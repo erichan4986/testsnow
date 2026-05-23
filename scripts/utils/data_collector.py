@@ -209,19 +209,14 @@ class AnnouncementCollector:
         self.ak = ak
 
     def collect(self, code: str, months: int = 3) -> list:
-        """
-        采集近 N 个月的公告
-        Returns:
-            List of dicts: [{title, type, date, content, url}]
-        """
         if self.ak is None:
             logger.warning("akshare 未安装，跳过公告采集")
             return []
 
         announcements = []
         try:
-            df = self.ak.stock_notice_report(symbol=code, date=datetime.now().strftime("%Y%m%d"))
-            if isinstance(df, str) or df is None or df.empty:
+            df = self.ak.stock_individual_notice_report(code)
+            if df is None or df.empty:
                 return []
 
             cutoff = datetime.now() - timedelta(days=months * 30)
@@ -240,8 +235,8 @@ class AnnouncementCollector:
                     "title": str(row.get("公告标题", "")),
                     "type": ann_type,
                     "date": str(row.get("公告日期", "")),
-                    "content": str(row.get("公告内容", ""))[:500],
-                    "url": str(row.get("公告链接", "")),
+                    "content": "",  # No content field available
+                    "url": str(row.get("网址", "")),
                     "is_important": any(t in ann_type for t in important_types),
                 })
 
@@ -259,23 +254,20 @@ class FundFlowCollector:
         self.ak = ak
 
     def collect(self, code: str, days: int = 7) -> list:
-        if self.ak is None:
-            return []
         try:
-            market = "sz" if code.startswith(("00", "30")) else "sh"
-            df = self.ak.stock_individual_fund_flow(stock=code, market=market)
-            if df is None or df.empty:
-                return []
-            df = df.head(days)
-            results = []
-            for _, row in df.iterrows():
-                results.append({
-                    "date": str(row.get("日期", "")),
-                    "main_inflow": float(row.get("主力净流入", 0)),
-                    "retail_inflow": float(row.get("散户净流入", 0)),
-                    "large_order_pct": float(row.get("大单占比", 0)),
-                })
-            return results
+            import requests
+            market = "0" if code.startswith(("00", "30")) else "1"
+            url = f"https://push2.eastmoney.com/api/qt/ulist.np/get?secids={market}.{code}&fields=f1,f2,f3,f12,f13,f14,f62,f66,f69,f72,f75,f78,f81,f84,f87"
+            resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10, verify=False)
+            data = resp.json()
+            d = data.get("data", {}).get("diff", [{}])[0]
+
+            return [{
+                "date": datetime.now().strftime("%Y-%m-%d"),
+                "main_inflow": d.get("f62", 0) / 10000,  # Convert to 万
+                "retail_inflow": d.get("f84", 0) / 10000,
+                "large_order_pct": d.get("f69", 0),
+            }]
         except Exception as e:
             logger.error(f"采集 {code} 资金流向失败: {e}")
             return []
