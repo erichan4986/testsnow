@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "utils"))
 
-from data_collector import TechnicalCollector, ReportCollector, AnnouncementCollector
+from data_collector import TechnicalCollector, ReportCollector, AnnouncementCollector, FundFlowCollector, NewsCollector
 
 def test_fetch_kline_300661():
     """Test that we can fetch daily K-line for 圣邦股份."""
@@ -39,3 +39,13 @@ def test_fetch_announcements_300661():
     if len(announcements) > 0:
         assert "title" in announcements[0]
         assert "date" in announcements[0]
+
+def test_fetch_fundflow_300661():
+    collector = FundFlowCollector()
+    data = collector.collect(code="300661", days=7)
+    assert isinstance(data, list)
+
+def test_fetch_news_300661():
+    collector = NewsCollector()
+    data = collector.collect(code="300661", days=30)
+    assert isinstance(data, list)

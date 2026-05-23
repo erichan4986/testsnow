@@ -250,3 +250,67 @@ class AnnouncementCollector:
         except Exception as e:
             logger.error(f"采集 {code} 公告失败: {e}")
             return []
+
+
+class FundFlowCollector:
+    """采集资金流向数据（百度股市通 / akshare）"""
+
+    def __init__(self):
+        self.ak = ak
+
+    def collect(self, code: str, days: int = 7) -> list:
+        if self.ak is None:
+            return []
+        try:
+            market = "sz" if code.startswith(("00", "30")) else "sh"
+            df = self.ak.stock_individual_fund_flow(code=code, market=market)
+            if df is None or df.empty:
+                return []
+            df = df.head(days)
+            results = []
+            for _, row in df.iterrows():
+                results.append({
+                    "date": str(row.get("日期", "")),
+                    "main_inflow": float(row.get("主力净流入", 0)),
+                    "retail_inflow": float(row.get("散户净流入", 0)),
+                    "large_order_pct": float(row.get("大单占比", 0)),
+                })
+            return results
+        except Exception as e:
+            logger.error(f"采集 {code} 资金流向失败: {e}")
+            return []
+
+
+class NewsCollector:
+    """采集个股新闻（akshare）"""
+
+    def __init__(self):
+        self.ak = ak
+
+    def collect(self, code: str, days: int = 30) -> list:
+        if self.ak is None:
+            return []
+        try:
+            df = self.ak.stock_news_em(symbol=code)
+            if df is None or df.empty:
+                return []
+            cutoff = datetime.now() - timedelta(days=days)
+            results = []
+            for _, row in df.iterrows():
+                try:
+                    pub_date = pd.to_datetime(row.get("发布时间", ""))
+                    if pub_date < cutoff:
+                        continue
+                except Exception:
+                    continue
+                results.append({
+                    "title": str(row.get("标题", "")),
+                    "summary": str(row.get("内容", ""))[:300],
+                    "source": str(row.get("来源", "")),
+                    "date": str(row.get("发布时间", "")),
+                    "url": str(row.get("链接", "")),
+                })
+            return results[:20]
+        except Exception as e:
+            logger.error(f"采集 {code} 新闻失败: {e}")
+            return []
