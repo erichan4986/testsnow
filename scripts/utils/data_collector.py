@@ -186,14 +186,14 @@ class ReportCollector:
                     continue
 
                 reports.append({
-                    "title": str(row.get("报告标题", "")),
+                    "title": str(row.get("报告名称", "")),
                     "institution": str(row.get("机构", "")),
-                    "author": str(row.get("分析师", "")),
-                    "rating": str(row.get("评级", "")),
-                    "target_price": str(row.get("目标价", "")),
-                    "summary": str(row.get("摘要", "")),
-                    "date": str(row.get("发布日期", "")),
-                    "url": "",
+                    "author": "",  # No author field available
+                    "rating": str(row.get("东财评级", "")),
+                    "target_price": "",  # No target price field
+                    "summary": "",  # No summary field
+                    "date": str(row.get("日期", "")),
+                    "url": str(row.get("报告PDF链接", "")),
                 })
 
             return reports[:20]
@@ -221,7 +221,7 @@ class AnnouncementCollector:
         announcements = []
         try:
             df = self.ak.stock_notice_report(symbol=code, date=datetime.now().strftime("%Y%m%d"))
-            if df is None or df.empty:
+            if isinstance(df, str) or df is None or df.empty:
                 return []
 
             cutoff = datetime.now() - timedelta(days=months * 30)
@@ -263,7 +263,7 @@ class FundFlowCollector:
             return []
         try:
             market = "sz" if code.startswith(("00", "30")) else "sh"
-            df = self.ak.stock_individual_fund_flow(code=code, market=market)
+            df = self.ak.stock_individual_fund_flow(stock=code, market=market)
             if df is None or df.empty:
                 return []
             df = df.head(days)
