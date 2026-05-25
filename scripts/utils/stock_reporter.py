@@ -7,6 +7,7 @@
 
 import json
 import logging
+import re
 import ssl
 import urllib.request
 from datetime import datetime
@@ -123,6 +124,9 @@ class PerStockReporter:
 
         # 6. 资金流向追踪
         sections.append(self._fundflow_section(stock_name, analysis_result, stock_raw.get("fundflow", [])))
+
+        # 7. 知乎内容精选
+        sections.append(self._zhihu_section(stock_name, stock_raw.get("zhihu", {})))
 
         sections.append(self._sentiment_and_competition(stock_name, posts))
         sections.append(self._core_topics(stock_name, posts))
@@ -415,7 +419,6 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                     break
 
         sections = ["## 三、精品帖子深度解读\n"]
-        sections.append("*注：标题中的（一）（二）（三）等中文数字为作者原文自带的系列编号，非报告编号。*\n")
 
         # 每只股票预定义的深度分析（按URL匹配，确保与帖子一一对应）
         featured_analyses = self._get_featured_analyses(stock_name)
@@ -430,11 +433,15 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
             content = post.get("content", "")
             time_str = post.get("time", "")
 
-            # 尽量保留原文核心内容
-            excerpt = self._extract_excerpt(content, min_length=150, max_length=400)
-            # 如果内容明显是截断的列表页摘要，标注提示
-            if len(content) < 200:
-                excerpt = f"【列表页摘要，详情见原文链接】{excerpt}"
+            # 优先从 Vault 读取完整正文
+            full_content = self._read_full_content_from_vault(stock_name, url)
+            if full_content:
+                excerpt = self._extract_excerpt(full_content, min_length=200, max_length=600)
+            else:
+                excerpt = self._extract_excerpt(content, min_length=150, max_length=400)
+                # 如果内容明显是截断的列表页摘要，标注提示
+                if len(content) < 200:
+                    excerpt = f"【列表页摘要，详情见原文链接】{excerpt}"
 
             # 获取我的判断：优先按URL匹配，其次按序号
             judgment = featured_analyses.get(url, "")
@@ -965,6 +972,41 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
         lines.append("")
         return "\n".join(lines)
 
+    def _zhihu_section(self, stock_name: str, zhihu_data: Dict) -> str:
+        """Section 7: 知乎内容精选（股市/宏观经济相关）"""
+        lines = ["## 七、知乎内容精选", ""]
+
+        report_items = zhihu_data.get("report_items", []) if isinstance(zhihu_data, dict) else []
+        if not report_items:
+            lines.append("*暂无知乎相关内容*")
+            lines.append("")
+            return "\n".join(lines)
+
+        lines.append(f"> 本次从知乎采集 {zhihu_data.get('total', 0)} 条内容，筛选出 {len(report_items)} 条与股市/宏观经济相关。\n")
+
+        for i, item in enumerate(report_items[:5], 1):
+            title = item.get("title", "")
+            author = item.get("author_name", "未知")
+            badge = item.get("author_badge", "")
+            url = item.get("url", "")
+            vote_up = item.get("vote_up_count", 0)
+            comments = item.get("comment_count", 0)
+            text = item.get("content_text", "")[:300]
+            search_kw = item.get("search_keyword", "")
+
+            lines.append(f"### {i}. [{title}]({url})")
+            author_info = f"**{author}**"
+            if badge:
+                author_info += f" ({badge})"
+            lines.append(f"{author_info} | 👍 {vote_up} | 💬 {comments}")
+            if search_kw:
+                lines.append(f"> 来源: {search_kw}")
+            lines.append(f"")
+            lines.append(f"> {text}...")
+            lines.append(f"")
+
+        return "\n".join(lines)
+
     def _valuation_forecast(self, stock_name: str) -> str:
         """
         估值与预测板块：整合实时行情 + 券商一致预期，计算 forward PE / PEG
@@ -1205,19 +1247,87 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
 
         return bullish, bearish, neutral
 
-    def _extract_excerpt(self, content: str, min_length: int = 150, max_length: int = 400) -> str:
-        """提取帖子摘要，尽量保留原文"""
-        # 清理emoji和特殊符号
+    def _read_full_content_from_vault(self, stock_name: str, url: str) -> Optional[str]:
+        """
+        从 Obsidian Vault 读取帖子的完整正文。
+        """
+        post_id = url.rstrip("/").split("/")[-1]
+        vault_path = (
+            Path(__file__).parent.parent.parent
+            / "knowledge"
+            / "10-Stocks"
+            / stock_name
+            / "posts"
+            / f"{post_id}.md"
+        )
+        if not vault_path.exists():
+            return None
+
+        content = vault_path.read_text(encoding="utf-8")
+        match = re.search(r"^---\n.*?\n---\n\n# .*\n\n(.+)", content, re.DOTALL)
+        if match:
+            return match.group(1).strip()
+        return None
+
+    def _extract_argument_chain(self, content: str, min_length: int = 200, max_length: int = 600) -> str:
+        """
+        从帖子正文中提取推导链（前提假设 → 论据/数据 → 推理过程 → 结论）。
+
+        策略：
+        1. 如果正文长度在范围内，直接返回
+        2. 如果过长，优先保留包含逻辑连接词和数字的段落
+        3. 按原文顺序重组选中的段落
+        """
         content = content.strip()
         if len(content) <= max_length:
             return content
 
-        # 尝试在句子边界截断
-        truncated = content[:max_length]
-        last_period = max(truncated.rfind("。"), truncated.rfind("！"), truncated.rfind("？"))
-        if last_period > min_length:
-            return truncated[:last_period + 1]
-        return truncated + "..."
+        logic_keywords = ["因为", "所以", "如果", "那么", "因此", "意味着", "结论是",
+                          "前提", "论据", "推导", "逻辑", "假设", "验证"]
+        data_patterns = [r"\d+[%％]", r"\d+\.\d+", r"\d+亿", r"\d+万", r"\d+元"]
+
+        paragraphs = [p.strip() for p in content.split("\n") if p.strip()]
+
+        scored_paragraphs = []
+        for p in paragraphs:
+            score = 0
+            for kw in logic_keywords:
+                if kw in p:
+                    score += 2
+            for pattern in data_patterns:
+                if re.search(pattern, p):
+                    score += 3
+            if 30 <= len(p) <= 200:
+                score += 1
+            scored_paragraphs.append((score, p))
+
+        scored_paragraphs.sort(key=lambda x: x[0], reverse=True)
+
+        selected = []
+        total_len = 0
+        for score, p in scored_paragraphs:
+            if total_len + len(p) > max_length and total_len >= min_length:
+                break
+            selected.append(p)
+            total_len += len(p) + 1
+
+        selected_set = set(selected)
+        ordered = [p for p in paragraphs if p in selected_set]
+
+        result = "\n".join(ordered)
+
+        if len(result) < min_length:
+            truncated = content[:max_length]
+            last_period = max(truncated.rfind("。"), truncated.rfind("！"), truncated.rfind("？"))
+            if last_period > min_length:
+                return truncated[:last_period + 1]
+            return truncated + "..."
+
+        return result
+
+    def _extract_excerpt(self, content: str, min_length: int = 150, max_length: int = 400) -> str:
+        """Backward-compatible alias for _extract_argument_chain."""
+        return self._extract_argument_chain(content, min_length, max_length)
 
     def _generate_summary_report(self, output_dir: str) -> str:
         """生成汇总简报"""
