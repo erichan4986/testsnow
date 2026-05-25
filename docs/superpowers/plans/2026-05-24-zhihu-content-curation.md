@@ -512,6 +512,8 @@ git diff --cached --quiet || git commit -m "feat(demo): zhihu curation integrati
 - [ ] **Step 1: 运行 demo 脚本**
 
 ```bash
+export DEEPSEEK_API_KEY="sk-REDACTED-DEEPSEEK"
+export ZHIHU_API_KEY="7d19ad2b8e7c5c0859b48b389674a24a54e88735"
 python scripts/demo_shengbang.py
 ```
 
