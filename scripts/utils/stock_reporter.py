@@ -109,13 +109,32 @@ class PerStockReporter:
             logger.warning(f"[{stock_name}] 无数据，跳过")
             return ""
 
-        # 双轨分流
-        featured_posts = [p for p in all_posts if p.get("_track") == "featured"]
-        sentiment_posts = [p for p in all_posts if p.get("_track") != "featured"]
+        # 统一质量门筛选（硬指标 + LLM 评估）
+        try:
+            from .content_quality_gate import ContentQualityGate
+        except ImportError:
+            import sys
+            utils_dir = Path(__file__).parent
+            if str(utils_dir) not in sys.path:
+                sys.path.insert(0, str(utils_dir))
+            from content_quality_gate import ContentQualityGate
+
+        gate = ContentQualityGate()
+        quality_results = gate.process_xueqiu_posts(all_posts)
+
+        # 只保留高质量内容进入报告
+        keep_posts = [r.item.extra for r in quality_results if r.action == "keep"]
+        demote_posts = [r.item.extra for r in quality_results if r.action == "demote"]
+        discard_posts = [r.item.extra for r in quality_results if r.action == "discard"]
+
+        # 在 keep 的帖子中，再按原双轨分流区分 featured/sentiment
+        featured_posts = [p for p in keep_posts if p.get("_track") == "featured"]
+        sentiment_posts = [p for p in keep_posts if p.get("_track") != "featured"]
 
         logger.info(
-            f"[{stock_name}] 报告生成: featured={len(featured_posts)}, "
-            f"sentiment={len(sentiment_posts)}"
+            f"[{stock_name}] 质量门筛选: 原始={len(all_posts)}, "
+            f"保留={len(keep_posts)}, 降级={len(demote_posts)}, 丢弃={len(discard_posts)} | "
+            f"报告用: featured={len(featured_posts)}, sentiment={len(sentiment_posts)}"
         )
 
         # 准备数据
