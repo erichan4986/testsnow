@@ -14,7 +14,16 @@ import os
 import re
 from dataclasses import dataclass, field
 from datetime import datetime
+from pathlib import Path
 from typing import Dict, List, Optional
+
+# Auto-load .env from project root
+_project_root = Path(__file__).parent.parent.parent
+try:
+    from dotenv import load_dotenv
+    load_dotenv(_project_root / ".env")
+except Exception:
+    pass
 
 logger = logging.getLogger(__name__)
 
