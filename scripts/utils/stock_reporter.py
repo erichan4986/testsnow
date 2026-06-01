@@ -127,6 +127,9 @@ class PerStockReporter:
         demote_posts = [r.item.extra for r in quality_results if r.action == "demote"]
         discard_posts = [r.item.extra for r in quality_results if r.action == "discard"]
 
+        stock_raw = self.raw_data.get(stock_name, {})
+        stock_raw["_keep_posts"] = keep_posts
+
         # 在 keep 的帖子中，再按原双轨分流区分 featured/sentiment
         featured_posts = [p for p in keep_posts if p.get("_track") == "featured"]
         sentiment_posts = [p for p in keep_posts if p.get("_track") != "featured"]
@@ -138,49 +141,80 @@ class PerStockReporter:
         )
 
         # 准备数据
-        stock_raw = self.raw_data.get(stock_name, {})
         analysis_result = stock_raw.get("analysis", {})
         code = self.stock_codes.get(stock_name, "")
         quote = self._fetch_tencent_quote(code) if code else None
         consensus = self._fetch_consensus_eps(code) if code else None
 
-        # 构建报告各部分
+        # === 跨来源内容去重与归纳 ===
+        # 收集所有来源的高质量内容（雪球 keep + 知乎 report_items）
+        zhihu_report_items = stock_raw.get("zhihu", {}).get("report_items", [])
+        all_sources_items = keep_posts + zhihu_report_items
+
+        cross_source_section = ""
+        if all_sources_items:
+            try:
+                from .content_consolidator import ContentConsolidator
+                consolidator = ContentConsolidator()
+                consolidated = consolidator.consolidate(all_sources_items)
+                cross_source_section = consolidator.generate_cross_source_summary(consolidated) or ""
+                # 将 cross_sources 信息回注到 featured_posts 和 zhihu_report_items
+                # 用于在各板块内标注交叉来源
+                self._annotate_cross_sources(consolidated, keep_posts, zhihu_report_items)
+            except Exception as e:
+                logger.warning(f"跨来源内容归纳失败: {e}")
+
+        # === 主题化综合叙事 ===
+        synthesis = self._synthesize_sections(stock_name, stock_raw)
+        has_synthesis = any(
+            synthesis.get(k) for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]
+        )
+
+        # 构建报告各部分（新 9 板块结构）
         sections = []
         sections.append(self._header(stock_name))
 
-        # 1. 综合评分与推荐（新增）
+        # 1. 综合评分与推荐
         sections.append(self._composite_score_section(stock_name, all_posts, stock_raw, quote, consensus))
 
         # 2. 实时行情与估值
         sections.append(self._valuation_forecast(stock_name, quote, consensus))
 
-        # 3. 技术面分析
-        sections.append(self._technical_section(stock_name, analysis_result))
+        if has_synthesis:
+            # 3. 产业逻辑与竞争格局（合成）
+            if synthesis.get("industry_logic"):
+                sections.append(self._render_synthesis_section("产业逻辑与竞争格局", synthesis["industry_logic"], synthesis["citations"]))
 
-        # 4. 最新研报摘要
-        sections.append(self._reports_section(stock_name, analysis_result, stock_raw.get("reports", [])))
+            # 4. 业绩基本面追踪（合成）
+            if synthesis.get("fundamentals"):
+                sections.append(self._render_synthesis_section("业绩基本面追踪", synthesis["fundamentals"], synthesis["citations"]))
 
-        # 5. 近期公告要点
-        sections.append(self._announcements_section(stock_name, analysis_result, stock_raw.get("announcements", [])))
+            # 5. 估值争议与市场分歧（合成）
+            if synthesis.get("valuation_debate"):
+                sections.append(self._render_synthesis_section("估值争议与市场分歧", synthesis["valuation_debate"], synthesis["citations"]))
 
-        # 6. 资金流向追踪
-        sections.append(self._fundflow_section(stock_name, analysis_result, stock_raw.get("fundflow", [])))
+            # 6. 资金面与情绪跟踪（合成）
+            if synthesis.get("funding_sentiment"):
+                sections.append(self._render_synthesis_section("资金面与情绪跟踪", synthesis["funding_sentiment"], synthesis["citations"]))
 
-        # 7. 知乎内容精选
-        sections.append(self._zhihu_section(stock_name, stock_raw.get("zhihu", {})))
+            # 7. 关键事件与催化剂（合成）
+            if synthesis.get("events_catalysts"):
+                sections.append(self._render_synthesis_section("关键事件与催化剂", synthesis["events_catalysts"], synthesis["citations"]))
+        else:
+            # 降级：旧版板块展示
+            sections.append(self._sentiment_and_competition(stock_name, all_posts))
+            sections.append(self._core_topics(stock_name, all_posts))
+            sections.append(self._zhihu_section(stock_name, stock_raw.get("zhihu", {})))
+            sections.append(self._featured_posts(stock_name, featured_posts))
+            sections.append(self._comment_highlights(stock_name, all_posts))
 
-        # 8. 市场情绪与竞争格局
-        sections.append(self._sentiment_and_competition(stock_name, all_posts))
-        sections.append(self._core_topics(stock_name, all_posts))
-
-        # 9. 精品帖子深度解读
-        sections.append(self._featured_posts(stock_name, featured_posts))
-
-        # 10. 关键评论摘录
-        sections.append(self._comment_highlights(stock_name, all_posts))
-
-        # 11. 综合风险评分（替换原风险提示）
+        # 8. 风险综合评估（保留）
         sections.append(self._risk_score_section(stock_name, all_posts, stock_raw, quote, consensus))
+
+        # 9. 信息来源汇总（新）
+        if has_synthesis and synthesis.get("citations"):
+            sections.append(self._citations_section(synthesis["citations"]))
+
         sections.append(self._footer())
 
         markdown = "\n\n".join(sections)
@@ -203,6 +237,62 @@ class PerStockReporter:
 **数据来源**: 雪球网热门讨论
 
 ---"""
+
+    def _synthesize_sections(self, stock_name: str, stock_raw: Dict) -> Dict[str, str]:
+        """
+        调用 KnowledgeSynthesizer 生成主题化综合叙事。
+        返回包含 5 个主题 Markdown + citations 的字典。
+        """
+        try:
+            from scripts.utils.knowledge_synthesizer import KnowledgeSynthesizer
+            from scripts.utils.source_adapter import adapt_all
+        except ImportError:
+            import sys
+            utils_dir = Path(__file__).parent
+            if str(utils_dir) not in sys.path:
+                sys.path.insert(0, str(utils_dir))
+            from knowledge_synthesizer import KnowledgeSynthesizer
+            from source_adapter import adapt_all
+
+        # 收集所有来源的数据
+        keep_posts = stock_raw.get("_keep_posts", [])
+        zhihu_items = stock_raw.get("zhihu", {}).get("report_items", [])
+        reports = stock_raw.get("reports", [])
+        announcements = stock_raw.get("announcements", [])
+        fundflow = stock_raw.get("fundflow", [])
+        news = stock_raw.get("news", [])
+
+        items = adapt_all(
+            xueqiu_items=keep_posts,
+            zhihu_items=zhihu_items,
+            reports=reports,
+            announcements=announcements,
+            fundflow=fundflow,
+            news=news,
+        )
+        if not items:
+            return {k: "" for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]} | {"citations": {}}
+
+        synth = KnowledgeSynthesizer()
+        result = synth.synthesize(stock_name, {"items": items})
+
+        # 回填 citation 元数据：用 items 列表按索引匹配
+        citations = result.get("citations", {})
+        resolved_citations = {}
+        for ref_id, meta in citations.items():
+            if meta.get("_placeholder") and 1 <= ref_id <= len(items):
+                src_item = items[ref_id - 1]
+                resolved_citations[ref_id] = {
+                    "title": src_item.title,
+                    "source": src_item.source_platform,
+                    "author": src_item.author,
+                    "url": src_item.url,
+                    "date": src_item.publish_time,
+                }
+            else:
+                resolved_citations[ref_id] = meta
+        result["citations"] = resolved_citations
+        return result
 
     def _sentiment_and_competition(self, stock_name: str, posts: List[Dict]) -> str:
         """
@@ -528,9 +618,16 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
             # 确保引用块内段落连续：将 \n\n 替换为 \n>\n> 以保持 blockquote
             quoted_excerpt = "\n>\n> ".join(excerpt.split("\n\n"))
 
+            # 交叉来源标注
+            cross_sources = post.get("_cross_sources", [])
+            cross_note = ""
+            if cross_sources:
+                cs_labels = [f"{cs['source']}" for cs in cross_sources]
+                cross_note = f"\n\n📌 **也被提及于**: {', '.join(cs_labels)}"
+
             section = f"""### 3.{i} [{title}]({url})
 
-**作者**: {author} | **时间**: {time_str} | **互动**: 👍{likes} 💬{comments} 🔄{reposts}
+**作者**: {author} | **时间**: {time_str} | **互动**: 👍{likes} 💬{comments} 🔄{reposts}{cross_note}
 
 **核心观点摘录**:
 
@@ -1055,25 +1152,48 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
         lines.append("")
         return "\n".join(lines)
 
+    def _annotate_cross_sources(self, consolidated: List[Dict], keep_posts: List[Dict], zhihu_items: List[Dict]) -> None:
+        """
+        将 cross_sources 信息回注到原始内容中，用于在各板块内标注交叉来源。
+        """
+        # 建立 title -> cross_sources 映射
+        cross_map = {}
+        for item in consolidated:
+            title = item.get("title", "")
+            if title and item.get("cross_sources"):
+                cross_map[title] = item.get("cross_sources", [])
+
+        # 回注到雪球 keep_posts
+        for post in keep_posts:
+            title = post.get("title", "")
+            if title in cross_map:
+                post["_cross_sources"] = cross_map[title]
+
+        # 回注到知乎 items
+        for item in zhihu_items:
+            title = item.get("title", "")
+            if title in cross_map:
+                item["_cross_sources"] = cross_map[title]
+
     def _zhihu_section(self, stock_name: str, zhihu_data: Dict) -> str:
-        """Section 7: 知乎内容精选（AI 质量评估后）"""
-        lines = ["## 七、知乎内容精选", ""]
+        """Section 7: 知乎及全网内容精选（统一质量评估后）"""
+        lines = ["## 七、知乎及全网内容精选", ""]
 
         report_items = zhihu_data.get("report_items", []) if isinstance(zhihu_data, dict) else []
         if not report_items:
-            lines.append("*暂无知乎相关内容*")
+            lines.append("*暂无相关内容*")
             lines.append("")
             return "\n".join(lines)
 
         total = zhihu_data.get("total", 0)
-        stats = zhihu_data.get("curator_stats", {})
-        api_calls = stats.get("api_calls", 0) if stats else 0
+        gate_stats = zhihu_data.get("gate_stats", {})
         lines.append(
-            f"> 本次从知乎采集 {total} 条内容，经 AI 评估筛选出 **{len(report_items)}** 条高质量内容纳入报告"
-            f"（消耗 Curator API {api_calls} 次）。\n"
+            f"> 本次采集 {total} 条内容（知乎站内 + 全网），经质量门筛选出 **{len(report_items)}** 条高质量内容纳入报告。\n"
         )
 
-        for i, item in enumerate(report_items[:5], 1):
+        # 优先展示高质量内容，最多展示 12 条
+        display_items = report_items[:12]
+        for i, item in enumerate(display_items, 1):
             title = item.get("title", "")
             author = item.get("author_name", "未知")
             badge = item.get("author_badge", "")
@@ -1082,47 +1202,57 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
             comments = item.get("comment_count", 0)
             search_kw = item.get("search_keyword", "")
             edit_time = item.get("edit_time", 0)
+            source_platform = item.get("source_platform", "知乎")
+            source_type = item.get("_source_type", "site")
             date_str = ""
             if edit_time:
                 from datetime import datetime
                 date_str = datetime.fromtimestamp(edit_time).strftime("%Y-%m-%d")
 
-            # 读取 curator 评估结果
+            # 兼容新旧两种评估结果格式
+            qg = item.get("_quality_gate", {})
             cur = item.get("_curator", {})
-            quality_score = cur.get("quality_score", 0)
-            content_type = cur.get("content_type", "")
-            valid_until = cur.get("valid_until", "")
+            quality_score = qg.get("quality_score") or cur.get("quality_score", 0)
+            reasons = qg.get("reasons", [])
             summary = cur.get("summary", "")
             logic_chain = cur.get("logic_chain", {})
             judgment = cur.get("judgment", "")
+
+            # 来源标签
+            source_label = "[全网]" if source_type == "web" else "[站内]"
 
             # 元数据行
             meta_parts = [f"**{author}**"]
             if badge:
                 meta_parts.append(f"({badge})")
+            meta_parts.append(f"来源: {source_platform}")
             if date_str:
                 meta_parts.append(f"编辑时间 {date_str}")
             meta_parts.append(f"👍 {vote_up}")
             if quality_score:
                 meta_parts.append(f"质量分 {quality_score}/100")
-            if content_type:
-                meta_parts.append(f"类型: {content_type}")
-            if valid_until:
-                meta_parts.append(f"有效期至 {valid_until}")
 
-            lines.append(f"### {i}. [{title}]({url})")
+            # 交叉来源标注
+            cross_sources = item.get("_cross_sources", [])
+            if cross_sources:
+                cs_labels = [f"{cs['source']}" for cs in cross_sources]
+                meta_parts.append(f"📌 也被: {', '.join(cs_labels)} 提及")
+
+            lines.append(f"### {i}. {source_label}[{title}]({url})")
             lines.append(" | ".join(meta_parts))
             if search_kw:
-                lines.append(f"> 来源: {search_kw}")
+                lines.append(f"> 搜索关键词: {search_kw}")
+            if reasons:
+                lines.append(f"> 质量亮点: {', '.join(reasons[:2])}")
             lines.append("")
 
-            # 摘要
+            # 摘要（旧格式兼容）
             if summary:
                 lines.append("**摘要**：")
                 lines.append(f"{summary}")
                 lines.append("")
 
-            # 逻辑链
+            # 逻辑链（旧格式兼容）
             if logic_chain and any(logic_chain.values()):
                 lines.append("**逻辑链**：")
                 premise = logic_chain.get("premise", "")
@@ -1139,7 +1269,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                     lines.append(f"- **结论**：{conclusion}")
                 lines.append("")
 
-            # AI 判断
+            # AI 判断（旧格式兼容）
             if judgment and "[降级模式]" not in judgment:
                 lines.append("**判断**：")
                 lines.append(f"{judgment}")
@@ -1149,6 +1279,10 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                 text = item.get("content_text", "")[:300]
                 lines.append(f"> {text}...")
                 lines.append("")
+
+        if len(report_items) > len(display_items):
+            lines.append(f"*... 还有 {len(report_items) - len(display_items)} 条高质量内容未展示*")
+            lines.append("")
 
         return "\n".join(lines)
 
@@ -1631,6 +1765,73 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
     def _extract_excerpt(self, content: str, min_length: int = 150, max_length: int = 400) -> str:
         """Backward-compatible alias for _extract_argument_chain."""
         return self._extract_argument_chain(content, min_length, max_length)
+
+    def _render_synthesis_section(self, title: str, narrative: str, citations: Dict) -> str:
+        """渲染一个合成叙事板块，自动提取该板块使用的引用。"""
+        import re
+        used_refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", narrative))
+
+        lines = [f"## {title}", "", narrative, ""]
+
+        if used_refs:
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                url = meta.get("url", "")
+                date = meta.get("date", "")
+                parts = [f"[^{ref_id}]"]
+                if source:
+                    parts.append(source)
+                if author:
+                    parts.append(f"作者: {author}")
+                if title_text:
+                    parts.append(f"《{title_text[:40]}》")
+                if date:
+                    parts.append(date)
+                line = " | ".join(parts)
+                if url:
+                    line += f" [{url}]"
+                lines.append(f"- {line}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def _citations_section(self, citations: Dict) -> str:
+        """报告末尾的全局引用汇总板块。"""
+        lines = ["## 九、信息来源汇总", ""]
+        if not citations:
+            lines.append("*无引用信息*")
+            lines.append("")
+            return "\n".join(lines)
+
+        lines.append(f"> 本报告共引用 **{len(citations)}** 条信息来源：")
+        lines.append("")
+
+        for ref_id in sorted(citations.keys()):
+            meta = citations[ref_id]
+            source = meta.get("source", "未知")
+            author = meta.get("author", "")
+            title = meta.get("title", "")
+            url = meta.get("url", "")
+            date = meta.get("date", "")
+            parts = [f"[^{ref_id}]"]
+            if source:
+                parts.append(f"**{source}**")
+            if author:
+                parts.append(f"作者: {author}")
+            if title:
+                parts.append(f"《{title[:50]}》")
+            if date:
+                parts.append(date)
+            line = " | ".join(parts)
+            if url:
+                line = f"{line} [{url}]"
+            lines.append(f"- {line}")
+        lines.append("")
+        return "\n".join(lines)
 
     def _generate_summary_report(self, output_dir: str) -> str:
         """生成汇总简报"""
