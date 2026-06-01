@@ -1515,8 +1515,8 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
         # 回退到原有的风险提示内容，但替换标题编号
         content = self._risks_and_watch(stock_name, posts)
         if content:
-            # 将硬编码的 "## 五、风险提示与关注要点" 替换为 "## 十二、综合风险评分"
-            content = content.replace("## 五、风险提示与关注要点", "## 十二、综合风险评分")
+            # 移除硬编码的编号，使用无编号标题
+            content = content.replace("## 五、风险提示与关注要点", "## 综合风险评分")
         return content
 
     def _footer(self) -> str:
