@@ -78,7 +78,8 @@ def main():
     zhihu = ZhihuCollector()
     zhihu_data = zhihu.collect(
         stock_name=stock_name,
-        keywords=["模拟芯片", "信号链", "电源管理芯片", "国产替代", "半导体", "模拟IC", "芯片设计"],
+        keywords=["模拟芯片", "信号链", "电源管理芯片", "国产替代", "半导体", "模拟IC", "芯片设计",
+                  "思瑞浦", "杰华特", "纳芯微", "艾为电子"],
         limit=8,
     )
     report_items = zhihu_data.get("report_items", [])
