@@ -1529,6 +1529,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                 "gross_margin": _get('毛利率'),
                 "net_margin": _get('销售净利率'),
                 "roe": _get('净资产收益率(ROE)'),
+                "revenue": _get('营业总收入'),
             }
         except Exception as e:
             logger.warning(f"[{code}] 财务指标获取失败: {e}")
@@ -1563,6 +1564,14 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                     growth = ((consensus["eps_next"] / consensus["eps_current"]) - 1) * 100 if consensus.get("eps_next") and consensus["eps_current"] else None
                     metrics["eps_growth"] = growth
                     metrics["peg"] = fwd_pe / growth if fwd_pe and growth else None
+            # PS(市销率) = 总市值 / 营收（营收单位为元，需转换为亿）
+            # 注意：若取到的是季度营收，需年化处理（乘以4）
+            if metrics.get("mcap") and metrics.get("revenue"):
+                revenue_yi = metrics["revenue"] / 100000000
+                # 简单年化：若营收小于最近季度典型值的2倍，认为是季度数据，乘以4
+                if revenue_yi > 0:
+                    # 对于Q1数据（约10-15亿），年化后约40-60亿
+                    metrics["ps"] = metrics["mcap"] / (revenue_yi * 4) if revenue_yi < 30 else metrics["mcap"] / revenue_yi
             result[name] = metrics
         return result
 
@@ -1571,7 +1580,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
         if not metrics:
             return ""
         lines = ["", "### 竞争对手财务指标对比", "", "> 数据来源: 东方财富财务摘要 + 腾讯财经实时行情 + 同花顺一致预期", ""]
-        headers = ["公司", "存货周转(天)", "应收周转(天)", "毛利率(%)", "总市值(亿)", "PE(TTM)", "Forward PE", "PEG"]
+        headers = ["公司", "存货周转(天)", "应收周转(天)", "毛利率(%)", "总市值(亿)", "PE(TTM)", "Forward PE", "PEG", "PS(市销率)"]
         lines.append("| " + " | ".join(headers) + " |")
         lines.append("|" + "|".join(["---"] * len(headers)) + "|")
         for name in [stock_name] + COMPETITOR_MAP.get(stock_name, []):
@@ -1592,6 +1601,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                 fmt(m.get("pe_ttm")),
                 fmt(m.get("forward_pe")),
                 fmt(m.get("peg")),
+                fmt(m.get("ps")),
             ]
             lines.append("| " + " | ".join(row) + " |")
         lines.append("")
@@ -1606,6 +1616,8 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                 parts.append(f"毛利率 {target['gross_margin']:.1f}%")
             if target.get("pe_ttm"):
                 parts.append(f"PE(TTM) {target['pe_ttm']:.1f}")
+            if target.get("ps"):
+                parts.append(f"PS {target['ps']:.1f}")
             if parts:
                 lines.append("、".join(parts) + "。")
             lines.append("")
