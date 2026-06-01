@@ -161,7 +161,14 @@ class KnowledgeSynthesizer:
                 continue
 
             try:
-                narrative, citations = self._synthesize_theme(stock_name, theme_key, items)
+                # 收集已生成的前置板块叙事，避免跨板块重复展开
+                previous_narratives = {
+                    k: v for k, v in result.items()
+                    if v and k in THEMES
+                }
+                narrative, citations = self._synthesize_theme(
+                    stock_name, theme_key, items, previous_narratives
+                )
                 result[theme_key] = narrative
                 # 合并引用（全局去重）
                 for cid, cdata in citations.items():
@@ -175,14 +182,24 @@ class KnowledgeSynthesizer:
         return result
 
     def _synthesize_theme(
-        self, stock_name: str, theme_key: str, items: List[SynthesisItem]
+        self,
+        stock_name: str,
+        theme_key: str,
+        items: List[SynthesisItem],
+        previous_narratives: Dict[str, str] = None,
     ) -> Tuple[str, Dict[int, Dict]]:
         """合成单个主题，返回 (叙事文本, 该主题使用的引用字典)"""
-        prompt = self._build_prompt(stock_name, theme_key, items)
+        prompt = self._build_prompt(stock_name, theme_key, items, previous_narratives)
         response_text = self._call_llm(prompt)
         return self._parse_with_citations(response_text)
 
-    def _build_prompt(self, stock_name: str, theme_key: str, items: List[SynthesisItem]) -> str:
+    def _build_prompt(
+        self,
+        stock_name: str,
+        theme_key: str,
+        items: List[SynthesisItem],
+        previous_narratives: Dict[str, str] = None,
+    ) -> str:
         """为特定主题构建 LLM prompt。"""
         prefix_template = THEME_PROMPT_PREFIX.get(theme_key, THEMES["industry_logic"][0])
         try:
@@ -203,7 +220,20 @@ class KnowledgeSynthesizer:
             )
             source_lines.append(line)
 
-        return prefix + "\n\n信息来源：\n" + "\n".join(source_lines)
+        prompt = prefix + "\n\n信息来源：\n" + "\n".join(source_lines)
+
+        # 追加前置板块上下文，避免跨板块重复展开
+        if previous_narratives:
+            prompt += "\n\n---\n\n注意：以下内容是本报告已生成的其他板块分析。"
+            prompt += "请确保本板块不重复展开已在其他板块中详细讨论过的事实（如季度收入、毛利率、具体订单数字等）。"
+            prompt += "仅在需要支撑本板块论点时，用一句话简要引用，并继续标注 [^n] 引用。\n\n"
+            for prev_key, prev_text in previous_narratives.items():
+                prev_title = THEMES.get(prev_key, (prev_key, 0))[0]
+                # 截取前 300 字作为上下文，控制 prompt 长度
+                truncated = prev_text[:300] + "..." if len(prev_text) > 300 else prev_text
+                prompt += f"【{prev_title}】\n{truncated}\n\n"
+
+        return prompt
 
     def _call_llm(self, prompt: str) -> str:
         """调用 LLM，重试 1 次。"""
