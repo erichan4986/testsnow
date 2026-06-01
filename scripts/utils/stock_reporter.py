@@ -29,6 +29,23 @@ COMPETITOR_MAP = {
     "乐鑫科技": ["翱捷科技", "博通集成", "全志科技", "恒玄科技"],
 }
 
+# 竞争对手股票代码映射（用于财务指标对比）
+COMPETITOR_CODES = {
+    "思瑞浦": "688536",
+    "杰华特": "688141",
+    "纳芯微": "688052",
+    "艾为电子": "688798",
+    "拓普集团": "601689",
+    "银轮股份": "002126",
+    "光威复材": "300699",
+    "恒神股份": "H100027",  # 新三板，可能无数据
+    "地平线": "9660.HK",
+    "翱捷科技": "688220",
+    "博通集成": "603068",
+    "全志科技": "300458",
+    "恒玄科技": "688608",
+}
+
 # 行业赛道映射
 INDUSTRY_MAP = {
     "黑芝麻智能": "智能驾驶芯片",
@@ -183,7 +200,12 @@ class PerStockReporter:
         if has_synthesis:
             # 3. 产业逻辑与竞争格局（合成）
             if synthesis.get("industry_logic"):
-                sections.append(self._render_synthesis_section("产业逻辑与竞争格局", synthesis["industry_logic"], synthesis["citations"]))
+                industry_section = self._render_synthesis_section("产业逻辑与竞争格局", synthesis["industry_logic"], synthesis["citations"])
+                # 追加竞争对手财务指标对比表
+                comp_metrics = self._fetch_competitor_metrics(stock_name)
+                if comp_metrics:
+                    industry_section += self._competitor_metrics_table(stock_name, comp_metrics)
+                sections.append(industry_section)
 
             # 4. 业绩基本面追踪（合成）
             if synthesis.get("fundamentals"):
@@ -1480,6 +1502,114 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
         except Exception as e:
             logger.warning(f"[{code}] 一致预期 EPS 获取失败: {e}")
             return None
+
+    def _fetch_financial_abstract(self, code: str) -> Optional[Dict]:
+        """调用 akshare 获取财务分析指标（存货周转、应收周转、毛利率等）"""
+        try:
+            import akshare as ak
+            import pandas as pd
+            df = ak.stock_financial_abstract(symbol=code)
+            if df is None or df.empty:
+                return None
+            row = df.set_index('指标')
+            def _get(indicator):
+                if indicator not in row.index:
+                    return None
+                val = row.loc[indicator]
+                # 某些指标（如毛利率）在 DataFrame 中会出现多行重复
+                if isinstance(val, pd.DataFrame):
+                    val = val.iloc[0]
+                for col in ['20260331', '20251231', '20240930', '20240630', '20240331', '20241231']:
+                    if col in val.index and pd.notna(val[col]):
+                        return float(val[col])
+                return None
+            return {
+                "inventory_days": _get('存货周转天数'),
+                "receivable_days": _get('应收账款周转天数'),
+                "gross_margin": _get('毛利率'),
+                "net_margin": _get('销售净利率'),
+                "roe": _get('净资产收益率(ROE)'),
+            }
+        except Exception as e:
+            logger.warning(f"[{code}] 财务指标获取失败: {e}")
+            return None
+
+    def _fetch_competitor_metrics(self, stock_name: str) -> Dict[str, Dict]:
+        """获取目标股票及其竞争对手的财务+估值指标"""
+        competitors = COMPETITOR_MAP.get(stock_name, [])
+        all_names = [stock_name] + competitors
+        result = {}
+        for name in all_names:
+            code = self.stock_codes.get(name) or COMPETITOR_CODES.get(name)
+            if not code:
+                continue
+            metrics = {}
+            # 财务指标
+            fin = self._fetch_financial_abstract(code)
+            if fin:
+                metrics.update(fin)
+            # 估值指标
+            quote = self._fetch_tencent_quote(code)
+            if quote:
+                metrics["mcap"] = quote.get("mcap_yi")
+                metrics["pe_ttm"] = quote.get("pe_ttm")
+            # 一致预期
+            consensus = self._fetch_consensus_eps(code)
+            if consensus and consensus.get("eps_current") and metrics.get("pe_ttm"):
+                price = quote.get("price") if quote else None
+                if price:
+                    fwd_pe = price / consensus["eps_current"] if consensus["eps_current"] else None
+                    metrics["forward_pe"] = fwd_pe
+                    growth = ((consensus["eps_next"] / consensus["eps_current"]) - 1) * 100 if consensus.get("eps_next") and consensus["eps_current"] else None
+                    metrics["eps_growth"] = growth
+                    metrics["peg"] = fwd_pe / growth if fwd_pe and growth else None
+            result[name] = metrics
+        return result
+
+    def _competitor_metrics_table(self, stock_name: str, metrics: Dict[str, Dict]) -> str:
+        """生成竞争对手财务指标对比 Markdown 表格"""
+        if not metrics:
+            return ""
+        lines = ["", "### 竞争对手财务指标对比", "", "> 数据来源: 东方财富财务摘要 + 腾讯财经实时行情 + 同花顺一致预期", ""]
+        headers = ["公司", "存货周转(天)", "应收周转(天)", "毛利率(%)", "总市值(亿)", "PE(TTM)", "Forward PE", "PEG"]
+        lines.append("| " + " | ".join(headers) + " |")
+        lines.append("|" + "|".join(["---"] * len(headers)) + "|")
+        for name in [stock_name] + COMPETITOR_MAP.get(stock_name, []):
+            m = metrics.get(name, {})
+            def fmt(val, fmt_str="{:.1f}", suffix=""):
+                if val is None:
+                    return "-"
+                try:
+                    return fmt_str.format(float(val)) + suffix
+                except (ValueError, TypeError):
+                    return str(val)
+            row = [
+                f"**{name}**" if name == stock_name else name,
+                fmt(m.get("inventory_days")),
+                fmt(m.get("receivable_days")),
+                fmt(m.get("gross_margin")),
+                fmt(m.get("mcap"), "{:.0f}"),
+                fmt(m.get("pe_ttm")),
+                fmt(m.get("forward_pe")),
+                fmt(m.get("peg")),
+            ]
+            lines.append("| " + " | ".join(row) + " |")
+        lines.append("")
+        # 添加简要解读
+        target = metrics.get(stock_name, {})
+        if target.get("gross_margin"):
+            lines.append(f"**{stock_name} 相对位置**: ")
+            parts = []
+            if target.get("inventory_days"):
+                parts.append(f"存货周转天数 {target['inventory_days']:.0f} 天")
+            if target.get("gross_margin"):
+                parts.append(f"毛利率 {target['gross_margin']:.1f}%")
+            if target.get("pe_ttm"):
+                parts.append(f"PE(TTM) {target['pe_ttm']:.1f}")
+            if parts:
+                lines.append("、".join(parts) + "。")
+            lines.append("")
+        return "\n".join(lines)
 
     def _valuation_industry_judgment(self, stock_name: str, pe_ttm: float, pe_fwd: float, peg: Optional[float], mcap: float) -> str:
         """基于产业逻辑给出估值判断"""
