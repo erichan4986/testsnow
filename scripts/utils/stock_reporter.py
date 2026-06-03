@@ -8,53 +8,31 @@
 import json
 import logging
 import re
-import ssl
-import urllib.request
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Any, Optional
 
-# Mac 环境下 Python 的 SSL 证书可能未正确配置，允许未验证的 HTTPS 请求
-ssl._create_default_https_context = ssl._create_unverified_context
-
 logger = logging.getLogger(__name__)
 
-# 竞争对手/可比公司映射
-COMPETITOR_MAP = {
-    "黑芝麻智能": ["地平线", "Mobileye", "英伟达", "高通"],
-    "长春高新": ["特宝生物", "安科生物", "诺和诺德", "百克生物"],
-    "三花智控": ["拓普集团", "银轮股份", "盾安环境", "五洲新春"],
-    "中简科技": ["光威复材", "恒神股份", "吉林碳谷", "中航高科"],
-    "圣邦股份": ["思瑞浦", "杰华特", "纳芯微", "艾为电子"],
-    "乐鑫科技": ["翱捷科技", "博通集成", "全志科技", "恒玄科技"],
-}
-
-# 竞争对手股票代码映射（用于财务指标对比）
-COMPETITOR_CODES = {
-    "思瑞浦": "688536",
-    "杰华特": "688141",
-    "纳芯微": "688052",
-    "艾为电子": "688798",
-    "拓普集团": "601689",
-    "银轮股份": "002126",
-    "光威复材": "300699",
-    "恒神股份": "H100027",  # 新三板，可能无数据
-    "地平线": "9660.HK",
-    "翱捷科技": "688220",
-    "博通集成": "603068",
-    "全志科技": "300458",
-    "恒玄科技": "688608",
-}
-
-# 行业赛道映射
-INDUSTRY_MAP = {
-    "黑芝麻智能": "智能驾驶芯片",
-    "长春高新": "生物医药/生长激素",
-    "三花智控": "汽车零部件/机器人",
-    "中简科技": "碳纤维/军工材料",
-    "圣邦股份": "模拟芯片/半导体",
-    "乐鑫科技": "AIoT/无线通信芯片",
-}
+# 从 reporter 子模块导入常量与函数
+from .reporter.constants import COMPETITOR_MAP, COMPETITOR_CODES, INDUSTRY_MAP
+from .reporter.data_fetcher import (
+    fetch_tencent_quote,
+    fetch_consensus_eps,
+    fetch_competitor_metrics,
+    competitor_metrics_table,
+    industry_fwd_pe,
+)
+from .reporter.scoring_engine import (
+    classify_sentiment,
+    composite_score_section,
+    compute_pillar_scores,
+    ev_expectation,
+    industry_specific_risk_table,
+    risk_score_section,
+    sentiment_ratio,
+    valuation_industry_judgment,
+)
 
 
 class PerStockReporter:
@@ -160,8 +138,16 @@ class PerStockReporter:
         # 准备数据
         analysis_result = stock_raw.get("analysis", {})
         code = self.stock_codes.get(stock_name, "")
-        quote = self._fetch_tencent_quote(code) if code else None
-        consensus = self._fetch_consensus_eps(code) if code else None
+        quote = fetch_tencent_quote(code) if code else None
+        consensus = fetch_consensus_eps(code) if code else None
+        ind_fwd_pe = industry_fwd_pe(stock_name)
+
+        # 亏损股：计算 PS（市销率）用于替代 PE 做估值评分
+        if quote and quote.get("pe_ttm", 0) <= 0 and code:
+            from .reporter.data_fetcher import fetch_ps
+            ps = fetch_ps(code, quote)
+            if ps:
+                quote["ps"] = ps
 
         # === 跨来源内容去重与归纳 ===
         # 收集所有来源的高质量内容（雪球 keep + 知乎 report_items）
@@ -187,41 +173,58 @@ class PerStockReporter:
             synthesis.get(k) for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]
         )
 
-        # 构建报告各部分（新 9 板块结构）
+        # 构建报告各部分（新 7 模块结构）
         sections = []
         sections.append(self._header(stock_name))
 
-        # 1. 综合评分与推荐
-        sections.append(self._composite_score_section(stock_name, all_posts, stock_raw, quote, consensus))
+        # 执行摘要（新增，无编号）
+        sections.append(self._executive_summary(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe, synthesis))
 
-        # 2. 实时行情与估值
-        sections.append(self._valuation_forecast(stock_name, quote, consensus))
+        # 一、综合评分与推荐
+        sections.append(composite_score_section(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe))
+
+        # 二、估值与财务快照（精简版）
+        sections.append(self._valuation_forecast_compact(stock_name, quote, consensus))
+
+        # 竞争对手财务指标对比（无编号）
+        comp_metrics = fetch_competitor_metrics(stock_name, self.stock_codes)
+        if comp_metrics:
+            sections.append(competitor_metrics_table(stock_name, comp_metrics))
+
+        # 三、核心事实基座（新增）
+        core_facts = synthesis.get("core_facts", [])
+        if core_facts:
+            sections.append(self._core_facts_table(core_facts))
+
+        # 收集合成文本用于风险评分增强
+        synthesis_texts = []
 
         if has_synthesis:
             # 3. 产业逻辑与竞争格局（合成）
             if synthesis.get("industry_logic"):
-                industry_section = self._render_synthesis_section("产业逻辑与竞争格局", synthesis["industry_logic"], synthesis["citations"])
-                # 追加竞争对手财务指标对比表
-                comp_metrics = self._fetch_competitor_metrics(stock_name)
-                if comp_metrics:
-                    industry_section += self._competitor_metrics_table(stock_name, comp_metrics)
+                industry_section = self._render_synthesis_section("三、产业逻辑与竞争格局", synthesis["industry_logic"], synthesis["citations"])
                 sections.append(industry_section)
+                synthesis_texts.append(synthesis["industry_logic"])
 
             # 4. 业绩基本面追踪（合成）
             if synthesis.get("fundamentals"):
-                sections.append(self._render_synthesis_section("业绩基本面追踪", synthesis["fundamentals"], synthesis["citations"]))
+                sections.append(self._render_synthesis_section("四、业绩基本面追踪", synthesis["fundamentals"], synthesis["citations"]))
+                synthesis_texts.append(synthesis["fundamentals"])
 
             # 5. 估值争议与市场分歧（合成）
             if synthesis.get("valuation_debate"):
-                sections.append(self._render_synthesis_section("估值争议与市场分歧", synthesis["valuation_debate"], synthesis["citations"]))
+                sections.append(self._render_synthesis_section("五、估值争议与市场分歧", synthesis["valuation_debate"], synthesis["citations"]))
+                synthesis_texts.append(synthesis["valuation_debate"])
 
             # 6. 资金面与情绪跟踪（合成）
             if synthesis.get("funding_sentiment"):
-                sections.append(self._render_synthesis_section("资金面与情绪跟踪", synthesis["funding_sentiment"], synthesis["citations"]))
+                sections.append(self._render_synthesis_section("六、资金面与情绪跟踪", synthesis["funding_sentiment"], synthesis["citations"]))
+                synthesis_texts.append(synthesis["funding_sentiment"])
 
             # 7. 关键事件与催化剂（合成）
             if synthesis.get("events_catalysts"):
-                sections.append(self._render_synthesis_section("关键事件与催化剂", synthesis["events_catalysts"], synthesis["citations"]))
+                sections.append(self._render_synthesis_section("七、关键事件与催化剂", synthesis["events_catalysts"], synthesis["citations"]))
+                synthesis_texts.append(synthesis["events_catalysts"])
         else:
             # 降级：旧版板块展示
             sections.append(self._sentiment_and_competition(stock_name, all_posts))
@@ -230,12 +233,19 @@ class PerStockReporter:
             sections.append(self._featured_posts(stock_name, featured_posts))
             sections.append(self._comment_highlights(stock_name, all_posts))
 
+        # 7.5 行业特有风险因子评估（如适用）
+        chip_risk = industry_specific_risk_table(stock_name)
+        if chip_risk:
+            sections.append(chip_risk)
+
         # 8. 风险综合评估（保留）
-        sections.append(self._risk_score_section(stock_name, all_posts, stock_raw, quote, consensus))
+        watch_points = self._risks_and_watch(stock_name, all_posts)
+        combined_synthesis = "\n".join(synthesis_texts)
+        sections.append(risk_score_section(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe, watch_points, combined_synthesis))
 
         # 9. 信息来源汇总（新）
         if has_synthesis and synthesis.get("citations"):
-            sections.append(self._citations_section(synthesis["citations"]))
+            sections.append(self._citations_section("七、信息来源汇总", synthesis["citations"]))
 
         sections.append(self._footer())
 
@@ -259,6 +269,210 @@ class PerStockReporter:
 **数据来源**: 雪球网热门讨论
 
 ---"""
+
+    def _executive_summary(
+        self,
+        stock_name: str,
+        all_posts: List[Dict],
+        stock_raw: Dict,
+        quote: Optional[Dict],
+        consensus: Optional[Dict],
+        ind_fwd_pe: Optional[float],
+        synthesis: Dict[str, str],
+    ) -> str:
+        """执行摘要：综合评分 + 核心投资论点 + 一句话结论。"""
+        ps = quote.get("ps") if quote else None
+        pillar = compute_pillar_scores(stock_raw, all_posts, quote, consensus, ind_fwd_pe, ps)
+        ev = ev_expectation(pillar, consensus)
+        total_score = round(
+            pillar["valuation"] * 0.30 +
+            pillar["technical"] * 0.25 +
+            pillar["sentiment"] * 0.20 +
+            pillar["fundamental"] * 0.15 +
+            pillar["fundflow"] * 0.10,
+            1,
+        )
+        sentiment = sentiment_ratio(all_posts)
+
+        lines = [
+            "## 执行摘要",
+            "",
+            f"### 综合评分: {total_score}/10 | EV: {ev.get('ev_pct', 0):+.2f}%（{ev.get('signal', 'N/A')}）",
+            "",
+            "| 维度 | 权重 | 得分(0-10) | 说明 |",
+            "|------|------|------------|------|",
+            f"| 估值健康度(B) | 30% | {pillar['valuation']:.1f} | {pillar.get('valuation_note', '')} |",
+            f"| 技术面强度(M) | 25% | {pillar['technical']:.1f} | {pillar.get('technical_note', '')} |",
+            f"| 情绪面温度(M) | 20% | {pillar['sentiment']:.1f} | 看多 {sentiment['bullish']:.0f}% / 看空 {sentiment['bearish']:.0f}% |",
+            f"| 基本面趋势(B) | 15% | {pillar['fundamental']:.1f} | {pillar.get('fundamental_note', '')} |",
+            f"| 资金关注度(M) | 10% | {pillar['fundflow']:.1f} | {pillar.get('fundflow_note', '')} |",
+            "",
+            "### 核心投资论点",
+            "",
+        ]
+
+        # 从合成文本中提取多空信号（简化启发式）
+        debate_text = synthesis.get("valuation_debate", "")
+        fund_text = synthesis.get("fundamentals", "")
+        combined = debate_text + "\n" + fund_text
+
+        bullish_points = self._extract_thesis_points(combined, "bullish")
+        bearish_points = self._extract_thesis_points(combined, "bearish")
+
+        if bullish_points:
+            lines.append("**看多：**")
+            for pt in bullish_points[:4]:
+                star = "⭐" * pt.get("stars", 3)
+                lines.append(f"- {pt.get('text', '')} → {star}")
+            lines.append("")
+
+        if bearish_points:
+            lines.append("**看空：**")
+            for pt in bearish_points[:4]:
+                star = "⭐" * pt.get("stars", 3)
+                lines.append(f"- {pt.get('text', '')} → {star}")
+            lines.append("")
+
+        # 一句话结论
+        conclusion = self._extract_conclusion(stock_name, combined)
+        if conclusion:
+            lines.append(f"> **一句话结论**：{conclusion}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def _extract_thesis_points(self, text: str, direction: str) -> List[Dict]:
+        """从合成文本中提取看多/看空论点（简化启发式 V1）。"""
+        points = []
+        if not text:
+            return points
+
+        if direction == "bullish":
+            # 简单启发：提取包含积极关键词的句子
+            keywords = ["增长", "放量", "突破", "拐点", "优势", "机遇", "看好", "上调", "超预期", "确定性"]
+            for sentence in text.split("。"):
+                if any(k in sentence for k in keywords) and len(sentence) > 20:
+                    points.append({"text": sentence.strip() + "。", "stars": 3})
+                if len(points) >= 4:
+                    break
+        else:
+            keywords = ["亏损", "下滑", "压力", "风险", "落后", "减持", "解禁", "看空", "下调", "陷阱"]
+            for sentence in text.split("。"):
+                if any(k in sentence for k in keywords) and len(sentence) > 20:
+                    points.append({"text": sentence.strip() + "。", "stars": 3})
+                if len(points) >= 4:
+                    break
+
+        return points
+
+    def _extract_conclusion(self, stock_name: str, text: str) -> str:
+        """提取一句话结论（简化版：返回空字符串，由后续 LLM 增强）。"""
+        return ""
+
+    def _core_facts_table(self, core_facts: List[Dict]) -> str:
+        """渲染核心事实基座表格。"""
+        if not core_facts:
+            return ""
+
+        lines = [
+            "## 三、核心事实基座",
+            "",
+            "| # | 事实 | 数据/来源 | 置信度 |",
+            "|---|------|-----------|--------|",
+        ]
+        for f in core_facts:
+            fid = f.get("fact_id", "")
+            fact = f.get("fact", "").replace("|", "\\|")
+            data = f.get("data", "").replace("|", "\\|")
+            conf = f.get("confidence", "中")
+            lines.append(f"| {fid} | {fact} | {data} | {conf} |")
+
+        lines.extend([
+            "",
+            "> **说明**：后续深度分析模块不再重复展开这些数据，仅在需要支撑论点时引用编号（如“见事实#1”）。",
+            "",
+        ])
+        return "\n".join(lines)
+
+    def _valuation_forecast_compact(self, stock_name: str, quote=None, consensus=None) -> str:
+        """精简版估值板块：表格 + 一句话判断。"""
+        code = self.stock_codes.get(stock_name, "")
+        if not code:
+            return ""
+
+        if quote is None:
+            quote = fetch_tencent_quote(code)
+        if consensus is None:
+            consensus = fetch_consensus_eps(code)
+
+        if not quote:
+            return ""
+
+        price = quote.get("price", 0)
+        pe_ttm = quote.get("pe_ttm", 0)
+        pb = quote.get("pb", 0)
+        mcap = quote.get("mcap_yi", 0)
+        change_pct = quote.get("change_pct", 0)
+
+        lines = [
+            "## 二、估值与财务快照",
+            "",
+            f"**数据日期**: {self.date_display} | **数据来源**: 腾讯财经实时行情 + 同花顺机构一致预期",
+            "",
+            "### 实时估值指标",
+            "",
+            "| 指标 | 数值 | 说明 |",
+            "|------|------|------|",
+            f"| 最新价 | {price:.2f} 元 | 较前日 {'+' if change_pct >= 0 else ''}{change_pct:.2f}% |",
+            f"| 总市值 | {mcap:.1f} 亿 | 流通市值 {quote.get('float_mcap_yi', 0):.1f} 亿 |",
+            f"| PE(TTM) | {pe_ttm:.1f} | 滚动市盈率 |",
+            f"| PB | {pb:.2f} | 市净率 |",
+        ]
+
+        if consensus and consensus.get("eps_current"):
+            eps_cur = consensus["eps_current"]
+            eps_next = consensus.get("eps_next")
+            pe_fwd = price / eps_cur if eps_cur else float("inf")
+            lines.extend([
+                "",
+                "### Forward 估值",
+                "",
+                "| 指标 | 数值 | 说明 |",
+                "|------|------|------|",
+                f"| Forward PE | {pe_fwd:.1f} | 最新价 / {consensus['year_current']} 预期 EPS |",
+            ])
+            if eps_next:
+                cagr = (eps_next / eps_cur - 1) if eps_cur else 0
+                peg = pe_fwd / (cagr * 100) if cagr > 0 else float("inf")
+                lines.append(f"| PEG | {peg:.2f} | Forward PE / 盈利增速 |")
+        else:
+            lines.extend([
+                "",
+                "> 暂无法获取机构一致预期 EPS 数据。",
+            ])
+
+        # 一句话判断
+        judgment = ""
+        if pe_ttm <= 0:
+            judgment = "PE-TTM 为负，处于亏损状态；估值判断需依赖产业逻辑和同行对比（见深度分析模块）。"
+        elif consensus and consensus.get("eps_current"):
+            pe_fwd = price / consensus["eps_current"]
+            if pe_fwd < pe_ttm:
+                judgment = f"Forward PE ({pe_fwd:.1f}) 低于 PE-TTM ({pe_ttm:.1f})，业绩成长正在消化估值。"
+            elif pe_fwd > pe_ttm:
+                judgment = f"Forward PE ({pe_fwd:.1f}) 高于 PE-TTM ({pe_ttm:.1f})，市场预期业绩增速放缓。"
+            else:
+                judgment = "Forward PE 与 PE-TTM 基本持平，估值处于合理区间。"
+        else:
+            judgment = "缺乏 consensus 数据，估值判断参考产业逻辑与同行对比。"
+
+        lines.extend([
+            "",
+            f"**一句话判断**: {judgment}",
+            "",
+        ])
+
+        return "\n".join(lines)
 
     def _synthesize_sections(self, stock_name: str, stock_raw: Dict) -> Dict[str, str]:
         """
@@ -328,7 +542,7 @@ class PerStockReporter:
         avg_interaction = (total_likes + total_comments + total_reposts) / total if total else 0
 
         # 提取看多/看空/中性信号
-        bullish_signals, bearish_signals, neutral_signals = self._classify_sentiment(posts)
+        bullish_signals, bearish_signals, neutral_signals = classify_sentiment(posts)
 
         section = f"""## 八、市场情绪与竞争格局
 
@@ -1318,10 +1532,10 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
 
         # 拉取实时估值（如果未传入）
         if quote is None:
-            quote = self._fetch_tencent_quote(code)
+            quote = fetch_tencent_quote(code)
         # 拉取一致预期（如果未传入）
         if consensus is None:
-            consensus = self._fetch_consensus_eps(code)
+            consensus = fetch_consensus_eps(code)
 
         if not quote:
             return ""
@@ -1403,7 +1617,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                     judgments.append(f"- **PEG 偏高**: PEG = {peg:.2f} > 1.2，当前估值已较充分反映增长预期，需警惕业绩不及预期的回调风险")
 
             # 结合产业逻辑的额外判断
-            industry_judgment = self._valuation_industry_judgment(stock_name, pe_ttm, pe_fwd, peg if eps_next and cagr > 0 else None, mcap)
+            industry_judgment = valuation_industry_judgment(stock_name, pe_ttm, pe_fwd, peg if eps_next and cagr > 0 else None, mcap)
             judgments.append(industry_judgment)
 
             lines.extend(judgments)
@@ -1419,247 +1633,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
 
         return "\n".join(lines)
 
-    def _fetch_tencent_quote(self, code: str) -> Optional[Dict[str, float]]:
-        """调用腾讯财经 API 获取实时估值数据"""
-        try:
-            is_hk = len(code) == 5 and code.startswith("0")
-            if is_hk:
-                prefix = f"hk{code}"
-            elif code.startswith(("6", "9")):
-                prefix = f"sh{code}"
-            elif code.startswith("8"):
-                prefix = f"bj{code}"
-            else:
-                prefix = f"sz{code}"
-
-            url = f"https://qt.gtimg.cn/q={prefix}"
-            req = urllib.request.Request(url)
-            req.add_header("User-Agent", "Mozilla/5.0")
-            resp = urllib.request.urlopen(req, timeout=10)
-            data = resp.read().decode("gbk")
-
-            vals = data.split('"')[1].split("~")
-            if len(vals) < 45:
-                return None
-
-            result = {
-                "price": float(vals[3]) if vals[3] else 0,
-                "last_close": float(vals[4]) if vals[4] else 0,
-                "change_pct": float(vals[32]) if vals[32] else 0,
-                "mcap_yi": float(vals[44]) if vals[44] else 0,
-            }
-
-            if is_hk:
-                # 港股字段映射不同，PE/PB 可能不可用
-                result["float_mcap_yi"] = float(vals[45]) if vals[45] else 0
-                result["pe_ttm"] = 0
-                result["pb"] = 0
-                result["pe_static"] = 0
-            else:
-                result["pe_ttm"] = float(vals[39]) if vals[39] else 0
-                result["float_mcap_yi"] = float(vals[45]) if vals[45] else 0
-                result["pb"] = float(vals[46]) if vals[46] else 0
-                result["pe_static"] = float(vals[52]) if vals[52] else 0
-
-            return result
-        except Exception as e:
-            logger.warning(f"[{code}] 腾讯财经 API 调用失败: {e}")
-            return None
-
-    def _fetch_consensus_eps(self, code: str) -> Optional[Dict[str, Any]]:
-        """调用 akshare 获取券商一致预期 EPS"""
-        try:
-            import akshare as ak
-            df = ak.stock_profit_forecast_ths(symbol=code, indicator="预测年报每股收益")
-            if df is None or df.empty:
-                return None
-
-            years_sorted = sorted(df["年度"].unique())
-            eps_cur = eps_next = None
-            analyst_count = 0
-            year_current = year_next = ""
-
-            for _, row in df.iterrows():
-                y = str(row["年度"])
-                if len(years_sorted) > 0 and y == str(years_sorted[0]):
-                    eps_cur = float(row["均值"])
-                    analyst_count = int(row["预测机构数"])
-                    year_current = y
-                elif len(years_sorted) > 1 and y == str(years_sorted[1]):
-                    eps_next = float(row["均值"])
-                    year_next = y
-
-            if eps_cur is None:
-                return None
-
-            return {
-                "eps_current": eps_cur,
-                "eps_next": eps_next,
-                "analyst_count": analyst_count,
-                "year_current": year_current,
-                "year_next": year_next,
-            }
-        except Exception as e:
-            logger.warning(f"[{code}] 一致预期 EPS 获取失败: {e}")
-            return None
-
-    def _fetch_financial_abstract(self, code: str) -> Optional[Dict]:
-        """调用 akshare 获取财务分析指标（存货周转、应收周转、毛利率等）"""
-        try:
-            import akshare as ak
-            import pandas as pd
-            df = ak.stock_financial_abstract(symbol=code)
-            if df is None or df.empty:
-                return None
-            row = df.set_index('指标')
-            def _get(indicator):
-                if indicator not in row.index:
-                    return None
-                val = row.loc[indicator]
-                # 某些指标（如毛利率）在 DataFrame 中会出现多行重复
-                if isinstance(val, pd.DataFrame):
-                    val = val.iloc[0]
-                for col in ['20260331', '20251231', '20240930', '20240630', '20240331', '20241231']:
-                    if col in val.index and pd.notna(val[col]):
-                        return float(val[col])
-                return None
-            return {
-                "inventory_days": _get('存货周转天数'),
-                "receivable_days": _get('应收账款周转天数'),
-                "gross_margin": _get('毛利率'),
-                "net_margin": _get('销售净利率'),
-                "roe": _get('净资产收益率(ROE)'),
-                "revenue": _get('营业总收入'),
-            }
-        except Exception as e:
-            logger.warning(f"[{code}] 财务指标获取失败: {e}")
-            return None
-
-    def _fetch_competitor_metrics(self, stock_name: str) -> Dict[str, Dict]:
-        """获取目标股票及其竞争对手的财务+估值指标"""
-        competitors = COMPETITOR_MAP.get(stock_name, [])
-        all_names = [stock_name] + competitors
-        result = {}
-        for name in all_names:
-            code = self.stock_codes.get(name) or COMPETITOR_CODES.get(name)
-            if not code:
-                continue
-            metrics = {}
-            # 财务指标
-            fin = self._fetch_financial_abstract(code)
-            if fin:
-                metrics.update(fin)
-            # 估值指标
-            quote = self._fetch_tencent_quote(code)
-            if quote:
-                metrics["mcap"] = quote.get("mcap_yi")
-                metrics["pe_ttm"] = quote.get("pe_ttm")
-            # 一致预期
-            consensus = self._fetch_consensus_eps(code)
-            if consensus and consensus.get("eps_current") and metrics.get("pe_ttm"):
-                price = quote.get("price") if quote else None
-                if price:
-                    fwd_pe = price / consensus["eps_current"] if consensus["eps_current"] else None
-                    metrics["forward_pe"] = fwd_pe
-                    growth = ((consensus["eps_next"] / consensus["eps_current"]) - 1) * 100 if consensus.get("eps_next") and consensus["eps_current"] else None
-                    metrics["eps_growth"] = growth
-                    metrics["peg"] = fwd_pe / growth if fwd_pe and growth else None
-            # PS(市销率) = 总市值 / 营收（营收单位为元，需转换为亿）
-            # 注意：若取到的是季度营收，需年化处理（乘以4）
-            if metrics.get("mcap") and metrics.get("revenue"):
-                revenue_yi = metrics["revenue"] / 100000000
-                # 简单年化：若营收小于最近季度典型值的2倍，认为是季度数据，乘以4
-                if revenue_yi > 0:
-                    # 对于Q1数据（约10-15亿），年化后约40-60亿
-                    metrics["ps"] = metrics["mcap"] / (revenue_yi * 4) if revenue_yi < 30 else metrics["mcap"] / revenue_yi
-            result[name] = metrics
-        return result
-
-    def _competitor_metrics_table(self, stock_name: str, metrics: Dict[str, Dict]) -> str:
-        """生成竞争对手财务指标对比 Markdown 表格"""
-        if not metrics:
-            return ""
-        lines = ["", "### 竞争对手财务指标对比", "", "> 数据来源: 东方财富财务摘要 + 腾讯财经实时行情 + 同花顺一致预期", ""]
-        headers = ["公司", "存货周转(天)", "应收周转(天)", "毛利率(%)", "总市值(亿)", "PE(TTM)", "Forward PE", "PEG", "PS(市销率)"]
-        lines.append("| " + " | ".join(headers) + " |")
-        lines.append("|" + "|".join(["---"] * len(headers)) + "|")
-        for name in [stock_name] + COMPETITOR_MAP.get(stock_name, []):
-            m = metrics.get(name, {})
-            def fmt(val, fmt_str="{:.1f}", suffix=""):
-                if val is None:
-                    return "-"
-                try:
-                    return fmt_str.format(float(val)) + suffix
-                except (ValueError, TypeError):
-                    return str(val)
-            row = [
-                f"**{name}**" if name == stock_name else name,
-                fmt(m.get("inventory_days")),
-                fmt(m.get("receivable_days")),
-                fmt(m.get("gross_margin")),
-                fmt(m.get("mcap"), "{:.0f}"),
-                fmt(m.get("pe_ttm")),
-                fmt(m.get("forward_pe")),
-                fmt(m.get("peg")),
-                fmt(m.get("ps")),
-            ]
-            lines.append("| " + " | ".join(row) + " |")
-        lines.append("")
-        # 添加简要解读
-        target = metrics.get(stock_name, {})
-        if target.get("gross_margin"):
-            lines.append(f"**{stock_name} 相对位置**: ")
-            parts = []
-            if target.get("inventory_days"):
-                parts.append(f"存货周转天数 {target['inventory_days']:.0f} 天")
-            if target.get("gross_margin"):
-                parts.append(f"毛利率 {target['gross_margin']:.1f}%")
-            if target.get("pe_ttm"):
-                parts.append(f"PE(TTM) {target['pe_ttm']:.1f}")
-            if target.get("ps"):
-                parts.append(f"PS {target['ps']:.1f}")
-            if parts:
-                lines.append("、".join(parts) + "。")
-            lines.append("")
-        return "\n".join(lines)
-
-    def _valuation_industry_judgment(self, stock_name: str, pe_ttm: float, pe_fwd: float, peg: Optional[float], mcap: float) -> str:
-        """基于产业逻辑给出估值判断"""
-        judgments = {
-            "黑芝麻智能": f"- **产业视角**: 黑芝麻智能为港股智驾芯片标的，当前市值 {mcap:.0f} 亿港币。智驾芯片行业处于渗透率快速提升期，高成长赛道通常可享受更高估值溢价。但需警惕港股通退通风险对估值体系的压制。",
-            "长春高新": f"- **产业视角**: 长春高新当前 PE-TTM {pe_ttm:.1f} 已处于历史低位，反映市场对集采和竞争格局恶化的极度悲观。若业绩能企稳回升，存在估值修复空间；但若继续下滑，低估值陷阱风险仍在。",
-            "三花智控": f"- **产业视角**: 三花智控作为特斯拉机器人核心供应商，当前估值包含大量未来订单预期。Forward PE {pe_fwd:.1f} 是否合理，取决于 5-6 月订单催化能否兑现。若订单落地，估值有望切换至 2027 年；若落空，存在业绩和估值双杀风险。",
-            "中简科技": f"- **产业视角**: 中简科技为军工碳纤维高端标的，军工行业订单具有强季节性，PE 波动较大。当前估值需结合 Q2 订单恢复情况判断。若航空发动机碳纤维应用取得突破，将打开十倍级市场空间，当前估值远未反映。",
-            "圣邦股份": f"- **产业视角**: 模拟芯片行业正处于周期反转+国产替代双击窗口。圣邦作为龙头，Forward PE {pe_fwd:.1f} 在周期上行阶段具有合理性。但需跟踪杰华特在 MOS 领域的竞争进展，以及涨价周期能否持续。",
-            "乐鑫科技": f"- **产业视角**: 乐鑫科技当前市值 {mcap:.0f} 亿，市场仍将其视为'Wi-Fi 芯片商'。若端侧 AI 平台定位获得认可，估值体系有望从硬件 PE 切换至平台型 PS。S31 新品的导入进度是估值重构的关键催化剂。",
-        }
-        return judgments.get(stock_name, f"- **产业视角**: 当前估值需结合行业景气度和公司基本面综合判断。Forward PE {pe_fwd:.1f} 是否合理，取决于业绩增速能否达到市场预期。")
-
-    # ============ 占位方法（Phase 2 评分体系待实现） ============
-
-    def _composite_score_section(self, stock_name: str, posts: List[Dict], stock_raw: Dict, quote: Optional[Dict], consensus: Optional[Dict]) -> str:
-        """
-        综合评分与推荐（Phase 2 待实现）
-        当前返回占位内容，后续接入 G = B + M 评分模型
-        """
-        return f"""## 一、综合评分与推荐
-
-> 综合评分体系（G = B + M）正在开发中，将在后续版本中提供量化评分、目标价区间和 AI 推荐。
-
-**当前信号**: 基于社区情绪和基本面数据的主观判断，请参考报告中「市场情绪与竞争格局」和「估值与业绩预测」部分。
-"""
-
-    def _risk_score_section(self, stock_name: str, posts: List[Dict], stock_raw: Dict, quote: Optional[Dict], consensus: Optional[Dict]) -> str:
-        """
-        综合风险评分（Phase 2 待实现）
-        当前返回占位内容，后续接入 0-10 加法风险模型
-        """
-        # 回退到原有的风险提示内容，但替换标题编号
-        content = self._risks_and_watch(stock_name, posts)
-        if content:
-            # 移除硬编码的编号，使用无编号标题
-            content = content.replace("## 五、风险提示与关注要点", "## 综合风险评分")
-        return content
+    # ============ Phase 2: 量化评分体系 ============
 
     def _footer(self) -> str:
         """报告尾部"""
@@ -1670,31 +1644,6 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
 """
 
     # ============ 辅助方法 ============
-
-    def _classify_sentiment(self, posts: List[Dict]) -> tuple:
-        """简单情感分类"""
-        bullish_keywords = ["涨", "利好", "突破", "买入", "看好", "反弹", "业绩", "增长",
-                           "目标", "翻倍", "冲锋", "加油", "坚定", "持有", "难得", "龙头"]
-        bearish_keywords = ["跌", "利空", "卖出", "看空", "下跌", "暴雷", "减持", "亏损",
-                           "爆仓", "割", "陷阱", "恶心", "砸", "做空", "退", "不敢买"]
-
-        bullish = []
-        bearish = []
-        neutral = []
-
-        for p in posts:
-            text = p.get("title", "") + " " + p.get("content", "")
-            b_score = sum(1 for k in bullish_keywords if k in text)
-            e_score = sum(1 for k in bearish_keywords if k in text)
-
-            if b_score > e_score:
-                bullish.append(p)
-            elif e_score > b_score:
-                bearish.append(p)
-            else:
-                neutral.append(p)
-
-        return bullish, bearish, neutral
 
     def _read_full_content_from_vault(self, stock_name: str, url: str) -> Optional[Dict]:
         """
@@ -1941,9 +1890,9 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
 
         return "\n".join(lines)
 
-    def _citations_section(self, citations: Dict) -> str:
+    def _citations_section(self, title: str, citations: Dict) -> str:
         """报告末尾的全局引用汇总板块。"""
-        lines = ["## 九、信息来源汇总", ""]
+        lines = [f"## {title}", ""]
         if not citations:
             lines.append("*无引用信息*")
             lines.append("")
@@ -1990,7 +1939,7 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
             total = len(posts)
             likes = sum(p.get("like_count", 0) for p in posts)
             comments = sum(p.get("comment_count", 0) for p in posts)
-            bullish, bearish, neutral = self._classify_sentiment(posts)
+            bullish, bearish, neutral = classify_sentiment(posts)
             sentiment = "看多" if len(bullish) > len(bearish) else "看空" if len(bearish) > len(bullish) else "中性"
             heat = "🔥" if likes + comments > 100 else "🌡️" if likes + comments > 50 else "❄️"
 
