@@ -276,10 +276,13 @@ class PerStockReporter:
         )
         sentiment = sentiment_ratio(all_posts)
 
+        ev_pct = ev.get('ev_pct')
+        ev_signal = ev.get('signal') or 'N/A'
+        ev_pct_str = f"{ev_pct:+.2f}" if ev_pct is not None else "N/A"
         lines = [
             "## 执行摘要",
             "",
-            f"### 综合评分: {total_score}/10 | EV: {ev.get('ev_pct', 0):+.2f}%（{ev.get('signal', 'N/A')}）",
+            f"### 综合评分: {total_score}/10 | EV: {ev_pct_str}%（{ev_signal}）",
             "",
             "| 维度 | 权重 | 得分(0-10) | 说明 |",
             "|------|------|------------|------|",
