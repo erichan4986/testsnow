@@ -200,31 +200,13 @@ class PerStockReporter:
         synthesis_texts = []
 
         if has_synthesis:
-            # 3. 产业逻辑与竞争格局（合成）
-            if synthesis.get("industry_logic"):
-                industry_section = self._render_synthesis_section("三、产业逻辑与竞争格局", synthesis["industry_logic"], synthesis["citations"])
-                sections.append(industry_section)
-                synthesis_texts.append(synthesis["industry_logic"])
-
-            # 4. 业绩基本面追踪（合成）
-            if synthesis.get("fundamentals"):
-                sections.append(self._render_synthesis_section("四、业绩基本面追踪", synthesis["fundamentals"], synthesis["citations"]))
-                synthesis_texts.append(synthesis["fundamentals"])
-
-            # 5. 估值争议与市场分歧（合成）
-            if synthesis.get("valuation_debate"):
-                sections.append(self._render_synthesis_section("五、估值争议与市场分歧", synthesis["valuation_debate"], synthesis["citations"]))
-                synthesis_texts.append(synthesis["valuation_debate"])
-
-            # 6. 资金面与情绪跟踪（合成）
-            if synthesis.get("funding_sentiment"):
-                sections.append(self._render_synthesis_section("六、资金面与情绪跟踪", synthesis["funding_sentiment"], synthesis["citations"]))
-                synthesis_texts.append(synthesis["funding_sentiment"])
-
-            # 7. 关键事件与催化剂（合成）
-            if synthesis.get("events_catalysts"):
-                sections.append(self._render_synthesis_section("七、关键事件与催化剂", synthesis["events_catalysts"], synthesis["citations"]))
-                synthesis_texts.append(synthesis["events_catalysts"])
+            # 四、深度分析（合并5个合成板块为3个子板块）
+            deep_section = self._deep_analysis(stock_name, synthesis)
+            if deep_section:
+                sections.append(deep_section)
+                for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]:
+                    if synthesis.get(k):
+                        synthesis_texts.append(synthesis[k])
         else:
             # 降级：旧版板块展示
             sections.append(self._sentiment_and_competition(stock_name, all_posts))
@@ -471,6 +453,113 @@ class PerStockReporter:
             f"**一句话判断**: {judgment}",
             "",
         ])
+
+        return "\n".join(lines)
+
+    def _deep_analysis(
+        self,
+        stock_name: str,
+        synthesis: Dict[str, str],
+    ) -> str:
+        """
+        深度分析板块：合并原5个合成板块为3个子板块。
+        4.1 产业逻辑与竞争格局
+        4.2 业绩路径与多空分歧
+        4.3 资金面与催化剂时间线
+        """
+        citations = synthesis.get("citations", {})
+        lines = ["## 四、深度分析", ""]
+
+        # 4.1 产业逻辑与竞争格局
+        industry_logic = synthesis.get("industry_logic", "")
+        if industry_logic:
+            lines.extend([
+                "### 4.1 产业逻辑与竞争格局",
+                "",
+                industry_logic,
+                "",
+            ])
+            used_refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", industry_logic))
+            if used_refs:
+                lines.append("**本节引用来源：**")
+                for ref_id in sorted(used_refs):
+                    meta = citations.get(ref_id, {})
+                    source = meta.get("source", "未知")
+                    author = meta.get("author", "")
+                    title_text = meta.get("title", "")
+                    line = f"- [^{ref_id}] {source}"
+                    if author:
+                        line += f" | 作者: {author}"
+                    if title_text:
+                        line += f" | 《{title_text[:40]}》"
+                    lines.append(line)
+                lines.append("")
+
+        # 4.2 业绩路径与多空分歧
+        fundamentals = synthesis.get("fundamentals", "")
+        valuation_debate = synthesis.get("valuation_debate", "")
+        if fundamentals or valuation_debate:
+            lines.extend([
+                "### 4.2 业绩路径与多空分歧",
+                "",
+            ])
+            if fundamentals:
+                lines.append(fundamentals)
+                lines.append("")
+            if valuation_debate:
+                lines.append(valuation_debate)
+                lines.append("")
+
+            used_refs = set()
+            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", fundamentals))
+            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", valuation_debate))
+            if used_refs:
+                lines.append("**本节引用来源：**")
+                for ref_id in sorted(used_refs):
+                    meta = citations.get(ref_id, {})
+                    source = meta.get("source", "未知")
+                    author = meta.get("author", "")
+                    title_text = meta.get("title", "")
+                    line = f"- [^{ref_id}] {source}"
+                    if author:
+                        line += f" | 作者: {author}"
+                    if title_text:
+                        line += f" | 《{title_text[:40]}》"
+                    lines.append(line)
+                lines.append("")
+
+        # 4.3 资金面与催化剂时间线
+        funding = synthesis.get("funding_sentiment", "")
+        events = synthesis.get("events_catalysts", "")
+        if funding or events:
+            lines.extend([
+                "### 4.3 资金面与催化剂时间线",
+                "",
+            ])
+            if funding:
+                lines.append(funding)
+                lines.append("")
+            if events:
+                lines.append(events)
+                lines.append("")
+
+            used_refs = set()
+            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", funding))
+            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", events))
+            if used_refs:
+                lines.append("**本节引用来源：**")
+                for ref_id in sorted(used_refs):
+                    meta = citations.get(ref_id, {})
+                    source = meta.get("source", "未知")
+                    author = meta.get("author", "")
+                    title_text = meta.get("title", "")
+                    line = f"- [^{ref_id}] {source}"
+                    if author:
+                        line += f" | 作者: {author}"
+                    if title_text:
+                        line += f" | 《{title_text[:40]}》"
+                    lines.append(line)
+                lines.append("")
 
         return "\n".join(lines)
 
