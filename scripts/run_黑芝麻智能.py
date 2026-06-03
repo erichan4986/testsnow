@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 STOCK = {
     "name": "黑芝麻智能",
     "code": "02533",
-    "xueqiu_code": "HK02533",
+    "xueqiu_code": "02533",
     "gid": "hk02533"
 }
 STOCK_NAME = STOCK["name"]
@@ -39,23 +39,45 @@ KEYWORDS = ["智能驾驶芯片", "自动驾驶", "华山芯片", "黑芝麻", "
 
 
 def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
-    """加载已抓取的雪球数据。如果不存在则返回空列表。"""
+    """加载已抓取的雪球数据。优先匹配指定日期，否则回退到最近日期的缓存。"""
     raw_dir = Path(__file__).parent.parent / "data" / "raw"
+
+    # 1. 优先指定日期
     candidate = raw_dir / f"xueqiu_data_{date_str}_{stock_name}.json"
-    if not candidate.exists():
-        logger.info(f"未找到雪球缓存文件: {candidate}")
-        return []
-    try:
-        with open(candidate, "r", encoding="utf-8") as f:
-            payload = json.load(f)
-        posts = payload.get("posts", [])
-        gate = payload.get("gate_stats", {})
-        logger.info(f"从缓存加载 [{stock_name}] 雪球数据: {len(posts)} 条 "
-                    f"(featured={gate.get('featured', 0)}, sentiment={gate.get('sentiment', 0)})")
-        return posts
-    except Exception as e:
-        logger.warning(f"读取雪球缓存失败: {e}")
-        return []
+    if candidate.exists():
+        try:
+            with open(candidate, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            posts = payload.get("posts", [])
+            gate = payload.get("gate_stats", {})
+            logger.info(f"从缓存加载 [{stock_name}] 雪球数据: {len(posts)} 条 "
+                        f"(featured={gate.get('featured', 0)}, sentiment={gate.get('sentiment', 0)})")
+            return posts
+        except Exception as e:
+            logger.warning(f"读取雪球缓存失败: {e}")
+
+    # 2. 回退到最近日期的缓存
+    all_candidates = sorted(
+        raw_dir.glob(f"xueqiu_data_*_{stock_name}.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    if all_candidates:
+        latest = all_candidates[0]
+        logger.info(f"未找到 {date_str} 的缓存，回退到最近缓存: {latest.name}")
+        try:
+            with open(latest, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            posts = payload.get("posts", [])
+            gate = payload.get("gate_stats", {})
+            logger.info(f"从缓存加载 [{stock_name}] 雪球数据: {len(posts)} 条 "
+                        f"(featured={gate.get('featured', 0)}, sentiment={gate.get('sentiment', 0)})")
+            return posts
+        except Exception as e:
+            logger.warning(f"读取雪球缓存失败: {e}")
+
+    logger.info(f"未找到任何雪球缓存文件")
+    return []
 
 
 def main():
