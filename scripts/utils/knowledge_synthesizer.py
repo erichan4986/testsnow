@@ -10,7 +10,10 @@ import os
 import re
 from typing import Dict, List, Optional, Tuple
 
-from scripts.utils.source_adapter import SynthesisItem
+try:
+    from .source_adapter import SynthesisItem
+except ImportError:
+    from source_adapter import SynthesisItem
 
 logger = logging.getLogger(__name__)
 
@@ -36,6 +39,7 @@ THEME_PROMPT_PREFIX = {
         "   - 国产替代进展与市场份额变化\n"
         "4. 最后给出该赛道未来 6-12 个月的关键趋势判断\n"
         "5. 不要编造数据，只能基于以下信息\n"
+        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
     ),
     "fundamentals": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的业绩基本面进行追踪分析。\n\n"
@@ -45,6 +49,7 @@ THEME_PROMPT_PREFIX = {
         "3. 必须覆盖：最新季度营收/利润变化、毛利率走势、订单/客户动态、管理层指引\n"
         "4. 最后给出业绩预期修正方向（上调/下调/维持）\n"
         "5. 不要编造数据，只能基于以下信息\n"
+        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
     ),
     "valuation_debate": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的估值争议进行综合解读。\n\n"
@@ -54,6 +59,7 @@ THEME_PROMPT_PREFIX = {
         "3. 必须覆盖：看多方的核心论据、看空方的核心论据、双方分歧的关键变量\n"
         "4. 最后给出一个中性的综合判断\n"
         "5. 不要编造数据，只能基于以下信息\n"
+        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
     ),
     "funding_sentiment": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的资金面与情绪进行跟踪分析。\n\n"
@@ -63,6 +69,7 @@ THEME_PROMPT_PREFIX = {
         "3. 必须覆盖：主力资金动向、散户情绪指标、北向资金/机构持仓变化、融资余额变化\n"
         "4. 最后给出资金面对股价的短期影响判断\n"
         "5. 不要编造数据，只能基于以下信息\n"
+        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
     ),
     "events_catalysts": (
         "你是资深半导体行业分析师。请基于以下多源信息，梳理{stock_name}近期的关键事件与催化剂。\n\n"
@@ -72,6 +79,7 @@ THEME_PROMPT_PREFIX = {
         "3. 必须覆盖：已落地的利好/利空、即将发生的事件、政策/行业催化\n"
         "4. 最后给出下一个值得关注的催化剂时间点\n"
         "5. 不要编造数据，只能基于以下信息\n"
+        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
     ),
 }
 
@@ -181,6 +189,17 @@ class KnowledgeSynthesizer:
                 logger.warning(f"[{stock_name}] {theme_title} 合成失败: {e}")
                 result[theme_key] = ""
 
+        # 提取核心事实基座
+        if self.client and any(result.get(k) for k in THEMES):
+            try:
+                narratives = {k: result[k] for k in THEMES if result.get(k)}
+                result["core_facts"] = self.extract_core_facts(stock_name, narratives)
+            except Exception as e:
+                logger.warning(f"[{stock_name}] 核心事实提取失败: {e}")
+                result["core_facts"] = []
+        else:
+            result["core_facts"] = []
+
         result["citations"] = dict(self.source_index)
         return result
 
@@ -280,3 +299,73 @@ class KnowledgeSynthesizer:
             # 占位：caller 负责回填真实元数据
             citations[ref_id] = {"_placeholder": True, "ref_id": ref_id}
         return text, citations
+
+    def extract_core_facts(
+        self,
+        stock_name: str,
+        narratives: Dict[str, str],
+    ) -> List[Dict]:
+        """
+        从已合成的主题叙事中提取核心事实基座。
+
+        Args:
+            stock_name: 股票名称
+            narratives: theme_key -> 叙事文本
+
+        Returns:
+            [{"fact_id": int, "fact": str, "data": str, "confidence": str}, ...]
+        """
+        if not self.client:
+            return []
+
+        narrative_text = "\n\n".join(
+            f"【{THEMES.get(k, (k, 0))[0]}】\n{v}"
+            for k, v in narratives.items() if v
+        )
+
+        prompt = (
+            f"你是资深财经数据编辑。请从以下关于{stock_name}的分析文本中，提取8-12条核心事实。"
+            "每条事实必须包含：事实陈述、支撑数据、置信度（高/中/低）。"
+            "只提取客观事实和数据，不要提取观点、判断或预测。"
+            "去重：同一事实在不同段落中出现时只保留一次。"
+            "\n\n输出格式（JSON）："
+            '\n[\n  {"fact_id": 1, "fact": "2025年营收", "data": "8.22亿元，同比+73.4%", "confidence": "高"},\n  ...\n]'
+            "\n\n分析文本：\n"
+            f"{narrative_text[:3000]}"
+        )
+
+        try:
+            response_text = self._call_llm(prompt)
+            if not response_text:
+                return []
+
+            # 提取 JSON 块（处理 markdown code block）
+            text = response_text
+            if text.startswith("```json"):
+                text = text[7:]
+            elif text.startswith("```"):
+                text = text[3:]
+            if text.endswith("```"):
+                text = text[:-3]
+            text = text.strip()
+
+            facts = json.loads(text)
+            if not isinstance(facts, list):
+                return []
+
+            normalized = []
+            for i, f in enumerate(facts, 1):
+                if isinstance(f, dict) and f.get("fact"):
+                    normalized.append({
+                        "fact_id": f.get("fact_id", i),
+                        "fact": str(f.get("fact", "")),
+                        "data": str(f.get("data", "")),
+                        "confidence": str(f.get("confidence", "中")),
+                    })
+            return normalized
+        except json.JSONDecodeError as e:
+            logger.warning(f"[{stock_name}] 核心事实 JSON 解析失败: {e}")
+            return []
+        except Exception as e:
+            logger.warning(f"[{stock_name}] 核心事实提取解析失败: {e}")
+            return []
