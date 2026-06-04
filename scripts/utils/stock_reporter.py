@@ -100,7 +100,38 @@ class PerStockReporter:
 
     def generate_stock_report(self, stock_name: str, output_dir: str) -> tuple:
         """
-        生成单只股票的深度报告
+        生成单只股票的深度报告（Pipeline 内部实现，接口不变）。
+        """
+        all_posts = self.stocks_data.get(stock_name, [])
+        if not all_posts:
+            logger.warning(f"[{stock_name}] 无数据，跳过")
+            return "", ""
+
+        try:
+            from .report_skills import build_stock_report_pipeline
+            pipeline = build_stock_report_pipeline()
+            ctx = pipeline.run({
+                "stock_name": stock_name,
+                "date_str": self.date_str,
+                "output_dir": output_dir,
+                "stocks_data": self.stocks_data,
+                "raw_data": self.raw_data,
+                "stock_codes": self.stock_codes,
+            })
+            md_path = ctx.output.get("md_path", "")
+            html_path = ctx.output.get("html_path", "")
+            if md_path:
+                logger.info(f"[{stock_name}] 报告已生成: {md_path}")
+            if html_path:
+                logger.info(f"[{stock_name}] Dashboard 已生成: {html_path}")
+            return md_path, html_path
+        except Exception as e:
+            logger.error(f"[{stock_name}] Pipeline 执行失败: {e}")
+            return "", ""
+
+    def generate_stock_report_legacy(self, stock_name: str, output_dir: str) -> tuple:
+        """
+        生成单只股票的深度报告（旧实现，保留供参考）
 
         Args:
             stock_name: 股票名称

@@ -35,7 +35,7 @@ class ReportAssemblySkill(BaseSkill):
         total_score = ctx.get("total_score", 0)
         pillar = ctx.get("pillar_scores", {})
         synthesis = ctx.get("synthesis", {})
-        quote = ctx.get("quote", {})
+        quote = ctx.get("quote") or {}
 
         lines = [
             f"# {stock_name} 舆情深度报告",
