@@ -22,6 +22,7 @@ from .reporter.data_fetcher import (
     fetch_competitor_metrics,
     competitor_metrics_table,
     industry_fwd_pe,
+    fetch_latest_quarterly_financials,
 )
 from .reporter.scoring_engine import (
     classify_sentiment,
@@ -186,10 +187,25 @@ class PerStockReporter:
         # 二、估值与财务快照（精简版）
         sections.append(self._valuation_forecast_compact(stock_name, quote, consensus))
 
+        # 最新财务快照（含同比）
+        quarterly_fin = self._quarterly_financials_table(stock_name)
+        if quarterly_fin:
+            sections.append(quarterly_fin)
+
         # 竞争对手财务指标对比（无编号）
         comp_metrics = fetch_competitor_metrics(stock_name, self.stock_codes)
         if comp_metrics:
             sections.append(competitor_metrics_table(stock_name, comp_metrics))
+
+        # 技术面分析（新增）
+        tech_section = self._technical_analysis_section(stock_name, stock_raw)
+        if tech_section:
+            sections.append(tech_section)
+
+        # 价格目标与触发条件（新增）
+        price_target_section = self._price_target_section(stock_name, stock_raw)
+        if price_target_section:
+            sections.append(price_target_section)
 
         # 三、核心事实基座（新增）
         core_facts = synthesis.get("core_facts", [])
@@ -545,6 +561,79 @@ class PerStockReporter:
             f"**一句话判断**: {judgment}",
             "",
         ])
+
+        return "\n".join(lines)
+
+    def _quarterly_financials_table(self, stock_name: str) -> str:
+        """最新财务数据快照（含同比）。"""
+        code = self.stock_codes.get(stock_name, "")
+        if not code:
+            return ""
+
+        fin = fetch_latest_quarterly_financials(code)
+        if not fin:
+            return ""
+
+        date_type = fin.get("date_type", "")
+        report_date = fin.get("report_date", "")[:10] if fin.get("report_date") else ""
+
+        def _fmt(val, unit="", decimals=1):
+            if val is None:
+                return "N/A"
+            if unit == "亿":
+                return f"{val/100000000:.{decimals}f}亿"
+            if unit == "%":
+                return f"{val:.{decimals}f}%"
+            return f"{val:.{decimals}f}"
+
+        def _yoy(val):
+            if val is None:
+                return "N/A"
+            sign = "+" if val >= 0 else ""
+            return f"{sign}{val:.1f}%"
+
+        revenue = fin.get("revenue")
+        net_profit = fin.get("net_profit")
+        gross_margin = fin.get("gross_margin")
+        net_margin = fin.get("net_margin")
+        roe = fin.get("roe")
+        basic_eps = fin.get("basic_eps")
+
+        lines = [
+            "### 最新财务快照",
+            "",
+            f"> 报告期: {report_date} ({date_type}) | 数据来源: 东方财富",
+            "",
+            "| 指标 | 最新值 | 同比变化 |",
+            "|------|--------|----------|",
+        ]
+
+        if revenue is not None:
+            lines.append(f"| 营业总收入 | {_fmt(revenue, '亿', 2)} | {_yoy(fin.get('revenue_yoy'))} |")
+        if net_profit is not None:
+            lines.append(f"| 归母净利润 | {_fmt(net_profit, '亿', 2)} | {_yoy(fin.get('net_profit_yoy'))} |")
+        if gross_margin is not None:
+            lines.append(f"| 毛利率 | {_fmt(gross_margin, '%', 1)} | {_yoy(fin.get('gross_margin_yoy'))} |")
+        if net_margin is not None:
+            lines.append(f"| 净利率 | {_fmt(net_margin, '%', 1)} | {_yoy(fin.get('net_margin_yoy'))} |")
+        if roe is not None:
+            lines.append(f"| ROE(平均) | {_fmt(roe, '%', 1)} | {_yoy(fin.get('roe_yoy'))} |")
+        if basic_eps is not None:
+            lines.append(f"| 基本 EPS | {_fmt(basic_eps)} | {_yoy(fin.get('eps_yoy'))} |")
+
+        lines.append("")
+
+        # 一句话总结
+        summary_parts = []
+        if fin.get("revenue_yoy") is not None:
+            direction = "增长" if fin["revenue_yoy"] >= 0 else "下滑"
+            summary_parts.append(f"营收同比{direction}{abs(fin['revenue_yoy']):.1f}%")
+        if fin.get("net_profit_yoy") is not None:
+            direction = "增长" if fin["net_profit_yoy"] >= 0 else "下滑"
+            summary_parts.append(f"净利润同比{direction}{abs(fin['net_profit_yoy']):.1f}%")
+        if summary_parts:
+            lines.append(f"> **财务趋势**: {'，'.join(summary_parts)}。")
+            lines.append("")
 
         return "\n".join(lines)
 
@@ -1504,6 +1593,229 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
         if not tech_md or tech_md == "*AI分析暂缺*":
             return "## 三、技术面分析\n\n*暂无数据*\n"
         return f"## 三、技术面分析\n\n{tech_md}\n"
+
+    def _technical_analysis_section(self, stock_name: str, stock_raw: Dict) -> str:
+        """技术面深度分析板块（基于 technical_analyzer 共振分析）。"""
+        tech = stock_raw.get("technical", {})
+        if not tech or not isinstance(tech, dict):
+            return ""
+
+        indicators = tech.get("indicators", {})
+        if not indicators:
+            return ""
+
+        resonance = indicators.get("_resonance", {})
+        patterns = indicators.get("_patterns", [])
+        levels = indicators.get("_levels", {})
+
+        lines = ["## 技术面分析", ""]
+
+        # --- 综合判断 ---
+        if resonance:
+            trend = resonance.get("trend", "")
+            momentum = resonance.get("momentum", "")
+            vp = resonance.get("volume_price", "")
+            score = resonance.get("composite_score", 0)
+            signals = resonance.get("signals", [])
+
+            trend_icon = {"多头": "📈", "空头": "📉", "震荡": "〰️"}.get(trend, "")
+            mom_icon = {"超买": "🔴", "超卖": "🟢", "中性": "🟡"}.get(momentum, "")
+
+            lines.append(f"**趋势**: {trend_icon} {trend} | **动量**: {mom_icon} {momentum} | **量价**: {vp} | **综合评分**: {score}/10")
+            lines.append("")
+
+            if signals:
+                lines.append("**关键信号：**")
+                for sig in signals:
+                    lines.append(f"- {sig}")
+                lines.append("")
+
+        # --- 指标状态表格 ---
+        lines.append("### 指标快照")
+        lines.append("")
+        lines.append("| 指标 | 数值 | 状态 |")
+        lines.append("|------|------|------|")
+
+        def _status(val, bull, bear, fmt=".1f"):
+            if val is None:
+                return "N/A", "—"
+            s = f"{val:{fmt}}"
+            if bull and bear:
+                if val > bull:
+                    return s, "🔴 超买"
+                elif val < bear:
+                    return s, "🟢 超卖"
+                return s, "🟡 中性"
+            return s, "—"
+
+        rsi = indicators.get("rsi_14")
+        v, st = _status(rsi, 70, 30)
+        lines.append(f"| RSI(14) | {v} | {st} |")
+
+        macd = indicators.get("macd")
+        macd_hist = indicators.get("macd_hist")
+        if macd is not None:
+            macd_str = f"{macd:+.2f}"
+            if macd_hist is not None:
+                macd_str += f" (柱{macd_hist:+.2f})"
+            macd_state = "🟢 金叉扩张" if macd > 0 and macd_hist and macd_hist > 0 else ("🔴 死叉收缩" if macd < 0 and macd_hist and macd_hist < 0 else "🟡 观望")
+            lines.append(f"| MACD | {macd_str} | {macd_state} |")
+
+        adx = indicators.get("adx")
+        plus_di = indicators.get("plus_di")
+        minus_di = indicators.get("minus_di")
+        if adx is not None:
+            adx_str = f"{adx:.1f}"
+            if plus_di is not None and minus_di is not None:
+                adx_str += f" (+{plus_di:.1f}/-{minus_di:.1f})"
+            adx_state = "🟢 强趋势" if adx > 25 else "🟡 弱趋势"
+            lines.append(f"| ADX(14) | {adx_str} | {adx_state} |")
+
+        cci = indicators.get("cci_20")
+        v, st = _status(cci, 100, -100)
+        lines.append(f"| CCI(20) | {v} | {st} |")
+
+        wr = indicators.get("williams_r")
+        v, st = _status(wr, -20, -80)
+        lines.append(f"| Williams %R(14) | {v} | {st} |")
+
+        stoch_k = indicators.get("stoch_rsi_k")
+        stoch_d = indicators.get("stoch_rsi_d")
+        if stoch_k is not None:
+            stoch_str = f"{stoch_k:.2f}"
+            if stoch_d is not None:
+                stoch_str += f" / D={stoch_d:.2f}"
+            stoch_state = "🔴 超买" if stoch_k > 0.8 else ("🟢 超卖" if stoch_k < 0.2 else "🟡 中性")
+            lines.append(f"| StochRSI(14) | {stoch_str} | {stoch_state} |")
+
+        atr = indicators.get("atr_14")
+        close = indicators.get("close")
+        if atr is not None and close:
+            atr_pct = atr / close * 100
+            atr_state = "🔴 高波动" if atr_pct > 5 else ("🟢 低波动" if atr_pct < 1.5 else "🟡 正常")
+            lines.append(f"| ATR(14) | {atr:.2f} ({atr_pct:.1f}%) | {atr_state} |")
+
+        lines.append("")
+
+        # --- 关键价位 ---
+        support = levels.get("support")
+        resistance = levels.get("resistance")
+        if support or resistance:
+            lines.append("### 关键价位")
+            lines.append("")
+            if support:
+                lines.append(f"- **支撑位**: {support}")
+            if resistance:
+                lines.append(f"- **阻力位**: {resistance}")
+            if close and support and resistance:
+                position = (close - support) / (resistance - support) * 100 if resistance != support else 50
+                lines.append(f"- **当前位置**: 处于支撑-阻力区间的 **{position:.0f}%**")
+            lines.append("")
+
+        # --- 形态识别 ---
+        if patterns:
+            lines.append("### 形态识别")
+            lines.append("")
+            for p in patterns:
+                conf = p.get("confidence", "")
+                desc = p.get("description", "")
+                lines.append(f"- **{p['pattern']}** ({conf}置信): {desc}")
+            lines.append("")
+
+        return "\n".join(lines)
+
+    def _price_target_section(self, stock_name: str, stock_raw: Dict) -> str:
+        """价格目标与触发条件板块（基于 price_target 分析结果）。"""
+        pt = stock_raw.get("price_target")
+        if not pt or not isinstance(pt, dict):
+            return ""
+
+        if pt.get("error"):
+            return f"\n## 价格目标与触发条件\n\n> **{pt['error']}**\n"
+
+        lines = ["\n## 价格目标与触发条件\n"]
+
+        # Direction + confidence + profit/risk
+        direction = pt.get("direction", "")
+        confidence = pt.get("confidence", "")
+        conf_score = pt.get("confidence_score", 0)
+        pr_ratio = pt.get("profit_risk_ratio")
+        pr_text = f" | **盈亏比**: {pr_ratio}:1" if pr_ratio else ""
+
+        lines.append(f"**方向**: {direction} | **置信度**: {confidence}（{conf_score}/10）{pr_text}")
+        lines.append("")
+
+        # Momentum status line
+        momentum = pt.get("momentum_status", "")
+        if momentum:
+            lines.append(f"**动量状态**: {momentum}")
+            # Check for signal conflict
+            if "MACD死叉" in momentum and ("RSI" in momentum or "MA多头" in momentum):
+                lines.append("⚠️ **动量信号分歧，建议等待一致**")
+            lines.append("")
+
+        # Target table
+        lines.append("| 目标 | 价格 | 推导依据 | 验证源 |")
+        lines.append("|------|------|---------|--------|")
+
+        conservative = pt.get("conservative")
+        base = pt.get("base")
+        aggressive = pt.get("aggressive")
+        aggressive_raw = pt.get("aggressive_raw")
+        method = pt.get("method", "")
+
+        if conservative:
+            lines.append(f"| 保守 | {conservative} | {method} | 综合 |")
+        if base:
+            lines.append(f"| 基准 | {base} | {method} | A+B交叉验证 |")
+        if aggressive:
+            if pt.get("is_far_target"):
+                lines.append(f"| 激进 | {aggressive_raw}（久远，暂不可达） | 周K斐波那契1.618扩展 | 周线大结构 |")
+            else:
+                lines.append(f"| 激进 | {aggressive} | 周K斐波那契1.618扩展 | 周线大结构 |")
+
+        lines.append("")
+
+        # Trigger conditions
+        trigger = pt.get("trigger_conditions", {})
+        if trigger:
+            parts = []
+            if trigger.get("price"):
+                parts.append(trigger["price"])
+            if trigger.get("trend"):
+                parts.append(trigger["trend"])
+            if trigger.get("volume"):
+                parts.append(trigger["volume"])
+            if trigger.get("momentum"):
+                parts.append(trigger["momentum"])
+            if parts:
+                lines.append(f"**触发**: {' + '.join(parts)}")
+
+        # Stop loss
+        stop = pt.get("stop_loss", "")
+        if stop:
+            lines.append(f"**止损**: {stop}")
+
+        # Failure conditions
+        failures = pt.get("failure_conditions", [])
+        if failures:
+            lines.append(f"**失效**: {' / '.join(failures)}")
+
+        # Time estimate
+        time_est = pt.get("time_estimate", {})
+        if time_est:
+            parts = []
+            if time_est.get("conservative"):
+                parts.append(f"保守{time_est['conservative']}")
+            if time_est.get("base"):
+                parts.append(f"基准{time_est['base']}")
+            if time_est.get("aggressive"):
+                parts.append(f"激进{time_est['aggressive']}")
+            if parts:
+                lines.append(f"**时间预期**: {' / '.join(parts)}")
+
+        lines.append("")
+        return "\n".join(lines)
 
     def _reports_section(self, stock_name: str, analysis_result: Dict, raw_reports: list) -> str:
         """Section 4: 最新研报摘要"""
