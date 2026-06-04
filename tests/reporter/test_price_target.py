@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level, estimate_time
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level, estimate_time, analyze_price_target
 
 
 def test_zigzag_basic():
@@ -394,8 +394,8 @@ def test_estimate_time_basic():
 def test_estimate_time_macd_expanding():
     """MACD expanding -> time × 0.85."""
     low, high = estimate_time(150, 100, 5.0, macd_momentum="expanding")
-    assert low == 12.75  # 15 * 0.85
-    assert high == 17.0  # 20 * 0.85
+    assert low == 12.8  # 15 * 0.85 = 12.75 -> rounded to 1 decimal
+    assert high == 17.0  # 20 * 0.85 = 17.0
 
 
 def test_estimate_time_rsi_high():
@@ -403,3 +403,22 @@ def test_estimate_time_rsi_high():
     low, high = estimate_time(150, 100, 5.0, rsi=70.0)
     assert low == 16.5  # 15 * 1.1
     assert high == 22.0  # 20 * 1.1
+
+
+def test_analyze_price_target_minimal():
+    """Minimal daily+weekly data should return a result dict with expected keys."""
+    # Generate 70 days so weekly (every 5 days) has 14 rows for ADX calculation
+    daily = pd.DataFrame({
+        "open": [90 + i * 0.8 for i in range(70)],
+        "high": [92 + i * 0.8 for i in range(70)],
+        "low": [88 + i * 0.8 for i in range(70)],
+        "close": [91 + i * 0.8 for i in range(70)],
+        "volume": [1000000] * 70,
+    })
+    weekly = daily.iloc[::5].reset_index(drop=True)
+    result = analyze_price_target(daily, weekly, current_price=float(daily["close"].iloc[-1]))
+    assert "direction" in result
+    assert "confidence" in result
+    assert "conservative" in result
+    assert "base" in result
+    assert "aggressive" in result
