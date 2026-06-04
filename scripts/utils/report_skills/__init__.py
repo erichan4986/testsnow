@@ -3,6 +3,7 @@
 from .analysis_skills import cross_source_consolidation_skill, scoring_skill
 from .chart_skills import ChartGenerationSkill, TechnicalAnalysisSkill
 from .data_skills import data_loading_skill, quality_gate_skill, quote_fetching_skill
+from .synthesis_skills import SynthesisSkill
 
 __all__ = [
     "cross_source_consolidation_skill",
@@ -12,4 +13,5 @@ __all__ = [
     "scoring_skill",
     "TechnicalAnalysisSkill",
     "ChartGenerationSkill",
+    "SynthesisSkill",
 ]
