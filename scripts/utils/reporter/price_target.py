@@ -323,3 +323,35 @@ def confidence_level(score: float, aggressive_is_far: bool = False) -> str:
     elif score >= 4.0:
         return "低"
     return "观望"
+
+
+def estimate_time(
+    target_price: float,
+    current_price: float,
+    daily_atr: float,
+    macd_momentum: str = "flat",
+    rsi: float = 50.0,
+) -> Tuple[float, float]:
+    """
+    基于ATR估算到达目标价所需时间范围（Spec Section 8）。
+    动量修正：MACD柱线斜率和RSI区间微调。
+    """
+    distance = abs(target_price - current_price)
+    if daily_atr <= 0:
+        return 0.0, 0.0
+
+    min_days = distance / daily_atr
+    base_low, base_high = min_days * 1.5, min_days * 2.0
+
+    multiplier = 1.0
+    if macd_momentum == "expanding":
+        multiplier *= 0.85
+    elif macd_momentum == "contracting":
+        multiplier *= 1.25
+
+    if rsi > 65:
+        multiplier *= 1.1
+    elif rsi < 40:
+        multiplier *= 0.9
+
+    return round(base_low * multiplier, 1), round(base_high * multiplier, 1)

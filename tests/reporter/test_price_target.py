@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level, estimate_time
 
 
 def test_zigzag_basic():
@@ -382,3 +382,24 @@ def test_confidence_level_far_target_cap():
     """High score but far target -> confidence capped at '中'."""
     score = 9.0
     assert confidence_level(score, aggressive_is_far=True) == "中"
+
+
+def test_estimate_time_basic():
+    """Target 150, current 100, ATR=5 -> base 15-20 days."""
+    low, high = estimate_time(150, 100, 5.0)
+    assert low == 15.0
+    assert high == 20.0
+
+
+def test_estimate_time_macd_expanding():
+    """MACD expanding -> time × 0.85."""
+    low, high = estimate_time(150, 100, 5.0, macd_momentum="expanding")
+    assert low == 12.75  # 15 * 0.85
+    assert high == 17.0  # 20 * 0.85
+
+
+def test_estimate_time_rsi_high():
+    """RSI > 65 -> time × 1.1."""
+    low, high = estimate_time(150, 100, 5.0, rsi=70.0)
+    assert low == 16.5  # 15 * 1.1
+    assert high == 22.0  # 20 * 1.1
