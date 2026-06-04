@@ -6,6 +6,11 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+try:
+    from .technical_analyzer import _adx, _sma, _atr, _macd, _bollinger
+except ImportError:
+    from technical_analyzer import _adx, _sma, _atr, _macd, _bollinger
+
 logger = logging.getLogger(__name__)
 
 
@@ -116,13 +121,64 @@ def extract_pattern_info(pattern: Dict) -> Optional[Dict]:
             "type": "double_bottom",
             "is_bullish": True,
             "neckline": pattern.get("peak"),
-            "extreme": pattern.get("bottom1"),
+            "extreme": min(pattern.get("bottom1", float("inf")), pattern.get("bottom2", float("inf"))),
         }
     elif ptype == "双顶":
         return {
             "type": "double_top",
             "is_bullish": False,
             "neckline": pattern.get("valley"),
-            "extreme": pattern.get("top1"),
+            "extreme": max(pattern.get("top1", 0), pattern.get("top2", 0)),
         }
     return None
+
+
+def weekly_trend_analysis(df_weekly: pd.DataFrame) -> Dict:
+    """
+    周线趋势分析：ADX方向、+DI/-DI、MA排列、BOLL带宽。
+    返回: {direction, adx, adx_score, plus_di, minus_di, is_ranging}
+    """
+    if df_weekly is None or len(df_weekly) < 14:
+        return {"direction": "数据不足", "adx_score": 0, "is_ranging": True}
+
+    close = df_weekly["close"]
+    adx, plus_di, minus_di = _adx(df_weekly)
+    latest_adx = float(adx.iloc[-1])
+    latest_plus = float(plus_di.iloc[-1])
+    latest_minus = float(minus_di.iloc[-1])
+
+    # ADX scoring for confidence
+    if latest_adx > 30 and latest_plus > latest_minus:
+        adx_score = 10
+        direction = "多头"
+    elif latest_adx > 25 and latest_plus > latest_minus:
+        adx_score = 7
+        direction = "多头"
+    elif latest_adx > 20 and latest_plus > latest_minus:
+        adx_score = 4
+        direction = "多头"
+    elif latest_adx > 25 and latest_plus < latest_minus:
+        adx_score = 7
+        direction = "空头"
+    else:
+        adx_score = 0
+        direction = "震荡"
+
+    # Ranging check: ADX<20 for 4 weeks AND BOLL bandwidth < 8%
+    recent_adx = adx.tail(4)
+    is_ranging = bool((recent_adx < 20).all())
+    if is_ranging:
+        boll_up, boll_mid, boll_low = _bollinger(close, period=20)
+        bandwidth = (boll_up.iloc[-1] - boll_low.iloc[-1]) / boll_mid.iloc[-1]
+        is_ranging = is_ranging and (bandwidth < 0.08)
+        if is_ranging:
+            direction = "震荡"
+
+    return {
+        "direction": direction,
+        "adx": round(latest_adx, 1),
+        "adx_score": adx_score,
+        "plus_di": round(latest_plus, 1),
+        "minus_di": round(latest_minus, 1),
+        "is_ranging": is_ranging,
+    }

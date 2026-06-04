@@ -144,22 +144,22 @@ def test_double_top_target():
 
 def test_extract_double_bottom():
     """Extract pattern info from a double bottom dict."""
-    pattern = {"pattern": "双底", "bottom1": 90, "bottom2": 91, "peak": 100}
+    pattern = {"pattern": "双底", "bottom1": 90, "bottom2": 88, "peak": 100}
     info = extract_pattern_info(pattern)
     assert info["type"] == "double_bottom"
     assert info["is_bullish"] is True
     assert info["neckline"] == 100
-    assert info["extreme"] == 90
+    assert info["extreme"] == 88  # should pick the lower bottom
 
 
 def test_extract_double_top():
     """Extract pattern info from a double top dict."""
-    pattern = {"pattern": "双顶", "top1": 100, "top2": 101, "valley": 90}
+    pattern = {"pattern": "双顶", "top1": 100, "top2": 102, "valley": 90}
     info = extract_pattern_info(pattern)
     assert info["type"] == "double_top"
     assert info["is_bullish"] is False
     assert info["neckline"] == 90
-    assert info["extreme"] == 100
+    assert info["extreme"] == 102  # should pick the higher top
 
 
 def test_extract_unknown_pattern():
