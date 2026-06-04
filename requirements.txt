@@ -6,3 +6,5 @@ markdown>=3.5.0
 mootdx>=0.1.0
 stockstats>=0.6.0
 akshare>=1.14.0
+plotly>=5.18.0
+kaleido>=0.2.1
