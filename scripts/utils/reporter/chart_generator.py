@@ -208,9 +208,9 @@ def generate_bull_bear_chart(
     bull = bullish_args or []
     bear = bearish_args or []
 
-    bull_texts = [f"{b['text']} ({b.get('credibility', '')})" for b in bull]
+    bull_texts = [f"{b.get('text', '')} ({b.get('credibility', '')})" for b in bull]
     bull_vals = [b.get("stars", 1) for b in bull]
-    bear_texts = [f"{b['text']} ({b.get('credibility', '')})" for b in bear]
+    bear_texts = [f"{b.get('text', '')} ({b.get('credibility', '')})" for b in bear]
     bear_vals = [-b.get("stars", 1) for b in bear]
 
     fig = go.Figure()
