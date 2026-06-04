@@ -15,17 +15,41 @@ def _ensure_parent(path: str) -> Path:
     return p
 
 
+def _compute_sma(values: list[float], window: int) -> list[float | None]:
+    """Compute simple moving average; pad start with None."""
+    if len(values) < window:
+        return [None] * len(values)
+    result: list[float | None] = [None] * (window - 1)
+    for i in range(window - 1, len(values)):
+        result.append(sum(values[i - window + 1 : i + 1]) / window)
+    return result
+
+
+def _compute_ema(values: list[float], span: int) -> list[float]:
+    """Compute exponential moving average."""
+    if not values:
+        return []
+    alpha = 2.0 / (span + 1)
+    ema = [values[0]]
+    for v in values[1:]:
+        ema.append(alpha * v + (1 - alpha) * ema[-1])
+    return ema
+
+
 def generate_technical_panel(
     stock_name: str,
     daily_data: dict[str, list],
     patterns: list[dict[str, Any]],
-    indicators: dict[str, float],
+    indicators: dict[str, Any],
     output_path: str,
 ) -> str:
     """Generate a 4-panel technical chart (K-line+MA, Volume, MACD, RSI)."""
     p = _ensure_parent(output_path)
     close = daily_data.get("close", [])
     volume = daily_data.get("volume", [])
+    opens = daily_data.get("open", close)
+    highs = daily_data.get("high", close)
+    lows = daily_data.get("low", close)
     n = len(close)
     idx = list(range(n))
 
@@ -38,20 +62,71 @@ def generate_technical_panel(
         subplot_titles=("价格与均线", "成交量", "MACD", "RSI"),
     )
 
-    # Row 1: Price + MA
-    fig.add_trace(go.Scatter(x=idx, y=close, mode="lines", name="收盘价", line=dict(color="black")), row=1, col=1)
-    for key, color in [("ma5", "orange"), ("ma20", "blue"), ("ma60", "purple")]:
+    # Row 1: Candlestick + MA
+    fig.add_trace(
+        go.Candlestick(
+            x=idx,
+            open=opens,
+            high=highs,
+            low=lows,
+            close=close,
+            name="K线",
+            increasing_line_color="red",
+            decreasing_line_color="green",
+        ),
+        row=1,
+        col=1,
+    )
+
+    for key, color, window in [("ma5", "orange", 5), ("ma20", "blue", 20), ("ma60", "purple", 60)]:
         val = indicators.get(key)
-        if val is not None and n > 0:
-            fig.add_trace(go.Scatter(x=idx, y=[val] * n, mode="lines", name=key.upper(), line=dict(color=color, dash="dash")), row=1, col=1)
+        if val is None or n == 0:
+            continue
+        if isinstance(val, list) and len(val) == n:
+            ma_y = val
+        elif isinstance(val, (int, float)):
+            ma_y = _compute_sma(close, window)
+        else:
+            continue
+        fig.add_trace(
+            go.Scatter(
+                x=idx,
+                y=ma_y,
+                mode="lines",
+                name=key.upper(),
+                line=dict(color=color, dash="dash"),
+            ),
+            row=1,
+            col=1,
+        )
 
     # Pattern annotations
     for pat in patterns or []:
         if "neckline" in pat:
-            fig.add_hline(y=pat["neckline"], line=dict(color="green", dash="dot"), row=1, col=1, annotation_text="颈线")
+            fig.add_hline(
+                y=pat["neckline"],
+                line=dict(color="green", dash="dot"),
+                row=1,
+                col=1,
+                annotation_text="颈线",
+            )
         for b in ("bottom1", "bottom2"):
             if b in pat:
-                fig.add_hline(y=pat[b], line=dict(color="red", dash="dot"), row=1, col=1)
+                # Place marker at the approximate x-position of the pattern
+                x_pos = pat.get(f"{b}_idx", n // 3 if b == "bottom1" else 2 * n // 3)
+                if x_pos is not None and 0 <= x_pos < n:
+                    fig.add_trace(
+                        go.Scatter(
+                            x=[x_pos],
+                            y=[pat[b]],
+                            mode="markers",
+                            marker=dict(color="red", size=10, symbol="x"),
+                            name=b,
+                            showlegend=False,
+                        ),
+                        row=1,
+                        col=1,
+                    )
 
     # Row 2: Volume
     if volume:
@@ -61,15 +136,54 @@ def generate_technical_panel(
     # Row 3: MACD
     macd = indicators.get("macd")
     macd_hist = indicators.get("macd_hist")
+    macd_signal = indicators.get("macd_signal")
     if macd is not None and macd_hist is not None and n > 0:
-        fig.add_trace(go.Bar(x=idx, y=[macd_hist] * n, marker_color="gray", name="MACD柱状"), row=3, col=1)
-        fig.add_trace(go.Scatter(x=idx, y=[macd] * n, mode="lines", name="MACD", line=dict(color="blue")), row=3, col=1)
+        if isinstance(macd_hist, list) and len(macd_hist) == n:
+            hist_y = macd_hist
+        else:
+            hist_y = [macd_hist] * n
+        if isinstance(macd, list) and len(macd) == n:
+            macd_y = macd
+        else:
+            macd_y = [macd] * n
+        if macd_signal is None:
+            macd_signal = _compute_ema(macd_y, 9)
+        elif isinstance(macd_signal, (int, float)):
+            macd_signal = [macd_signal] * n
+        elif isinstance(macd_signal, list) and len(macd_signal) != n:
+            macd_signal = [macd_signal[-1] if macd_signal else 0] * n
+
+        fig.add_trace(go.Bar(x=idx, y=hist_y, marker_color="gray", name="MACD柱状"), row=3, col=1)
+        fig.add_trace(
+            go.Scatter(x=idx, y=macd_y, mode="lines", name="MACD", line=dict(color="blue")),
+            row=3,
+            col=1,
+        )
+        fig.add_trace(
+            go.Scatter(
+                x=idx,
+                y=macd_signal,
+                mode="lines",
+                name="MACD信号线",
+                line=dict(color="orange", dash="dash"),
+            ),
+            row=3,
+            col=1,
+        )
         fig.add_hline(y=0, line=dict(color="black", width=0.5), row=3, col=1)
 
     # Row 4: RSI
     rsi = indicators.get("rsi")
     if rsi is not None and n > 0:
-        fig.add_trace(go.Scatter(x=idx, y=[rsi] * n, mode="lines", name="RSI", line=dict(color="purple")), row=4, col=1)
+        if isinstance(rsi, list) and len(rsi) == n:
+            rsi_y = rsi
+        else:
+            rsi_y = [rsi] * n
+        fig.add_trace(
+            go.Scatter(x=idx, y=rsi_y, mode="lines", name="RSI", line=dict(color="purple")),
+            row=4,
+            col=1,
+        )
         fig.add_hline(y=70, line=dict(color="red", dash="dash"), row=4, col=1)
         fig.add_hline(y=30, line=dict(color="green", dash="dash"), row=4, col=1)
 
