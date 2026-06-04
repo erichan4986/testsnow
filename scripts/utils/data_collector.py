@@ -1,7 +1,8 @@
 import json
 import logging
+import time
 from pathlib import Path
-from typing import Dict, Optional
+from typing import Dict, Optional, Callable, Any
 from datetime import datetime, timedelta
 
 import pandas as pd
@@ -17,6 +18,53 @@ except ImportError:
     stockstats = None
 
 logger = logging.getLogger(__name__)
+
+
+class AkshareHelper:
+    """
+    akshare 调用包装器，带限速、重试、失败降级。
+
+    使用方式:
+        helper = AkshareHelper()
+        df = helper.call(ak.stock_financial_abstract, symbol='300661')
+    """
+
+    def __init__(self, delay_sec: float = 1.5, max_retries: int = 3):
+        self.delay_sec = delay_sec
+        self.max_retries = max_retries
+        self._last_call_time = 0.0
+
+    def call(self, func: Callable, *args, **kwargs) -> Any:
+        """
+        带限速和重试地调用 akshare 函数。
+        返回函数结果，或在所有重试失败后返回 None。
+        """
+        # 限速：确保两次调用间隔至少 delay_sec
+        elapsed = time.time() - self._last_call_time
+        if elapsed < self.delay_sec:
+            time.sleep(self.delay_sec - elapsed)
+
+        last_error = None
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                self._last_call_time = time.time()
+                return func(*args, **kwargs)
+            except Exception as e:
+                last_error = e
+                err_name = type(e).__name__
+                if "RemoteDisconnected" in err_name or "ConnectionError" in err_name or "Connection aborted" in str(e):
+                    wait = attempt * 2  # 2s, 4s, 6s
+                    logger.warning(f"akshare 调用 {func.__name__} 失败 (attempt {attempt}/{self.max_retries}): {e}")
+                    if attempt < self.max_retries:
+                        logger.info(f"等待 {wait}s 后重试...")
+                        time.sleep(wait)
+                else:
+                    # 非网络错误，不重试
+                    logger.warning(f"akshare 调用 {func.__name__} 失败 (非网络错误): {e}")
+                    break
+
+        logger.error(f"akshare 调用 {func.__name__} 最终失败: {last_error}")
+        return None
 
 
 class TechnicalCollector:
@@ -74,12 +122,86 @@ class TechnicalCollector:
             logger.error(f"获取 {code} K线失败: {e}")
             return None
 
+    def fetch_weekly_kline(self, code: str, market: int = 0, weeks: int = 72) -> Optional[pd.DataFrame]:
+        """
+        获取周K线数据。
+        A股: 通过 akshare stock_zh_a_hist(symbol, period='weekly')
+        港股: 优先 Wind CSV，备选 akshare stock_hk_hist
+        """
+        if ak is None:
+            logger.warning("akshare 未安装，无法获取周线数据")
+            return None
+
+        try:
+            # A-share weekly
+            if market == 0 or market == 1:
+                prefix = "SZ" if market == 0 else "SH"
+                symbol = f"{prefix}{code}"
+                df = ak.stock_zh_a_hist(symbol=symbol, period="weekly", start_date="20200101", adjust="qfq")
+            else:
+                # HK stock
+                df = ak.stock_hk_hist(symbol=code, period="weekly", start_date="20200101")
+
+            if df is None or df.empty:
+                return None
+
+            # Standardize columns
+            column_map = {
+                "日期": "date", "开盘": "open", "最高": "high",
+                "最低": "low", "收盘": "close", "成交量": "volume",
+            }
+            df = df.rename(columns=column_map)
+            for col in ["open", "high", "low", "close", "volume"]:
+                if col not in df.columns:
+                    logger.error(f"周线数据缺少列: {col}")
+                    return None
+
+            if len(df) > weeks:
+                df = df.tail(weeks).reset_index(drop=True)
+
+            return df
+        except Exception as e:
+            logger.error(f"获取 {code} 周线数据失败: {e}")
+            return None
+
     def compute_indicators(self, df: pd.DataFrame) -> Dict:
         """
-        使用 stockstats 计算技术指标
+        计算技术指标（优先使用 technical_analyzer，回退到 stockstats）。
         Returns:
-            Dict with latest indicator values
+            Dict with latest indicator values + resonance + patterns + levels
         """
+        # 优先使用纯 pandas 增强版分析器
+        ta_analyze = None
+        try:
+            from .reporter.technical_analyzer import analyze as ta_analyze
+        except ImportError:
+            try:
+                from reporter.technical_analyzer import analyze as ta_analyze
+            except ImportError:
+                import sys
+                from pathlib import Path
+                reporter_dir = Path(__file__).parent / "reporter"
+                if str(reporter_dir) not in sys.path:
+                    sys.path.insert(0, str(reporter_dir))
+                try:
+                    from technical_analyzer import analyze as ta_analyze
+                except ImportError:
+                    pass
+
+        if ta_analyze is not None:
+            try:
+                result = ta_analyze(df)
+                if result and result.get("indicators"):
+                    # 保持向后兼容：返回扁平化的 indicators 同时保留完整结果
+                    flat = dict(result["indicators"])
+                    flat["_resonance"] = result.get("resonance", {})
+                    flat["_patterns"] = result.get("patterns", [])
+                    flat["_levels"] = result.get("levels", {})
+                    return flat
+            except Exception as e:
+                logger.warning(f"technical_analyzer 失败，回退到 stockstats: {e}")
+
+        # 回退：stockstats
         if stockstats is None:
             logger.error("stockstats 未安装")
             return {}
@@ -122,6 +244,22 @@ class TechnicalCollector:
                 "boll_lower": float(ss["boll_lb"].iloc[-1]) if "boll_lb" in ss.columns else None,
             }
 
+            # 从原始 DataFrame 计算额外量化指标（不依赖 stockstats）
+            if len(df) >= 22:
+                latest_close = float(df["close"].iloc[-1])
+                month_ago_close = float(df["close"].iloc[-22])
+                result["monthly_return_pct"] = round((latest_close - month_ago_close) / month_ago_close * 100, 2)
+
+            if len(df) >= 20 and "amount" in df.columns:
+                # amount 通常为元，转换为亿元
+                avg_amount = float(df["amount"].tail(20).mean())
+                result["avg_amount_yi"] = round(avg_amount / 100000000, 2)
+            elif len(df) >= 20 and "volume" in df.columns:
+                # 若只有 volume（股），用 close * volume 估算成交额
+                avg_vol = float(df["volume"].tail(20).mean())
+                avg_close = float(df["close"].tail(20).mean())
+                result["avg_amount_yi"] = round(avg_vol * avg_close / 100000000, 2)
+
             # Remove None values for cleaner JSON
             return {k: v for k, v in result.items() if v is not None}
         except Exception as e:
@@ -129,16 +267,34 @@ class TechnicalCollector:
             return {}
 
     def collect(self, code: str, market: int = 0, days: int = 120) -> Dict:
-        """一键采集技术指标"""
-        df = self.fetch_kline(code, market, days)
-        if df is None or df.empty:
+        """一键采集技术指标（含日线+周线+价格目标）"""
+        df_daily = self.fetch_kline(code, market, days)
+        if df_daily is None or df_daily.empty:
             return {}
-        indicators = self.compute_indicators(df)
+        indicators = self.compute_indicators(df_daily)
+
+        # --- 新增：周线 + 价格目标 ---
+        price_target_result = None
+        try:
+            df_weekly = self.fetch_weekly_kline(code, market, weeks=72)
+            if df_weekly is not None and not df_weekly.empty:
+                try:
+                    from .reporter.price_target import analyze_price_target
+                except ImportError:
+                    from reporter.price_target import analyze_price_target
+                current_price = float(df_daily["close"].iloc[-1])
+                price_target_result = analyze_price_target(
+                    df_daily, df_weekly, current_price=current_price,
+                )
+        except Exception as e:
+            logger.warning(f"价格目标分析失败: {e}")
+
         return {
             "code": code,
             "market": market,
-            "days": len(df),
+            "days": len(df_daily),
             "indicators": indicators,
+            "price_target": price_target_result,
             "fetched_at": datetime.now().isoformat(),
         }
 
@@ -155,10 +311,21 @@ except ImportError:
 
 
 class ReportCollector:
-    """采集券商研报数据（东财/akshare）"""
+    """采集券商研报数据（东财 reportapi，直接 HTTP 调用，不依赖 akshare）"""
+
+    REPORT_API = "https://reportapi.eastmoney.com/report/list"
+    PDF_TPL = "https://pdf.dfcfw.com/pdf/H3_{info_code}_1.pdf"
+    UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
 
     def __init__(self):
-        self.ak = ak
+        self.session = None
+
+    def _get_session(self):
+        import requests
+        if self.session is None:
+            self.session = requests.Session()
+            self.session.headers.update({"User-Agent": self.UA, "Referer": "https://data.eastmoney.com/"})
+        return self.session
 
     def collect(self, code: str, months: int = 4) -> list:
         """
@@ -166,34 +333,54 @@ class ReportCollector:
         Returns:
             List of dicts: [{title, institution, author, rating, target_price, summary, date, url}]
         """
-        if self.ak is None:
-            logger.warning("akshare 未安装，跳过研报采集")
-            return []
+        import requests
+        import time
 
-        reports = []
         try:
-            df = self.ak.stock_research_report_em(symbol=code)
-            if df is None or df.empty:
-                return []
+            all_records = []
+            for page in range(1, 6):
+                params = {
+                    "industryCode": "*", "pageSize": "100", "industry": "*",
+                    "rating": "*", "ratingChange": "*",
+                    "beginTime": "2000-01-01", "endTime": "2030-01-01",
+                    "pageNo": str(page), "fields": "", "qType": "0",
+                    "orgCode": "", "code": code, "rcode": "",
+                    "p": str(page), "pageNum": str(page), "pageNumber": str(page),
+                }
+                resp = requests.get(self.REPORT_API, params=params, headers={"User-Agent": self.UA, "Referer": "https://data.eastmoney.com/"}, timeout=30)
+                data = resp.json()
+                rows = data.get("data") or []
+                if not rows:
+                    break
+                all_records.extend(rows)
+                if page >= (data.get("TotalPage", 1) or 1):
+                    break
+                time.sleep(0.3)
 
             cutoff = datetime.now() - timedelta(days=months * 30)
-            for _, row in df.iterrows():
+            reports = []
+            for r in all_records:
+                pub_date = r.get("publishDate", "")
                 try:
-                    pub_date = pd.to_datetime(row.get("发布日期", row.get("日期", "")))
-                    if pub_date < cutoff:
-                        continue
+                    if pub_date:
+                        pd_date = datetime.strptime(pub_date[:10], "%Y-%m-%d")
+                        if pd_date < cutoff:
+                            continue
                 except Exception:
                     continue
 
+                info_code = r.get("infoCode", "")
+                pdf_url = self.PDF_TPL.format(info_code=info_code) if info_code else ""
+
                 reports.append({
-                    "title": str(row.get("报告名称", "")),
-                    "institution": str(row.get("机构", "")),
-                    "author": "",  # No author field available
-                    "rating": str(row.get("东财评级", "")),
-                    "target_price": "",  # No target price field
-                    "summary": "",  # No summary field
-                    "date": str(row.get("日期", "")),
-                    "url": str(row.get("报告PDF链接", "")),
+                    "title": str(r.get("title", "")),
+                    "institution": str(r.get("orgSName", "")),
+                    "author": "",
+                    "rating": str(r.get("emRatingName", "")),
+                    "target_price": "",
+                    "summary": "",
+                    "date": pub_date[:10] if pub_date else "",
+                    "url": pdf_url,
                 })
 
             return reports[:20]
@@ -206,103 +393,489 @@ class AnnouncementCollector:
     """采集公司公告数据（巨潮/akshare）"""
 
     def __init__(self):
-        self.ak = ak
+        self.helper = AkshareHelper()
 
     def collect(self, code: str, months: int = 3) -> list:
-        if self.ak is None:
+        if ak is None:
             logger.warning("akshare 未安装，跳过公告采集")
             return []
 
-        announcements = []
-        try:
-            df = self.ak.stock_individual_notice_report(code)
-            if df is None or df.empty:
-                return []
-
-            cutoff = datetime.now() - timedelta(days=months * 30)
-            important_types = ["定期报告", "重大事项", "股权激励", "增减持", "并购", "关联交易"]
-
-            for _, row in df.iterrows():
-                try:
-                    pub_date = pd.to_datetime(row.get("公告日期", ""))
-                    if pub_date < cutoff:
-                        continue
-                except Exception:
-                    continue
-
-                ann_type = str(row.get("公告类型", ""))
-                announcements.append({
-                    "title": str(row.get("公告标题", "")),
-                    "type": ann_type,
-                    "date": str(row.get("公告日期", "")),
-                    "content": "",  # No content field available
-                    "url": str(row.get("网址", "")),
-                    "is_important": any(t in ann_type for t in important_types),
-                })
-
-            announcements.sort(key=lambda x: (not x["is_important"], x["date"]), reverse=True)
-            return announcements[:15]
-        except Exception as e:
-            logger.error(f"采集 {code} 公告失败: {e}")
+        df = self.helper.call(ak.stock_individual_notice_report, code)
+        if df is None or df.empty:
             return []
+
+        announcements = []
+        cutoff = datetime.now() - timedelta(days=months * 30)
+        important_types = ["定期报告", "重大事项", "股权激励", "增减持", "并购", "关联交易"]
+
+        for _, row in df.iterrows():
+            try:
+                pub_date = pd.to_datetime(row.get("公告日期", ""))
+                if pub_date < cutoff:
+                    continue
+            except Exception:
+                continue
+
+            ann_type = str(row.get("公告类型", ""))
+            announcements.append({
+                "title": str(row.get("公告标题", "")),
+                "type": ann_type,
+                "date": str(row.get("公告日期", "")),
+                "content": "",  # No content field available
+                "url": str(row.get("网址", "")),
+                "is_important": any(t in ann_type for t in important_types),
+            })
+
+        announcements.sort(key=lambda x: (not x["is_important"], x["date"]), reverse=True)
+        return announcements[:15]
 
 
 class FundFlowCollector:
-    """采集资金流向数据（百度股市通 / akshare）"""
+    """采集资金流向数据（东方财富 / akshare）"""
 
     def __init__(self):
-        self.ak = ak
+        self.helper = AkshareHelper()
 
     def collect(self, code: str, days: int = 7) -> list:
-        try:
-            import requests
-            market = "0" if code.startswith(("00", "30")) else "1"
-            url = f"https://push2.eastmoney.com/api/qt/ulist.np/get?secids={market}.{code}&fields=f1,f2,f3,f12,f13,f14,f62,f66,f69,f72,f75,f78,f81,f84,f87"
-            resp = requests.get(url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10, verify=False)
-            data = resp.json()
-            d = data.get("data", {}).get("diff", [{}])[0]
-
-            return [{
-                "date": datetime.now().strftime("%Y-%m-%d"),
-                "main_inflow": d.get("f62", 0) / 10000,  # Convert to 万
-                "retail_inflow": d.get("f84", 0) / 10000,
-                "large_order_pct": d.get("f69", 0),
-            }]
-        except Exception as e:
-            logger.error(f"采集 {code} 资金流向失败: {e}")
+        """采集资金流向，当前环境下 API 可能被限制，返回空列表并记录警告"""
+        if ak is None:
+            logger.warning("akshare 未安装，跳过资金流向采集")
             return []
+        market = "sz" if code.startswith(("00", "30")) else "sh"
+        df = self.helper.call(ak.stock_individual_fund_flow, stock=code, market=market)
+        if df is None or df.empty:
+            return []
+        # akshare returns data in reverse chronological order
+        df = df.head(days)
+        results = []
+        for _, row in df.iterrows():
+            results.append({
+                "date": str(row.get("日期", "")),
+                "main_inflow": float(row.get("主力净流入", 0)),
+                "retail_inflow": float(row.get("小单净流入", 0)),
+                "large_order_pct": float(row.get("超大单净流入", 0)),
+            })
+        return results
 
 
 class NewsCollector:
     """采集个股新闻（akshare）"""
 
     def __init__(self):
-        self.ak = ak
+        self.helper = AkshareHelper()
 
     def collect(self, code: str, days: int = 30) -> list:
-        if self.ak is None:
+        if ak is None:
             return []
-        try:
-            df = self.ak.stock_news_em(symbol=code)
-            if df is None or df.empty:
-                return []
-            cutoff = datetime.now() - timedelta(days=days)
-            results = []
-            for _, row in df.iterrows():
-                try:
-                    pub_date = pd.to_datetime(row.get("发布时间", ""))
-                    if pub_date < cutoff:
-                        continue
-                except Exception:
+        df = self.helper.call(ak.stock_news_em, symbol=code)
+        if df is None or df.empty:
+            return []
+        cutoff = datetime.now() - timedelta(days=days)
+        results = []
+        for _, row in df.iterrows():
+            try:
+                pub_date = pd.to_datetime(row.get("发布时间", ""))
+                if pub_date < cutoff:
                     continue
-                results.append({
-                    "title": str(row.get("标题", "")),
-                    "summary": str(row.get("内容", ""))[:300],
-                    "source": str(row.get("来源", "")),
-                    "date": str(row.get("发布时间", "")),
-                    "url": str(row.get("链接", "")),
-                })
-            return results[:20]
-        except Exception as e:
-            logger.error(f"采集 {code} 新闻失败: {e}")
+            except Exception:
+                continue
+            results.append({
+                "title": str(row.get("新闻标题", "")),
+                "summary": str(row.get("新闻内容", ""))[:300],
+                "source": str(row.get("文章来源", "")),
+                "date": str(row.get("发布时间", "")),
+                "url": str(row.get("新闻链接", "")),
+            })
+        return results[:20]
+
+
+import requests
+import time
+import os
+
+
+class ZhihuCollector:
+    """
+    采集知乎内容（知乎开发者平台 API）
+    - 关键词搜索（如：圣邦股份、模拟芯片）
+    - 指定博主文章搜索
+    - 自动筛选股市/宏观经济相关内容
+
+    ⚠️ 知乎API每日限量1000次，本采集器已内置限流保护
+    """
+
+    BASE_URL = "https://developer.zhihu.com/api/v1/content/zhihu_search"
+    WEB_SEARCH_URL = "https://developer.zhihu.com/api/v1/content/global_search"
+    DAILY_LIMIT = 1000  # 知乎API日限额
+
+    # 股市/宏观经济相关关键词（用于初步过滤）
+    STOCK_MACRO_KEYWORDS = [
+        "股票", "股市", "A股", "港股", "美股", "大盘", "指数", "板块",
+        "投资", "估值", "PE", "PB", "财报", "营收", "利润", "净利润", "毛利率",
+        "业绩", "研报", "券商", "基金", "持仓", "牛市", "熊市", "上涨", "下跌",
+        "涨幅", "跌幅", "主力", "散户", "机构", "北向资金", "回购", "分红",
+        "市值", "股东", "减持", "增持", "IPO", "退市", "成交量", "成交额",
+        "换手率", "市盈率", "市净率", "ROE", "EPS", "年报", "季报", "中报",
+        "宏观经济", "GDP", "CPI", "PPI", "通胀", "通缩", "利率", "降息", "加息",
+        "央行", "美联储", "货币政策", "财政政策", "降准", "量化宽松", "QE",
+        "经济周期", "复苏", "衰退", "PMI", "制造业", "汇率", "人民币", "美元",
+        "关税", "贸易", "能源", "原油", "黄金", "大宗商品", "房地产", "楼市",
+        "房价", "国债", "地方债", "消费", "内需", "外需", "双循环",
+        "半导体", "芯片", "模拟芯片", "集成电路", "国产替代", "涨价", "周期",
+        "光模块", "AI芯片", "车规级", "德州仪器", "TI", "ADI", "思瑞浦", "纳芯微",
+        "杰华特", "艾为电子",
+    ]
+
+    def __init__(self, api_key: str = None):
+        self.api_key = api_key or os.getenv("ZHIHU_API_KEY")
+        if not self.api_key:
+            logger.warning("ZHIHU_API_KEY 未设置，ZhihuCollector 将不可用")
+        self._request_count = 0
+        self._cache = {}  # query -> (timestamp, results)
+        self._cache_ttl = 3600  # 缓存1小时
+
+    def _check_limit(self) -> bool:
+        """检查是否超出日限额"""
+        if self._request_count >= self.DAILY_LIMIT:
+            logger.warning(f"知乎API日限额已达 ({self.DAILY_LIMIT})，跳过本次请求")
+            return False
+        return True
+
+    def _request(self, query: str, limit: int = 5, endpoint: str = None) -> list:
+        """发起知乎搜索请求（带缓存和限流）
+
+        Args:
+            query: 搜索关键词
+            limit: 返回条数
+            endpoint: 自定义端点，默认使用 BASE_URL（站内搜索）
+        """
+        if not self.api_key:
             return []
+
+        if not self._check_limit():
+            return []
+
+        url = endpoint or self.BASE_URL
+        cache_key = f"{url}::{query}"
+
+        # 检查缓存
+        now = time.time()
+        if cache_key in self._cache:
+            cached_time, cached_results = self._cache[cache_key]
+            if now - cached_time < self._cache_ttl:
+                logger.info(f"知乎搜索 '{query}' 命中缓存")
+                return cached_results
+
+        try:
+            self._request_count += 1
+            ts = int(now)
+            resp = requests.get(
+                url,
+                params={"Query": query, "limit": limit},
+                headers={
+                    "Authorization": f"Bearer {self.api_key}",
+                    "X-Request-Timestamp": str(ts),
+                    "Content-Type": "application/json",
+                },
+                timeout=15,
+            )
+            resp.raise_for_status()
+            data = resp.json()
+
+            if data.get("Code") != 0:
+                logger.warning(f"知乎API返回错误: {data.get('Message')}")
+                return []
+
+            items = data.get("Data", {}).get("Items", [])
+            results = []
+            for item in items:
+                results.append({
+                    "title": str(item.get("Title", "")),
+                    "content_type": str(item.get("ContentType", "")),
+                    "content_id": str(item.get("ContentID", "")),
+                    "content_text": str(item.get("ContentText", ""))[:800],
+                    "url": str(item.get("Url", "")),
+                    "comment_count": int(item.get("CommentCount", 0)),
+                    "vote_up_count": int(item.get("VoteUpCount", 0)),
+                    "author_name": str(item.get("AuthorName", "")),
+                    "author_badge": str(item.get("AuthorBadgeText", "")),
+                    "edit_time": int(item.get("EditTime", 0)),
+                    "authority_level": str(item.get("AuthorityLevel", "")),
+                    "ranking_score": float(item.get("RankingScore", 0)),
+                    "source": "知乎",
+                })
+
+            # 写入缓存
+            self._cache[cache_key] = (now, results)
+            return results
+        except Exception as e:
+            logger.error(f"知乎搜索失败 [{query}]: {e}")
+            return []
+
+    @staticmethod
+    def _infer_platform(url: str) -> str:
+        """通过 URL 域名推断来源平台"""
+        if not url:
+            return "未知来源"
+        url_lower = url.lower()
+        if "mp.weixin.qq.com" in url_lower:
+            return "微信公众号"
+        if "36kr.com" in url_lower:
+            return "36氪"
+        if "caixin.com" in url_lower:
+            return "财新网"
+        if "wallstreetcn.com" in url_lower:
+            return "华尔街见闻"
+        if "cls.cn" in url_lower:
+            return "财联社"
+        if "zhuanlan.zhihu.com" in url_lower or "zhihu.com" in url_lower:
+            return "知乎"
+        if "sohu.com" in url_lower:
+            return "搜狐"
+        if "163.com" in url_lower or "netease.com" in url_lower:
+            return "网易"
+        if "sina.com.cn" in url_lower or "sina.com" in url_lower:
+            return "新浪"
+        if "huanqiu.com" in url_lower:
+            return "环球网"
+        if "cs.com.cn" in url_lower:
+            return "中证网"
+        if "cninfo.com.cn" in url_lower:
+            return "巨潮资讯"
+        if "eastmoney.com" in url_lower:
+            return "东方财富"
+        if "stcn.com" in url_lower:
+            return "证券时报"
+        # 提取域名作为兜底
+        try:
+            from urllib.parse import urlparse
+            domain = urlparse(url).netloc
+            return domain
+        except Exception:
+            return "未知来源"
+
+    def search_web(self, keywords: list, limit_per_kw: int = 5) -> list:
+        """
+        调用知乎全网搜索 API（global_search）
+        策略：与 search_keywords 一致，但端点不同
+        Returns: 合并去重后的全网文章列表
+        """
+        all_items = []
+        seen_ids = set()
+        for kw in keywords:
+            items = self._request(kw, limit=limit_per_kw, endpoint=self.WEB_SEARCH_URL)
+            for item in items:
+                cid = item.get("content_id")
+                if cid and cid not in seen_ids:
+                    seen_ids.add(cid)
+                    item["search_keyword"] = kw
+                    item["_source_type"] = "web"
+                    item["source_platform"] = self._infer_platform(item.get("url", ""))
+                    all_items.append(item)
+            logger.info(f"知乎全网搜索 '{kw}' 获取 {len(items)} 条结果")
+        return all_items
+
+    def _is_stock_macro_related(self, text: str) -> bool:
+        """基于关键词判断内容是否与股市/宏观经济相关"""
+        text_lower = text.lower()
+        for kw in self.STOCK_MACRO_KEYWORDS:
+            if kw.lower() in text_lower:
+                return True
+        return False
+
+    def search_keywords(self, keywords: list, limit_per_kw: int = 5) -> list:
+        """
+        按关键词搜索知乎内容
+        Returns: 合并去重后的文章列表
+        """
+        all_items = []
+        seen_ids = set()
+        for kw in keywords:
+            items = self._request(kw, limit=limit_per_kw)
+            for item in items:
+                cid = item.get("content_id")
+                if cid and cid not in seen_ids:
+                    seen_ids.add(cid)
+                    item["search_keyword"] = kw
+                    all_items.append(item)
+            logger.info(f"知乎搜索 '{kw}' 获取 {len(items)} 条结果")
+        return all_items
+
+    def search_authors(self, author_names: list, limit_per_author: int = 3) -> list:
+        """
+        搜索指定博主的文章
+        策略：先用博主名搜索，然后筛选出该博主的内容
+        """
+        all_items = []
+        seen_ids = set()
+        for name in author_names:
+            items = self._request(name, limit=limit_per_author * 2)
+            author_items = [
+                item for item in items
+                if name.lower() in item.get("author_name", "").lower()
+            ]
+            for item in author_items[:limit_per_author]:
+                cid = item.get("content_id")
+                if cid and cid not in seen_ids:
+                    seen_ids.add(cid)
+                    item["search_keyword"] = f"博主:{name}"
+                    all_items.append(item)
+            logger.info(f"知乎博主 '{name}' 获取 {len(author_items)} 条结果")
+        return all_items
+
+    def collect(self, stock_name: str = None, keywords: list = None,
+                author_names: list = None, limit: int = 5,
+                use_curator: bool = True) -> Dict:
+        """
+        一键采集知乎内容，自动分类为【报告相关】和【知识沉淀】
+        注意：默认每关键词5条、每博主3条，以控制API用量
+
+        Args:
+            use_curator: 是否启用 ContentQualityGate 进行统一质量评估（默认True）
+
+        Returns:
+            {
+                "report_items": [...],      # 高质量内容（进入报告）
+                "knowledge_items": [...],   # 未采纳内容（知识沉淀）
+                "total": N,
+                "api_calls": N,             # 知乎API消耗次数
+                "gate_stats": {...},        # 质量门统计（若启用）
+            }
+        """
+        start_count = self._request_count
+
+        # 默认关键词
+        default_keywords = [stock_name] if stock_name else []
+        search_keywords = list(set((keywords or []) + default_keywords))
+
+        # 默认关注博主
+        default_authors = ["Deep Van", "奥特之父", "MR.Dang", "羊村里最快的羊"]
+        search_authors = author_names or default_authors
+
+        # 搜索（站内 + 全网）
+        kw_items = self.search_keywords(search_keywords, limit_per_kw=limit)
+        author_items = self.search_authors(search_authors, limit_per_author=min(limit, 3))
+        web_items = self.search_web(search_keywords, limit_per_kw=limit)
+
+        all_items = kw_items + author_items + web_items
+        api_calls = self._request_count - start_count
+
+        # 去重
+        seen_ids = set()
+        unique_items = []
+        for item in all_items:
+            cid = item.get("content_id")
+            if cid and cid not in seen_ids:
+                seen_ids.add(cid)
+                unique_items.append(item)
+
+        # 是否启用 ContentQualityGate 进行统一质量评估
+        gate_stats = None
+        if use_curator:
+            try:
+                from .content_quality_gate import ContentQualityGate
+                gate = ContentQualityGate()
+                quality_results = gate.process_zhihu_items(unique_items)
+
+                report_items = []
+                knowledge_items = []
+                for result in quality_results:
+                    item = result.item.extra
+                    item["_quality_gate"] = {
+                        "passed_hard_gate": result.passed_hard_gate,
+                        "quality_score": result.quality_score,
+                        "action": result.action,
+                        "reasons": result.reasons,
+                    }
+                    if result.action == "keep":
+                        report_items.append(item)
+                    else:
+                        knowledge_items.append(item)
+
+                gate_stats = {
+                    "total": len(unique_items),
+                    "hard_passed": sum(1 for r in quality_results if r.passed_hard_gate),
+                    "keep": len(report_items),
+                    "demote": sum(1 for r in quality_results if r.action == "demote"),
+                    "discard": sum(1 for r in quality_results if r.action == "discard"),
+                }
+                logger.info(
+                    f"知乎采集+质量门完成: 共 {len(unique_items)} 条 "
+                    f"(站内 {len(kw_items)} + 博主 {len(author_items)} + 全网 {len(web_items)}), "
+                    f"报告纳入 {len(report_items)} 条, 知识沉淀 {len(knowledge_items)} 条, "
+                    f"知乎API {api_calls} 次"
+                )
+            except Exception as e:
+                logger.warning(f"ContentQualityGate 启用失败，回退到关键词分类: {e}")
+                # 回退：简单关键词分类
+                report_items = []
+                knowledge_items = []
+                for item in unique_items:
+                    text = item.get("title", "") + " " + item.get("content_text", "")
+                    if self._is_stock_macro_related(text):
+                        item["relevance"] = "股市/宏观经济"
+                        report_items.append(item)
+                    else:
+                        item["relevance"] = "知识沉淀"
+                        knowledge_items.append(item)
+        else:
+            # 不使用 quality gate：简单关键词分类
+            report_items = []
+            knowledge_items = []
+            for item in unique_items:
+                text = item.get("title", "") + " " + item.get("content_text", "")
+                if self._is_stock_macro_related(text):
+                    item["relevance"] = "股市/宏观经济"
+                    report_items.append(item)
+                else:
+                    item["relevance"] = "知识沉淀"
+                    knowledge_items.append(item)
+
+            logger.info(
+                f"知乎采集完成: 共 {len(unique_items)} 条 "
+                f"(站内 {len(kw_items)} + 博主 {len(author_items)} + 全网 {len(web_items)}), "
+                f"报告相关 {len(report_items)} 条, 知识沉淀 {len(knowledge_items)} 条, "
+                f"消耗API {api_calls} 次 (今日累计 {self._request_count}/{self.DAILY_LIMIT})"
+            )
+
+        # === ZhihuCurator 增强层 ===
+        # 在 ContentQualityGate 之后，对 report_items 进行 LLM 精编 + 时效判断
+        curator_stats = None
+        if use_curator and report_items:
+            try:
+                from .zhihu_curator import ZhihuCurator
+                curator = ZhihuCurator()
+                curator_result = curator.curate(report_items)
+
+                # 最终 report_items = Curator 筛选后的高质量内容
+                curated_report = curator_result.get("report_items", [])
+                curated_knowledge = curator_result.get("knowledge_items", [])
+                curator_stats = curator_result.get("stats", {})
+
+                # 将 Curator 淘汰的内容并入 knowledge_items
+                # (ContentQualityGate 原来的 knowledge_items + Curator 淘汰的)
+                knowledge_items = knowledge_items + curated_knowledge
+
+                # 更新 report_items
+                report_items = curated_report
+
+                logger.info(
+                    f"ZhihuCurator 增强层完成: gate后 {curator_stats.get('total', 0)} 条 → "
+                    f"L1粗筛 {curator_stats.get('l1_passed', 0)} → "
+                    f"L2评估 {curator_stats.get('l2_evaluated', 0)} → "
+                    f"L3纳入 {curator_stats.get('l3_included', 0)} 条"
+                )
+            except Exception as e:
+                logger.warning(f"ZhihuCurator 增强层启用失败，保留 ContentQualityGate 结果: {e}")
+
+        result = {
+            "report_items": report_items,
+            "knowledge_items": knowledge_items,
+            "total": len(unique_items),
+            "api_calls": api_calls,
+        }
+        if gate_stats:
+            result["gate_stats"] = gate_stats
+        if curator_stats:
+            result["curator_stats"] = curator_stats
+        return result
