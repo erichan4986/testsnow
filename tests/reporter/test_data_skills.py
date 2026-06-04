@@ -1,0 +1,53 @@
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
+
+from skill_pipeline import SkillContext
+from report_skills.data_skills import data_loading_skill, quality_gate_skill, quote_fetching_skill
+
+
+def test_data_loading_skill():
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stocks_data": {"测试股": [{"title": "t1"}, {"title": "t2"}]},
+        "raw_data": {"测试股": {"technical": {"days": 10}}},
+    })
+    result = data_loading_skill(ctx)
+    assert result.get("all_posts") == [{"title": "t1"}, {"title": "t2"}]
+    assert result.get("stock_raw") == {"technical": {"days": 10}}
+
+
+def test_data_loading_skill_missing_stock():
+    ctx = SkillContext(input={
+        "stock_name": "不存在",
+        "stocks_data": {},
+        "raw_data": {},
+    })
+    result = data_loading_skill(ctx)
+    assert result.get("all_posts") == []
+    assert result.get("stock_raw") == {}
+
+
+def test_quality_gate_skill_filters_posts():
+    posts = [
+        {"title": "好", "content": "优质内容" * 50, "like": 100, "comment": 50},
+        {"title": "差", "content": "短", "like": 1, "comment": 0},
+    ]
+    ctx = SkillContext(input={"all_posts": posts})
+    result = quality_gate_skill(ctx)
+    assert "keep_posts" in result.output
+    assert "demote_posts" in result.output
+    assert "discard_posts" in result.output
+
+
+def test_quote_fetching_skill_with_code():
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_codes": {"测试股": "000001"},
+    })
+    result = quote_fetching_skill(ctx)
+    # quote may be None in test env, but key should exist
+    assert "quote" in result.output
+    assert "consensus" in result.output
+    assert "ind_fwd_pe" in result.output
+    assert "ps" in result.output
