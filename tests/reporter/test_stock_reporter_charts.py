@@ -6,7 +6,8 @@ import sys
 from pathlib import Path
 from unittest.mock import patch, MagicMock
 
-from scripts.utils.stock_reporter import PerStockReporter
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
+from utils.stock_reporter import PerStockReporter
 
 
 class TestStockReporterChartIntegration:
@@ -59,23 +60,23 @@ class TestStockReporterChartIntegration:
         Path(fake_chart_path).write_text("fake png", encoding="utf-8")
 
         with patch(
-            "scripts.utils.stock_reporter.generate_technical_panel", return_value=fake_chart_path
+            "utils.stock_reporter.generate_technical_panel", return_value=fake_chart_path
         ) as mock_tech, patch(
-            "scripts.utils.stock_reporter.generate_bull_bear_chart", return_value=fake_chart_path
+            "utils.stock_reporter.generate_bull_bear_chart", return_value=fake_chart_path
         ) as mock_bb, patch(
-            "scripts.utils.stock_reporter.generate_radar_chart", return_value=fake_chart_path
+            "utils.stock_reporter.generate_radar_chart", return_value=fake_chart_path
         ) as mock_radar, patch(
-            "scripts.utils.stock_reporter.generate_valuation_comparison", return_value=fake_chart_path
+            "utils.stock_reporter.generate_valuation_comparison", return_value=fake_chart_path
         ) as mock_val, patch(
-            "scripts.utils.stock_reporter.fetch_tencent_quote", return_value={"pe_ttm": 15.0}
+            "utils.stock_reporter.fetch_tencent_quote", return_value={"pe_ttm": 15.0}
         ), patch(
-            "scripts.utils.stock_reporter.fetch_consensus_eps", return_value={}
+            "utils.stock_reporter.fetch_consensus_eps", return_value={}
         ), patch(
-            "scripts.utils.stock_reporter.industry_fwd_pe", return_value=18.0
+            "utils.stock_reporter.industry_fwd_pe", return_value=18.0
         ), patch(
-            "scripts.utils.stock_reporter.fetch_competitor_metrics", return_value={"测试科技": {"forward_pe": 15.0, "ps": 2.0}}
+            "utils.stock_reporter.fetch_competitor_metrics", return_value={"测试科技": {"forward_pe": 15.0, "ps": 2.0}}
         ), patch(
-            "scripts.utils.stock_reporter.competitor_metrics_table", return_value="## 竞争对手财务指标对比\n"
+            "utils.stock_reporter.competitor_metrics_table", return_value="## 竞争对手财务指标对比\n"
         ):
             md_path = reporter.generate_stock_report(stock_name, str(tmp_path))
 
