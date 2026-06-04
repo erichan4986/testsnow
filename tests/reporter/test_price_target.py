@@ -276,3 +276,60 @@ def test_synthesize_resonance():
     assert result["base"] == 112.5
     # Aggressive = weekly 1.618
     assert result["aggressive"] == 125.0
+
+
+def test_synthesize_daily_only():
+    """Only daily pattern present -> daily pattern target used as base."""
+    daily_pattern = {"type": "double_bottom", "is_bullish": True, "neckline": 100, "extreme": 90}
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 115, "1.618": 125}
+    result = synthesize_targets(
+        daily_pattern, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["direction"] == "中线看多"
+    assert result["conservative"] == 100.0  # min(daily_neckline, weekly_fib_1.0)
+    assert result["base"] == 110.0  # daily pattern target
+    assert result["method"] == "日K形态主导"
+
+
+def test_synthesize_neither_pattern():
+    """No patterns present -> pure Fibonacci fallback."""
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 115, "1.618": 125}
+    result = synthesize_targets(
+        None, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["direction"] == "中线看多"
+    assert result["conservative"] == 105.0  # weekly_fib["1.0"]
+    assert result["base"] == 115.0  # weekly_fib["1.272"]
+    assert result["aggressive"] == 125.0  # weekly_fib["1.618"]
+    assert result["method"] == "纯斐波那契扩展（无形态）"
+
+
+def test_synthesize_bearish():
+    """Bearish direction -> targets below current price."""
+    daily_pattern = {"type": "double_top", "is_bullish": False, "neckline": 100, "extreme": 110}
+    daily_fib = {"1.0": 100, "1.272": 90, "1.618": 80}
+    weekly_fib = {"1.0": 95, "1.272": 85, "1.618": 75}
+    result = synthesize_targets(
+        daily_pattern, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=False
+    )
+    assert result["direction"] == "中线看空"
+    assert result["base"] == 90.0  # neckline - height = 100 - 10 = 90
+
+
+def test_synthesize_aggressive_cap():
+    """Aggressive target exceeding 50% cap should be capped and marked as far."""
+    # Neither mode: aggressive = fib["1.618"] = 300, should be capped to 150
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 200, "1.618": 300}
+    result = synthesize_targets(
+        None, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["aggressive"] == 150.0  # capped at 100 * 1.5
+    assert result["aggressive_raw"] == 300.0  # raw uncapped value
+    assert result["is_far_target"] is True
