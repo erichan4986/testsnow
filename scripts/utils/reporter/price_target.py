@@ -31,7 +31,9 @@ def zigzag(close: pd.Series, min_pct: float = 0.05) -> List[Dict]:
         if direction == 0:
             if abs(change) >= min_pct:
                 direction = 1 if change > 0 else -1
-                pivots.append({"idx": last_pivot_idx, "price": last_pivot_price, "type": last_pivot_type})
+                # Initial pivot type depends on first move direction
+                initial_type = "valley" if direction == 1 else "peak"
+                pivots.append({"idx": last_pivot_idx, "price": last_pivot_price, "type": initial_type})
                 last_pivot_type = "peak" if direction == 1 else "valley"
                 last_pivot_idx = i
                 last_pivot_price = price
@@ -58,7 +60,8 @@ def zigzag(close: pd.Series, min_pct: float = 0.05) -> List[Dict]:
 
     # Add final pivot if different from last recorded
     if pivots and last_pivot_idx != pivots[-1]["idx"]:
-        pivots.append({"idx": last_pivot_idx, "price": last_pivot_price, "type": last_pivot_type})
+        final_type = "peak" if last_pivot_price > pivots[-1]["price"] else "valley"
+        pivots.append({"idx": last_pivot_idx, "price": last_pivot_price, "type": final_type})
     elif not pivots:
         pivots.append({"idx": last_pivot_idx, "price": last_pivot_price, "type": last_pivot_type})
 
