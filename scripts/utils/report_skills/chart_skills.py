@@ -40,9 +40,9 @@ class TechnicalAnalysisSkill(BaseSkill):
                 indicators=indicators,
                 output_path=str(output_path),
             )
-            ctx.set("technical_chart_path", chart_path)
+            ctx.set("chart_technical", chart_path)
         else:
-            ctx.set("technical_chart_path", None)
+            ctx.set("chart_technical", None)
 
         return ctx
 
@@ -103,7 +103,7 @@ class ChartGenerationSkill(BaseSkill):
             total_score=total_score,
             output_path=str(radar_path),
         )
-        ctx.set("radar_chart_path", radar_chart_path)
+        ctx.set("chart_radar", radar_chart_path)
         ctx.set("pillar_scores", pillar)
         ctx.set("total_score", total_score)
 
@@ -117,7 +117,7 @@ class ChartGenerationSkill(BaseSkill):
             bearish_args=bearish_args,
             output_path=str(bb_path),
         )
-        ctx.set("bullbear_chart_path", bb_chart_path)
+        ctx.set("chart_bullbear", bb_chart_path)
 
         # Valuation comparison chart
         competitor_metrics = ctx.get("competitor_metrics")
@@ -128,8 +128,8 @@ class ChartGenerationSkill(BaseSkill):
                 competitor_metrics=competitor_metrics,
                 output_path=str(val_path),
             )
-            ctx.set("valuation_chart_path", val_chart_path)
+            ctx.set("chart_valuation", val_chart_path)
         else:
-            ctx.set("valuation_chart_path", None)
+            ctx.set("chart_valuation", None)
 
         return ctx

@@ -44,7 +44,7 @@ class TestTechnicalAnalysisSkill:
             skill = TechnicalAnalysisSkill()
             result = skill.run(ctx)
 
-        assert result.get("technical_chart_path") == str(tmp_path / "tech.png")
+        assert result.get("chart_technical") == str(tmp_path / "tech.png")
         mock_gen.assert_called_once()
 
     def test_skips_when_no_data(self, tmp_path):
@@ -57,7 +57,7 @@ class TestTechnicalAnalysisSkill:
         skill = TechnicalAnalysisSkill()
         result = skill.run(ctx)
 
-        assert result.get("technical_chart_path") is None
+        assert result.get("chart_technical") is None
 
 
 class TestChartGenerationSkill:
@@ -98,9 +98,9 @@ class TestChartGenerationSkill:
             skill = ChartGenerationSkill()
             result = skill.run(ctx)
 
-        assert result.get("radar_chart_path") == str(tmp_path / "radar.png")
-        assert result.get("bullbear_chart_path") == str(tmp_path / "bb.png")
-        assert result.get("valuation_chart_path") == str(tmp_path / "val.png")
+        assert result.get("chart_radar") == str(tmp_path / "radar.png")
+        assert result.get("chart_bullbear") == str(tmp_path / "bb.png")
+        assert result.get("chart_valuation") == str(tmp_path / "val.png")
         assert result.get("total_score") is not None
         assert "pillar_scores" in result.output
         mock_score.assert_called_once()
@@ -141,6 +141,6 @@ class TestChartGenerationSkill:
             skill = ChartGenerationSkill()
             result = skill.run(ctx)
 
-        assert result.get("valuation_chart_path") is None
-        assert result.get("radar_chart_path") is not None
-        assert result.get("bullbear_chart_path") is not None
+        assert result.get("chart_valuation") is None
+        assert result.get("chart_radar") is not None
+        assert result.get("chart_bullbear") is not None
