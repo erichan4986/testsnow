@@ -285,3 +285,41 @@ def profit_risk_filter(
         "potential_gain": round(potential_gain, 2),
         "initial_risk": round(initial_risk, 2),
     }
+
+
+def confidence_score(
+    resonance: int,
+    pattern_quality: int,
+    breakout_quality: int,
+    weekly_adx: int,
+    momentum: int,
+    fib_convergence: int,
+) -> float:
+    """
+    六因子加权评分，返回0-10分。
+    权重：共振30% + 形态20% + 突破20% + 周线ADX15% + 动量5% + 斐波那契汇聚10%
+    """
+    score = (
+        resonance * 0.30 +
+        pattern_quality * 0.20 +
+        breakout_quality * 0.20 +
+        weekly_adx * 0.15 +
+        momentum * 0.05 +
+        fib_convergence * 0.10
+    )
+    return round(score, 1)
+
+
+def confidence_level(score: float, aggressive_is_far: bool = False) -> str:
+    """
+    置信度映射。若激进目标超远，上限锁为"中"。
+    """
+    if aggressive_is_far and score >= 8.0:
+        return "中"  # 上限锁定
+    if score >= 8.0:
+        return "高"
+    elif score >= 6.0:
+        return "中"
+    elif score >= 4.0:
+        return "低"
+    return "观望"

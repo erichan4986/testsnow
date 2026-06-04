@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level
 
 
 def test_zigzag_basic():
@@ -356,3 +356,29 @@ def test_profit_risk_fail():
         min_ratio=1.5,
     )
     assert result["pass"] is False
+
+
+def test_confidence_high():
+    """All best-case factors -> score >= 8.0 (High)."""
+    score = confidence_score(
+        resonance=10, pattern_quality=10, breakout_quality=10,
+        weekly_adx=10, momentum=10, fib_convergence=10,
+    )
+    assert score >= 8.0
+    assert confidence_level(score) == "高"
+
+
+def test_confidence_medium():
+    """Moderate factors -> score between 6.0 and 8.0 (Medium)."""
+    score = confidence_score(
+        resonance=6, pattern_quality=6, breakout_quality=6,
+        weekly_adx=6, momentum=6, fib_convergence=6,
+    )
+    assert 6.0 <= score < 8.0
+    assert confidence_level(score) == "中"
+
+
+def test_confidence_level_far_target_cap():
+    """High score but far target -> confidence capped at '中'."""
+    score = 9.0
+    assert confidence_level(score, aggressive_is_far=True) == "中"
