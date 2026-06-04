@@ -34,6 +34,12 @@ from .reporter.scoring_engine import (
     sentiment_ratio,
     valuation_industry_judgment,
 )
+from .reporter.chart_generator import (
+    generate_bull_bear_chart,
+    generate_radar_chart,
+    generate_technical_panel,
+    generate_valuation_comparison,
+)
 
 
 class PerStockReporter:
@@ -150,6 +156,78 @@ class PerStockReporter:
             if ps:
                 quote["ps"] = ps
 
+        # === 图表生成（在报告各板块中嵌入） ===
+        chart_dir = Path(output_dir) / "charts"
+        chart_dir.mkdir(parents=True, exist_ok=True)
+        self._chart_paths: Dict[str, str] = {}
+
+        # 先初始化 synthesis，供图表生成和后续流程使用
+        synthesis = self._synthesize_sections(stock_name, stock_raw)
+
+        try:
+            # 1. 技术面综合图
+            daily_data = stock_raw.get("technical", {}).get("daily_data", {})
+            indicators = stock_raw.get("technical", {}).get("indicators", {})
+            patterns = indicators.get("_patterns", [])
+            if daily_data and indicators:
+                tech_path = chart_dir / f"{stock_name}_technical_{self.date_str}.png"
+                generate_technical_panel(
+                    stock_name=stock_name,
+                    daily_data=daily_data,
+                    patterns=patterns,
+                    indicators=indicators,
+                    output_path=str(tech_path),
+                )
+                self._chart_paths["technical"] = str(tech_path)
+
+            # 2. 多空论点对比图
+            debate_text = synthesis.get("valuation_debate", "")
+            fund_text = synthesis.get("fundamentals", "")
+            combined = debate_text + "\n" + fund_text
+            bullish_args = self._extract_thesis_points(combined, "bullish")
+            bearish_args = self._extract_thesis_points(combined, "bearish")
+            if bullish_args or bearish_args:
+                bb_path = chart_dir / f"{stock_name}_bullbear_{self.date_str}.png"
+                generate_bull_bear_chart(
+                    stock_name=stock_name,
+                    bullish_args=bullish_args,
+                    bearish_args=bearish_args,
+                    output_path=str(bb_path),
+                )
+                self._chart_paths["bullbear"] = str(bb_path)
+
+            # 3. 五维评分雷达图
+            pillar = compute_pillar_scores(stock_raw, all_posts, quote, consensus, ind_fwd_pe, quote.get("ps") if quote else None)
+            total_score = round(
+                pillar["valuation"] * 0.30 +
+                pillar["technical"] * 0.25 +
+                pillar["sentiment"] * 0.20 +
+                pillar["fundamental"] * 0.15 +
+                pillar["fundflow"] * 0.10,
+                1,
+            )
+            radar_path = chart_dir / f"{stock_name}_radar_{self.date_str}.png"
+            generate_radar_chart(
+                stock_name=stock_name,
+                pillar_scores=pillar,
+                total_score=total_score,
+                output_path=str(radar_path),
+            )
+            self._chart_paths["radar"] = str(radar_path)
+
+            # 4. 估值对比图
+            comp_metrics = fetch_competitor_metrics(stock_name, self.stock_codes)
+            if comp_metrics:
+                val_path = chart_dir / f"{stock_name}_valuation_{self.date_str}.png"
+                generate_valuation_comparison(
+                    stock_name=stock_name,
+                    competitor_metrics=comp_metrics,
+                    output_path=str(val_path),
+                )
+                self._chart_paths["valuation"] = str(val_path)
+        except Exception as e:
+            logger.warning(f"[{stock_name}] 图表生成失败: {e}")
+
         # === 跨来源内容去重与归纳 ===
         # 收集所有来源的高质量内容（雪球 keep + 知乎 report_items）
         zhihu_report_items = stock_raw.get("zhihu", {}).get("report_items", [])
@@ -169,7 +247,7 @@ class PerStockReporter:
                 logger.warning(f"跨来源内容归纳失败: {e}")
 
         # === 主题化综合叙事 ===
-        synthesis = self._synthesize_sections(stock_name, stock_raw)
+        # synthesis 已在图表生成阶段初始化
         has_synthesis = any(
             synthesis.get(k) for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]
         )
@@ -182,7 +260,11 @@ class PerStockReporter:
         sections.append(self._executive_summary(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe, synthesis))
 
         # 一、综合评分与推荐
-        sections.append(composite_score_section(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe))
+        score_section = composite_score_section(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe)
+        radar_chart = getattr(self, "_chart_paths", {}).get("radar")
+        if radar_chart:
+            score_section += f"\n\n### 五维评分雷达图\n\n![{stock_name} 五维评分雷达图]({radar_chart})\n"
+        sections.append(score_section)
 
         # 二、估值与财务快照（精简版）
         sections.append(self._valuation_forecast_compact(stock_name, quote, consensus))
@@ -195,7 +277,11 @@ class PerStockReporter:
         # 竞争对手财务指标对比（无编号）
         comp_metrics = fetch_competitor_metrics(stock_name, self.stock_codes)
         if comp_metrics:
-            sections.append(competitor_metrics_table(stock_name, comp_metrics))
+            comp_table = competitor_metrics_table(stock_name, comp_metrics)
+            val_chart = getattr(self, "_chart_paths", {}).get("valuation")
+            if val_chart:
+                comp_table += f"\n\n### 估值对比图\n\n![{stock_name} 估值对比]({val_chart})\n"
+            sections.append(comp_table)
 
         # 技术面分析（新增）
         tech_section = self._technical_analysis_section(stock_name, stock_raw)
@@ -338,6 +424,14 @@ class PerStockReporter:
         conclusion = self._extract_conclusion(stock_name, combined)
         if conclusion:
             lines.append(f"> **一句话结论**：{conclusion}")
+            lines.append("")
+
+        # --- 多空论点对比图 ---
+        bullbear_chart = getattr(self, "_chart_paths", {}).get("bullbear")
+        if bullbear_chart:
+            lines.append("### 多空论点对比")
+            lines.append("")
+            lines.append(f"![{stock_name} 多空论点对比]({bullbear_chart})")
             lines.append("")
 
         return "\n".join(lines)
@@ -1720,6 +1814,14 @@ Anthropic在最新开发者活动中将基于乐鑫ESP32-S3的M5Stack Cardputer�
                 conf = p.get("confidence", "")
                 desc = p.get("description", "")
                 lines.append(f"- **{p['pattern']}** ({conf}置信): {desc}")
+            lines.append("")
+
+        # --- 技术面综合图 ---
+        tech_chart = getattr(self, "_chart_paths", {}).get("technical")
+        if tech_chart:
+            lines.append("### 技术面综合图")
+            lines.append("")
+            lines.append(f"![{stock_name} 技术面分析]({tech_chart})")
             lines.append("")
 
         return "\n".join(lines)
