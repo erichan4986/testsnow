@@ -166,3 +166,46 @@ def test_extract_unknown_pattern():
     """Unknown pattern should return None."""
     pattern = {"pattern": "三角形"}
     assert extract_pattern_info(pattern) is None
+
+
+from price_target import weekly_trend_analysis
+
+
+def test_weekly_trend_strong_bullish():
+    """ADX>30, +DI>-DI -> strong bullish trend."""
+    # Build a strong upward weekly series (need >=14 points for ADX)
+    base = list(range(100, 128))
+    df = pd.DataFrame({
+        "high": [b + 2 for b in base],
+        "low": [b - 2 for b in base],
+        "close": base,
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "多头"
+    assert trend["adx_score"] == 10
+    assert trend["is_ranging"] is False
+
+
+def test_weekly_trend_short_data():
+    """Less than 14 data points should return insufficient data."""
+    df = pd.DataFrame({
+        "high": [110, 112],
+        "low": [105, 107],
+        "close": [108, 110],
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "数据不足"
+    assert trend["is_ranging"] is True
+
+
+def test_weekly_trend_ranging():
+    """ADX<20 for 4 weeks with tight BOLL -> ranging."""
+    # Flat-ish series with low ADX
+    df = pd.DataFrame({
+        "high": [102, 103, 102, 103, 102, 103, 102, 103, 102, 103, 102, 103, 102, 103, 102],
+        "low": [98, 99, 98, 99, 98, 99, 98, 99, 98, 99, 98, 99, 98, 99, 98],
+        "close": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "震荡"
+    assert bool(trend["is_ranging"]) is True
