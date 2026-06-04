@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter
 
 
 def test_zigzag_basic():
@@ -333,3 +333,26 @@ def test_synthesize_aggressive_cap():
     assert result["aggressive"] == 150.0  # capped at 100 * 1.5
     assert result["aggressive_raw"] == 300.0  # raw uncapped value
     assert result["is_far_target"] is True
+
+
+def test_profit_risk_pass():
+    """Conservative target 150, trigger 130.6, stop 118 -> ratio = 19.4/12.6 = 1.54 >= 1.5 -> pass."""
+    result = profit_risk_filter(
+        conservative_target=150.0,
+        neckline=128.5,
+        daily_atr=7.0,
+        min_ratio=1.5,
+    )
+    assert result["pass"] is True
+    assert result["ratio"] >= 1.5
+
+
+def test_profit_risk_fail():
+    """Conservative target 130, trigger 128.5, stop 118 -> ratio = 1.5/10.5 = 0.14 < 1.5 -> fail."""
+    result = profit_risk_filter(
+        conservative_target=130.0,
+        neckline=128.5,
+        daily_atr=7.0,
+        min_ratio=1.5,
+    )
+    assert result["pass"] is False

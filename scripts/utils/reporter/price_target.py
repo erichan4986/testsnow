@@ -256,3 +256,32 @@ def synthesize_targets(
         "is_far_target": is_far,
         "method": method,
     }
+
+
+def profit_risk_filter(
+    conservative_target: float,
+    neckline: float,
+    daily_atr: float,
+    min_ratio: float = 1.5,
+) -> Dict:
+    """
+    盈亏比过滤（Spec Section 4）。
+    用预估触发价（颈线 + 0.3×ATR）和预估止损价（颈线 - 1.5×ATR）计算。
+    """
+    trigger_price = neckline + 0.3 * daily_atr
+    stop_price = neckline - 1.5 * daily_atr
+    potential_gain = abs(conservative_target - trigger_price)
+    initial_risk = abs(trigger_price - stop_price)
+
+    if initial_risk <= 0:
+        return {"pass": False, "ratio": 0.0, "trigger_price": trigger_price, "stop_price": stop_price}
+
+    ratio = potential_gain / initial_risk
+    return {
+        "pass": ratio >= min_ratio,
+        "ratio": round(ratio, 2),
+        "trigger_price": round(trigger_price, 2),
+        "stop_price": round(stop_price, 2),
+        "potential_gain": round(potential_gain, 2),
+        "initial_risk": round(initial_risk, 2),
+    }
