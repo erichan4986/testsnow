@@ -288,7 +288,7 @@ def test_synthesize_daily_only():
         current_price=100, is_bullish=True
     )
     assert result["direction"] == "中线看多"
-    assert result["conservative"] == 100.0  # min(daily_neckline, weekly_fib_1.0)
+    assert result["conservative"] == 105.0  # min(daily_pattern_target, weekly_fib_1.0)
     assert result["base"] == 110.0  # daily pattern target
     assert result["method"] == "日K形态主导"
 

@@ -229,7 +229,8 @@ def synthesize_targets(
         has_pt = daily_pt if daily_has else weekly_pt
         has_neck = daily_pattern["neckline"] if daily_has else weekly_pattern["neckline"]
         no_fib = weekly_fib if daily_has else daily_fib
-        conservative = min(has_neck, no_fib.get("1.0", has_neck))
+        # 保守目标取形态测距值与另一方斐波那契1.0的较低者
+        conservative = min(has_pt if has_pt is not None else has_neck, no_fib.get("1.0", has_neck))
         base = has_pt
         aggressive = has_pt * 1.3 if has_pt is not None else no_fib.get("1.618", base)
         method = f"{'日K' if daily_has else '周K'}形态主导"
@@ -263,6 +264,7 @@ def profit_risk_filter(
     neckline: float,
     daily_atr: float,
     min_ratio: float = 1.5,
+    is_bullish: bool = True,
 ) -> Dict:
     """
     盈亏比过滤（Spec Section 4）。
@@ -270,12 +272,32 @@ def profit_risk_filter(
     """
     trigger_price = neckline + 0.3 * daily_atr
     stop_price = neckline - 1.5 * daily_atr
-    potential_gain = abs(conservative_target - trigger_price)
     initial_risk = abs(trigger_price - stop_price)
 
     if initial_risk <= 0:
         return {"pass": False, "ratio": 0.0, "trigger_price": trigger_price, "stop_price": stop_price}
 
+    # 方向校验：做多时保守目标必须高于触发价，反之亦然
+    if is_bullish and conservative_target <= trigger_price:
+        return {
+            "pass": False,
+            "ratio": 0.0,
+            "trigger_price": round(trigger_price, 2),
+            "stop_price": round(stop_price, 2),
+            "potential_gain": 0.0,
+            "initial_risk": round(initial_risk, 2),
+        }
+    if not is_bullish and conservative_target >= trigger_price:
+        return {
+            "pass": False,
+            "ratio": 0.0,
+            "trigger_price": round(trigger_price, 2),
+            "stop_price": round(stop_price, 2),
+            "potential_gain": 0.0,
+            "initial_risk": round(initial_risk, 2),
+        }
+
+    potential_gain = abs(conservative_target - trigger_price)
     ratio = potential_gain / initial_risk
     return {
         "pass": ratio >= min_ratio,
@@ -493,6 +515,7 @@ def analyze_price_target(
             conservative_target=targets["conservative"],
             neckline=neckline,
             daily_atr=daily_atr,
+            is_bullish=is_bullish,
         )
 
     if pr_filter and not pr_filter["pass"]:
