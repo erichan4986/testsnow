@@ -97,3 +97,32 @@ def fib_targets_with_convergence(
                 targets[j]["in_convergence"] = True
 
     return targets
+
+
+def pattern_target(neckline: float, extreme: float, is_bullish: bool) -> float:
+    """形态测距：双顶/双底/头肩等。"""
+    height = abs(extreme - neckline)
+    return neckline + height if is_bullish else neckline - height
+
+
+def extract_pattern_info(pattern: Dict) -> Optional[Dict]:
+    """
+    从 technical_analyzer 的形态 dict 中提取颈线价和测距所需信息。
+    支持双底（bottom1, bottom2, peak=neckline）和双顶（top1, top2, valley=neckline）。
+    """
+    ptype = pattern.get("pattern", "")
+    if ptype == "双底":
+        return {
+            "type": "double_bottom",
+            "is_bullish": True,
+            "neckline": pattern.get("peak"),
+            "extreme": pattern.get("bottom1"),
+        }
+    elif ptype == "双顶":
+        return {
+            "type": "double_top",
+            "is_bullish": False,
+            "neckline": pattern.get("valley"),
+            "extreme": pattern.get("top1"),
+        }
+    return None

@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info
 
 
 def test_zigzag_basic():
@@ -130,3 +130,39 @@ def test_fib_no_convergence():
     ]
     targets = fib_targets_with_convergence(bands, level=1.272, convergence_pct=0.03)
     assert not any(t["in_convergence"] for t in targets)
+
+
+def test_double_bottom_target():
+    """Double bottom: neckline=100, bottom=90 -> target=110."""
+    assert pattern_target(100, 90, is_bullish=True) == 110.0
+
+
+def test_double_top_target():
+    """Double top: neckline=90, top=100 -> target=80."""
+    assert pattern_target(90, 100, is_bullish=False) == 80.0
+
+
+def test_extract_double_bottom():
+    """Extract pattern info from a double bottom dict."""
+    pattern = {"pattern": "双底", "bottom1": 90, "bottom2": 91, "peak": 100}
+    info = extract_pattern_info(pattern)
+    assert info["type"] == "double_bottom"
+    assert info["is_bullish"] is True
+    assert info["neckline"] == 100
+    assert info["extreme"] == 90
+
+
+def test_extract_double_top():
+    """Extract pattern info from a double top dict."""
+    pattern = {"pattern": "双顶", "top1": 100, "top2": 101, "valley": 90}
+    info = extract_pattern_info(pattern)
+    assert info["type"] == "double_top"
+    assert info["is_bullish"] is False
+    assert info["neckline"] == 90
+    assert info["extreme"] == 100
+
+
+def test_extract_unknown_pattern():
+    """Unknown pattern should return None."""
+    pattern = {"pattern": "三角形"}
+    assert extract_pattern_info(pattern) is None
