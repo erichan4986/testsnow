@@ -188,3 +188,74 @@ def weekly_trend_analysis(df_weekly: pd.DataFrame) -> Dict:
         "minus_di": round(latest_minus, 1),
         "is_ranging": is_ranging,
     }
+
+
+def synthesize_targets(
+    daily_pattern: Optional[Dict],
+    weekly_pattern: Optional[Dict],
+    daily_fib: Dict,
+    weekly_fib: Dict,
+    current_price: float,
+    is_bullish: bool,
+) -> Dict:
+    """
+    标准化目标合成表（Spec Section 3）。
+    返回: {direction, conservative, base, aggressive, method}
+    """
+    daily_has = daily_pattern is not None
+    weekly_has = weekly_pattern is not None
+
+    # Daily pattern target
+    daily_pt = None
+    if daily_has:
+        daily_pt = pattern_target(daily_pattern["neckline"], daily_pattern["extreme"], is_bullish)
+
+    # Weekly pattern target
+    weekly_pt = None
+    if weekly_has:
+        weekly_pt = pattern_target(weekly_pattern["neckline"], weekly_pattern["extreme"], is_bullish)
+
+    def _get_fib(fib_dict, key, default=None):
+        return fib_dict.get(key, default)
+
+    if daily_has and weekly_has:
+        # 共振：同向有形态
+        conservative = min(
+            _get_fib(weekly_fib, "1.0", float("inf")),
+            daily_pattern["neckline"] if daily_pattern else float("inf"),
+        )
+        base = (daily_pt + _get_fib(weekly_fib, "1.272", daily_pt)) / 2
+        aggressive = _get_fib(weekly_fib, "1.618", weekly_pt or base)
+        method = "A+B交叉验证（日K形态+周K形态共振）"
+    elif daily_has or weekly_has:
+        # 仅一方有形态
+        has_pt = daily_pt if daily_has else weekly_pt
+        has_neck = daily_pattern["neckline"] if daily_has else weekly_pattern["neckline"]
+        no_fib = weekly_fib if daily_has else daily_fib
+        conservative = min(has_neck, _get_fib(no_fib, "1.0", has_neck))
+        base = has_pt
+        aggressive = has_pt * 1.3 if has_pt else _get_fib(no_fib, "1.618", base)
+        method = f"{'日K' if daily_has else '周K'}形态主导"
+    else:
+        # 双方都无形态，只有波段
+        fib = weekly_fib if weekly_fib else daily_fib
+        conservative = _get_fib(fib, "1.0", current_price)
+        base = _get_fib(fib, "1.272", current_price * 1.1)
+        aggressive = _get_fib(fib, "1.618", current_price * 1.2)
+        method = "纯斐波那契扩展（无形态）"
+
+    # 激进目标上限：不超过当前价+50%（科技股+60%）
+    agg_limit = current_price * 1.5
+    # NOTE: actual sector detection (tech=60%) happens at caller level
+    aggressive_capped = min(aggressive, agg_limit) if aggressive else None
+    is_far = aggressive and aggressive > agg_limit
+
+    return {
+        "direction": "中线看多" if is_bullish else "中线看空",
+        "conservative": round(conservative, 2) if conservative else None,
+        "base": round(base, 2) if base else None,
+        "aggressive": round(aggressive_capped, 2) if aggressive_capped else None,
+        "aggressive_raw": round(aggressive, 2) if aggressive else None,
+        "is_far_target": is_far,
+        "method": method,
+    }

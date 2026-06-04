@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets
 
 
 def test_zigzag_basic():
@@ -257,3 +257,22 @@ def test_weekly_trend_boll_bandwidth_gate():
     trend = weekly_trend_analysis(df)
     # ADX low but BOLL wide -> should NOT be ranging
     assert bool(trend["is_ranging"]) is False
+
+
+def test_synthesize_resonance():
+    """Daily and weekly patterns both bullish -> mean for base target."""
+    daily_pattern = {"type": "double_bottom", "is_bullish": True, "neckline": 100, "extreme": 90}
+    weekly_pattern = {"type": "double_bottom", "is_bullish": True, "neckline": 105, "extreme": 95}
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 115, "1.618": 125}
+    result = synthesize_targets(
+        daily_pattern, weekly_pattern, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["direction"] == "中线看多"
+    # Conservative = min of weekly 1.0, daily neckline
+    assert result["conservative"] == 100.0
+    # Base = mean of daily pattern target (110) and weekly 1.272 (115)
+    assert result["base"] == 112.5
+    # Aggressive = weekly 1.618
+    assert result["aggressive"] == 125.0
