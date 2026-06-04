@@ -66,3 +66,34 @@ def zigzag(close: pd.Series, min_pct: float = 0.05) -> List[Dict]:
         pivots.append({"idx": last_pivot_idx, "price": last_pivot_price, "type": last_pivot_type})
 
     return pivots
+
+
+def fib_extension(low: float, high: float, level: float) -> float:
+    """从波段低点到高点的斐波那契扩展。"""
+    return high + (high - low) * (level - 1)
+
+
+def fib_targets_with_convergence(
+    bands: List[Dict], level: float = 1.272, convergence_pct: float = 0.03
+) -> List[Dict]:
+    """
+    计算多个波段的同向扩展位，检查是否形成汇聚区。
+    bands: [{low, high}, ...]
+    返回: [{price, band_idx, in_convergence: bool}, ...]
+    """
+    targets = []
+    for i, band in enumerate(bands):
+        price = fib_extension(band["low"], band["high"], level)
+        targets.append({"price": round(price, 2), "band_idx": i, "in_convergence": False})
+
+    # 检查汇聚：≥2个目标落在 convergence_pct 价格区间内
+    n = len(targets)
+    for i in range(n):
+        for j in range(i + 1, n):
+            p1, p2 = targets[i]["price"], targets[j]["price"]
+            diff = abs(p1 - p2) / max(p1, p2, 1e-9)
+            if diff <= convergence_pct:
+                targets[i]["in_convergence"] = True
+                targets[j]["in_convergence"] = True
+
+    return targets

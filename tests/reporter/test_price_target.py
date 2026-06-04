@@ -3,7 +3,7 @@ import numpy as np
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag
+from price_target import zigzag, fib_extension, fib_targets_with_convergence
 
 
 def test_zigzag_basic():
@@ -102,3 +102,31 @@ def test_zigzag_short_series_empty():
     assert zigzag(pd.Series([100, 105]), min_pct=0.05) == []
     assert zigzag(pd.Series([100]), min_pct=0.05) == []
     assert zigzag(pd.Series([]), min_pct=0.05) == []
+
+
+def test_fib_extension():
+    """Fibonacci extension from low=100 to high=120."""
+    assert fib_extension(100, 120, 1.0) == 120.0
+    assert fib_extension(100, 120, 1.272) == 125.44
+    assert abs(fib_extension(100, 120, 1.618) - 132.36) < 0.01
+
+
+def test_fib_convergence():
+    """Multiple bands pointing to similar prices within 3% should converge."""
+    bands = [
+        {"low": 100, "high": 120},   # 1.272 = 125.44
+        {"low": 105, "high": 122},   # 1.272 = 123.62
+    ]
+    targets = fib_targets_with_convergence(bands, level=1.272, convergence_pct=0.03)
+    # 125.44 vs 123.62: diff = 1.46%, within 3% -> should have convergence info
+    assert any(t["in_convergence"] for t in targets)
+
+
+def test_fib_no_convergence():
+    """Bands with prices far apart should NOT converge."""
+    bands = [
+        {"low": 100, "high": 120},   # 1.272 = 125.44
+        {"low": 50, "high": 80},     # 1.272 = 118.16
+    ]
+    targets = fib_targets_with_convergence(bands, level=1.272, convergence_pct=0.03)
+    assert not any(t["in_convergence"] for t in targets)
