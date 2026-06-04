@@ -112,7 +112,7 @@ class PerStockReporter:
         all_posts = self.stocks_data.get(stock_name, [])
         if not all_posts:
             logger.warning(f"[{stock_name}] 无数据，跳过")
-            return ""
+            return "", ""
 
         # 统一质量门筛选（硬指标 + LLM 评估）
         try:
