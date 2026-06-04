@@ -78,17 +78,30 @@ class TestStockReporterChartIntegration:
         ), patch(
             "utils.stock_reporter.competitor_metrics_table", return_value="## 竞争对手财务指标对比\n"
         ):
-            md_path = reporter.generate_stock_report(stock_name, str(tmp_path))
+            md_path, html_path = reporter.generate_stock_report(stock_name, str(tmp_path))
 
         assert md_path
+        assert html_path
         md_content = Path(md_path).read_text(encoding="utf-8")
+        html_content = Path(html_path).read_text(encoding="utf-8")
 
-        # Assert all 4 chart image references are present
-        # The actual path uses the real chart path pattern; verify by alt text and extension
+        # Assert all 4 chart image references are present in Markdown
         assert f"![{stock_name} 技术面分析](" in md_content
         assert f"![{stock_name} 多空论点对比](" in md_content
         assert f"![{stock_name} 五维评分雷达图](" in md_content
         assert f"![{stock_name} 估值对比](" in md_content
+
+        # Assert HTML Dashboard was generated with key sections
+        assert f"<title>{stock_name} 舆情 Dashboard</title>" in html_content
+        assert "综合评分" in html_content
+        assert "AI推荐" in html_content
+        assert "EV" in html_content
+        assert "技术面分析" in html_content
+        assert "多空观点拆解" in html_content
+        assert "五维评分雷达" in html_content
+        assert "同业估值对比" in html_content
+        assert "操作建议" in html_content
+        assert f"{stock_name}_{reporter.date_str}.md" in html_content
 
         # Assert chart generators were called
         mock_tech.assert_called_once()
