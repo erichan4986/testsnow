@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent / "scripts" / "utils"))
 import pytest
 import time
 from skill_pipeline import SkillContext, BaseSkill, skill, SkillPipeline
+from unittest.mock import patch
 
 
 class TestSkillContext:
@@ -38,18 +39,20 @@ class TestBaseSkill:
 
 class TestSkillDecorator:
     def test_skill_decorator_runs_and_logs_time(self):
-        @skill(name="test_skill")
-        def my_skill(ctx):
-            time.sleep(0.01)
-            ctx.set("decorated", True)
-            return ctx
+        call_times = [0.0, 0.05]  # start, end
 
-        ctx = SkillContext()
-        result = my_skill(ctx)
-        assert result.get("decorated") is True
-        assert "_skill_times" in result.metadata
-        assert "test_skill" in result.metadata["_skill_times"]
-        assert result.metadata["_skill_times"]["test_skill"] >= 0.01
+        with patch("skill_pipeline.time.time", side_effect=call_times):
+            @skill(name="test_skill")
+            def my_skill(ctx):
+                ctx.set("decorated", True)
+                return ctx
+
+            ctx = SkillContext()
+            result = my_skill(ctx)
+            assert result.get("decorated") is True
+            assert "_skill_times" in result.metadata
+            assert "test_skill" in result.metadata["_skill_times"]
+            assert result.metadata["_skill_times"]["test_skill"] == 0.05
 
 
 class TestSkillPipeline:
@@ -101,3 +104,37 @@ class TestSkillPipeline:
         assert returned is pipeline
         pipeline.add(step2)
         assert len(pipeline.skills) == 2
+
+    def test_empty_pipeline(self):
+        pipeline = SkillPipeline([])
+        result = pipeline.run()
+        assert isinstance(result, SkillContext)
+        assert result.output == {}
+        assert result.input == {}
+
+    def test_skill_raises_exception(self):
+        @skill()
+        def failing_skill(ctx):
+            ctx.set("partial", True)
+            raise ValueError("boom")
+
+        ctx = SkillContext()
+        with pytest.raises(ValueError, match="boom"):
+            failing_skill(ctx)
+        assert ctx.get("partial") is True
+
+    def test_context_set_overwrites(self):
+        ctx = SkillContext()
+        ctx.set("key", "first")
+        assert ctx.get("key") == "first"
+        ctx.set("key", "second")
+        assert ctx.get("key") == "second"
+
+    def test_pipeline_exception_propagates(self):
+        @skill()
+        def failing_skill(ctx):
+            raise ValueError("boom")
+
+        pipeline = SkillPipeline([failing_skill])
+        with pytest.raises(ValueError, match="boom"):
+            pipeline.run()

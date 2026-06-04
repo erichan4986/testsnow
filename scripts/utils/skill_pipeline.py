@@ -1,5 +1,7 @@
 """Core abstractions for the Skill Pipeline framework."""
 
+__all__ = ["SkillContext", "BaseSkill", "skill", "SkillPipeline"]
+
 import logging
 import time
 from abc import ABC, abstractmethod
@@ -18,7 +20,7 @@ class SkillContext:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
     def get(self, key: str, default: Any = None) -> Any:
-        """Check output first, then input for a key."""
+        """Get a value from context. Checks output first, then input."""
         if key in self.output:
             return self.output[key]
         return self.input.get(key, default)
