@@ -139,7 +139,7 @@ def weekly_trend_analysis(df_weekly: pd.DataFrame) -> Dict:
     返回: {direction, adx, adx_score, plus_di, minus_di, is_ranging}
     """
     if df_weekly is None or len(df_weekly) < 14:
-        return {"direction": "数据不足", "adx_score": 0, "is_ranging": True}
+        return {"direction": "数据不足", "adx": None, "adx_score": 0, "plus_di": None, "minus_di": None, "is_ranging": True}
 
     close = df_weekly["close"]
     adx, plus_di, minus_di = _adx(df_weekly)
@@ -157,8 +157,14 @@ def weekly_trend_analysis(df_weekly: pd.DataFrame) -> Dict:
     elif latest_adx > 20 and latest_plus > latest_minus:
         adx_score = 4
         direction = "多头"
+    elif latest_adx > 30 and latest_plus < latest_minus:
+        adx_score = 10
+        direction = "空头"
     elif latest_adx > 25 and latest_plus < latest_minus:
         adx_score = 7
+        direction = "空头"
+    elif latest_adx > 20 and latest_plus < latest_minus:
+        adx_score = 4
         direction = "空头"
     else:
         adx_score = 0

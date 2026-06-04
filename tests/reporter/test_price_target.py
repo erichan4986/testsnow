@@ -209,3 +209,51 @@ def test_weekly_trend_ranging():
     trend = weekly_trend_analysis(df)
     assert trend["direction"] == "震荡"
     assert bool(trend["is_ranging"]) is True
+
+
+def test_weekly_trend_strong_bearish():
+    """ADX>30, +DI<-DI -> strong bearish trend."""
+    base = list(range(128, 100, -1))
+    df = pd.DataFrame({
+        "high": [b + 2 for b in base],
+        "low": [b - 2 for b in base],
+        "close": base,
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "空头"
+    assert trend["adx_score"] == 10
+    assert trend["is_ranging"] is False
+
+
+def test_weekly_trend_adx_boundary_score():
+    """ADX between 25 and 30 with +DI>-DI -> score 7."""
+    # Construct a moderate uptrend: 3 steps +0.3, then 1 step -0.5
+    # This yields ADX ~27.5, score 7 (between the >25 and >30 thresholds)
+    close = [100]
+    for i in range(1, 30):
+        close.append(close[-1] + (0.3 if i % 4 != 0 else -0.5))
+    df = pd.DataFrame({
+        "high": [c + 1.5 for c in close],
+        "low": [c - 1.5 for c in close],
+        "close": close,
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "多头"
+    assert trend["adx_score"] == 7
+
+
+def test_weekly_trend_boll_bandwidth_gate():
+    """ADX<20 for 4 weeks but BOLL bandwidth >=8% -> is_ranging=False."""
+    # Oscillating close with amplitude 3 yields BOLL bandwidth ~11%
+    # while ADX stays low (~7) due to lack of directional trend
+    close = [100]
+    for i in range(1, 30):
+        close.append(100 + (3 if i % 3 == 0 else -3))
+    df = pd.DataFrame({
+        "high": [c + 1.0 for c in close],
+        "low": [c - 1.0 for c in close],
+        "close": close,
+    })
+    trend = weekly_trend_analysis(df)
+    # ADX low but BOLL wide -> should NOT be ranging
+    assert bool(trend["is_ranging"]) is False
