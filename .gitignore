@@ -1,0 +1,30 @@
+# Environment variables and secrets
+.env
+cookies.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Data and reports (keep directory structure but ignore content)
+/data/raw/*.json
+/reports/*.md
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Worktrees
+.worktrees/
