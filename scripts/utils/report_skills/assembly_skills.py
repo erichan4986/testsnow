@@ -9,7 +9,7 @@ else:
 
 
 class ReportAssemblySkill(BaseSkill):
-    """Markdown + HTML Dashboard 组装。"""
+    """Markdown + HTML Dashboard 组装。复用 PerStockReporter 的 section 方法保留完整报告结构。"""
     name = "report_assembly"
 
     def run(self, ctx: SkillContext) -> SkillContext:
@@ -31,163 +31,161 @@ class ReportAssemblySkill(BaseSkill):
         ctx.set("html_path", str(html_path))
         return ctx
 
-    def _assemble_markdown(self, ctx: SkillContext) -> str:
-        """组装 Markdown 报告。"""
+    def _reporter(self, ctx: SkillContext):
+        """构造一个轻量的 PerStockReporter 实例，用于调用旧 section 方法。"""
+        try:
+            from ..stock_reporter import PerStockReporter
+        except ImportError:
+            try:
+                from utils.stock_reporter import PerStockReporter
+            except ImportError:
+                from stock_reporter import PerStockReporter
+
         stock_name = ctx.get("stock_name")
         date_str = ctx.get("date_str", "")
-        date_display = f"{date_str[:4]}年{date_str[4:6]}月{date_str[6:]}日" if len(date_str) == 8 else date_str
-        total_score = ctx.get("total_score", 0)
-        pillar = ctx.get("pillar_scores", {})
+        all_posts = ctx.get("all_posts", [])
+        stock_raw = ctx.get("stock_raw", {})
+        stock_codes = ctx.get("stock_codes", {})
+
+        reporter = PerStockReporter(
+            stocks_data={stock_name: all_posts},
+            stock_codes=stock_codes,
+            raw_data={stock_name: stock_raw},
+        )
+        reporter.date_str = date_str
+        reporter.date_display = f"{date_str[:4]}年{date_str[4:6]}月{date_str[6:]}日" if len(date_str) == 8 else date_str
+        reporter._chart_paths = {
+            "technical": ctx.get("chart_technical"),
+            "bullbear": ctx.get("chart_bullbear"),
+            "radar": ctx.get("chart_radar"),
+            "valuation": ctx.get("chart_valuation"),
+        }
+        return reporter
+
+    def _assemble_markdown(self, ctx: SkillContext) -> str:
+        """组装完整 Markdown 报告。"""
+        stock_name = ctx.get("stock_name")
+        all_posts = ctx.get("all_posts", [])
+        stock_raw = ctx.get("stock_raw", {})
+        keep_posts = ctx.get("keep_posts", [])
+        quote = ctx.get("quote")
+        consensus = ctx.get("consensus")
+        ind_fwd_pe = ctx.get("ind_fwd_pe")
         synthesis = ctx.get("synthesis", {})
-        quote = ctx.get("quote") or {}
+        stock_codes = ctx.get("stock_codes", {})
+        chart_paths = {
+            "technical": ctx.get("chart_technical"),
+            "bullbear": ctx.get("chart_bullbear"),
+            "radar": ctx.get("chart_radar"),
+            "valuation": ctx.get("chart_valuation"),
+        }
 
-        lines = [
-            f"# {stock_name} 舆情深度报告",
-            f"",
-            f"> 生成日期：{date_display}",
-            f"> 综合评分：{total_score}/10",
-            f"",
-            f"## 一、综合评分与推荐",
-            f"",
-            f"| 维度 | 评分 |",
-            f"|------|------|",
-            f"| 估值 | {pillar.get('valuation', 0)} |",
-            f"| 技术 | {pillar.get('technical', 0)} |",
-            f"| 情绪 | {pillar.get('sentiment', 0)} |",
-            f"| 基本面 | {pillar.get('fundamental', 0)} |",
-            f"| 资金流 | {pillar.get('fundflow', 0)} |",
-            f"",
-        ]
+        reporter = self._reporter(ctx)
 
-        # Embed radar chart if available
-        radar_chart = ctx.get("chart_radar")
+        # 导入旧辅助函数
+        try:
+            from ..reporter.scoring_engine import composite_score_section, industry_specific_risk_table, risk_score_section
+            from ..reporter.data_fetcher import fetch_competitor_metrics, competitor_metrics_table
+        except ImportError:
+            try:
+                from utils.reporter.scoring_engine import composite_score_section, industry_specific_risk_table, risk_score_section
+                from utils.reporter.data_fetcher import fetch_competitor_metrics, competitor_metrics_table
+            except ImportError:
+                from reporter.scoring_engine import composite_score_section, industry_specific_risk_table, risk_score_section
+                from reporter.data_fetcher import fetch_competitor_metrics, competitor_metrics_table
+
+        sections = []
+        sections.append(reporter._header(stock_name))
+        sections.append(reporter._executive_summary(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe, synthesis))
+
+        # 一、综合评分与推荐
+        score_section = composite_score_section(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe)
+        radar_chart = chart_paths.get("radar")
         if radar_chart:
-            lines.append(f"### 五维评分雷达图")
-            lines.append(f"")
-            lines.append(f"![{stock_name} 五维评分雷达图]({radar_chart})")
-            lines.append(f"")
+            score_section += f"\n\n### 五维评分雷达图\n\n![{stock_name} 五维评分雷达图]({radar_chart})\n"
+        sections.append(score_section)
 
-        lines.extend([
-            f"## 二、核心观点",
-            f"",
-            f"**行业逻辑**：{synthesis.get('industry_logic', 'N/A')}",
-            f"",
-            f"**基本面**：{synthesis.get('fundamentals', 'N/A')}",
-            f"",
-            f"**估值多空**：{synthesis.get('valuation_debate', 'N/A')}",
-            f"",
-        ])
+        # 二、估值与财务快照
+        sections.append(reporter._valuation_forecast_compact(stock_name, quote, consensus))
+        quarterly_fin = reporter._quarterly_financials_table(stock_name)
+        if quarterly_fin:
+            sections.append(quarterly_fin)
 
-        # Embed bull-bear chart if available
-        bullbear_chart = ctx.get("chart_bullbear")
-        if bullbear_chart:
-            lines.append(f"### 多空观点拆解")
-            lines.append(f"")
-            lines.append(f"![{stock_name} 多空论点对比]({bullbear_chart})")
-            lines.append(f"")
+        # 竞争对手财务指标对比
+        comp_metrics = fetch_competitor_metrics(stock_name, stock_codes)
+        if comp_metrics:
+            comp_table = competitor_metrics_table(stock_name, comp_metrics)
+            val_chart = chart_paths.get("valuation")
+            if val_chart:
+                comp_table += f"\n\n### 同业估值对比\n\n![{stock_name} 估值对比]({val_chart})\n"
+            sections.append(comp_table)
 
-        lines.extend([
-            f"**资金情绪**：{synthesis.get('funding_sentiment', 'N/A')}",
-            f"",
-            f"**事件催化**：{synthesis.get('events_catalysts', 'N/A')}",
-            f"",
-            f"## 三、技术面分析",
-            f"",
-        ])
-
-        # Embed technical chart if available
-        tech_chart = ctx.get("chart_technical")
+        # 技术面分析
+        tech_section = reporter._technical_analysis_section(stock_name, stock_raw)
+        if tech_section:
+            sections.append(tech_section)
+        tech_chart = chart_paths.get("technical")
         if tech_chart:
-            lines.append(f"![{stock_name} 技术面分析]({tech_chart})")
-            lines.append(f"")
+            sections.append(f"### 技术面综合分析\n\n![{stock_name} 技术面分析]({tech_chart})\n")
 
-        lines.extend([
-            f"## 四、行情数据",
-            f"",
-            f"- PE(TTM): {quote.get('pe_ttm', 'N/A')}",
-            f"- 市值: {quote.get('market_cap', 'N/A')}",
-            f"",
-        ])
+        # 价格目标与触发条件
+        price_target_section = reporter._price_target_section(stock_name, stock_raw)
+        if price_target_section:
+            sections.append(price_target_section)
 
-        # Embed valuation chart if available
-        val_chart = ctx.get("chart_valuation")
-        if val_chart:
-            lines.append(f"### 同业估值对比")
-            lines.append(f"")
-            lines.append(f"![{stock_name} 估值对比]({val_chart})")
-            lines.append(f"")
+        # 核心事实基座
+        core_facts = synthesis.get("core_facts", [])
+        if core_facts:
+            sections.append(reporter._core_facts_table(core_facts))
 
-        return "\n".join(lines)
+        # 深度分析 / 降级旧版板块
+        has_synthesis = any(
+            synthesis.get(k) for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]
+        )
+        if has_synthesis:
+            sections.append(reporter._deep_analysis(stock_name, synthesis))
+        else:
+            sections.append(reporter._sentiment_and_competition(stock_name, all_posts))
+            sections.append(reporter._core_topics(stock_name, all_posts))
+            sections.append(reporter._zhihu_section(stock_name, stock_raw.get("zhihu", {})))
+            featured_posts = [p for p in keep_posts if p.get("_track") == "featured"]
+            sections.append(reporter._featured_posts(stock_name, featured_posts))
+            sections.append(reporter._comment_highlights(stock_name, all_posts))
+
+        # 行业特有风险
+        chip_risk = industry_specific_risk_table(stock_name)
+        if chip_risk:
+            sections.append(chip_risk)
+
+        # 风险综合评估
+        watch_points = reporter._risks_and_watch(stock_name, all_posts)
+        synthesis_texts = [synthesis.get(k, "") for k in ["industry_logic", "fundamentals", "valuation_debate", "funding_sentiment", "events_catalysts"]]
+        sections.append(risk_score_section(stock_name, all_posts, stock_raw, quote, consensus, ind_fwd_pe, watch_points, "\n".join(synthesis_texts)))
+
+        # 信息来源汇总
+        if has_synthesis and synthesis.get("citations"):
+            sections.append(reporter._citations_section("七、信息来源汇总", synthesis["citations"]))
+
+        sections.append(reporter._footer())
+
+        return "\n\n".join(sections)
 
     def _assemble_html(self, ctx: SkillContext) -> str:
-        """组装 HTML Dashboard。"""
+        """组装 HTML Dashboard。复用旧 _generate_html_dashboard 以保留完整信息。"""
         stock_name = ctx.get("stock_name")
+        output_dir = ctx.get("output_dir")
         date_str = ctx.get("date_str")
-        md_path = f"{stock_name}_{date_str}.md"
-        total_score = ctx.get("total_score", 0)
-        pillar = ctx.get("pillar_scores", {})
-        quote = ctx.get("quote") or {}
-        pe_ttm = quote.get("pe_ttm", "N/A")
 
-        ev_html = ""
-        if isinstance(pe_ttm, (int, float)) and pe_ttm != 0:
-            ev_html = f"<p>EV 隐含预期: 基于 PE {pe_ttm:.1f} 估算</p>"
+        reporter = self._reporter(ctx)
+        chart_paths = {
+            "technical": ctx.get("chart_technical"),
+            "bullbear": ctx.get("chart_bullbear"),
+            "radar": ctx.get("chart_radar"),
+            "valuation": ctx.get("chart_valuation"),
+        }
 
-        return f"""<!DOCTYPE html>
-<html lang="zh-CN">
-<head>
-<meta charset="UTF-8">
-<title>{stock_name} 舆情 Dashboard</title>
-<script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 p-6">
-<div class="max-w-5xl mx-auto space-y-6">
-  <h1 class="text-3xl font-bold mb-4">{stock_name} 舆情 Dashboard</h1>
-  <p class="text-gray-600 mb-6">日期: {date_str}</p>
+        # 复用旧 HTML 生成方法
+        html_content = reporter._generate_html_dashboard(stock_name, chart_paths)
 
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">综合评分</h2>
-    <p class="text-2xl font-bold text-blue-600">{total_score}/10</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">AI推荐</h2>
-    <p>基于五维评分模型生成，请结合完整报告判断。</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">EV</h2>
-    {ev_html}
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">技术面分析</h2>
-    <p>技术面图表已嵌入 Markdown 报告。</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">多空观点拆解</h2>
-    <p>多空论点对比图已嵌入 Markdown 报告。</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">五维评分雷达</h2>
-    <p>雷达图已嵌入 Markdown 报告。</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">同业估值对比</h2>
-    <p>估值对比图已嵌入 Markdown 报告。</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <h2 class="text-xl font-semibold mb-2">操作建议</h2>
-    <p>请结合综合评分与核心观点做出投资决策。</p>
-  </div>
-
-  <div class="bg-white rounded-lg shadow p-6">
-    <p>完整报告请查看：<a href="{md_path}" class="text-blue-600 underline">{md_path}</a></p>
-  </div>
-</div>
-</body>
-</html>"""
+        # 保证 HTML 文件名和 md 文件名一致（测试中期望 {stock_name}_{date_str}.html）
+        return html_content
