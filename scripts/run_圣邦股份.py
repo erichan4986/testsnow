@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""黑芝麻智能全流程报告生成（港股 + 知乎搜索 + 读取已抓取雪球数据）"""
+"""圣邦股份全流程报告生成（A股 + 知乎搜索 + 技术面分析）"""
 
 import json
 import logging
@@ -7,7 +7,6 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# 加载 .env 中的环境变量
 from dotenv import load_dotenv
 env_path = Path(__file__).parent.parent / ".env"
 if env_path.exists():
@@ -16,7 +15,7 @@ if env_path.exists():
 sys.path.insert(0, str(Path(__file__).parent))
 
 from utils.fetcher import fetch_all_stocks
-from utils.data_collector import ZhihuCollector
+from utils.data_collector import ZhihuCollector, TechnicalCollector
 from utils.stock_reporter import PerStockReporter
 from utils.pdf_exporter import export_pdf
 
@@ -28,21 +27,18 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STOCK = {
-    "name": "黑芝麻智能",
-    "code": "02533",
-    "xueqiu_code": "02533",
-    "gid": "hk02533"
+    "name": "圣邦股份",
+    "code": "300661",
+    "xueqiu_code": "SZ300661",
+    "gid": "300661"
 }
 STOCK_NAME = STOCK["name"]
 
-KEYWORDS = ["智能驾驶芯片", "自动驾驶", "华山芯片", "黑芝麻", "地平线", "Mobileye"]
+KEYWORDS = ["圣邦股份", "模拟芯片", "电源管理芯片", "半导体", "PMIC"]
 
 
 def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
-    """加载已抓取的雪球数据。优先匹配指定日期，否则回退到最近日期的缓存。"""
     raw_dir = Path(__file__).parent.parent / "data" / "raw"
-
-    # 1. 优先指定日期
     candidate = raw_dir / f"xueqiu_data_{date_str}_{stock_name}.json"
     if candidate.exists():
         try:
@@ -56,7 +52,6 @@ def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
         except Exception as e:
             logger.warning(f"读取雪球缓存失败: {e}")
 
-    # 2. 回退到最近日期的缓存
     all_candidates = sorted(
         raw_dir.glob(f"xueqiu_data_*_{stock_name}.json"),
         key=lambda p: p.stat().st_mtime,
@@ -76,7 +71,7 @@ def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
         except Exception as e:
             logger.warning(f"读取雪球缓存失败: {e}")
 
-    logger.info(f"未找到任何雪球缓存文件")
+    logger.info("未找到任何雪球缓存文件")
     return []
 
 
@@ -90,8 +85,8 @@ def main():
     logger.info(f"日期: {date_str}")
     logger.info("=" * 50)
 
-    # 1. 加载帖子数据（先尝试雪球缓存，不存在则回退东财）
-    logger.info("\n[1/4] 加载帖子数据...")
+    # 1. 加载帖子数据
+    logger.info("\n[1/5] 加载帖子数据...")
     posts = _load_xueqiu_data(STOCK_NAME, date_str)
 
     if posts:
@@ -103,7 +98,6 @@ def main():
         total_posts = len(stocks_data.get(STOCK_NAME, []))
         logger.info(f"  东财获取 {total_posts} 条帖子")
 
-    # 东财列表页帖子无正文，用标题回退填充，并补充基础互动数据
     for p in stocks_data.get(STOCK_NAME, []):
         if not p.get("content"):
             p["content"] = p.get("title", "")
@@ -111,8 +105,18 @@ def main():
             p["like"] = 10
             p["comment"] = 5
 
-    # 2. 采集知乎内容（站内搜索 + 全网搜索）
-    logger.info("\n[2/4] 采集知乎内容...")
+    # 2. 采集技术面数据（A股）
+    logger.info("\n[2/5] 采集技术面数据...")
+    tech_collector = TechnicalCollector()
+    tech_data = tech_collector.collect(STOCK["code"], market=0, days=120)
+    if tech_data:
+        logger.info(f"  技术面采集完成: {tech_data.get('days', 0)} 天数据, "
+                    f"indicators={list(tech_data.get('indicators', {}).keys())[:8]}")
+    else:
+        logger.warning("  技术面数据为空")
+
+    # 3. 采集知乎内容
+    logger.info("\n[3/5] 采集知乎内容...")
     zhihu_collector = ZhihuCollector()
     zhihu_data = zhihu_collector.collect(
         stock_name=STOCK_NAME,
@@ -129,7 +133,7 @@ def main():
                 f"丢弃={gate_stats.get('discard', 0)}")
     logger.info(f"  报告用: {len(report_items)} 条, 知识沉淀: {len(knowledge_items)} 条")
 
-    # 3. 保存原始数据
+    # 4. 保存原始数据
     raw_dir = Path(__file__).parent.parent / "data" / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_path = raw_dir / f"report_input_{date_str}_{STOCK_NAME}.json"
@@ -137,19 +141,20 @@ def main():
         with open(raw_path, "w", encoding="utf-8") as f:
             json.dump({
                 "date": date_str,
-                "stock_codes": {STOCK_NAME: "02533"},
+                "stock_codes": {STOCK_NAME: STOCK["code"]},
                 "stocks_data": stocks_data,
             }, f, ensure_ascii=False, indent=2)
-        logger.info(f"\n[3/4] 原始数据已保存: {raw_path}")
+        logger.info(f"\n[4/5] 原始数据已保存: {raw_path}")
     except Exception as e:
-        logger.warning(f"\n[3/4] 原始数据保存失败: {e}")
+        logger.warning(f"\n[4/5] 原始数据保存失败: {e}")
 
-    # 4. 生成报告
-    logger.info("\n[4/4] 生成个股深度报告...")
-    stock_codes = {STOCK_NAME: "02533"}
+    # 5. 生成报告
+    logger.info("\n[5/5] 生成个股深度报告...")
+    stock_codes = {STOCK_NAME: STOCK["code"]}
     collected_data = {
         STOCK_NAME: {
             "zhihu": zhihu_data,
+            "technical": tech_data,
         }
     }
     reporter = PerStockReporter(
@@ -162,7 +167,7 @@ def main():
     if html_path:
         logger.info(f"  Dashboard 已生成: {html_path}")
 
-    # 5. 导出 PDF
+    # 6. 导出 PDF
     if md_path:
         logger.info("\n导出 PDF...")
         try:
