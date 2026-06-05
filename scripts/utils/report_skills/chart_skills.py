@@ -1,7 +1,33 @@
 """Technical analysis and chart generation skills."""
 
+import sys
 from pathlib import Path
-from skill_pipeline import BaseSkill, SkillContext
+
+if __name__.startswith("utils."):
+    from ..skill_pipeline import BaseSkill, SkillContext
+else:
+    from skill_pipeline import BaseSkill, SkillContext
+
+# Module-level imports so tests can patch them via unittest.mock
+try:
+    from reporter.chart_generator import (
+        generate_bull_bear_chart,
+        generate_radar_chart,
+        generate_technical_panel,
+        generate_valuation_comparison,
+    )
+    from reporter.scoring_engine import compute_pillar_scores
+except ImportError:
+    utils_dir = Path(__file__).parent.parent
+    if str(utils_dir) not in sys.path:
+        sys.path.insert(0, str(utils_dir))
+    from reporter.chart_generator import (
+        generate_bull_bear_chart,
+        generate_radar_chart,
+        generate_technical_panel,
+        generate_valuation_comparison,
+    )
+    from reporter.scoring_engine import compute_pillar_scores
 
 
 class TechnicalAnalysisSkill(BaseSkill):
@@ -21,15 +47,6 @@ class TechnicalAnalysisSkill(BaseSkill):
         daily_data = tech.get("daily_data", {})
         indicators = tech.get("indicators", {})
         patterns = indicators.get("_patterns", [])
-
-        try:
-            from reporter.chart_generator import generate_technical_panel
-        except ImportError:
-            import sys
-            utils_dir = Path(__file__).parent.parent
-            if str(utils_dir) not in sys.path:
-                sys.path.insert(0, str(utils_dir))
-            from reporter.chart_generator import generate_technical_panel
 
         if daily_data and indicators:
             output_path = Path(output_dir) / f"{stock_name}_technical.png"
@@ -64,25 +81,6 @@ class ChartGenerationSkill(BaseSkill):
 
         if not output_dir:
             output_dir = str(Path(__file__).parent.parent.parent.parent / "reports" / "charts")
-
-        try:
-            from reporter.chart_generator import (
-                generate_bull_bear_chart,
-                generate_radar_chart,
-                generate_valuation_comparison,
-            )
-            from reporter.scoring_engine import compute_pillar_scores
-        except ImportError:
-            import sys
-            utils_dir = Path(__file__).parent.parent
-            if str(utils_dir) not in sys.path:
-                sys.path.insert(0, str(utils_dir))
-            from reporter.chart_generator import (
-                generate_bull_bear_chart,
-                generate_radar_chart,
-                generate_valuation_comparison,
-            )
-            from reporter.scoring_engine import compute_pillar_scores
 
         # Compute pillar scores for radar chart
         pillar = compute_pillar_scores(stock_raw, keep_posts, quote, consensus, ind_fwd_pe, ps)

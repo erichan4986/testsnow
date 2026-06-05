@@ -1,17 +1,27 @@
 """Report generation skills package."""
 
+if __name__.startswith("utils."):
+    from ..skill_pipeline import SkillPipeline
+else:
+    from skill_pipeline import SkillPipeline
+
 from .analysis_skills import cross_source_consolidation_skill, scoring_skill
 from .chart_skills import ChartGenerationSkill, TechnicalAnalysisSkill
-from .data_skills import data_loading_skill, quality_gate_skill, quote_fetching_skill
+from .data_skills import (
+    competitor_fetching_skill,
+    data_loading_skill,
+    quality_gate_skill,
+    quote_fetching_skill,
+)
 from .assembly_skills import ReportAssemblySkill
 from .synthesis_skills import SynthesisSkill
-from skill_pipeline import SkillPipeline
 
 __all__ = [
     "cross_source_consolidation_skill",
     "data_loading_skill",
     "quality_gate_skill",
     "quote_fetching_skill",
+    "competitor_fetching_skill",
     "scoring_skill",
     "TechnicalAnalysisSkill",
     "ChartGenerationSkill",
@@ -28,6 +38,7 @@ def build_stock_report_pipeline(llm_client=None) -> SkillPipeline:
         quality_gate_skill,
         cross_source_consolidation_skill,
         quote_fetching_skill,
+        competitor_fetching_skill,
         TechnicalAnalysisSkill(),
         SynthesisSkill(llm_client=llm_client),
         scoring_skill,

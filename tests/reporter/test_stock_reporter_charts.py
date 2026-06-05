@@ -60,21 +60,21 @@ class TestStockReporterChartIntegration:
         Path(fake_chart_path).write_text("fake png", encoding="utf-8")
 
         with patch(
-            "utils.stock_reporter.generate_technical_panel", return_value=fake_chart_path
+            "utils.report_skills.chart_skills.generate_technical_panel", return_value=fake_chart_path
         ) as mock_tech, patch(
-            "utils.stock_reporter.generate_bull_bear_chart", return_value=fake_chart_path
+            "utils.report_skills.chart_skills.generate_bull_bear_chart", return_value=fake_chart_path
         ) as mock_bb, patch(
-            "utils.stock_reporter.generate_radar_chart", return_value=fake_chart_path
+            "utils.report_skills.chart_skills.generate_radar_chart", return_value=fake_chart_path
         ) as mock_radar, patch(
-            "utils.stock_reporter.generate_valuation_comparison", return_value=fake_chart_path
+            "utils.report_skills.chart_skills.generate_valuation_comparison", return_value=fake_chart_path
         ) as mock_val, patch(
-            "utils.stock_reporter.fetch_tencent_quote", return_value={"pe_ttm": 15.0}
+            "utils.report_skills.data_skills.fetch_tencent_quote", return_value={"pe_ttm": 15.0}
         ), patch(
-            "utils.stock_reporter.fetch_consensus_eps", return_value={}
+            "utils.report_skills.data_skills.fetch_consensus_eps", return_value={}
         ), patch(
-            "utils.stock_reporter.industry_fwd_pe", return_value=18.0
+            "utils.report_skills.data_skills.industry_fwd_pe", return_value=18.0
         ), patch(
-            "utils.stock_reporter.fetch_competitor_metrics", return_value={"测试科技": {"forward_pe": 15.0, "ps": 2.0}}
+            "utils.report_skills.data_skills.fetch_competitor_metrics", return_value={"测试科技": {"forward_pe": 15.0, "ps": 2.0}}
         ), patch(
             "utils.stock_reporter.competitor_metrics_table", return_value="## 竞争对手财务指标对比\n"
         ):

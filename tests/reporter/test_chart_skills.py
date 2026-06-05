@@ -40,7 +40,7 @@ class TestTechnicalAnalysisSkill:
             "output_dir": str(tmp_path),
         })
 
-        with patch("reporter.chart_generator.generate_technical_panel", return_value=str(tmp_path / "tech.png")) as mock_gen:
+        with patch("report_skills.chart_skills.generate_technical_panel", return_value=str(tmp_path / "tech.png")) as mock_gen:
             skill = TechnicalAnalysisSkill()
             result = skill.run(ctx)
 
@@ -84,16 +84,16 @@ class TestChartGenerationSkill:
             "output_dir": str(tmp_path),
         })
 
-        with patch("reporter.scoring_engine.compute_pillar_scores", return_value={
+        with patch("report_skills.chart_skills.compute_pillar_scores", return_value={
             "valuation": 6.0,
             "technical": 7.0,
             "sentiment": 5.0,
             "fundamental": 6.0,
             "fundflow": 4.0,
         }) as mock_score, \
-             patch("reporter.chart_generator.generate_radar_chart", return_value=str(tmp_path / "radar.png")) as mock_radar, \
-             patch("reporter.chart_generator.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")) as mock_bb, \
-             patch("reporter.chart_generator.generate_valuation_comparison", return_value=str(tmp_path / "val.png")) as mock_val:
+             patch("report_skills.chart_skills.generate_radar_chart", return_value=str(tmp_path / "radar.png")) as mock_radar, \
+             patch("report_skills.chart_skills.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")) as mock_bb, \
+             patch("report_skills.chart_skills.generate_valuation_comparison", return_value=str(tmp_path / "val.png")) as mock_val:
 
             skill = ChartGenerationSkill()
             result = skill.run(ctx)
@@ -128,15 +128,15 @@ class TestChartGenerationSkill:
             "output_dir": str(tmp_path),
         })
 
-        with patch("reporter.scoring_engine.compute_pillar_scores", return_value={
+        with patch("report_skills.chart_skills.compute_pillar_scores", return_value={
             "valuation": 5.0,
             "technical": 5.0,
             "sentiment": 5.0,
             "fundamental": 5.0,
             "fundflow": 5.0,
         }), \
-             patch("reporter.chart_generator.generate_radar_chart", return_value=str(tmp_path / "radar.png")), \
-             patch("reporter.chart_generator.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")):
+             patch("report_skills.chart_skills.generate_radar_chart", return_value=str(tmp_path / "radar.png")), \
+             patch("report_skills.chart_skills.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")):
 
             skill = ChartGenerationSkill()
             result = skill.run(ctx)

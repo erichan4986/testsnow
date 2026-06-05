@@ -9,7 +9,7 @@ from report_skills import build_stock_report_pipeline
 def test_pipeline_builder_returns_pipeline():
     pipeline = build_stock_report_pipeline()
     assert pipeline is not None
-    assert len(pipeline.skills) == 9
+    assert len(pipeline.skills) == 10
 
 
 def test_pipeline_end_to_end(tmp_path):

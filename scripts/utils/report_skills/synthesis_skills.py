@@ -1,6 +1,9 @@
 """LLM synthesis skill."""
 
-from skill_pipeline import BaseSkill, SkillContext
+if __name__.startswith("utils."):
+    from ..skill_pipeline import BaseSkill, SkillContext
+else:
+    from skill_pipeline import BaseSkill, SkillContext
 
 
 class SynthesisSkill(BaseSkill):

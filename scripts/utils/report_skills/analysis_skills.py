@@ -1,7 +1,11 @@
 """Cross-source consolidation and scoring skills."""
 
 from pathlib import Path
-from skill_pipeline import skill, SkillContext
+
+if __name__.startswith("utils."):
+    from ..skill_pipeline import skill, SkillContext
+else:
+    from skill_pipeline import skill, SkillContext
 
 
 @skill(name="cross_source_consolidation")
