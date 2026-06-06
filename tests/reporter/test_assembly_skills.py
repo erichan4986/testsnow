@@ -1,9 +1,9 @@
 import sys
 from pathlib import Path
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
-from skill_pipeline import SkillContext
-from report_skills.assembly_skills import ReportAssemblySkill
+from utils.skill_pipeline import SkillContext
+from utils.report_skills.assembly_skills import ReportAssemblySkill
 
 
 def test_report_assembly_skill(tmp_path):

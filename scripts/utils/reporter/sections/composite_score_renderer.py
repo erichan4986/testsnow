@@ -48,6 +48,6 @@ class CompositeScoreRenderer:
         chart_paths = ctx.get("chart_paths", ctx.get("_chart_paths", {}))
         radar_chart = chart_paths.get("radar")
         if radar_chart:
-            md += f"\n\n### 五维评分雷达\n\n![{stock_name} 五维评分雷达]({radar_chart})\n"
+            md += f"\n\n### 五维评分雷达图\n\n![{stock_name} 五维评分雷达图]({radar_chart})\n"
 
         return md

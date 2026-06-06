@@ -13,6 +13,7 @@ from .data_skills import (
     quality_gate_skill,
     quote_fetching_skill,
 )
+from .technical_skills import technical_fetching_skill
 from .assembly_skills import ReportAssemblySkill
 from .synthesis_skills import SynthesisSkill
 
@@ -23,6 +24,7 @@ __all__ = [
     "quote_fetching_skill",
     "competitor_fetching_skill",
     "scoring_skill",
+    "technical_fetching_skill",
     "TechnicalAnalysisSkill",
     "ChartGenerationSkill",
     "SynthesisSkill",
@@ -39,6 +41,7 @@ def build_stock_report_pipeline(llm_client=None) -> SkillPipeline:
         cross_source_consolidation_skill,
         quote_fetching_skill,
         competitor_fetching_skill,
+        technical_fetching_skill,
         TechnicalAnalysisSkill(),
         SynthesisSkill(llm_client=llm_client),
         scoring_skill,

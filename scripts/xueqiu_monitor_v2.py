@@ -133,6 +133,8 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
                     data_source="mootdx+stockstats", valid_days=1,
                 )
                 stock_raw["technical"] = tech_data
+                if tech_data.get("price_target"):
+                    stock_raw["price_target"] = tech_data["price_target"]
 
             # Reports
             reports = report_collector.collect(code, months=4)

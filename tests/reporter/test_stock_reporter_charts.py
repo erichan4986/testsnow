@@ -75,8 +75,6 @@ class TestStockReporterChartIntegration:
             "utils.report_skills.data_skills.industry_fwd_pe", return_value=18.0
         ), patch(
             "utils.report_skills.data_skills.fetch_competitor_metrics", return_value={"测试科技": {"forward_pe": 15.0, "ps": 2.0}}
-        ), patch(
-            "utils.stock_reporter.competitor_metrics_table", return_value="## 竞争对手财务指标对比\n"
         ):
             md_path, html_path = reporter.generate_stock_report(stock_name, str(tmp_path))
 

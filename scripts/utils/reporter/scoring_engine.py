@@ -53,8 +53,13 @@ def compute_pillar_scores(
     consensus: Optional[Dict],
     industry_fwd_pe: Optional[float],
     ps: Optional[float] = None,
-) -> Dict:
-    """计算五维度得分（0-10 制），返回各维度分和原始中间值。"""
+) -> Optional[Dict]:
+    """计算五维度得分（0-10 制），返回各维度分和原始中间值。
+    当 quote 缺失或 price 为 0 时返回 None（数据不足，无法评分）。
+    """
+    if not quote:
+        return None
+
     tech = stock_raw.get("technical", {})
     indicators = tech.get("indicators", {}) if isinstance(tech, dict) else {}
     fund = stock_raw.get("fundflow", [])
@@ -278,12 +283,17 @@ def composite_score_section(
     quote: Optional[Dict],
     consensus: Optional[Dict],
     industry_fwd_pe: Optional[float],
+    pillar: Optional[Dict] = None,
 ) -> str:
     """
     G = B + M 综合评分（0-10） + EV Expectation Model + 目标价区间 + AI 推荐。
+    如果传入 pillar 则直接使用，否则基于 posts 重新计算。
     """
-    ps = quote.get("ps") if quote else None
-    pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
+    if pillar is None:
+        ps = quote.get("ps") if quote else None
+        pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
+    if pillar is None:
+        return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
     ev = ev_expectation(pillar, consensus)
 
     total_score = round(
@@ -339,10 +349,11 @@ def composite_score_section(
     elif pillar["fundamental"] <= 3:
         reasons.append("基本面承压")
 
-    if pillar["bullish_pct"] > 60:
-        reasons.append(f"社区情绪偏乐观（看多 {pillar['bullish_pct']:.0f}%）")
-    elif pillar["bullish_pct"] < 30:
-        reasons.append(f"社区情绪偏谨慎（看多 {pillar['bullish_pct']:.0f}%）")
+    bullish_pct = pillar.get("bullish_pct", 0) or 0
+    if bullish_pct > 60:
+        reasons.append(f"社区情绪偏乐观（看多 {bullish_pct:.0f}%）")
+    elif bullish_pct < 30:
+        reasons.append(f"社区情绪偏谨慎（看多 {bullish_pct:.0f}%）")
 
     recommendation = (
         f"**{rec_cn}** — 加权 EV {ev.get('ev_pct', 'N/A'):+.2f}%。"
@@ -354,8 +365,9 @@ def composite_score_section(
     fwd_pe_str = f"{pillar['fwd_pe']:.1f}" if pillar.get('fwd_pe') else 'N/A'
     ind_pe_str = f"{pillar['industry_fwd_pe']:.1f}" if pillar.get('industry_fwd_pe') else 'N/A'
     eps_str = f"{pillar['eps_growth']:.1f}" if pillar.get('eps_growth') else 'N/A'
-    rsi_val = pillar['indicators'].get('rsi_14')
-    macd_val = pillar['indicators'].get('macd')
+    indicators = pillar.get("indicators") or {}
+    rsi_val = indicators.get('rsi_14')
+    macd_val = indicators.get('macd')
     rsi_str = f"{rsi_val:.1f}" if isinstance(rsi_val, (int, float)) else 'N/A'
     macd_str = f"{macd_val:.1f}" if isinstance(macd_val, (int, float)) else 'N/A'
 
@@ -378,9 +390,9 @@ def composite_score_section(
         "|------|------|------------|------|",
         f"| 估值健康度(B) | 30% | {pillar['valuation']} | {val_desc} |",
         f"| 技术面强度(M) | 25% | {pillar['technical']} | RSI {rsi_str}, MACD {macd_str} |",
-        f"| 情绪面温度(M) | 20% | {pillar['sentiment']} | 看多 {pillar['bullish_pct']:.0f}% / 看空 {pillar['bearish_pct']:.0f}% |",
+        f"| 情绪面温度(M) | 20% | {pillar['sentiment']} | 看多 {pillar.get('bullish_pct', 0):.0f}% / 看空 {pillar.get('bearish_pct', 0):.0f}% |",
         f"| 基本面趋势(B) | 15% | {pillar['fundamental']} | 预期 EPS 增速 {eps_str}% |",
-        f"| 资金关注度(M) | 10% | {pillar['fundflow']} | 近5日主力净流入 {'有' if pillar['has_fund'] else '无数据'} |",
+        f"| 资金关注度(M) | 10% | {pillar['fundflow']} | 近5日主力净流入 {'有' if pillar.get('has_fund') else '无数据'} |",
         "",
         f"> **AI 综合推荐**：{recommendation}",
     ]
@@ -492,7 +504,7 @@ def risk_score_section(
         position_advice = "建议减仓或不买入"
 
     lines = [
-        "## 六、综合风险评分",
+        "## 综合风险评分",
         "",
         f"### 风险等级: {total_risk}/10（{risk_level}）",
         "",
@@ -571,7 +583,7 @@ def _build_chip_risk_table(stock_name: str, category: str, factors: List[tuple])
     avg_score = round(sum(f[2] for f in factors) / len(factors), 1) if factors else 0.0
 
     lines = [
-        f"## 五、行业特有风险因子评估（{category}专项）",
+        f"## 行业特有风险因子评估（{category}专项）",
         "",
         f"> 本模块针对 **{stock_name}** 作为 {category} 的特殊风险结构，补充传统 PE/PEG 模型无法覆盖的维度。",
         "",

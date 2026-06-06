@@ -156,7 +156,7 @@ class ValuationRenderer:
         if valuation_chart:
             lines.append("### 同业估值对比")
             lines.append("")
-            lines.append(f"![{stock_name} 同业估值对比]({valuation_chart})")
+            lines.append(f"![{stock_name} 估值对比]({valuation_chart})")
             lines.append("")
 
         return "\n".join(lines)

@@ -53,14 +53,18 @@ def scoring_skill(ctx: SkillContext) -> SkillContext:
         from reporter.scoring_engine import compute_pillar_scores
 
     pillar = compute_pillar_scores(stock_raw, keep_posts, quote, consensus, ind_fwd_pe, ps)
-    total_score = round(
-        pillar["valuation"] * 0.30 +
-        pillar["technical"] * 0.25 +
-        pillar["sentiment"] * 0.20 +
-        pillar["fundamental"] * 0.15 +
-        pillar["fundflow"] * 0.10,
-        1,
-    )
+    if pillar is not None:
+        total_score = round(
+            pillar["valuation"] * 0.30 +
+            pillar["technical"] * 0.25 +
+            pillar["sentiment"] * 0.20 +
+            pillar["fundamental"] * 0.15 +
+            pillar["fundflow"] * 0.10,
+            1,
+        )
+    else:
+        total_score = None
     ctx.set("pillar_scores", pillar)
+    ctx.set("pillar", pillar)
     ctx.set("total_score", total_score)
     return ctx

@@ -217,30 +217,47 @@ def synthesize_targets(
 
     if daily_has and weekly_has:
         # 共振：同向有形态
-        conservative = min(
-            weekly_fib.get("1.0", float("inf")),
-            daily_pattern["neckline"],
-        )
-        base = (daily_pt + weekly_fib.get("1.272", daily_pt)) / 2
-        aggressive = weekly_fib.get("1.618", weekly_pt or base)
+        if is_bullish:
+            conservative = min(
+                weekly_fib.get("1.0", float("inf")),
+                daily_pattern["neckline"],
+            )
+            base = (daily_pt + weekly_fib.get("1.272", daily_pt)) / 2
+            aggressive = weekly_fib.get("1.618", weekly_pt or base)
+        else:
+            # 看空：以形态测距为基础，目标低于颈线
+            conservative = daily_pt if daily_pt is not None else daily_pattern["neckline"] * 0.95
+            base = weekly_pt if weekly_pt is not None else daily_pattern["neckline"] * 0.92
+            aggressive = min(daily_pt, weekly_pt) if (daily_pt and weekly_pt) else (daily_pt or weekly_pt or daily_pattern["neckline"] * 0.88)
         method = "A+B交叉验证（日K形态+周K形态共振）"
     elif daily_has or weekly_has:
         # 仅一方有形态
         has_pt = daily_pt if daily_has else weekly_pt
         has_neck = daily_pattern["neckline"] if daily_has else weekly_pattern["neckline"]
-        no_fib = weekly_fib if daily_has else daily_fib
-        # 保守目标取形态测距值与另一方斐波那契1.0的较低者
-        conservative = min(has_pt if has_pt is not None else has_neck, no_fib.get("1.0", has_neck))
-        base = has_pt
-        aggressive = has_pt * 1.3 if has_pt is not None else no_fib.get("1.618", base)
+        if is_bullish:
+            no_fib = weekly_fib if daily_has else daily_fib
+            conservative = min(has_pt if has_pt is not None else has_neck, no_fib.get("1.0", has_neck))
+            base = has_pt
+            aggressive = has_pt * 1.3 if has_pt is not None else no_fib.get("1.618", base)
+        else:
+            conservative = has_pt if has_pt is not None else has_neck * 0.95
+            base = has_pt if has_pt is not None else has_neck * 0.92
+            aggressive = has_pt * 0.85 if has_pt is not None else has_neck * 0.88
         method = f"{'日K' if daily_has else '周K'}形态主导"
     else:
         # 双方都无形态，只有波段
         fib = weekly_fib if weekly_fib else daily_fib
-        conservative = fib.get("1.0", current_price)
-        base = fib.get("1.272", current_price * 1.1)
-        aggressive = fib.get("1.618", current_price * 1.2)
-        method = "纯斐波那契扩展（无形态）"
+        if is_bullish:
+            conservative = fib.get("1.0", current_price)
+            base = fib.get("1.272", current_price * 1.1)
+            aggressive = fib.get("1.618", current_price * 1.2)
+            method = "纯斐波那契扩展（无形态）"
+        else:
+            # 看空：目标低于现价（百分比估算）
+            conservative = current_price * 0.95
+            base = current_price * 0.90
+            aggressive = current_price * 0.85
+            method = "无形态看空目标（百分比估算）"
 
     # 激进目标上限：不超过当前价+50%（科技股+60%）
     agg_limit = current_price * 1.5
@@ -268,10 +285,15 @@ def profit_risk_filter(
 ) -> Dict:
     """
     盈亏比过滤（Spec Section 4）。
-    用预估触发价（颈线 + 0.3×ATR）和预估止损价（颈线 - 1.5×ATR）计算。
+    做多：触发价=颈线+0.3×ATR，止损=颈线-1.5×ATR
+    做空：触发价=颈线-0.3×ATR，止损=颈线+1.5×ATR
     """
-    trigger_price = neckline + 0.3 * daily_atr
-    stop_price = neckline - 1.5 * daily_atr
+    if is_bullish:
+        trigger_price = neckline + 0.3 * daily_atr
+        stop_price = neckline - 1.5 * daily_atr
+    else:
+        trigger_price = neckline - 0.3 * daily_atr
+        stop_price = neckline + 1.5 * daily_atr
     initial_risk = abs(trigger_price - stop_price)
 
     if initial_risk <= 0:
@@ -379,12 +401,42 @@ def estimate_time(
     return round(base_low * multiplier, 1), round(base_high * multiplier, 1)
 
 
+def _daily_trend_from_indicators(indicators: Dict) -> str:
+    """从日线指标中提取趋势方向：多头/空头/震荡。"""
+    adx = indicators.get("adx")
+    plus_di = indicators.get("plus_di")
+    minus_di = indicators.get("minus_di")
+    if adx is not None and adx > 25:
+        if plus_di is not None and minus_di is not None:
+            return "多头" if plus_di > minus_di else "空头"
+    return "震荡"
+
+
+def _macd_dead_expanding(daily_close: pd.Series) -> bool:
+    """MACD死叉且柱线扩张（否决信号）。"""
+    try:
+        from .technical_analyzer import _macd
+    except ImportError:
+        from technical_analyzer import _macd
+    macd_line, macd_sig, macd_hist = _macd(daily_close)
+    if macd_line.iloc[-1] >= macd_sig.iloc[-1]:
+        return False
+    if macd_hist.iloc[-1] >= 0:
+        return False
+    # 柱线最近3天持续变负（扩张）才否决；稳定或收缩不否决
+    recent = macd_hist.tail(3)
+    if len(recent) < 3:
+        return False
+    return bool(recent.iloc[-1] < recent.iloc[0])
+
+
 def analyze_price_target(
     df_daily: pd.DataFrame,
     df_weekly: pd.DataFrame,
     current_price: float,
     stock_sector: str = "general",
     is_hk: bool = False,
+    daily_indicators: Dict = None,
 ) -> Dict:
     """
     主入口：对日K+周K做完整价格目标分析。
@@ -395,6 +447,7 @@ def analyze_price_target(
         current_price: 最新收盘价
         stock_sector: "tech_chip" 或其他，决定激进目标上限（50% vs 60%）
         is_hk: 是否港股，影响量能阈值
+        daily_indicators: 日线技术指标 dict（含 adx/plus_di/minus_di/macd 等）
 
     Returns:
         完整的分析结果字典，可直接用于报告渲染。
@@ -408,6 +461,29 @@ def analyze_price_target(
     weekly_trend = weekly_trend_analysis(df_weekly)
     if weekly_trend.get("is_ranging"):
         return {"error": "震荡格局，暂不做目标", "weekly_trend": weekly_trend}
+
+    # --- 1b. 日线趋势 + 方向冲突检测 ---
+    daily_indicators = daily_indicators or {}
+    daily_trend = _daily_trend_from_indicators(daily_indicators)
+    weekly_direction = weekly_trend.get("direction", "震荡")
+
+    if daily_trend in ("多头", "空头") and weekly_direction in ("多头", "空头"):
+        if daily_trend != weekly_direction:
+            return {
+                "error": "观望",
+                "reason": f"日线/周线方向冲突：日线{daily_trend} vs 周线{weekly_direction}",
+                "weekly_trend": weekly_trend,
+                "daily_trend": daily_trend,
+            }
+
+    # --- 1c. MACD死叉扩张否决 ---
+    if _macd_dead_expanding(df_daily["close"]):
+        return {
+            "error": "关注/不操作",
+            "reason": "MACD死叉扩张，不满足触发条件",
+            "weekly_trend": weekly_trend,
+            "daily_trend": daily_trend,
+        }
 
     # --- 2. 日线/周线形态识别（复用 technical_analyzer） ---
     try:
@@ -443,6 +519,8 @@ def analyze_price_target(
         is_bullish = daily_pattern_info["is_bullish"]
     elif weekly_pattern_info:
         is_bullish = weekly_pattern_info["is_bullish"]
+    elif weekly_direction == "空头":
+        is_bullish = False
 
     # --- 3. Zigzag + 斐波那契 ---
     daily_zigzag = zigzag(daily_close, min_pct=0.05)
@@ -554,17 +632,31 @@ def analyze_price_target(
     # 这里用价格相对位置近似
     kdj_golden = False  # TODO: 如需精确KDJ，从 technical_analyzer.analyze() 传入
 
-    # --- 7. 置信度评分 ---
-    # 共振分
-    resonance_score = 10 if (daily_pattern_info and weekly_pattern_info) else (
-        6 if (daily_pattern_info or weekly_pattern_info) else 0
-    )
-    # 形态完整性
-    pattern_score = 10  # 简化：有形态=10（2次触及标准）
-    # 突破质量（无实际突破K线时用预估）
-    breakout_score = 6  # 简化：预估突破=6
-    # 周线ADX
+    # --- 7. 置信度评分（六因子） ---
+    has_daily_pat = daily_pattern_info is not None
+    has_weekly_pat = weekly_pattern_info is not None
+
+    # 共振分：双周期同向有形态=10，单周期=6，无形态=0
+    resonance_score = 10 if (has_daily_pat and has_weekly_pat) else (6 if (has_daily_pat or has_weekly_pat) else 0)
+
+    # 形态完整性：有形态=10，无形态=0
+    pattern_score = 10 if (has_daily_pat or has_weekly_pat) else 0
+
+    # 突破质量：无实际突破检测=0（保守）
+    breakout_score = 0
+
+    # 周线趋势强度
     adx_score = weekly_trend.get("adx_score", 0)
+
+    # 动量综合：MACD金叉扩张=10，死叉扩张=2，其他=6
+    macd_golden = macd_line.iloc[-1] > macd_sig.iloc[-1]
+    if macd_golden and macd_momentum == "expanding":
+        momentum_score = 10
+    elif not macd_golden and macd_momentum == "expanding":
+        momentum_score = 2
+    else:
+        momentum_score = 6
+
     # 斐波那契汇聚
     fib_conv_score = 10 if weekly_fib.get("1.272") and any(
         t.get("in_convergence") for t in fib_targets_with_convergence(weekly_bands, 1.272)
@@ -575,7 +667,7 @@ def analyze_price_target(
         pattern_quality=pattern_score,
         breakout_quality=breakout_score,
         weekly_adx=adx_score,
-        momentum=6,  # simplified; detailed momentum scoring done at caller level
+        momentum=momentum_score,
         fib_convergence=fib_conv_score,
     )
     conf_level = confidence_level(conf_score, aggressive_is_far=targets.get("is_far_target", False))

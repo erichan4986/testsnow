@@ -129,7 +129,12 @@ def main():
                 f"丢弃={gate_stats.get('discard', 0)}")
     logger.info(f"  报告用: {len(report_items)} 条, 知识沉淀: {len(knowledge_items)} 条")
 
-    # 3. 保存原始数据
+    # 3. 保存原始数据（包含 zhihu，供后续重跑复用）
+    collected_data = {
+        STOCK_NAME: {
+            "zhihu": zhihu_data,
+        }
+    }
     raw_dir = Path(__file__).parent.parent / "data" / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
     raw_path = raw_dir / f"report_input_{date_str}_{STOCK_NAME}.json"
@@ -139,7 +144,8 @@ def main():
                 "date": date_str,
                 "stock_codes": {STOCK_NAME: "02533"},
                 "stocks_data": stocks_data,
-            }, f, ensure_ascii=False, indent=2)
+                "raw_data": collected_data,
+            }, f, ensure_ascii=False, indent=2, default=str)
         logger.info(f"\n[3/4] 原始数据已保存: {raw_path}")
     except Exception as e:
         logger.warning(f"\n[3/4] 原始数据保存失败: {e}")
@@ -147,11 +153,6 @@ def main():
     # 4. 生成报告
     logger.info("\n[4/4] 生成个股深度报告...")
     stock_codes = {STOCK_NAME: "02533"}
-    collected_data = {
-        STOCK_NAME: {
-            "zhihu": zhihu_data,
-        }
-    }
     reporter = PerStockReporter(
         stocks_data=stocks_data,
         stock_codes=stock_codes,

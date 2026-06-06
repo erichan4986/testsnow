@@ -57,8 +57,14 @@ class TechnicalAnalysisSkill(BaseSkill):
                 indicators=indicators,
                 output_path=str(output_path),
             )
+            chart_paths = ctx.get("chart_paths", {})
+            chart_paths["technical"] = chart_path
+            ctx.set("chart_paths", chart_paths)
             ctx.set("chart_technical", chart_path)
         else:
+            chart_paths = ctx.get("chart_paths", {})
+            chart_paths["technical"] = None
+            ctx.set("chart_paths", chart_paths)
             ctx.set("chart_technical", None)
 
         return ctx
@@ -101,9 +107,11 @@ class ChartGenerationSkill(BaseSkill):
             total_score=total_score,
             output_path=str(radar_path),
         )
-        ctx.set("chart_radar", radar_chart_path)
+        chart_paths = ctx.get("chart_paths", {})
+        chart_paths["radar"] = radar_chart_path
         ctx.set("pillar_scores", pillar)
         ctx.set("total_score", total_score)
+        ctx.set("chart_radar", radar_chart_path)
 
         # Bull-bear chart
         bullish_args = ctx.get("bullish_args", [])
@@ -115,6 +123,7 @@ class ChartGenerationSkill(BaseSkill):
             bearish_args=bearish_args,
             output_path=str(bb_path),
         )
+        chart_paths["bullbear"] = bb_chart_path
         ctx.set("chart_bullbear", bb_chart_path)
 
         # Valuation comparison chart
@@ -126,8 +135,11 @@ class ChartGenerationSkill(BaseSkill):
                 competitor_metrics=competitor_metrics,
                 output_path=str(val_path),
             )
+            chart_paths["valuation"] = val_chart_path
             ctx.set("chart_valuation", val_chart_path)
         else:
+            chart_paths["valuation"] = None
             ctx.set("chart_valuation", None)
 
+        ctx.set("chart_paths", chart_paths)
         return ctx

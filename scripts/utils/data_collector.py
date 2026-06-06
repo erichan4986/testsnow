@@ -125,44 +125,59 @@ class TechnicalCollector:
     def fetch_weekly_kline(self, code: str, market: int = 0, weeks: int = 72) -> Optional[pd.DataFrame]:
         """
         获取周K线数据。
-        A股: 通过 akshare stock_zh_a_hist(symbol, period='weekly')
-        港股: 优先 Wind CSV，备选 akshare stock_hk_hist
+        优先 mootdx (frequency=1)，回退 akshare。
+        港股: 备选 akshare stock_hk_hist。
         """
+        # --- 优先 1: mootdx ---
+        if self.client is not None:
+            try:
+                end = datetime.now()
+                begin = end - timedelta(days=weeks * 7 * 2)
+                df = self.client.k(
+                    symbol=code,
+                    begin=begin.strftime("%Y%m%d"),
+                    end=end.strftime("%Y%m%d"),
+                    frequency=1,
+                )
+                if df is not None and not df.empty and all(c in df.columns for c in ["open", "high", "low", "close", "volume"]):
+                    if len(df) > weeks:
+                        df = df.tail(weeks).reset_index(drop=True)
+                    return df
+            except Exception as e:
+                logger.warning(f"mootdx 周线获取失败: {e}")
+
+        # --- 回退: akshare ---
         if ak is None:
             logger.warning("akshare 未安装，无法获取周线数据")
             return None
 
-        try:
-            # A-share weekly
-            if market == 0 or market == 1:
-                prefix = "SZ" if market == 0 else "SH"
-                symbol = f"{prefix}{code}"
-                df = ak.stock_zh_a_hist(symbol=symbol, period="weekly", start_date="20200101", adjust="qfq")
-            else:
-                # HK stock
-                df = ak.stock_hk_hist(symbol=code, period="weekly", start_date="20200101")
+        helper = AkshareHelper()
+        df = None
+        if market == 0 or market == 1:
+            prefix = "SZ" if market == 0 else "SH"
+            symbol = f"{prefix}{code}"
+            df = helper.call(ak.stock_zh_a_hist, symbol=symbol, period="weekly", start_date="20200101", adjust="qfq")
+        else:
+            df = helper.call(ak.stock_hk_hist, symbol=code, period="weekly", start_date="20200101")
 
-            if df is None or df.empty:
+        if df is None or df.empty:
+            return None
+
+        # Standardize columns
+        column_map = {
+            "日期": "date", "开盘": "open", "最高": "high",
+            "最低": "low", "收盘": "close", "成交量": "volume",
+        }
+        df = df.rename(columns=column_map)
+        for col in ["open", "high", "low", "close", "volume"]:
+            if col not in df.columns:
+                logger.error(f"周线数据缺少列: {col}")
                 return None
 
-            # Standardize columns
-            column_map = {
-                "日期": "date", "开盘": "open", "最高": "high",
-                "最低": "low", "收盘": "close", "成交量": "volume",
-            }
-            df = df.rename(columns=column_map)
-            for col in ["open", "high", "low", "close", "volume"]:
-                if col not in df.columns:
-                    logger.error(f"周线数据缺少列: {col}")
-                    return None
+        if len(df) > weeks:
+            df = df.tail(weeks).reset_index(drop=True)
 
-            if len(df) > weeks:
-                df = df.tail(weeks).reset_index(drop=True)
-
-            return df
-        except Exception as e:
-            logger.error(f"获取 {code} 周线数据失败: {e}")
-            return None
+        return df
 
     def compute_indicators(self, df: pd.DataFrame) -> Dict:
         """
@@ -285,6 +300,7 @@ class TechnicalCollector:
                 current_price = float(df_daily["close"].iloc[-1])
                 price_target_result = analyze_price_target(
                     df_daily, df_weekly, current_price=current_price,
+                    daily_indicators=indicators,
                 )
         except Exception as e:
             logger.warning(f"价格目标分析失败: {e}")
