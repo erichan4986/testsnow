@@ -142,7 +142,7 @@ def compute_weekly_trend(df_weekly: pd.DataFrame) -> Dict:
     """基于周线判定大背景。
     单边上涨: 周K线收盘价持续在MA5和MA10之上，均线流畅发散
     单边下跌: 周K线收盘价持续在MA5和MA10之下，均线流畅发散
-    震荡市: 周收盘价20日内穿越MA5/MA10 ≥3次，且MA5与MA10差值 < 2%
+    震荡市: 近10周收盘价穿越MA5/MA10 ≥3次，且MA5与MA10差值 < 2%
     返回: {"weekly_trend": "单边上涨", "weekly_ma5": 48.2, "weekly_ma10": 46.5,
            "weekly_ma20": 44.0, "weekly_close": 50.1, "ma20_direction": "向上"}
     """
@@ -150,7 +150,18 @@ def compute_weekly_trend(df_weekly: pd.DataFrame) -> Dict:
 
 **关键参数：**
 - 均线走平判定：MA20 近5日方向变化 < 0.5%
-- 周线震荡判定：20日内穿越 ≥3 次 + MA5/MA10 差值 < 2%
+- 周线震荡判定（伪代码）:
+  ```python
+  cross_count = 0
+  for i in range(-10, 0):  # 近10周
+      # 对 MA5 或 MA10 的穿越都算
+      for ma in [weekly_ma5, weekly_ma10]:
+          if (weekly_close[i-1] < ma[i-1] and weekly_close[i] > ma[i]) or \
+             (weekly_close[i-1] > ma[i-1] and weekly_close[i] < ma[i]):
+              cross_count += 1
+              break  # 同一周只算一次
+  is_choppy = cross_count >= 3 and abs(ma5 - ma10) / ma10 < 0.02
+  ```
 
 ### 2.3 背离扫描
 
@@ -163,7 +174,7 @@ def detect_triple_divergence(
     """三重背离扫描。采用"2/3 触发"原则（而非必须3/3）。
 
     顶背离条件（需同时满足3项中的至少2项）：
-    1. 布林背离: 股价创近20日新高，但布林上轨未创新高（差值 > 1%），或股价跑到上轨之外
+    1. 布林背离: 股价创近20日新高，但当前布林上轨 <= 前高点对应布林上轨 × 1.01（几乎未抬高），或股价跑到上轨之外
     2. MACD顶背离: 股价创近20日新高，但DIF低于前一个高点的DIF值，且红柱缩短
     3. RSI顶背离: 股价创近20日新高，但RSI未创新高，反而拐头向下
 
@@ -181,14 +192,15 @@ def detect_triple_divergence(
 def find_support_resistance(df: pd.DataFrame, use_scipy: bool = False) -> Dict:
     """基于120日数据找支撑/阻力位。
 
-    识别方法:
-    - 支撑位: 某个价格区间（均值±1%）至少有3次有效触及，
-              触及后反向运行 ≥2% 或 ≥1个ATR 才计入有效
-    - 阻力位: 同上
-
-    强度分级:
-    - 触及 ≥5次 或跨越时间超过半年 → "强"
-    - 否则 → "中"/"弱"
+    算法步骤:
+    1. 找局部极值点: 用 rolling window(宽度5日) 找局部最高/最低。
+       或用 scipy.signal.argrelextrema (use_scipy=True 时)。
+    2. 价格聚类: 对所有极值价格做分箱聚类，差值在 ±1% 以内的归为一组。
+       可用 pandas groupby 对 `round(price / price * 100)` 分箱。
+    3. 有效触及判定: 组内每个点，检查触及后是否反向运行 ≥2% 或 ≥1 ATR，
+       至少3次有效才视为有效支撑/阻力区。
+    4. 强度分级: 有效触及 ≥5次 或跨越时间超过半年 → "强"，否则 → "中"/"弱"。
+    5. 取组内价格的均值作为最终价位。
 
     返回: {"support": 45.2, "support_strength": "强",
            "resistance": 52.8, "resistance_strength": "中"}
@@ -248,13 +260,77 @@ def generate_trading_signals(
     - 日线突破但周线震荡 → 置信度"低"，只进行极小仓位（<10%）试探
     - 日线破位但周线震荡+底部 → 不执行清仓
 
-    假突破风险控制:
-    - 突破次日即回落跌破MA5 → 停止加仓
-    - 第三日继续下跌 → 减仓
-    - 第四日触发破位 → 直接清仓
+    假突破风险控制（基于最近4日数据推断阶段）:
+    - 突破次日即回落跌破MA5 → 停止加仓，标记 stage="day2_pullback"
+    - 第三日继续下跌 → 减仓，标记 stage="day3_reduce"
+    - 第四日触发破位 → 直接清仓，标记 stage="day4_cut"
+    内部维护 `fake_breakout_stage`: "none" | "day2_pullback" | "day3_reduce" | "day4_cut"
+    该字段写入 _resonance，供后续运行追踪。
 
     返回: {"core_signal": "买入信号", "confidence": "高",
-           "position": "30%", "strategy": "初始仓位入场"}
+           "position": "30%", "strategy": "初始仓位入场",
+           "fake_breakout_stage": "none"}
+    """
+```
+
+### 2.7 趋势阶段判定
+
+```python
+def classify_trend_stage(
+    df: pd.DataFrame,
+    df_weekly: pd.DataFrame,
+    indicators: Dict,
+) -> str:
+    """判定当前趋势阶段：早期/中期/末期/盘整。
+
+    规则:
+    - 早期: 近3周内从震荡进入单边，或从底部放量突破周线MA20，且均线刚刚多头排列
+    - 中期: 周线均线多头排列已持续 ≥5周，价格沿MA10稳步上行，无加速迹象
+    - 末期: 出现加速上涨（连续3日大阳线 + 布林宽急剧扩大 > 前5日均宽×1.5）、
+            频繁长上影（近5日出现 ≥2次）、或三重顶背离预警
+    - 盘整: 周线震荡市，或日线反复穿越均线（10日内穿越 ≥4次）
+
+    返回: "早期" | "中期" | "末期" | "盘整"
+    """
+```
+
+### 2.8 卖出三要素评估（条件启用）
+
+```python
+def assess_sell_factors(
+    indicators: Dict,
+    core_signal: str,
+    quote: Optional[Dict] = None,
+) -> Optional[Dict]:
+    """卖出三要素评估。默认不计算，仅在特定条件下触发。
+
+    触发条件（满足任一即计算）:
+    1. core_signal 为 "破位信号" 或 "警惕"
+    2. RSI > 80 且拐头向下（严重超买离场信号）
+    3. BIAS(5) 或 BIAS(10) 创120日极值
+
+    三要素:
+    1. 估值定价: 若 quote/consensus 中有极度高估信号则标记，否则 "N/A"
+    2. 均线信号: 是否触发破位或跌破MA20
+    3. 强弱偏离度: BIAS/RSI 是否极端
+
+    结论: 至少满足2条 → "建议卖出"，否则 → "不满足卖出条件"
+
+    返回: {"valuation": "N/A", "ma_signal": "未破位", "deviation": "BIAS(5)未创极值",
+           "conclusion": "不满足卖出条件"}
+    若不触发条件则返回 None（renderer 不渲染该模块）
+    """
+```
+
+### 2.9 主入口
+
+```python
+def advanced_resonance(
+    df: pd.DataFrame,
+    df_weekly: pd.DataFrame,
+) -> Dict:
+    """主入口：调用以上所有函数，组装完整 _resonance 结构。
+    被 data_collector 的 compute_indicators 调用，替换现有的 multi_indicator_resonance。
     """
 ```
 
@@ -334,7 +410,7 @@ def advanced_resonance(
 
 | 模块 | 触发条件 |
 |---|---|
-| 卖出三要素 | `resonance` 包含 `"sell_assessment"`，或检测到离场信号 |
+| 卖出三要素 | `resonance` 包含 `"sell_assessment"`（该字段仅在 core_signal 为 "破位"/"警惕" 或检测到严重超买/BIAS极值时才计算并写入） |
 | 背离扫描 | `divergence_scan` 不为 None |
 | 关键价位 | `key_levels` 中 support/resistance 任一存在 |
 
@@ -380,7 +456,11 @@ def advanced_resonance(
 | sklearn 引入 | **不引入** | 支撑阻力手写聚类已足够，避免黑盒 |
 | 支撑阻力有效触及 | 反向运行 ≥2% 或 ≥1 ATR | 过滤噪声，提升质量 |
 | 旧渲染 | **降级保留** | 确保 backward compatible |
-| 卖出三要素 | **条件启用** | 平时隐藏，仅在触发时显示 |
+| 卖出三要素 | **条件计算** | 仅在 core_signal 为"破位"/"警惕" 或严重超买/BIAS极值时才计算 |
+| 布林背离容差 | **当前上轨 <= 前高上轨 × 1.01** | 布林上轨本身波动率扩张时会自然抬高，要求几乎未抬高才是强条件 |
+| 周线震荡判定 | **近10周**（而非20周） | 20周跨度太长，10周更灵敏；穿越定义为"收盘价从均线一侧到另一侧" |
+| 假突破风控 | **内部推断4日阶段** | 基于最近4日数据推断 stage，写入 `_resonance["fake_breakout_stage"]` 供追踪 |
+| 趋势阶段 | **骨架规则** | 早期(刚突破)/中期(持续多头)/末期(加速+背离)/盘整(震荡市) |
 
 ---
 
