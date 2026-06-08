@@ -106,6 +106,40 @@ def compute_bias(df: pd.DataFrame, windows=(5, 10, 20), lookback=120) -> Dict:
     return out
 
 
+def compute_boll_state(df: pd.DataFrame, config: Dict | None = None) -> Dict:
+    """计算布林宽度、开口/缩口/正常状态。前5日均宽不含当天。"""
+    if config is None:
+        config = {"technical": {"boll": {"open_ratio": 1.2, "squeeze_ratio": 0.8, "width_ma_window": 5}}}
+    boll_cfg = config.get("technical", {}).get("boll", {})
+    open_ratio = boll_cfg.get("open_ratio", 1.2)
+    squeeze_ratio = boll_cfg.get("squeeze_ratio", 0.8)
+    width_ma_window = boll_cfg.get("width_ma_window", 5)
+
+    upper = df["boll_upper"]
+    mid = df["boll_mid"].replace(0, np.nan)
+    lower = df["boll_lower"]
+    width = (upper - lower) / mid
+    width_ma5_prev = width.shift(1).rolling(window=width_ma_window, min_periods=width_ma_window).mean()
+
+    cur_width = width.iloc[-1]
+    ref_width = width_ma5_prev.iloc[-1]
+
+    if pd.isna(cur_width) or pd.isna(ref_width):
+        state = "未知"
+    elif cur_width > ref_width * open_ratio:
+        state = "开口"
+    elif cur_width < ref_width * squeeze_ratio:
+        state = "缩口"
+    else:
+        state = "正常"
+
+    return {
+        "boll_width": None if pd.isna(cur_width) else round(float(cur_width), 4),
+        "boll_width_ma5": None if pd.isna(ref_width) else round(float(ref_width), 4),
+        "boll_state": state,
+    }
+
+
 def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     obv = [0]
     for i in range(1, len(close)):
