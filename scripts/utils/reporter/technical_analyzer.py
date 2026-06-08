@@ -67,6 +67,11 @@ except ImportError:
         multi_indicator_resonance,
     )
 
+try:
+    from .technical_resonance import evaluate_market_resonance
+except ImportError:
+    from technical_resonance import evaluate_market_resonance
+
 
 # ---------------------------------------------------------------------------
 # Main entry points
@@ -321,12 +326,10 @@ def advanced_medium_term_resonance(
             "medium_term_invalid": invalidation.get("hard_invalid_price"),
         },
         "invalidation": invalidation,
-        "market_regime": {
-            "market_trend": "未知",
-            "sector_trend": "未知",
-            "relative_strength": "未知",
-            "impact": "暂未接入市场/行业数据，本次技术分析仅基于个股自身K线结构。",
-        },
+        # 11. 市场共振（占位）
+        "market_regime": evaluate_market_resonance(
+            stock_trend_state=trend_state,
+        ),
         "advisors": {
             "macd": {"state": "多头延续" if indicators.get("macd", 0) > 0 else "空头延续",
                      "meaning": "仅作趋势确认，不单独构成买卖信号"},
