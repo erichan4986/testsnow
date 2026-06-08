@@ -42,12 +42,14 @@ try:
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
         evaluate_bias_extreme,
+        detect_false_rebound, detect_false_breakout,
     )
 except ImportError:
     from technical_state_machine import (
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
         evaluate_bias_extreme,
+        detect_false_rebound, detect_false_breakout,
     )
 
 try:
@@ -329,6 +331,30 @@ def advanced_medium_term_resonance(
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",
     }
+
+    # 假反弹检测
+    volume_ma20 = float(df_daily["volume"].tail(20).mean())
+    false_rebound = detect_false_rebound(
+        df_recent=df_daily.tail(10),
+        boll_state=indicators.get("boll_state", "正常"),
+        volume_ma20=volume_ma20,
+    )
+    if false_rebound:
+        _resonance["false_rebound"] = false_rebound
+
+    # 假突破检测
+    if len(df_daily) >= 2:
+        prev = df_daily.iloc[-2]
+        cur = df_daily.iloc[-1]
+        ma5_series = _sma(df_daily["close"].astype(float), 5)
+        false_breakout = detect_false_breakout(
+            close=float(cur["close"]),
+            ma5=float(ma5_series.iloc[-1]),
+            prev_close=float(prev["close"]),
+            prev_ma5=float(ma5_series.iloc[-2]),
+        )
+        if false_breakout:
+            _resonance["false_breakout"] = false_breakout
 
     return {
         "indicators": indicators,

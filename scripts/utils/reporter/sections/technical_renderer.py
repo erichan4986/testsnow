@@ -99,6 +99,16 @@ class TechnicalRenderer:
             lines.append(f"**BIAS预警**：{bias_extreme['warning']}（{bias_extreme['level']}）")
             lines.append("")
 
+        false_rebound = resonance.get("false_rebound")
+        if false_rebound:
+            lines.append(f"**假反弹预警**：{false_rebound['signal']}（{false_rebound['confidence']}）")
+            lines.append("")
+
+        false_breakout = resonance.get("false_breakout")
+        if false_breakout:
+            lines.append(f"**假突破预警**：{false_breakout['signal']}（{false_breakout['confidence']}）")
+            lines.append("")
+
         div = resonance.get("divergence_scan")
         if div:
             lines.append(f"**背离预警**：{div.get('type', '')}（{div.get('confidence', '')}）")

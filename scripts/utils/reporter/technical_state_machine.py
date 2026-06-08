@@ -2,6 +2,8 @@
 
 from typing import Dict
 
+import pandas as pd
+
 __all__ = [
     "classify_trend_state", "apply_previous_state",
     "compute_trend_health", "compute_invalidation",
@@ -39,13 +41,64 @@ def evaluate_bias_extreme(
     return None
 
 
-def detect_false_rebound(*args, **kwargs):
-    """Placeholder for false rebound detection."""
-    return None
+def detect_false_rebound(
+    df_recent: pd.DataFrame,
+    boll_state: str,
+    volume_ma20: float,
+) -> dict | None:
+    """检测假反弹（冷不丁单根阳线）。
+
+    规则：
+    1. 最新一根K线 close > open（阳线）
+    2. 前一根K线 close <= open（非阳线）
+    3. BOLL 状态不是 "开口"
+    4. 最新成交量 < volume_ma20 * 1.2（未放量）
+    """
+    if df_recent is None or len(df_recent) < 6:
+        return None
+
+    latest = df_recent.iloc[-1]
+    prev = df_recent.iloc[-2]
+
+    # 1. 最新阳线
+    if not (latest["close"] > latest["open"]):
+        return None
+
+    # 2. 前一日非阳线
+    if not (prev["close"] <= prev["open"]):
+        return None
+
+    # 3. BOLL 未开口
+    if boll_state == "开口":
+        return None
+
+    # 4. 未放量
+    latest_volume = float(latest["volume"])
+    if latest_volume >= volume_ma20 * 1.2:
+        return None
+
+    return {
+        "type": "假反弹预警",
+        "confidence": "中",
+        "signal": "疑似假反弹，观望为宜",
+        "reason": "单根阳线+BOLL未张口+未放量",
+    }
 
 
-def detect_false_breakout(*args, **kwargs):
-    """Placeholder for false breakout detection."""
+def detect_false_breakout(
+    close: float,
+    ma5: float,
+    prev_close: float,
+    prev_ma5: float,
+) -> dict | None:
+    """检测假突破：前一日站上 MA5，今日跌破 MA5。"""
+    if prev_close > prev_ma5 and close < ma5:
+        return {
+            "type": "假突破预警",
+            "confidence": "中",
+            "signal": "突破MA5后回落，停止加仓",
+            "reason": "前一日站上MA5，今日跌破MA5",
+        }
     return None
 
 

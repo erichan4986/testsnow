@@ -2,10 +2,13 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
 
+import pandas as pd
+
 from technical_state_machine import (
     classify_trend_state, apply_previous_state,
     compute_trend_health, compute_invalidation,
     evaluate_bias_extreme,
+    detect_false_rebound, detect_false_breakout,
 )
 
 
@@ -86,3 +89,53 @@ def test_evaluate_bias_extreme_both_prefers_high():
     )
     assert result is not None
     assert result["direction"] == "high"
+
+
+def test_detect_false_rebound_insufficient_data():
+    df = pd.DataFrame({
+        "open": [100, 101, 102],
+        "close": [101, 102, 103],
+        "volume": [1000, 1000, 1000],
+    })
+    result = detect_false_rebound(df, "正常", 1000)
+    assert result is None
+
+
+def test_detect_false_rebound_detected():
+    # Single positive day after negative, BOLL not open, volume below avg
+    df = pd.DataFrame({
+        "open":  [100, 100, 100, 100, 100, 99],
+        "close": [99,  99,  99,  99,  99,  102],  # last day positive
+        "volume": [1000, 1000, 1000, 1000, 1000, 1000],
+    })
+    result = detect_false_rebound(df, "正常", 1500)
+    assert result is not None
+    assert result["type"] == "假反弹预警"
+
+
+def test_detect_false_rebound_boll_open_excluded():
+    df = pd.DataFrame({
+        "open":  [100, 100, 100, 100, 100, 99],
+        "close": [99,  99,  99,  99,  99,  102],
+        "volume": [1000, 1000, 1000, 1000, 1000, 1000],
+    })
+    result = detect_false_rebound(df, "开口", 1500)
+    assert result is None
+
+
+def test_detect_false_breakout_detected():
+    result = detect_false_breakout(
+        close=98, ma5=100,
+        prev_close=102, prev_ma5=100,
+    )
+    assert result is not None
+    assert result["type"] == "假突破预警"
+    assert "停止加仓" in result["signal"]
+
+
+def test_detect_false_breakout_no_break():
+    result = detect_false_breakout(
+        close=102, ma5=100,
+        prev_close=98, prev_ma5=100,
+    )
+    assert result is None
