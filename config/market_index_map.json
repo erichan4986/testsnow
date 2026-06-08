@@ -1,0 +1,27 @@
+{
+  "_meta": {
+    "updated": "2026-06-08",
+    "source": "local_cache",
+    "version": "phase3.market_resonance.v1"
+  },
+  "688008": {
+    "name": "澜起科技",
+    "exchange": "SH",
+    "board": "STAR",
+    "market": {"code": "000001", "name": "上证综指", "source": "fallback"},
+    "sector": {"code": "801081", "name": "申万电子", "source": "sw"},
+    "thematic": {"code": "000688", "name": "科创50", "source": "manual"},
+    "updated": "2026-06-08",
+    "confidence": "中"
+  },
+  "300003": {
+    "name": "乐普医疗",
+    "exchange": "SZ",
+    "board": "CY",
+    "market": {"code": "399006", "name": "创业板指", "source": "fallback"},
+    "sector": {"code": "801153", "name": "申万医药生物", "source": "sw"},
+    "thematic": {"code": "399006", "name": "创业板指", "source": "fallback"},
+    "updated": "2026-06-08",
+    "confidence": "中"
+  }
+}
