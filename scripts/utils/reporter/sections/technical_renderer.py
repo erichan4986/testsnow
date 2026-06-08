@@ -89,6 +89,60 @@ class TechnicalRenderer:
             lines.append(f"**K线形态**：{candle_signal['signal']}（位置：{candle_signal['location']}）")
             lines.append("")
 
+        # Phase 3 新增模块渲染
+        structure = resonance.get("structure_health")
+        if structure and structure.get("state") != "无法判断":
+            sh_state = structure.get("state", "")
+            sh_conf = structure.get("confidence", "")
+            lines.append(f"**趋势结构**：{sh_state}（置信度：{sh_conf}）")
+            for ev in structure.get("evidence", [])[:3]:
+                lines.append(f"- {ev}")
+            lines.append(f"- 提示：{structure.get('action_hint', '')}")
+            lines.append("")
+
+        channel = resonance.get("channel_status")
+        if channel and channel.get("state") not in ["无明显通道", "未知"]:
+            ch_state = channel.get("state", "")
+            ch_conf = channel.get("confidence", "")
+            pos = channel.get("position", "")
+            lines.append(f"**通道/箱体**：{ch_state}（置信度：{ch_conf}）")
+            lines.append(f"- 位置：{pos}")
+            if channel.get("breakout_status") != "未突破":
+                lines.append(f"- 突破状态：{channel['breakout_status']}")
+            lines.append(f"- 提示：{channel.get('action_hint', '')}")
+            lines.append("")
+
+        bottom = resonance.get("bottom_signal")
+        if bottom and bottom.get("state") != "none":
+            b_state = bottom.get("state", "")
+            b_conf = bottom.get("confidence", "")
+            display_state = {"bottom_watch": "底部区域观察", "bottom_candidate": "底部候选", "bottom_strengthened": "底部信号增强"}.get(b_state, b_state)
+            lines.append(f"**底部区域**：{display_state}（置信度：{b_conf}）")
+            for ev in bottom.get("evidence", [])[:3]:
+                lines.append(f"- {ev}")
+            if bottom.get("missing"):
+                lines.append(f"- 尚缺：{'; '.join(bottom['missing'][:2])}")
+            lines.append(f"- 提示：{bottom.get('action_hint', '')}")
+            lines.append("")
+
+        dart = resonance.get("dart_strategy")
+        if dart:
+            lines.append("**底部区域观察框架**：")
+            for step in dart.get("steps", []):
+                lines.append(f"- 第{step['level']}层：{step['condition']} → {step['action']}")
+            lines.append(f"- 失效条件：{dart.get('invalid_if', '')}")
+            lines.append("")
+
+        mr = resonance.get("market_resonance")
+        if mr and mr.get("state") != "未知":
+            mr_state = mr.get("state", "")
+            mr_conf = mr.get("confidence", "")
+            lines.append(f"**市场共振**：{mr_state}（置信度：{mr_conf}）")
+            for ev in mr.get("evidence", [])[:3]:
+                lines.append(f"- {ev}")
+            lines.append(f"- 提示：{mr.get('action_hint', '')}")
+            lines.append("")
+
         lines.append("**结论**：趋势仍可跟踪，但不适合将 RSI 超买、BIAS 偏高或 MACD 背离单独视为卖出信号。")
         lines.append("")
 
