@@ -205,6 +205,92 @@ def resample_daily_to_weekly(df: pd.DataFrame) -> pd.DataFrame | None:
     return weekly
 
 
+def compute_weekly_trend(df_weekly: pd.DataFrame) -> Dict:
+    """基于周线判定大背景。返回趋势 + evidence。"""
+    close = df_weekly["close"].astype(float)
+    ma5 = close.rolling(5, min_periods=5).mean()
+    ma10 = close.rolling(10, min_periods=10).mean()
+    ma20 = close.rolling(20, min_periods=20).mean()
+
+    if len(df_weekly) < 20:
+        return {
+            "weekly_trend": "未知",
+            "weekly_close": round(float(close.iloc[-1]), 4),
+            "weekly_ma5": None, "weekly_ma10": None, "weekly_ma20": None,
+            "ma20_direction": "未知",
+            "weekly_trend_evidence": {"reason": "周线数据不足"},
+        }
+
+    weekly_close = close.iloc[-1]
+    above_ma5_ma10_count = ((close > ma5) & (close > ma10)).tail(6).sum()
+    below_ma5_ma10_count = ((close < ma5) & (close < ma10)).tail(6).sum()
+    ma_order_up = ma5.iloc[-1] > ma10.iloc[-1] > ma20.iloc[-1]
+    ma_order_down = ma5.iloc[-1] < ma10.iloc[-1] < ma20.iloc[-1]
+
+    ma5_slope_4w = ma5.iloc[-1] / ma5.iloc[-4] - 1 if ma5.iloc[-4] else np.nan
+    ma10_slope_4w = ma10.iloc[-1] / ma10.iloc[-4] - 1 if ma10.iloc[-4] else np.nan
+
+    cross_count = 0
+    for i in range(-10, 0):
+        crossed = False
+        for ma in [ma5, ma10]:
+            if pd.isna(ma.iloc[i]) or pd.isna(ma.iloc[i - 1]):
+                continue
+            prev_side = close.iloc[i - 1] - ma.iloc[i - 1]
+            cur_side = close.iloc[i] - ma.iloc[i]
+            if prev_side * cur_side < 0:
+                crossed = True
+        if crossed:
+            cross_count += 1
+
+    ma5_ma10_gap = abs(ma5.iloc[-1] - ma10.iloc[-1]) / ma10.iloc[-1] if ma10.iloc[-1] != 0 else 0
+
+    is_uptrend = (
+        above_ma5_ma10_count >= 5
+        and ma_order_up
+        and pd.notna(ma5_slope_4w) and ma5_slope_4w > 0
+        and pd.notna(ma10_slope_4w) and ma10_slope_4w > 0
+    )
+    is_downtrend = (
+        below_ma5_ma10_count >= 5
+        and ma_order_down
+        and pd.notna(ma5_slope_4w) and ma5_slope_4w < 0
+        and pd.notna(ma10_slope_4w) and ma10_slope_4w < 0
+    )
+    is_choppy = cross_count >= 3 or ma5_ma10_gap < 0.02
+
+    if is_uptrend:
+        trend = "单边上涨"
+    elif is_downtrend:
+        trend = "单边下跌"
+    elif is_choppy:
+        trend = "震荡"
+    else:
+        trend = "趋势修复中"
+
+    return {
+        "weekly_trend": trend,
+        "weekly_close": round(float(weekly_close), 4),
+        "weekly_ma5": round(float(ma5.iloc[-1]), 4),
+        "weekly_ma10": round(float(ma10.iloc[-1]), 4),
+        "weekly_ma20": round(float(ma20.iloc[-1]), 4),
+        "ma20_direction": compute_ma_direction(ma20, lookback=5, flat_threshold=0.005),
+        "weekly_trend_evidence": {
+            "weeks_above_ma5_ma10": int(above_ma5_ma10_count),
+            "weeks_below_ma5_ma10": int(below_ma5_ma10_count),
+            "ma_order": (
+                "MA5>MA10>MA20" if ma_order_up
+                else "MA5<MA10<MA20" if ma_order_down
+                else "均线未形成顺序排列"
+            ),
+            "ma5_slope_4w": round(float(ma5_slope_4w), 4) if pd.notna(ma5_slope_4w) else None,
+            "ma10_slope_4w": round(float(ma10_slope_4w), 4) if pd.notna(ma10_slope_4w) else None,
+            "cross_count_10w": int(cross_count),
+            "ma5_ma10_gap": round(float(ma5_ma10_gap), 4),
+        },
+    }
+
+
 def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     obv = [0]
     for i in range(1, len(close)):
