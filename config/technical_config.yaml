@@ -1,0 +1,59 @@
+technical:
+  horizon: medium_term
+
+  data:
+    min_daily_bars: 120
+    recommended_daily_bars: 250
+    min_weekly_bars: 20
+    recommended_weekly_bars: 60
+
+  ma:
+    flat_threshold: 0.005
+    ma20_warning_confirm_days: 3
+    ma60_break_confirm_days: 2
+
+  boll:
+    open_ratio: 1.2
+    squeeze_ratio: 0.8
+    width_ma_window: 5
+
+  bias:
+    lookback: 120
+    windows: [5, 10, 20]
+    extreme_windows: [5, 10]
+
+  volume:
+    confirm_ratio: 1.3
+    ma_window: 20
+
+  support_resistance:
+    lookback: 250
+    local_extrema_window: 5
+    min_touches: 3
+    strong_touches: 5
+    reverse_pct: 0.02
+    reverse_atr_multiplier: 1.0
+    bucket_pct: 0.005
+    bucket_atr_multiplier: 0.5
+    low_liquidity_downgrade: true
+
+  # reserved for future full triple divergence scan (phase 1 uses simplified overextension only)
+  divergence:
+    swing_left: 3
+    swing_right: 3
+    min_matched: 2
+    total_conditions: 3
+    lookback: 80
+    boll_upper_tolerance: 1.01
+
+  scoring:
+    weekly_structure_weight: 30
+    daily_ma_weight: 25
+    price_structure_weight: 15
+    volume_weight: 10
+    volatility_weight: 10
+    risk_penalty_weight: 10
+
+  renderer:
+    default_mode: compact
+    allow_full_mode: true
