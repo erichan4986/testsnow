@@ -1044,3 +1044,70 @@ def compute_invalidation(
         "structure_break": struct_break,
         "current_distance_to_invalid": distance or "未知",
     }
+
+
+def detect_boll_overextension(
+    df: pd.DataFrame,
+    indicators: Dict,
+    weekly_trend: str,
+    config: Dict | None = None,
+) -> Dict | None:
+    """简化版背离/超买预警。检测价格突破 BOLL 上轨 + RSI 极端值。"""
+    if config is None:
+        config = {"technical": {"divergence": {
+            "boll_upper_tolerance": 1.01,
+        }}}
+    boll_tol = config.get("technical", {}).get("divergence", {}).get("boll_upper_tolerance", 1.01)
+
+    close = indicators.get("close", 0)
+    boll_upper = indicators.get("boll_upper")
+    boll_lower = indicators.get("boll_lower")
+    rsi = indicators.get("rsi_14")
+    macd_hist = indicators.get("macd_hist")
+
+    warnings = []
+    evidence = {}
+
+    # BOLL 超买/超卖
+    if boll_upper and close > boll_upper * boll_tol:
+        warnings.append("boll_overextension")
+        evidence["boll"] = {"price": close, "upper": boll_upper, "state": "突破上轨"}
+    elif boll_lower and close < boll_lower / boll_tol:
+        warnings.append("boll_overextension")
+        evidence["boll"] = {"price": close, "lower": boll_lower, "state": "跌破下轨"}
+
+    # RSI 极端
+    if rsi is not None and rsi > 75:
+        warnings.append("rsi_overbought")
+        evidence["rsi"] = {"value": rsi, "state": "超买区"}
+    elif rsi is not None and rsi < 25:
+        warnings.append("rsi_oversold")
+        evidence["rsi"] = {"value": rsi, "state": "超卖区"}
+
+    # MACD 柱线收缩
+    if macd_hist is not None and macd_hist < 0:
+        warnings.append("macd_hist_shrinking")
+        evidence["macd"] = {"hist": macd_hist, "state": "柱线翻绿"}
+
+    if len(warnings) >= 2:
+        return {
+            "type": "超买预警" if close > (boll_upper or close) else "超卖预警",
+            "confidence": "强烈" if len(warnings) >= 3 else "中度",
+            "matched": len(warnings),
+            "total": 3,
+            "evidence": evidence,
+            "missing": [],
+            "action": "均线为王，仅作中期风险预警" if weekly_trend == "单边上涨" else "建议减仓观察",
+        }
+    elif len(warnings) == 1:
+        return {
+            "type": "单一预警",
+            "confidence": "轻度",
+            "matched": 1,
+            "total": 3,
+            "evidence": evidence,
+            "missing": [],
+            "action": "观望",
+        }
+
+    return None
