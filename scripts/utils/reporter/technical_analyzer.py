@@ -11,78 +11,23 @@ import pandas as pd
 
 logger = logging.getLogger(__name__)
 
-
-# ---------------------------------------------------------------------------
-# 1. 基础指标计算
-# ---------------------------------------------------------------------------
-
-def _sma(series: pd.Series, period: int) -> pd.Series:
-    return series.rolling(window=period, min_periods=1).mean()
-
-
-def _ema(series: pd.Series, period: int) -> pd.Series:
-    return series.ewm(span=period, adjust=False, min_periods=1).mean()
-
-
-def _atr(df: pd.DataFrame, period: int = 14) -> pd.Series:
-    high, low, close = df["high"], df["low"], df["close"]
-    tr1 = high - low
-    tr2 = (high - close.shift(1)).abs()
-    tr3 = (low - close.shift(1)).abs()
-    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1)
-    return tr.rolling(window=period, min_periods=1).mean()
-
-
-def _adx(df: pd.DataFrame, period: int = 14) -> Tuple[pd.Series, pd.Series, pd.Series]:
-    """返回 (adx, plus_di, minus_di)"""
-    high, low, close = df["high"], df["low"], df["close"]
-    plus_dm = high.diff()
-    minus_dm = -low.diff()
-    plus_dm[plus_dm < 0] = 0
-    minus_dm[minus_dm < 0] = 0
-    plus_dm = plus_dm.where(plus_dm > minus_dm, 0)
-    minus_dm = minus_dm.where(minus_dm > plus_dm, 0)
-
-    tr = pd.concat([high - low, (high - close.shift(1)).abs(), (low - close.shift(1)).abs()], axis=1).max(axis=1)
-    atr = tr.rolling(window=period, min_periods=1).mean()
-
-    plus_di = 100 * (plus_dm.rolling(window=period, min_periods=1).mean() / atr)
-    minus_di = 100 * (minus_dm.rolling(window=period, min_periods=1).mean() / atr)
-    dx = (100 * (plus_di - minus_di).abs() / (plus_di + minus_di)).fillna(0)
-    adx = dx.rolling(window=period, min_periods=1).mean()
-    return adx, plus_di, minus_di
-
-
-def _cci(df: pd.DataFrame, period: int = 20) -> pd.Series:
-    tp = (df["high"] + df["low"] + df["close"]) / 3
-    sma = tp.rolling(window=period, min_periods=1).mean()
-    mad = tp.rolling(window=period, min_periods=1).apply(lambda x: np.abs(x - x.mean()).mean(), raw=False)
-    return (tp - sma) / (0.015 * mad)
-
-
-def _williams_r(df: pd.DataFrame, period: int = 14) -> pd.Series:
-    highest_high = df["high"].rolling(window=period, min_periods=1).max()
-    lowest_low = df["low"].rolling(window=period, min_periods=1).min()
-    return -100 * (highest_high - df["close"]) / (highest_high - lowest_low)
-
-
-def _stoch_rsi(close: pd.Series, period: int = 14, smooth_k: int = 3, smooth_d: int = 3) -> Tuple[pd.Series, pd.Series]:
-    delta = close.diff()
-    gain = delta.where(delta > 0, 0)
-    loss = (-delta).where(delta < 0, 0)
-    avg_gain = gain.rolling(window=period, min_periods=1).mean()
-    avg_loss = loss.rolling(window=period, min_periods=1).mean()
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    rsi = 100 - (100 / (1 + rs))
-
-    stoch = (rsi - rsi.rolling(window=period, min_periods=1).min()) / (
-        rsi.rolling(window=period, min_periods=1).max() - rsi.rolling(window=period, min_periods=1).min()
+try:
+    from .technical_indicators import (
+        sma as _sma, ema as _ema, atr as _atr, adx as _adx,
+        cci as _cci, williams_r as _williams_r, stoch_rsi as _stoch_rsi,
+        obv as _obv, macd as _macd, bollinger as _bollinger, rsi as _rsi,
     )
-    stoch = stoch.fillna(0)
-    k = _sma(stoch, smooth_k)
-    d = _sma(k, smooth_d)
-    return k, d
+except ImportError:
+    from technical_indicators import (
+        sma as _sma, ema as _ema, atr as _atr, adx as _adx,
+        cci as _cci, williams_r as _williams_r, stoch_rsi as _stoch_rsi,
+        obv as _obv, macd as _macd, bollinger as _bollinger, rsi as _rsi,
+    )
 
+
+# ---------------------------------------------------------------------------
+# 1. 基础指标计算（已从 technical_indicators 重新导出）
+# ---------------------------------------------------------------------------
 
 def compute_bias(df: pd.DataFrame, windows=(5, 10, 20), lookback=120) -> Dict:
     """计算 BIAS(5/10/20)，并标记120日极值（防 look-ahead）。"""
@@ -415,35 +360,6 @@ def find_support_resistance(
     }
 
 
-def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
-    obv = [0]
-    for i in range(1, len(close)):
-        if close.iloc[i] > close.iloc[i - 1]:
-            obv.append(obv[-1] + volume.iloc[i])
-        elif close.iloc[i] < close.iloc[i - 1]:
-            obv.append(obv[-1] - volume.iloc[i])
-        else:
-            obv.append(obv[-1])
-    return pd.Series(obv, index=close.index)
-
-
-def _macd(close: pd.Series, fast: int = 12, slow: int = 26, signal: int = 9) -> Tuple[pd.Series, pd.Series, pd.Series]:
-    ema_fast = _ema(close, fast)
-    ema_slow = _ema(close, slow)
-    macd_line = ema_fast - ema_slow
-    signal_line = _ema(macd_line, signal)
-    hist = macd_line - signal_line
-    return macd_line, signal_line, hist
-
-
-def _bollinger(close: pd.Series, period: int = 20, std_dev: int = 2) -> Tuple[pd.Series, pd.Series, pd.Series]:
-    mid = _sma(close, period)
-    std = close.rolling(window=period, min_periods=1).std()
-    upper = mid + std_dev * std
-    lower = mid - std_dev * std
-    return upper, mid, lower
-
-
 # ---------------------------------------------------------------------------
 # 2. 形态识别
 # ---------------------------------------------------------------------------
@@ -752,16 +668,6 @@ def analyze(df: pd.DataFrame, df_weekly: pd.DataFrame | None = None) -> Dict:
             return {}
 
     return advanced_medium_term_resonance(df_daily=df, df_weekly=df_weekly)
-
-
-def _rsi(series: pd.Series, period: int = 14) -> pd.Series:
-    delta = series.diff()
-    gain = delta.where(delta > 0, 0)
-    loss = (-delta).where(delta < 0, 0)
-    avg_gain = gain.rolling(window=period, min_periods=1).mean()
-    avg_loss = loss.rolling(window=period, min_periods=1).mean()
-    rs = avg_gain / avg_loss.replace(0, np.nan)
-    return 100 - (100 / (1 + rs))
 
 
 def classify_trend_state(
