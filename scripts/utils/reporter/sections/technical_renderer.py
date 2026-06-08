@@ -77,6 +77,12 @@ class TechnicalRenderer:
             lines.append(f"**主要风险**：【{'，'.join(deductions)}】")
             lines.append("")
 
+        ds = resonance.get("daily_structure", {})
+        candle_signal = ds.get("candle_signal")
+        if candle_signal:
+            lines.append(f"**K线形态**：{candle_signal['signal']}（位置：{candle_signal['location']}）")
+            lines.append("")
+
         lines.append("**结论**：趋势仍可跟踪，但不适合将 RSI 超买、BIAS 偏高或 MACD 背离单独视为卖出信号。")
         lines.append("")
 

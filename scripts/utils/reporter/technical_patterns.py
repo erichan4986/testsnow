@@ -10,9 +10,81 @@ __all__ = [
     "multi_indicator_resonance",
 ]
 
-# Placeholder for Task 6 (Phase 2B):
-def evaluate_candle_at_key_levels(candle, key_levels, close, boll_state, boll_lower=None, boll_upper=None):
-    """Placeholder for candle pattern evaluation at key levels."""
+def evaluate_candle_at_key_levels(
+    candle: dict,
+    key_levels: dict,
+    close: float,
+    boll_state: str,
+    boll_lower: float | None = None,
+    boll_upper: float | None = None,
+) -> dict | None:
+    """
+    在关键位置评估 K 线形态信号。
+    只在支撑区、阻力区、BOLL 上轨/下轨附近输出提示。
+    """
+    # Determine proximity to key levels (generous ±3% band for S/R, ±2% for BOLL)
+    near_support = False
+    near_resistance = False
+    near_boll_lower = False
+    near_boll_upper = False
+
+    support_zone = key_levels.get("support_zone") if key_levels else None
+    if support_zone is not None:
+        zone_low = support_zone.get("zone_low")
+        zone_high = support_zone.get("zone_high")
+        if zone_low is not None and zone_high is not None:
+            lower = zone_low * 0.97
+            upper = zone_high * 1.03
+            if lower <= close <= upper:
+                near_support = True
+
+    resistance_zone = key_levels.get("resistance_zone") if key_levels else None
+    if resistance_zone is not None:
+        zone_low = resistance_zone.get("zone_low")
+        zone_high = resistance_zone.get("zone_high")
+        if zone_low is not None and zone_high is not None:
+            lower = zone_low * 0.97
+            upper = zone_high * 1.03
+            if lower <= close <= upper:
+                near_resistance = True
+
+    if boll_lower is not None:
+        if close <= boll_lower * 1.02:
+            near_boll_lower = True
+
+    if boll_upper is not None:
+        if close >= boll_upper * 0.98:
+            near_boll_upper = True
+
+    at_key_level = near_support or near_resistance or near_boll_lower or near_boll_upper
+    if not at_key_level:
+        return None
+
+    is_doji = candle.get("is_doji", False)
+    is_long_lower = candle.get("is_long_lower_shadow", False)
+    is_long_upper = candle.get("is_long_upper_shadow", False)
+
+    if is_doji:
+        return {
+            "signal": "十字星，多空胶着，变盘可能增加",
+            "strength": "reversal_watch",
+            "location": "关键位",
+        }
+
+    if is_long_lower and (near_support or near_boll_lower):
+        return {
+            "signal": "长下影，下方承接力较强",
+            "strength": "support_confirm",
+            "location": "支撑位",
+        }
+
+    if is_long_upper and (near_resistance or near_boll_upper):
+        return {
+            "signal": "长上影，上方抛压较重",
+            "strength": "resistance_warn",
+            "location": "阻力位",
+        }
+
     return None
 
 

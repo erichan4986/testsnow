@@ -51,12 +51,14 @@ except ImportError:
 try:
     from .technical_patterns import (
         detect_double_top, detect_double_bottom,
-        detect_boll_overextension, multi_indicator_resonance,
+        detect_boll_overextension, evaluate_candle_at_key_levels,
+        multi_indicator_resonance,
     )
 except ImportError:
     from technical_patterns import (
         detect_double_top, detect_double_bottom,
-        detect_boll_overextension, multi_indicator_resonance,
+        detect_boll_overextension, evaluate_candle_at_key_levels,
+        multi_indicator_resonance,
     )
 
 
@@ -208,6 +210,20 @@ def advanced_medium_term_resonance(
 
     # 6. 支撑阻力
     sr_result = find_support_resistance(df_daily, config)
+
+    # 6.5 K线形态信号（只在关键位置）
+    atr_series = _atr(df_daily)
+    candle_features = compute_candle_features(df_daily, atr_series)
+    candle_signal = evaluate_candle_at_key_levels(
+        candle=candle_features,
+        key_levels=sr_result,
+        close=indicators["close"],
+        boll_state=indicators.get("boll_state", "正常"),
+        boll_lower=indicators.get("boll_lower"),
+        boll_upper=indicators.get("boll_upper"),
+    )
+    if candle_signal:
+        daily_structure["candle_signal"] = candle_signal
 
     # 7. 简化背离扫描
     divergence = detect_boll_overextension(df_daily, indicators, weekly_result["weekly_trend"], config)
