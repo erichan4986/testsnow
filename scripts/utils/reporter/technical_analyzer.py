@@ -351,36 +351,11 @@ def multi_indicator_resonance(indicators: Dict) -> Dict:
 # 4. 主入口
 # ---------------------------------------------------------------------------
 
-def analyze(df: pd.DataFrame) -> Dict:
-    """
-    对日 K DataFrame 做完整技术分析。
-
-    Args:
-        df: DataFrame with columns [open, high, low, close, volume, amount(optional)]
-
-    Returns:
-        {
-            "indicators": {最新指标值},
-            "resonance": {多指标共振判断},
-            "patterns": [检测到的形态],
-            "levels": {"support": ..., "resistance": ...},
-        }
-    """
-    if df is None or df.empty or len(df) < 30:
-        logger.warning("数据不足 30 条，无法做完整技术分析")
-        return {}
-
-    # 标准化列名
-    df = df.copy()
-    for col in ["open", "high", "low", "close", "volume"]:
-        if col not in df.columns:
-            logger.error(f"缺少必要列: {col}")
-            return {}
-
+def _compute_base_indicators(df: pd.DataFrame) -> Dict:
+    """计算全部旧版指标。被 analyze() 和 advanced_medium_term_resonance() 复用。"""
     close = df["close"]
     volume = df["volume"]
 
-    # --- 计算指标 ---
     macd_line, macd_sig, macd_hist = _macd(close)
     boll_up, boll_mid, boll_low = _bollinger(close)
     adx, plus_di, minus_di = _adx(df)
@@ -419,7 +394,6 @@ def analyze(df: pd.DataFrame) -> Dict:
         "boll_lower": float(boll_low.iloc[-1]),
     }
 
-    # 月收益率（如果数据够）
     if len(df) >= 22:
         indicators["monthly_return_pct"] = round(
             (close.iloc[-1] - close.iloc[-22]) / close.iloc[-22] * 100, 2
@@ -431,6 +405,40 @@ def analyze(df: pd.DataFrame) -> Dict:
         avg_vol = float(volume.tail(20).mean())
         avg_close = float(close.tail(20).mean())
         indicators["avg_amount_yi"] = round(avg_vol * avg_close / 100000000, 2)
+
+    return indicators
+
+
+def analyze(df: pd.DataFrame) -> Dict:
+    """
+    对日 K DataFrame 做完整技术分析。
+
+    Args:
+        df: DataFrame with columns [open, high, low, close, volume, amount(optional)]
+
+    Returns:
+        {
+            "indicators": {最新指标值},
+            "resonance": {多指标共振判断},
+            "patterns": [检测到的形态],
+            "levels": {"support": ..., "resistance": ...},
+        }
+    """
+    if df is None or df.empty or len(df) < 30:
+        logger.warning("数据不足 30 条，无法做完整技术分析")
+        return {}
+
+    # 标准化列名
+    df = df.copy()
+    for col in ["open", "high", "low", "close", "volume"]:
+        if col not in df.columns:
+            logger.error(f"缺少必要列: {col}")
+            return {}
+
+    close = df["close"]
+
+    # --- 计算指标 ---
+    indicators = _compute_base_indicators(df)
 
     # --- 形态识别 ---
     patterns = []
