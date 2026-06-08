@@ -30,6 +30,8 @@ try:
         compute_ma_direction, resample_daily_to_weekly,
         compute_weekly_trend, find_support_resistance,
         evaluate_sr_transformation,
+        detect_trend_structure_health, detect_channel_or_box_structure,
+        evaluate_bottoming_region,
     )
 except ImportError:
     from technical_structure import (
@@ -37,6 +39,8 @@ except ImportError:
         compute_ma_direction, resample_daily_to_weekly,
         compute_weekly_trend, find_support_resistance,
         evaluate_sr_transformation,
+        detect_trend_structure_health, detect_channel_or_box_structure,
+        evaluate_bottoming_region,
     )
 
 try:
@@ -158,8 +162,15 @@ def advanced_medium_term_resonance(
 ) -> Dict:
     """中期趋势技术分析主入口。"""
     if config is None:
-        from technical_config import load_technical_config
-        config = load_technical_config()
+        try:
+            from .technical_config import load_technical_config
+            config = load_technical_config()
+        except ImportError:
+            try:
+                from technical_config import load_technical_config
+                config = load_technical_config()
+            except ImportError:
+                config = {"technical": {}}
 
     # 1. 数据质量
     daily_count = len(df_daily) if df_daily is not None else 0
@@ -359,6 +370,46 @@ def advanced_medium_term_resonance(
         rsi_value=indicators.get("rsi_14"),
     )
     _resonance["sell_assessment"] = sell_assessment
+
+    # Phase 3: 趋势结构健康度
+    structure_health = detect_trend_structure_health(df_daily)
+    channel_status = detect_channel_or_box_structure(df_daily)
+    bottom_signal = evaluate_bottoming_region(
+        df_daily, df_weekly, indicators, trend_state,
+        structure_health=structure_health,
+        weekly_background=_resonance.get("weekly_background"),
+    )
+
+    # Phase 3: 分批观察框架
+    try:
+        from .technical_strategy import evaluate_dart_strategy
+    except ImportError:
+        from technical_strategy import evaluate_dart_strategy
+    dart_strategy = evaluate_dart_strategy(
+        bottom_signal, trend_state, indicators, invalidation
+    )
+
+    # Phase 3: 市场共振
+    try:
+        from .technical_resonance import load_market_index_map
+    except ImportError:
+        from technical_resonance import load_market_index_map
+    stock_code = quote.get("code") if quote else None
+    mapping = load_market_index_map(stock_code) if stock_code else {}
+    market_resonance = evaluate_market_resonance(
+        stock_trend_state=trend_state,
+        market_trend_state=None,
+        sector_trend_state=None,
+        theme_trend_state=None,
+    )
+
+    _resonance.update({
+        "structure_health": structure_health,
+        "channel_status": channel_status,
+        "bottom_signal": bottom_signal,
+        "dart_strategy": dart_strategy,
+        "market_resonance": market_resonance,
+    })
 
     # 假反弹检测
     volume_ma20 = float(df_daily["volume"].tail(20).mean())
