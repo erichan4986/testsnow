@@ -291,6 +291,130 @@ def compute_weekly_trend(df_weekly: pd.DataFrame) -> Dict:
     }
 
 
+def find_support_resistance(
+    df: pd.DataFrame,
+    config: Dict | None = None,
+) -> Dict:
+    """基于ATR分箱识别支撑/阻力区间。要求触及后反向运行。"""
+    if config is None:
+        config = {
+            "technical": {
+                "support_resistance": {
+                    "lookback": 250,
+                    "local_extrema_window": 5,
+                    "min_touches": 3,
+                    "strong_touches": 5,
+                    "reverse_pct": 0.02,
+                    "reverse_atr_multiplier": 1.0,
+                    "bucket_pct": 0.005,
+                    "bucket_atr_multiplier": 0.5,
+                    "low_liquidity_downgrade": True,
+                }
+            }
+        }
+    sr_cfg = config.get("technical", {}).get("support_resistance", {})
+    lookback = sr_cfg.get("lookback", 250)
+    min_touches = sr_cfg.get("min_touches", 3)
+    reverse_pct = sr_cfg.get("reverse_pct", 0.02)
+    reverse_atr_mult = sr_cfg.get("reverse_atr_multiplier", 1.0)
+    bucket_pct = sr_cfg.get("bucket_pct", 0.005)
+    bucket_atr_mult = sr_cfg.get("bucket_atr_multiplier", 0.5)
+
+    if len(df) < 30:
+        return {"support_zone": None, "resistance_zone": None}
+
+    close = df["close"].astype(float)
+    high = df["high"].astype(float)
+    low = df["low"].astype(float)
+
+    recent = df.tail(min(lookback, len(df)))
+    recent_close = recent["close"].astype(float)
+    recent_high = recent["high"].astype(float)
+    recent_low = recent["low"].astype(float)
+
+    tr1 = recent_high - recent_low
+    tr2 = (recent_high - recent_close.shift(1)).abs()
+    tr3 = (recent_low - recent_close.shift(1)).abs()
+    atr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1).rolling(14, min_periods=1).mean().iloc[-1]
+    cur_price = close.iloc[-1]
+    bin_size = max(cur_price * bucket_pct, atr * bucket_atr_mult)
+
+    if bin_size == 0:
+        return {"support_zone": None, "resistance_zone": None}
+
+    window = sr_cfg.get("local_extrema_window", 5)
+    local_max_mask = (recent_high == recent_high.rolling(window, center=True).max())
+    local_min_mask = (recent_low == recent_low.rolling(window, center=True).min())
+
+    reverse_threshold = max(cur_price * reverse_pct, atr * reverse_atr_mult)
+
+    def _valid_touches(prices: pd.Series, is_support: bool) -> pd.Series:
+        valid = []
+        for idx, price in prices.items():
+            future = recent_close.loc[idx:].iloc[:6]
+            if len(future) < 2:
+                continue
+            future_max = future.max()
+            future_min = future.min()
+            if is_support:
+                rebound = future_max - price
+                if rebound >= reverse_threshold:
+                    valid.append(price)
+            else:
+                drop = price - future_min
+                if drop >= reverse_threshold:
+                    valid.append(price)
+        return pd.Series(valid)
+
+    max_prices_raw = recent_high[local_max_mask].dropna()
+    min_prices_raw = recent_low[local_min_mask].dropna()
+
+    max_prices = _valid_touches(max_prices_raw, is_support=False)
+    min_prices = _valid_touches(min_prices_raw, is_support=True)
+
+    if len(max_prices) < min_touches or len(min_prices) < min_touches:
+        return {"support_zone": None, "resistance_zone": None}
+
+    max_buckets = (max_prices / bin_size).round()
+    min_buckets = (min_prices / bin_size).round()
+
+    from collections import Counter
+    max_counts = Counter(max_buckets)
+    min_counts = Counter(min_buckets)
+
+    support_zone = None
+    resistance_zone = None
+
+    if min_counts:
+        best_min_bucket = min_counts.most_common(1)[0]
+        if best_min_bucket[1] >= min_touches:
+            min_prices_in_bucket = min_prices[min_buckets == best_min_bucket[0]]
+            support_zone = {
+                "price": round(float(min_prices_in_bucket.mean()), 2),
+                "zone_low": round(float(min_prices_in_bucket.min()), 2),
+                "zone_high": round(float(min_prices_in_bucket.max()), 2),
+                "strength": "强" if best_min_bucket[1] >= sr_cfg.get("strong_touches", 5) else "中",
+                "touches": int(best_min_bucket[1]),
+            }
+
+    if max_counts:
+        best_max_bucket = max_counts.most_common(1)[0]
+        if best_max_bucket[1] >= min_touches:
+            max_prices_in_bucket = max_prices[max_buckets == best_max_bucket[0]]
+            resistance_zone = {
+                "price": round(float(max_prices_in_bucket.mean()), 2),
+                "zone_low": round(float(max_prices_in_bucket.min()), 2),
+                "zone_high": round(float(max_prices_in_bucket.max()), 2),
+                "strength": "强" if best_max_bucket[1] >= sr_cfg.get("strong_touches", 5) else "中",
+                "touches": int(best_max_bucket[1]),
+            }
+
+    return {
+        "support_zone": support_zone,
+        "resistance_zone": resistance_zone,
+    }
+
+
 def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     obv = [0]
     for i in range(1, len(close)):
