@@ -41,14 +41,14 @@ try:
     from .technical_state_machine import (
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
-        evaluate_bias_extreme,
+        evaluate_bias_extreme, evaluate_sell_three_factors,
         detect_false_rebound, detect_false_breakout,
     )
 except ImportError:
     from technical_state_machine import (
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
-        evaluate_bias_extreme,
+        evaluate_bias_extreme, evaluate_sell_three_factors,
         detect_false_rebound, detect_false_breakout,
     )
 
@@ -327,10 +327,23 @@ def advanced_medium_term_resonance(
                      "meaning": "开口=趋势加速，缩口=等待方向"},
         },
         "divergence_scan": divergence,
-        "sell_assessment": None,
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",
     }
+
+    # 卖出三要素评估
+    bias_extreme_high = (
+        bias_extreme is not None
+        and bias_extreme.get("direction") == "high"
+    )
+
+    sell_assessment = evaluate_sell_three_factors(
+        valuation_overpriced=None,
+        ma_breakdown=trend_state.get("stage") == "破坏期",
+        bias_extreme_high=bias_extreme_high,
+        rsi_value=indicators.get("rsi_14"),
+    )
+    _resonance["sell_assessment"] = sell_assessment
 
     # 假反弹检测
     volume_ma20 = float(df_daily["volume"].tail(20).mean())

@@ -86,6 +86,13 @@ class TechnicalRenderer:
         lines.append("**结论**：趋势仍可跟踪，但不适合将 RSI 超买、BIAS 偏高或 MACD 背离单独视为卖出信号。")
         lines.append("")
 
+        sell_assessment = resonance.get("sell_assessment")
+        if sell_assessment and sell_assessment.get("met_count", 0) >= 1:
+            met = sell_assessment["met_count"]
+            rec = sell_assessment["recommendation"]
+            lines.append(f"**卖出三要素**：满足 {met}/3 条，{rec}。")
+            lines.append("")
+
         adv_lines = []
         for name, info in advisors.items():
             meaning = info.get("meaning", "")
@@ -156,6 +163,18 @@ class TechnicalRenderer:
             label = _cn.get(name, name)
             lines.insert(insert_idx + 11, f"- {label}：{comp.get('score', 0)}/{comp.get('max', 0)} ({comp.get('evidence', '')})")
         lines.insert(insert_idx + 12, "")
+
+        # After health score section
+        sell_assessment = resonance.get("sell_assessment")
+        if sell_assessment and sell_assessment.get("met_count", 0) >= 1:
+            lines.insert(insert_idx + 13, "### 卖出三要素评估")
+            lines.insert(insert_idx + 14, "")
+            offset = insert_idx + 15
+            for f in sell_assessment.get("factors", []):
+                lines.insert(offset, f"- {f}")
+                offset += 1
+            lines.insert(offset, f"- 结论：{sell_assessment['recommendation']}（满足 {sell_assessment['met_count']}/3 条）")
+            lines.insert(offset + 1, "")
 
         return "\n".join(lines)
 

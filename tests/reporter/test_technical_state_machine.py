@@ -7,7 +7,7 @@ import pandas as pd
 from technical_state_machine import (
     classify_trend_state, apply_previous_state,
     compute_trend_health, compute_invalidation,
-    evaluate_bias_extreme,
+    evaluate_bias_extreme, evaluate_sell_three_factors,
     detect_false_rebound, detect_false_breakout,
 )
 
@@ -139,3 +139,47 @@ def test_detect_false_breakout_no_break():
         prev_close=98, prev_ma5=100,
     )
     assert result is None
+
+
+def test_evaluate_sell_three_factors_zero_met():
+    result = evaluate_sell_three_factors(
+        valuation_overpriced=False, ma_breakdown=False, bias_extreme_high=False,
+    )
+    assert result["met_count"] == 0
+    assert "观望" in result["recommendation"]
+
+
+def test_evaluate_sell_three_factors_one_met():
+    result = evaluate_sell_three_factors(
+        valuation_overpriced=False, ma_breakdown=True, bias_extreme_high=False,
+    )
+    assert result["met_count"] == 1
+    assert "减仓观察" in result["recommendation"]
+
+
+def test_evaluate_sell_three_factors_two_met():
+    result = evaluate_sell_three_factors(
+        valuation_overpriced=False, ma_breakdown=True, bias_extreme_high=True,
+    )
+    assert result["met_count"] == 2
+    assert "建议卖出" in result["recommendation"]
+
+
+def test_evaluate_sell_three_factors_rsi_merged_into_deviation():
+    """RSI > 80 should count as deviation extreme, not a 4th factor."""
+    result = evaluate_sell_three_factors(
+        valuation_overpriced=False, ma_breakdown=False, bias_extreme_high=False,
+        rsi_value=85,
+    )
+    assert result["met_count"] == 1
+    assert any("RSI" in f for f in result["factors"])
+    assert len(result["factors"]) == 1
+
+
+def test_evaluate_sell_three_factors_rsi_and_bias_together():
+    result = evaluate_sell_three_factors(
+        valuation_overpriced=False, ma_breakdown=False, bias_extreme_high=True,
+        rsi_value=85,
+    )
+    assert result["met_count"] == 1
+    assert any("且RSI" in f for f in result["factors"])

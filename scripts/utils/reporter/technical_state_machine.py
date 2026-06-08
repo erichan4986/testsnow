@@ -102,9 +102,50 @@ def detect_false_breakout(
     return None
 
 
-def evaluate_sell_three_factors(*args, **kwargs):
-    """Placeholder for sell three-factors framework."""
-    return None
+def evaluate_sell_three_factors(
+    valuation_overpriced: bool | None,
+    ma_breakdown: bool,
+    bias_extreme_high: bool,
+    rsi_value: float | None = None,
+) -> dict:
+    """
+    卖出三要素决策框架。
+    三要素：估值定价、均线信号、强弱偏离度。
+    RSI 严重超买并入"强弱偏离度"，不得成为第四个要素。
+    至少满足两条才给出明确卖出建议。
+    """
+    factors = []
+
+    if valuation_overpriced:
+        factors.append("估值定价：极度高估")
+
+    if ma_breakdown:
+        factors.append("均线信号：已触发破位")
+
+    deviation_extreme = bias_extreme_high or (rsi_value is not None and rsi_value > 80)
+    if deviation_extreme:
+        if bias_extreme_high and rsi_value is not None and rsi_value > 80:
+            factors.append(f"强弱偏离度：BIAS高位极端且RSI严重超买（RSI={rsi_value:.1f}）")
+        elif bias_extreme_high:
+            factors.append("强弱偏离度：BIAS创近120日高位极值")
+        else:
+            factors.append(f"强弱偏离度：RSI严重超买（RSI={rsi_value:.1f}）")
+
+    met = len(factors)
+
+    if met >= 2:
+        recommendation = "建议卖出"
+    elif met == 1:
+        recommendation = "部分信号出现，建议减仓观察"
+    else:
+        recommendation = "观望，不满足卖出条件"
+
+    return {
+        "factors": factors,
+        "met_count": met,
+        "recommendation": recommendation,
+        "rule": "卖出三要素：估值定价、均线信号、强弱偏离度；至少满足两条才给出明确卖出建议",
+    }
 
 
 def classify_trend_state(
