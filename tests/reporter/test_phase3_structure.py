@@ -95,3 +95,65 @@ def test_short_gap_lowers_confidence():
     result = detect_trend_structure_health(df, min_gap_days=3)
     assert result["state"] == "低点抬升"
     assert result["confidence"] != "高"
+
+
+def test_horizontal_box():
+    """水平箱体"""
+    dates = pd.date_range("2026-04-01", periods=30, freq="B")
+    closes = np.ones(30) * 250
+    # 波动极小，保持水平
+    highs = closes + 3
+    lows = closes - 3
+    df = pd.DataFrame({
+        "date": dates,
+        "open": closes - 1,
+        "high": highs,
+        "low": lows,
+        "close": closes,
+        "volume": np.ones(30) * 10000,
+    })
+    result = detect_channel_or_box_structure(df, lookback=30)
+    assert result["state"] == "水平箱体"
+    assert result["position"] in ["中部", "接近上轨", "接近下轨"]
+
+
+def test_ascending_channel():
+    """上升通道：高低点均抬升"""
+    dates = pd.date_range("2026-04-01", periods=40, freq="B")
+    base = np.linspace(200, 250, 40)
+    wave = np.sin(np.arange(40) / 2.0) * 6
+    closes = base + wave
+    highs = closes + 5
+    lows = closes - 5
+    df = pd.DataFrame({
+        "date": dates,
+        "open": closes - 1,
+        "high": highs,
+        "low": lows,
+        "close": closes,
+        "volume": np.ones(40) * 10000,
+    })
+    result = detect_channel_or_box_structure(df, lookback=30)
+    assert result["state"] == "上升通道"
+
+
+def test_breakout_above():
+    """向上突破"""
+    dates = pd.date_range("2026-04-01", periods=30, freq="B")
+    closes = np.ones(30) * 250
+    highs = np.ones(30) * 252
+    lows = np.ones(30) * 248
+    # 后3日明显突破上轨
+    closes[-3:] = 265
+    highs[-3:] = 267
+    lows[-3:] = 263
+    df = pd.DataFrame({
+        "date": dates,
+        "open": closes - 1,
+        "high": highs,
+        "low": lows,
+        "close": closes,
+        "volume": np.ones(30) * 10000,
+    })
+    result = detect_channel_or_box_structure(df, lookback=30, confirm_days=2)
+    assert result["breakout_status"] in ["向上突破待确认", "向上突破确认"]
