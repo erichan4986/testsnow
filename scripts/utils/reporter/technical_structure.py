@@ -11,7 +11,8 @@ __all__ = [
     "compute_bias", "compute_boll_state", "compute_candle_features",
     "compute_ma_direction", "resample_daily_to_weekly",
     "compute_weekly_trend", "find_support_resistance",
-    "evaluate_sr_transformation",
+    "evaluate_sr_transformation", "detect_trend_structure_health",
+    "detect_channel_or_box_structure", "evaluate_bottoming_region",
 ]
 
 logger = logging.getLogger(__name__)
@@ -391,4 +392,376 @@ def find_support_resistance(
     return {
         "support_zone": support_zone,
         "resistance_zone": resistance_zone,
+    }
+
+
+def detect_trend_structure_health(
+    df_daily: pd.DataFrame,
+    lookback: int = 60,
+    swing_left: int = 2,
+    swing_right: int = 2,
+    min_gap_days: int = 3,
+    tolerance_pct: float = 0.01,
+    atr_multiplier: float = 0.5,
+) -> dict:
+    """检测趋势结构健康度：回调低点是否抬升/走平/下移。"""
+    if df_daily is None or len(df_daily) < lookback:
+        return {
+            "state": "无法判断",
+            "is_healthy": None,
+            "confidence": "低",
+            "swing_lows": [],
+            "last_low_relation": "unknown",
+            "evidence": [],
+            "missing": [f"数据不足，需要{lookback}根K线，实际{len(df_daily) if df_daily is not None else 0}根"],
+            "action_hint": "证据不足，继续观察",
+        }
+
+    df = df_daily.iloc[-lookback:].copy().reset_index(drop=True)
+    lows = df["low"].values
+    dates = df["date"] if "date" in df.columns else pd.Series(df.index)
+
+    # 计算 ATR（简化版，用 high-low）
+    atr = (df["high"] - df["low"]).rolling(14).mean().iloc[-1]
+    threshold = max(tolerance_pct, atr_multiplier * (atr / df["close"].iloc[-1] if df["close"].iloc[-1] != 0 else 0))
+
+    # 找 confirmed swing lows
+    swing_lows = []
+    n = len(df)
+    for i in range(swing_left, n - swing_right):
+        is_low = True
+        for j in range(1, swing_left + 1):
+            if lows[i - j] <= lows[i]:
+                is_low = False; break
+        for j in range(1, swing_right + 1):
+            if lows[i + j] <= lows[i]:
+                is_low = False; break
+        if is_low:
+            swing_lows.append({"idx": i, "price": float(lows[i]), "date": str(dates.iloc[i]) if hasattr(dates.iloc[i], 'strftime') else str(dates.iloc[i])})
+
+    if len(swing_lows) < 2:
+        return {
+            "state": "无法判断",
+            "is_healthy": None,
+            "confidence": "低",
+            "swing_lows": [{"date": s["date"], "price": s["price"]} for s in swing_lows],
+            "last_low_relation": "unknown",
+            "evidence": [],
+            "missing": ["confirmed swing lows 不足2个"],
+            "action_hint": "证据不足，继续观察",
+        }
+
+    # 过滤间隔不足的（只保留间隔 >= min_gap_days 的）
+    filtered = [swing_lows[0]]
+    short_gaps = []
+    for s in swing_lows[1:]:
+        gap = s["idx"] - filtered[-1]["idx"]
+        if gap >= min_gap_days:
+            filtered.append(s)
+        else:
+            short_gaps.append(gap)
+    swing_lows = filtered
+
+    if len(swing_lows) < 2:
+        return {
+            "state": "无法判断",
+            "is_healthy": None,
+            "confidence": "低",
+            "swing_lows": [{"date": s["date"], "price": s["price"]} for s in swing_lows],
+            "last_low_relation": "unknown",
+            "evidence": [],
+            "missing": ["confirmed swing lows 间隔过短，不足2个有效低点"],
+            "action_hint": "证据不足，继续观察",
+        }
+
+    # 比较最后两个低点
+    prev = swing_lows[-2]["price"]
+    last = swing_lows[-1]["price"]
+    diff = (last - prev) / prev
+
+    if diff > threshold:
+        state = "低点抬升"
+        is_healthy = True
+        last_rel = "higher"
+    elif diff < -threshold:
+        state = "低点下移"
+        is_healthy = False
+        last_rel = "lower"
+    else:
+        state = "低点走平"
+        is_healthy = None
+        last_rel = "flat"
+
+    # 计算有效间隔用于置信度
+    effective_gaps = [
+        swing_lows[i]["idx"] - swing_lows[i - 1]["idx"]
+        for i in range(1, len(swing_lows))
+    ]
+    min_effective_gap = min(effective_gaps) if effective_gaps else None
+
+    if min_effective_gap is not None and min_effective_gap < 5:
+        confidence = "中" if len(swing_lows) >= 3 else "低"
+    elif len(swing_lows) >= 3:
+        confidence = "高"
+    else:
+        confidence = "中"
+
+    evidence = [f"最近两个回调低点：{prev:.2f} -> {last:.2f}"]
+    if state == "低点抬升":
+        evidence.append("回调低点逐步抬高，上升趋势结构健康")
+    elif state == "低点下移":
+        evidence.append("回调低点下移，结构转弱")
+
+    return {
+        "state": state,
+        "is_healthy": is_healthy,
+        "confidence": confidence,
+        "swing_lows": [{"date": s["date"], "price": s["price"]} for s in swing_lows],
+        "last_low_relation": last_rel,
+        "evidence": evidence,
+        "missing": [],
+        "action_hint": "结构健康，回调低点抬升" if is_healthy else ("结构转弱，低点下移" if is_healthy is False else "证据不足，继续观察"),
+    }
+
+
+def detect_channel_or_box_structure(
+    df_daily: pd.DataFrame,
+    lookback: int = 40,
+    slope_tolerance_pct: float = 0.005,
+    confirm_days: int = 2,
+) -> dict:
+    """检测上升/下降通道或水平箱体。使用分位数拟合上下轨。"""
+    if df_daily is None or len(df_daily) < lookback:
+        return {
+            "state": "无明显通道",
+            "confidence": "低",
+            "upper": None, "lower": None,
+            "position": "未知", "breakout_status": "未突破",
+            "evidence": [], "missing": ["数据不足"],
+            "action_hint": "区间内观望",
+        }
+
+    df = df_daily.iloc[-lookback:].copy().reset_index(drop=True)
+    x = np.arange(len(df))
+    upper_prices = df["high"].values
+    lower_prices = df["low"].values
+    avg_price = df["close"].mean()
+
+    def _fit_slope(y):
+        if len(y) < 2:
+            return 0, 0
+        slope, intercept = np.polyfit(x, y, 1)
+        return slope, intercept
+
+    upper_slope, upper_intercept = _fit_slope(upper_prices)
+    lower_slope, lower_intercept = _fit_slope(lower_prices)
+
+    upper_norm_slope = upper_slope / avg_price if avg_price else 0
+    lower_norm_slope = lower_slope / avg_price if avg_price else 0
+    norm_diff = abs(upper_norm_slope - lower_norm_slope)
+
+    # 上下轨
+    upper = upper_intercept + upper_slope * (len(df) - 1)
+    lower = lower_intercept + lower_slope * (len(df) - 1)
+
+    # 用分位数拟合作为 fallback
+    use_quantile = False
+    if abs(upper_norm_slope) > 0.01 or abs(lower_norm_slope) > 0.01:
+        upper = np.percentile(upper_prices, 95)
+        lower = np.percentile(lower_prices, 5)
+        use_quantile = True
+
+    if use_quantile or (abs(upper_norm_slope) < slope_tolerance_pct and abs(lower_norm_slope) < slope_tolerance_pct):
+        state = "水平箱体"
+        conf = "高" if not use_quantile else "中"
+    elif upper_norm_slope > 0 and lower_norm_slope > 0:
+        state = "上升通道"
+        conf = "高" if norm_diff <= slope_tolerance_pct else "低"
+    elif upper_norm_slope < 0 and lower_norm_slope < 0:
+        state = "下降通道"
+        conf = "高" if norm_diff <= slope_tolerance_pct else "低"
+    else:
+        state = "无明显通道"
+        conf = "低"
+
+    if state == "无明显通道":
+        return {
+            "state": state, "confidence": conf,
+            "upper": round(upper, 2), "lower": round(lower, 2),
+            "position": "未知", "breakout_status": "未突破",
+            "evidence": [], "missing": [], "action_hint": "区间内观望",
+        }
+
+    # 当前位置
+    last_close = float(df_daily["close"].iloc[-1])
+    mid = (upper + lower) / 2
+    if last_close > upper:
+        position = "区间外"
+    elif last_close > mid + (upper - mid) * 0.3:
+        position = "接近上轨"
+    elif last_close < mid - (mid - lower) * 0.3:
+        position = "接近下轨"
+    else:
+        position = "中部"
+
+    # 突破检测（用 confirm_bars）
+    confirm_bars = df_daily.iloc[-confirm_days:]
+    breakout_status = "未突破"
+    if len(confirm_bars) >= confirm_days:
+        above_upper = all(c > upper for c in confirm_bars["close"].values)
+        below_lower = all(c < lower for c in confirm_bars["close"].values)
+        if above_upper:
+            breakout_status = "向上突破确认" if confirm_days >= 2 else "向上突破待确认"
+        elif below_lower:
+            breakout_status = "向下跌破确认" if confirm_days >= 2 else "向下跌破待确认"
+
+    action_hint = "区间内观望"
+    if "向上" in breakout_status:
+        action_hint = "趋势跟随"
+    elif "向下" in breakout_status:
+        action_hint = "风险警戒"
+    elif position == "接近下轨":
+        action_hint = "等待突破确认"
+
+    return {
+        "state": state,
+        "confidence": conf,
+        "upper": round(upper, 2),
+        "lower": round(lower, 2),
+        "position": position,
+        "breakout_status": breakout_status,
+        "evidence": [f"上轨≈{upper:.2f}，下轨≈{lower:.2f}", f"当前位置：{position}"],
+        "missing": ["使用分位数拟合"] if use_quantile else [],
+        "action_hint": action_hint,
+    }
+
+
+def evaluate_bottoming_region(
+    df_daily: pd.DataFrame,
+    df_weekly: pd.DataFrame | None,
+    indicators: dict,
+    trend_state: dict,
+    structure_health: dict | None = None,
+    weekly_background: dict | None = None,
+) -> dict:
+    """评估是否进入底部区域观察。不直接输出买入建议。"""
+    score = 0
+    evidence = []
+    missing = []
+
+    # 条件1: 波动率收敛
+    if len(df_daily) >= 40:
+        recent_amp = (df_daily["high"].iloc[-20:].max() - df_daily["low"].iloc[-20:].min()) / df_daily["close"].iloc[-20:].mean()
+        prev_amp = (df_daily["high"].iloc[-40:-20].max() - df_daily["low"].iloc[-40:-20].min()) / df_daily["close"].iloc[-40:-20].mean()
+        if prev_amp > 0 and recent_amp < prev_amp * 0.4:
+            score += 1
+            evidence.append("过去20日振幅明显收敛")
+    else:
+        missing.append("历史数据不足，无法判断波动率收敛")
+
+    # 条件2: 长期支撑附近（周线 MA20/MA60 附近）
+    close = indicators.get("close")
+    if df_weekly is not None and len(df_weekly) >= 5 and close:
+        wma20 = df_weekly["close"].rolling(20).mean().iloc[-1] if len(df_weekly) >= 20 else None
+        wma60 = df_weekly["close"].rolling(60).mean().iloc[-1] if len(df_weekly) >= 60 else None
+        near = False
+        for ma_val, name in [(wma20, "MA20"), (wma60, "MA60")]:
+            if ma_val is not None and ma_val > 0 and abs(close - ma_val) / ma_val < 0.05:
+                near = True
+                evidence.append(f"价格位于周线{name}附近")
+                break
+        if near:
+            score += 1
+        else:
+            missing.append("价格尚未回到周线长期支撑附近")
+    else:
+        missing.append("周线数据不足")
+
+    # 条件3: BIAS 负偏离但不再创新低
+    bias_5 = indicators.get("bias_5")
+    if bias_5 is not None and len(df_daily) >= 20:
+        if bias_5 < 0:
+            recent_biases = []
+            for i in range(1, 6):
+                if len(df_daily) >= i + 5:
+                    c = df_daily["close"].iloc[-i]
+                    ma5_i = df_daily["close"].iloc[-i-4:-i+1].mean() if len(df_daily) >= i + 4 else None
+                    if ma5_i and ma5_i > 0:
+                        recent_biases.append((c - ma5_i) / ma5_i * 100)
+            min_20 = min([
+                (df_daily["close"].iloc[j] - df_daily["close"].iloc[max(0, j-4):j+1].mean()) / df_daily["close"].iloc[max(0, j-4):j+1].mean() * 100
+                for j in range(-20, 0) if len(df_daily) >= abs(j) + 5
+            ]) if len(df_daily) >= 25 else None
+            if recent_biases and min_20 is not None and min(recent_biases) >= min_20 - 0.5:
+                score += 1
+                evidence.append("BIAS负偏离但不再创新低")
+            elif bias_5 < 0:
+                missing.append("BIAS仍在创新低")
+        else:
+            missing.append("BIAS未出现负偏离")
+    else:
+        missing.append("BIAS数据不足")
+
+    # 条件4: 价格不再有效跌破最近 swing low
+    if structure_health and structure_health.get("swing_lows"):
+        swing_lows = structure_health["swing_lows"]
+        if swing_lows:
+            last_low = min(s["price"] for s in swing_lows)
+            if close and close >= last_low * 0.99:
+                score += 1
+                evidence.append("价格未有效跌破最近回调低点")
+            else:
+                missing.append("价格已跌破最近回调低点")
+        else:
+            missing.append("swing_lows 为空")
+    else:
+        missing.append("structure_health 或 swing_lows 缺失，无法判断低点支撑")
+
+    # 条件5: 短期修复迹象
+    ma5 = indicators.get("ma_5")
+    ma10 = indicators.get("ma_10")
+    if close and ma5 and ma10:
+        if close >= ma5:
+            score += 1
+            evidence.append("价格重新站上MA5")
+        elif abs(ma5 - ma10) / ma10 < 0.01:
+            score += 1
+            evidence.append("MA5/MA10开始走平")
+        else:
+            missing.append("尚未出现短期修复迹象")
+    else:
+        missing.append("MA5/MA10 数据不足")
+
+    # 状态分层
+    weekly_trend = (weekly_background or {}).get("trend")
+    if weekly_trend is None:
+        is_weekly_downtrend = (
+            trend_state.get("primary_state") == "下降趋势"
+            and trend_state.get("stage") in ["破坏期", "转弱期"]
+        )
+    else:
+        is_weekly_downtrend = weekly_trend == "单边下跌"
+
+    if score >= 5 and indicators.get("volume", 0) > df_daily["volume"].iloc[-20:].mean() * 1.2 and close and indicators.get("ma_20") and close >= indicators["ma_20"]:
+        state = "bottom_strengthened"
+        conf = "高"
+    elif score >= 4 and not is_weekly_downtrend:
+        state = "bottom_candidate"
+        conf = "中"
+    elif score >= 3:
+        state = "bottom_watch"
+        conf = "低"
+    else:
+        state = "none"
+        conf = "低"
+
+    return {
+        "state": state,
+        "confidence": conf,
+        "score": score,
+        "total": 5,
+        "evidence": evidence,
+        "missing": missing,
+        "action_hint": "仅作底部区域观察，不构成买入信号",
+        "risk": "若跌破最近swing low，则底部观察失效",
     }
