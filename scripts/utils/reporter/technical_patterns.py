@@ -7,6 +7,7 @@ import pandas as pd
 __all__ = [
     "detect_double_top", "detect_double_bottom",
     "detect_boll_overextension", "evaluate_candle_at_key_levels",
+    "multi_indicator_resonance",
 ]
 
 # Placeholder for Task 6 (Phase 2B):
@@ -154,3 +155,142 @@ def detect_boll_overextension(
         }
 
     return None
+
+
+def multi_indicator_resonance(indicators: Dict) -> Dict:
+    """
+    综合判断趋势、动量、量价配合（legacy，保留向后兼容）。
+    """
+    signals = []
+    score = 5.0
+
+    adx = indicators.get("adx")
+    plus_di = indicators.get("plus_di")
+    minus_di = indicators.get("minus_di")
+    ma5 = indicators.get("ma_5")
+    ma20 = indicators.get("ma_20")
+    ma60 = indicators.get("ma_60")
+    close = indicators.get("close")
+
+    trend = "震荡"
+    if adx is not None and adx > 25:
+        if plus_di is not None and minus_di is not None and plus_di > minus_di:
+            trend = "多头"
+            score += 1.0
+            signals.append(f"ADX={adx:.1f} 强趋势，+DI > -DI，多头排列")
+        elif plus_di is not None and minus_di is not None and plus_di < minus_di:
+            trend = "空头"
+            score -= 1.0
+            signals.append(f"ADX={adx:.1f} 强趋势，-DI > +DI，空头排列")
+    else:
+        adx_str = f"{adx:.1f}" if adx is not None else "N/A"
+        signals.append(f"ADX={adx_str} 趋势偏弱，震荡格局")
+
+    if ma5 is not None and ma20 is not None and ma60 is not None and close is not None:
+        if ma5 > ma20 > ma60 and close > ma5:
+            if trend != "多头":
+                trend = "多头"
+            score += 0.5
+            signals.append("MA 多头排列（5>20>60）")
+        elif ma5 < ma20 < ma60 and close < ma5:
+            if trend != "空头":
+                trend = "空头"
+            score -= 0.5
+            signals.append("MA 空头排列（5<20<60）")
+
+    rsi = indicators.get("rsi_14")
+    stoch_k = indicators.get("stoch_rsi_k")
+    williams = indicators.get("williams_r")
+
+    momentum = "中性"
+    if rsi is not None and rsi > 70:
+        momentum = "超买"
+        score -= 0.5
+        signals.append(f"RSI={rsi:.1f} 超买，短期回调风险")
+    elif rsi is not None and rsi < 30:
+        momentum = "超卖"
+        score += 0.5
+        signals.append(f"RSI={rsi:.1f} 超卖，短期反弹机会")
+    else:
+        if rsi is not None:
+            signals.append(f"RSI={rsi:.1f} 中性区间")
+
+    if stoch_k is not None:
+        if stoch_k > 0.8:
+            score -= 0.3
+            signals.append(f"StochRSI K={stoch_k:.2f} 接近超买")
+        elif stoch_k < 0.2:
+            score += 0.3
+            signals.append(f"StochRSI K={stoch_k:.2f} 接近超卖")
+
+    if williams is not None:
+        if williams > -20:
+            score -= 0.3
+            signals.append(f"Williams %R={williams:.1f} 超买区")
+        elif williams < -80:
+            score += 0.3
+            signals.append(f"Williams %R={williams:.1f} 超卖区")
+
+    macd = indicators.get("macd")
+    macd_signal = indicators.get("macd_signal")
+    macd_hist = indicators.get("macd_hist")
+    if macd is not None and macd_signal is not None:
+        if macd > macd_signal and macd_hist is not None and macd_hist > 0:
+            score += 0.5
+            signals.append("MACD 金叉且柱线扩张，动量向上")
+        elif macd < macd_signal and macd_hist is not None and macd_hist < 0:
+            score -= 0.5
+            signals.append("MACD 死叉且柱线收缩，动量向下")
+        elif macd > macd_signal and macd_hist is not None and macd_hist < 0:
+            signals.append("MACD 金叉但柱线收缩，动量减弱")
+        elif macd < macd_signal and macd_hist is not None and macd_hist > 0:
+            signals.append("MACD 死叉但柱线收缩，下跌动能减弱")
+
+    obv_slope = indicators.get("obv_slope_5")
+    price_slope = indicators.get("price_slope_5")
+    volume_price = "中性"
+    if obv_slope is not None and price_slope is not None:
+        if price_slope > 0 and obv_slope > 0:
+            volume_price = "确认"
+            score += 0.5
+            signals.append("量价齐升，上涨趋势获成交量确认")
+        elif price_slope > 0 and obv_slope < 0:
+            volume_price = "背离"
+            score -= 0.8
+            signals.append("⚠️ 量价背离：价格上涨但 OBV 下降，上涨乏力")
+        elif price_slope < 0 and obv_slope < 0:
+            volume_price = "确认"
+            score -= 0.5
+            signals.append("量价齐跌，下跌趋势获成交量确认")
+        elif price_slope < 0 and obv_slope > 0:
+            volume_price = "背离"
+            score += 0.8
+            signals.append("✅ 底背离：价格下跌但 OBV 上升，吸筹迹象")
+
+    boll_upper = indicators.get("boll_upper")
+    boll_lower = indicators.get("boll_lower")
+    if boll_upper is not None and boll_lower is not None and close is not None:
+        if close > boll_upper:
+            score -= 0.3
+            signals.append("价格突破布林带上轨，短期超买")
+        elif close < boll_lower:
+            score += 0.3
+            signals.append("价格跌破布林带下轨，短期超卖")
+
+    atr = indicators.get("atr_14")
+    if atr is not None and close is not None:
+        atr_pct = atr / close * 100
+        if atr_pct > 5:
+            signals.append(f"ATR={atr_pct:.1f}% 高波动，注意风控")
+        elif atr_pct < 1.5:
+            signals.append(f"ATR={atr_pct:.1f}% 低波动，可能酝酿突破")
+
+    score = round(max(0.0, min(10.0, score)), 1)
+
+    return {
+        "trend": trend,
+        "momentum": momentum,
+        "volume_price": volume_price,
+        "composite_score": score,
+        "signals": signals,
+    }
