@@ -38,3 +38,37 @@ def test_analyze_returns_backward_compatible_shape():
     assert "ma_20" in ind
     assert "boll_upper" in ind
     assert "atr_14" in ind
+
+
+def test_analyze_schema_stable_after_refactor():
+    """Verify analyze() returns the exact dict schema expected by consumers."""
+    close = [100.0]
+    for _ in range(1, 150):
+        close.append(close[-1] * (1 + (0.01 if _ % 2 == 0 else -0.005)))
+    df = _make_df(close)
+
+    result = analyze(df)
+
+    # Top-level keys
+    assert "indicators" in result
+    assert "resonance" in result
+    assert "patterns" in result
+    assert "levels" in result
+
+    indicators = result["indicators"]
+    required_indicator_keys = [
+        "close", "volume", "macd", "macd_signal", "macd_hist",
+        "rsi_14", "adx", "plus_di", "minus_di",
+        "ma_5", "ma_10", "ma_20", "ma_60",
+        "boll_upper", "boll_mid", "boll_lower", "atr_14",
+    ]
+    for key in required_indicator_keys:
+        assert key in indicators, f"missing indicator key: {key}"
+
+    resonance = result["resonance"]
+    required_resonance_keys = [
+        "trend", "momentum", "volume_price", "composite_score",
+        "signals", "trend_state", "trend_health", "invalidation",
+    ]
+    for key in required_resonance_keys:
+        assert key in resonance, f"missing resonance key: {key}"
