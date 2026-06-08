@@ -14,7 +14,7 @@ class TechnicalRenderer:
         resonance = indicators.get("_resonance", {})
 
         if resonance.get("trend_state") and resonance.get("trend_health"):
-            mode = ctx.get("technical_render_mode", "compact")
+            mode = ctx.get("technical_render_mode", "full")
             if mode == "full":
                 return self._render_full(resonance, stock_name, ctx)
             return self._render_compact(resonance, stock_name, ctx)
@@ -124,8 +124,16 @@ class TechnicalRenderer:
         lines.insert(insert_idx + 9, "")
         lines.insert(insert_idx + 10, "### 3. 健康度评分")
         th = resonance.get("trend_health", {})
+        _cn = {
+            "weekly_structure": "周线结构",
+            "daily_ma_alignment": "日线MA趋势",
+            "price_structure": "价格结构",
+            "volume_confirmation": "成交量确认",
+            "volatility_condition": "波动率条件",
+        }
         for name, comp in th.get("components", {}).items():
-            lines.insert(insert_idx + 11, f"- {name}：{comp.get('score', 0)}/{comp.get('max', 0)} ({comp.get('evidence', '')})")
+            label = _cn.get(name, name)
+            lines.insert(insert_idx + 11, f"- {label}：{comp.get('score', 0)}/{comp.get('max', 0)} ({comp.get('evidence', '')})")
         lines.insert(insert_idx + 12, "")
 
         return "\n".join(lines)

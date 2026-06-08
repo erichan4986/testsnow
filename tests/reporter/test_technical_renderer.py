@@ -5,7 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from technical_renderer import TechnicalRenderer
 
 
-def _make_ctx(with_new_fields=True, mode="compact"):
+def _make_ctx(with_new_fields=True, mode="full"):
     ctx = {
         "stock_name": "测试股",
         "stock_raw": {
