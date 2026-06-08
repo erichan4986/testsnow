@@ -113,3 +113,56 @@ def test_swing_lows_missing():
         "swing" in str(m).lower() or "low" in str(m).lower()
         for m in result.get("missing", [])
     )
+
+
+from scripts.utils.reporter.technical_strategy import evaluate_dart_strategy
+
+
+def test_dart_strategy_active():
+    """满足条件触发"""
+    bottom = {"state": "bottom_candidate"}
+    trend = {"stage": "盘整期", "primary_state": "震荡趋势"}
+    indicators = {"close": 200, "ma_5": 198}
+    inv = {"hard_invalid_price": 180}
+    result = evaluate_dart_strategy(bottom, trend, indicators, inv)
+    assert result is not None
+    assert result["state"] == "active"
+    for step in result["steps"]:
+        assert "买入" not in step["action"]
+        assert "建仓" not in step["action"]
+        assert "加仓" not in step["action"]
+        assert "满仓" not in step["action"]
+
+
+def test_dart_strategy_no_buy_words():
+    """不得出现买入/建仓/加仓/满仓"""
+    bottom = {"state": "bottom_candidate"}
+    trend = {"stage": "盘整期", "primary_state": "震荡趋势"}
+    indicators = {"close": 200, "ma_5": 198}
+    inv = {"hard_invalid_price": 180}
+    result = evaluate_dart_strategy(bottom, trend, indicators, inv)
+    text = str(result)
+    assert "买入" not in text
+    assert "建仓" not in text
+    assert "加仓" not in text
+    assert "满仓" not in text
+
+
+def test_dart_strategy_not_triggered_below_ma5():
+    """价格低于MA5不触发"""
+    bottom = {"state": "bottom_candidate"}
+    trend = {"stage": "盘整期", "primary_state": "震荡趋势"}
+    indicators = {"close": 195, "ma_5": 198}
+    inv = {"hard_invalid_price": 180}
+    result = evaluate_dart_strategy(bottom, trend, indicators, inv)
+    assert result is None
+
+
+def test_dart_strategy_not_triggered_in_downtrend():
+    """周线破坏期不触发"""
+    bottom = {"state": "bottom_candidate"}
+    trend = {"stage": "破坏期", "primary_state": "下降趋势"}
+    indicators = {"close": 200, "ma_5": 198}
+    inv = {"hard_invalid_price": 180}
+    result = evaluate_dart_strategy(bottom, trend, indicators, inv)
+    assert result is None
