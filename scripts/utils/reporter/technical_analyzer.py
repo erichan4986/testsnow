@@ -740,61 +740,18 @@ def _compute_base_indicators(df: pd.DataFrame) -> Dict:
     return indicators
 
 
-def analyze(df: pd.DataFrame) -> Dict:
-    """
-    对日 K DataFrame 做完整技术分析。
-
-    Args:
-        df: DataFrame with columns [open, high, low, close, volume, amount(optional)]
-
-    Returns:
-        {
-            "indicators": {最新指标值},
-            "resonance": {多指标共振判断},
-            "patterns": [检测到的形态],
-            "levels": {"support": ..., "resistance": ...},
-        }
-    """
+def analyze(df: pd.DataFrame, df_weekly: pd.DataFrame | None = None) -> Dict:
+    """对日K DataFrame做完整技术分析（中期趋势版）。"""
     if df is None or df.empty or len(df) < 30:
-        logger.warning("数据不足 30 条，无法做完整技术分析")
+        logger.warning("数据不足30条，无法做完整技术分析")
         return {}
 
-    # 标准化列名
-    df = df.copy()
     for col in ["open", "high", "low", "close", "volume"]:
         if col not in df.columns:
             logger.error(f"缺少必要列: {col}")
             return {}
 
-    close = df["close"]
-
-    # --- 计算指标 ---
-    indicators = _compute_base_indicators(df)
-
-    # --- 形态识别 ---
-    patterns = []
-    dtop = detect_double_top(close)
-    if dtop:
-        patterns.append(dtop)
-    dbot = detect_double_bottom(close)
-    if dbot:
-        patterns.append(dbot)
-
-    # --- 支撑/阻力 ---
-    support, resistance = _is_support_resistance(close)
-
-    # --- 共振分析 ---
-    resonance = multi_indicator_resonance(indicators)
-
-    return {
-        "indicators": indicators,
-        "resonance": resonance,
-        "patterns": patterns,
-        "levels": {
-            "support": round(support, 2) if support else None,
-            "resistance": round(resistance, 2) if resistance else None,
-        },
-    }
+    return advanced_medium_term_resonance(df_daily=df, df_weekly=df_weekly)
 
 
 def _rsi(series: pd.Series, period: int = 14) -> pd.Series:
@@ -1111,3 +1068,179 @@ def detect_boll_overextension(
         }
 
     return None
+
+
+def advanced_medium_term_resonance(
+    df_daily: pd.DataFrame,
+    df_weekly: pd.DataFrame | None = None,
+    quote: Dict | None = None,
+    previous_state: Dict | None = None,
+    config: Dict | None = None,
+) -> Dict:
+    """中期趋势技术分析主入口。"""
+    if config is None:
+        from technical_config import load_technical_config
+        config = load_technical_config()
+
+    # 1. 数据质量
+    daily_count = len(df_daily) if df_daily is not None else 0
+
+    # 2. 自动 resample 周线（如果未传入）
+    if df_weekly is None and df_daily is not None and len(df_daily) >= 5:
+        df_weekly = resample_daily_to_weekly(df_daily)
+    weekly_count = len(df_weekly) if df_weekly is not None else 0
+    sufficient = daily_count >= 120 and weekly_count >= 20
+
+    # 3. 计算全部旧指标（复用 Task 2）
+    indicators = _compute_base_indicators(df_daily)
+
+    # BIAS
+    bias_result = compute_bias(df_daily)
+    indicators.update(bias_result)
+
+    # BOLL state
+    close = df_daily["close"].astype(float)
+    boll_up, boll_mid, boll_low = _bollinger(close)
+    df_boll = pd.DataFrame({"boll_upper": boll_up, "boll_mid": boll_mid, "boll_lower": boll_low})
+    boll_result = compute_boll_state(df_boll, config)
+    indicators.update(boll_result)
+    indicators["boll_upper"] = float(boll_up.iloc[-1])
+    indicators["boll_mid"] = float(boll_mid.iloc[-1])
+    indicators["boll_lower"] = float(boll_low.iloc[-1])
+
+    # 成交额
+    if "amount" in df_daily.columns:
+        indicators["amount"] = float(df_daily["amount"].iloc[-1])
+        indicators["amount_ma20"] = float(df_daily["amount"].tail(20).mean())
+    elif "turnover" in df_daily.columns:
+        indicators["turnover_ma20"] = float(df_daily["turnover"].tail(20).mean())
+
+    # 4. 周线趋势
+    weekly_result = compute_weekly_trend(df_weekly) if df_weekly is not None and len(df_weekly) >= 20 else {
+        "weekly_trend": "未知", "weekly_close": None, "weekly_ma5": None,
+        "weekly_ma10": None, "weekly_ma20": None, "ma20_direction": "未知",
+        "weekly_trend_evidence": {"reason": "周线数据不足"},
+    }
+    indicators["weekly_close"] = weekly_result.get("weekly_close")
+    indicators["weekly_ma5"] = weekly_result.get("weekly_ma5")
+    indicators["weekly_ma10"] = weekly_result.get("weekly_ma10")
+    indicators["weekly_ma20"] = weekly_result.get("weekly_ma20")
+    indicators["weekly_trend"] = weekly_result.get("weekly_trend")
+
+    # 5. 日线结构
+    price_vs_ma20 = "站上" if indicators["close"] > indicators["ma_20"] else "跌破"
+    price_vs_ma60 = "站上" if indicators["close"] > indicators["ma_60"] else "跌破"
+    daily_structure = {
+        "ma20_direction": compute_ma_direction(_sma(close, 20)),
+        "ma60_direction": compute_ma_direction(_sma(close, 60)),
+        "price_vs_ma20": price_vs_ma20,
+        "price_vs_ma60": price_vs_ma60,
+        "structure_type": "无明显结构",
+        "boll_state": indicators.get("boll_state", "正常"),
+        "price_position": "中轨附近",
+    }
+
+    # 6. 支撑阻力
+    sr_result = find_support_resistance(df_daily, config)
+
+    # 7. 简化背离扫描
+    divergence = detect_boll_overextension(df_daily, indicators, weekly_result["weekly_trend"], config)
+
+    # 8. 趋势状态机
+    trend_state = classify_trend_state(
+        weekly_trend=weekly_result["weekly_trend"],
+        daily_structure=daily_structure,
+        indicators=indicators,
+        divergence=divergence,
+    )
+    apply_previous_state(trend_state, previous_state)
+
+    # 9. 趋势健康度
+    trend_health = compute_trend_health(
+        weekly_trend=weekly_result["weekly_trend"],
+        daily_structure=daily_structure,
+        indicators=indicators,
+        config=config,
+    )
+
+    # 10. 失效条件
+    invalidation = compute_invalidation(
+        close=indicators["close"],
+        ma20=indicators.get("ma_20"),
+        ma60=indicators.get("ma_60"),
+        support_zone=sr_result.get("support_zone"),
+        config=config,
+    )
+
+    # 11. 分析可信度
+    limitations = []
+    if daily_count < 120:
+        limitations.append("日线数据不足120根")
+    if weekly_count < 20:
+        limitations.append("周线数据不足20根")
+    if not sufficient:
+        limitations.append("不满足完整中期趋势分析条件")
+
+    analysis_confidence = {
+        "level": "高" if sufficient and not limitations else ("中" if daily_count >= 60 else "低"),
+        "reasons": [f"日线{daily_count}根", f"周线{weekly_count}根"] if sufficient else [],
+        "limitations": limitations,
+    }
+
+    # 12. 组装 _resonance
+    _resonance = {
+        "trend": "多头" if trend_state["primary_state"] == "上升趋势" else ("空头" if trend_state["primary_state"] == "下降趋势" else "震荡"),
+        "momentum": "偏强" if trend_health["score"] >= 65 else "偏弱",
+        "volume_price": "确认",
+        "composite_score": round(min(10, max(0, trend_health["score"] / 10)), 1),
+        "signals": [f"趋势阶段：{trend_state['stage']}"],
+
+        "analysis_horizon": "中期（日线-周线）",
+        "analysis_confidence": analysis_confidence,
+        "trend_state": trend_state,
+        "weekly_background": {
+            "trend": weekly_result["weekly_trend"],
+            "ma_structure": weekly_result["weekly_trend_evidence"].get("ma_order", "未知"),
+            "weekly_close_position": "站上MA10" if weekly_result.get("weekly_close") and weekly_result.get("weekly_ma10") and weekly_result["weekly_close"] > weekly_result["weekly_ma10"] else "未知",
+            "evidence": weekly_result["weekly_trend_evidence"],
+        },
+        "daily_structure": daily_structure,
+        "trend_health": trend_health,
+        "key_levels": {
+            "support_zone": sr_result.get("support_zone"),
+            "resistance_zone": sr_result.get("resistance_zone"),
+            "medium_term_invalid": invalidation.get("hard_invalid_price"),
+        },
+        "invalidation": invalidation,
+        "market_regime": {
+            "market_trend": "未知",
+            "sector_trend": "未知",
+            "relative_strength": "未知",
+            "impact": "暂未接入市场/行业数据，本次技术分析仅基于个股自身K线结构。",
+        },
+        "advisors": {
+            "macd": {"state": "多头延续" if indicators.get("macd", 0) > 0 else "空头延续",
+                     "meaning": "仅作趋势确认，不单独构成买卖信号"},
+            "rsi": {"value": indicators.get("rsi_14"),
+                    "state": "强势钝化" if indicators.get("rsi_14", 50) > 70 else "正常",
+                    "meaning": "强趋势中不单独构成卖出信号"},
+            "bias": {"state": "偏高" if indicators.get("bias_5", 0) > 3 else "正常",
+                     "meaning": "短线追高性价比下降，但中期趋势未破坏"},
+            "boll": {"state": indicators.get("boll_state", "正常"),
+                     "meaning": "开口=趋势加速，缩口=等待方向"},
+        },
+        "divergence_scan": divergence,
+        "sell_assessment": None,
+        "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
+        "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",
+    }
+
+    return {
+        "indicators": indicators,
+        "resonance": _resonance,
+        "patterns": [],
+        "levels": {
+            "support": sr_result["support_zone"]["price"] if sr_result.get("support_zone") else None,
+            "resistance": sr_result["resistance_zone"]["price"] if sr_result.get("resistance_zone") else None,
+        },
+    }
