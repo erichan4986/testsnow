@@ -216,15 +216,32 @@ def infer_market_context(code: str, name: str, quote: dict | None = None) -> dic
 
 ```python
 indicators.update({
+    # BIAS
     "bias_5", "bias_10", "bias_20",
     "bias_5_extreme_high", "bias_5_extreme_low",
     "bias_10_extreme_high", "bias_10_extreme_low",
+
+    # BOLL
     "boll_width", "boll_width_ma5", "boll_state",
+
+    # MA direction
     "ma20_direction", "ma60_direction",
+
+    # Weekly
     "weekly_close", "weekly_ma5", "weekly_ma10", "weekly_ma20", "weekly_trend",
+
+    # ATR
     "atr_14",
+
+    # 成交额（优先于 volume）
+    "amount", "amount_ma20", "turnover_ma20",
 })
 ```
+
+**成交额字段优先级**：
+1. 若数据源提供 `amount` / `turnover`（元），优先使用成交额做确认；
+2. 若不存在，降级使用 `volume`（股）× `close` 估算成交额；
+3. 估算值在报告中不直接显示，仅用于内部突破/跌破确认逻辑。
 
 ---
 
@@ -584,6 +601,22 @@ bucket = round(price / bin_size)
 ### 14.3 有效触及
 
 1. 局部高点或低点；2. 触及后反向运行 ≥2% 或 ≥1 ATR；3. 至少3次有效触及；4. 成交额不能过低；5. 港股低流动性标的降低强度评级。
+
+### 14.4 缺失处理
+
+新股、低流动性、历史不足时可能找不到有效支撑/阻力：
+
+```python
+"support_zone": None
+"resistance_zone": None
+```
+
+Renderer 遇到 None 时显示：
+
+```markdown
+- 支撑区：暂无可靠支撑区，原因：历史数据不足或有效触及次数不足。
+- 压力区：暂无可靠压力区，原因：历史数据不足或有效触及次数不足。
+```
 
 ---
 
@@ -1090,6 +1123,8 @@ assert states[16]["state_changed"] is True
 ## 28. Agent 执行摘要
 
 请按以下顺序实施：
+
+**重要：第一阶段不要实现头肩顶、双底等复杂形态；只实现平台、箱体、通道、突破/跌破。**
 
 1. 新增 technical_config.yaml 和 config loader，统一管理阈值
 2. 扩展 technical meta、market_context、analysis_confidence
