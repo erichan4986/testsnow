@@ -912,3 +912,135 @@ def apply_previous_state(trend_state: Dict, previous_state: Dict | None) -> None
     cur_stage = trend_state.get("stage")
     trend_state["state_changed"] = old_stage != cur_stage
     trend_state["previous_state"] = old_stage
+
+
+def compute_trend_health(
+    weekly_trend: str,
+    daily_structure: Dict,
+    indicators: Dict,
+    config: Dict | None = None,
+) -> Dict:
+    """计算趋势健康度评分（0-100）。"""
+    if config is None:
+        config = {"technical": {"scoring": {
+            "weekly_structure_weight": 30, "daily_ma_weight": 25,
+            "price_structure_weight": 15, "volume_weight": 10,
+            "volatility_weight": 10, "risk_penalty_weight": 10,
+        }}}
+    sc = config.get("technical", {}).get("scoring", {})
+
+    score = 0
+    components = {}
+    penalties = {}
+    deductions = []
+
+    if weekly_trend == "单边上涨":
+        components["weekly_structure"] = {"score": 25, "max": 30, "evidence": "周线多头排列"}
+        score += 25
+    elif weekly_trend == "震荡":
+        components["weekly_structure"] = {"score": 10, "max": 30, "evidence": "周线震荡"}
+        score += 10
+    else:
+        components["weekly_structure"] = {"score": 5, "max": 30, "evidence": f"周线{weekly_trend}"}
+        score += 5
+
+    ma20_dir = daily_structure.get("ma20_direction", "未知")
+    ma60_dir = daily_structure.get("ma60_direction", "未知")
+    price_vs_ma20 = daily_structure.get("price_vs_ma20", "未知")
+    if ma20_dir == "向上" and price_vs_ma20 == "站上":
+        components["daily_ma_alignment"] = {"score": 20, "max": 25, "evidence": "MA20向上，价格站上"}
+        score += 20
+    elif ma20_dir == "走平":
+        components["daily_ma_alignment"] = {"score": 10, "max": 25, "evidence": "MA20走平"}
+        score += 10
+    else:
+        components["daily_ma_alignment"] = {"score": 5, "max": 25, "evidence": "MA20向下或价格跌破"}
+        score += 5
+
+    structure_type = daily_structure.get("structure_type", "无明显结构")
+    if structure_type in ["上升通道", "平台整理"]:
+        components["price_structure"] = {"score": 12, "max": 15, "evidence": structure_type}
+        score += 12
+    else:
+        components["price_structure"] = {"score": 5, "max": 15, "evidence": structure_type}
+        score += 5
+
+    components["volume_confirmation"] = {"score": 8, "max": 10, "evidence": "成交额温和"}
+    score += 8
+
+    boll_state = indicators.get("boll_state", "正常")
+    if boll_state == "开口":
+        components["volatility_condition"] = {"score": 7, "max": 10, "evidence": "BOLL开口，趋势波动放大"}
+        score += 7
+    else:
+        components["volatility_condition"] = {"score": 5, "max": 10, "evidence": f"BOLL{boll_state}"}
+        score += 5
+
+    rsi = indicators.get("rsi_14")
+    if rsi is not None and rsi > 75:
+        penalties["overextension"] = {"score": -5, "min": -10, "evidence": f"RSI={rsi:.1f} 偏高"}
+        score -= 5
+        deductions.append("RSI偏高")
+
+    bias_5 = indicators.get("bias_5")
+    if bias_5 is not None and bias_5 > 5:
+        penalties["overextension"] = penalties.get("overextension", {"score": 0, "min": -10, "evidence": ""})
+        penalties["overextension"]["score"] -= 3
+        penalties["overextension"]["evidence"] += f" BIAS(5)={bias_5:.1f}%"
+        score -= 3
+        deductions.append("BIAS偏高")
+
+    score = max(0, min(100, score))
+
+    if score >= 80:
+        grade = "趋势强健"
+    elif score >= 65:
+        grade = "健康"
+    elif score >= 50:
+        grade = "转弱观察"
+    elif score >= 30:
+        grade = "破坏风险高"
+    else:
+        grade = "趋势失效"
+
+    return {
+        "score": score,
+        "grade": grade,
+        "summary": f"趋势健康度{score}/100，{grade}。",
+        "components": components,
+        "penalties": penalties,
+        "deductions": deductions,
+    }
+
+
+def compute_invalidation(
+    close: float,
+    ma20: float | None,
+    ma60: float | None,
+    support_zone: Dict | None,
+    config: Dict | None = None,
+) -> Dict:
+    """生成趋势失效条件。hard_invalid_price 是价格位，current_distance_to_invalid 是距离百分比。"""
+    if config is None:
+        config = {"technical": {"ma": {"ma20_warning_confirm_days": 3, "ma60_break_confirm_days": 2}}}
+    ma_cfg = config.get("technical", {}).get("ma", {})
+
+    soft = f"日线连续{ma_cfg.get('ma20_warning_confirm_days', 3)}日收盘跌破MA20"
+    hard = "周线收盘跌破MA10，或日线有效跌破MA60"
+    struct_break = "跌破前期平台下沿"
+
+    hard_price = ma60 if ma60 and ma60 > 0 else None
+    distance = None
+    if hard_price and hard_price > 0:
+        distance = f"{(close - hard_price) / hard_price * 100:.1f}%"
+    elif support_zone and support_zone.get("zone_low"):
+        hard_price = support_zone["zone_low"]
+        distance = f"{(close - hard_price) / close * 100:.1f}%"
+
+    return {
+        "soft_warning": soft,
+        "hard_invalid": hard,
+        "hard_invalid_price": hard_price,
+        "structure_break": struct_break,
+        "current_distance_to_invalid": distance or "未知",
+    }
