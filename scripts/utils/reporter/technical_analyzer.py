@@ -140,6 +140,71 @@ def compute_boll_state(df: pd.DataFrame, config: Dict | None = None) -> Dict:
     }
 
 
+def compute_candle_features(df: pd.DataFrame, atr: pd.Series | None = None) -> Dict:
+    """计算K线实体、影线长度（归一化）。"""
+    row = df.iloc[-1]
+    open_, high, low, close = row["open"], row["high"], row["low"], row["close"]
+    body = abs(close - open_)
+    upper_shadow = high - max(open_, close)
+    lower_shadow = min(open_, close) - low
+    full_range = high - low
+    close_base = close if close else np.nan
+    atr_cur = atr.iloc[-1] if atr is not None and len(atr) else np.nan
+    return {
+        "body_len": round(float(body), 4),
+        "upper_shadow": round(float(upper_shadow), 4),
+        "lower_shadow": round(float(lower_shadow), 4),
+        "body_pct": None if not close_base else round(float(body / close_base), 4),
+        "upper_shadow_pct": None if not close_base else round(float(upper_shadow / close_base), 4),
+        "lower_shadow_pct": None if not close_base else round(float(lower_shadow / close_base), 4),
+        "body_atr_ratio": None if pd.isna(atr_cur) or atr_cur == 0 else round(float(body / atr_cur), 2),
+        "upper_shadow_atr_ratio": None if pd.isna(atr_cur) or atr_cur == 0 else round(float(upper_shadow / atr_cur), 2),
+        "lower_shadow_atr_ratio": None if pd.isna(atr_cur) or atr_cur == 0 else round(float(lower_shadow / atr_cur), 2),
+        "is_doji": full_range > 0 and body / full_range < 0.1,
+        "is_long_upper_shadow": full_range > 0 and upper_shadow / full_range > 0.45,
+        "is_long_lower_shadow": full_range > 0 and lower_shadow / full_range > 0.45,
+    }
+
+
+def compute_ma_direction(ma: pd.Series, lookback: int = 5, flat_threshold: float = 0.005) -> str:
+    """判断均线方向：向上 / 向下 / 走平。"""
+    if len(ma) < lookback + 1:
+        return "未知"
+    cur = ma.iloc[-1]
+    prev = ma.iloc[-lookback - 1]
+    if pd.isna(cur) or pd.isna(prev) or prev == 0:
+        return "未知"
+    change = cur / prev - 1
+    if change > flat_threshold:
+        return "向上"
+    elif change < -flat_threshold:
+        return "向下"
+    else:
+        return "走平"
+
+
+def resample_daily_to_weekly(df: pd.DataFrame) -> pd.DataFrame | None:
+    """从日线 resample 为周线（周五收盘）。"""
+    if df is None or df.empty or len(df) < 5:
+        return None
+    df = df.copy()
+    if "date" in df.columns:
+        df["date"] = pd.to_datetime(df["date"])
+        df = df.set_index("date")
+    elif not isinstance(df.index, pd.DatetimeIndex):
+        return None
+
+    weekly = df.resample("W-FRI").agg({
+        "open": "first",
+        "high": "max",
+        "low": "min",
+        "close": "last",
+        "volume": "sum",
+    }).dropna()
+    weekly = weekly.reset_index(drop=True)
+    return weekly
+
+
 def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     obv = [0]
     for i in range(1, len(close)):
