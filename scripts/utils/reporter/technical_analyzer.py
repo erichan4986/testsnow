@@ -805,3 +805,110 @@ def _rsi(series: pd.Series, period: int = 14) -> pd.Series:
     avg_loss = loss.rolling(window=period, min_periods=1).mean()
     rs = avg_gain / avg_loss.replace(0, np.nan)
     return 100 - (100 / (1 + rs))
+
+
+def classify_trend_state(
+    weekly_trend: str,
+    daily_structure: Dict,
+    indicators: Dict,
+    divergence: Dict | None,
+) -> Dict:
+    """趋势状态机。按优先级判定唯一阶段。price_vs_ma60=='跌破' 直接判定破坏期。"""
+    price_vs_ma20 = daily_structure.get("price_vs_ma20", "未知")
+    price_vs_ma60 = daily_structure.get("price_vs_ma60", "未知")
+    ma20_dir = daily_structure.get("ma20_direction", "未知")
+    ma60_dir = daily_structure.get("ma60_direction", "未知")
+    boll_state = indicators.get("boll_state", "正常")
+    rsi = indicators.get("rsi_14", 50)
+    close = indicators.get("close", 0)
+    ma20 = indicators.get("ma_20", 0)
+    ma60 = indicators.get("ma_60", 0)
+
+    # 1. 破坏期（最高优先级）
+    if price_vs_ma60 == "跌破" or weekly_trend in ["单边下跌"]:
+        return {
+            "primary_state": "下降趋势",
+            "stage": "破坏期",
+            "action_hint": "趋势失效",
+            "state_changed": None,
+            "previous_state": None,
+            "summary": "中期趋势结构已破坏，日线有效跌破MA60或周线转弱。",
+        }
+
+    # 2. 转弱期
+    if price_vs_ma20 == "跌破" and (ma20_dir == "走平" or ma20_dir == "向下"):
+        return {
+            "primary_state": "下降趋势",
+            "stage": "转弱期",
+            "action_hint": "降低预期",
+            "state_changed": None,
+            "previous_state": None,
+            "summary": "日线跌破MA20，中期趋势进入观察。",
+        }
+
+    # 3. 高位钝化期
+    if price_vs_ma20 == "站上" and rsi is not None and rsi > 70 and boll_state == "开口":
+        if close > ma20 * 1.05:
+            return {
+                "primary_state": "上升趋势",
+                "stage": "高位钝化期",
+                "action_hint": "持有跟踪",
+                "state_changed": None,
+                "previous_state": None,
+                "summary": "趋势仍在MA20上方，但RSI高位、BOLL扩张，警惕过热。",
+            }
+
+    # 4. 加速期
+    if price_vs_ma20 == "站上" and boll_state == "开口" and close > ma20 * 1.03:
+        return {
+            "primary_state": "上升趋势",
+            "stage": "加速期",
+            "action_hint": "持有跟踪",
+            "state_changed": None,
+            "previous_state": None,
+            "summary": "趋势加速，BOLL开口扩大，价格远离MA20。",
+        }
+
+    # 5. 主升期
+    if price_vs_ma20 == "站上" and ma20_dir == "向上" and ma60_dir in ["向上", "走平"]:
+        return {
+            "primary_state": "上升趋势",
+            "stage": "主升期",
+            "action_hint": "持有跟踪",
+            "state_changed": None,
+            "previous_state": None,
+            "summary": "周线多头结构完整，日线沿MA20稳步上行。",
+        }
+
+    # 6. 启动期
+    if price_vs_ma20 == "站上" and weekly_trend in ["趋势修复中", "震荡"]:
+        return {
+            "primary_state": "上升趋势",
+            "stage": "启动期",
+            "action_hint": "趋势确认",
+            "state_changed": None,
+            "previous_state": None,
+            "summary": "刚从震荡/下跌修复，均线刚开始多头排列。",
+        }
+
+    # 7. 盘整期
+    return {
+        "primary_state": "震荡趋势",
+        "stage": "盘整期",
+        "action_hint": "观察",
+        "state_changed": None,
+        "previous_state": None,
+        "summary": "无明显趋势方向，以观望为主。",
+    }
+
+
+def apply_previous_state(trend_state: Dict, previous_state: Dict | None) -> None:
+    """根据上一次分析结果更新 state_changed 和 previous_state。"""
+    if previous_state is None:
+        trend_state["state_changed"] = None
+        trend_state["previous_state"] = None
+        return
+    old_stage = previous_state.get("trend_state", {}).get("stage")
+    cur_stage = trend_state.get("stage")
+    trend_state["state_changed"] = old_stage != cur_stage
+    trend_state["previous_state"] = old_stage
