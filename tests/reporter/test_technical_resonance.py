@@ -8,28 +8,28 @@ from technical_resonance import evaluate_market_resonance
 
 def test_evaluate_market_resonance_placeholder():
     result = evaluate_market_resonance(
-        stock_trend_state={"primary_state": "上升趋势"},
+        stock_trend_state={"primary_state": "上升趋势", "stage": "主升期"},
     )
-    assert result["sector_trend"] == "未接入"
-    assert result["market_trend"] == "未接入"
-    assert "暂未接入" in result["impact"]
-    assert result["resonance_signals"] == []
+    assert result["state"] == "未知"
+    assert result["confidence"] == "低"
+    assert "market index data missing" in result["missing"]
 
 
 def test_evaluate_market_resonance_with_data():
     result = evaluate_market_resonance(
-        stock_trend_state={"primary_state": "上升趋势"},
-        sector_trend="上涨",
-        market_trend="上涨",
+        stock_trend_state={"primary_state": "上升趋势", "stage": "主升期"},
+        market_trend_state={"primary_state": "上升趋势", "stage": "主升期"},
+        sector_trend_state={"primary_state": "上升趋势", "stage": "主升期"},
     )
-    assert "共振上涨" in result["resonance_signals"][0]
-    assert "增强" in result["impact"]
+    assert result["state"] == "顺风共振"
+    assert result["confidence"] == "高"
+    assert "可信度上调" in result["impact"]
 
 
 def test_evaluate_market_resonance_independent():
     result = evaluate_market_resonance(
-        stock_trend_state={"primary_state": "上升趋势"},
-        sector_trend="震荡",
-        market_trend="上涨",
+        stock_trend_state={"primary_state": "上升趋势", "stage": "主升期"},
+        market_trend_state={"primary_state": "下降趋势", "stage": "破坏期"},
+        sector_trend_state={"primary_state": "下降趋势", "stage": "破坏期"},
     )
-    assert "独立行情" in result["resonance_signals"][0]
+    assert result["state"] == "逆风独立"
