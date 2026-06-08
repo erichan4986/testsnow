@@ -84,6 +84,28 @@ def _stoch_rsi(close: pd.Series, period: int = 14, smooth_k: int = 3, smooth_d: 
     return k, d
 
 
+def compute_bias(df: pd.DataFrame, windows=(5, 10, 20), lookback=120) -> Dict:
+    """计算 BIAS(5/10/20)，并标记120日极值（防 look-ahead）。"""
+    close = df["close"].astype(float)
+    out = {}
+    for n in windows:
+        ma = close.rolling(n, min_periods=n).mean()
+        bias = (close / ma - 1.0) * 100
+        cur = bias.iloc[-1]
+        out[f"bias_{n}"] = None if pd.isna(cur) else round(float(cur), 2)
+        if n in (5, 10):
+            hist = bias.shift(1).rolling(lookback, min_periods=min(60, lookback))
+            prev_max = hist.max().iloc[-1]
+            prev_min = hist.min().iloc[-1]
+            out[f"bias_{n}_extreme_high"] = bool(
+                pd.notna(cur) and pd.notna(prev_max) and cur > prev_max
+            )
+            out[f"bias_{n}_extreme_low"] = bool(
+                pd.notna(cur) and pd.notna(prev_min) and cur < prev_min
+            )
+    return out
+
+
 def _obv(close: pd.Series, volume: pd.Series) -> pd.Series:
     obv = [0]
     for i in range(1, len(close)):
