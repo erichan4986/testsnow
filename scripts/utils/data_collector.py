@@ -80,7 +80,7 @@ class TechnicalCollector:
 
     def fetch_kline(self, code: str, market: int = 0, days: int = 120) -> Optional[pd.DataFrame]:
         """
-        获取日K线数据
+        获取日K线数据。若返回数据不足预期，自动扩大查询范围重试。
         Args:
             code: 股票代码，如 "300661"
             market: 0=深圳, 1=上海
@@ -92,35 +92,46 @@ class TechnicalCollector:
             logger.error("mootdx 客户端未初始化")
             return None
 
-        try:
-            end = datetime.now()
-            begin = end - timedelta(days=days * 2)
-            df = self.client.k(
-                symbol=code,
-                begin=begin.strftime("%Y%m%d"),
-                end=end.strftime("%Y%m%d"),
-            )
-            if df is None or df.empty:
-                logger.warning(f"{code} K线数据为空")
-                return None
+        multipliers = [2, 5, 10]
+        for mult in multipliers:
+            try:
+                end = datetime.now()
+                begin = end - timedelta(days=days * mult)
+                df = self.client.k(
+                    symbol=code,
+                    begin=begin.strftime("%Y%m%d"),
+                    end=end.strftime("%Y%m%d"),
+                )
+                if df is None or df.empty:
+                    logger.warning(f"{code} K线数据为空 (mult={mult})")
+                    continue
 
-            # Rename columns to standard names
-            df = df.rename(columns={
-                "open": "open",
-                "high": "high",
-                "low": "low",
-                "close": "close",
-                "volume": "volume",
-            })
+                # Rename columns to standard names
+                df = df.rename(columns={
+                    "open": "open",
+                    "high": "high",
+                    "low": "low",
+                    "close": "close",
+                    "volume": "volume",
+                })
 
-            # Keep only last N days
-            if len(df) > days:
-                df = df.tail(days).reset_index(drop=True)
+                if len(df) >= days:
+                    if len(df) > days:
+                        df = df.tail(days).reset_index(drop=True)
+                    return df
+                else:
+                    logger.warning(
+                        f"{code} 返回 {len(df)} 条，不足目标 {days} 条，"
+                        f"扩大查询范围重试 (mult={mult})"
+                    )
+                    # 最后一次循环仍不足时，返回已有全部数据
+                    if mult == multipliers[-1]:
+                        return df.reset_index(drop=True)
+            except Exception as e:
+                logger.error(f"获取 {code} K线失败 (mult={mult}): {e}")
+                continue
 
-            return df
-        except Exception as e:
-            logger.error(f"获取 {code} K线失败: {e}")
-            return None
+        return None
 
     def fetch_weekly_kline(self, code: str, market: int = 0, weeks: int = 72) -> Optional[pd.DataFrame]:
         """
