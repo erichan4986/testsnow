@@ -5,6 +5,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from technical_state_machine import (
     classify_trend_state, apply_previous_state,
     compute_trend_health, compute_invalidation,
+    evaluate_bias_extreme,
 )
 
 
@@ -49,3 +50,39 @@ def test_old_import_path_still_works():
     assert callable(classify_trend_state)
     assert callable(compute_trend_health)
     assert callable(compute_invalidation)
+
+
+def test_evaluate_bias_extreme_high():
+    result = evaluate_bias_extreme(
+        bias_5=5.5, bias_5_extreme_high=True, bias_5_extreme_low=False,
+        bias_10=4.2, bias_10_extreme_high=False, bias_10_extreme_low=False,
+    )
+    assert result is not None
+    assert result["direction"] == "high"
+    assert "超买" in result["warning"]
+
+
+def test_evaluate_bias_extreme_low():
+    result = evaluate_bias_extreme(
+        bias_5=-5.5, bias_5_extreme_high=False, bias_5_extreme_low=True,
+        bias_10=-4.2, bias_10_extreme_high=False, bias_10_extreme_low=False,
+    )
+    assert result is not None
+    assert result["direction"] == "low"
+    assert "超卖" in result["warning"]
+
+
+def test_evaluate_bias_extreme_none():
+    result = evaluate_bias_extreme(
+        bias_5=1.0, bias_5_extreme_high=False, bias_5_extreme_low=False,
+    )
+    assert result is None
+
+
+def test_evaluate_bias_extreme_both_prefers_high():
+    # Defensive: both flags set — prefer high for safety
+    result = evaluate_bias_extreme(
+        bias_5=5.5, bias_5_extreme_high=True, bias_5_extreme_low=True,
+    )
+    assert result is not None
+    assert result["direction"] == "high"

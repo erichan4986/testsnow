@@ -94,6 +94,11 @@ class TechnicalRenderer:
             lines.append("**谋士团**：" + " | ".join(adv_lines))
             lines.append("")
 
+        bias_extreme = resonance.get("bias_extreme")
+        if bias_extreme:
+            lines.append(f"**BIAS预警**：{bias_extreme['warning']}（{bias_extreme['level']}）")
+            lines.append("")
+
         div = resonance.get("divergence_scan")
         if div:
             lines.append(f"**背离预警**：{div.get('type', '')}（{div.get('confidence', '')}）")

@@ -10,9 +10,32 @@ __all__ = [
 ]
 
 
-# Placeholders for Tasks 7-9 (Phase 2B):
-def evaluate_bias_extreme(*args, **kwargs):
-    """Placeholder for BIAS extreme warning."""
+def evaluate_bias_extreme(
+    bias_5: float | None,
+    bias_5_extreme_high: bool,
+    bias_5_extreme_low: bool,
+    bias_10: float | None = None,
+    bias_10_extreme_high: bool = False,
+    bias_10_extreme_low: bool = False,
+) -> dict | None:
+    """评估 BIAS 是否处于极端状态。
+
+    必须返回 direction: "high" | "low"，供卖出三要素使用。
+    """
+    if bias_5_extreme_high or bias_10_extreme_high:
+        return {
+            "warning": "BIAS 创近120日新高，极端超买",
+            "level": "严重",
+            "direction": "high",
+            "affects": "卖出三要素之强弱偏离度",
+        }
+    if bias_5_extreme_low or bias_10_extreme_low:
+        return {
+            "warning": "BIAS 创近120日新低，极端超卖",
+            "level": "严重",
+            "direction": "low",
+            "affects": "买入参考，不构成买入信号",
+        }
     return None
 
 

@@ -41,11 +41,13 @@ try:
     from .technical_state_machine import (
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
+        evaluate_bias_extreme,
     )
 except ImportError:
     from technical_state_machine import (
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
+        evaluate_bias_extreme,
     )
 
 try:
@@ -165,6 +167,17 @@ def advanced_medium_term_resonance(
     # BIAS
     bias_result = compute_bias(df_daily)
     indicators.update(bias_result)
+
+    bias_extreme = evaluate_bias_extreme(
+        bias_5=indicators.get("bias_5"),
+        bias_5_extreme_high=indicators.get("bias_5_extreme_high", False),
+        bias_5_extreme_low=indicators.get("bias_5_extreme_low", False),
+        bias_10=indicators.get("bias_10"),
+        bias_10_extreme_high=indicators.get("bias_10_extreme_high", False),
+        bias_10_extreme_low=indicators.get("bias_10_extreme_low", False),
+    )
+    if bias_extreme:
+        _resonance["bias_extreme"] = bias_extreme
 
     # BOLL state
     close = df_daily["close"].astype(float)
