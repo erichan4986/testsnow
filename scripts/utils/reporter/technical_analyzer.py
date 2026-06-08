@@ -29,12 +29,14 @@ try:
         compute_bias, compute_boll_state, compute_candle_features,
         compute_ma_direction, resample_daily_to_weekly,
         compute_weekly_trend, find_support_resistance,
+        evaluate_sr_transformation,
     )
 except ImportError:
     from technical_structure import (
         compute_bias, compute_boll_state, compute_candle_features,
         compute_ma_direction, resample_daily_to_weekly,
         compute_weekly_trend, find_support_resistance,
+        evaluate_sr_transformation,
     )
 
 try:
@@ -225,6 +227,16 @@ def advanced_medium_term_resonance(
 
     # 6. 支撑阻力
     sr_result = find_support_resistance(df_daily, config)
+
+    # 支撑阻力转化
+    sr_transform = evaluate_sr_transformation(
+        close=indicators["close"],
+        support_zone=sr_result.get("support_zone"),
+        resistance_zone=sr_result.get("resistance_zone"),
+        recent_closes=df_daily["close"].astype(float).tail(5).tolist(),
+    )
+    if sr_transform:
+        _resonance["sr_transformation"] = sr_transform
 
     # 6.5 K线形态信号（只在关键位置）
     atr_series = _atr(df_daily)

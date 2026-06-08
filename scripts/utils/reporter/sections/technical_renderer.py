@@ -65,6 +65,12 @@ class TechnicalRenderer:
             lines.append(f"- 中期失效参考：【{inv['current_distance_to_invalid']}】")
         lines.append("")
 
+        sr_transform = resonance.get("sr_transformation")
+        if sr_transform:
+            for sig in sr_transform.get("signals", []):
+                lines.append(f"**{sig['signal']}**")
+            lines.append("")
+
         lines.append("**趋势失效条件**：")
         if inv.get("soft_warning"):
             lines.append(f"- 第一警戒：【{inv['soft_warning']}】")

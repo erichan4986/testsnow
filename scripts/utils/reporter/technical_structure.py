@@ -17,9 +17,51 @@ __all__ = [
 logger = logging.getLogger(__name__)
 
 
-def evaluate_sr_transformation(close, support_zone, resistance_zone, recent_closes):
-    """Placeholder for support/resistance transformation rules."""
-    return None
+def evaluate_sr_transformation(
+    close: float,
+    support_zone: dict | None,
+    resistance_zone: dict | None,
+    recent_closes: list[float],
+) -> dict | None:
+    """
+    评估支撑/阻力转化。
+    阻力被强突破 → 转为新支撑；支撑被有效跌破 → 转为新阻力。
+    必须使用最近 3 日收盘价确认，不能只靠单日。
+    """
+    signals = []
+
+    # 阻力转支撑
+    if resistance_zone and len(recent_closes) >= 3:
+        rz_high = resistance_zone.get("zone_high")
+        if rz_high is not None:
+            stood_above = all(c > rz_high for c in recent_closes[-3:])
+            strong_break = close > rz_high * 1.01
+            if stood_above and strong_break:
+                signals.append({
+                    "signal": "阻力突破，原阻力转为新支撑",
+                    "type": "resistance_break",
+                    "new_support": round(float(rz_high), 2),
+                })
+
+    # 支撑转阻力
+    if support_zone and len(recent_closes) >= 3:
+        sz_low = support_zone.get("zone_low")
+        if sz_low is not None:
+            stayed_below = all(c < sz_low for c in recent_closes[-3:])
+            if stayed_below:
+                signals.append({
+                    "signal": "支撑告破，原支撑转为新阻力",
+                    "type": "support_break",
+                    "new_resistance": round(float(sz_low), 2),
+                })
+
+    if not signals:
+        return None
+
+    return {
+        "signals": signals,
+        "primary": signals[0],
+    }
 
 
 def compute_bias(df: pd.DataFrame, windows=(5, 10, 20), lookback=120) -> Dict:
