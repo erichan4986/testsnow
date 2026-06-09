@@ -183,6 +183,7 @@ def advanced_medium_term_resonance(
 
     # 3. 计算全部旧指标（复用 Task 2）
     indicators = _compute_base_indicators(df_daily)
+    _resonance = {}
 
     # BIAS
     bias_result = compute_bias(df_daily)
@@ -313,7 +314,7 @@ def advanced_medium_term_resonance(
     }
 
     # 12. 组装 _resonance
-    _resonance = {
+    _resonance.update({
         "trend": "多头" if trend_state["primary_state"] == "上升趋势" else ("空头" if trend_state["primary_state"] == "下降趋势" else "震荡"),
         "momentum": "偏强" if trend_health["score"] >= 65 else "偏弱",
         "volume_price": "确认",
@@ -355,7 +356,7 @@ def advanced_medium_term_resonance(
         "divergence_scan": divergence,
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",
-    }
+    })
 
     # 卖出三要素评估
     bias_extreme_high = (

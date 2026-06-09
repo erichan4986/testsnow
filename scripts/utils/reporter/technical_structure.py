@@ -176,10 +176,10 @@ def resample_daily_to_weekly(df: pd.DataFrame) -> pd.DataFrame | None:
         return None
 
     weekly = df.resample("W-FRI").agg({
-        "open": "first",
+        "open": lambda x: x.iloc[0] if len(x) else None,
         "high": "max",
         "low": "min",
-        "close": "last",
+        "close": lambda x: x.iloc[-1] if len(x) else None,
         "volume": "sum",
     }).dropna()
     weekly = weekly.reset_index(drop=True)
