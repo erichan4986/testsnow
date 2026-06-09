@@ -176,8 +176,18 @@ def classify_trend_state(
             "summary": "中期趋势结构已破坏，日线有效跌破MA60或周线转弱。",
         }
 
-    # 2. 转弱期
+    # 2. 转弱期 / 震荡转弱观察
     if price_vs_ma20 == "跌破" and (ma20_dir == "走平" or ma20_dir == "向下"):
+        # 周线仍为震荡且 MA60 仍向上，不宜过早输出完整“下降趋势”
+        if weekly_trend == "震荡" and ma60_dir == "向上":
+            return {
+                "primary_state": "震荡转弱",
+                "stage": "临界破坏观察期",
+                "action_hint": "降低预期",
+                "state_changed": None,
+                "previous_state": None,
+                "summary": "日线跌破MA20，中期结构转弱，需观察能否收回MA60。",
+            }
         return {
             "primary_state": "下降趋势",
             "stage": "转弱期",
@@ -372,24 +382,40 @@ def compute_invalidation(
 
     hard_price = ma60 if ma60 and ma60 > 0 else None
     hard_source = "MA60"
-    distance = None
+    distance_pct = None
+    distance_str = None
     if hard_price and hard_price > 0:
-        distance = f"{(close - hard_price) / hard_price * 100:.1f}%"
+        distance_pct = round((close - hard_price) / hard_price * 100, 2)
+        distance_str = f"{distance_pct:.1f}%"
     elif support_zone and support_zone.get("zone_low"):
         hard_price = support_zone["zone_low"]
         hard_source = "支撑区"
-        distance = f"{(close - hard_price) / close * 100:.1f}%"
+        distance_pct = round((close - hard_price) / close * 100, 2)
+        distance_str = f"{distance_pct:.1f}%"
 
     is_invalidated = False
-    if hard_price is not None and close < hard_price:
-        is_invalidated = True
+    status = "safe"
+    message = ""
+    if hard_price is not None:
+        if close < hard_price:
+            is_invalidated = True
+            status = "broken"
+            message = f"当前收盘价已跌破{hard_source}（{hard_price:.2f}），中期结构破坏确认。"
+        elif close < hard_price * 1.03:
+            status = "near_or_slightly_broken"
+            message = f"当前收盘价已接近/略低于日线{hard_source}（{hard_price:.2f}），若连续2-3日无法收回，视为中期结构进一步破坏。"
+        else:
+            message = f"当前收盘价位于{hard_source}（{hard_price:.2f}）上方，距离约 {distance_str}。"
 
     return {
         "soft_warning": soft,
         "hard_invalid": hard,
         "hard_invalid_price": hard_price,
         "hard_invalid_source": hard_source,
+        "distance_pct": distance_pct,
         "is_invalidated": is_invalidated,
+        "status": status,
+        "message": message,
         "structure_break": struct_break,
-        "current_distance_to_invalid": distance or "未知",
+        "current_distance_to_invalid": distance_str or "未知",
     }

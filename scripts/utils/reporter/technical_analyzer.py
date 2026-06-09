@@ -93,6 +93,61 @@ def _min_confidence(current: str, cap: str) -> str:
     return reverse[min(order.get(current, 0), order.get(cap, 0))]
 
 
+def _build_advisors(indicators: dict) -> dict:
+    """根据当前指标动态生成 advisor 文案，避免模板残留。"""
+    # BIAS
+    bias_5 = indicators.get("bias_5", 0)
+    if bias_5 is not None and bias_5 < 0:
+        bias_state = "负偏离但未到极端"
+        bias_meaning = "提示短线已有回撤，不构成独立买卖信号"
+    elif bias_5 is not None and bias_5 > 3:
+        bias_state = "偏高"
+        bias_meaning = "短线追高性价比下降，但中期趋势未破坏"
+    else:
+        bias_state = "正常"
+        bias_meaning = "价格与均线偏离适中"
+
+    # BOLL
+    close = indicators.get("close", 0)
+    boll_lower = indicators.get("boll_lower")
+    boll_upper = indicators.get("boll_upper")
+    boll_state = indicators.get("boll_state", "正常")
+
+    if boll_lower is not None and close <= boll_lower * 1.03:
+        boll_position = "接近下轨"
+    elif boll_upper is not None and close >= boll_upper * 0.97:
+        boll_position = "接近上轨"
+    else:
+        boll_position = "中轨附近"
+
+    if boll_state == "开口":
+        boll_meaning = f"{boll_position}，波动有所放大（提示短线承压，不单独构成趋势判断）"
+    elif boll_state == "缩口":
+        boll_meaning = f"{boll_position}，波动收敛（提示等待方向选择）"
+    else:
+        boll_meaning = f"{boll_position}，波动正常"
+
+    return {
+        "macd": {
+            "state": "多头延续" if indicators.get("macd", 0) > 0 else "空头延续",
+            "meaning": "仅作趋势确认，不单独构成买卖信号",
+        },
+        "rsi": {
+            "value": indicators.get("rsi_14"),
+            "state": "强势钝化" if indicators.get("rsi_14", 50) > 70 else "正常",
+            "meaning": "强趋势中不单独构成卖出信号",
+        },
+        "bias": {
+            "state": bias_state,
+            "meaning": bias_meaning,
+        },
+        "boll": {
+            "state": boll_state,
+            "meaning": boll_meaning,
+        },
+    }
+
+
 def _apply_gap_based_qfq_approximation(df: pd.DataFrame, gap_details: list) -> pd.DataFrame:
     """
     基于检测到的价格缺口做近似前复权修复。
@@ -305,6 +360,8 @@ def advanced_medium_term_resonance(
                     ),
                     "repair_method": repair_method_used,
                     "note": "本地近似复权，非精确前复权",
+                    "latest_gap": price_adjustment_validation.get("latest_gap"),
+                    "largest_gap": price_adjustment_validation.get("largest_gap"),
                     "gap_date": _pg.get("gap_date"),
                     "gap_pct": _pg.get("max_gap_pct"),
                 }
@@ -319,6 +376,8 @@ def advanced_medium_term_resonance(
                     ),
                     "repair_method": None,
                     "note": "未修复",
+                    "latest_gap": price_adjustment_validation.get("latest_gap"),
+                    "largest_gap": price_adjustment_validation.get("largest_gap"),
                     "gap_date": _pg.get("gap_date"),
                     "gap_pct": _pg.get("max_gap_pct"),
                 }
@@ -334,6 +393,8 @@ def advanced_medium_term_resonance(
                 ),
                 "repair_method": None,
                 "note": f"修复失败: {e}",
+                "latest_gap": price_adjustment_validation.get("latest_gap"),
+                "largest_gap": price_adjustment_validation.get("largest_gap"),
                 "gap_date": _pg.get("gap_date"),
                 "gap_pct": _pg.get("max_gap_pct"),
             }
@@ -347,6 +408,8 @@ def advanced_medium_term_resonance(
             "message": "当前标记为前复权数据，但仍检测到异常价格断点，建议核查数据源。",
             "repair_method": "qfq",
             "note": "已使用前复权但仍检测到断点",
+            "latest_gap": price_adjustment_validation.get("latest_gap"),
+            "largest_gap": price_adjustment_validation.get("largest_gap"),
             "gap_date": _pg.get("gap_date"),
             "gap_pct": _pg.get("max_gap_pct"),
         }
@@ -580,17 +643,7 @@ def advanced_medium_term_resonance(
         "market_regime": evaluate_market_resonance(
             stock_trend_state=trend_state,
         ),
-        "advisors": {
-            "macd": {"state": "多头延续" if indicators.get("macd", 0) > 0 else "空头延续",
-                     "meaning": "仅作趋势确认，不单独构成买卖信号"},
-            "rsi": {"value": indicators.get("rsi_14"),
-                    "state": "强势钝化" if indicators.get("rsi_14", 50) > 70 else "正常",
-                    "meaning": "强趋势中不单独构成卖出信号"},
-            "bias": {"state": "偏高" if indicators.get("bias_5", 0) > 3 else "正常",
-                     "meaning": "短线追高性价比下降，但中期趋势未破坏"},
-            "boll": {"state": indicators.get("boll_state", "正常"),
-                     "meaning": "开口=趋势加速，缩口=等待方向"},
-        },
+        "advisors": _build_advisors(indicators),
         "divergence_scan": divergence,
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",

@@ -69,8 +69,14 @@ class TechnicalRenderer:
             lines.append(f"- 压力区：【{rz.get('zone_low', '—')} - {rz.get('zone_high', '—')}】（{rz.get('strength', '弱')}）")
         else:
             lines.append("- 压力区：暂无可靠压力区，原因：历史数据不足或有效触及次数不足。")
-        if inv.get("current_distance_to_invalid"):
-            lines.append(f"- 中期失效参考：【{inv['current_distance_to_invalid']}】")
+        if inv.get("hard_invalid_price") is not None:
+            basis = inv.get("hard_invalid_source", "")
+            price = inv["hard_invalid_price"]
+            dist = inv.get("current_distance_to_invalid", "未知")
+            msg = inv.get("message", "")
+            lines.append(f"- 中期失效参考：日线 {basis} 约 {price:.2f}，当前距离约 {dist}")
+            if msg:
+                lines.append(f"  {msg}")
         lines.append("")
 
         sr_transform = resonance.get("sr_transformation")
@@ -151,7 +157,9 @@ class TechnicalRenderer:
             lines.append(f"- 提示：{mr.get('action_hint', '')}")
             lines.append("")
 
-        lines.append("**结论**：趋势仍可跟踪，但不适合将 RSI 超买、BIAS 偏高或 MACD 背离单独视为卖出信号。")
+        # 动态结论：基于实际状态生成，避免模板残留无关内容
+        conclusion = self._build_conclusion(ts, th, inv, advisors, bottom, resonance)
+        lines.append(f"**结论**：{conclusion}")
         lines.append("")
 
         sell_assessment = resonance.get("sell_assessment")
@@ -368,3 +376,41 @@ class TechnicalRenderer:
             lines.append("")
 
         return "\n".join(lines)
+
+    def _build_conclusion(self, ts: dict, th: dict, inv: dict, advisors: dict, bottom: dict | None, resonance: dict) -> str:
+        """基于实际状态生成结论文案，避免模板残留无关内容。"""
+        primary = ts.get("primary_state", "")
+        stage = ts.get("stage", "")
+
+        parts = ["趋势仍可跟踪"]
+
+        active_warnings = []
+
+        bias = advisors.get("bias", {})
+        bias_state = bias.get("state", "")
+        if "偏高" in bias_state:
+            active_warnings.append("BIAS 偏高")
+        elif "负偏离" in bias_state:
+            active_warnings.append("BIAS 负偏离")
+
+        rsi = advisors.get("rsi", {})
+        rsi_state = rsi.get("state", "")
+        if "钝化" in rsi_state or "超买" in rsi_state:
+            active_warnings.append("RSI 超买/钝化")
+
+        divergence = resonance.get("divergence_scan")
+        if divergence and "背离" in divergence.get("type", ""):
+            active_warnings.append("MACD 背离")
+
+        if active_warnings:
+            parts.append(f"但不适合将 {'、'.join(active_warnings)} 单独视为卖出信号")
+
+        if primary == "震荡转弱" and "临界" in stage:
+            parts.append("日线跌破MA20，中期结构转弱，需观察能否收回MA60；若连续收盘无法收回，则中期结构破坏风险进一步上升")
+        elif primary == "下降趋势":
+            parts.append("中期趋势已走弱，建议降低仓位或观望")
+
+        if bottom and bottom.get("state") != "none":
+            parts.append("底部区域仅作观察，不构成买入信号")
+
+        return "。".join(parts) + "。"

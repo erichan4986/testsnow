@@ -702,16 +702,33 @@ def evaluate_bottoming_region(
     else:
         missing.append("BIAS数据不足")
 
-    # 条件4: 价格不再有效跌破最近 swing low
+    # 条件4: 价格不再有效跌破最近 swing low（区分盘中跌破和收盘跌破）
+    swing_low_status = None
     if structure_health and structure_health.get("swing_lows"):
         swing_lows = structure_health["swing_lows"]
         if swing_lows:
             last_low = min(s["price"] for s in swing_lows)
-            if close and close >= last_low * 0.99:
-                score += 1
-                evidence.append("价格未有效跌破最近回调低点")
+            latest_low = df_daily["low"].iloc[-1] if len(df_daily) >= 1 else None
+            if close is not None and last_low is not None:
+                intraday_broke = latest_low is not None and latest_low < last_low * 0.99
+                close_broke = close < last_low * 0.99
+                swing_low_status = {
+                    "last_swing_low": round(last_low, 2),
+                    "latest_low": round(float(latest_low), 2) if latest_low is not None else None,
+                    "latest_close": round(close, 2),
+                    "intraday_broke": bool(intraday_broke),
+                    "close_broke": bool(close_broke),
+                }
+                if not close_broke:
+                    score += 1
+                    if intraday_broke:
+                        evidence.append("收盘未有效跌破最近回调低点，但盘中已下探")
+                    else:
+                        evidence.append("价格未有效跌破最近回调低点")
+                else:
+                    missing.append("价格已有效跌破最近回调低点")
             else:
-                missing.append("价格已跌破最近回调低点")
+                missing.append("close 或 swing_low 数据缺失")
         else:
             missing.append("swing_lows 为空")
     else:
@@ -762,6 +779,7 @@ def evaluate_bottoming_region(
         "total": 5,
         "evidence": evidence,
         "missing": missing,
+        "swing_low_status": swing_low_status,
         "action_hint": "仅作底部区域观察，不构成买入信号",
-        "risk": "若跌破最近swing low，则底部观察失效",
+        "risk": "若收盘有效跌破最近swing low，则底部观察失效",
     }
