@@ -155,7 +155,11 @@ def _compute_base_indicators(df: pd.DataFrame) -> Dict:
     return indicators
 
 
-def analyze(df: pd.DataFrame, df_weekly: pd.DataFrame | None = None) -> Dict:
+def analyze(
+    df: pd.DataFrame,
+    df_weekly: pd.DataFrame | None = None,
+    quote: Dict | None = None,
+) -> Dict:
     """对日K DataFrame做完整技术分析（中期趋势版）。"""
     if df is None or df.empty or len(df) < 30:
         logger.warning("数据不足30条，无法做完整技术分析")
@@ -166,7 +170,7 @@ def analyze(df: pd.DataFrame, df_weekly: pd.DataFrame | None = None) -> Dict:
             logger.error(f"缺少必要列: {col}")
             return {}
 
-    return advanced_medium_term_resonance(df_daily=df, df_weekly=df_weekly)
+    return advanced_medium_term_resonance(df_daily=df, df_weekly=df_weekly, quote=quote)
 
 
 def advanced_medium_term_resonance(

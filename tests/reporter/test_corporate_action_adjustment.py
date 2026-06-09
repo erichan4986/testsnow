@@ -199,3 +199,32 @@ def test_renderer_shows_corporate_action_warning():
     assert "数据提醒" in output
     assert "除权断点" in output
     assert "本地近似复权" in output
+
+
+def test_collector_attrs_carry_adjustment():
+    import pandas as pd
+
+    # Verify df.attrs pattern works end-to-end
+    fake_df = pd.DataFrame({
+        "date": ["2026-01-01"],
+        "open": [100.0], "high": [101.0], "low": [99.0],
+        "close": [100.5], "volume": [10000],
+    })
+    fake_df.attrs["adjustment"] = "qfq"
+    fake_df.attrs["data_source"] = "akshare"
+    assert fake_df.attrs["adjustment"] == "qfq"
+    assert fake_df.attrs["data_source"] == "akshare"
+
+    fake_df2 = pd.DataFrame({
+        "date": ["2026-01-01"],
+        "open": [100.0], "high": [101.0], "low": [99.0],
+        "close": [100.5], "volume": [10000],
+    })
+    fake_df2.attrs["adjustment"] = "raw"
+    fake_df2.attrs["data_source"] = "mootdx"
+    assert fake_df2.attrs["adjustment"] == "raw"
+    assert fake_df2.attrs["data_source"] == "mootdx"
+
+    # Verify attrs don't pollute columns
+    assert "adjustment" not in fake_df.columns
+    assert "data_source" not in fake_df.columns

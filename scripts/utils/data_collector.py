@@ -80,14 +80,40 @@ class TechnicalCollector:
 
     def fetch_kline(self, code: str, market: int = 0, days: int = 120) -> Optional[pd.DataFrame]:
         """
-        获取日K线数据。若返回数据不足预期，自动扩大查询范围重试。
-        Args:
-            code: 股票代码，如 "300661"
-            market: 0=深圳, 1=上海
-            days: 需要多少天的数据
-        Returns:
-            DataFrame with columns: date, open, high, low, close, volume
+        获取日K线数据。
+        优先级：1) akshare qfq  2) mootdx raw
         """
+        # --- Priority 1: akshare qfq ---
+        if ak is not None:
+            helper = AkshareHelper()
+            prefix = "SZ" if market == 0 else "SH"
+            symbol = f"{prefix}{code}"
+            df = helper.call(
+                ak.stock_zh_a_hist,
+                symbol=symbol,
+                period="daily",
+                start_date=(datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d"),
+                adjust="qfq",
+            )
+            if df is not None and not df.empty:
+                column_map = {
+                    "日期": "date", "开盘": "open", "最高": "high",
+                    "最低": "low", "收盘": "close", "成交量": "volume",
+                }
+                df = df.rename(columns=column_map)
+                for col in ["open", "high", "low", "close", "volume"]:
+                    if col not in df.columns:
+                        logger.error(f"akshare 返回数据缺少列: {col}")
+                        df = None
+                        break
+                if df is not None:
+                    if len(df) > days:
+                        df = df.tail(days).reset_index(drop=True)
+                    df.attrs["adjustment"] = "qfq"
+                    df.attrs["data_source"] = "akshare"
+                    return df
+
+        # --- Priority 2: mootdx raw ---
         if self.client is None:
             logger.error("mootdx 客户端未初始化")
             return None
@@ -106,26 +132,25 @@ class TechnicalCollector:
                     logger.warning(f"{code} K线数据为空 (mult={mult})")
                     continue
 
-                # Rename columns to standard names
                 df = df.rename(columns={
-                    "open": "open",
-                    "high": "high",
-                    "low": "low",
-                    "close": "close",
-                    "volume": "volume",
+                    "open": "open", "high": "high", "low": "low",
+                    "close": "close", "volume": "volume",
                 })
 
                 if len(df) >= days:
                     if len(df) > days:
                         df = df.tail(days).reset_index(drop=True)
+                    df.attrs["adjustment"] = "raw"
+                    df.attrs["data_source"] = "mootdx"
                     return df
                 else:
                     logger.warning(
                         f"{code} 返回 {len(df)} 条，不足目标 {days} 条，"
                         f"扩大查询范围重试 (mult={mult})"
                     )
-                    # 最后一次循环仍不足时，返回已有全部数据
                     if mult == multipliers[-1]:
+                        df.attrs["adjustment"] = "raw"
+                        df.attrs["data_source"] = "mootdx"
                         return df.reset_index(drop=True)
             except Exception as e:
                 logger.error(f"获取 {code} K线失败 (mult={mult}): {e}")
@@ -216,7 +241,11 @@ class TechnicalCollector:
 
         if ta_analyze is not None:
             try:
-                result = ta_analyze(df)
+                quote = {
+                    "adjustment": df.attrs.get("adjustment", "raw"),
+                    "data_source": df.attrs.get("data_source", "unknown"),
+                }
+                result = ta_analyze(df, df_weekly=None, quote=quote)
                 if result and result.get("indicators"):
                     # 保持向后兼容：返回扁平化的 indicators 同时保留完整结果
                     flat = dict(result["indicators"])
