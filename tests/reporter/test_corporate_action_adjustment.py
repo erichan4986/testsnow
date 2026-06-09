@@ -165,3 +165,37 @@ def test_candle_location_strict_in_zone():
     if sig is not None:
         assert sig["location"] != "支撑位", f"close 已跌破支撑区，不应显示支撑位：{sig}"
         assert "跌破" in sig["signal"] or "下方" in sig["location"], f"应提示已跌破原支撑区：{sig}"
+
+
+def test_renderer_shows_corporate_action_warning():
+    import sys as _sys
+    from pathlib import Path
+    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    from sections.technical_renderer import TechnicalRenderer
+
+    ctx = {
+        "stock_name": "乐鑫科技",
+        "stock_raw": {
+            "technical": {
+                "indicators": {
+                    "_resonance": {
+                        "analysis_confidence": {"level": "低", "reasons": [], "limitations": []},
+                        "trend_state": {"primary_state": "上升趋势", "stage": "主升期"},
+                        "trend_health": {"score": 70, "grade": "良好"},
+                        "key_levels": {},
+                        "corporate_action_warning": {
+                            "has_recent_action": True,
+                            "message": "当前价格序列疑似存在除权断点（2026-06-05 跳变 28.7%）",
+                            "note": "本地近似复权，非精确前复权",
+                        },
+                    },
+                },
+            },
+        },
+        "technical_render_mode": "compact",
+    }
+    renderer = TechnicalRenderer()
+    output = renderer.render(ctx)
+    assert "数据提醒" in output
+    assert "除权断点" in output
+    assert "本地近似复权" in output

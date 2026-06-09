@@ -37,6 +37,14 @@ class TechnicalRenderer:
                 lines.append(f"限制因素：{'；'.join(conf['limitations'])}")
             lines.append("")
 
+        # Corporate action warning
+        corp_warning = resonance.get("corporate_action_warning")
+        if corp_warning and corp_warning.get("has_recent_action"):
+            lines.append(f"> **数据提醒**：{corp_warning['message']}")
+            if corp_warning.get("note"):
+                lines.append(f"> **注意**：{corp_warning['note']}")
+            lines.append("")
+
         stage = ts.get("stage", "未知")
         primary = ts.get("primary_state", "未知")
         score = th.get("score", 0)
