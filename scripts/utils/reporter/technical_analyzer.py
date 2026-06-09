@@ -122,7 +122,7 @@ def _apply_gap_based_qfq_approximation(df: pd.DataFrame, gap_details: list) -> p
         close = float(gap["close"])
         if close == 0:
             continue
-        ratio = prev_close / close
+        ratio = close / prev_close
         mask = df["date"] < gap_date
         for col in price_cols:
             df.loc[mask, col] = df.loc[mask, col] * ratio
