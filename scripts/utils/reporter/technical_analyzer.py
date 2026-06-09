@@ -76,6 +76,22 @@ try:
 except ImportError:
     from technical_resonance import evaluate_market_resonance
 
+try:
+    from .price_adjustment_validator import validate_adjustment, apply_qfq_adjustment
+except ImportError:
+    from price_adjustment_validator import validate_adjustment, apply_qfq_adjustment
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+def _min_confidence(current: str, cap: str) -> str:
+    """Take the lower of two confidence levels."""
+    order = {"低": 0, "中": 1, "高": 2}
+    reverse = {0: "低", 1: "中", 2: "高"}
+    return reverse[min(order.get(current, 0), order.get(cap, 0))]
+
 
 # ---------------------------------------------------------------------------
 # Main entry points
@@ -171,6 +187,107 @@ def advanced_medium_term_resonance(
                 config = load_technical_config()
             except ImportError:
                 config = {"technical": {}}
+
+    # ---- Price adjustment quality gate (pure computation, no network) ----
+    input_adjustment = (
+        (quote or {}).get("adjustment")
+        or (getattr(df_daily, "attrs", None) or {}).get("adjustment")
+        or "raw"
+    )
+    data_source = (
+        (quote or {}).get("data_source")
+        or (getattr(df_daily, "attrs", None) or {}).get("data_source")
+        or "unknown"
+    )
+
+    corporate_action_warning = None
+    price_adjustment_validation = None
+    effective_adjustment = input_adjustment
+    adjustment_source = data_source
+    price_adjustment_applied = False
+    weekly_resampled_from_adjusted_daily = False
+
+    if df_daily is not None and len(df_daily) >= 2:
+        raw_validation = validate_adjustment(
+            df_daily, adjustment=input_adjustment, quote=quote
+        )
+        price_adjustment_validation = raw_validation
+
+    has_gap = bool(
+        price_adjustment_validation
+        and price_adjustment_validation.get("price_gaps", {}).get("possible_exrights_gap")
+    )
+    requires_qfq = bool(
+        price_adjustment_validation
+        and price_adjustment_validation.get("requires_qfq")
+    )
+
+    # Local repair attempt (pure function, no network)
+    if input_adjustment == "raw" and requires_qfq:
+        try:
+            xdxr_df = (quote or {}).get("xdxr_df")
+            df_repaired = apply_qfq_adjustment(df_daily, xdxr_df)
+            if df_repaired is not None and not df_repaired.empty and len(df_repaired) == len(df_daily):
+                df_daily = df_repaired
+                effective_adjustment = "local_qfq_approx"
+                adjustment_source = "local_gap_repair"
+                price_adjustment_applied = True
+
+                # CRITICAL: recompute weekly from repaired daily
+                df_weekly = resample_daily_to_weekly(df_daily)
+                weekly_resampled_from_adjusted_daily = True
+                weekly_count = len(df_weekly) if df_weekly is not None else 0
+
+                corporate_action_warning = {
+                    "has_recent_action": True,
+                    "message": price_adjustment_validation.get(
+                        "warning_message",
+                        "raw 价格序列疑似存在除权断点，已使用本地近似前复权修复。",
+                    ),
+                    "repair_method": "local_qfq_approx",
+                    "note": "本地近似复权，非精确前复权",
+                    "gap_date": price_adjustment_validation.get("gap_date"),
+                    "gap_pct": price_adjustment_validation.get("gap_pct"),
+                }
+            else:
+                effective_adjustment = "raw"
+                corporate_action_warning = {
+                    "has_recent_action": True,
+                    "message": price_adjustment_validation.get(
+                        "warning_message",
+                        "raw 价格序列疑似存在除权断点，且未能完成本地修复。",
+                    ),
+                    "repair_method": None,
+                    "note": "未修复",
+                    "gap_date": price_adjustment_validation.get("gap_date"),
+                    "gap_pct": price_adjustment_validation.get("gap_pct"),
+                }
+        except Exception as e:
+            logger.warning(f"本地近似复权修复失败: {e}")
+            effective_adjustment = "raw"
+            corporate_action_warning = {
+                "has_recent_action": True,
+                "message": price_adjustment_validation.get(
+                    "warning_message",
+                    "raw 价格序列疑似存在除权断点。",
+                ),
+                "repair_method": None,
+                "note": f"修复失败: {e}",
+                "gap_date": price_adjustment_validation.get("gap_date"),
+                "gap_pct": price_adjustment_validation.get("gap_pct"),
+            }
+
+    elif input_adjustment == "qfq" and has_gap:
+        # qfq data still shows gaps — warn, do not repair again, but cap confidence
+        effective_adjustment = "qfq"
+        corporate_action_warning = {
+            "has_recent_action": True,
+            "message": "当前标记为前复权数据，但仍检测到异常价格断点，建议核查数据源。",
+            "repair_method": "qfq",
+            "note": "已使用前复权但仍检测到断点",
+            "gap_date": price_adjustment_validation.get("gap_date"),
+            "gap_pct": price_adjustment_validation.get("gap_pct"),
+        }
 
     # 1. 数据质量
     daily_count = len(df_daily) if df_daily is not None else 0
@@ -298,7 +415,30 @@ def advanced_medium_term_resonance(
         config=config,
     )
 
+    # Divergence / strong-signal confidence caps based on adjustment quality
+    if divergence and effective_adjustment == "raw" and has_gap:
+        divergence["confidence"] = "低可信度"
+        divergence["action"] = "未使用前复权数据，此预警仅供参考"
+        _resonance["strong_signal_suppressed"] = True
+        _resonance["suppressed_signals"] = [
+            "divergence_scan",
+            "bias_extreme",
+            "support_resistance_strength",
+            "trend_structure_break",
+        ]
+    elif divergence and effective_adjustment == "local_qfq_approx":
+        divergence["confidence"] = _min_confidence(
+            divergence.get("confidence", "中"), "中"
+        )
+        divergence["action_note"] = "基于本地近似复权序列，可信度最高为中"
+
     # 11. 分析可信度
+    base_confidence = (
+        "高" if daily_count >= 250 and weekly_count >= 60
+        else "中" if daily_count >= 120 and weekly_count >= 20
+        else "低"
+    )
+
     limitations = []
     if daily_count < 120:
         limitations.append("日线数据不足120根")
@@ -307,10 +447,45 @@ def advanced_medium_term_resonance(
     if not sufficient:
         limitations.append("不满足完整中期趋势分析条件")
 
+    if effective_adjustment == "raw" and has_gap:
+        confidence_level = "低"
+        limitations.append("未使用前复权数据，技术指标可能失真")
+    elif effective_adjustment == "local_qfq_approx":
+        confidence_level = _min_confidence(base_confidence, "中")
+        limitations.append("本地近似复权，非精确前复权数据，可信度最高为中")
+    elif effective_adjustment == "qfq" and has_gap:
+        confidence_level = _min_confidence(base_confidence, "中")
+        limitations.append("前复权数据仍存在异常断点，需核查数据源")
+    else:
+        confidence_level = base_confidence
+
     analysis_confidence = {
-        "level": "高" if sufficient and not limitations else ("中" if daily_count >= 60 else "低"),
-        "reasons": [f"日线{daily_count}根", f"周线{weekly_count}根"] if sufficient else [],
+        "level": confidence_level,
+        "reasons": [
+            f"日线{daily_count}根",
+            f"周线{weekly_count}根",
+            f"复权状态:{effective_adjustment}",
+        ],
         "limitations": limitations,
+        "data_quality": {
+            "input_adjustment": input_adjustment,
+            "effective_adjustment": effective_adjustment,
+            "adjustment_source": adjustment_source,
+        },
+    }
+
+    price_data_lineage = {
+        "input_adjustment": input_adjustment,
+        "effective_adjustment": effective_adjustment,
+        "input_data_source": data_source,
+        "adjustment_source": adjustment_source,
+        "price_adjustment_applied": price_adjustment_applied,
+        "weekly_resampled_from_adjusted_daily": weekly_resampled_from_adjusted_daily,
+        "gap_date": price_adjustment_validation.get("gap_date") if price_adjustment_validation else None,
+        "gap_pct": price_adjustment_validation.get("gap_pct") if price_adjustment_validation else None,
+        "price_adjusted_columns": ["open", "high", "low", "close"] if price_adjustment_applied else [],
+        "volume_adjusted": False,
+        "amount_adjusted": False,
     }
 
     # 12. 组装 _resonance
@@ -356,6 +531,9 @@ def advanced_medium_term_resonance(
         "divergence_scan": divergence,
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",
+        "corporate_action_warning": corporate_action_warning,
+        "price_adjustment_validation": price_adjustment_validation,
+        "price_data_lineage": price_data_lineage,
     })
 
     # 卖出三要素评估

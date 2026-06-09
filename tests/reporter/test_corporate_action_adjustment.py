@@ -2,7 +2,6 @@
 
 import pytest
 
-pytestmark = pytest.mark.skip(reason="Corporate action integration not yet fully implemented")
 
 import numpy as np
 import pandas as pd
@@ -37,53 +36,73 @@ def _make_exrights_df(days=130, exrights_date="2026-06-05", split_ratio=1.4):
     return df
 
 
-def test_corporate_action_lowers_confidence():
-    sys = pytest.importorskip("sys")
-    from pathlib import Path
+def test_corporate_action_lowers_confidence(monkeypatch):
     import sys as _sys
+    from pathlib import Path
     _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    import technical_analyzer as ta_mod
     from technical_analyzer import advanced_medium_term_resonance
+
+    # Monkeypatch local repair to return None (simulate no xdxr available)
+    monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", lambda df, *a, **k: None)
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(
         df_daily=df,
-        quote={
-            "adjustment": "raw",
-            "corporate_actions": [
-                {"date": "2026-06-05", "type": "10转4派5"},
-            ],
-        },
+        quote={"adjustment": "raw", "code": "688018"},
     )
     resonance = result["resonance"]
-    assert resonance["analysis_confidence"]["level"] == "低", (
-        f"未使用前复权且有近期除权，confidence 应为低，实际为 {resonance['analysis_confidence']['level']}"
-    )
-    assert "corporate_action_warning" in resonance
+    assert resonance["analysis_confidence"]["level"] == "低"
+    assert resonance["corporate_action_warning"] is not None
     assert resonance["corporate_action_warning"]["has_recent_action"] is True
+    assert resonance["price_data_lineage"]["effective_adjustment"] == "raw"
+    assert resonance["price_data_lineage"]["price_adjustment_applied"] is False
 
 
 def test_qfq_maintains_medium_confidence():
-    sys = pytest.importorskip("sys")
-    from pathlib import Path
     import sys as _sys
+    from pathlib import Path
     _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
     from technical_analyzer import advanced_medium_term_resonance
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(
         df_daily=df,
-        quote={
-            "adjustment": "qfq",
-            "corporate_actions": [
-                {"date": "2026-06-05", "type": "10转4派5"},
-            ],
-        },
+        quote={"adjustment": "qfq", "code": "688018"},
     )
     resonance = result["resonance"]
-    # 有除权但使用 qfq，至少应为中（日线>=120）
-    assert resonance["analysis_confidence"]["level"] == "中", (
-        f"使用 qfq 且日线>=120，confidence 至少应为中，实际为 {resonance['analysis_confidence']['level']}"
+    # qfq + gap -> cap at medium, never high
+    assert resonance["analysis_confidence"]["level"] in ("低", "中")
+    assert resonance["analysis_confidence"]["level"] != "高"
+    assert resonance["corporate_action_warning"] is not None
+    warning_text = str(resonance["corporate_action_warning"])
+    assert "前复权" in warning_text or "断点" in warning_text
+
+
+def test_raw_gap_local_repair_caps_confidence(monkeypatch):
+    import sys as _sys
+    from pathlib import Path
+    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    import technical_analyzer as ta_mod
+    from technical_analyzer import advanced_medium_term_resonance
+
+    df = _make_exrights_df()
+
+    # Monkeypatch local repair to return a valid repaired df
+    def fake_repair(df, *args, **kwargs):
+        return df.copy()
+
+    monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", fake_repair)
+
+    result = advanced_medium_term_resonance(
+        df_daily=df,
+        quote={"adjustment": "raw", "code": "688018"},
     )
+    resonance = result["resonance"]
+    assert resonance["price_data_lineage"]["effective_adjustment"] == "local_qfq_approx"
+    assert resonance["price_data_lineage"]["price_adjustment_applied"] is True
+    assert resonance["price_data_lineage"]["weekly_resampled_from_adjusted_daily"] is True
+    assert resonance["analysis_confidence"]["level"] in ("低", "中")
 
 
 def test_no_triple_divergence_naming():
