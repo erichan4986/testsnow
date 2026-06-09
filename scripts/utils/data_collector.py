@@ -78,13 +78,15 @@ class TechnicalCollector:
             except Exception as e:
                 logger.warning(f"mootdx 初始化失败: {e}")
 
-    def fetch_kline(self, code: str, market: int = 0, days: int = 120) -> Optional[pd.DataFrame]:
+    def fetch_kline(self, code: str, market: int = 0, days: int = 120, adjustment: str | None = None) -> Optional[pd.DataFrame]:
         """
         获取日K线数据。
         优先级：1) akshare qfq  2) mootdx raw
+        Args:
+            adjustment: "qfq"=强制akshare前复权, "raw"=强制mootdx原始, None=自动优先qfq
         """
-        # --- Priority 1: akshare qfq ---
-        if ak is not None:
+        # --- Priority 1: akshare qfq (unless raw explicitly requested) ---
+        if ak is not None and adjustment != "raw":
             helper = AkshareHelper()
             prefix = "SZ" if market == 0 else "SH"
             symbol = f"{prefix}{code}"
@@ -321,9 +323,9 @@ class TechnicalCollector:
             logger.error(f"计算技术指标失败: {e}")
             return {}
 
-    def collect(self, code: str, market: int = 0, days: int = 120) -> Dict:
+    def collect(self, code: str, market: int = 0, days: int = 120, adjustment: str | None = None) -> Dict:
         """一键采集技术指标（含日线+周线+价格目标）"""
-        df_daily = self.fetch_kline(code, market, days)
+        df_daily = self.fetch_kline(code, market, days, adjustment=adjustment)
         if df_daily is None or df_daily.empty:
             return {}
         indicators = self.compute_indicators(df_daily)
@@ -349,6 +351,8 @@ class TechnicalCollector:
             "code": code,
             "market": market,
             "days": len(df_daily),
+            "adjustment": df_daily.attrs.get("adjustment", "raw"),
+            "data_source": df_daily.attrs.get("data_source", "unknown"),
             "indicators": indicators,
             "price_target": price_target_result,
             "fetched_at": datetime.now().isoformat(),
