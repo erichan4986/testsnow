@@ -93,6 +93,43 @@ def _min_confidence(current: str, cap: str) -> str:
     return reverse[min(order.get(current, 0), order.get(cap, 0))]
 
 
+def _apply_gap_based_qfq_approximation(df: pd.DataFrame, gap_details: list) -> pd.DataFrame:
+    """
+    基于检测到的价格缺口做近似前复权修复。
+    不需要 xdxr 除权记录，直接利用相邻交易日的跳变比例反推。
+    多个缺口时累积调整（从最早到最近逐条应用）。
+    """
+    if not gap_details:
+        return df.copy()
+
+    df = df.copy()
+
+    # 确保 date 列为 datetime
+    if "date" not in df.columns:
+        df = df.reset_index()
+    df["date"] = pd.to_datetime(df["date"])
+
+    price_cols = [c for c in ["open", "high", "low", "close"] if c in df.columns]
+    if not price_cols:
+        return df
+
+    # 按缺口日期升序（最早优先），累积调整系数
+    gaps = sorted(gap_details, key=lambda g: pd.to_datetime(g["date"]))
+
+    for gap in gaps:
+        gap_date = pd.to_datetime(gap["date"])
+        prev_close = float(gap["prev_close"])
+        close = float(gap["close"])
+        if close == 0:
+            continue
+        ratio = prev_close / close
+        mask = df["date"] < gap_date
+        for col in price_cols:
+            df.loc[mask, col] = df.loc[mask, col] * ratio
+
+    return df
+
+
 # ---------------------------------------------------------------------------
 # Main entry points
 # ---------------------------------------------------------------------------
@@ -228,13 +265,30 @@ def advanced_medium_term_resonance(
 
     # Local repair attempt (pure function, no network)
     if input_adjustment == "raw" and requires_qfq:
+        df_repaired = None
+        repair_method_used = None
         try:
+            # 1. 优先用精确 xdxr 修复（如果有）
             xdxr_df = (quote or {}).get("xdxr_df")
             df_repaired = apply_qfq_adjustment(df_daily, xdxr_df)
             if df_repaired is not None and not df_repaired.empty and len(df_repaired) == len(df_daily):
+                # 检查是否真的有变化（xdxr 存在时应该不同）
+                if not df_repaired["close"].equals(df_daily["close"]):
+                    repair_method_used = "xdxr_qfq"
+
+            # 2. xdxr 无变化或缺失，用缺口比例近似修复
+            if repair_method_used is None:
+                _pg = price_adjustment_validation.get("price_gaps", {}) if price_adjustment_validation else {}
+                gap_details = _pg.get("gap_details", [])
+                if gap_details:
+                    df_repaired = _apply_gap_based_qfq_approximation(df_daily, gap_details)
+                    if not df_repaired["close"].equals(df_daily["close"]):
+                        repair_method_used = "gap_ratio_approx"
+
+            if df_repaired is not None and repair_method_used is not None:
                 df_daily = df_repaired
                 effective_adjustment = "local_qfq_approx"
-                adjustment_source = "local_gap_repair"
+                adjustment_source = f"local_gap_repair ({repair_method_used})"
                 price_adjustment_applied = True
 
                 # CRITICAL: recompute weekly from repaired daily
@@ -249,7 +303,7 @@ def advanced_medium_term_resonance(
                         "warning_message",
                         "raw 价格序列疑似存在除权断点，已使用本地近似前复权修复。",
                     ),
-                    "repair_method": "local_qfq_approx",
+                    "repair_method": repair_method_used,
                     "note": "本地近似复权，非精确前复权",
                     "gap_date": _pg.get("gap_date"),
                     "gap_pct": _pg.get("max_gap_pct"),

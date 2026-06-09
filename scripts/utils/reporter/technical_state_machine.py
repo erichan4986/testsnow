@@ -371,17 +371,25 @@ def compute_invalidation(
     struct_break = "跌破前期平台下沿"
 
     hard_price = ma60 if ma60 and ma60 > 0 else None
+    hard_source = "MA60"
     distance = None
     if hard_price and hard_price > 0:
         distance = f"{(close - hard_price) / hard_price * 100:.1f}%"
     elif support_zone and support_zone.get("zone_low"):
         hard_price = support_zone["zone_low"]
+        hard_source = "支撑区"
         distance = f"{(close - hard_price) / close * 100:.1f}%"
+
+    is_invalidated = False
+    if hard_price is not None and close < hard_price:
+        is_invalidated = True
 
     return {
         "soft_warning": soft,
         "hard_invalid": hard,
         "hard_invalid_price": hard_price,
+        "hard_invalid_source": hard_source,
+        "is_invalidated": is_invalidated,
         "structure_break": struct_break,
         "current_distance_to_invalid": distance or "未知",
     }

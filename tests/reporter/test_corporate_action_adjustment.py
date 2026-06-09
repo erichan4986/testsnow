@@ -45,6 +45,8 @@ def test_corporate_action_lowers_confidence(monkeypatch):
 
     # Monkeypatch local repair to return None (simulate no xdxr available)
     monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", lambda df, *a, **k: None)
+    # Also disable gap-based approximation so no repair happens at all
+    monkeypatch.setattr(ta_mod, "_apply_gap_based_qfq_approximation", lambda df, *a, **k: df.copy())
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(

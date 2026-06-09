@@ -24,7 +24,9 @@ def evaluate_candle_at_key_levels(
     """
     # Determine proximity to key levels (generous ±3% band for S/R, ±2% for BOLL)
     near_support = False
+    below_support = False
     near_resistance = False
+    above_resistance = False
     near_boll_lower = False
     near_boll_upper = False
 
@@ -35,8 +37,11 @@ def evaluate_candle_at_key_levels(
         if zone_low is not None and zone_high is not None:
             lower = zone_low * 0.97
             upper = zone_high * 1.03
-            if lower <= close <= upper:
+            if zone_low <= close <= zone_high:
                 near_support = True
+            elif lower <= close < zone_low:
+                near_support = True
+                below_support = True
 
     resistance_zone = key_levels.get("resistance_zone") if key_levels else None
     if resistance_zone is not None:
@@ -45,8 +50,11 @@ def evaluate_candle_at_key_levels(
         if zone_low is not None and zone_high is not None:
             lower = zone_low * 0.97
             upper = zone_high * 1.03
-            if lower <= close <= upper:
+            if zone_low <= close <= zone_high:
                 near_resistance = True
+            elif zone_high < close <= upper:
+                near_resistance = True
+                above_resistance = True
 
     if boll_lower is not None:
         if close <= boll_lower * 1.02:
@@ -72,6 +80,12 @@ def evaluate_candle_at_key_levels(
         }
 
     if is_long_lower and (near_support or near_boll_lower):
+        if below_support:
+            return {
+                "signal": "长下影，价格已跌破原支撑区，下方承接力观察中",
+                "strength": "support_confirm",
+                "location": "支撑位下方",
+            }
         return {
             "signal": "长下影，下方承接力较强",
             "strength": "support_confirm",
@@ -79,6 +93,12 @@ def evaluate_candle_at_key_levels(
         }
 
     if is_long_upper and (near_resistance or near_boll_upper):
+        if above_resistance:
+            return {
+                "signal": "长上影，价格已突破原阻力区，上方抛压观察中",
+                "strength": "resistance_warn",
+                "location": "阻力位上方",
+            }
         return {
             "signal": "长上影，上方抛压较重",
             "strength": "resistance_warn",
