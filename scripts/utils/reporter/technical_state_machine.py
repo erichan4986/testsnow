@@ -12,6 +12,61 @@ __all__ = [
 ]
 
 
+def _score_volume_confirmation(df_daily: pd.DataFrame | None) -> tuple[int, str]:
+    """基于实际成交量动态评分。
+
+    规则：
+    - 最新成交量 >= 1.5×MA20：放量确认，9-10分
+    - 1.2×MA20 <= 最新 < 1.5×MA20：温和放量，7-8分
+    - 0.8×MA20 <= 最新 < 1.2×MA20：正常，5-6分
+    - 最新 < 0.8×MA20：缩量，3-4分
+    - 近5日量能递增：+1分
+    - 近5日量能递减：-1分
+    """
+    if df_daily is None or df_daily.empty or "volume" not in df_daily.columns:
+        return 8, "成交额温和（数据不足，默认评分）"
+
+    try:
+        vol = df_daily["volume"].astype(float)
+        if len(vol) < 20:
+            return 8, "成交额温和（数据不足，默认评分）"
+
+        latest_vol = float(vol.iloc[-1])
+        ma20_vol = float(vol.tail(20).mean())
+        if ma20_vol <= 0:
+            return 8, "成交额温和（数据不足，默认评分）"
+
+        ratio = latest_vol / ma20_vol
+
+        # 基础分
+        if ratio >= 1.5:
+            base_score = 9
+            evidence = f"放量（量能比{ratio:.1f}×MA20）"
+        elif ratio >= 1.2:
+            base_score = 7
+            evidence = f"温和放量（量能比{ratio:.1f}×MA20）"
+        elif ratio >= 0.8:
+            base_score = 6
+            evidence = f"量能正常（量能比{ratio:.1f}×MA20）"
+        else:
+            base_score = 4
+            evidence = f"缩量（量能比{ratio:.1f}×MA20）"
+
+        # 趋势修正（近5日）
+        if len(vol) >= 6:
+            recent = vol.tail(5).tolist()
+            if all(recent[i] >= recent[i - 1] for i in range(1, 5)):
+                base_score = min(10, base_score + 1)
+                evidence += "，近5日递增"
+            elif all(recent[i] <= recent[i - 1] for i in range(1, 5)):
+                base_score = max(0, base_score - 1)
+                evidence += "，近5日递减"
+
+        return base_score, evidence
+    except Exception:
+        return 8, "成交额温和（计算异常，默认评分）"
+
+
 def evaluate_bias_extreme(
     bias_5: float | None,
     bias_5_extreme_high: bool,
@@ -242,7 +297,23 @@ def classify_trend_state(
             "summary": "刚从震荡/下跌修复，均线刚开始多头排列。",
         }
 
-    # 7. 盘整期
+    # 7. 高位回撤后的震荡转弱观察（MA60 仍向上但被短期跌破 MA20）
+    if (
+        ma20_dir == "向上"
+        and ma60_dir == "向上"
+        and price_vs_ma20 == "跌破"
+        and price_vs_ma60 == "站上"
+    ):
+        return {
+            "primary_state": "震荡转弱",
+            "stage": "回撤观察期",
+            "action_hint": "降低预期",
+            "state_changed": None,
+            "previous_state": None,
+            "summary": "高位回撤至MA20下方，但MA60仍向上，中期结构未破坏，观察能否重新站上MA20。",
+        }
+
+    # 8. 盘整期
     return {
         "primary_state": "震荡趋势",
         "stage": "盘整期",
@@ -270,6 +341,7 @@ def compute_trend_health(
     daily_structure: Dict,
     indicators: Dict,
     config: Dict | None = None,
+    df_daily: pd.DataFrame | None = None,
 ) -> Dict:
     """计算趋势健康度评分（0-100）。"""
     if config is None:
@@ -298,14 +370,26 @@ def compute_trend_health(
     ma20_dir = daily_structure.get("ma20_direction", "未知")
     ma60_dir = daily_structure.get("ma60_direction", "未知")
     price_vs_ma20 = daily_structure.get("price_vs_ma20", "未知")
+    price_vs_ma60 = daily_structure.get("price_vs_ma60", "未知")
     if ma20_dir == "向上" and price_vs_ma20 == "站上":
         components["daily_ma_alignment"] = {"score": 20, "max": 25, "evidence": "MA20向上，价格站上"}
         score += 20
+    elif ma20_dir == "向上" and price_vs_ma20 == "跌破":
+        # MA20 仍向上但价格跌破，属于短线转弱，不要写成 MA20向下
+        components["daily_ma_alignment"] = {"score": 12, "max": 25, "evidence": "MA20向上，但价格跌破MA20，短线转弱"}
+        score += 12
     elif ma20_dir == "走平":
-        components["daily_ma_alignment"] = {"score": 10, "max": 25, "evidence": "MA20走平"}
-        score += 10
+        if price_vs_ma20 == "站上":
+            components["daily_ma_alignment"] = {"score": 12, "max": 25, "evidence": "MA20走平，价格站上"}
+            score += 12
+        else:
+            components["daily_ma_alignment"] = {"score": 8, "max": 25, "evidence": "MA20走平，价格跌破"}
+            score += 8
+    elif ma20_dir == "向下":
+        components["daily_ma_alignment"] = {"score": 5, "max": 25, "evidence": "MA20向下"}
+        score += 5
     else:
-        components["daily_ma_alignment"] = {"score": 5, "max": 25, "evidence": "MA20向下或价格跌破"}
+        components["daily_ma_alignment"] = {"score": 5, "max": 25, "evidence": "日线MA结构偏弱"}
         score += 5
 
     structure_type = daily_structure.get("structure_type", "无明显结构")
@@ -316,8 +400,10 @@ def compute_trend_health(
         components["price_structure"] = {"score": 5, "max": 15, "evidence": structure_type}
         score += 5
 
-    components["volume_confirmation"] = {"score": 8, "max": 10, "evidence": "成交额温和"}
-    score += 8
+    # 动态成交量确认评分
+    vol_score, vol_evidence = _score_volume_confirmation(df_daily)
+    components["volume_confirmation"] = {"score": vol_score, "max": 10, "evidence": vol_evidence}
+    score += vol_score
 
     boll_state = indicators.get("boll_state", "正常")
     if boll_state == "开口":
@@ -343,6 +429,10 @@ def compute_trend_health(
 
     score = max(0, min(100, score))
 
+    # 当中期均线仍向上且价格在MA60上方时，健康度评级不应低于"转弱观察"
+    if ma60_dir == "向上" and price_vs_ma60 == "站上" and score < 50:
+        score = min(50, score + 15)
+
     if score >= 80:
         grade = "趋势强健"
     elif score >= 65:
@@ -353,6 +443,10 @@ def compute_trend_health(
         grade = "破坏风险高"
     else:
         grade = "趋势失效"
+
+    # 评级冲突修正：MA60仍向上且价格在MA60上方时，不使用"破坏风险高"
+    if ma60_dir == "向上" and price_vs_ma60 == "站上" and grade == "破坏风险高":
+        grade = "转弱观察"
 
     return {
         "score": score,

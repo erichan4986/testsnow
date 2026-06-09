@@ -131,11 +131,10 @@ def analyze_index_trend(
 
     try:
         trend_health = compute_trend_health(
-            weekly_background={"trend": weekly.get("weekly_trend", "未知")},
+            weekly_trend=weekly.get("weekly_trend", "未知"),
             daily_structure=daily_structure,
-            trend_state=trend_state,
             indicators=indicators,
-            divergence=None,
+            df_daily=df_daily,
         )
     except TypeError:
         trend_health = compute_trend_health(
@@ -164,12 +163,24 @@ def evaluate_market_resonance(
     critical_missing = []
     if market_trend_state is None:
         critical_missing.append("market index data missing")
+
+    # 行业缺失但主题可用时，用主题指数代理，不再显示 raw missing
+    sector_proxy_note = None
+    theme_name = "主题指数"
+    if mapping_meta and mapping_meta.get("thematic") and mapping_meta["thematic"].get("name"):
+        theme_name = mapping_meta["thematic"]["name"]
+
     if sector_trend_state is None:
-        critical_missing.append("sector index data missing")
+        if theme_trend_state is not None:
+            sector_proxy_note = f"以{theme_name}代理行业共振"
+        else:
+            critical_missing.append("sector index data missing")
 
     optional_missing = []
     if theme_trend_state is None:
         optional_missing.append("theme index data missing")
+    elif sector_proxy_note:
+        optional_missing.append(sector_proxy_note)
 
     if market_trend_state is None and sector_trend_state is None:
         return {
@@ -203,26 +214,29 @@ def evaluate_market_resonance(
     c_str = _strength(sector_trend_state)
     t_str = _strength(theme_trend_state)
 
-    # 相对行业强弱
-    if c_str > 0:
-        relative = "强于行业" if s_str >= c_str else "弱于行业"
-    elif c_str < 0:
-        relative = "强于行业" if s_str > c_str else "弱于行业"
+    # 行业缺失时用主题指数替代，用于规则判断
+    effective_sector = c_str if c_str != 0 else t_str
+
+    # 相对行业强弱（优先用行业，缺失用主题）
+    if effective_sector > 0:
+        relative = "强于行业" if s_str >= effective_sector else "弱于行业"
+    elif effective_sector < 0:
+        relative = "强于行业" if s_str > effective_sector else "弱于行业"
     else:
         relative = "同步"
 
     # 共振规则矩阵
-    if s_str > 0 and m_str > 0 and c_str > 0:
+    if s_str > 0 and m_str > 0 and effective_sector > 0:
         state = "顺风共振"; impact = "趋势信号可信度上调"; conf = "高"
-    elif s_str > 0 and m_str <= 0 and c_str <= 0:
+    elif s_str > 0 and m_str <= 0 and effective_sector <= 0:
         state = "逆风独立"; impact = "独立行情，波动风险上升"; conf = "中"
-    elif s_str < 0 and c_str > 0:
+    elif s_str < 0 and effective_sector > 0:
         state = "弱于板块"; impact = "个股弱于行业，优先级下降"; conf = "中"
-    elif s_str < 0 and m_str < 0 and c_str < 0:
+    elif s_str < 0 and m_str < 0 and effective_sector < 0:
         state = "系统性压力"; impact = "中期修复难度较大"; conf = "高"
-    elif s_str == 0 and c_str > 0:
+    elif s_str == 0 and effective_sector > 0:
         state = "等待补涨确认"; impact = "观察是否突破 MA20"; conf = "中"
-    elif s_str == 0 and c_str < 0:
+    elif s_str == 0 and effective_sector < 0:
         state = "震荡偏弱"; impact = "降低技术信号权重"; conf = "低"
     else:
         state = "未知"; impact = "信号复杂，继续观察"; conf = "低"

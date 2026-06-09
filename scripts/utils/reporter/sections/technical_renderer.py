@@ -69,6 +69,20 @@ class TechnicalRenderer:
             lines.append(f"- 压力区：【{rz.get('zone_low', '—')} - {rz.get('zone_high', '—')}】（{rz.get('strength', '弱')}）")
         else:
             lines.append("- 压力区：暂无可靠压力区，原因：历史数据不足或有效触及次数不足。")
+
+        # 当支撑/压力区缺失时，补充 MA 观察位
+        if not sz and not rz:
+            raw_indicators = ctx.get("stock_raw", {}).get("technical", {}).get("indicators", {})
+            close_val = raw_indicators.get("close")
+            for ma_key, ma_label in [
+                ("ma_5", "MA5"), ("ma_10", "MA10"), ("ma_20", "MA20"), ("ma_60", "MA60"),
+            ]:
+                ma_val = raw_indicators.get(ma_key)
+                if close_val is not None and ma_val is not None and ma_val > 0:
+                    diff_pct = round((close_val - ma_val) / ma_val * 100, 2)
+                    rel = "站上" if diff_pct >= 0 else "跌破"
+                    lines.append(f"- {ma_label}：约 {ma_val:.2f}（当前{rel}，距离 {diff_pct:+.2f}%）")
+
         if inv.get("hard_invalid_price") is not None:
             basis = inv.get("hard_invalid_source", "")
             price = inv["hard_invalid_price"]
@@ -148,13 +162,45 @@ class TechnicalRenderer:
             lines.append("")
 
         mr = resonance.get("market_resonance")
-        if mr and mr.get("state") != "未知":
-            mr_state = mr.get("state", "")
-            mr_conf = mr.get("confidence", "")
-            lines.append(f"**市场共振**：{mr_state}（置信度：{mr_conf}）")
+        if mr:
+            mr_state = mr.get("state", "未知")
+            mr_conf = mr.get("confidence", "低")
+            impact = mr.get("impact", "")
+            relative = mr.get("relative_strength", "未知")
+            missing = mr.get("missing", [])
+            lines.append(f"**市场/板块共振**：{mr_state}（置信度：{mr_conf}）")
+            if impact:
+                lines.append(f"- 影响：{impact}")
+            if relative and relative != "未知":
+                lines.append(f"- 相对行业：{relative}")
             for ev in mr.get("evidence", [])[:3]:
                 lines.append(f"- {ev}")
+            real_missing = [m for m in missing if not m.startswith("以")]
+            proxy_notes = [m for m in missing if m.startswith("以")]
+            if proxy_notes:
+                lines.append(f"- 说明：{'; '.join(proxy_notes[:2])}")
+            if real_missing:
+                lines.append(f"- 缺失：{'; '.join(real_missing[:3])}")
             lines.append(f"- 提示：{mr.get('action_hint', '')}")
+            lines.append("")
+
+        # 所属概念板块
+        tech_raw = ctx.get("stock_raw", {}).get("technical", {})
+        concept_blocks = tech_raw.get("concept_blocks")
+        if concept_blocks and concept_blocks.get("concept_tags"):
+            tags = concept_blocks["concept_tags"][:8]
+            lines.append(f"**所属概念板块**：{', '.join(tags)}")
+            lines.append("")
+
+        # 近5日资金流向
+        fund_flow = tech_raw.get("fund_flow")
+        if fund_flow and isinstance(fund_flow, list) and len(fund_flow) > 0:
+            lines.append("**近5日资金流向**（万元）：")
+            for row in fund_flow[:5]:
+                date = row.get("date", "")
+                main_in = row.get("main_in", "")
+                change = row.get("change_pct", "")
+                lines.append(f"- {date}: 主力净流入 {main_in}万，涨跌 {change}%")
             lines.append("")
 
         # 动态结论：基于实际状态生成，避免模板残留无关内容
@@ -196,6 +242,32 @@ class TechnicalRenderer:
         if div:
             lines.append(f"**背离预警**：{div.get('type', '')}（{div.get('confidence', '')}）")
             lines.append(f"处置：{div.get('action', '观望')}")
+            lines.append("")
+
+        # 价格目标分析
+        price_target = tech_raw.get("price_target")
+        if price_target and not price_target.get("error"):
+            pt_conf = price_target.get("confidence", "未知")
+            pt_score = price_target.get("confidence_score", 0)
+            pt_dir = price_target.get("direction", "")
+            dir_label = "看涨" if pt_dir == "bullish" else ("看跌" if pt_dir == "bearish" else "观望")
+            lines.append(f"**价格目标分析**（置信度：{pt_conf}，评分：{pt_score}/100，方向：{dir_label}）")
+            for level in ["conservative", "base", "aggressive"]:
+                val = price_target.get(level)
+                if val is not None:
+                    label = {"conservative": "保守", "base": "基准", "aggressive": "激进"}.get(level, level)
+                    lines.append(f"- {label}目标：{val:.2f}")
+            te = price_target.get("time_estimate", {})
+            if te:
+                lines.append(f"- 时间预期：保守{te.get('conservative', '')} / 基准{te.get('base', '')}")
+            trig = price_target.get("trigger_conditions", {})
+            if trig.get("price"):
+                lines.append(f"- 触发条件：{trig['price']}")
+            if price_target.get("stop_loss"):
+                lines.append(f"- 止损：{price_target['stop_loss']}")
+            lines.append("")
+        elif price_target and price_target.get("error"):
+            lines.append(f"**价格目标分析**：{price_target['error']}（{price_target.get('reason', '')}）")
             lines.append("")
 
         chart_paths = ctx.get("chart_paths", {})

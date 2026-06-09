@@ -592,17 +592,24 @@ def detect_channel_or_box_structure(
             "evidence": [], "missing": [], "action_hint": "区间内观望",
         }
 
-    # 当前位置
+    # 当前位置（用距离上轨/下轨的相对比例，避免 mid 阈值误判）
     last_close = float(df_daily["close"].iloc[-1])
-    mid = (upper + lower) / 2
-    if last_close > upper:
-        position = "区间外"
-    elif last_close > mid + (upper - mid) * 0.3:
-        position = "接近上轨"
-    elif last_close < mid - (mid - lower) * 0.3:
-        position = "接近下轨"
+    if upper is None or lower is None or upper <= lower:
+        position = "未知"
+    elif last_close > upper:
+        position = "区间外（突破上轨）"
+    elif last_close < lower:
+        position = "区间外（跌破下轨）"
     else:
-        position = "中部"
+        range_ = upper - lower
+        dist_to_upper = (upper - last_close) / range_
+        dist_to_lower = (last_close - lower) / range_
+        if dist_to_upper < 0.15:
+            position = "接近上轨"
+        elif dist_to_lower < 0.15:
+            position = "接近下轨"
+        else:
+            position = "中部"
 
     # 突破检测（用 confirm_bars）
     confirm_bars = df_daily.iloc[-confirm_days:]

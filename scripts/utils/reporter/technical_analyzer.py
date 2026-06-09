@@ -72,9 +72,17 @@ except ImportError:
     )
 
 try:
-    from .technical_resonance import evaluate_market_resonance
+    from .technical_resonance import (
+        evaluate_market_resonance,
+        load_market_index_map,
+        analyze_index_trend,
+    )
 except ImportError:
-    from technical_resonance import evaluate_market_resonance
+    from technical_resonance import (
+        evaluate_market_resonance,
+        load_market_index_map,
+        analyze_index_trend,
+    )
 
 try:
     from .price_adjustment_validator import validate_adjustment, apply_qfq_adjustment
@@ -113,12 +121,20 @@ def _build_advisors(indicators: dict) -> dict:
     boll_upper = indicators.get("boll_upper")
     boll_state = indicators.get("boll_state", "正常")
 
-    if boll_lower is not None and close <= boll_lower * 1.03:
+    boll_position = "中轨附近"
+    if boll_lower is not None and boll_upper is not None and boll_upper > boll_lower:
+        boll_range = boll_upper - boll_lower
+        boll_pct = (close - boll_lower) / boll_range
+        dist_to_lower_pct = abs(close - boll_lower) / close if close > 0 else 0
+        dist_to_upper_pct = abs(close - boll_upper) / close if close > 0 else 0
+        if boll_pct > 0.85 or dist_to_upper_pct < 0.06:
+            boll_position = "接近上轨"
+        elif boll_pct < 0.15 or dist_to_lower_pct < 0.06:
+            boll_position = "接近下轨"
+    elif boll_lower is not None and close <= boll_lower * 1.05:
         boll_position = "接近下轨"
-    elif boll_upper is not None and close >= boll_upper * 0.97:
+    elif boll_upper is not None and close >= boll_upper * 0.95:
         boll_position = "接近上轨"
-    else:
-        boll_position = "中轨附近"
 
     if boll_state == "开口":
         boll_meaning = f"{boll_position}，波动有所放大（提示短线承压，不单独构成趋势判断）"
@@ -127,9 +143,21 @@ def _build_advisors(indicators: dict) -> dict:
     else:
         boll_meaning = f"{boll_position}，波动正常"
 
+    # MACD
+    macd = indicators.get("macd", 0)
+    macd_hist = indicators.get("macd_hist", 0)
+    if macd > 0 and macd_hist < 0:
+        macd_state = "多头动能衰减"
+    elif macd > 0:
+        macd_state = "多头延续"
+    elif macd < 0 and macd_hist > 0:
+        macd_state = "空头动能衰减"
+    else:
+        macd_state = "空头延续"
+
     return {
         "macd": {
-            "state": "多头延续" if indicators.get("macd", 0) > 0 else "空头延续",
+            "state": macd_state,
             "meaning": "仅作趋势确认，不单独构成买卖信号",
         },
         "rsi": {
@@ -183,6 +211,73 @@ def _apply_gap_based_qfq_approximation(df: pd.DataFrame, gap_details: list) -> p
             df.loc[mask, col] = df.loc[mask, col] * ratio
 
     return df
+
+
+def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
+    """获取指数日K数据。优先 akshare，失败回退 mootdx，再失败返回 None。"""
+    from datetime import datetime, timedelta
+
+    # ---- Priority 1: akshare ----
+    try:
+        import akshare as ak
+        helper = None
+        try:
+            from ..data_collector import AkshareHelper
+            helper = AkshareHelper()
+        except Exception:
+            try:
+                from data_collector import AkshareHelper
+                helper = AkshareHelper()
+            except Exception:
+                pass
+
+        start_date = (datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d")
+        if helper is not None:
+            df = helper.call(ak.index_zh_a_hist, symbol=symbol, period="daily", start_date=start_date)
+        else:
+            df = ak.index_zh_a_hist(symbol=symbol, period="daily", start_date=start_date)
+
+        if df is not None and not df.empty:
+            column_map = {
+                "日期": "date", "开盘": "open", "最高": "high",
+                "最低": "low", "收盘": "close", "成交量": "volume",
+            }
+            df = df.rename(columns=column_map)
+            for col in ["open", "high", "low", "close", "volume"]:
+                if col not in df.columns:
+                    logger.warning(f"指数 {symbol} 返回数据缺少列: {col}")
+                    return None
+            if len(df) > days:
+                df = df.tail(days).reset_index(drop=True)
+            return df
+    except Exception as e:
+        logger.warning(f"akshare 获取指数 {symbol} 失败: {e}")
+
+    # ---- Priority 2: mootdx (TCP 7709，不依赖 HTTP 代理) ----
+    try:
+        from mootdx.quotes import Quotes
+        client = Quotes.factory(market="std")
+        # market: 0=深圳, 1=上海; 指数代码 symbol 直接传 6 位
+        market_flag = 1 if symbol.startswith(("0", "6")) else 0
+        end = datetime.now()
+        begin = end - timedelta(days=days * 3)
+        df = client.k(
+            symbol=symbol,
+            market=market_flag,
+            begin=begin.strftime("%Y%m%d"),
+            end=end.strftime("%Y%m%d"),
+        )
+        if df is not None and not df.empty and all(c in df.columns for c in ["open", "high", "low", "close", "volume"]):
+            if "date" not in df.columns and df.index.name is not None:
+                df = df.reset_index()
+            if len(df) > days:
+                df = df.tail(days).reset_index(drop=True)
+            logger.info(f"mootdx 获取指数 {symbol} 成功，共 {len(df)} 条")
+            return df
+    except Exception as e:
+        logger.warning(f"mootdx 获取指数 {symbol} 失败: {e}")
+
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -529,6 +624,7 @@ def advanced_medium_term_resonance(
         daily_structure=daily_structure,
         indicators=indicators,
         config=config,
+        df_daily=df_daily,
     )
 
     # 10. 失效条件
@@ -684,18 +780,33 @@ def advanced_medium_term_resonance(
         bottom_signal, trend_state, indicators, invalidation
     )
 
-    # Phase 3: 市场共振
-    try:
-        from .technical_resonance import load_market_index_map
-    except ImportError:
-        from technical_resonance import load_market_index_map
+    # Phase 3: 市场共振（个股 vs 市场/主题指数）
     stock_code = quote.get("code") if quote else None
     mapping = load_market_index_map(stock_code) if stock_code else {}
+
+    market_index_state = None
+    theme_index_state = None
+    sector_index_state = None
+
+    market_meta = mapping.get("market")
+    if market_meta and market_meta.get("code"):
+        df_market = _fetch_index_kline(market_meta["code"], days=daily_count if daily_count else 120)
+        if df_market is not None and not df_market.empty:
+            market_index_state = analyze_index_trend(df_market).get("trend_state")
+
+    thematic_meta = mapping.get("thematic")
+    if thematic_meta and thematic_meta.get("code"):
+        df_theme = _fetch_index_kline(thematic_meta["code"], days=daily_count if daily_count else 120)
+        if df_theme is not None and not df_theme.empty:
+            theme_index_state = analyze_index_trend(df_theme).get("trend_state")
+
+    # 行业指数当前未接入（需要行业 map），保持 None，evaluate_market_resonance 会识别为缺失
     market_resonance = evaluate_market_resonance(
         stock_trend_state=trend_state,
-        market_trend_state=None,
-        sector_trend_state=None,
-        theme_trend_state=None,
+        market_trend_state=market_index_state,
+        sector_trend_state=sector_index_state,
+        theme_trend_state=theme_index_state,
+        mapping_meta=mapping,
     )
 
     _resonance.update({

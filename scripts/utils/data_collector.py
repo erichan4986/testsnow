@@ -19,6 +19,80 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+_BAIDU_PAE_HEADERS = {
+    "Host": "finance.pae.baidu.com",
+    "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/117.0.0.0",
+    "Accept": "application/vnd.finance-web.v1+json",
+    "Origin": "https://gushitong.baidu.com",
+    "Referer": "https://gushitong.baidu.com/",
+}
+
+
+def _baidu_fund_flow_history(code: str, days: int = 20) -> list[dict]:
+    """百度股市通个股资金流向（日级，最近 N 交易日）。"""
+    import requests
+    url = (
+        f"https://finance.pae.baidu.com/vapi/v1/fundsortlist"
+        f"?code={code}&market=ab&pn=0&rn={days}"
+        f"&finClientType=pc"
+    )
+    try:
+        r = requests.get(url, headers=_BAIDU_PAE_HEADERS, timeout=10)
+        d = r.json()
+        if str(d.get("ResultCode", -1)) != "0":
+            return []
+        rows = []
+        for item in d.get("Result", {}).get("list", []):
+            rows.append({
+                "date": item.get("showtime", ""),
+                "close": item.get("closepx", ""),
+                "change_pct": item.get("ratio", ""),
+                "super_net_in": item.get("superNetIn", ""),
+                "large_net_in": item.get("largeNetIn", ""),
+                "medium_net_in": item.get("mediumNetIn", ""),
+                "small_net_in": item.get("littleNetIn", ""),
+                "main_in": item.get("extMainIn", ""),
+            })
+        return rows
+    except Exception as e:
+        logger.warning(f"百度资金流向获取失败: {e}")
+        return []
+
+
+def _baidu_concept_blocks(code: str) -> dict:
+    """百度股市通概念板块归属。"""
+    import requests
+    url = (
+        f"https://finance.pae.baidu.com/api/getrelatedblock"
+        f"?code={code}&market=ab"
+        f"&typeCode=all&finClientType=pc"
+    )
+    try:
+        r = requests.get(url, headers=_BAIDU_PAE_HEADERS, timeout=10)
+        d = r.json()
+        if str(d.get("ResultCode", -1)) != "0":
+            return {}
+        result = {"industry": [], "concept": [], "region": [], "concept_tags": []}
+        for block in d.get("Result", []):
+            block_type = block.get("type", "")
+            for item in block.get("list", []):
+                entry = {
+                    "name": item.get("name", ""),
+                    "change_pct": item.get("increase", ""),
+                    "desc": item.get("desc", ""),
+                }
+                if "行业" in block_type:
+                    result["industry"].append(entry)
+                elif "概念" in block_type:
+                    result["concept"].append(entry)
+                    result["concept_tags"].append(entry["name"])
+                elif "地域" in block_type:
+                    result["region"].append(entry)
+        return result
+    except Exception as e:
+        logger.warning(f"百度概念板块获取失败: {e}")
+        return {}
+
 
 class AkshareHelper:
     """
@@ -217,9 +291,12 @@ class TechnicalCollector:
 
         return df
 
-    def compute_indicators(self, df: pd.DataFrame) -> Dict:
+    def compute_indicators(self, df: pd.DataFrame, code: str | None = None) -> Dict:
         """
         计算技术指标（优先使用 technical_analyzer，回退到 stockstats）。
+        Args:
+            df: 日K DataFrame
+            code: 股票代码，用于 technical_analyzer 的市场/板块共振映射
         Returns:
             Dict with latest indicator values + resonance + patterns + levels
         """
@@ -244,6 +321,7 @@ class TechnicalCollector:
         if ta_analyze is not None:
             try:
                 quote = {
+                    "code": code or df.attrs.get("code"),
                     "adjustment": df.attrs.get("adjustment", "raw"),
                     "data_source": df.attrs.get("data_source", "unknown"),
                 }
@@ -328,7 +406,7 @@ class TechnicalCollector:
         df_daily = self.fetch_kline(code, market, days, adjustment=adjustment)
         if df_daily is None or df_daily.empty:
             return {}
-        indicators = self.compute_indicators(df_daily)
+        indicators = self.compute_indicators(df_daily, code=code)
 
         # --- 新增：周线 + 价格目标 ---
         price_target_result = None
@@ -347,6 +425,10 @@ class TechnicalCollector:
         except Exception as e:
             logger.warning(f"价格目标分析失败: {e}")
 
+        # --- 新增：资金流向 + 概念板块（百度PAE，零鉴权） ---
+        fund_flow = _baidu_fund_flow_history(code, days=5)
+        concept_blocks = _baidu_concept_blocks(code)
+
         return {
             "code": code,
             "market": market,
@@ -355,6 +437,8 @@ class TechnicalCollector:
             "data_source": df_daily.attrs.get("data_source", "unknown"),
             "indicators": indicators,
             "price_target": price_target_result,
+            "fund_flow": fund_flow,
+            "concept_blocks": concept_blocks,
             "fetched_at": datetime.now().isoformat(),
         }
 
