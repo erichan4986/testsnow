@@ -238,6 +238,7 @@ def advanced_medium_term_resonance(
                 weekly_resampled_from_adjusted_daily = True
                 weekly_count = len(df_weekly) if df_weekly is not None else 0
 
+                _pg = price_adjustment_validation.get("price_gaps", {}) if price_adjustment_validation else {}
                 corporate_action_warning = {
                     "has_recent_action": True,
                     "message": price_adjustment_validation.get(
@@ -246,11 +247,12 @@ def advanced_medium_term_resonance(
                     ),
                     "repair_method": "local_qfq_approx",
                     "note": "本地近似复权，非精确前复权",
-                    "gap_date": price_adjustment_validation.get("gap_date"),
-                    "gap_pct": price_adjustment_validation.get("gap_pct"),
+                    "gap_date": _pg.get("gap_date"),
+                    "gap_pct": _pg.get("max_gap_pct"),
                 }
             else:
                 effective_adjustment = "raw"
+                _pg = price_adjustment_validation.get("price_gaps", {}) if price_adjustment_validation else {}
                 corporate_action_warning = {
                     "has_recent_action": True,
                     "message": price_adjustment_validation.get(
@@ -259,12 +261,13 @@ def advanced_medium_term_resonance(
                     ),
                     "repair_method": None,
                     "note": "未修复",
-                    "gap_date": price_adjustment_validation.get("gap_date"),
-                    "gap_pct": price_adjustment_validation.get("gap_pct"),
+                    "gap_date": _pg.get("gap_date"),
+                    "gap_pct": _pg.get("max_gap_pct"),
                 }
         except Exception as e:
             logger.warning(f"本地近似复权修复失败: {e}")
             effective_adjustment = "raw"
+            _pg = price_adjustment_validation.get("price_gaps", {}) if price_adjustment_validation else {}
             corporate_action_warning = {
                 "has_recent_action": True,
                 "message": price_adjustment_validation.get(
@@ -273,20 +276,21 @@ def advanced_medium_term_resonance(
                 ),
                 "repair_method": None,
                 "note": f"修复失败: {e}",
-                "gap_date": price_adjustment_validation.get("gap_date"),
-                "gap_pct": price_adjustment_validation.get("gap_pct"),
+                "gap_date": _pg.get("gap_date"),
+                "gap_pct": _pg.get("max_gap_pct"),
             }
 
     elif input_adjustment == "qfq" and has_gap:
         # qfq data still shows gaps — warn, do not repair again, but cap confidence
         effective_adjustment = "qfq"
+        _pg = price_adjustment_validation.get("price_gaps", {}) if price_adjustment_validation else {}
         corporate_action_warning = {
             "has_recent_action": True,
             "message": "当前标记为前复权数据，但仍检测到异常价格断点，建议核查数据源。",
             "repair_method": "qfq",
             "note": "已使用前复权但仍检测到断点",
-            "gap_date": price_adjustment_validation.get("gap_date"),
-            "gap_pct": price_adjustment_validation.get("gap_pct"),
+            "gap_date": _pg.get("gap_date"),
+            "gap_pct": _pg.get("max_gap_pct"),
         }
 
     # 1. 数据质量
@@ -474,6 +478,7 @@ def advanced_medium_term_resonance(
         },
     }
 
+    _pg = price_adjustment_validation.get("price_gaps", {}) if price_adjustment_validation else {}
     price_data_lineage = {
         "input_adjustment": input_adjustment,
         "effective_adjustment": effective_adjustment,
@@ -481,8 +486,8 @@ def advanced_medium_term_resonance(
         "adjustment_source": adjustment_source,
         "price_adjustment_applied": price_adjustment_applied,
         "weekly_resampled_from_adjusted_daily": weekly_resampled_from_adjusted_daily,
-        "gap_date": price_adjustment_validation.get("gap_date") if price_adjustment_validation else None,
-        "gap_pct": price_adjustment_validation.get("gap_pct") if price_adjustment_validation else None,
+        "gap_date": _pg.get("gap_date"),
+        "gap_pct": _pg.get("max_gap_pct"),
         "price_adjusted_columns": ["open", "high", "low", "close"] if price_adjustment_applied else [],
         "volume_adjusted": False,
         "amount_adjusted": False,
