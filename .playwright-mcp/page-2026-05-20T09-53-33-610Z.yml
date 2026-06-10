@@ -1,0 +1,957 @@
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "雪球 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img "雪球" [ref=e11]
+          - generic [ref=e12]: 首页
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "搜索" [ref=e15]
+          - button "" [ref=e17] [cursor=pointer]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link [ref=e20] [cursor=pointer]:
+              - /url: https://ai.xueqiu.com/chat
+              - img [ref=e21]
+          - listitem [ref=e22]:
+            - link "" [ref=e23] [cursor=pointer]:
+              - /url: /snb/web/cs?from=xq
+          - listitem [ref=e24]:
+            - link "" [ref=e25] [cursor=pointer]:
+              - /url: javascript:;
+          - listitem [ref=e26]:
+            - link "下载App" [ref=e27] [cursor=pointer]:
+              - /url: "javascript:"
+          - listitem [ref=e28]:
+            - generic [ref=e29] [cursor=pointer]: 发帖
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - strong [ref=e32]: 公司概况
+      - list [ref=e33]:
+        - listitem [ref=e34]:
+          - link "公司简介" [ref=e35] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/GSJJ
+        - listitem [ref=e36]:
+          - link "公司高管" [ref=e37] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/GSGG
+      - strong [ref=e38]: 股权信息
+      - list [ref=e39]:
+        - listitem [ref=e40]:
+          - link "股本结构" [ref=e41] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/GBJG
+        - listitem [ref=e42]:
+          - link "十大股东" [ref=e43] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/SDGD
+        - listitem [ref=e44]:
+          - link "十大流通股东" [ref=e45] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/LTGD
+        - listitem [ref=e46]:
+          - link "基金持股" [ref=e47] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/JJCG
+        - listitem [ref=e48]:
+          - link "高管增减持" [ref=e49] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/GGZJC
+        - listitem [ref=e50]:
+          - link "股东人数" [ref=e51] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/GDRS
+        - listitem [ref=e52]:
+          - link "限售解禁" [ref=e53] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/XSJJ
+      - strong [ref=e54]: 股票交易
+      - list [ref=e55]:
+        - listitem [ref=e56]:
+          - link "成交明细" [ref=e57] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688018.htm#detail
+        - listitem [ref=e58]:
+          - link "分价表" [ref=e59] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688018.htm#price
+        - listitem [ref=e60]:
+          - link "大单统计" [ref=e61] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688018.htm#dadan
+        - listitem [ref=e62]:
+          - link "大宗交易" [ref=e63] [cursor=pointer]:
+            - /url: http://data.eastmoney.com/dzjy/detail/688018.html
+        - listitem [ref=e64]:
+          - link "龙虎榜数据" [ref=e65] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/LHB
+        - listitem [ref=e66]:
+          - link "融资融券" [ref=e67] [cursor=pointer]:
+            - /url: http://stockdata.stock.hexun.com/rzrq/s688018.shtml
+      - strong [ref=e68]: 公司公告
+      - list [ref=e69]:
+        - listitem [ref=e70]:
+          - link "最新公告" [ref=e71] [cursor=pointer]:
+            - /url: http://www.sse.com.cn/assortment/stock/list/info/announcement/index.shtml?productId=688018
+        - listitem [ref=e72]:
+          - link "年度报告" [ref=e73] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vCB_Bulletin/stockid/688018/page_type/ndbg.phtml
+      - strong [ref=e74]: 公司运作
+      - list [ref=e75]:
+        - listitem [ref=e76]:
+          - link "股东大会" [ref=e77] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vGP_StockHolderMeeting/stockid/688018.phtml
+        - listitem [ref=e78]:
+          - link "收入构成" [ref=e79] [cursor=pointer]:
+            - /url: http://stockpage.10jqka.com.cn/688018/operate/#analysis
+        - listitem [ref=e80]:
+          - link "重大事项" [ref=e81] [cursor=pointer]:
+            - /url: http://q.stock.sohu.com/cn/688018/bw.shtml
+        - listitem [ref=e82]:
+          - link "分红送配" [ref=e83] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/FHPS
+        - listitem [ref=e84]:
+          - link "增发一览" [ref=e85] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/ZFYLB
+        - listitem [ref=e86]:
+          - link "内部交易" [ref=e87] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/INSIDER
+      - strong [ref=e88]: 财务数据
+      - list [ref=e89]:
+        - listitem [ref=e90]:
+          - link "业绩预告" [ref=e91] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688018.htm#10
+        - listitem [ref=e92]:
+          - link "主要指标" [ref=e93] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/ZYCWZB
+        - listitem [ref=e94]:
+          - link "利润表" [ref=e95] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/GSLRB
+        - listitem [ref=e96]:
+          - link "资产负债表" [ref=e97] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/ZCFZB
+        - listitem [ref=e98]:
+          - link "现金流量表" [ref=e99] [cursor=pointer]:
+            - /url: /S/SH688018/detail/#/XJLLB
+        - listitem [ref=e100]:
+          - link "所有者权益变动" [ref=e101] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_BenifitChange/stockid/688018/displaytype/4.phtml
+        - listitem [ref=e102]:
+          - link "雪球选股器" [ref=e103] [cursor=pointer]:
+            - /url: /stock/screener
+      - strong [ref=e104]: 研究分析
+      - list [ref=e105]:
+        - listitem [ref=e106]:
+          - link "杜邦分析" [ref=e107] [cursor=pointer]:
+            - /url: https://vip.stock.finance.sina.com.cn/corp/go.php/vFD_DupontAnalysis/stockid/688018/displaytype/10.phtml
+        - listitem [ref=e108]:
+          - link "研究报告" [ref=e109] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/q/go.php/vReport_List/kind/search/index.phtml?t1=2&symbol=688018
+      - strong [ref=e110]: APP专享
+      - list [ref=e111]:
+        - listitem [ref=e112] [cursor=pointer]: 大盘异动
+        - listitem [ref=e113] [cursor=pointer]: 股价提醒
+        - listitem [ref=e114] [cursor=pointer]: 购买指数
+        - listitem [ref=e115] [cursor=pointer]: 相关ETF
+    - generic [ref=e116]:
+      - heading "乐鑫科技(SH:688018)" [level=1] [ref=e117]
+      - generic [ref=e118]:
+        - generic [ref=e119]: 沪股通
+        - generic [ref=e120]: 可融资
+        - generic [ref=e121]: 可卖空
+        - generic [ref=e122]: 科创板
+      - generic [ref=e123]:
+        - img "微信分享" [ref=e126] [cursor=pointer]
+        - link "" [ref=e128] [cursor=pointer]:
+          - /url: "#"
+        - link "加自选" [ref=e129] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - strong [ref=e135]: ¥188.58
+            - generic [ref=e136]: "-0.42 -0.22%"
+          - generic [ref=e137]:
+            - generic [ref=e138]: 4.27 万球友关注
+            - generic [ref=e139]: 已收盘 05-20 15:00:00 北京时间
+        - table [ref=e140]:
+          - rowgroup [ref=e141]:
+            - row "最高：191.88 今开：186.88 涨停：226.80 成交量：809.82万" [ref=e142]:
+              - cell "最高：191.88" [ref=e143]
+              - cell "今开：186.88" [ref=e144]
+              - cell "涨停：226.80" [ref=e145]
+              - cell "成交量：809.82万" [ref=e146]
+            - row "最低：182.21 昨收：189.00 跌停：151.20 成交额：15.06亿" [ref=e147]:
+              - cell "最低：182.21" [ref=e148]
+              - cell "昨收：189.00" [ref=e149]
+              - cell "跌停：151.20" [ref=e150]
+              - cell "成交额：15.06亿" [ref=e151]
+            - row "换手：4.84% 盘后量：200 量比：1.08 总市值：315.72亿" [ref=e152]:
+              - cell "换手：4.84%" [ref=e153]
+              - cell "盘后量：200" [ref=e154]
+              - cell "量比：1.08" [ref=e155]
+              - cell "总市值：315.72亿" [ref=e156]
+            - row "振幅：5.12% 盘后额：3.77万 委比：-60.17% 流通值：315.72亿" [ref=e157]:
+              - cell "振幅：5.12%" [ref=e158]
+              - cell "盘后额：3.77万" [ref=e159]
+              - cell "委比：-60.17%" [ref=e160]
+              - cell "流通值：315.72亿" [ref=e161]
+            - row "市盈率(动)：58.19 市盈率(TTM)：58.49 每股收益：3.22 股息(TTM)：0.50" [ref=e162]:
+              - cell "市盈率(动)：58.19" [ref=e163]
+              - cell "市盈率(TTM)：58.49" [ref=e164]
+              - cell "每股收益：3.22" [ref=e165]
+              - cell "股息(TTM)：0.50" [ref=e166]
+            - row "市盈率(静)：63.42 市净率：7.01 每股净资产：26.90 股息率(TTM)：0.27%" [ref=e167]:
+              - cell "市盈率(静)：63.42" [ref=e168]
+              - cell "市净率：7.01" [ref=e169]
+              - cell "每股净资产：26.90" [ref=e170]
+              - cell "股息率(TTM)：0.27%" [ref=e171]
+            - row "52周最高：225.60 总股本：1.67亿 表决权：无差异 注册制：是" [ref=e172]:
+              - cell "52周最高：225.60" [ref=e173]
+              - cell "总股本：1.67亿" [ref=e174]
+              - cell "表决权：无差异" [ref=e175]
+              - cell "注册制：是" [ref=e176]
+            - row "52周最低：130.30 流通股：1.67亿 盈利情况：-- 货币单位：CNY" [ref=e177]:
+              - cell "52周最低：130.30" [ref=e178]
+              - cell "流通股：1.67亿" [ref=e179]
+              - cell "盈利情况：--" [ref=e180]
+              - cell "货币单位：CNY" [ref=e181]
+      - generic [ref=e184] [cursor=pointer]:
+        - generic [ref=e185]:
+          - generic [ref=e186]: 分时
+          - generic [ref=e187]: 五日
+          - generic [ref=e188]: 日K
+          - generic [ref=e189]: 周K
+          - generic [ref=e190]: 月K
+          - generic [ref=e191]: 季K
+          - generic [ref=e192]: 年K
+          - generic [ref=e193]: 120分
+          - generic [ref=e194]: 60分
+          - generic [ref=e195]: 30分
+          - generic [ref=e196]: 15分
+          - generic [ref=e197]: 5分
+          - generic [ref=e198]: 1分
+        - list [ref=e199]:
+          - listitem [ref=e200]: 区间统计
+          - listitem [ref=e201]: 全屏显示
+      - link "都在问 乐 鑫 科 技 在 端 侧 A I 领 域 的 竞 争 优 势 是 什 么 ？" [ref=e1130] [cursor=pointer]:
+        - /url: https://ai.xueqiu.com/ai/seekball/chat?shareId=s-87905b15-7d04-463f-bdf0-488e90b98665&navBarTransparent=1&navBarTheme=dark&ref=1&module=2&symbol=SH688018
+        - paragraph [ref=e206]:
+          - generic [ref=e207]: 都在问
+          - generic [ref=e208]: 乐
+          - generic [ref=e209]: 鑫
+          - generic [ref=e210]: 科
+          - generic [ref=e211]: 技
+          - generic [ref=e212]: 在
+          - generic [ref=e213]: 端
+          - generic [ref=e214]: 侧
+          - generic [ref=e215]: A
+          - generic [ref=e216]: I
+          - generic [ref=e217]: 领
+          - generic [ref=e218]: 域
+          - generic [ref=e219]: 的
+          - generic [ref=e220]: 竞
+          - generic [ref=e221]: 争
+          - generic [ref=e222]: 优
+          - generic [ref=e223]: 势
+          - generic [ref=e224]: 是
+          - generic [ref=e225]: 什
+          - generic [ref=e1131]: 么
+          - generic [ref=e1132]: ？
+      - generic [ref=e229]:
+        - img [ref=e230]
+        - generic [ref=e231]:
+          - generic [ref=e233]: $乐鑫科技(SH688018)$
+          - generic [ref=e234]:
+            - generic [ref=e235]:
+              - link "" [ref=e237] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e238]: 
+              - link "" [ref=e239] [cursor=pointer]:
+                - /url: javascript:;
+                - generic [ref=e240]: 
+              - link "" [ref=e241] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e242]: 
+              - link "" [ref=e243] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e244]: 
+              - link "" [ref=e245] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e246]: 
+              - link [ref=e248] [cursor=pointer]:
+                - /url: ""
+                - img [ref=e249]
+              - link " 长文" [ref=e251] [cursor=pointer]:
+                - /url: https://mp.xueqiu.com/write/?position=pc_stock_post
+                - generic [ref=e252]: 
+                - text: 长文
+            - link "发布" [ref=e254]:
+              - /url: ""
+      - generic [ref=e255]:
+        - generic [ref=e256]:
+          - link "全部" [ref=e257] [cursor=pointer]:
+            - /url: ""
+          - link "讨论" [ref=e258] [cursor=pointer]:
+            - /url: ""
+          - link "交易" [ref=e259] [cursor=pointer]:
+            - /url: ""
+          - link "资讯" [ref=e260] [cursor=pointer]:
+            - /url: ""
+          - link "公告" [ref=e261] [cursor=pointer]:
+            - /url: ""
+        - generic [ref=e262]:
+          - generic [ref=e264]:
+            - link "时间排序" [ref=e828] [cursor=pointer]:
+              - /url: ""
+            - link "热门排序" [ref=e829] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e268]:
+            - textbox "搜索该股票相关信息" [ref=e269]
+            - generic [ref=e270]: 
+        - generic [ref=e271]:
+          - article [ref=e1133]:
+            - link [ref=e1134] [cursor=pointer]:
+              - /url: /4756863557
+              - img [ref=e1135]
+            - generic [ref=e1136]:
+              - generic [ref=e1138]:
+                - link "猫头鹰学徒" [ref=e1139] [cursor=pointer]:
+                  - /url: /4756863557
+                - link "昨天 13:58· 来自Android" [ref=e1140] [cursor=pointer]:
+                  - /url: /4756863557/389677293
+              - generic [ref=e1144]:
+                - link "$乐鑫科技(SH688018)$" [ref=e1145] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688018
+                - text: 砸又不出力，才跌3个点就急吼吼拉，又不舍得快拉大幅震荡让浮筹快速走掉，这就是我们量化的实力吗
+                - img "[滴汗]" [ref=e1146]
+                - text: ，也就是A股能允许这种水平的策略长期存在
+              - generic [ref=e1147]:
+                - link " 转发" [ref=e1148] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1149]: 
+                  - generic [ref=e1150]: 转发
+                - link " 9" [ref=e1151] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1152]: 
+                  - generic [ref=e1153]: "9"
+                - link " 赞" [ref=e1154] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1155]: 
+                  - generic [ref=e1156]: 赞
+                - link " 收藏" [ref=e1157] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1158]: 
+                  - generic [ref=e1159]: 收藏
+          - article [ref=e1160]:
+            - link [ref=e1161] [cursor=pointer]:
+              - /url: /8919011630
+              - img [ref=e1162]
+            - generic [ref=e1163]:
+              - generic [ref=e1165]:
+                - link "沙迦" [ref=e1166] [cursor=pointer]:
+                  - /url: /8919011630
+                - link "05-18 19:40· 来自iPhone" [ref=e1167] [cursor=pointer]:
+                  - /url: /8919011630/389530987
+              - generic [ref=e1171]:
+                - link "$乐鑫科技(SH688018)$" [ref=e1172] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688018
+                - text: 难得的长线好股，坚定持有到500亿！
+              - generic [ref=e1173]:
+                - link " 转发" [ref=e1174] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1175]: 
+                  - generic [ref=e1176]: 转发
+                - link " 5" [ref=e1177] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1178]: 
+                  - generic [ref=e1179]: "5"
+                - link " 4" [ref=e1180] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1181]: 
+                  - generic [ref=e1182]: "4"
+                - link " 收藏" [ref=e1183] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1184]: 
+                  - generic [ref=e1185]: 收藏
+          - article [ref=e1186]:
+            - link [ref=e1187] [cursor=pointer]:
+              - /url: /4756863557
+              - img [ref=e1188]
+            - generic [ref=e1189]:
+              - generic [ref=e1191]:
+                - link "猫头鹰学徒" [ref=e1192] [cursor=pointer]:
+                  - /url: /4756863557
+                - link "修改于05-18 10:28· 来自Android" [ref=e1193] [cursor=pointer]:
+                  - /url: /4756863557/389398772
+              - generic [ref=e1197]:
+                - link "$乐鑫科技(SH688018)$" [ref=e1198] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688018
+                - text: 这走势让我想起来某股
+                - img "[滴汗]" [ref=e1199]
+                - text: ，放量震荡恶心人，强弱不明，然后3天砸懵小散，然后。。。
+              - generic [ref=e1200]:
+                - link " 转发" [ref=e1201] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1202]: 
+                  - generic [ref=e1203]: 转发
+                - link " 5" [ref=e1204] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1205]: 
+                  - generic [ref=e1206]: "5"
+                - link " 3" [ref=e1207] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1208]: 
+                  - generic [ref=e1209]: "3"
+                - link " 收藏" [ref=e1210] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1211]: 
+                  - generic [ref=e1212]: 收藏
+          - article [ref=e1213]:
+            - link [ref=e1214] [cursor=pointer]:
+              - /url: /4756863557
+              - img [ref=e1215]
+            - generic [ref=e1216]:
+              - generic [ref=e1218]:
+                - link "猫头鹰学徒" [ref=e1219] [cursor=pointer]:
+                  - /url: /4756863557
+                - link "05-13 23:01· 来自雪球" [ref=e1220] [cursor=pointer]:
+                  - /url: /4756863557/388715458
+              - generic [ref=e1224]:
+                - link "$乐鑫科技(SH688018)$" [ref=e1225] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688018
+                - text: 这个到最后，逻辑不会是跟着通胀涨价吧
+                - img "[滴汗]" [ref=e1226]
+                - text: ，有这么low吗，这市场除了涨价不会别的逻辑是吧。。。
+              - generic [ref=e1227]:
+                - link " 转发" [ref=e1228] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1229]: 
+                  - generic [ref=e1230]: 转发
+                - link " 8" [ref=e1231] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1232]: 
+                  - generic [ref=e1233]: "8"
+                - link " 1" [ref=e1234] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1235]: 
+                  - generic [ref=e1236]: "1"
+                - link " 收藏" [ref=e1237] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1238]: 
+                  - generic [ref=e1239]: 收藏
+          - article [ref=e1240]:
+            - link [ref=e1241] [cursor=pointer]:
+              - /url: /2704885039
+              - img [ref=e1242]
+            - generic [ref=e1243]:
+              - generic [ref=e1245]:
+                - link "乐鑫科技" [ref=e1246] [cursor=pointer]:
+                  - /url: /2704885039
+                - img [ref=e1247]
+                - link "05-07 19:20· 来自雪球" [ref=e1248] [cursor=pointer]:
+                  - /url: /2704885039/387639520
+              - generic [ref=e1250] [cursor=pointer]:
+                - heading "Anthropic 再度青睐 ESP32，Claude 开发者活动主推 M5Stack C..." [level=3] [ref=e1251]
+                - generic [ref=e1253]:
+                  - text: 乐鑫董办
+                  - text: 听说 688018 的股东都关注啦
+                  - text: Anthropic 在其最新开发者活动中，将基于乐鑫 ESP32-S3 芯片的 M5Stack Cardputer 作为官方推荐硬件。
+                  - text: 乐鑫 ESP32 系列在全球拥有数百万开发者，对于 AI 模型来说，乐鑫详尽的文档和海量的开源代码库是其学习最充分、执行最精准的硬件语言。乐...
+                - img [ref=e1256]
+              - generic [ref=e1257]:
+                - link " 转发" [ref=e1258] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1259]: 
+                  - generic [ref=e1260]: 转发
+                - link " 3" [ref=e1261] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1262]: 
+                  - generic [ref=e1263]: "3"
+                - link " 17" [ref=e1264] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1265]: 
+                  - generic [ref=e1266]: "17"
+                - link " 收藏" [ref=e1267] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1268]: 
+                  - generic [ref=e1269]: 收藏
+          - article [ref=e1270]:
+            - link [ref=e1271] [cursor=pointer]:
+              - /url: /6518775321
+              - img [ref=e1272]
+            - generic [ref=e1273]:
+              - generic [ref=e1275]:
+                - link "360服务" [ref=e1276] [cursor=pointer]:
+                  - /url: /6518775321
+                - link "05-13 13:23· 来自雪球" [ref=e1277] [cursor=pointer]:
+                  - /url: /6518775321/388584188
+              - generic [ref=e1280]:
+                - generic [ref=e1281]:
+                  - link "$乐鑫科技(SH688018)$" [ref=e1282] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SH688018
+                  - text: 4月29日的集成电路集体业绩会的问答，我贴一下吧：
+                  - text: 尊敬的张瑞安董事长您好，有一个问题想请教您，在AI时代到来的时候，作为一个全新的技术，巨头公司往往用AI去加固他们原来的城堡去提效他们原来的体系，让他们原来的技术护城河变得更丰厚，可是这样的话，有些时候往往...
+                - link "展开" [ref=e1283] [cursor=pointer]:
+                  - /url: ""
+              - generic [ref=e1284]:
+                - link " 转发" [ref=e1285] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1286]: 
+                  - generic [ref=e1287]: 转发
+                - link " 3" [ref=e1288] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1289]: 
+                  - generic [ref=e1290]: "3"
+                - link " 7" [ref=e1291] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1292]: 
+                  - generic [ref=e1293]: "7"
+                - link " 收藏" [ref=e1294] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1295]: 
+                  - generic [ref=e1296]: 收藏
+          - article [ref=e1297]:
+            - link [ref=e1298] [cursor=pointer]:
+              - /url: /8919011630
+              - img [ref=e1299]
+            - generic [ref=e1300]:
+              - generic [ref=e1302]:
+                - link "沙迦" [ref=e1303] [cursor=pointer]:
+                  - /url: /8919011630
+                - link "05-17 22:59· 来自Android" [ref=e1304] [cursor=pointer]:
+                  - /url: /8919011630/389353591
+              - generic [ref=e1307]:
+                - generic [ref=e1308]:
+                  - link "$乐鑫科技(SH688018)$" [ref=e1309] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SH688018
+                  - text: 如果用一句通俗的话来形容： 如果物理AI是给机器人和智能设备“注入灵魂”，那乐鑫的芯片就是承载这个灵魂的“大脑与感知中枢”。
+                  - text: 我们可以从“物理AI的核心诉求”与“乐鑫的产品特性”高度吻合的角度，来拆解它的适配性：
+                  - text: 🧠 1. 硬件架构：天生为“端侧AI...
+                - link "展开" [ref=e1310] [cursor=pointer]:
+                  - /url: ""
+              - generic [ref=e1311]:
+                - link " 转发" [ref=e1312] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1313]: 
+                  - generic [ref=e1314]: 转发
+                - link " 2" [ref=e1315] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1316]: 
+                  - generic [ref=e1317]: "2"
+                - link " 6" [ref=e1318] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1319]: 
+                  - generic [ref=e1320]: "6"
+                - link " 收藏" [ref=e1321] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1322]: 
+                  - generic [ref=e1323]: 收藏
+          - article [ref=e1324]:
+            - link [ref=e1325] [cursor=pointer]:
+              - /url: /1816952559
+              - img [ref=e1326]
+            - generic [ref=e1327]:
+              - generic [ref=e1329]:
+                - link "好心的开源小露水" [ref=e1330] [cursor=pointer]:
+                  - /url: /1816952559
+                - link "05-15 10:01· 来自iPhone" [ref=e1331] [cursor=pointer]:
+                  - /url: /1816952559/389013211
+              - generic [ref=e1335]:
+                - link "$乐鑫科技(SH688018)$" [ref=e1336] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688018
+                - text: 乐鑫今年完不成他的20亿颗目标吧，备那么多原材料是想赌一把S31么？但是根据之前的导入期，S31今年应该不会量产吧。
+              - generic [ref=e1337]:
+                - link " 转发" [ref=e1338] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1339]: 
+                  - generic [ref=e1340]: 转发
+                - link " 6" [ref=e1341] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1342]: 
+                  - generic [ref=e1343]: "6"
+                - link " 赞" [ref=e1344] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1345]: 
+                  - generic [ref=e1346]: 赞
+                - link " 收藏" [ref=e1347] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1348]: 
+                  - generic [ref=e1349]: 收藏
+          - article [ref=e1350]:
+            - link [ref=e1351] [cursor=pointer]:
+              - /url: /6518775321
+              - img [ref=e1352]
+            - generic [ref=e1353]:
+              - generic [ref=e1355]:
+                - link "360服务" [ref=e1356] [cursor=pointer]:
+                  - /url: /6518775321
+                - link "05-15 22:53· 来自iPhone" [ref=e1357] [cursor=pointer]:
+                  - /url: /6518775321/389189103
+              - generic [ref=e1360]:
+                - generic [ref=e1361]:
+                  - link "$乐鑫科技(SH688018)$" [ref=e1362] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SH688018
+                  - text: 我觉得市场的预期差，应该就是“低端芯片”这顶帽子。什么时候摘帽，什么时候就能腾飞？
+                  - text: 到今天还有朋友觉得这是个做体脂秤芯片的公司，但其实各行各业只是下游各种场景的其中一员
+                  - img "[笑]" [ref=e1363]
+                  - img "[笑]" [ref=e1364]
+                  - img "[献花花]" [ref=e1365]
+                  - img "[献花花]" [ref=e1366]
+                  - text: 下游一直不爆款（包括AI玩具的失落），总用量却一直稳定增...
+                - link "展开" [ref=e1367] [cursor=pointer]:
+                  - /url: ""
+              - generic [ref=e1368]:
+                - link " 转发" [ref=e1369] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1370]: 
+                  - generic [ref=e1371]: 转发
+                - link " 3" [ref=e1372] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1373]: 
+                  - generic [ref=e1374]: "3"
+                - link " 5" [ref=e1375] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1376]: 
+                  - generic [ref=e1377]: "5"
+                - link " 收藏" [ref=e1378] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1379]: 
+                  - generic [ref=e1380]: 收藏
+          - article [ref=e1381]:
+            - link [ref=e1382] [cursor=pointer]:
+              - /url: /8674412048
+              - img [ref=e1383]
+            - generic [ref=e1384]:
+              - generic [ref=e1386]:
+                - link "沙漠1988" [ref=e1387] [cursor=pointer]:
+                  - /url: /8674412048
+                - link "昨天 18:09· 来自iPhone" [ref=e1388] [cursor=pointer]:
+                  - /url: /8674412048/389737343
+              - generic [ref=e1392]:
+                - link "$乐鑫科技(SH688018)$" [ref=e1393] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688018
+                - text: 最近走的不错，感觉快要加速了，乐鑫欠股东一个20cm涨停
+              - generic [ref=e1394]:
+                - link " 转发" [ref=e1395] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1396]: 
+                  - generic [ref=e1397]: 转发
+                - link " 4" [ref=e1398] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1399]: 
+                  - generic [ref=e1400]: "4"
+                - link " 赞" [ref=e1401] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1402]: 
+                  - generic [ref=e1403]: 赞
+                - link " 收藏" [ref=e1404] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e1405]: 
+                  - generic [ref=e1406]: 收藏
+        - generic [ref=e1407]:
+          - link "1" [ref=e1408] [cursor=pointer]:
+            - /url: ""
+          - link "2" [ref=e1409] [cursor=pointer]:
+            - /url: ""
+          - link "3" [ref=e1410] [cursor=pointer]:
+            - /url: ""
+          - link "4" [ref=e1411] [cursor=pointer]:
+            - /url: ""
+          - link "5" [ref=e1412] [cursor=pointer]:
+            - /url: ""
+          - text: ...
+          - link "100" [ref=e1413] [cursor=pointer]:
+            - /url: ""
+          - link "下一页" [ref=e1414] [cursor=pointer]:
+            - /url: ""
+          - textbox [ref=e1415]
+    - generic [ref=e571]:
+      - generic [ref=e572]:
+        - generic [ref=e574]: 简介
+        - generic [ref=e576]:
+          - text: 乐鑫科技（股票代码：688018）是一家物联网整体解决方案供应商，成立于 2008 年，在中国、捷克、印度、新加坡和巴西均设有办公...
+          - link "展开" [ref=e577] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e578]:
+        - generic [ref=e580]: 企业名片
+        - generic [ref=e581]:
+          - generic [ref=e582] [cursor=pointer]:
+            - generic [ref=e583]:
+              - img [ref=e584]
+              - img [ref=e585]
+            - generic [ref=e586]:
+              - generic [ref=e587]: 乐鑫科技
+              - generic [ref=e588]:
+                - generic [ref=e589]: 粉丝
+                - generic [ref=e590]: "1960"
+                - generic [ref=e591]: ｜ 帖子
+                - generic [ref=e592]: "205"
+                - generic [ref=e593]: ｜ 活动
+          - button "关注" [ref=e594] [cursor=pointer]
+      - generic [ref=e595]:
+        - generic [ref=e597]: 业务
+        - generic [ref=e598]: 集成电路产品的研发设计和销售。
+      - generic [ref=e599]:
+        - generic [ref=e601]: 大事件
+        - list [ref=e603]:
+          - listitem [ref=e604]: 2026-05-20(今日)解禁27.93万股(实际值)，占总股本0.17%
+      - generic [ref=e605]:
+        - generic [ref=e606]:
+          - generic [ref=e607]: 影响力用户
+          - link "下五位" [ref=e609] [cursor=pointer]:
+            - /url: "#"
+        - list [ref=e611]:
+          - link "乐鑫科技 1960粉丝、75条相关讨论" [ref=e612] [cursor=pointer]:
+            - /url: /u/2704885039
+            - listitem [ref=e613]:
+              - img [ref=e615]
+              - generic [ref=e616]:
+                - generic [ref=e617]: 乐鑫科技
+                - generic [ref=e618]: 1960粉丝、75条相关讨论
+          - link "李姑墨 707粉丝、25条相关讨论" [ref=e619] [cursor=pointer]:
+            - /url: /u/8106031255
+            - listitem [ref=e620]:
+              - img [ref=e622]
+              - generic [ref=e623]:
+                - generic [ref=e624]: 李姑墨
+                - generic [ref=e625]: 707粉丝、25条相关讨论
+          - link "Trociz 13867粉丝、77条相关讨论" [ref=e626] [cursor=pointer]:
+            - /url: /u/1222910358
+            - listitem [ref=e627]:
+              - img [ref=e629]
+              - generic [ref=e630]:
+                - generic [ref=e631]: Trociz
+                - generic [ref=e632]: 13867粉丝、77条相关讨论
+          - link "360服务 19粉丝、23条相关讨论" [ref=e633] [cursor=pointer]:
+            - /url: /u/6518775321
+            - listitem [ref=e634]:
+              - img [ref=e636]
+              - generic [ref=e637]:
+                - generic [ref=e638]: 360服务
+                - generic [ref=e639]: 19粉丝、23条相关讨论
+          - link "大隐无言 186399粉丝、21条相关讨论" [ref=e640] [cursor=pointer]:
+            - /url: /u/1638377010
+            - listitem [ref=e641]:
+              - img [ref=e643]
+              - generic [ref=e644]:
+                - generic [ref=e645]: 大隐无言
+                - generic [ref=e646]: 186399粉丝、21条相关讨论
+      - generic [ref=e647]:
+        - generic [ref=e649]:
+          - link "42673" [ref=e650] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/S/SH688018/detail#/follow
+          - text: 人关注了该股票
+        - list [ref=e652]:
+          - listitem [ref=e653]:
+            - link [ref=e654] [cursor=pointer]:
+              - /url: /8608657791
+              - img [ref=e655]
+          - listitem [ref=e656]:
+            - link [ref=e657] [cursor=pointer]:
+              - /url: /8893152678
+              - img [ref=e658]
+          - listitem [ref=e659]:
+            - link [ref=e660] [cursor=pointer]:
+              - /url: /9775217471
+              - img [ref=e661]
+          - listitem [ref=e662]:
+            - link [ref=e663] [cursor=pointer]:
+              - /url: /3425547191
+              - img [ref=e664]
+          - listitem [ref=e665]:
+            - link [ref=e666] [cursor=pointer]:
+              - /url: /6934088348
+              - img [ref=e667]
+          - listitem [ref=e668]:
+            - link [ref=e669] [cursor=pointer]:
+              - /url: /9950548762
+              - img [ref=e670]
+          - listitem [ref=e671]:
+            - link [ref=e672] [cursor=pointer]:
+              - /url: /1650779350
+              - img [ref=e673]
+          - listitem [ref=e674]:
+            - link [ref=e675] [cursor=pointer]:
+              - /url: /5220446198
+              - img [ref=e676]
+          - listitem [ref=e677]:
+            - link [ref=e678] [cursor=pointer]:
+              - /url: /7759561545
+              - img [ref=e679]
+          - listitem [ref=e680]:
+            - link [ref=e681] [cursor=pointer]:
+              - /url: /2830111513
+              - img [ref=e682]
+          - listitem [ref=e683]:
+            - link [ref=e684] [cursor=pointer]:
+              - /url: /4235587756
+              - img [ref=e685]
+          - listitem [ref=e686]:
+            - link [ref=e687] [cursor=pointer]:
+              - /url: /4756637922
+              - img [ref=e688]
+          - listitem [ref=e689]:
+            - link [ref=e690] [cursor=pointer]:
+              - /url: /9484925692
+              - img [ref=e691]
+          - listitem [ref=e692]:
+            - link [ref=e693] [cursor=pointer]:
+              - /url: /1621505815
+              - img [ref=e694]
+      - generic [ref=e695]:
+        - generic [ref=e697]: 相关股票
+        - list [ref=e699]:
+          - generic [ref=e700]:
+            - generic [ref=e701]:
+              - link "东芯股份" [ref=e702] [cursor=pointer]:
+                - /url: /S/SH688110
+              - generic [ref=e703]: SH688110
+            - generic [ref=e704]:
+              - generic [ref=e705]: "164.75"
+              - generic [ref=e706]: +1.01%
+          - generic [ref=e707]:
+            - generic [ref=e708]:
+              - link "*ST闻泰" [ref=e709] [cursor=pointer]:
+                - /url: /S/SH600745
+              - generic [ref=e710]: SH600745
+            - generic [ref=e711]:
+              - generic [ref=e712]: "16.00"
+              - generic [ref=e713]: "-4.99%"
+          - generic [ref=e714]:
+            - generic [ref=e715]:
+              - link "赣锋锂业" [ref=e716] [cursor=pointer]:
+                - /url: /S/SZ002460
+              - generic [ref=e717]: SZ002460
+            - generic [ref=e718]:
+              - generic [ref=e719]: "77.17"
+              - generic [ref=e720]: +1.45%
+          - generic [ref=e721]:
+            - generic [ref=e722]:
+              - link "光莆股份" [ref=e723] [cursor=pointer]:
+                - /url: /S/SZ300632
+              - generic [ref=e724]: SZ300632
+            - generic [ref=e725]:
+              - generic [ref=e726]: "39.29"
+              - generic [ref=e727]: "-6.98%"
+      - generic [ref=e728]:
+        - generic [ref=e730]: 相关基金
+        - list [ref=e732]:
+          - generic [ref=e733]:
+            - generic [ref=e734]:
+              - link "银河创新混合A" [ref=e735] [cursor=pointer]:
+                - /url: /S/F519674
+              - generic [ref=e736]: 基金季报中持仓包含乐鑫科技所属板块
+              - generic [ref=e737]:
+                - generic [ref=e738]: 金牛奖
+                - generic [ref=e739]: 7年老将
+            - generic [ref=e740]:
+              - generic [ref=e741]: +82.55%
+              - generic [ref=e742]: 近1年
+          - generic [ref=e743]:
+            - generic [ref=e744]:
+              - link "富荣研究优选混合C" [ref=e745] [cursor=pointer]:
+                - /url: /S/F015658
+              - generic [ref=e746]: 乐鑫科技占比9.54%
+              - generic [ref=e747]:
+                - generic [ref=e748]: 买入费率为0
+                - generic [ref=e749]: 郎骋成管理
+            - generic [ref=e750]:
+              - generic [ref=e751]: +46.70%
+              - generic [ref=e752]: 近1年
+          - generic [ref=e753]:
+            - generic [ref=e754]:
+              - link "富荣研究优选混合A" [ref=e755] [cursor=pointer]:
+                - /url: /S/F015657
+              - generic [ref=e756]: 乐鑫科技占比9.54%
+              - generic [ref=e757]:
+                - generic [ref=e758]: 郎骋成管理
+                - generic [ref=e759]: 5年老将
+            - generic [ref=e760]:
+              - generic [ref=e761]: +47.28%
+              - generic [ref=e762]: 近1年
+          - generic [ref=e763]:
+            - generic [ref=e764]:
+              - link "博时智选量化多因子股票A" [ref=e765] [cursor=pointer]:
+                - /url: /S/F013465
+              - generic [ref=e766]: 乐鑫科技占比9.17%
+              - generic [ref=e767]:
+                - generic [ref=e768]: 近3年业绩同类排名前11%
+                - generic [ref=e769]: 刘钊管理
+            - generic [ref=e770]:
+              - generic [ref=e771]: +59.22%
+              - generic [ref=e772]: 近1年
+          - generic [ref=e773]:
+            - generic [ref=e774]:
+              - link "博时智选量化多因子股票C" [ref=e775] [cursor=pointer]:
+                - /url: /S/F013466
+              - generic [ref=e776]: 乐鑫科技占比9.17%
+              - generic [ref=e777]:
+                - generic [ref=e778]: 买入费率为0
+                - generic [ref=e779]: 近3年业绩同类排名前12%
+            - generic [ref=e780]:
+              - generic [ref=e781]: +58.42%
+              - generic [ref=e782]: 近1年
+  - contentinfo [ref=e783]:
+    - generic [ref=e784]:
+      - generic [ref=e785]:
+        - link "微信" [ref=e786] [cursor=pointer]:
+          - /url: javascript:;
+          - img "微信" [ref=e787]
+        - link "微博" [ref=e788] [cursor=pointer]:
+          - /url: https://weibo.com/xueqiucom
+          - img "微博" [ref=e789]
+        - link "邮箱" [ref=e790] [cursor=pointer]:
+          - /url: mailto:snowball@xueqiu.com
+          - img "邮箱" [ref=e791]
+      - generic [ref=e792]:
+        - link "A股开户｜" [ref=e793] [cursor=pointer]:
+          - /url: https://broker.xueqiu.com/open/pingan
+        - link "雪球基金｜" [ref=e794] [cursor=pointer]:
+          - /url: https://danjuanfunds.com/
+        - link "投资者教育｜" [ref=e795] [cursor=pointer]:
+          - /url: https://xueqiu.com/edu/invest-edu
+        - link "风险提示" [ref=e796] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq#6_0
+      - generic [ref=e797]: 风险提示：雪球里任何用户或者嘉宾的发言，都有其特定立场，投资决策需要建立在独立思考之上
+      - generic [ref=e798]:
+        - generic [ref=e799]:
+          - text: 其他建议反馈欢迎点击
+          - link "#我给雪球提建议#" [ref=e801] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-aIkee7membqueQg-aPkOW7uuiuriM=
+          - text: 如受到欺诈信息骚扰请至
+          - link "#防诈骗举报专区#" [ref=e803] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-mYsuiviOmql-S4vuaKpeS4k-WMuiM=
+        - generic [ref=e804]:
+          - text: 互联网违法和不良信息投诉：01061840634 / tousu@xueqiu.com
+          - generic [ref=e805]: 举报中心
+          - link "侵权投诉指引" [ref=e806] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/tortreport
+          - link "雪球服务协议" [ref=e807] [cursor=pointer]:
+            - /url: https://xueqiu.com/about/terms
+          - link "雪球隐私政策" [ref=e808] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/privacy
+          - text: © 2026 XUEQIU.COM 北京雪球信息科技有限公司
+          - link "京公网安备 11010502040379号" [ref=e809] [cursor=pointer]:
+            - /url: https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502040379
+          - link "京ICP证100666号" [ref=e810] [cursor=pointer]:
+            - /url: https://xqdoc.imedao.com/198bc1b4fb41d6523feaace4.jpg
+          - link "京ICP备10040543" [ref=e811] [cursor=pointer]:
+            - /url: https://beian.miit.gov.cn/
+          - link "京金信备〔2022〕3号" [ref=e812] [cursor=pointer]:
+            - /url: https://fisbaobei.ifcert.cn/Home/homeIindex
+          - link "营业执照" [ref=e813] [cursor=pointer]:
+            - /url: https://xqimg.imedao.com/1798dc30dead0453fd6075d8.png
+          - generic [ref=e814]:
+            - link "证券业协会会员单位（代码817027）" [ref=e815] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/14d52aefd15e8f3fc0ce1fbd.png
+            - 'link "广播电视节目制作经营许可证: (京)字第08638号" [ref=e816] [cursor=pointer]':
+              - /url: https://xqdoc.imedao.com/198c1a776442061d3fe4efd5.pdf
+            - link "出版物经营许可证" [ref=e817] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/181b337b7742caf83fee6640.png
+          - link "人工智能服务登记编号：Beijing-XueQiuHuiJian-2S0033" [ref=e819]:
+            - /url: javascript:;
+      - generic [ref=e820]:
+        - link "常见问题｜" [ref=e821] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq
+        - link "加入我们｜" [ref=e822] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/jobs
+        - link "关于雪球" [ref=e823] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/what-is-xueqiu
+  - text: "* * · * * *"
+  - generic [ref=e825]:
+    - img "fold" [ref=e826]
+    - generic [ref=e827]: 问问投资的问题吧，帮你发现投资好机会

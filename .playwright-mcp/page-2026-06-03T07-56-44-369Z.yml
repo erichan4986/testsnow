@@ -1,0 +1,296 @@
+- generic [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "news_logo" [ref=e5] [cursor=pointer]:
+        - /url: https://www.hkexnews.hk/index_c.htm
+        - img "news_logo" [ref=e6]
+      - generic [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "ESS電子呈交系統" [ref=e10] [cursor=pointer]:
+              - /url: https://www1.esubmission.hkex.com.hk
+              - img "ESS" [ref=e11]
+              - text: 電子呈交系統
+          - listitem [ref=e12]:
+            - link "Disclosure of Interests Online System線上權益披露系統" [ref=e13] [cursor=pointer]:
+              - /url: https://sdinotice.hkex.com.hk
+              - img "Disclosure of Interests Online System" [ref=e14]
+              - text: 線上權益披露系統
+          - listitem [ref=e15]:
+            - text: 字體大小
+            - link "A" [ref=e16] [cursor=pointer]:
+              - /url: "#"
+            - link "A" [ref=e17] [cursor=pointer]:
+              - /url: "#"
+            - link "A" [ref=e18] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e19]:
+          - link "EN" [ref=e20] [cursor=pointer]:
+            - /url: javascript:route('chi', 'eng')
+          - link "简" [ref=e21] [cursor=pointer]:
+            - /url: javascript:route('chi', 'sim')
+          - link "通知" [ref=e22]:
+            - /url: javascript:void(0);
+      - link "跳到內容" [ref=e23] [cursor=pointer]:
+        - /url: "#skip-to-content"
+  - navigation [ref=e25]:
+    - list [ref=e27]:
+      - listitem [ref=e28]:
+        - link "上市公司文件" [ref=e29] [cursor=pointer]:
+          - /url: "#"
+      - listitem [ref=e30]:
+        - link "股權披露" [ref=e31] [cursor=pointer]:
+          - /url: "#"
+      - listitem [ref=e32]:
+        - link "新上市" [ref=e33] [cursor=pointer]:
+          - /url: "#"
+      - listitem [ref=e34]:
+        - link "交易所報告" [ref=e35] [cursor=pointer]:
+          - /url: "#"
+  - tabpanel [ref=e39]:
+    - generic [ref=e45]:
+      - list [ref=e47]:
+        - listitem [ref=e48]:
+          - generic [ref=e49]:
+            - generic [ref=e50]: 搜索類型
+            - link "現有上市證券" [ref=e55] [cursor=pointer]:
+              - /url: "#"
+        - listitem [ref=e56]:
+          - generic [ref=e57]:
+            - generic [ref=e58]: 股份代號/股份名稱
+            - combobox "股份代號/股份名稱" [active] [ref=e61]
+        - listitem [ref=e62]:
+          - generic [ref=e63]:
+            - generic [ref=e64]: 標題類別及文件類別
+            - link [ref=e65] [cursor=pointer]:
+              - /url: "#"
+            - generic [ref=e66]:
+              - link "所有" [ref=e71] [cursor=pointer]:
+                - /url: "#"
+              - link "所有" [ref=e77]:
+                - /url: "#"
+        - listitem [ref=e78]:
+          - generic [ref=e79]:
+            - generic [ref=e80]: 開始日期
+            - textbox "開始日期" [ref=e81] [cursor=pointer]:
+              - /placeholder: yyyy/mm/dd
+              - text: 2026/05/03
+          - generic [ref=e82]:
+            - generic [ref=e83]: 完結日期
+            - textbox "完結日期" [ref=e84] [cursor=pointer]:
+              - /placeholder: yyyy/mm/dd
+              - text: 2026/06/03
+        - listitem [ref=e85]:
+          - generic [ref=e86]:
+            - generic [ref=e87]: 訊息標題
+            - combobox "請輸入關鍵字" [ref=e90]
+      - generic [ref=e91]:
+        - link "清除" [ref=e92] [cursor=pointer]:
+          - /url: "#"
+        - link "搜尋" [ref=e93] [cursor=pointer]:
+          - /url: "#"
+  - contentinfo [ref=e99]:
+    - generic [ref=e100]:
+      - link "news_footer_logo" [ref=e102] [cursor=pointer]:
+        - /url: https://www.hkexnews.hk/index_c.htm
+        - img "news_footer_logo" [ref=e103]
+      - list [ref=e104]:
+        - listitem [ref=e105]:
+          - link "Twitter" [ref=e106] [cursor=pointer]:
+            - /url: https://twitter.com/hkexgroup
+            - img "Twitter" [ref=e107]
+        - listitem [ref=e108]:
+          - link "Linkedin" [ref=e109] [cursor=pointer]:
+            - /url: https://www.linkedin.com/company/hkex
+            - img "Linkedin" [ref=e110]
+        - listitem [ref=e111]:
+          - link "WeChat" [ref=e112] [cursor=pointer]:
+            - /url: https://www.hkex.com.hk/global/follow-us-on-wechat?sc_lang=zh-HK
+            - img "WeChat" [ref=e113]
+        - listitem [ref=e114]:
+          - link "Youtube" [ref=e115] [cursor=pointer]:
+            - /url: https://www.youtube.com/user/hkexgroup
+            - img "Youtube" [ref=e116]
+        - listitem [ref=e117]:
+          - link "Weibo" [ref=e118] [cursor=pointer]:
+            - /url: https://www.weibo.com/6508212764
+            - img "Weibo" [ref=e119]
+      - generic:
+        - generic:
+          - list:
+            - listitem [ref=e120]:
+              - link "上市公司文件" [ref=e121]:
+                - /url: "#"
+              - list [ref=e123]:
+                - listitem [ref=e124]:
+                  - link "最新公告" [ref=e125] [cursor=pointer]:
+                    - /url: https://www1.hkexnews.hk/listedco/listconews/index/lci.html?lang=zh
+                    - text: 最新公告
+                - listitem [ref=e126]:
+                  - link "按公司名稱查看" [ref=e127] [cursor=pointer]:
+                    - /url: javascript:openLciCompany()
+                - listitem [ref=e128]:
+                  - link "按標題類別查看" [ref=e129] [cursor=pointer]:
+                    - /url: javascript:openLciHeadlines()
+                - listitem [ref=e130]:
+                  - link "按預先界定的文件查看" [ref=e131] [cursor=pointer]:
+                    - /url: javascript:openLciPredefine()
+            - listitem [ref=e132]:
+              - link "股權披露" [ref=e133]:
+                - /url: "#"
+              - list [ref=e135]:
+                - listitem [ref=e136]:
+                  - link "披露權益" [ref=e137] [cursor=pointer]:
+                    - /url: https://www2.hkexnews.hk/Shareholding-Disclosures/Disclosure-of-Interests?sc_lang=zh-HK
+                - listitem [ref=e138]:
+                  - link "中央結算系統持股紀錄查詢服務" [ref=e139] [cursor=pointer]:
+                    - /url: http://www3.hkexnews.hk/sdw/search/searchsdw_c.aspx
+                    - text: 中央結算系統持股紀錄查詢服務
+                - listitem [ref=e140]:
+                  - link "滬港通及深港通持股紀錄查詢服務" [ref=e141] [cursor=pointer]:
+                    - /url: https://www2.hkexnews.hk/Shareholding-Disclosures/Stock-Connect-Shareholding?sc_lang=zh-HK
+            - listitem [ref=e142]:
+              - link "新上市" [ref=e143]:
+                - /url: "#"
+              - list [ref=e145]:
+                - listitem [ref=e146]:
+                  - link "申請版本，整體協調人公告，聆訊後資料集及相關資料" [ref=e147] [cursor=pointer]:
+                    - /url: https://www1.hkexnews.hk/app/appindex.html?lang=zh
+                    - text: 申請版本，整體協調人公告，聆訊後資料集及相關資料
+                - listitem [ref=e148]:
+                  - link "新上市資料" [ref=e149] [cursor=pointer]:
+                    - /url: https://www2.hkexnews.hk/New-Listings/New-Listing-Information/Main-Board?sc_lang=zh-HK
+                - listitem [ref=e150]:
+                  - link "上市申請進展報告" [ref=e151] [cursor=pointer]:
+                    - /url: https://www2.hkexnews.hk/New-Listings/Progress-Report-for-New-Listing-Applications/Main-Board?sc_lang=zh-HK
+                  - list [ref=e152]:
+                    - listitem [ref=e153]:
+                      - link "主板" [ref=e154] [cursor=pointer]:
+                        - /url: https://www2.hkexnews.hk/New-Listings/Progress-Report-for-New-Listing-Applications/Main-Board?sc_lang=zh-HK
+                    - listitem [ref=e155]:
+                      - link "GEM" [ref=e156] [cursor=pointer]:
+                        - /url: https://www2.hkexnews.hk/New-Listings/Progress-Report-for-New-Listing-Applications/GEM?sc_lang=zh-HK
+                    - listitem [ref=e157]:
+                      - link "其他" [ref=e158] [cursor=pointer]:
+                        - /url: https://www2.hkexnews.hk/New-Listings/Progress-Report-for-New-Listing-Applications/Others?sc_lang=zh-HK
+          - list:
+            - listitem [ref=e159]:
+              - link "交易所報告" [ref=e160]:
+                - /url: "#"
+              - generic [ref=e161]:
+                - list [ref=e162]:
+                  - listitem [ref=e163]:
+                    - text: 每月有關長時間停牌公司之報告
+                    - list [ref=e164]:
+                      - listitem [ref=e165]:
+                        - link "主板" [ref=e166] [cursor=pointer]:
+                          - /url: https://www2.hkexnews.hk/-/media/HKEXnews/Homepage/Exchange-Reports/Prolonged-Suspension-Status-Report/psuspenrep_mb_c.pdf
+                          - text: 主板
+                      - listitem [ref=e168]:
+                        - link "GEM" [ref=e169] [cursor=pointer]:
+                          - /url: https://www2.hkexnews.hk/-/media/HKEXnews/Homepage/Exchange-Reports/Prolonged-Suspension-Status-Report/psuspenrep_gem_c.pdf
+                          - text: GEM
+                  - listitem [ref=e171]:
+                    - link "股份購回報告" [ref=e172] [cursor=pointer]:
+                      - /url: http://www3.hkexnews.hk/reports/sharerepur/sbn_c.asp
+                      - text: 股份購回報告
+                  - listitem [ref=e173]:
+                    - text: 董事會會議通知
+                    - list [ref=e174]:
+                      - listitem [ref=e175]:
+                        - link "主板" [ref=e176] [cursor=pointer]:
+                          - /url: https://www3.hkexnews.hk/reports/bmn/ebmn_c.htm
+                          - text: 主板
+                      - listitem [ref=e177]:
+                        - link "GEM" [ref=e178] [cursor=pointer]:
+                          - /url: https://www3.hkexnews.hk/reports/bmn/cbmngem.htm
+                          - text: GEM
+                  - listitem [ref=e179]:
+                    - text: 證券持有人享有的權益(股息及其他)
+                    - list [ref=e180]:
+                      - listitem [ref=e181]:
+                        - link "主板" [ref=e182] [cursor=pointer]:
+                          - /url: https://www3.hkexnews.hk/reports/doe/eent_c.htm
+                          - text: 主板
+                      - listitem [ref=e183]:
+                        - link "GEM" [ref=e184] [cursor=pointer]:
+                          - /url: https://www3.hkexnews.hk/reports/doe/CENTGEM.htm
+                          - text: GEM
+                  - listitem [ref=e185]:
+                    - text: 交易安排表
+                    - list [ref=e186]:
+                      - listitem [ref=e187]:
+                        - link "主板" [ref=e188] [cursor=pointer]:
+                          - /url: https://www.hkex.com.hk/chi/market/sec_tradinfo/tradarng/etat_c.htm
+                          - text: 主板
+                      - listitem [ref=e189]:
+                        - link "GEM" [ref=e190] [cursor=pointer]:
+                          - /url: https://www.hkex.com.hk/chi/market/sec_tradinfo/tradarng/etatgem_c.htm
+                          - text: GEM
+                  - listitem [ref=e191]:
+                    - link "董事名單" [ref=e192] [cursor=pointer]:
+                      - /url: https://www3.hkexnews.hk/reports/dirsearch?sc_lang=zh-HK
+                - list [ref=e193]:
+                  - listitem [ref=e194]:
+                    - link "除牌程序及停牌公司之報告" [ref=e195] [cursor=pointer]:
+                      - /url: https://www2.hkexnews.hk/Exchange-Reports/Status-Report-on-Delisting-Proceeding-and-Suspensions?sc_lang=zh-HK
+                  - listitem [ref=e196]:
+                    - link "紀律制裁" [ref=e197] [cursor=pointer]:
+                      - /url: https://www.hkex.com.hk/Listing/Disciplinary-and-Enforcement/Disciplinary-Sanctions?sc_lang=zh-HK
+            - listitem [ref=e198]:
+              - link "相關網站" [ref=e199]:
+                - /url: "#"
+              - list [ref=e201]:
+                - listitem [ref=e202]:
+                  - link "香港市場網站" [ref=e203] [cursor=pointer]:
+                    - /url: http://www.hkex.com.hk/?sc_lang=zh-HK
+                - listitem [ref=e204]:
+                  - link "香港交易所集團" [ref=e205] [cursor=pointer]:
+                    - /url: http://www.hkexgroup.com/?sc_lang=zh-HK
+                - listitem [ref=e206]:
+                  - link "GEM" [ref=e207] [cursor=pointer]:
+                    - /url: https://www.hkex.com.hk/Join-Our-Market/IPO/GEM?sc_lang=zh-HK
+                - listitem [ref=e208]:
+                  - link "債券通" [ref=e209] [cursor=pointer]:
+                    - /url: https://www.chinabondconnect.com/sc/index.html
+                - listitem [ref=e210]:
+                  - link "中華交易服務" [ref=e211] [cursor=pointer]:
+                    - /url: https://www.cesc.com/tc/index.html
+                - listitem [ref=e212]:
+                  - link "倫敦金屬交易所" [ref=e213] [cursor=pointer]:
+                    - /url: https://www.lme.com/cn
+      - list [ref=e215]:
+        - listitem [ref=e216]:
+          - link "簡介" [ref=e217] [cursor=pointer]:
+            - /url: https://www2.hkexnews.hk/Global/Exchange/About-Us?sc_lang=zh-HK
+        - listitem [ref=e218]:
+          - link "聯絡我們" [ref=e219] [cursor=pointer]:
+            - /url: https://www2.hkexnews.hk/Global/Exchange/Contact-Us?sc_lang=zh-HK
+        - listitem [ref=e220]:
+          - link "使用條款" [ref=e221] [cursor=pointer]:
+            - /url: https://www2.hkexnews.hk/Global/Exchange/Terms-of-Use?sc_lang=zh-HK
+        - listitem [ref=e222]:
+          - link "私隱聲明" [ref=e223] [cursor=pointer]:
+            - /url: https://www.hkex.com.hk/Global/Exchange/HKEX-Privacy-Notices?sc_lang=zh-HK
+        - listitem [ref=e224]:
+          - link "Cookie通知" [ref=e225] [cursor=pointer]:
+            - /url: https://www.hkex.com.hk/Global/Exchange/Cookie-Notice?sc_lang=zh-HK
+        - listitem [ref=e226]:
+          - link "搜尋" [ref=e227] [cursor=pointer]:
+            - /url: https://www3.hkexnews.hk/search/sitesearch/sitesearch_c.html
+      - paragraph [ref=e228]: ©2008-2026 香港交易及結算所有限公司版權所有，翻印必究
+  - button "管理偏好" [ref=e230] [cursor=pointer]
+  - region "Cookie banner" [ref=e231]:
+    - alertdialog "我們使用Cookie" [ref=e232]:
+      - generic [ref=e234]:
+        - generic [ref=e236]:
+          - heading "我們使用Cookie" [level=2] [ref=e237]
+          - paragraph [ref=e238]:
+            - text: 我們使用cookie以運作我們的網站，並改善我們的溝通、服務和瀏覽體驗，如提供個性化內容。部分cookie對我們網站的基本運作至關重要。對於其它cookie，閣下可以選擇是否接受，或者閣下也可使用以下的偏好管理，以選擇接受哪些cookie。請查看我們的
+            - link "cookie通知" [ref=e239] [cursor=pointer]:
+              - /url: https://www.hkex.com.hk/Global/Exchange/Cookie-Notice?sc_lang=zh-hk
+            - text: ，以瞭解更多詳情。
+        - generic [ref=e241]:
+          - button "管理偏好" [ref=e242] [cursor=pointer]
+          - button "拒絕" [ref=e243] [cursor=pointer]
+          - button "接受" [ref=e244] [cursor=pointer]

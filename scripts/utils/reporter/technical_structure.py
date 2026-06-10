@@ -66,7 +66,7 @@ def evaluate_sr_transformation(
 
 
 def compute_bias(df: pd.DataFrame, windows=(5, 10, 20), lookback=120) -> Dict:
-    """计算 BIAS(5/10/20)，并标记120日极值（防 look-ahead）。"""
+    """计算 BIAS(5/10/20)，并标记120日极值与极端分位（防 look-ahead）。"""
     close = df["close"].astype(float)
     out = {}
     for n in windows:
@@ -75,15 +75,20 @@ def compute_bias(df: pd.DataFrame, windows=(5, 10, 20), lookback=120) -> Dict:
         cur = bias.iloc[-1]
         out[f"bias_{n}"] = None if pd.isna(cur) else round(float(cur), 2)
         if n in (5, 10):
-            hist = bias.shift(1).rolling(lookback, min_periods=min(60, lookback))
-            prev_max = hist.max().iloc[-1]
-            prev_min = hist.min().iloc[-1]
-            out[f"bias_{n}_extreme_high"] = bool(
-                pd.notna(cur) and pd.notna(prev_max) and cur > prev_max
-            )
-            out[f"bias_{n}_extreme_low"] = bool(
-                pd.notna(cur) and pd.notna(prev_min) and cur < prev_min
-            )
+            shifted = bias.shift(1)
+            hist_window = shifted.iloc[-lookback:].dropna()
+            if len(hist_window) >= min(60, lookback) and pd.notna(cur):
+                prev_max = hist_window.max()
+                prev_min = hist_window.min()
+                out[f"bias_{n}_extreme_high"] = bool(cur > prev_max)
+                out[f"bias_{n}_extreme_low"] = bool(cur < prev_min)
+                # 极端分位（<10% 或 >90%）也视为显著偏离
+                pct = float((hist_window < cur).mean() * 100)
+                out[f"bias_{n}_pct"] = round(pct, 1)
+            else:
+                out[f"bias_{n}_extreme_high"] = False
+                out[f"bias_{n}_extreme_low"] = False
+                out[f"bias_{n}_pct"] = 50.0
     return out
 
 
@@ -301,8 +306,11 @@ def find_support_resistance(
     bucket_pct = sr_cfg.get("bucket_pct", 0.005)
     bucket_atr_mult = sr_cfg.get("bucket_atr_multiplier", 0.5)
 
+    diagnostics = {"lookback": lookback, "min_touches": min_touches}
+
     if len(df) < 30:
-        return {"support_zone": None, "resistance_zone": None}
+        diagnostics.update({"bars": len(df), "reason": f"数据仅{len(df)}根，不足30根"})
+        return {"support_zone": None, "resistance_zone": None, "diagnostics": diagnostics}
 
     close = df["close"].astype(float)
     high = df["high"].astype(float)
@@ -321,7 +329,8 @@ def find_support_resistance(
     bin_size = max(cur_price * bucket_pct, atr * bucket_atr_mult)
 
     if bin_size == 0:
-        return {"support_zone": None, "resistance_zone": None}
+        diagnostics.update({"bars": len(df), "atr": float(atr) if pd.notna(atr) else None, "reason": "ATR为零，无法计算支撑阻力区"})
+        return {"support_zone": None, "resistance_zone": None, "diagnostics": diagnostics}
 
     window = sr_cfg.get("local_extrema_window", 5)
     local_max_mask = (recent_high == recent_high.rolling(window, center=True).max())
@@ -354,7 +363,20 @@ def find_support_resistance(
     min_prices = _valid_touches(min_prices_raw, is_support=True)
 
     if len(max_prices) < min_touches or len(min_prices) < min_touches:
-        return {"support_zone": None, "resistance_zone": None}
+        diagnostics.update({
+            "bars": len(df),
+            "recent_bars": len(recent),
+            "local_extrema_window": window,
+            "raw_peaks": len(max_prices_raw),
+            "raw_valleys": len(min_prices_raw),
+            "valid_resistance_touches": len(max_prices),
+            "valid_support_touches": len(min_prices),
+            "required_touches": min_touches,
+            "reason": (
+                f"有效触及不足（峰 {len(max_prices)} 次 / 谷 {len(min_prices)} 次，需≥{min_touches} 次）"
+            ),
+        })
+        return {"support_zone": None, "resistance_zone": None, "diagnostics": diagnostics}
 
     max_buckets = (max_prices / bin_size).round()
     min_buckets = (min_prices / bin_size).round()
@@ -389,9 +411,67 @@ def find_support_resistance(
                 "touches": int(best_max_bucket[1]),
             }
 
+    # 位置校验：支撑区必须在当前价格下方，压力区必须在上方
+    invalid_reasons = []
+    if support_zone and support_zone["zone_high"] > cur_price:
+        invalid_reasons.append(
+            f"识别出的支撑区（{support_zone['zone_low']}-{support_zone['zone_high']}）"
+            f"位于当前价格（{cur_price:.2f}）上方，不构成有效支撑"
+        )
+        support_zone = None
+
+    if resistance_zone and resistance_zone["zone_low"] < cur_price:
+        invalid_reasons.append(
+            f"识别出的压力区（{resistance_zone['zone_low']}-{resistance_zone['zone_high']}）"
+            f"位于当前价格（{cur_price:.2f}）下方，不构成有效压力"
+        )
+        resistance_zone = None
+
+    # 重叠检测：支撑区和压力区距离太近（<1% 当前价格）时降级
+    if support_zone and resistance_zone:
+        gap = resistance_zone["zone_low"] - support_zone["zone_high"]
+        if gap >= 0 and gap / cur_price < 0.01:
+            # 两者几乎重叠，降级为区间参考
+            merged = {
+                "price": round((support_zone["price"] + resistance_zone["price"]) / 2, 2),
+                "zone_low": support_zone["zone_low"],
+                "zone_high": resistance_zone["zone_high"],
+                "strength": "弱",
+                "touches": support_zone["touches"] + resistance_zone["touches"],
+                "note": "支撑与压力区过近，视为震荡区间参考",
+            }
+            support_zone = merged
+            resistance_zone = None
+            invalid_reasons.append("支撑区与压力区过近（<1%），合并为震荡区间")
+
+    # Build concise reason based on what was actually found after bucketing
+    if support_zone and resistance_zone:
+        reason = "支撑区与压力区均已识别"
+    elif support_zone:
+        reason = "支撑区已识别，压力区价位分散未形成聚集区"
+    elif resistance_zone:
+        reason = "压力区已识别，支撑区价位分散未形成聚集区"
+    else:
+        reason = "价位分散，未形成聚集区"
+    if invalid_reasons:
+        reason += "；" + "；".join(invalid_reasons)
+
+
+    diagnostics.update({
+        "bars": len(df),
+        "recent_bars": len(recent),
+        "local_extrema_window": window,
+        "raw_peaks": len(max_prices_raw),
+        "raw_valleys": len(min_prices_raw),
+        "valid_resistance_touches": len(max_prices),
+        "valid_support_touches": len(min_prices),
+        "required_touches": min_touches,
+        "reason": reason,
+    })
     return {
         "support_zone": support_zone,
         "resistance_zone": resistance_zone,
+        "diagnostics": diagnostics,
     }
 
 

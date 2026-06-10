@@ -1,0 +1,49 @@
+- generic [active] [ref=e1]:
+  - banner [ref=e3]:
+    - generic [ref=e4]:
+      - link "news_logo" [ref=e5] [cursor=pointer]:
+        - /url: https://www.hkexnews.hk/index_c.htm
+        - img "news_logo" [ref=e6]
+      - generic [ref=e7]:
+        - list [ref=e8]:
+          - listitem [ref=e9]:
+            - link "ESS電子呈交系統" [ref=e10] [cursor=pointer]:
+              - /url: https://www1.esubmission.hkex.com.hk
+              - img "ESS" [ref=e11]
+              - text: 電子呈交系統
+          - listitem [ref=e12]:
+            - link "Disclosure of Interests Online System線上權益披露系統" [ref=e13] [cursor=pointer]:
+              - /url: https://sdinotice.hkex.com.hk
+              - img "Disclosure of Interests Online System" [ref=e14]
+              - text: 線上權益披露系統
+          - listitem [ref=e15]:
+            - text: 字體大小
+            - link "A" [ref=e16] [cursor=pointer]:
+              - /url: "#"
+            - link "A" [ref=e17] [cursor=pointer]:
+              - /url: "#"
+            - link "A" [ref=e18] [cursor=pointer]:
+              - /url: "#"
+        - generic [ref=e19]:
+          - link "EN" [ref=e20] [cursor=pointer]:
+            - /url: javascript:route('chi', 'eng')
+          - link "简" [ref=e21] [cursor=pointer]:
+            - /url: javascript:route('chi', 'sim')
+          - link "通知" [ref=e22]:
+            - /url: javascript:void(0);
+      - link "跳到內容" [ref=e23] [cursor=pointer]:
+        - /url: "#skip-to-content"
+  - navigation [ref=e25]:
+    - list [ref=e27]:
+      - listitem [ref=e28]:
+        - link "上市公司文件" [ref=e29] [cursor=pointer]:
+          - /url: "#"
+      - listitem [ref=e30]:
+        - link "股權披露" [ref=e31] [cursor=pointer]:
+          - /url: "#"
+      - listitem [ref=e32]:
+        - link "新上市" [ref=e33] [cursor=pointer]:
+          - /url: "#"
+      - listitem [ref=e34]:
+        - link "交易所報告" [ref=e35] [cursor=pointer]:
+          - /url: "#"

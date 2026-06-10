@@ -1,0 +1,1034 @@
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "雪球 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img "雪球" [ref=e11]
+          - generic [ref=e12]: 首页
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "搜索" [ref=e15]
+          - button "" [ref=e17] [cursor=pointer]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link [ref=e20] [cursor=pointer]:
+              - /url: https://ai.xueqiu.com/chat
+              - img [ref=e21]
+          - listitem [ref=e22]:
+            - link "" [ref=e23] [cursor=pointer]:
+              - /url: /snb/web/cs?from=xq
+          - listitem [ref=e24]:
+            - link "" [ref=e25] [cursor=pointer]:
+              - /url: javascript:;
+          - listitem [ref=e26]:
+            - link "下载App" [ref=e27] [cursor=pointer]:
+              - /url: "javascript:"
+          - listitem [ref=e28]:
+            - generic [ref=e29] [cursor=pointer]: 发帖
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - link [ref=e33] [cursor=pointer]:
+          - /url: /u/8680319853
+          - img [ref=e34]
+        - link "用户8680319853" [ref=e35] [cursor=pointer]:
+          - /url: /u/8680319853
+        - generic [ref=e36]:
+          - link "关注0" [ref=e38] [cursor=pointer]:
+            - /url: /center/#/friends
+          - link "粉丝0" [ref=e40] [cursor=pointer]:
+            - /url: /center/#/fans
+        - button "发帖" [ref=e42] [cursor=pointer]
+      - list [ref=e43]:
+        - listitem [ref=e44]:
+          - link " 首页" [ref=e45] [cursor=pointer]:
+            - /url: /#/?t=1779266540129
+            - generic [ref=e46]: 
+            - generic [ref=e47]: 首页
+        - listitem [ref=e48]:
+          - link " 自选" [ref=e49] [cursor=pointer]:
+            - /url: /#/optional?t=1779266540129
+            - generic [ref=e50]: 
+            - generic [ref=e51]: 自选
+        - listitem [ref=e52]:
+          - link " 行情" [ref=e53] [cursor=pointer]:
+            - /url: /hq
+            - generic [ref=e54]: 
+            - generic [ref=e55]: 行情
+        - listitem [ref=e56]:
+          - link " 基金" [ref=e57] [cursor=pointer]:
+            - /url: https://xueqiu.com/f/new/node/pages/token-jump?url=https://danjuanfunds.com/
+            - generic [ref=e58]: 
+            - generic [ref=e59]: 基金
+        - listitem [ref=e60]:
+          - link " 私募" [ref=e61] [cursor=pointer]:
+            - /url: https://xueqiu.com/f/new/node/pages/token-jump?url=https://danjuanfunds.com/rn/pf-shelves/home
+            - generic [ref=e62]: 
+            - generic [ref=e63]: 私募
+        - listitem [ref=e64]:
+          - link " 我的资产" [ref=e65] [cursor=pointer]:
+            - /url: /center/#/assets?t=1779266540129
+            - generic [ref=e66]: 
+            - generic [ref=e67]: 我的资产
+        - listitem [ref=e68]:
+          - link " 创作者中心" [ref=e69] [cursor=pointer]:
+            - /url: https://mp.xueqiu.com/
+            - generic [ref=e70]: 
+            - generic [ref=e71]: 创作者中心
+        - listitem [ref=e72]:
+          - link "我的消息" [ref=e73] [cursor=pointer]:
+            - /url: javascript:;
+            - img [ref=e74]
+            - generic [ref=e75]: 我的消息
+          - list [ref=e76]:
+            - listitem [ref=e77]:
+              - link "回复" [ref=e78] [cursor=pointer]:
+                - /url: /center/#/comments?t=1779266539779
+            - listitem [ref=e79]:
+              - link "@我" [ref=e80] [cursor=pointer]:
+                - /url: /center/#/mention?t=1779266539779
+            - listitem [ref=e81]:
+              - link "赞" [ref=e82] [cursor=pointer]:
+                - /url: /center/#/likes?t=1779266539779
+            - listitem [ref=e83]:
+              - link "我的粉丝" [ref=e84] [cursor=pointer]:
+                - /url: /center/#/fans?t=1779266539779
+            - listitem [ref=e85]:
+              - link "系统消息 53" [ref=e86] [cursor=pointer]:
+                - /url: /center/#/sys-message
+                - text: 系统消息
+                - generic [ref=e87]: "53"
+            - listitem [ref=e88]:
+              - link "私信" [ref=e89] [cursor=pointer]:
+                - /url: /center/#/user-message
+    - generic [ref=e90]:
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - link "张平原" [ref=e93] [cursor=pointer]:
+            - /url: /3448047273
+            - img "张平原" [ref=e94]
+          - link "张平原 认证" [ref=e96] [cursor=pointer]:
+            - /url: /3448047273
+            - text: 张平原
+            - img "认证" [ref=e97]
+          - generic [ref=e98]:
+            - link "修改于2026-05-12 23:08" [ref=e99] [cursor=pointer]:
+              - /url: /3448047273/388421483
+              - text: 修改于
+              - time [ref=e100]: 2026-05-12 23:08
+            - generic [ref=e101]: 来自雪球
+            - text: ·
+            - generic [ref=e102]: 吉林
+          - generic [ref=e103] [cursor=pointer]: 关注
+        - article [ref=e104]:
+          - heading "长春高新股东会信息记录" [level=1] [ref=e105]
+          - generic [ref=e106]:
+            - text: 来自
+            - link "张平原的雪球专栏" [ref=e107] [cursor=pointer]:
+              - /url: /3448047273/column
+          - generic [ref=e108]:
+            - paragraph [ref=e109]:
+              - text: 姜董事长
+              - generic [ref=e111]: ，
+              - text: 生长激素每季度环比增长5%
+              - generic [ref=e113]: 。
+              - text: 金蓓欣有成为下一个生长激素的潜力
+              - generic [ref=e115]: ，
+              - text: 金蓓欣进医保是公司的战略性任务
+              - generic [ref=e117]: 。
+              - text: BD每年都会增加
+              - generic [ref=e118]: 。
+            - paragraph [ref=e119]:
+              - text: 金总
+              - generic [ref=e121]: ，
+              - text: 每个季度越来越好
+              - generic [ref=e122]: 。
+            - paragraph [ref=e123]:
+              - text: 瑞宙生物的24价肺炎疫苗
+              - generic [ref=e125]: ，
+              - text: 今年7月份进入3期
+              - generic [ref=e127]: 。
+              - text: 数据比国内竞品好
+              - generic [ref=e129]: 。
+              - link "辉瑞" [ref=e130] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/PFE?from=status_stock_match
+              - text: 的16价肺炎肺炎24年全球非中华区销售收入60亿美元
+              - generic [ref=e131]: 。
+            - paragraph [ref=e132]:
+              - text: 整体感觉管理层比较淡定从容
+              - generic [ref=e133]: 。
+            - paragraph [ref=e134]:
+              - text: 另外特别说明一下
+              - generic [ref=e136]: ，
+              - text: 感觉管理层对于BD的自信有点让我感到意外
+              - generic [ref=e138]: ，
+              - text: 他们没有一点我预期中的留有余地的说辞
+              - generic [ref=e140]: 。
+              - text: 还有就是对生长激素业务季度环比增长也非常自信
+              - generic [ref=e141]: 。
+            - paragraph [ref=e142]:
+              - text: 今天有14位个人和机构股东参会
+              - generic [ref=e144]: ，
+              - text: 没有卖方机构
+              - generic [ref=e145]: 。
+            - paragraph [ref=e146]:
+              - text: 感觉近几年最精彩
+              - generic [ref=e148]: 、
+              - text: 含金量最高的股东会
+              - generic [ref=e149]: 。
+            - paragraph [ref=e150]:
+              - text: 后注
+              - generic [ref=e151]: ：
+              - text: 瑞宙生物以前没有重视过
+              - generic [ref=e153]: ，
+              - text: 做了一下功课
+              - generic [ref=e155]: ，
+              - text: 瑞宙生物的24价肺炎疫苗还真的蛮有看头
+              - generic [ref=e157]: 。
+              - text: 目前国内进度领先
+              - generic [ref=e159]: ，
+              - text: 如果做成将是数百亿级别的市场
+              - generic [ref=e160]: 。
+            - paragraph [ref=e161]:
+              - text: 本人资料性留存
+              - generic [ref=e163]: ，
+              - text: 非股票推荐
+              - generic [ref=e165]: ，
+              - text: 请谨慎阅读
+              - generic [ref=e166]: ！
+        - paragraph [ref=e167]: 风险提示：用户发表的所有文章仅代表个人观点，与雪球的立场无关。投资决策需建立在独立思考之上。
+        - generic [ref=e168]:
+          - link "张平原的专栏 339篇文章 · 162441人关注 " [ref=e169] [cursor=pointer]:
+            - /url: /3448047273/column
+            - generic [ref=e170]:
+              - generic [ref=e171]:
+                - generic [ref=e172]:
+                  - img [ref=e173]
+                  - generic [ref=e174]: 张平原的专栏
+                - generic [ref=e175]: 339篇文章 · 162441人关注
+              - generic [ref=e176]: 
+          - generic [ref=e178]:
+            - generic [ref=e179] [cursor=pointer]:
+              - generic [ref=e180]: 
+              - generic [ref=e182]: "46"
+            - generic [ref=e183] [cursor=pointer]:
+              - generic [ref=e184]: 
+              - generic [ref=e186]: "17"
+        - generic [ref=e188]:
+          - img "微信分享" [ref=e192] [cursor=pointer]
+          - generic [ref=e193]:
+            - link " 转发" [ref=e194] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e195]: 
+              - paragraph [ref=e196]: 转发
+            - link " 57" [ref=e197] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e198]: 
+              - paragraph [ref=e199]: "57"
+          - link "投诉" [ref=e202] [cursor=pointer]:
+            - /url: ""
+            - paragraph [ref=e203]: 投诉
+        - generic [ref=e205]:
+          - generic [ref=e206]:
+            - img [ref=e207]
+            - generic [ref=e208]:
+              - generic [ref=e209]:
+                - generic [ref=e210]: 回复@张平原
+                - textbox [ref=e211]:
+                  - paragraph [ref=e212]
+              - generic [ref=e213]:
+                - generic [ref=e214]:
+                  - link "" [ref=e216] [cursor=pointer]:
+                    - /url: ""
+                    - generic [ref=e217]: 
+                  - link "" [ref=e218] [cursor=pointer]:
+                    - /url: ""
+                    - generic [ref=e219]: 
+                  - link "" [ref=e220] [cursor=pointer]:
+                    - /url: javascript:;
+                    - generic [ref=e221]: 
+                  - generic [ref=e223]:
+                    - checkbox "仅在正文下讨论" [ref=e224]
+                    - generic [ref=e225]: 仅在正文下讨论
+                    - img [ref=e227]
+                - link "发布" [ref=e229]:
+                  - /url: ""
+          - generic [ref=e232]:
+            - heading "全部讨论（57）" [level=3] [ref=e233]
+            - generic [ref=e234]:
+              - link "最热" [ref=e235] [cursor=pointer]:
+                - /url: ""
+              - link "最新" [ref=e236] [cursor=pointer]:
+                - /url: ""
+              - link "最早" [ref=e237] [cursor=pointer]:
+                - /url: ""
+            - generic [ref=e238]:
+              - generic [ref=e239]:
+                - generic [ref=e240]:
+                  - link [ref=e241] [cursor=pointer]:
+                    - /url: /2896802347
+                    - img [ref=e242]
+                  - generic [ref=e243]:
+                    - generic [ref=e244]:
+                      - link "陈栋yga" [ref=e245] [cursor=pointer]:
+                        - /url: /2896802347
+                      - generic [ref=e246]: 05-12 20:16 · 北京
+                    - paragraph [ref=e247]:
+                      - text: 如果每季度增长5% 起码长春高新能支撑他的研发费用
+                      - text: Q2现金流：27.16亿元 × 42.4% ≈ 11.52亿元
+                      - text: Q3现金流：28.52亿元 × 42.4% ≈ 12.09亿元
+                      - text: Q4现金流：29.95亿元 × 42.4% ≈ 12.70亿元
+                      - text: 2026年全年预测经营性现金流：10.98 + 11.52 + 12.09 + 12.70 ≈47.29亿元。
+                      - text: 2025年全年经营性现金流为8.02亿元。若能实现增长，2026年现金流将实现数倍增长，造血能力大幅增强。
+                - generic [ref=e248]:
+                  - link "讨论" [ref=e249] [cursor=pointer]:
+                    - /url: ""
+                  - link "5" [ref=e250] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e251]:
+                - generic [ref=e252]:
+                  - link [ref=e253] [cursor=pointer]:
+                    - /url: /6011704218
+                    - img [ref=e254]
+                  - generic [ref=e255]:
+                    - generic [ref=e256]:
+                      - link "幻雨198716" [ref=e257] [cursor=pointer]:
+                        - /url: /6011704218
+                      - generic [ref=e258]: 05-12 23:41 · 上海
+                    - paragraph [ref=e259]: 肺炎疫苗国内总共市场规模大概90亿左右，其中80亿是13价多糖结合疫苗，沃森占比最高，然后辉瑞的13价，康泰的13价，全是用在小孩身上的。智飞的15价多糖结合疫苗已经申请上市，预计年底或者2027年上半年获批，智飞后面还有26价结合疫苗在临床，未来这个市场多半被智飞半垄断。瑞宙生物的，整体比智飞生物要慢两年，到时候也是多家竞争的局面，能卖个十几二十亿已经很不错了（国外不要想了，没做全球多中心，商业化能力也不够）。另外10亿是23价多糖疫苗（非结合），主要是老人使用，价格烂的一踏糊涂。
+                - blockquote [ref=e260]:
+                  - generic [ref=e261]:
+                    - link "张平原 作者" [ref=e262] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: ：多谢您的分享！
+                - generic [ref=e263]:
+                  - link "1" [ref=e264] [cursor=pointer]:
+                    - /url: ""
+                  - link "3" [ref=e265] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e266]:
+                - generic [ref=e267]:
+                  - link [ref=e268] [cursor=pointer]:
+                    - /url: /3448047273
+                    - img [ref=e269]
+                  - generic [ref=e270]:
+                    - generic [ref=e271]:
+                      - link "张平原" [ref=e272] [cursor=pointer]:
+                        - /url: /3448047273
+                      - text: 作者
+                      - img "达人认证" [ref=e273] [cursor=pointer]
+                      - generic [ref=e274]: 05-14 17:46 · 江苏
+                    - paragraph [ref=e275]:
+                      - text: 说实话，我对管理层所说的这些好消息，有点半信半疑。
+                      - text: 毕竟原来他们也miss过不少。
+                - blockquote [ref=e276]:
+                  - generic [ref=e277]:
+                    - link "坚定的逆向投资者" [ref=e278] [cursor=pointer]:
+                      - /url: /9208931920
+                    - text: ：地产剥离 股权激励 港股上市这些都没聊？
+                - generic [ref=e279]:
+                  - link "1" [ref=e280] [cursor=pointer]:
+                    - /url: ""
+                  - link "2" [ref=e281] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e282]:
+                - generic [ref=e283]:
+                  - link [ref=e284] [cursor=pointer]:
+                    - /url: /shard31
+                    - img [ref=e285]
+                  - generic [ref=e286]:
+                    - generic [ref=e287]:
+                      - link "次元-碎片" [ref=e288] [cursor=pointer]:
+                        - /url: /shard31
+                      - generic [ref=e289]: 05-13 09:43 · 北京
+                    - paragraph [ref=e290]:
+                      - text: 如果你认可这是底部就不要在这里再说任何的话.
+                      - text: 参会的就8个人，就你和狮子皇在嚷嚷（他的录音大概出处就在你这吧）
+                - blockquote [ref=e291]:
+                  - generic [ref=e292]:
+                    - link "次元-碎片" [ref=e293] [cursor=pointer]:
+                      - /url: /shard31
+                    - text: 回复
+                    - link "@不立危墙之下2024" [ref=e294] [cursor=pointer]:
+                      - /url: /1483265159
+                    - text: ：其实没有什么特别的消息，我看了狮子皇列出来的问题我都挺吃惊的.投资说到底投的是人.只要人没问题还在全力投入，日常动作逻辑合理且可控就没大问题.很多信息董秘也说在机构会上聊过，只不过我们渠道参加.所以某种角度上说，没消息就是好消息
+                  - generic [ref=e295]:
+                    - link "次元-碎片" [ref=e296] [cursor=pointer]:
+                      - /url: /shard31
+                    - text: 回复
+                    - link "@张平原" [ref=e297] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: ：没有敲锣打鼓筑底的可能，所以请拿好票等待
+                  - generic [ref=e298]:
+                    - link "次元-碎片" [ref=e299] [cursor=pointer]:
+                      - /url: /shard31
+                    - text: 回复
+                    - link "@张平原" [ref=e300] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: ：
+                    - generic [ref=e301] [cursor=pointer]:
+                      - text: 今年三或者四季度会有第三届的研发日，所以......
+                      - text: 至于为什么胸有成竹，大概率就是你家的娃有保底学校，但可能还有更好的学校在运作吧
+                  - generic [ref=e302]: 查看13条回复
+                - generic [ref=e303]:
+                  - link "13" [ref=e304] [cursor=pointer]:
+                    - /url: ""
+                  - link "2" [ref=e305] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e306]:
+                - generic [ref=e307]:
+                  - link [ref=e308] [cursor=pointer]:
+                    - /url: /9489823772
+                    - img [ref=e309]
+                  - generic [ref=e310]:
+                    - generic [ref=e311]:
+                      - link "套牢式投资" [ref=e312] [cursor=pointer]:
+                        - /url: /9489823772
+                      - generic [ref=e313]: 05-13 08:11 · 湖北
+                    - paragraph [ref=e314]:
+                      - text: 管理层说的话，标点符号都不能信. 25年要努力确保营收双位数增长的口号还历历在目啊
+                      - link "$长春高新(SZ000661)$" [ref=e315] [cursor=pointer]:
+                        - /url: https://xueqiu.com/S/SZ000661
+                - blockquote [ref=e316]:
+                  - generic [ref=e317]:
+                    - link "套牢式投资" [ref=e318] [cursor=pointer]:
+                      - /url: /9489823772
+                    - text: 回复
+                    - link "@张平原" [ref=e319] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: ：我给你提个醒，因为姜云涛原话是“努力确保生长激素双位数增长”,能力圈还特意发了好几篇吹水文,主要就是掰扯为什么是确保而不是争取,几千字的分析得出结论就是因为非常有把握所以用“确保”,这些都是各种沟通会上口头说的,跟这次股东大会一样，没有书面通告也没有法律效力更没有什么记录。
+                  - generic [ref=e320]:
+                    - link "张平原 作者" [ref=e321] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: 回复
+                    - link "@幸福70" [ref=e322] [cursor=pointer]:
+                      - /url: /5633972925
+                    - text: ：去年的下降80%说对了，希望今年的增长也是准的。
+                  - generic [ref=e323]:
+                    - link "幸福70" [ref=e324] [cursor=pointer]:
+                      - /url: /5633972925
+                    - text: ：去年我在股东会上问姜云涛，25年业绩能稳住不他回答说降80%我还以为是怼我的
+                  - generic [ref=e325]: 查看6条回复
+                - generic [ref=e326]:
+                  - link "6" [ref=e327] [cursor=pointer]:
+                    - /url: ""
+                  - link "2" [ref=e328] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e329]:
+                - generic [ref=e330]:
+                  - link [ref=e331] [cursor=pointer]:
+                    - /url: /5623572121
+                    - img [ref=e332]
+                  - generic [ref=e333]:
+                    - generic [ref=e334]:
+                      - link "好财哥" [ref=e335] [cursor=pointer]:
+                        - /url: /5623572121
+                      - generic [ref=e336]: 05-12 17:55 · 四川
+                    - paragraph [ref=e337]: 首先要做正确的事，然后把事情做对。请问投资一家做拔苗助长术和JJ放大术的公司是一件正确的事吗
+                - blockquote [ref=e338]:
+                  - generic [ref=e339]:
+                    - link "好财哥" [ref=e340] [cursor=pointer]:
+                      - /url: /5623572121
+                    - text: 回复
+                    - link "@闪电长空" [ref=e341] [cursor=pointer]:
+                      - /url: /6262236666
+                    - text: ：被你看穿了😂
+                  - generic [ref=e342]:
+                    - link "闪电长空" [ref=e343] [cursor=pointer]:
+                      - /url: /6262236666
+                    - text: 回复
+                    - link "@好财哥" [ref=e344] [cursor=pointer]:
+                      - /url: /5623572121
+                    - text: ：少给自己贴金了吧，饼王都没你能吹
+                  - generic [ref=e345]:
+                    - link "好财哥" [ref=e346] [cursor=pointer]:
+                      - /url: /5623572121
+                    - text: 回复
+                    - link "@小李裁纸刀" [ref=e347] [cursor=pointer]:
+                      - /url: /2365866639
+                    - text: ：我是价值投资者，投给有价值的公司，推动社会发展和人类文明进步
+                  - generic [ref=e348]: 查看4条回复
+                - generic [ref=e349]:
+                  - link "4" [ref=e350] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e351] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e352]:
+                - generic [ref=e353]:
+                  - link [ref=e354] [cursor=pointer]:
+                    - /url: /3520750977
+                    - img [ref=e355]
+                  - generic [ref=e356]:
+                    - generic [ref=e357]:
+                      - link "威少吃点米" [ref=e358] [cursor=pointer]:
+                        - /url: /3520750977
+                      - generic [ref=e359]: 05-12 17:53 · 四川
+                    - paragraph [ref=e360]: 新生儿又创新低了啊
+                - blockquote [ref=e361]:
+                  - generic [ref=e362]:
+                    - link "牛年一气冲天" [ref=e363] [cursor=pointer]:
+                      - /url: /5439970276
+                    - text: ：能打生长激素的 范围基本上中收入以上 这部分出生率不低的
+                - generic [ref=e364]:
+                  - link "1" [ref=e365] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e366] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e367]:
+                - generic [ref=e368]:
+                  - link [ref=e369] [cursor=pointer]:
+                    - /url: /9327187903
+                    - img [ref=e370]
+                  - generic [ref=e371]:
+                    - generic [ref=e372]:
+                      - link "彬彬711" [ref=e373] [cursor=pointer]:
+                        - /url: /9327187903
+                      - generic [ref=e374]: 05-16 10:07 · 云南
+                    - paragraph [ref=e375]:
+                      - img "[献花花]" [ref=e376]
+                      - text: 生长激素一季度18亿，如果每个季度环比增长5%，这样全年就有近80亿营收?? 80亿乍算的阿
+                      - img "[抱拳]" [ref=e377]
+                - generic [ref=e378]:
+                  - link "讨论" [ref=e379] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e380] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e381]:
+                - generic [ref=e382]:
+                  - link [ref=e383] [cursor=pointer]:
+                    - /url: /6359084287
+                    - img [ref=e384]
+                  - generic [ref=e385]:
+                    - generic [ref=e386]:
+                      - link "家有千斤名姝毓" [ref=e387] [cursor=pointer]:
+                        - /url: /6359084287
+                      - generic [ref=e388]: 05-15 16:39 · 山东
+                    - paragraph [ref=e389]: 听金秃子的话能倾家荡产，因为我原先听过，结果损失惨重
+                - generic [ref=e390]:
+                  - link "讨论" [ref=e391] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e392] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e393]:
+                - generic [ref=e394]:
+                  - link [ref=e395] [cursor=pointer]:
+                    - /url: /3461462607
+                    - img [ref=e396]
+                  - generic [ref=e397]:
+                    - generic [ref=e398]:
+                      - link "来福旺" [ref=e399] [cursor=pointer]:
+                        - /url: /3461462607
+                      - generic [ref=e400]: 05-13 23:26 · 广东
+                    - paragraph [ref=e401]: 这个叫张平原的人又在写文章忽悠小散了。前几年写南极电商的那篇文章就忽悠不少人去接盘。
+                - generic [ref=e402]:
+                  - link "讨论" [ref=e403] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e404] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e405]:
+                - generic [ref=e406]:
+                  - link [ref=e407] [cursor=pointer]:
+                    - /url: /5247724204
+                    - img [ref=e408]
+                  - generic [ref=e409]:
+                    - generic [ref=e410]:
+                      - link "星星68" [ref=e411] [cursor=pointer]:
+                        - /url: /5247724204
+                      - generic [ref=e412]: 05-13 15:07 · 河北
+                    - paragraph [ref=e413]: 管理层天天吹
+                - generic [ref=e414]:
+                  - link "讨论" [ref=e415] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e416] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e417]:
+                - generic [ref=e418]:
+                  - link [ref=e419] [cursor=pointer]:
+                    - /url: /3269100236
+                    - img [ref=e420]
+                  - generic [ref=e421]:
+                    - generic [ref=e422]:
+                      - link "万雪斋" [ref=e423] [cursor=pointer]:
+                        - /url: /3269100236
+                      - generic [ref=e424]: 05-12 22:24 · 上海
+                    - paragraph [ref=e425]: 曾经的大牛股
+                - generic [ref=e426]:
+                  - link "讨论" [ref=e427] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e428] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e429]:
+                - generic [ref=e430]:
+                  - link [ref=e431] [cursor=pointer]:
+                    - /url: /1072077628
+                    - img [ref=e432]
+                  - generic [ref=e433]:
+                    - generic [ref=e434]:
+                      - link "坚持胜利stf" [ref=e435] [cursor=pointer]:
+                        - /url: /1072077628
+                      - generic [ref=e436]: 05-12 20:30 · 湖北
+                    - paragraph [ref=e437]: 今年有新bd吗？
+                - generic [ref=e438]:
+                  - link "讨论" [ref=e439] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e440] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e441]:
+                - generic [ref=e442]:
+                  - link [ref=e443] [cursor=pointer]:
+                    - /url: /6327384335
+                    - img [ref=e444]
+                  - generic [ref=e445]:
+                    - generic [ref=e446]:
+                      - link "贞心的财富神箭手" [ref=e447] [cursor=pointer]:
+                        - /url: /6327384335
+                      - generic [ref=e448]: 05-12 18:16 · 北京
+                    - paragraph [ref=e449]: 愿闻其详
+                - generic [ref=e450]:
+                  - link "讨论" [ref=e451] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e452] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e453]:
+                - generic [ref=e454]:
+                  - link [ref=e455] [cursor=pointer]:
+                    - /url: /9489823772
+                    - img [ref=e456]
+                  - generic [ref=e457]:
+                    - generic [ref=e458]:
+                      - link "套牢式投资" [ref=e459] [cursor=pointer]:
+                        - /url: /9489823772
+                      - generic [ref=e460]: 05-12 18:05 · 湖北
+                    - paragraph [ref=e461]: 金赛巨有进展吗？
+                - generic [ref=e462]:
+                  - link "讨论" [ref=e463] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e464] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e465]:
+                - generic [ref=e466]:
+                  - link [ref=e467] [cursor=pointer]:
+                    - /url: /6402273788
+                    - img [ref=e468]
+                  - generic [ref=e469]:
+                    - generic [ref=e470]:
+                      - link "云起时_" [ref=e471] [cursor=pointer]:
+                        - /url: /6402273788
+                      - generic [ref=e472]: 05-12 18:05 · 广东
+                    - paragraph [ref=e473]: 请教下，每季度增长5%是指销售额吗，这也太低了吧
+                - blockquote [ref=e474]:
+                  - generic [ref=e475]:
+                    - link "未来可期c7j" [ref=e476] [cursor=pointer]:
+                      - /url: /4825843090
+                    - text: ：能有增长就不错了
+                  - generic [ref=e477]:
+                    - link "张平原 作者" [ref=e478] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: ：
+                    - generic [ref=e479] [cursor=pointer]:
+                      - text: 生长激素一季度18亿，如果每个季度环比增长5%，这样全年就有近80亿营收。
+                      - text: 应该很不错了吧。
+                  - generic [ref=e480]:
+                    - link "稳稳的幸福吗" [ref=e481] [cursor=pointer]:
+                      - /url: /4816200048
+                    - text: 回复
+                    - link "@张平原" [ref=e482] [cursor=pointer]:
+                      - /url: /3448047273
+                    - text: ：往年都是2，3季度占大头，如果2季度环比增长只有5%，那怎么保证第4季度？怎么能线性外推去算啊
+                  - generic [ref=e483]: 查看7条回复
+                - generic [ref=e484]:
+                  - link "7" [ref=e485] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e486] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e487]:
+                - generic [ref=e488]:
+                  - link [ref=e489] [cursor=pointer]:
+                    - /url: /8436581820
+                    - img [ref=e490]
+                  - generic [ref=e491]:
+                    - generic [ref=e492]:
+                      - link "YYco0" [ref=e493] [cursor=pointer]:
+                        - /url: /8436581820
+                      - generic [ref=e494]: 05-12 18:04 · 陕西
+                    - paragraph [ref=e495]: 还有啥干货 张总
+                - generic [ref=e496]:
+                  - link "讨论" [ref=e497] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e498] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e499]:
+                - generic [ref=e500]:
+                  - link [ref=e501] [cursor=pointer]:
+                    - /url: /5515191763
+                    - img [ref=e502]
+                  - generic [ref=e503]:
+                    - generic [ref=e504]:
+                      - link "米乐03" [ref=e505] [cursor=pointer]:
+                        - /url: /5515191763
+                      - generic [ref=e506]: 05-12 17:54 · 江苏
+                    - paragraph [ref=e507]: 金蓓欣伏欣奇拜单抗，今年可以期待一下～
+                - blockquote [ref=e508]:
+                  - generic [ref=e509]:
+                    - link "米乐03" [ref=e510] [cursor=pointer]:
+                      - /url: /5515191763
+                    - text: 回复
+                    - link "@三千滚雪球" [ref=e511] [cursor=pointer]:
+                      - /url: /8108849831
+                    - text: ：今年目标值，单月销量破亿应该问题不大，抖音上超过100个顶级医院医生都在宣传推广伏欣奇拜单抗，分享使用体验的患者不计其数，顺利的话今年第二季度销量会有大的跃升。
+                  - generic [ref=e512]:
+                    - link "yin111" [ref=e513] [cursor=pointer]:
+                      - /url: /3940565464
+                    - text: 回复
+                    - link "@米乐03" [ref=e514] [cursor=pointer]:
+                      - /url: /5515191763
+                    - text: ：月销量破亿？吹牛不上税
+                  - generic [ref=e515]:
+                    - link "李玄通" [ref=e516] [cursor=pointer]:
+                      - /url: /5203345561
+                    - text: 回复
+                    - link "@米乐03" [ref=e517] [cursor=pointer]:
+                      - /url: /5515191763
+                    - text: ：单月破亿就别想了，今年首个上市完整年，销量能破3亿就已经很不错了。
+                  - generic [ref=e518]: 查看5条回复
+                - generic [ref=e519]:
+                  - link "5" [ref=e520] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e521] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e522]:
+                - generic [ref=e523]:
+                  - link [ref=e524] [cursor=pointer]:
+                    - /url: /6769259204
+                    - img [ref=e525]
+                  - generic [ref=e526]:
+                    - generic [ref=e527]:
+                      - link "laotang926" [ref=e528] [cursor=pointer]:
+                        - /url: /6769259204
+                      - generic [ref=e529]: 05-12 17:52 · 甘肃
+                    - paragraph [ref=e530]:
+                      - text: 参会的人真少，关注的少也算底部特征
+                      - img "[献花花]" [ref=e531]
+                - generic [ref=e532]:
+                  - link "讨论" [ref=e533] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e534] [cursor=pointer]:
+                    - /url: ""
+      - generic [ref=e536]:
+        - generic [ref=e537]:
+          - heading "热门话题" [level=3] [ref=e538]
+          - table [ref=e540]:
+            - row "1 光刻机概念异动，张江高科涨停" [ref=e541]:
+              - cell "1" [ref=e542]
+              - cell "光刻机概念异动，张江高科涨停" [ref=e543]:
+                - link "光刻机概念异动，张江高科涨停" [ref=e544] [cursor=pointer]:
+                  - /url: /k?q=%23%E5%85%89%E5%88%BB%E6%9C%BA%E6%A6%82%E5%BF%B5%E5%BC%82%E5%8A%A8%EF%BC%8C%E5%BC%A0%E6%B1%9F%E9%AB%98%E7%A7%91%E6%B6%A8%E5%81%9C%23
+            - row "2 588290！最低费率科创芯片ETF强势拉升" [ref=e545]:
+              - cell "2" [ref=e546]
+              - cell "588290！最低费率科创芯片ETF强势拉升" [ref=e547]:
+                - link "588290！最低费率科创芯片ETF强势拉升" [ref=e548] [cursor=pointer]:
+                  - /url: /k?q=%23588290%EF%BC%81%E6%9C%80%E4%BD%8E%E8%B4%B9%E7%8E%87%E7%A7%91%E5%88%9B%E8%8A%AF%E7%89%87ETF%E5%BC%BA%E5%8A%BF%E6%8B%89%E5%8D%87%23
+            - row "3 算力租赁活跃，宏景科技大涨" [ref=e549]:
+              - cell "3" [ref=e550]
+              - cell "算力租赁活跃，宏景科技大涨" [ref=e551]:
+                - link "算力租赁活跃，宏景科技大涨" [ref=e552] [cursor=pointer]:
+                  - /url: /k?q=%23%E7%AE%97%E5%8A%9B%E7%A7%9F%E8%B5%81%E6%B4%BB%E8%B7%83%EF%BC%8C%E5%AE%8F%E6%99%AF%E7%A7%91%E6%8A%80%E5%A4%A7%E6%B6%A8%23
+            - row "4 港股芯片板块走强，华虹半导体大涨" [ref=e553]:
+              - cell "4" [ref=e554]
+              - cell "港股芯片板块走强，华虹半导体大涨" [ref=e555]:
+                - link "港股芯片板块走强，华虹半导体大涨" [ref=e556] [cursor=pointer]:
+                  - /url: /k?q=%23%E6%B8%AF%E8%82%A1%E8%8A%AF%E7%89%87%E6%9D%BF%E5%9D%97%E8%B5%B0%E5%BC%BA%EF%BC%8C%E5%8D%8E%E8%99%B9%E5%8D%8A%E5%AF%BC%E4%BD%93%E5%A4%A7%E6%B6%A8%23
+            - row "5 锂矿概念拉升，国城矿业大涨" [ref=e557]:
+              - cell "5" [ref=e558]
+              - cell "锂矿概念拉升，国城矿业大涨" [ref=e559]:
+                - link "锂矿概念拉升，国城矿业大涨" [ref=e560] [cursor=pointer]:
+                  - /url: /k?q=%23%E9%94%82%E7%9F%BF%E6%A6%82%E5%BF%B5%E6%8B%89%E5%8D%87%EF%BC%8C%E5%9B%BD%E5%9F%8E%E7%9F%BF%E4%B8%9A%E5%A4%A7%E6%B6%A8%23
+            - row "6 英伟达财报倒计时引发市场聚焦" [ref=e561]:
+              - cell "6" [ref=e562]
+              - cell "英伟达财报倒计时引发市场聚焦" [ref=e563]:
+                - link "英伟达财报倒计时引发市场聚焦" [ref=e564] [cursor=pointer]:
+                  - /url: /k?q=%23%E8%8B%B1%E4%BC%9F%E8%BE%BE%E8%B4%A2%E6%8A%A5%E5%80%92%E8%AE%A1%E6%97%B6%E5%BC%95%E5%8F%91%E5%B8%82%E5%9C%BA%E8%81%9A%E7%84%A6%23
+            - row "7 液冷服务器概念走强，宏盛股份涨停" [ref=e565]:
+              - cell "7" [ref=e566]
+              - cell "液冷服务器概念走强，宏盛股份涨停" [ref=e567]:
+                - link "液冷服务器概念走强，宏盛股份涨停" [ref=e568] [cursor=pointer]:
+                  - /url: /k?q=%23%E6%B6%B2%E5%86%B7%E6%9C%8D%E5%8A%A1%E5%99%A8%E6%A6%82%E5%BF%B5%E8%B5%B0%E5%BC%BA%EF%BC%8C%E5%AE%8F%E7%9B%9B%E8%82%A1%E4%BB%BD%E6%B6%A8%E5%81%9C%23
+            - row "8 储能概念回升，固德威大涨" [ref=e569]:
+              - cell "8" [ref=e570]
+              - cell "储能概念回升，固德威大涨" [ref=e571]:
+                - link "储能概念回升，固德威大涨" [ref=e572] [cursor=pointer]:
+                  - /url: /k?q=%23%E5%82%A8%E8%83%BD%E6%A6%82%E5%BF%B5%E5%9B%9E%E5%8D%87%EF%BC%8C%E5%9B%BA%E5%BE%B7%E5%A8%81%E5%A4%A7%E6%B6%A8%23
+            - row "9 创新药板块活跃，奥赛康涨停" [ref=e573]:
+              - cell "9" [ref=e574]
+              - cell "创新药板块活跃，奥赛康涨停" [ref=e575]:
+                - link "创新药板块活跃，奥赛康涨停" [ref=e576] [cursor=pointer]:
+                  - /url: /k?q=%23%E5%88%9B%E6%96%B0%E8%8D%AF%E6%9D%BF%E5%9D%97%E6%B4%BB%E8%B7%83%EF%BC%8C%E5%A5%A5%E8%B5%9B%E5%BA%B7%E6%B6%A8%E5%81%9C%23
+            - row "10 电力板块大涨，京能电力涨停" [ref=e577]:
+              - cell "10" [ref=e578]
+              - cell "电力板块大涨，京能电力涨停" [ref=e579]:
+                - link "电力板块大涨，京能电力涨停" [ref=e580] [cursor=pointer]:
+                  - /url: /k?q=%23%E7%94%B5%E5%8A%9B%E6%9D%BF%E5%9D%97%E5%A4%A7%E6%B6%A8%EF%BC%8C%E4%BA%AC%E8%83%BD%E7%94%B5%E5%8A%9B%E6%B6%A8%E5%81%9C%23
+        - generic [ref=e582] [cursor=pointer]:
+          - img [ref=e583]
+          - generic [ref=e584]: 
+        - generic [ref=e585]:
+          - heading "热股榜 更多" [level=3] [ref=e586]:
+            - text: 热股榜
+            - link "更多" [ref=e587] [cursor=pointer]:
+              - /url: /hq#hot
+          - generic [ref=e588]:
+            - link "全球" [ref=e589] [cursor=pointer]:
+              - /url: ""
+            - link "沪深" [ref=e590] [cursor=pointer]:
+              - /url: ""
+            - link "港股" [ref=e591] [cursor=pointer]:
+              - /url: ""
+            - link "美股" [ref=e592] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e593]:
+            - link "1小时内最热" [ref=e594] [cursor=pointer]:
+              - /url: ""
+            - link "24小时内最热" [ref=e595] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e596]:
+            - generic [ref=e598]:
+              - generic [ref=e599]: "1"
+              - link "兆易创新" [ref=e601] [cursor=pointer]:
+                - /url: /S/SH603986
+              - generic [ref=e602]: +10.00%
+            - generic [ref=e604]:
+              - generic [ref=e605]: "2"
+              - link "贵州茅台" [ref=e607] [cursor=pointer]:
+                - /url: /S/SH600519
+              - generic [ref=e608]: "-0.70%"
+            - generic [ref=e610]:
+              - generic [ref=e611]: "3"
+              - link "巨力索具" [ref=e613] [cursor=pointer]:
+                - /url: /S/SZ002342
+              - generic [ref=e614]: "-9.72%"
+            - generic [ref=e616]:
+              - generic [ref=e617]: "4"
+              - link "中芯国际" [ref=e619] [cursor=pointer]:
+                - /url: /S/SH688981
+              - generic [ref=e620]: +12.62%
+            - generic [ref=e622]:
+              - generic [ref=e623]: "5"
+              - link "多氟多" [ref=e625] [cursor=pointer]:
+                - /url: /S/SZ002407
+              - generic [ref=e626]: +10.00%
+            - generic [ref=e628]:
+              - generic [ref=e629]: "6"
+              - link "科创芯片ETF富国" [ref=e631] [cursor=pointer]:
+                - /url: /S/SH588810
+              - generic [ref=e632]: +4.83%
+            - generic [ref=e634]:
+              - generic [ref=e635]: "7"
+              - link "腾讯控股" [ref=e637] [cursor=pointer]:
+                - /url: /S/00700
+              - generic [ref=e638]: "-1.04%"
+            - generic [ref=e640]:
+              - generic [ref=e641]: "8"
+              - link "利通电子" [ref=e643] [cursor=pointer]:
+                - /url: /S/SH603629
+              - generic [ref=e644]: +4.09%
+        - generic [ref=e645]:
+          - heading "涨跌幅榜 更多" [level=3] [ref=e646]:
+            - text: 涨跌幅榜
+            - link "更多" [ref=e647] [cursor=pointer]:
+              - /url: /hq#rank
+          - generic [ref=e648]:
+            - link "沪深" [ref=e649] [cursor=pointer]:
+              - /url: ""
+            - link "港股" [ref=e650] [cursor=pointer]:
+              - /url: ""
+            - link "美股" [ref=e651] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e652]:
+            - link "涨幅榜" [ref=e653] [cursor=pointer]:
+              - /url: ""
+            - link "跌幅榜" [ref=e654] [cursor=pointer]:
+              - /url: ""
+          - table [ref=e655]:
+            - row "1 锐翔智能 +25.00%" [ref=e656]:
+              - cell "1" [ref=e657]
+              - cell "锐翔智能" [ref=e658]:
+                - link "锐翔智能" [ref=e659] [cursor=pointer]:
+                  - /url: /S/BJ920178
+              - cell [ref=e660]
+              - cell "+25.00%" [ref=e661]
+            - row "2 *ST元道 +20.04%" [ref=e662]:
+              - cell "2" [ref=e663]
+              - cell "*ST元道" [ref=e664]:
+                - link "*ST元道" [ref=e665] [cursor=pointer]:
+                  - /url: /S/SZ301139
+              - cell [ref=e666]
+              - cell "+20.04%" [ref=e667]
+            - row "3 密封科技 +20.01%" [ref=e668]:
+              - cell "3" [ref=e669]
+              - cell "密封科技" [ref=e670]:
+                - link "密封科技" [ref=e671] [cursor=pointer]:
+                  - /url: /S/SZ301020
+              - cell [ref=e672]
+              - cell "+20.01%" [ref=e673]
+            - row "4 联芸科技 +20.01%" [ref=e674]:
+              - cell "4" [ref=e675]
+              - cell "联芸科技" [ref=e676]:
+                - link "联芸科技" [ref=e677] [cursor=pointer]:
+                  - /url: /S/SH688449
+              - cell [ref=e678]
+              - cell "+20.01%" [ref=e679]
+            - row "5 争光股份 +20.00%" [ref=e680]:
+              - cell "5" [ref=e681]
+              - cell "争光股份" [ref=e682]:
+                - link "争光股份" [ref=e683] [cursor=pointer]:
+                  - /url: /S/SZ301092
+              - cell [ref=e684]
+              - cell "+20.00%" [ref=e685]
+            - row "6 上海合晶 +20.00%" [ref=e686]:
+              - cell "6" [ref=e687]
+              - cell "上海合晶" [ref=e688]:
+                - link "上海合晶" [ref=e689] [cursor=pointer]:
+                  - /url: /S/SH688584
+              - cell [ref=e690]
+              - cell "+20.00%" [ref=e691]
+            - row "7 绿通科技 +20.00%" [ref=e692]:
+              - cell "7" [ref=e693]
+              - cell "绿通科技" [ref=e694]:
+                - link "绿通科技" [ref=e695] [cursor=pointer]:
+                  - /url: /S/SZ301322
+              - cell [ref=e696]
+              - cell "+20.00%" [ref=e697]
+            - row "8 金利华电 +20.00%" [ref=e698]:
+              - cell "8" [ref=e699]
+              - cell "金利华电" [ref=e700]:
+                - link "金利华电" [ref=e701] [cursor=pointer]:
+                  - /url: /S/SZ300069
+              - cell [ref=e702]
+              - cell "+20.00%" [ref=e703]
+            - row "9 利和兴 +20.00%" [ref=e704]:
+              - cell "9" [ref=e705]
+              - cell "利和兴" [ref=e706]:
+                - link "利和兴" [ref=e707] [cursor=pointer]:
+                  - /url: /S/SZ301013
+              - cell [ref=e708]
+              - cell "+20.00%" [ref=e709]
+            - row "10 瑞华泰 +20.00%" [ref=e710]:
+              - cell "10" [ref=e711]
+              - cell "瑞华泰" [ref=e712]:
+                - link "瑞华泰" [ref=e713] [cursor=pointer]:
+                  - /url: /S/SH688323
+              - cell [ref=e714]
+              - cell "+20.00%" [ref=e715]
+        - generic [ref=e716]:
+          - heading "热门基金" [level=3] [ref=e717]
+          - table [ref=e718]:
+            - row "1 金元顺安元启混合 年化(近5年) +28.65%" [ref=e719]:
+              - cell "1" [ref=e720]
+              - cell "金元顺安元启混合" [ref=e721]:
+                - link "金元顺安元启混合" [ref=e722] [cursor=pointer]:
+                  - /url: /S/F004685
+              - cell "年化(近5年)" [ref=e723]
+              - cell "+28.65%" [ref=e724]
+            - row "2 华夏中证5G通信主题ETF联接A 年化(近5年) +25.57%" [ref=e725]:
+              - cell "2" [ref=e726]
+              - cell "华夏中证5G通信主题ETF联接A" [ref=e727]:
+                - link "华夏中证5G通信主题ETF联接A" [ref=e728] [cursor=pointer]:
+                  - /url: /S/F008086
+              - cell "年化(近5年)" [ref=e729]
+              - cell "+25.57%" [ref=e730]
+            - row "3 中信保诚全球商品主题（QDII-FOF-LOF)A 年化(近5年) +22.99%" [ref=e731]:
+              - cell "3" [ref=e732]
+              - cell "中信保诚全球商品主题（QDII-FOF-LOF)A" [ref=e733]:
+                - link "中信保诚全球商品主题（QDII-FOF-LOF)A" [ref=e734] [cursor=pointer]:
+                  - /url: /S/F165513
+              - cell "年化(近5年)" [ref=e735]
+              - cell "+22.99%" [ref=e736]
+            - row "4 华商新趋势混合 年化(近5年) +21.29%" [ref=e737]:
+              - cell "4" [ref=e738]
+              - cell "华商新趋势混合" [ref=e739]:
+                - link "华商新趋势混合" [ref=e740] [cursor=pointer]:
+                  - /url: /S/F166301
+              - cell "年化(近5年)" [ref=e741]
+              - cell "+21.29%" [ref=e742]
+            - row "5 宏利转型机遇股票A 年化(近5年) +20.28%" [ref=e743]:
+              - cell "5" [ref=e744]
+              - cell "宏利转型机遇股票A" [ref=e745]:
+                - link "宏利转型机遇股票A" [ref=e746] [cursor=pointer]:
+                  - /url: /S/F000828
+              - cell "年化(近5年)" [ref=e747]
+              - cell "+20.28%" [ref=e748]
+            - row "6 广发石油指数QDII-A 年化(近5年) +20.13%" [ref=e749]:
+              - cell "6" [ref=e750]
+              - cell "广发石油指数QDII-A" [ref=e751]:
+                - link "广发石油指数QDII-A" [ref=e752] [cursor=pointer]:
+                  - /url: /S/F162719
+              - cell "年化(近5年)" [ref=e753]
+              - cell "+20.13%" [ref=e754]
+            - row "7 华安黄金ETF联接A 年化(近5年) +19.65%" [ref=e755]:
+              - cell "7" [ref=e756]
+              - cell "华安黄金ETF联接A" [ref=e757]:
+                - link "华安黄金ETF联接A" [ref=e758] [cursor=pointer]:
+                  - /url: /S/F000216
+              - cell "年化(近5年)" [ref=e759]
+              - cell "+19.65%" [ref=e760]
+            - row "8 前海开源沪港深核心资源C 年化(近5年) +17.75%" [ref=e761]:
+              - cell "8" [ref=e762]
+              - cell "前海开源沪港深核心资源C" [ref=e763]:
+                - link "前海开源沪港深核心资源C" [ref=e764] [cursor=pointer]:
+                  - /url: /S/F003305
+              - cell "年化(近5年)" [ref=e765]
+              - cell "+17.75%" [ref=e766]
+            - row "9 华商盛世成长混合 年化(近5年) +17.27%" [ref=e767]:
+              - cell "9" [ref=e768]
+              - cell "华商盛世成长混合" [ref=e769]:
+                - link "华商盛世成长混合" [ref=e770] [cursor=pointer]:
+                  - /url: /S/F630002
+              - cell "年化(近5年)" [ref=e771]
+              - cell "+17.27%" [ref=e772]
+            - row "10 广发纳指100ETF联接（QDII）人民币A 年化(近5年) +16.86%" [ref=e773]:
+              - cell "10" [ref=e774]
+              - cell "广发纳指100ETF联接（QDII）人民币A" [ref=e775]:
+                - link "广发纳指100ETF联接（QDII）人民币A" [ref=e776] [cursor=pointer]:
+                  - /url: /S/F270042
+              - cell "年化(近5年)" [ref=e777]
+              - cell "+16.86%" [ref=e778]
+        - generic [ref=e779]:
+          - generic [ref=e780]:
+            - link "常见问题" [ref=e781] [cursor=pointer]:
+              - /url: /about/faq
+            - text: ｜
+            - link "关于雪球" [ref=e782] [cursor=pointer]:
+              - /url: /about/what-is-xueqiu
+            - text: ｜
+            - link "投资者教育" [ref=e783] [cursor=pointer]:
+              - /url: /edu/invest-edu
+            - text: ｜
+            - link "风险提示" [ref=e784] [cursor=pointer]:
+              - /url: /about/faq#6_0
+          - generic [ref=e785]:
+            - text: © 2026 XUEQIU.COM 北京雪球信息科技有限公司
+            - link "京公网安备 11010502040379号" [ref=e786] [cursor=pointer]:
+              - /url: https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502040379
+            - text: ·
+            - link "京ICP证100666号" [ref=e787] [cursor=pointer]:
+              - /url: https://xqdoc.imedao.com/198bc1b4fb41d6523feaace4.jpg
+            - link "京ICP备10040543" [ref=e788] [cursor=pointer]:
+              - /url: https://beian.miit.gov.cn/
+            - text: ·
+            - link "京金信备〔2022〕3号" [ref=e789] [cursor=pointer]:
+              - /url: https://fisbaobei.ifcert.cn/Home/homeIindex
+            - link "营业执照" [ref=e790] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/1798dc30dead0453fd6075d8.png
+            - text: ·
+            - link "侵权投诉指引" [ref=e791] [cursor=pointer]:
+              - /url: /law/tortreport
+            - text: ·
+            - link "出版物经营许可证" [ref=e792] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/181b337b7742caf83fee6640.png
+  - text: "* * · * * *"
+  - generic [ref=e794]:
+    - img "fold" [ref=e795]
+    - generic [ref=e796]: 问问投资的问题吧，帮你发现投资好机会

@@ -85,6 +85,14 @@ except ImportError:
     )
 
 try:
+    from .price_target import analyze_price_target
+except ImportError:
+    try:
+        from price_target import analyze_price_target
+    except ImportError:
+        analyze_price_target = None
+
+try:
     from .price_adjustment_validator import validate_adjustment, apply_qfq_adjustment
 except ImportError:
     from price_adjustment_validator import validate_adjustment, apply_qfq_adjustment
@@ -103,20 +111,56 @@ def _min_confidence(current: str, cap: str) -> str:
 
 def _build_advisors(indicators: dict) -> dict:
     """根据当前指标动态生成 advisor 文案，避免模板残留。"""
-    # BIAS
-    bias_5 = indicators.get("bias_5", 0)
-    if bias_5 is not None and bias_5 < 0:
-        bias_state = "负偏离但未到极端"
-        bias_meaning = "提示短线已有回撤，不构成独立买卖信号"
-    elif bias_5 is not None and bias_5 > 3:
-        bias_state = "偏高"
-        bias_meaning = "短线追高性价比下降，但中期趋势未破坏"
+    close = indicators.get("close", 0)
+
+    # BIAS — 历史极值优先 + ATR波动率归一化辅助
+    bias_5 = indicators.get("bias_5")
+    bias_5_extreme_low = indicators.get("bias_5_extreme_low", False)
+    bias_5_extreme_high = indicators.get("bias_5_extreme_high", False)
+    atr_14 = indicators.get("atr_14")
+
+    if bias_5 is not None:
+        direction = "负" if bias_5 < 0 else "正" if bias_5 > 0 else ""
+        bias_5_pct = indicators.get("bias_5_pct")
+
+        if bias_5_extreme_low and bias_5 < 0:
+            bias_state = "严重负偏离（创120日极值）"
+            bias_meaning = "BIAS创近期新低，短线超卖迹象明显，但不单独构成买入信号"
+        elif bias_5_extreme_high and bias_5 > 0:
+            bias_state = "严重正偏离（创120日极值）"
+            bias_meaning = "BIAS创近期新高，短线超买迹象明显，但不单独构成卖出信号"
+        elif bias_5_pct is not None and bias_5_pct < 10 and bias_5 < 0:
+            bias_state = "严重负偏离（处于10%极端分位）"
+            bias_meaning = "BIAS处于近期极端低位，关注技术性修复可能，但不单独构成买入信号"
+        elif bias_5_pct is not None and bias_5_pct > 90 and bias_5 > 0:
+            bias_state = "严重正偏离（处于90%极端分位）"
+            bias_meaning = "BIAS处于近期极端高位，追高风险较大，但不单独构成卖出信号"
+        elif close and atr_14 is not None and atr_14 > 0:
+            atr_pct = atr_14 / close * 100
+            normalized = abs(bias_5) / atr_pct if atr_pct > 0 else 0
+            if normalized >= 2.0:
+                bias_state = f"{direction}偏离（{normalized:.1f}倍日波幅）"
+                bias_meaning = "偏离幅度超过2个日波动，关注技术性修复可能"
+            elif normalized >= 1.0:
+                bias_state = f"{direction}偏离（轻度）"
+                bias_meaning = "偏离在1-2个日波动幅度内，属正常区间"
+            else:
+                bias_state = "正常"
+                bias_meaning = "价格与均线偏离在正常波动范围内"
+        elif bias_5 < -3:
+            bias_state = "负偏离"
+            bias_meaning = "价格低于均线，提示短线已有回撤"
+        elif bias_5 > 3:
+            bias_state = "偏高"
+            bias_meaning = "价格高于均线，追高性价比下降"
+        else:
+            bias_state = "正常"
+            bias_meaning = "价格与均线偏离适中"
     else:
         bias_state = "正常"
         bias_meaning = "价格与均线偏离适中"
 
     # BOLL
-    close = indicators.get("close", 0)
     boll_lower = indicators.get("boll_lower")
     boll_upper = indicators.get("boll_upper")
     boll_state = indicators.get("boll_state", "正常")
@@ -155,15 +199,31 @@ def _build_advisors(indicators: dict) -> dict:
     else:
         macd_state = "空头延续"
 
+    # RSI
+    rsi_value = indicators.get("rsi_14")
+    if rsi_value is not None:
+        if rsi_value < 30:
+            rsi_state = "超卖"
+            rsi_meaning = "RSI进入超卖区，存在技术性反弹可能，但不单独构成买入信号"
+        elif rsi_value > 70:
+            rsi_state = "超买/强势钝化"
+            rsi_meaning = "强趋势中不单独构成卖出信号"
+        else:
+            rsi_state = "正常"
+            rsi_meaning = "RSI处于中性区间"
+    else:
+        rsi_state = "正常"
+        rsi_meaning = "RSI处于中性区间"
+
     return {
         "macd": {
             "state": macd_state,
             "meaning": "仅作趋势确认，不单独构成买卖信号",
         },
         "rsi": {
-            "value": indicators.get("rsi_14"),
-            "state": "强势钝化" if indicators.get("rsi_14", 50) > 70 else "正常",
-            "meaning": "强趋势中不单独构成卖出信号",
+            "value": rsi_value,
+            "state": rsi_state,
+            "meaning": rsi_meaning,
         },
         "bias": {
             "state": bias_state,
@@ -732,6 +792,7 @@ def advanced_medium_term_resonance(
         "key_levels": {
             "support_zone": sr_result.get("support_zone"),
             "resistance_zone": sr_result.get("resistance_zone"),
+            "diagnostics": sr_result.get("diagnostics"),
             "medium_term_invalid": invalidation.get("hard_invalid_price"),
         },
         "invalidation": invalidation,
@@ -841,9 +902,23 @@ def advanced_medium_term_resonance(
         if false_breakout:
             _resonance["false_breakout"] = false_breakout
 
+    # 价格目标分析
+    price_target_result = None
+    if analyze_price_target is not None and df_weekly is not None:
+        try:
+            price_target_result = analyze_price_target(
+                df_daily=df_daily,
+                df_weekly=df_weekly,
+                current_price=indicators.get("close", 0),
+                daily_indicators=indicators,
+            )
+        except Exception:
+            pass
+
     return {
         "indicators": indicators,
         "resonance": _resonance,
+        "price_target": price_target_result,
         "patterns": [],
         "levels": {
             "support": sr_result["support_zone"]["price"] if sr_result.get("support_zone") else None,

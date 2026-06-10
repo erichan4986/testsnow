@@ -1,0 +1,966 @@
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "雪球 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img "雪球" [ref=e11]
+          - generic [ref=e12]: 首页
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "搜索" [ref=e15]
+          - button "" [ref=e17] [cursor=pointer]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link [ref=e20] [cursor=pointer]:
+              - /url: https://ai.xueqiu.com/chat
+              - img [ref=e21]
+          - listitem [ref=e22]:
+            - link "" [ref=e23] [cursor=pointer]:
+              - /url: /snb/web/cs?from=xq
+          - listitem [ref=e24]:
+            - link "" [ref=e25] [cursor=pointer]:
+              - /url: javascript:;
+          - listitem [ref=e26]:
+            - link "下载App" [ref=e27] [cursor=pointer]:
+              - /url: "javascript:"
+          - listitem [ref=e28]:
+            - generic [ref=e29] [cursor=pointer]: 发帖
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - strong [ref=e32]: 公司概况
+      - list [ref=e33]:
+        - listitem [ref=e34]:
+          - link "公司简介" [ref=e35] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/GSJJ
+        - listitem [ref=e36]:
+          - link "公司高管" [ref=e37] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/GSGG
+      - strong [ref=e38]: 股权信息
+      - list [ref=e39]:
+        - listitem [ref=e40]:
+          - link "股本结构" [ref=e41] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/GBJG
+        - listitem [ref=e42]:
+          - link "十大股东" [ref=e43] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/SDGD
+        - listitem [ref=e44]:
+          - link "十大流通股东" [ref=e45] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/LTGD
+        - listitem [ref=e46]:
+          - link "基金持股" [ref=e47] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/JJCG
+        - listitem [ref=e48]:
+          - link "高管增减持" [ref=e49] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/GGZJC
+        - listitem [ref=e50]:
+          - link "股东人数" [ref=e51] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/GDRS
+        - listitem [ref=e52]:
+          - link "限售解禁" [ref=e53] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/XSJJ
+      - strong [ref=e54]: 股票交易
+      - list [ref=e55]:
+        - listitem [ref=e56]:
+          - link "成交明细" [ref=e57] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688188.htm#detail
+        - listitem [ref=e58]:
+          - link "分价表" [ref=e59] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688188.htm#price
+        - listitem [ref=e60]:
+          - link "大单统计" [ref=e61] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688188.htm#dadan
+        - listitem [ref=e62]:
+          - link "大宗交易" [ref=e63] [cursor=pointer]:
+            - /url: http://data.eastmoney.com/dzjy/detail/688188.html
+        - listitem [ref=e64]:
+          - link "龙虎榜数据" [ref=e65] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/LHB
+        - listitem [ref=e66]:
+          - link "融资融券" [ref=e67] [cursor=pointer]:
+            - /url: http://stockdata.stock.hexun.com/rzrq/s688188.shtml
+      - strong [ref=e68]: 公司公告
+      - list [ref=e69]:
+        - listitem [ref=e70]:
+          - link "最新公告" [ref=e71] [cursor=pointer]:
+            - /url: http://www.sse.com.cn/assortment/stock/list/info/announcement/index.shtml?productId=688188
+        - listitem [ref=e72]:
+          - link "年度报告" [ref=e73] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vCB_Bulletin/stockid/688188/page_type/ndbg.phtml
+      - strong [ref=e74]: 公司运作
+      - list [ref=e75]:
+        - listitem [ref=e76]:
+          - link "股东大会" [ref=e77] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vGP_StockHolderMeeting/stockid/688188.phtml
+        - listitem [ref=e78]:
+          - link "收入构成" [ref=e79] [cursor=pointer]:
+            - /url: http://stockpage.10jqka.com.cn/688188/operate/#analysis
+        - listitem [ref=e80]:
+          - link "重大事项" [ref=e81] [cursor=pointer]:
+            - /url: http://q.stock.sohu.com/cn/688188/bw.shtml
+        - listitem [ref=e82]:
+          - link "分红送配" [ref=e83] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/FHPS
+        - listitem [ref=e84]:
+          - link "增发一览" [ref=e85] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/ZFYLB
+        - listitem [ref=e86]:
+          - link "内部交易" [ref=e87] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/INSIDER
+      - strong [ref=e88]: 财务数据
+      - list [ref=e89]:
+        - listitem [ref=e90]:
+          - link "业绩预告" [ref=e91] [cursor=pointer]:
+            - /url: http://stockhtm.finance.qq.com/sstock/quotpage/q/688188.htm#10
+        - listitem [ref=e92]:
+          - link "主要指标" [ref=e93] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/ZYCWZB
+        - listitem [ref=e94]:
+          - link "利润表" [ref=e95] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/GSLRB
+        - listitem [ref=e96]:
+          - link "资产负债表" [ref=e97] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/ZCFZB
+        - listitem [ref=e98]:
+          - link "现金流量表" [ref=e99] [cursor=pointer]:
+            - /url: /S/SH688188/detail/#/XJLLB
+        - listitem [ref=e100]:
+          - link "所有者权益变动" [ref=e101] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_BenifitChange/stockid/688188/displaytype/4.phtml
+        - listitem [ref=e102]:
+          - link "雪球选股器" [ref=e103] [cursor=pointer]:
+            - /url: /stock/screener
+      - strong [ref=e104]: 研究分析
+      - list [ref=e105]:
+        - listitem [ref=e106]:
+          - link "杜邦分析" [ref=e107] [cursor=pointer]:
+            - /url: https://vip.stock.finance.sina.com.cn/corp/go.php/vFD_DupontAnalysis/stockid/688188/displaytype/10.phtml
+        - listitem [ref=e108]:
+          - link "研究报告" [ref=e109] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/q/go.php/vReport_List/kind/search/index.phtml?t1=2&symbol=688188
+      - strong [ref=e110]: APP专享
+      - list [ref=e111]:
+        - listitem [ref=e112] [cursor=pointer]: 大盘异动
+        - listitem [ref=e113] [cursor=pointer]: 股价提醒
+        - listitem [ref=e114] [cursor=pointer]: 购买指数
+        - listitem [ref=e115] [cursor=pointer]: 相关ETF
+    - generic [ref=e116]:
+      - heading "柏楚电子(SH:688188)" [level=1] [ref=e117]
+      - generic [ref=e118]:
+        - generic [ref=e119]: 沪股通
+        - generic [ref=e120]: 可融资
+        - generic [ref=e121]: 可卖空
+        - generic [ref=e122]: 科创板
+      - generic [ref=e123]:
+        - img "微信分享" [ref=e126] [cursor=pointer]
+        - link "" [ref=e128] [cursor=pointer]:
+          - /url: "#"
+        - link "加自选" [ref=e129] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e131]:
+        - generic [ref=e132]:
+          - generic [ref=e133]:
+            - strong [ref=e135]: ¥177.81
+            - generic [ref=e136]: +3.27 +1.87%
+          - generic [ref=e137]:
+            - generic [ref=e138]: 2.23 万球友关注
+            - generic [ref=e139]: 已收盘 05-20 15:00:00 北京时间
+        - table [ref=e140]:
+          - rowgroup [ref=e141]:
+            - row "最高：178.68 今开：172.00 涨停：209.45 成交量：346.40万" [ref=e142]:
+              - cell "最高：178.68" [ref=e143]
+              - cell "今开：172.00" [ref=e144]
+              - cell "涨停：209.45" [ref=e145]
+              - cell "成交量：346.40万" [ref=e146]
+            - row "最低：171.01 昨收：174.54 跌停：139.63 成交额：6.12亿" [ref=e147]:
+              - cell "最低：171.01" [ref=e148]
+              - cell "昨收：174.54" [ref=e149]
+              - cell "跌停：139.63" [ref=e150]
+              - cell "成交额：6.12亿" [ref=e151]
+            - row "换手：1.20% 盘后量：0 量比：0.87 总市值：515.09亿" [ref=e152]:
+              - cell "换手：1.20%" [ref=e153]
+              - cell "盘后量：0" [ref=e154]
+              - cell "量比：0.87" [ref=e155]
+              - cell "总市值：515.09亿" [ref=e156]
+            - row "振幅：4.39% 盘后额：0.00 委比：29.87% 流通值：515.09亿" [ref=e157]:
+              - cell "振幅：4.39%" [ref=e158]
+              - cell "盘后额：0.00" [ref=e159]
+              - cell "委比：29.87%" [ref=e160]
+              - cell "流通值：515.09亿" [ref=e161]
+            - row "市盈率(动)：40.69 市盈率(TTM)：43.89 每股收益：4.05 股息(TTM)：2.58" [ref=e162]:
+              - cell "市盈率(动)：40.69" [ref=e163]
+              - cell "市盈率(TTM)：43.89" [ref=e164]
+              - cell "每股收益：4.05" [ref=e165]
+              - cell "股息(TTM)：2.58" [ref=e166]
+            - row "市盈率(静)：46.30 市净率：8.03 每股净资产：22.13 股息率(TTM)：1.45%" [ref=e167]:
+              - cell "市盈率(静)：46.30" [ref=e168]
+              - cell "市净率：8.03" [ref=e169]
+              - cell "每股净资产：22.13" [ref=e170]
+              - cell "股息率(TTM)：1.45%" [ref=e171]
+            - row "52周最高：179.78 总股本：2.90亿 表决权：无差异 注册制：是" [ref=e172]:
+              - cell "52周最高：179.78" [ref=e173]
+              - cell "总股本：2.90亿" [ref=e174]
+              - cell "表决权：无差异" [ref=e175]
+              - cell "注册制：是" [ref=e176]
+            - row "52周最低：125.72 流通股：2.90亿 盈利情况：-- 货币单位：CNY" [ref=e177]:
+              - cell "52周最低：125.72" [ref=e178]
+              - cell "流通股：2.90亿" [ref=e179]
+              - cell "盈利情况：--" [ref=e180]
+              - cell "货币单位：CNY" [ref=e181]
+      - generic [ref=e184] [cursor=pointer]:
+        - generic [ref=e185]:
+          - generic [ref=e186]: 分时
+          - generic [ref=e187]: 五日
+          - generic [ref=e188]: 日K
+          - generic [ref=e189]: 周K
+          - generic [ref=e190]: 月K
+          - generic [ref=e191]: 季K
+          - generic [ref=e192]: 年K
+          - generic [ref=e193]: 120分
+          - generic [ref=e194]: 60分
+          - generic [ref=e195]: 30分
+          - generic [ref=e196]: 15分
+          - generic [ref=e197]: 5分
+          - generic [ref=e198]: 1分
+        - list [ref=e199]:
+          - listitem [ref=e200]: 区间统计
+          - listitem [ref=e201]: 全屏显示
+      - link "都在问 柏 楚 电 子 净 利 率 下 滑 的 原 因 是 什 么 ？" [ref=e205] [cursor=pointer]:
+        - /url: https://ai.xueqiu.com/ai/seekball/chat?shareId=s-3cce604d-3f17-4ec2-a1ed-f21800622327&navBarTransparent=1&navBarTheme=dark&ref=1&module=2&symbol=SH688188
+        - paragraph [ref=e206]:
+          - generic [ref=e207]: 都在问
+          - generic [ref=e208]: 柏
+          - generic [ref=e209]: 楚
+          - generic [ref=e210]: 电
+          - generic [ref=e211]: 子
+          - generic [ref=e212]: 净
+          - generic [ref=e213]: 利
+          - generic [ref=e214]: 率
+          - generic [ref=e215]: 下
+          - generic [ref=e216]: 滑
+          - generic [ref=e217]: 的
+          - generic [ref=e218]: 原
+          - generic [ref=e219]: 因
+          - generic [ref=e220]: 是
+          - generic [ref=e221]: 什
+          - generic [ref=e222]: 么
+          - generic [ref=e223]: ？
+      - generic [ref=e225]:
+        - img [ref=e226]
+        - generic [ref=e227]:
+          - generic [ref=e229]: $柏楚电子(SH688188)$
+          - generic [ref=e230]:
+            - generic [ref=e231]:
+              - link "" [ref=e233] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e234]: 
+              - link "" [ref=e235] [cursor=pointer]:
+                - /url: javascript:;
+                - generic [ref=e236]: 
+              - link "" [ref=e237] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e238]: 
+              - link "" [ref=e239] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e240]: 
+              - link "" [ref=e241] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e242]: 
+              - link [ref=e244] [cursor=pointer]:
+                - /url: ""
+                - img [ref=e245]
+              - link " 长文" [ref=e247] [cursor=pointer]:
+                - /url: https://mp.xueqiu.com/write/?position=pc_stock_post
+                - generic [ref=e248]: 
+                - text: 长文
+            - link "发布" [ref=e250]:
+              - /url: ""
+      - generic [ref=e251]:
+        - generic [ref=e252]:
+          - link "全部" [ref=e253] [cursor=pointer]:
+            - /url: ""
+          - link "讨论" [ref=e254] [cursor=pointer]:
+            - /url: ""
+          - link "交易" [ref=e255] [cursor=pointer]:
+            - /url: ""
+          - link "资讯" [ref=e256] [cursor=pointer]:
+            - /url: ""
+          - link "公告" [ref=e257] [cursor=pointer]:
+            - /url: ""
+        - generic [ref=e258]:
+          - generic [ref=e260]:
+            - link "新帖" [ref=e261] [cursor=pointer]:
+              - /url: ""
+            - link "热帖" [ref=e262] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e264]:
+            - textbox "搜索该股票相关信息" [ref=e265]
+            - generic [ref=e266]: 
+        - generic [ref=e267]:
+          - article [ref=e268]:
+            - link [ref=e269] [cursor=pointer]:
+              - /url: /1189289630
+              - img [ref=e270]
+            - generic [ref=e271]:
+              - generic [ref=e273]:
+                - link "奔跑长牛" [ref=e274] [cursor=pointer]:
+                  - /url: /1189289630
+                - link "37分钟前· 来自Android" [ref=e275] [cursor=pointer]:
+                  - /url: /1189289630/389966653
+              - generic [ref=e279]:
+                - link "$柏楚电子(SH688188)$" [ref=e280] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688188
+                - text: 中国激光加工切割龙头？高毛利高利润高增长，全球唯三，中国唯一？无人问津？tell me why!
+              - generic [ref=e281]:
+                - link " 转发" [ref=e282] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e283]: 
+                  - generic [ref=e284]: 转发
+                - link " 4" [ref=e285] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e286]: 
+                  - generic [ref=e287]: "4"
+                - link " 赞" [ref=e288] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e289]: 
+                  - generic [ref=e290]: 赞
+                - link " 收藏" [ref=e291] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e292]: 
+                  - generic [ref=e293]: 收藏
+          - article [ref=e294]:
+            - link [ref=e295] [cursor=pointer]:
+              - /url: /9487417059
+              - img [ref=e296]
+            - generic [ref=e297]:
+              - generic [ref=e299]:
+                - link "股海王朝" [ref=e300] [cursor=pointer]:
+                  - /url: /9487417059
+                - link "1小时前· 来自Android" [ref=e301] [cursor=pointer]:
+                  - /url: /9487417059/389955662
+              - generic [ref=e302]:
+                - generic [ref=e304]:
+                  - generic [ref=e305]:
+                    - link "$先导基电(SH600641)$" [ref=e306] [cursor=pointer]:
+                      - /url: https://xueqiu.com/S/SH600641
+                    - link "$日联科技(SH688531)$" [ref=e307] [cursor=pointer]:
+                      - /url: https://xueqiu.com/S/SH688531
+                    - link "$柏楚电子(SH688188)$" [ref=e308] [cursor=pointer]:
+                      - /url: https://xueqiu.com/S/SH688188
+                    - text: 先导基电在未来三年面临巨大的发展机会！
+                    - text: 先导基电（600641）公司自2024年底完成战略转型后，已经彻底剥离了传统房地产业务，全面锚定“半导体装备+核心零部件+新材料”的平台化硬科技布局。未来三年的巨大机会主要体现在以下...
+                  - link "展开" [ref=e309] [cursor=pointer]:
+                    - /url: ""
+                - img [ref=e311]
+              - generic [ref=e312]:
+                - link " 1" [ref=e313] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e314]: 
+                  - generic [ref=e315]: "1"
+                - link " 1" [ref=e316] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e317]: 
+                  - generic [ref=e318]: "1"
+                - link " 12" [ref=e319] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e320]: 
+                  - generic [ref=e321]: "12"
+                - link " 收藏" [ref=e322] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e323]: 
+                  - generic [ref=e324]: 收藏
+          - article [ref=e325]:
+            - link [ref=e326] [cursor=pointer]:
+              - /url: /7100212832
+              - img [ref=e327]
+            - generic [ref=e328]:
+              - generic [ref=e330]:
+                - link "方心景" [ref=e331] [cursor=pointer]:
+                  - /url: /7100212832
+                - link "9小时前· 来自雪球" [ref=e332] [cursor=pointer]:
+                  - /url: /7100212832/389827865
+              - generic [ref=e334] [cursor=pointer]:
+                - heading "专栏丨 现金为锚：深挖柏楚电子的盈利质量、估值与风险" [level=3] [ref=e335]:
+                  - strong [ref=e336]: 专栏丨
+                  - text: 现金为锚：深挖柏楚电子的盈利质量、估值与风险
+                - generic [ref=e338]:
+                  - text: 上篇分析完了柏楚电子的商业模式和护城河，核心结论：它是披着制造业外衣的软件公司，护城河靠操作工习惯锁定加全链条技术壁垒，软硬一体转型既是打开空间的钥匙也是拉低利润率的结构性压力。
+                  - text: 今天看财报有个数据组合感觉挺反直觉，柏楚电子净利率从2021年的60%一路滑到2025年的51%，但同一时...
+                - img [ref=e340]
+              - generic [ref=e341]:
+                - link " 转发" [ref=e342] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e343]: 
+                  - generic [ref=e344]: 转发
+                - link " 讨论" [ref=e345] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e346]: 
+                  - generic [ref=e347]: 讨论
+                - link " 2" [ref=e348] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e349]: 
+                  - generic [ref=e350]: "2"
+                - link " 收藏" [ref=e351] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e352]: 
+                  - generic [ref=e353]: 收藏
+          - article [ref=e354]:
+            - link [ref=e355] [cursor=pointer]:
+              - /url: /6761012553
+              - img [ref=e356]
+            - generic [ref=e357]:
+              - generic [ref=e359]:
+                - link "我是中登我怕谁" [ref=e360] [cursor=pointer]:
+                  - /url: /6761012553
+                - link "昨天 18:14· 来自iPhone" [ref=e361] [cursor=pointer]:
+                  - /url: /6761012553/389738369
+              - generic [ref=e365]:
+                - link "$柏楚电子(SH688188)$" [ref=e366] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688188
+                - text: 连续三个长上影
+              - generic [ref=e367]:
+                - link " 转发" [ref=e368] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e369]: 
+                  - generic [ref=e370]: 转发
+                - link " 2" [ref=e371] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e372]: 
+                  - generic [ref=e373]: "2"
+                - link " 3" [ref=e374] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e375]: 
+                  - generic [ref=e376]: "3"
+                - link " 收藏" [ref=e377] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e378]: 
+                  - generic [ref=e379]: 收藏
+          - article [ref=e380]:
+            - link [ref=e381] [cursor=pointer]:
+              - /url: /5100750911
+              - img [ref=e382]
+            - generic [ref=e383]:
+              - generic [ref=e385]:
+                - link "蓝空轻拥" [ref=e386] [cursor=pointer]:
+                  - /url: /5100750911
+                - link "昨天 17:07· 来自iPhone" [ref=e387] [cursor=pointer]:
+                  - /url: /5100750911/389725364
+              - generic [ref=e390]:
+                - generic [ref=e391]:
+                  - link "$柏楚电子(SH688188)$" [ref=e392] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SH688188
+                  - text: 柏楚电子：
+                  - text: 1）订单已明确改善（4月订单同比+30%左右，5月订单有望增速更快，主要系：下游PCB切割、泛AI、船舶、工程机械等领域订单持续改善）；
+                  - text: 2）智能焊接系统26年预计销售再翻倍达2800套左右，27/28年有望持续翻倍；
+                  - text: 3）PCB/AI相关激光切割系统已从0-1进入1-...
+                - link "展开" [ref=e393] [cursor=pointer]:
+                  - /url: ""
+              - generic [ref=e394]:
+                - link " 转发" [ref=e395] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e396]: 
+                  - generic [ref=e397]: 转发
+                - link " 6" [ref=e398] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e399]: 
+                  - generic [ref=e400]: "6"
+                - link " 12" [ref=e401] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e402]: 
+                  - generic [ref=e403]: "12"
+                - link " 收藏" [ref=e404] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e405]: 
+                  - generic [ref=e406]: 收藏
+          - article [ref=e407]:
+            - link [ref=e408] [cursor=pointer]:
+              - /url: /3291044181
+              - img [ref=e409]
+            - generic [ref=e410]:
+              - generic [ref=e412]:
+                - link "AIer4" [ref=e413] [cursor=pointer]:
+                  - /url: /3291044181
+                - link "昨天 15:43· 来自iPhone" [ref=e414] [cursor=pointer]:
+                  - /url: /3291044181/389707416
+              - generic [ref=e418]:
+                - link "$柏楚电子(SH688188)$" [ref=e419] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688188
+                - text: 真正的技术之王，中国发那科，静候下游回暖，第一步先超汇川
+              - generic [ref=e420]:
+                - link " 转发" [ref=e421] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e422]: 
+                  - generic [ref=e423]: 转发
+                - link " 讨论" [ref=e424] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e425]: 
+                  - generic [ref=e426]: 讨论
+                - link " 6" [ref=e427] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e428]: 
+                  - generic [ref=e429]: "6"
+                - link " 收藏" [ref=e430] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e431]: 
+                  - generic [ref=e432]: 收藏
+          - article [ref=e433]:
+            - link [ref=e434] [cursor=pointer]:
+              - /url: /8256953988
+              - img [ref=e435]
+            - generic [ref=e436]:
+              - generic [ref=e438]:
+                - link "娱己" [ref=e439] [cursor=pointer]:
+                  - /url: /8256953988
+                - link "昨天 13:15· 来自HarmonyOS" [ref=e440] [cursor=pointer]:
+                  - /url: /8256953988/389665111
+              - generic [ref=e444]:
+                - link "$柏楚电子(SH688188)$" [ref=e445] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688188
+                - text: 六个点给整没了，人才
+                - img "[想一下]" [ref=e446]
+              - generic [ref=e447]:
+                - link " 转发" [ref=e448] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e449]: 
+                  - generic [ref=e450]: 转发
+                - link " 讨论" [ref=e451] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e452]: 
+                  - generic [ref=e453]: 讨论
+                - link " 赞" [ref=e454] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e455]: 
+                  - generic [ref=e456]: 赞
+                - link " 收藏" [ref=e457] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e458]: 
+                  - generic [ref=e459]: 收藏
+          - article [ref=e460]:
+            - link [ref=e461] [cursor=pointer]:
+              - /url: /1332729867
+              - img [ref=e462]
+            - generic [ref=e463]:
+              - generic [ref=e465]:
+                - link "-湖广总督" [ref=e466] [cursor=pointer]:
+                  - /url: /1332729867
+                - link "昨天 10:59· 来自iPhone" [ref=e467] [cursor=pointer]:
+                  - /url: /1332729867/389635831
+              - generic [ref=e468]:
+                - generic [ref=e471]:
+                  - link "$柏楚电子(SH688188)$" [ref=e472] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SH688188
+                  - text: 你今天有什么说法？仙人指路
+                  - img "[祝涨]" [ref=e473]
+                  - img "[祝涨]" [ref=e474]
+                  - img "[祝涨]" [ref=e475]
+                - blockquote [ref=e476] [cursor=pointer]:
+                  - link "@-湖广总督 ：" [ref=e478]:
+                    - /url: /1332729867
+                    - generic [ref=e479]: "@-湖广总督"
+                    - generic [ref=e480]: ：
+                  - generic [ref=e483]:
+                    - link "$柏楚电子(SH688188)$" [ref=e484]:
+                      - /url: https://xueqiu.com/S/SH688188
+                    - text: 买了点柏楚，高位的涨幅大的不敢追。柏楚这两年都在打酱油，今年应该是奋发图强年
+                    - img "[加油]" [ref=e485]
+                    - img "[贴好运]" [ref=e486]
+                    - img "[涨]" [ref=e487]
+                    - img "[呲牙]" [ref=e488]
+                  - generic [ref=e489]:
+                    - text: 05-13 14:08
+                    - link "· 讨论 3" [ref=e490]:
+                      - /url: /1332729867/388599374#comment
+                    - text: · 赞 1
+              - generic [ref=e491]:
+                - link " 转发" [ref=e492] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e493]: 
+                  - generic [ref=e494]: 转发
+                - link " 讨论" [ref=e495] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e496]: 
+                  - generic [ref=e497]: 讨论
+                - link " 4" [ref=e498] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e499]: 
+                  - generic [ref=e500]: "4"
+                - link " 收藏" [ref=e501] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e502]: 
+                  - generic [ref=e503]: 收藏
+          - article [ref=e504]:
+            - link [ref=e505] [cursor=pointer]:
+              - /url: /5311339444
+              - img [ref=e506]
+            - generic [ref=e507]:
+              - generic [ref=e509]:
+                - link "投资消遣" [ref=e510] [cursor=pointer]:
+                  - /url: /5311339444
+                - link "昨天 10:19· 来自Android" [ref=e511] [cursor=pointer]:
+                  - /url: /5311339444/389620785
+              - generic [ref=e515]:
+                - link "$柏楚电子(SH688188)$" [ref=e516] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688188
+                - text: 非常好的走势，所有的上影线都会被吞没！
+              - generic [ref=e517]:
+                - link " 转发" [ref=e518] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e519]: 
+                  - generic [ref=e520]: 转发
+                - link " 讨论" [ref=e521] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e522]: 
+                  - generic [ref=e523]: 讨论
+                - link " 4" [ref=e524] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e525]: 
+                  - generic [ref=e526]: "4"
+                - link " 收藏" [ref=e527] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e528]: 
+                  - generic [ref=e529]: 收藏
+          - article [ref=e530]:
+            - link [ref=e531] [cursor=pointer]:
+              - /url: /1332729867
+              - img [ref=e532]
+            - generic [ref=e533]:
+              - generic [ref=e535]:
+                - link "-湖广总督" [ref=e536] [cursor=pointer]:
+                  - /url: /1332729867
+                - link "昨天 10:17· 来自iPhone" [ref=e537] [cursor=pointer]:
+                  - /url: /1332729867/389619661
+              - generic [ref=e538]:
+                - generic [ref=e541]:
+                  - link "$柏楚电子(SH688188)$" [ref=e542] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SH688188
+                  - text: 早盘冲高回落，继续加仓
+                  - img "[辣眼睛]" [ref=e543]
+                  - img "[贴好运]" [ref=e544]
+                  - img "[涨]" [ref=e545]
+                - blockquote [ref=e546] [cursor=pointer]:
+                  - link "@-湖广总督 ：" [ref=e548]:
+                    - /url: /1332729867
+                    - generic [ref=e549]: "@-湖广总督"
+                    - generic [ref=e550]: ：
+                  - generic [ref=e553]:
+                    - link "$昊华科技(SH600378)$" [ref=e554]:
+                      - /url: https://xueqiu.com/S/SH600378
+                    - text: 今天买了点气体玩玩
+                    - img "[贴好运]" [ref=e555]
+                    - img "[涨]" [ref=e556]
+                  - generic [ref=e557]:
+                    - text: 05-14 14:19
+                    - link "· 讨论 4" [ref=e558]:
+                      - /url: /1332729867/388855325#comment
+              - generic [ref=e559]:
+                - link " 转发" [ref=e560] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e561]: 
+                  - generic [ref=e562]: 转发
+                - link " 讨论" [ref=e563] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e564]: 
+                  - generic [ref=e565]: 讨论
+                - link " 1" [ref=e566] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e567]: 
+                  - generic [ref=e568]: "1"
+                - link " 收藏" [ref=e569] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e570]: 
+                  - generic [ref=e571]: 收藏
+        - generic [ref=e572]:
+          - link "1" [ref=e573] [cursor=pointer]:
+            - /url: ""
+          - link "2" [ref=e574] [cursor=pointer]:
+            - /url: ""
+          - link "3" [ref=e575] [cursor=pointer]:
+            - /url: ""
+          - link "4" [ref=e576] [cursor=pointer]:
+            - /url: ""
+          - link "5" [ref=e577] [cursor=pointer]:
+            - /url: ""
+          - text: ...
+          - link "100" [ref=e578] [cursor=pointer]:
+            - /url: ""
+          - link "下一页" [ref=e579] [cursor=pointer]:
+            - /url: ""
+          - textbox [ref=e580]
+    - generic [ref=e581]:
+      - generic [ref=e582]:
+        - generic [ref=e584]: 简介
+        - generic [ref=e586]:
+          - text: 上海柏楚电子科技股份有限公司的主营业务是激光切割控制系统的研发、生产和销售。公司的主要产品是FSCUT2000E、FSCUT300...
+          - link "展开" [ref=e587] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e588]:
+        - generic [ref=e590]: 业务
+        - generic [ref=e591]: 激光切割控制系统的研发、生产和销售。
+      - generic [ref=e592]:
+        - generic [ref=e593]:
+          - generic [ref=e594]: 影响力用户
+          - link "下五位" [ref=e596] [cursor=pointer]:
+            - /url: "#"
+        - list [ref=e598]:
+          - link "Windson19830918 5014粉丝、56条相关讨论" [ref=e599] [cursor=pointer]:
+            - /url: /u/4670036682
+            - listitem [ref=e600]:
+              - img [ref=e602]
+              - generic [ref=e603]:
+                - generic [ref=e604]: Windson19830918
+                - generic [ref=e605]: 5014粉丝、56条相关讨论
+          - link "股海王朝 17222粉丝、12条相关讨论" [ref=e606] [cursor=pointer]:
+            - /url: /u/9487417059
+            - listitem [ref=e607]:
+              - img [ref=e609]
+              - generic [ref=e610]:
+                - generic [ref=e611]: 股海王朝
+                - generic [ref=e612]: 17222粉丝、12条相关讨论
+          - link "路人JYB 5369粉丝、15条相关讨论" [ref=e613] [cursor=pointer]:
+            - /url: /u/5409603691
+            - listitem [ref=e614]:
+              - img [ref=e616]
+              - generic [ref=e617]:
+                - generic [ref=e618]: 路人JYB
+                - generic [ref=e619]: 5369粉丝、15条相关讨论
+          - link "一往情深fao 1280粉丝、166条相关讨论" [ref=e620] [cursor=pointer]:
+            - /url: /u/2787807475
+            - listitem [ref=e621]:
+              - img [ref=e623]
+              - generic [ref=e624]:
+                - generic [ref=e625]: 一往情深fao
+                - generic [ref=e626]: 1280粉丝、166条相关讨论
+          - link "致远复利农庄 21915粉丝、6条相关讨论" [ref=e627] [cursor=pointer]:
+            - /url: /u/6472712625
+            - listitem [ref=e628]:
+              - img [ref=e630]
+              - generic [ref=e631]:
+                - generic [ref=e632]: 致远复利农庄
+                - generic [ref=e633]: 21915粉丝、6条相关讨论
+      - generic [ref=e634]:
+        - generic [ref=e636]:
+          - link "22266" [ref=e637] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/S/SH688188/detail#/follow
+          - text: 人关注了该股票
+        - list [ref=e639]:
+          - listitem [ref=e640]:
+            - link [ref=e641] [cursor=pointer]:
+              - /url: /8681110101
+              - img [ref=e642]
+          - listitem [ref=e643]:
+            - link [ref=e644] [cursor=pointer]:
+              - /url: /6379226890
+              - img [ref=e645]
+          - listitem [ref=e646]:
+            - link [ref=e647] [cursor=pointer]:
+              - /url: /8251941836
+              - img [ref=e648]
+          - listitem [ref=e649]:
+            - link [ref=e650] [cursor=pointer]:
+              - /url: /5118356645
+              - img [ref=e651]
+          - listitem [ref=e652]:
+            - link [ref=e653] [cursor=pointer]:
+              - /url: /6023395045
+              - img [ref=e654]
+          - listitem [ref=e655]:
+            - link [ref=e656] [cursor=pointer]:
+              - /url: /5425052602
+              - img [ref=e657]
+          - listitem [ref=e658]:
+            - link [ref=e659] [cursor=pointer]:
+              - /url: /2480241098
+              - img [ref=e660]
+          - listitem [ref=e661]:
+            - link [ref=e662] [cursor=pointer]:
+              - /url: /8785917970
+              - img [ref=e663]
+          - listitem [ref=e664]:
+            - link [ref=e665] [cursor=pointer]:
+              - /url: /2994841713
+              - img [ref=e666]
+          - listitem [ref=e667]:
+            - link [ref=e668] [cursor=pointer]:
+              - /url: /7122662399
+              - img [ref=e669]
+          - listitem [ref=e670]:
+            - link [ref=e671] [cursor=pointer]:
+              - /url: /9046993068
+              - img [ref=e672]
+          - listitem [ref=e673]:
+            - link [ref=e674] [cursor=pointer]:
+              - /url: /1527527685
+              - img [ref=e675]
+          - listitem [ref=e676]:
+            - link [ref=e677] [cursor=pointer]:
+              - /url: /9838400777
+              - img [ref=e678]
+          - listitem [ref=e679]:
+            - link [ref=e680] [cursor=pointer]:
+              - /url: /2375183939
+              - img [ref=e681]
+      - generic [ref=e682]:
+        - generic [ref=e684]: 相关股票
+        - list [ref=e686]:
+          - generic [ref=e687]:
+            - generic [ref=e688]:
+              - link "东芯股份" [ref=e689] [cursor=pointer]:
+                - /url: /S/SH688110
+              - generic [ref=e690]: SH688110
+            - generic [ref=e691]:
+              - generic [ref=e692]: "164.75"
+              - generic [ref=e693]: +1.01%
+          - generic [ref=e694]:
+            - generic [ref=e695]:
+              - link "*ST闻泰" [ref=e696] [cursor=pointer]:
+                - /url: /S/SH600745
+              - generic [ref=e697]: SH600745
+            - generic [ref=e698]:
+              - generic [ref=e699]: "16.00"
+              - generic [ref=e700]: "-4.99%"
+          - generic [ref=e701]:
+            - generic [ref=e702]:
+              - link "赣锋锂业" [ref=e703] [cursor=pointer]:
+                - /url: /S/SZ002460
+              - generic [ref=e704]: SZ002460
+            - generic [ref=e705]:
+              - generic [ref=e706]: "77.17"
+              - generic [ref=e707]: +1.45%
+          - generic [ref=e708]:
+            - generic [ref=e709]:
+              - link "光莆股份" [ref=e710] [cursor=pointer]:
+                - /url: /S/SZ300632
+              - generic [ref=e711]: SZ300632
+            - generic [ref=e712]:
+              - generic [ref=e713]: "39.29"
+              - generic [ref=e714]: "-6.98%"
+      - generic [ref=e715]:
+        - generic [ref=e717]: 相关基金
+        - list [ref=e719]:
+          - generic [ref=e720]:
+            - generic [ref=e721]:
+              - link "易方达新收益A" [ref=e722] [cursor=pointer]:
+                - /url: /S/F001216
+              - generic [ref=e723]: 柏楚电子占比4.96%
+              - generic [ref=e724]:
+                - generic [ref=e725]: 张清华管理
+                - generic [ref=e726]: 12年老将
+            - generic [ref=e727]:
+              - generic [ref=e728]: +67.65%
+              - generic [ref=e729]: 近1年
+          - generic [ref=e730]:
+            - generic [ref=e731]:
+              - link "易方达裕丰回报债券A" [ref=e732] [cursor=pointer]:
+                - /url: /S/F000171
+              - generic [ref=e733]: 柏楚电子占比0.81%
+              - generic [ref=e734]:
+                - generic [ref=e735]: 金牛奖
+                - generic [ref=e736]: 12年老将
+            - generic [ref=e737]:
+              - generic [ref=e738]: +13.10%
+              - generic [ref=e739]: 近1年
+          - generic [ref=e740]:
+            - generic [ref=e741]:
+              - link "泰信中小盘精选混合" [ref=e742] [cursor=pointer]:
+                - /url: /S/F290011
+              - generic [ref=e743]: 基金季报中持仓包含柏楚电子所属板块
+              - generic [ref=e744]:
+                - generic [ref=e745]: 近4年业绩同类排名前17%
+                - generic [ref=e746]: 6年老将
+            - generic [ref=e747]:
+              - generic [ref=e748]: +49.29%
+              - generic [ref=e749]: 近1年
+          - generic [ref=e750]:
+            - generic [ref=e751]:
+              - link "南华丰淳混合A" [ref=e752] [cursor=pointer]:
+                - /url: /S/F005296
+              - generic [ref=e753]: 柏楚电子占比7.89%
+              - generic [ref=e754]:
+                - generic [ref=e755]: 徐超等人管理
+                - generic [ref=e756]: 7年老将
+            - generic [ref=e757]:
+              - generic [ref=e758]: +33.20%
+              - generic [ref=e759]: 近1年
+          - generic [ref=e760]:
+            - generic [ref=e761]:
+              - link "南华丰淳混合C" [ref=e762] [cursor=pointer]:
+                - /url: /S/F005297
+              - generic [ref=e763]: 柏楚电子占比7.89%
+              - generic [ref=e764]:
+                - generic [ref=e765]: 买入费率为0
+                - generic [ref=e766]: 徐超等人管理
+            - generic [ref=e767]:
+              - generic [ref=e768]: +32.67%
+              - generic [ref=e769]: 近1年
+  - contentinfo [ref=e770]:
+    - generic [ref=e771]:
+      - generic [ref=e772]:
+        - link "微信" [ref=e773] [cursor=pointer]:
+          - /url: javascript:;
+          - img "微信" [ref=e774]
+        - link "微博" [ref=e775] [cursor=pointer]:
+          - /url: https://weibo.com/xueqiucom
+          - img "微博" [ref=e776]
+        - link "邮箱" [ref=e777] [cursor=pointer]:
+          - /url: mailto:snowball@xueqiu.com
+          - img "邮箱" [ref=e778]
+      - generic [ref=e779]:
+        - link "A股开户｜" [ref=e780] [cursor=pointer]:
+          - /url: https://broker.xueqiu.com/open/pingan
+        - link "雪球基金｜" [ref=e781] [cursor=pointer]:
+          - /url: https://danjuanfunds.com/
+        - link "投资者教育｜" [ref=e782] [cursor=pointer]:
+          - /url: https://xueqiu.com/edu/invest-edu
+        - link "风险提示" [ref=e783] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq#6_0
+      - generic [ref=e784]: 风险提示：雪球里任何用户或者嘉宾的发言，都有其特定立场，投资决策需要建立在独立思考之上
+      - generic [ref=e785]:
+        - generic [ref=e786]:
+          - text: 其他建议反馈欢迎点击
+          - link "#我给雪球提建议#" [ref=e788] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-aIkee7membqueQg-aPkOW7uuiuriM=
+          - text: 如受到欺诈信息骚扰请至
+          - link "#防诈骗举报专区#" [ref=e790] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-mYsuiviOmql-S4vuaKpeS4k-WMuiM=
+        - generic [ref=e791]:
+          - text: 互联网违法和不良信息投诉：01061840634 / tousu@xueqiu.com
+          - generic [ref=e792]: 举报中心
+          - link "侵权投诉指引" [ref=e793] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/tortreport
+          - link "雪球服务协议" [ref=e794] [cursor=pointer]:
+            - /url: https://xueqiu.com/about/terms
+          - link "雪球隐私政策" [ref=e795] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/privacy
+          - text: © 2026 XUEQIU.COM 北京雪球信息科技有限公司
+          - link "京公网安备 11010502040379号" [ref=e796] [cursor=pointer]:
+            - /url: https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502040379
+          - link "京ICP证100666号" [ref=e797] [cursor=pointer]:
+            - /url: https://xqdoc.imedao.com/198bc1b4fb41d6523feaace4.jpg
+          - link "京ICP备10040543" [ref=e798] [cursor=pointer]:
+            - /url: https://beian.miit.gov.cn/
+          - link "京金信备〔2022〕3号" [ref=e799] [cursor=pointer]:
+            - /url: https://fisbaobei.ifcert.cn/Home/homeIindex
+          - link "营业执照" [ref=e800] [cursor=pointer]:
+            - /url: https://xqimg.imedao.com/1798dc30dead0453fd6075d8.png
+          - generic [ref=e801]:
+            - link "证券业协会会员单位（代码817027）" [ref=e802] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/14d52aefd15e8f3fc0ce1fbd.png
+            - 'link "广播电视节目制作经营许可证: (京)字第08638号" [ref=e803] [cursor=pointer]':
+              - /url: https://xqdoc.imedao.com/198c1a776442061d3fe4efd5.pdf
+            - link "出版物经营许可证" [ref=e804] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/181b337b7742caf83fee6640.png
+          - link "人工智能服务登记编号：Beijing-XueQiuHuiJian-2S0033" [ref=e806]:
+            - /url: javascript:;
+      - generic [ref=e807]:
+        - link "常见问题｜" [ref=e808] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq
+        - link "加入我们｜" [ref=e809] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/jobs
+        - link "关于雪球" [ref=e810] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/what-is-xueqiu
+  - text: "* * · * * *"
+  - generic [ref=e812]:
+    - img "fold" [ref=e813]
+    - generic [ref=e814]: 问问投资的问题吧，帮你发现投资好机会

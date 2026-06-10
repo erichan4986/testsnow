@@ -1,0 +1,124 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "知乎数据开放平台" [ref=e6] [cursor=pointer]:
+        - img [ref=e7]:
+          - generic [ref=e9]: 知
+        - generic [ref=e10]: 知乎数据开放平台
+      - navigation [ref=e11]:
+        - button "搜索产品" [ref=e12] [cursor=pointer]
+        - button "直答 Agent" [ref=e13] [cursor=pointer]
+        - button "知乎热榜" [ref=e14] [cursor=pointer]
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - button "文档中心" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+            - generic [ref=e20]: 文档中心
+          - button "联系我们" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+            - generic [ref=e26]: 联系我们
+        - button "登录" [ref=e27] [cursor=pointer]
+        - button "注册" [ref=e28] [cursor=pointer]
+  - generic [ref=e30]:
+    - paragraph [ref=e31]: DOCUMENTATION
+    - heading "文档中心" [level=1] [ref=e32]
+    - paragraph [ref=e33]: 接口说明、鉴权方式、示例代码与接入指南。
+  - generic [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]: Docs
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - button "开始使用" [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: 开始使用
+            - img [ref=e47]
+          - button "鉴权" [ref=e52] [cursor=pointer]
+        - generic [ref=e53]:
+          - button "知乎搜索" [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: 知乎搜索
+            - img [ref=e56]
+          - generic [ref=e60]:
+            - button "知乎搜索 API" [ref=e61] [cursor=pointer]
+            - button "知乎搜索 Skill" [ref=e62] [cursor=pointer]
+            - button "知乎搜索 MCP" [ref=e63] [cursor=pointer]
+        - generic [ref=e64]:
+          - button "全网搜索" [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]: 全网搜索
+            - img [ref=e67]
+          - generic [ref=e71]:
+            - button "全网搜索 API" [ref=e72] [cursor=pointer]
+            - button "全网搜索 Skill" [ref=e73] [cursor=pointer]
+            - button "全网搜索 MCP" [ref=e74] [cursor=pointer]
+        - generic [ref=e75]:
+          - button "直答" [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]: 直答
+            - img [ref=e78]
+          - generic [ref=e82]:
+            - button "直答 API" [ref=e83] [cursor=pointer]
+            - button "直答 Skill" [ref=e84] [cursor=pointer]
+            - button "直答 MCP" [ref=e85] [cursor=pointer]
+        - generic [ref=e86]:
+          - button "热榜" [ref=e87] [cursor=pointer]:
+            - generic [ref=e88]: 热榜
+            - img [ref=e89]
+          - generic [ref=e93]:
+            - button "知乎热榜 API" [ref=e94] [cursor=pointer]
+            - button "知乎热榜 Skill" [ref=e95] [cursor=pointer]
+            - button "知乎热榜 MCP" [ref=e96] [cursor=pointer]
+    - generic [ref=e100]:
+      - heading "Bearer 鉴权说明" [level=1] [ref=e101]
+      - heading "说明" [level=2] [ref=e102]
+      - paragraph [ref=e103]:
+        - text: 知乎开放平台当前推荐通过
+        - code [ref=e104]: "Authorization: Bearer <your_access_secret>"
+        - text: 的方式调用数据接口。
+      - paragraph [ref=e105]:
+        - text: 对于
+        - code [ref=e106]: zhihu_search
+        - text: 、
+        - code [ref=e107]: global_search
+        - text: 、
+        - code [ref=e108]: hot_list
+        - text: 等接口，调用时统一使用 Bearer 鉴权即可。
+      - heading "获取 Access Secret" [level=2] [ref=e109]
+      - paragraph [ref=e110]:
+        - text: 请在知乎开放平台
+        - link "个人中心" [ref=e111] [cursor=pointer]:
+          - /url: https://developer.zhihu.com/profile
+        - text: 查看并获取 Access Secret
+      - paragraph [ref=e112]: 说明：
+      - list [ref=e113]:
+        - listitem [ref=e114]: 调用方需要将 Access Secret 作为 Bearer Token 放入请求头。
+        - listitem [ref=e115]:
+          - text: 服务端会校验
+          - code [ref=e116]: Authorization
+          - text: 与
+          - code [ref=e117]: X-Request-Timestamp
+          - text: 。
+        - listitem [ref=e118]:
+          - code [ref=e119]: X-Request-Timestamp
+          - text: 需要传秒级 Unix 时间戳。
+      - heading "请求头示例" [level=2] [ref=e120]
+      - table [ref=e121]:
+        - rowgroup [ref=e122]:
+          - row "名称 示例值 说明" [ref=e123]:
+            - columnheader "名称" [ref=e124]
+            - columnheader "示例值" [ref=e125]
+            - columnheader "说明" [ref=e126]
+        - rowgroup [ref=e127]:
+          - row "Authorization Bearer <your_access_secret> Bearer 鉴权头" [ref=e128]:
+            - cell "Authorization" [ref=e129]
+            - cell "Bearer <your_access_secret>" [ref=e130]:
+              - code [ref=e131]: Bearer <your_access_secret>
+            - cell "Bearer 鉴权头" [ref=e132]
+          - row "X-Request-Timestamp 1742822400 秒级 Unix 时间戳" [ref=e133]:
+            - cell "X-Request-Timestamp" [ref=e134]
+            - cell "1742822400" [ref=e135]:
+              - code [ref=e136]: "1742822400"
+            - cell "秒级 Unix 时间戳" [ref=e137]
+          - row "Content-Type application/json JSON 接口固定值" [ref=e138]:
+            - cell "Content-Type" [ref=e139]
+            - cell "application/json" [ref=e140]:
+              - code [ref=e141]: application/json
+            - cell "JSON 接口固定值" [ref=e142]
+      - heading "Curl 示例" [level=2] [ref=e143]
+      - code [ref=e146]: "curl -G 'https://developer.zhihu.com/api/v1/content/zhihu_search' \\ --data-urlencode 'Query=怎么理解rave文化' \\ -H 'Authorization: Bearer <your_access_secret>' \\ -H \"X-Request-Timestamp: $(date +%s)\" \\ -H 'Content-Type: application/json'"

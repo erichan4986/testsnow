@@ -12,9 +12,29 @@ env/
 venv/
 .venv/
 
+# Test and type caches
+.pytest_cache/
+.mypy_cache/
+
+# Node / build artifacts
+node_modules/
+dist/
+build/
+
+# Logs and temp files
+logs/
+tmp/
+cache/
+*.log
+*.tmp
+
 # Data and reports (keep directory structure but ignore content)
 /data/raw/*.json
+/data/processed/
 /reports/*.md
+/reports/*.html
+/reports/*.pdf
+/reports/charts/*.png
 
 # IDE
 .vscode/

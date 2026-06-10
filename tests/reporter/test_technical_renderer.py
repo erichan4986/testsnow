@@ -27,6 +27,13 @@ def _make_ctx(with_new_fields=True, mode="full"):
                             "score": 72,
                             "grade": "健康",
                             "summary": "健康",
+                            "components": {
+                                "weekly_structure": {"score": 20, "max": 30, "evidence": "MA多头排列"},
+                                "daily_ma_alignment": {"score": 22, "max": 25, "evidence": "站上MA20"},
+                                "price_structure": {"score": 10, "max": 15, "evidence": "上升趋势"},
+                                "volume_confirmation": {"score": 8, "max": 10, "evidence": "放量"},
+                                "volatility_condition": {"score": 12, "max": 20, "evidence": "正常"},
+                            },
                         },
                         "analysis_confidence": {"level": "高", "reasons": [], "limitations": []},
                         "weekly_background": {"trend": "单边上涨"},
@@ -68,6 +75,11 @@ def test_compact_rendering():
     assert "主升期" in output
     assert "72/100" in output
     assert "趋势失效条件" in output
+    # 评分子项以表格形式呈现
+    assert "| 维度 | 得分 | 说明 |" in output
+    # 谋士团以表格形式呈现
+    assert "| 指标 | 状态 | 含义 |" in output
+    assert "| MACD | 多头延续 | 仅参考 |" in output
 
 
 def test_full_rendering():
@@ -76,7 +88,8 @@ def test_full_rendering():
     output = renderer.render(ctx)
     assert "趋势背景" in output
     assert "日线结构" in output
-    assert "健康度评分" in output
+    # 健康度评分以表格形式在 compact 基础输出中呈现，不再单独插入 "### 3. 健康度评分" 标题
+    assert "趋势健康度" in output
 
 
 def test_fallback_to_legacy():

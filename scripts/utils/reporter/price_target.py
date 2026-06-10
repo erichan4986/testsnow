@@ -477,12 +477,30 @@ def analyze_price_target(
             }
 
     # --- 1c. MACD死叉扩张否决 ---
+    try:
+        from .technical_analyzer import _macd as _macd_local
+    except ImportError:
+        from technical_analyzer import _macd as _macd_local
+    macd_line, macd_sig, macd_hist = _macd_local(df_daily["close"])
     if _macd_dead_expanding(df_daily["close"]):
+        latest_hist = float(macd_hist.iloc[-1])
+        prev_hist = float(macd_hist.iloc[-2]) if len(macd_hist) >= 2 else 0.0
+        first_hist = float(macd_hist.iloc[-3]) if len(macd_hist) >= 3 else 0.0
         return {
             "error": "关注/不操作",
             "reason": "MACD死叉扩张，不满足触发条件",
             "weekly_trend": weekly_trend,
             "daily_trend": daily_trend,
+            "diagnostics": {
+                "macd_line": round(float(macd_line.iloc[-1]), 2),
+                "macd_signal": round(float(macd_sig.iloc[-1]), 2),
+                "macd_hist": round(latest_hist, 2),
+                "hist_trend": (
+                    f"柱线从{first_hist:.3f}→{prev_hist:.3f}→{latest_hist:.3f}（持续负向扩张）"
+                    if len(macd_hist) >= 3 else "柱线持续负向扩张"
+                ),
+                "threshold_to_trigger": "MACD线上穿信号线（金叉），且柱线由负转正或至少停止扩张",
+            },
         }
 
     # --- 2. 日线/周线形态识别（复用 technical_analyzer） ---

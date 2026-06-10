@@ -1,0 +1,77 @@
+[
+  {
+    "quality_score": 72,
+    "content_type": "产业深度分析",
+    "valid_until": "2026-11-29",
+    "summary": "本文介绍了地平线开源的人形机器人小脑大模型HoloMotion-1，该模型拥有4亿参数，在端侧实现约300FPS实时推理。文章详细阐述了HoloMotion-1的技术特点：通过MoE稀疏激活与KV-cache推理机制，在保持大模型容量的同时降低推理开销，使机器人控制大模型能够进入高频、低延迟的真实控制链路。文章还对比了传统小规模控制模型的局限性，指出HoloMotion-1面向更丰富的动作分布和更长时序的运动连续性，建模更复杂的身体协同关系。地平线希望通过开源降低人形机器人全身控制的研发门槛，推动机器人小脑从实验室走向规模化应用。文章提供了开源代码库、项目主页、技术报告和模型链接，具有较高的技术参考价值。",
+    "logic_chain": {
+      "premise": "人形机器人需要高动态全身控制，传统小规模模型难以满足复杂动作和长时序需求。",
+      "evidence": "HoloMotion-1具有4亿参数，端侧300FPS推理，采用MoE和KV-cache技术。",
+      "reasoning": "大模型容量能建模更复杂的身体协同关系，结合稀疏激活和缓存机制实现实时推理，从而满足高频控制需求。",
+      "conclusion": "HoloMotion-1通过开源降低了研发门槛，有望推动机器人小脑从实验室走向规模化应用。"
+    },
+    "judgment": "认可。文章对HoloMotion-1的技术描述清晰，论据充分，提供了具体参数和开源链接。但需注意，该模型尚处于开源初期，实际应用效果和生态建设有待验证。此外，文章未提及与其他类似模型（如谷歌RT-2）的对比，独特性稍弱。总体而言，对于关注人形机器人控制技术的投资者，本文具有参考价值，但需结合后续进展评估。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 45,
+    "content_type": "事件点评",
+    "valid_until": "2026-02-26",
+    "summary": "本文是对Mobileye CEO Amnon Shashua的采访摘要，讨论了自动驾驶行业路径的转变：从消费级L4转向Robotaxi先行，再回归消费级。文章提到大众计划未来八年运营10万辆Robotaxi，以及Mobileye在L2+、L3、L4全线布局。但正文不完整，内容零散，缺乏深度分析和数据支撑。",
+    "logic_chain": {
+      "premise": "自动驾驶行业路径正在从消费级L4转向Robotaxi先行。",
+      "evidence": "Waymo在旧金山收费高于人工出租车，大众计划部署10万辆Robotaxi。",
+      "reasoning": "Robotaxi已具备商业模式，技术经验可延伸至消费级汽车。",
+      "conclusion": "Mobileye全线布局，能适应行业路径转变。"
+    },
+    "judgment": "质疑。文章内容不完整，逻辑跳跃，缺乏对Mobileye技术细节和财务数据的分析。观点主要来自CEO访谈，缺乏独立验证。时效性已过（发布时间2026-01-27，有效期30天），且质量分低，不建议纳入报告。",
+    "include_in_report": false,
+    "reason_if_excluded": "质量分低于60，且内容已过期（valid_until < 2026-06-03）。"
+  },
+  {
+    "quality_score": 68,
+    "content_type": "产业深度分析",
+    "valid_until": "2026-08-29",
+    "summary": "本文深入分析了Mobileye的自动驾驶技术路线，重点介绍了EyeQ系列芯片的演进历程。从EyeQ4（28nm，2.5 TOPS）到EyeQ5（7nm，15-24 TOPS），再到最新的EyeQ6系列（5nm，EyeQ6L约5 TOPS，EyeQ6H达67 TOPS），详细阐述了各代芯片的制程、算力、架构特点和应用场景。文章指出EyeQ4支持L2+功能，EyeQ5面向L3及以上，EyeQ6L针对L2级辅助驾驶，EyeQ6H则用于高阶自动驾驶。文章还提及了异构计算架构、XNN加速单元等关键技术。但正文不完整，缺少对软件算法和生态系统的分析。",
+    "logic_chain": {
+      "premise": "Mobileye的自动驾驶技术建立在EyeQ系列芯片基础上。",
+      "evidence": "各代芯片的制程、算力、架构参数，以及对应的自动驾驶等级。",
+      "reasoning": "芯片性能提升支撑了从ADAS到高阶自动驾驶的演进。",
+      "conclusion": "EyeQ系列芯片是Mobileye技术路线的核心，持续迭代满足不同等级需求。"
+    },
+    "judgment": "认可。文章对芯片参数的分析较为详实，但缺少与竞争对手（如英伟达、高通）的对比，且正文不完整，可能遗漏重要信息。对于关注自动驾驶硬件供应链的投资者，本文有一定参考价值，但需结合其他资料综合判断。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 75,
+    "content_type": "事件点评",
+    "valid_until": "2026-07-03",
+    "summary": "本文报道了VinFast、Autobrains与NVIDIA联合开发L4级Robotaxi的消息，该平台面向东南亚市场，基于NVIDIA DRIVE Hyperion 10架构和Autobrains的Agentic AI技术。文章指出Agentic AI采用多个专用AI智能体，仅在执行特定任务时激活，可降低计算需求并提升情境处理能力。合作旨在应对东南亚复杂交通环境，并实现成本效益。VinFast高管表示致力于开发可规模化的自动驾驶解决方案。文章提供了合作背景、技术特点和战略意义，但缺少具体时间表和财务细节。",
+    "logic_chain": {
+      "premise": "东南亚市场对自动驾驶验证严苛，现有方案成本高、稳定性不足。",
+      "evidence": "VinFast、Autobrains、NVIDIA三方合作，采用Agentic AI和DRIVE Hyperion 10。",
+      "reasoning": "Agentic AI通过专用智能体降低计算需求，模块化架构缩短集成周期，从而降低成本并提升稳定性。",
+      "conclusion": "该合作有望开发出适应东南亚环境的低成本L4级Robotaxi。"
+    },
+    "judgment": "认可。文章信息及时（发布时间2026-06-03），对合作的技术亮点和战略意义分析到位。但Agentic AI技术尚属新兴，实际效果有待验证。此外，未提及VinFast的Robotaxi商业化时间表，投资者需关注后续进展。总体而言，本文对关注自动驾驶新兴技术路线的投资者具有参考价值。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 55,
+    "content_type": "其他",
+    "valid_until": "2026-07-30",
+    "summary": "本文是百度百科词条，介绍摩尔线程的华山芯片。该芯片基于花港架构，是AI训推一体GPU，浮点算力介于英伟达Blackwell和Hopper之间，访存带宽接近Blackwell，高速互联带宽介于Hopper和Blackwell之间，访存容量优于Hopper。芯片支持超十万卡级AI工厂，兼容MTLink4.0和多种以太协议。预计2026年量产，算力密度提升50%，能效提升10倍。文章还提及了摩尔线程构建MUSA开发者生态，对标英伟达CUDA。但内容为百科格式，缺乏深度分析和独立观点。",
+    "logic_chain": {
+      "premise": "摩尔线程发布华山芯片，对标英伟达高端产品。",
+      "evidence": "芯片参数对比（算力、带宽、容量），以及生态建设计划。",
+      "reasoning": "通过参数对比显示华山芯片性能接近英伟达最新产品，生态对标CUDA。",
+      "conclusion": "华山芯片有望在AI训推领域形成竞争力。"
+    },
+    "judgment": "质疑。文章为百科词条，内容客观但缺乏深度分析，未提及芯片实际测试性能、客户采用情况或量产风险。参数对比虽亮眼，但需独立验证。此外，摩尔线程面临英伟达的生态壁垒，MUSA生态能否成功存疑。对于投资者，本文信息有限，需结合更多独立来源。",
+    "include_in_report": false,
+    "reason_if_excluded": "质量分低于60，且内容为百科词条，缺乏深度分析和独立观点，投资参考价值有限。"
+  }
+]

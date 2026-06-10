@@ -1,0 +1,439 @@
+/Users/erichan/testsnow
+├── .claude
+│   ├── skills
+│   │   └── grill-me
+│   │       └── SKILL.md
+│   ├── worktrees
+│   │   └── report-redesign
+│   │       ├── .claude
+│   │       │   └── settings.local.json
+│   │       ├── docs
+│   │       │   └── superpowers
+│   │       │       ├── plans
+│   │       │       │   └── 2026-05-24-zhihu-content-curation.md
+│   │       │       └── specs
+│   │       │           ├── 2026-05-24-zhihu-content-curation-design.md
+│   │       │           └── 2026-05-26-xueqiu-content-quality-gate-design.md
+│   │       ├── knowledge
+│   │       │   └── 99-Meta
+│   │       │       ├── data_registry.json
+│   │       │       └── weekly_index.json
+│   │       ├── scripts
+│   │       │   ├── utils
+│   │       │   │   ├── content_quality_gate.py
+│   │       │   │   ├── data_collector.py
+│   │       │   │   ├── detail_page_fetcher.py
+│   │       │   │   ├── financial_agent.py
+│   │       │   │   ├── knowledge_synthesizer.py
+│   │       │   │   ├── obsidian_writer.py
+│   │       │   │   ├── periodic_reporter.py
+│   │       │   │   ├── source_adapter.py
+│   │       │   │   ├── stock_reporter.py
+│   │       │   │   └── wechat_sogou_fetcher.py
+│   │       │   ├── demo_shengbang.py
+│   │       │   ├── deploy_wechat_exporter.sh
+│   │       │   ├── fetch_xueqiu.py
+│   │       │   ├── generate_periodic_report.py
+│   │       │   ├── run_黑芝麻智能.py
+│   │       │   └── xueqiu_monitor_v2.py
+│   │       ├── tests
+│   │       │   ├── utils
+│   │       │   │   ├── test_detail_page_fetcher.py
+│   │       │   │   ├── test_knowledge_synthesizer.py
+│   │       │   │   └── test_source_adapter.py
+│   │       │   ├── test_data_collector.py
+│   │       │   ├── test_financial_agent.py
+│   │       │   └── test_obsidian_writer.py
+│   │       └── requirements.txt
+│   └── settings.local.json
+├── config
+│   ├── market_index_map.json
+│   ├── stocks.json
+│   ├── stocks.json.bak
+│   └── technical_config.yaml
+├── data
+│   ├── raw
+│   │   ├── 20260526
+│   │   ├── 20260527
+│   │   ├── debug
+│   │   │   ├── 01_stock_page_02533_1780387198.png
+│   │   │   ├── 01_stock_page_02533_1780388327.png
+│   │   │   ├── 01_stock_page_02533_1780388794.png
+│   │   │   ├── 01_stock_page_02533_1780389510.png
+│   │   │   ├── 01_stock_page_02533_1780390365.png
+│   │   │   ├── 01_stock_page_02533_1780393827.png
+│   │   │   ├── 01_stock_page_02533_1780403617.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780387202.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780388332.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780388798.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780389516.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780390369.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780393832.png
+│   │   │   ├── 02_after_discussion_tab_02533_1780403621.png
+│   │   │   ├── 03_after_hot_sort_02533_1780387207.png
+│   │   │   ├── 03_after_hot_sort_02533_1780388337.png
+│   │   │   ├── 03_after_hot_sort_02533_1780388803.png
+│   │   │   ├── 03_after_hot_sort_02533_1780389520.png
+│   │   │   ├── 03_after_hot_sort_02533_1780390373.png
+│   │   │   ├── 03_after_hot_sort_02533_1780393836.png
+│   │   │   ├── 03_after_hot_sort_02533_1780403625.png
+│   │   │   └── pagination_bottom.png
+│   │   ├── lanqi_688008_daily_20260608_qfq.csv
+│   │   ├── lanqi_688008_daily_20260608_raw.csv
+│   │   ├── lanqi_688008_daily_20260609_raw.csv
+│   │   ├── lanqi_688008_daily_20260610_raw.csv
+│   │   ├── lanqi_688008_weekly_20260608.csv
+│   │   ├── lanqi_688008_weekly_20260609.csv
+│   │   ├── lanqi_688008_weekly_20260610.csv
+│   │   ├── lesin_688018_daily_20260608.csv
+│   │   ├── zhongjian_300777_daily_20260608.csv
+│   │   └── 黑芝麻智能数据.xlsx
+│   └── wechat
+├── docs
+│   ├── codex_handoff
+│   │   ├── file_manifest.txt
+│   │   ├── repo_audit.md
+│   │   └── repo_tree.txt
+│   └── superpowers
+│       ├── plans
+│       │   ├── 2026-05-23-a-stock-data-integration-plan.md
+│       │   ├── 2026-05-24-zhihu-content-curation.md
+│       │   ├── 2026-05-25-detail-page-fetcher.md
+│       │   ├── 2026-05-26-xueqiu-content-quality-gate.md
+│       │   ├── 2026-06-01-knowledge-synthesizer.md
+│       │   ├── 2026-06-02-xueqiu-extraction-separation.md
+│       │   ├── 2026-06-03-report-structure-redesign-plan.md
+│       │   ├── 2026-06-04-skill-architecture.md
+│       │   ├── 2026-06-04-technical-price-target.md
+│       │   ├── 2026-06-04-visual-report-integration.md
+│       │   ├── 2026-06-06-stock-reporter-full-skill-decomposition.md
+│       │   ├── 2026-06-08-advanced-technical-analysis.md
+│       │   ├── 2026-06-08-technical-analysis-phase-2.md
+│       │   ├── 2026-06-08-technical-phase3.md
+│       │   └── 2026-06-09-price-adjustment-reintegration.md
+│       └── specs
+│           ├── 2026-05-23-a-stock-data-integration-design.md
+│           ├── 2026-05-24-zhihu-content-curation-design.md
+│           ├── 2026-05-25-detail-page-fetcher-design.md
+│           ├── 2026-05-26-xueqiu-content-quality-gate-design.md
+│           ├── 2026-05-27-xueqiu-crawler-process-and-findings.md
+│           ├── 2026-05-29-report-format-enhancement-plan.md
+│           ├── 2026-06-01-alphagbm-skills-analysis.md
+│           ├── 2026-06-01-knowledge-synthesizer-design.md
+│           ├── 2026-06-02-xueqiu-extraction-separation-design.md
+│           ├── 2026-06-03-report-structure-redesign-design.md
+│           ├── 2026-06-04-skill-architecture-design.md
+│           ├── 2026-06-04-technical-price-target-design.md
+│           ├── 2026-06-04-visual-report-integration-design.md
+│           ├── 2026-06-06-stock-reporter-full-skill-decomposition.md
+│           ├── 2026-06-07-advanced-technical-analysis-design.md
+│           ├── 2026-06-08-advanced-technical-analysis-design.md
+│           ├── 2026-06-08-technical-phase3-structure-bottom-resonance.md
+│           ├── 2026-06-09-price-adjustment-reintegration-design.md
+│           └── 2026-06-10-agent-reach-fundamental-research-design.md
+├── knowledge
+│   ├── 00-Inbox
+│   ├── 10-Stocks
+│   │   ├── 三花智控
+│   │   │   ├── posts
+│   │   │   │   ├── 387555498.md
+│   │   │   │   ├── 388534017.md
+│   │   │   │   ├── 389108258.md
+│   │   │   │   ├── 389115569.md
+│   │   │   │   ├── 389142204.md
+│   │   │   │   ├── 389230320.md
+│   │   │   │   ├── 389280656.md
+│   │   │   │   ├── 389284761.md
+│   │   │   │   ├── 389470787.md
+│   │   │   │   └── 389478347.md
+│   │   │   ├── 20260526-公司公告.md
+│   │   │   ├── 20260526-技术指标.md
+│   │   │   ├── 20260526-最新研报.md
+│   │   │   └── 20260526-深度分析.md
+│   │   ├── 中简科技
+│   │   │   ├── posts
+│   │   │   │   ├── 383894300.md
+│   │   │   │   ├── 384184563.md
+│   │   │   │   ├── 385840696.md
+│   │   │   │   ├── 386488242.md
+│   │   │   │   └── 386713066.md
+│   │   │   ├── 20260526-公司公告.md
+│   │   │   ├── 20260526-技术指标.md
+│   │   │   └── 20260526-深度分析.md
+│   │   ├── 乐鑫科技
+│   │   │   ├── posts
+│   │   │   │   └── 387639520.md
+│   │   │   ├── 20260526-公司公告.md
+│   │   │   ├── 20260526-技术指标.md
+│   │   │   ├── 20260526-最新研报.md
+│   │   │   ├── 20260526-深度分析.md
+│   │   │   ├── 20260527-公司公告.md
+│   │   │   ├── 20260527-技术指标.md
+│   │   │   ├── 20260527-最新研报.md
+│   │   │   └── 20260527-深度分析.md
+│   │   ├── 圣邦股份
+│   │   │   ├── posts
+│   │   │   │   ├── 386958374.md
+│   │   │   │   ├── 388173091.md
+│   │   │   │   ├── 388218891.md
+│   │   │   │   ├── 388411598.md
+│   │   │   │   └── 389222825.md
+│   │   │   ├── 20260523-公司公告.md
+│   │   │   ├── 20260523-技术指标.md
+│   │   │   ├── 20260523-最新研报.md
+│   │   │   ├── 20260523-深度分析.md
+│   │   │   ├── 20260523-知乎相关.md
+│   │   │   ├── 20260524-公司公告.md
+│   │   │   ├── 20260524-技术指标.md
+│   │   │   ├── 20260524-最新研报.md
+│   │   │   ├── 20260524-深度分析.md
+│   │   │   ├── 20260525-公司公告.md
+│   │   │   ├── 20260525-技术指标.md
+│   │   │   ├── 20260525-最新研报.md
+│   │   │   ├── 20260525-深度分析.md
+│   │   │   ├── 20260526-公司公告.md
+│   │   │   ├── 20260526-技术指标.md
+│   │   │   ├── 20260526-最新研报.md
+│   │   │   ├── 20260526-深度分析.md
+│   │   │   ├── 20260527-公司公告.md
+│   │   │   ├── 20260527-技术指标.md
+│   │   │   ├── 20260527-最新研报.md
+│   │   │   ├── 20260527-深度分析.md
+│   │   │   ├── 20260601-公司公告.md
+│   │   │   ├── 20260601-技术指标.md
+│   │   │   ├── 20260601-最新研报.md
+│   │   │   ├── 20260601-深度分析.md
+│   │   │   ├── 20260601-知乎沉淀.md
+│   │   │   ├── 20260601-知乎相关.md
+│   │   │   ├── 20260607-核心数据.md
+│   │   │   ├── 20260607-深度解读.md
+│   │   │   └── MOC.md
+│   │   ├── 测试科技
+│   │   │   ├── 20260606-核心数据.md
+│   │   │   ├── 20260606-深度解读.md
+│   │   │   ├── 20260607-核心数据.md
+│   │   │   ├── 20260607-深度解读.md
+│   │   │   └── MOC.md
+│   │   ├── 测试股
+│   │   │   ├── 20260604-核心数据.md
+│   │   │   ├── 20260604-深度解读.md
+│   │   │   └── MOC.md
+│   │   ├── 长春高新
+│   │   │   ├── posts
+│   │   │   │   ├── 387863697.md
+│   │   │   │   ├── 387999629.md
+│   │   │   │   ├── 388298636.md
+│   │   │   │   ├── 388421483.md
+│   │   │   │   ├── 388931584.md
+│   │   │   │   ├── 389600347.md
+│   │   │   │   └── 389945072.md
+│   │   │   ├── 20260526-公司公告.md
+│   │   │   ├── 20260526-技术指标.md
+│   │   │   ├── 20260526-最新研报.md
+│   │   │   └── 20260526-深度分析.md
+│   │   └── 黑芝麻智能
+│   │       └── posts
+│   │           ├── 386852264.md
+│   │           ├── 388000408.md
+│   │           ├── 388361742.md
+│   │           ├── 388652567.md
+│   │           ├── 388680088.md
+│   │           ├── 388754523.md
+│   │           ├── 388940496.md
+│   │           ├── 389476307.md
+│   │           ├── 389710670.md
+│   │           ├── 389733777.md
+│   │           ├── 389734910.md
+│   │           ├── 389744003.md
+│   │           ├── 389915853.md
+│   │           ├── 390353787.md
+│   │           ├── 390363059.md
+│   │           ├── 391005107.md
+│   │           ├── 391010997.md
+│   │           ├── 391178915.md
+│   │           ├── 391205619.md
+│   │           ├── 391577720.md
+│   │           ├── 391602500.md
+│   │           ├── 391673939.md
+│   │           ├── 391712186.md
+│   │           ├── 391828782.md
+│   │           ├── 391865441.md
+│   │           ├── 391955101.md
+│   │           ├── 391994418.md
+│   │           ├── 391999248.md
+│   │           ├── 392008741.md
+│   │           ├── 392021213.md
+│   │           ├── 392043381.md
+│   │           └── 392399521.md
+│   ├── 20-Concepts
+│   ├── 30-Periodics
+│   └── 99-Meta
+│       ├── data_registry.json
+│       └── weekly_index.json
+├── reports
+│   ├── e2e_test
+│   │   └── charts
+│   │       ├── 圣邦股份_bullbear_20260604.png
+│   │       ├── 圣邦股份_radar_20260604.png
+│   │       └── 圣邦股份_valuation_20260604.png
+│   ├── 圣邦股份_bullbear.png
+│   ├── 圣邦股份_radar.png
+│   ├── 圣邦股份_valuation.png
+│   ├── 圣邦股份_五维评分雷达_20260604.png
+│   ├── 圣邦股份_交互式图表_20260604.png
+│   ├── 圣邦股份_交互式技术分析面板_20260604.png
+│   ├── 圣邦股份_同业估值对比_20260604.png
+│   ├── 圣邦股份_多空观点对比_20260604.png
+│   ├── 圣邦股份_技术分析图表_20260604.png
+│   ├── 黑芝麻智能_bullbear.png
+│   ├── 黑芝麻智能_radar.png
+│   └── 黑芝麻智能_valuation.png
+├── scripts
+│   ├── utils
+│   │   ├── report_skills
+│   │   │   ├── __init__.py
+│   │   │   ├── analysis_skills.py
+│   │   │   ├── assembly_skills.py
+│   │   │   ├── chart_skills.py
+│   │   │   ├── data_skills.py
+│   │   │   ├── knowledge_skills.py
+│   │   │   ├── synthesis_skills.py
+│   │   │   └── technical_skills.py
+│   │   ├── reporter
+│   │   │   ├── sections
+│   │   │   │   ├── __init__.py
+│   │   │   │   ├── composite_score_renderer.py
+│   │   │   │   ├── deep_analysis_renderer.py
+│   │   │   │   ├── executive_summary_renderer.py
+│   │   │   │   ├── html_dashboard_renderer.py
+│   │   │   │   ├── price_target_renderer.py
+│   │   │   │   ├── risk_renderer.py
+│   │   │   │   ├── technical_renderer.py
+│   │   │   │   └── valuation_renderer.py
+│   │   │   ├── __init__.py
+│   │   │   ├── chart_generator.py
+│   │   │   ├── constants.py
+│   │   │   ├── data_fetcher.py
+│   │   │   ├── price_adjustment_validator.py
+│   │   │   ├── price_target.py
+│   │   │   ├── scoring_engine.py
+│   │   │   ├── technical_analyzer.py
+│   │   │   ├── technical_config.py
+│   │   │   ├── technical_indicators.py
+│   │   │   ├── technical_patterns.py
+│   │   │   ├── technical_resonance.py
+│   │   │   ├── technical_state_machine.py
+│   │   │   ├── technical_strategy.py
+│   │   │   └── technical_structure.py
+│   │   ├── analyzer.py
+│   │   ├── content_consolidator.py
+│   │   ├── content_quality.py
+│   │   ├── content_quality_gate.py
+│   │   ├── data_collector.py
+│   │   ├── detail_page_fetcher.py
+│   │   ├── fetcher.py
+│   │   ├── financial_agent.py
+│   │   ├── judgment_generator.py
+│   │   ├── knowledge_synthesizer.py
+│   │   ├── obsidian_writer.py
+│   │   ├── parser.py
+│   │   ├── pdf_exporter.py
+│   │   ├── periodic_reporter.py
+│   │   ├── reporter.py
+│   │   ├── skill_pipeline.py
+│   │   ├── source_adapter.py
+│   │   ├── stock_reporter.py
+│   │   ├── wechat_sogou_fetcher.py
+│   │   └── zhihu_curator.py
+│   ├── batch_fetch_quality_posts.py
+│   ├── deploy_wechat_exporter.sh
+│   ├── extract_detail.py
+│   ├── extract_detail_via_cdp.py
+│   ├── fetch_xueqiu.py
+│   ├── generate_periodic_report.py
+│   ├── run_中简科技技术分析_真实数据.py
+│   ├── run_乐鑫科技技术分析_真实数据.py
+│   ├── run_圣邦股份.py
+│   ├── run_澜起科技技术分析_真实数据.py
+│   ├── run_黑芝麻智能.py
+│   ├── start_chrome_cdp.command
+│   ├── start_chrome_cdp.sh
+│   ├── sync_vault_from_raw.py
+│   └── xueqiu_monitor_v2.py
+├── tests
+│   ├── reporter
+│   │   ├── test_advanced_technical_e2e.py
+│   │   ├── test_analysis_skills.py
+│   │   ├── test_assembly_skills.py
+│   │   ├── test_backward_compatibility.py
+│   │   ├── test_bias_computation.py
+│   │   ├── test_boll_overextension.py
+│   │   ├── test_boll_state.py
+│   │   ├── test_chart_generator.py
+│   │   ├── test_chart_skills.py
+│   │   ├── test_composite_score_renderer.py
+│   │   ├── test_corporate_action_adjustment.py
+│   │   ├── test_daily_structure.py
+│   │   ├── test_data_skills.py
+│   │   ├── test_deep_analysis_renderer.py
+│   │   ├── test_executive_summary_renderer.py
+│   │   ├── test_existing_indicators.py
+│   │   ├── test_html_dashboard_renderer.py
+│   │   ├── test_knowledge_skills.py
+│   │   ├── test_lanqi_phase3_report.py
+│   │   ├── test_lexin_phase3_report.py
+│   │   ├── test_market_resonance.py
+│   │   ├── test_market_resonance_integration.py
+│   │   ├── test_phase3_bottom_strategy.py
+│   │   ├── test_phase3_integration.py
+│   │   ├── test_phase3_structure.py
+│   │   ├── test_pipeline_integration.py
+│   │   ├── test_price_adjustment_validator.py
+│   │   ├── test_price_target.py
+│   │   ├── test_risk_renderer.py
+│   │   ├── test_skill_pipeline_observability.py
+│   │   ├── test_stock_reporter_charts.py
+│   │   ├── test_support_resistance.py
+│   │   ├── test_synthesis_skills.py
+│   │   ├── test_technical_config.py
+│   │   ├── test_technical_imports.py
+│   │   ├── test_technical_indicators.py
+│   │   ├── test_technical_patterns.py
+│   │   ├── test_technical_renderer.py
+│   │   ├── test_technical_resonance.py
+│   │   ├── test_technical_state_machine.py
+│   │   ├── test_technical_structure.py
+│   │   ├── test_trend_health.py
+│   │   ├── test_trend_state_machine.py
+│   │   ├── test_valuation_renderer.py
+│   │   └── test_weekly_trend.py
+│   ├── utils
+│   │   ├── test_detail_page_fetcher.py
+│   │   ├── test_knowledge_synthesizer.py
+│   │   └── test_source_adapter.py
+│   ├── test_data_collector.py
+│   ├── test_financial_agent.py
+│   ├── test_obsidian_writer.py
+│   ├── test_price_target_e2e.py
+│   └── test_skill_pipeline.py
+├── .env
+├── .gitignore
+├── CLAUDE.md
+├── DEV_SPEC.md
+├── e2e_featured_posts.png
+├── e2e_sentiment_section.png
+├── pdf_page1.png
+├── pdf_preview_sentiment.png
+├── pdf_preview_top.png
+├── README.md
+├── requirements.txt
+├── snapshot.yml
+├── visual_report_bottom.png
+├── visual_report_p2.png
+├── visual_report_p3.png
+├── visual_report_p4.png
+├── visual_report_p5.png
+├── visual_report_p6.png
+├── visual_report_top.png
+├── 中国可落地项目清单.docx
+└── 架构全景_纯表格版.docx

@@ -85,6 +85,12 @@ def evaluate_bias_extreme(
             "level": "严重",
             "direction": "high",
             "affects": "卖出三要素之强弱偏离度",
+            "evidence": {
+                "bias_5": bias_5,
+                "bias_10": bias_10,
+                "threshold_desc": "120日回看期内最高值",
+                "window": "120日",
+            },
         }
     if bias_5_extreme_low or bias_10_extreme_low:
         return {
@@ -92,6 +98,12 @@ def evaluate_bias_extreme(
             "level": "严重",
             "direction": "low",
             "affects": "买入参考，不构成买入信号",
+            "evidence": {
+                "bias_5": bias_5,
+                "bias_10": bias_10,
+                "threshold_desc": "120日回看期内最低值",
+                "window": "120日",
+            },
         }
     return None
 

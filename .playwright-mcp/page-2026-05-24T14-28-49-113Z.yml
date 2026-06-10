@@ -1,0 +1,350 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "知乎数据开放平台" [ref=e6] [cursor=pointer]:
+        - img [ref=e7]:
+          - generic [ref=e9]: 知
+        - generic [ref=e10]: 知乎数据开放平台
+      - navigation [ref=e11]:
+        - button "搜索产品" [ref=e12] [cursor=pointer]
+        - button "直答 Agent" [ref=e13] [cursor=pointer]
+        - button "知乎热榜" [ref=e14] [cursor=pointer]
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - button "文档中心" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+            - generic [ref=e20]: 文档中心
+          - button "联系我们" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+            - generic [ref=e26]: 联系我们
+        - button "登录" [ref=e27] [cursor=pointer]
+        - button "注册" [ref=e28] [cursor=pointer]
+  - generic [ref=e30]:
+    - paragraph [ref=e31]: DOCUMENTATION
+    - heading "文档中心" [level=1] [ref=e32]
+    - paragraph [ref=e33]: 接口说明、鉴权方式、示例代码与接入指南。
+  - generic [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]: Docs
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - button "开始使用" [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: 开始使用
+            - img [ref=e47]
+          - button "鉴权" [ref=e52] [cursor=pointer]
+        - generic [ref=e53]:
+          - button "知乎搜索" [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: 知乎搜索
+            - img [ref=e56]
+          - generic [ref=e60]:
+            - button "知乎搜索 API" [ref=e61] [cursor=pointer]
+            - button "知乎搜索 Skill" [ref=e62] [cursor=pointer]
+            - button "知乎搜索 MCP" [ref=e63] [cursor=pointer]
+        - generic [ref=e64]:
+          - button "全网搜索" [active] [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]: 全网搜索
+            - img [ref=e67]
+          - generic [ref=e71]:
+            - button "全网搜索 API" [ref=e72] [cursor=pointer]
+            - button "全网搜索 Skill" [ref=e73] [cursor=pointer]
+            - button "全网搜索 MCP" [ref=e74] [cursor=pointer]
+        - generic [ref=e75]:
+          - button "直答" [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]: 直答
+            - img [ref=e78]
+          - generic [ref=e82]:
+            - button "直答 API" [ref=e83] [cursor=pointer]
+            - button "直答 Skill" [ref=e84] [cursor=pointer]
+            - button "直答 MCP" [ref=e85] [cursor=pointer]
+        - generic [ref=e86]:
+          - button "热榜" [ref=e87] [cursor=pointer]:
+            - generic [ref=e88]: 热榜
+            - img [ref=e89]
+          - generic [ref=e93]:
+            - button "知乎热榜 API" [ref=e94] [cursor=pointer]
+            - button "知乎热榜 Skill" [ref=e95] [cursor=pointer]
+            - button "知乎热榜 MCP" [ref=e96] [cursor=pointer]
+    - generic [ref=e100]:
+      - heading "全网搜索 API" [level=1] [ref=e147]
+      - heading "接口说明" [level=2] [ref=e148]
+      - paragraph [ref=e103]: 该接口用于全网内容搜索。
+      - heading "接口信息" [level=2] [ref=e149]
+      - table [ref=e121]:
+        - rowgroup [ref=e122]:
+          - row "说明 值" [ref=e150]:
+            - columnheader "说明" [ref=e151]
+            - columnheader "值" [ref=e152]
+        - rowgroup [ref=e127]:
+          - row "HTTP URL https://developer.zhihu.com/api/v1/content/global_search" [ref=e153]:
+            - cell "HTTP URL" [ref=e154]
+            - cell "https://developer.zhihu.com/api/v1/content/global_search" [ref=e155]:
+              - link "https://developer.zhihu.com/api/v1/content/global_search" [ref=e156] [cursor=pointer]:
+                - /url: https://developer.zhihu.com/api/v1/content/global_search
+          - row "HTTP Method GET" [ref=e157]:
+            - cell "HTTP Method" [ref=e158]
+            - cell "GET" [ref=e159]
+      - heading "请求参数" [level=2] [ref=e160]
+      - heading "Header" [level=3] [ref=e161]
+      - list [ref=e113]:
+        - listitem [ref=e114]:
+          - text: Authorization：
+          - code [ref=e162]: Bearer <your_access_secret>
+        - listitem [ref=e115]: X-Request-Timestamp：秒级 Unix 时间戳
+        - listitem [ref=e118]:
+          - text: Content-Type：固定值
+          - code [ref=e119]: application/json
+      - heading "Query" [level=3] [ref=e163]
+      - table [ref=e164]:
+        - rowgroup [ref=e165]:
+          - row "名称 类型 必填 说明" [ref=e166]:
+            - columnheader "名称" [ref=e167]
+            - columnheader "类型" [ref=e168]
+            - columnheader "必填" [ref=e169]
+            - columnheader "说明" [ref=e170]
+        - rowgroup [ref=e171]:
+          - row "Query String 是 查询关键词" [ref=e172]:
+            - cell "Query" [ref=e173]
+            - cell "String" [ref=e174]
+            - cell "是" [ref=e175]
+            - cell "查询关键词" [ref=e176]
+          - row "Count Int32 否 请求数量，默认 10，最大 20" [ref=e177]:
+            - cell "Count" [ref=e178]
+            - cell "Int32" [ref=e179]
+            - cell "否" [ref=e180]
+            - cell "请求数量，默认 10，最大 20" [ref=e181]
+          - row "Filter String 否 高级语法筛选表达式。作为 URL Query 参数传入时需进行 URL 编码，推荐使用 --data-urlencode 或 SDK 参数编码能力" [ref=e182]:
+            - cell "Filter" [ref=e183]
+            - cell "String" [ref=e184]
+            - cell "否" [ref=e185]
+            - cell "高级语法筛选表达式。作为 URL Query 参数传入时需进行 URL 编码，推荐使用 --data-urlencode 或 SDK 参数编码能力" [ref=e186]:
+              - text: 高级语法筛选表达式。作为 URL Query 参数传入时需进行 URL 编码，推荐使用
+              - code [ref=e187]: "--data-urlencode"
+              - text: 或 SDK 参数编码能力
+          - row "SearchDB String 否 索引库选择，默认 all" [ref=e188]:
+            - cell "SearchDB" [ref=e189]
+            - cell "String" [ref=e190]
+            - cell "否" [ref=e191]
+            - cell "索引库选择，默认 all" [ref=e192]:
+              - text: 索引库选择，默认
+              - code [ref=e193]: all
+      - heading "SearchDB 索引库选择" [level=3] [ref=e194]
+      - table [ref=e195]:
+        - rowgroup [ref=e196]:
+          - row "值 说明" [ref=e197]:
+            - columnheader "值" [ref=e198]
+            - columnheader "说明" [ref=e199]
+        - rowgroup [ref=e200]:
+          - row "all 全部索引库，默认值" [ref=e201]:
+            - cell "all" [ref=e202]:
+              - code [ref=e203]: all
+            - cell "全部索引库，默认值" [ref=e204]
+          - row "realtime 仅搜索实时库" [ref=e205]:
+            - cell "realtime" [ref=e206]:
+              - code [ref=e207]: realtime
+            - cell "仅搜索实时库" [ref=e208]
+          - row "static 仅搜索静态库" [ref=e209]:
+            - cell "static" [ref=e210]:
+              - code [ref=e211]: static
+            - cell "仅搜索静态库" [ref=e212]
+      - heading "Filter 高级语法" [level=3] [ref=e213]
+      - paragraph [ref=e105]:
+        - code [ref=e106]: Filter
+        - text: 用于按站点、发布时间等条件过滤搜索结果。
+      - paragraph [ref=e110]: 支持字段：
+      - table [ref=e214]:
+        - rowgroup [ref=e215]:
+          - row "字段 含义 类型 示例" [ref=e216]:
+            - columnheader "字段" [ref=e217]
+            - columnheader "含义" [ref=e218]
+            - columnheader "类型" [ref=e219]
+            - columnheader "示例" [ref=e220]
+        - rowgroup [ref=e221]:
+          - row "host 站点域名 String host==\"example.com\"" [ref=e222]:
+            - cell "host" [ref=e223]
+            - cell "站点域名" [ref=e224]
+            - cell "String" [ref=e225]
+            - cell "host==\"example.com\"" [ref=e226]:
+              - code [ref=e227]: host=="example.com"
+          - row "publish_time 发布时间，秒级时间戳 Int64 publish_time>=1778494631" [ref=e228]:
+            - cell "publish_time" [ref=e229]
+            - cell "发布时间，秒级时间戳" [ref=e230]
+            - cell "Int64" [ref=e231]
+            - cell "publish_time>=1778494631" [ref=e232]:
+              - code [ref=e233]: publish_time>=1778494631
+      - paragraph [ref=e112]: 支持操作符：
+      - list [ref=e234]:
+        - listitem [ref=e235]:
+          - code [ref=e236]: host
+          - text: 支持
+          - code [ref=e237]: ==
+          - text: 、
+          - code [ref=e238]: "!="
+          - text: ，字符串值必须使用双引号。
+          - code [ref=e239]: host=="zhihu.com"
+          - text: 及其子域名不支持，如需搜索仅知乎站内内容，请直接使用
+          - code [ref=e240]: zhihu_search
+          - text: 接口。
+        - listitem [ref=e241]:
+          - code [ref=e242]: publish_time
+          - text: 支持
+          - code [ref=e243]: ==
+          - text: 、
+          - code [ref=e244]: "!="
+          - text: 、
+          - code [ref=e245]: ">"
+          - text: 、
+          - code [ref=e246]: ">="
+          - text: 、
+          - code [ref=e247]: <
+          - text: 、
+          - code [ref=e248]: <=
+          - text: ，数字值不使用引号。
+      - paragraph [ref=e249]: 支持逻辑符：
+      - list [ref=e250]:
+        - listitem [ref=e251]:
+          - code [ref=e252]: AND
+          - text: 、
+          - code [ref=e253]: OR
+          - text: 必须大写。
+        - listitem [ref=e254]:
+          - code [ref=e255]: AND
+          - text: 优先级高于
+          - code [ref=e256]: OR
+          - text: 。
+        - listitem [ref=e257]:
+          - text: 可以使用括号
+          - code [ref=e258]: ()
+          - text: 明确控制优先级。
+      - paragraph [ref=e259]: 示例：
+      - code [ref=e146]: host=="example.com" host=="example.com" AND publish_time>=1778494631 (host=="example.com" OR host=="news.example.com") AND publish_time>1778494631
+      - heading "响应参数" [level=2] [ref=e260]
+      - paragraph [ref=e261]: Data：
+      - table [ref=e262]:
+        - rowgroup [ref=e263]:
+          - row "参数名 类型 是否必返 描述" [ref=e264]:
+            - columnheader "参数名" [ref=e265]
+            - columnheader "类型" [ref=e266]
+            - columnheader "是否必返" [ref=e267]
+            - columnheader "描述" [ref=e268]
+        - rowgroup [ref=e269]:
+          - row "HasMore Bool 是 是否有下一页数据" [ref=e270]:
+            - cell "HasMore" [ref=e271]
+            - cell "Bool" [ref=e272]
+            - cell "是" [ref=e273]
+            - cell "是否有下一页数据" [ref=e274]
+          - row "Items Array[Item] 是 内容数据列表" [ref=e275]:
+            - cell "Items" [ref=e276]
+            - cell "Array[Item]" [ref=e277]
+            - cell "是" [ref=e278]
+            - cell "内容数据列表" [ref=e279]
+      - paragraph [ref=e280]: Item：
+      - table [ref=e281]:
+        - rowgroup [ref=e282]:
+          - row "参数名 类型 是否必返 描述" [ref=e283]:
+            - columnheader "参数名" [ref=e284]
+            - columnheader "类型" [ref=e285]
+            - columnheader "是否必返" [ref=e286]
+            - columnheader "描述" [ref=e287]
+        - rowgroup [ref=e288]:
+          - row "Title String 是 内容标题" [ref=e289]:
+            - cell "Title" [ref=e290]
+            - cell "String" [ref=e291]
+            - cell "是" [ref=e292]
+            - cell "内容标题" [ref=e293]
+          - row "ContentType String 是 内容类型，如回答、文章" [ref=e294]:
+            - cell "ContentType" [ref=e295]
+            - cell "String" [ref=e296]
+            - cell "是" [ref=e297]
+            - cell "内容类型，如回答、文章" [ref=e298]
+          - row "ContentID String 是 内容 Token" [ref=e299]:
+            - cell "ContentID" [ref=e300]
+            - cell "String" [ref=e301]
+            - cell "是" [ref=e302]
+            - cell "内容 Token" [ref=e303]
+          - row "ContentText String 是 内容摘要，高亮部分用 <em> 标签表示" [ref=e304]:
+            - cell "ContentText" [ref=e305]
+            - cell "String" [ref=e306]
+            - cell "是" [ref=e307]
+            - cell "内容摘要，高亮部分用 <em> 标签表示" [ref=e308]
+          - row "Url String 是 内容链接（带溯源 utm 参数）" [ref=e309]:
+            - cell "Url" [ref=e310]
+            - cell "String" [ref=e311]
+            - cell "是" [ref=e312]
+            - cell "内容链接（带溯源 utm 参数）" [ref=e313]
+          - row "CommentCount Int32 是 评论数" [ref=e314]:
+            - cell "CommentCount" [ref=e315]
+            - cell "Int32" [ref=e316]
+            - cell "是" [ref=e317]
+            - cell "评论数" [ref=e318]
+          - row "VoteUpCount Int32 是 赞同数" [ref=e319]:
+            - cell "VoteUpCount" [ref=e320]
+            - cell "Int32" [ref=e321]
+            - cell "是" [ref=e322]
+            - cell "赞同数" [ref=e323]
+          - row "AuthorName String 是 作者昵称，匿名时，展示为：知乎用户" [ref=e324]:
+            - cell "AuthorName" [ref=e325]
+            - cell "String" [ref=e326]
+            - cell "是" [ref=e327]
+            - cell "作者昵称，匿名时，展示为：知乎用户" [ref=e328]
+          - row "AuthorAvatar String 是 作者头像" [ref=e329]:
+            - cell "AuthorAvatar" [ref=e330]
+            - cell "String" [ref=e331]
+            - cell "是" [ref=e332]
+            - cell "作者头像" [ref=e333]
+          - row "AuthorBadge String 是 认证标图片 Url" [ref=e334]:
+            - cell "AuthorBadge" [ref=e335]
+            - cell "String" [ref=e336]
+            - cell "是" [ref=e337]
+            - cell "认证标图片 Url" [ref=e338]
+          - row "AuthorBadgeText String 是 认证文案" [ref=e339]:
+            - cell "AuthorBadgeText" [ref=e340]
+            - cell "String" [ref=e341]
+            - cell "是" [ref=e342]
+            - cell "认证文案" [ref=e343]
+          - row "EditTime Int64 是 最后编辑时间戳，如 1745486539" [ref=e344]:
+            - cell "EditTime" [ref=e345]
+            - cell "Int64" [ref=e346]
+            - cell "是" [ref=e347]
+            - cell "最后编辑时间戳，如 1745486539" [ref=e348]
+          - row "CommentInfoList Array[CommentInfo] 否 精选评论" [ref=e349]:
+            - cell "CommentInfoList" [ref=e350]
+            - cell "Array[CommentInfo]" [ref=e351]
+            - cell "否" [ref=e352]
+            - cell "精选评论" [ref=e353]
+          - row "AuthorityLevel String 是 权威等级（1 低权威，2 中权威，3 高权威，4 超高权威）" [ref=e354]:
+            - cell "AuthorityLevel" [ref=e355]
+            - cell "String" [ref=e356]
+            - cell "是" [ref=e357]
+            - cell "权威等级（1 低权威，2 中权威，3 高权威，4 超高权威）" [ref=e358]
+      - paragraph [ref=e359]: "CommentInfo:"
+      - table [ref=e360]:
+        - rowgroup [ref=e361]:
+          - row "参数名 类型 是否必选 描述" [ref=e362]:
+            - columnheader "参数名" [ref=e363]
+            - columnheader "类型" [ref=e364]
+            - columnheader "是否必选" [ref=e365]
+            - columnheader "描述" [ref=e366]
+        - rowgroup [ref=e367]:
+          - row "Content String 是 评论内容" [ref=e368]:
+            - cell "Content" [ref=e369]
+            - cell "String" [ref=e370]
+            - cell "是" [ref=e371]
+            - cell "评论内容" [ref=e372]
+      - heading "响应示例" [level=3] [ref=e373]
+      - code [ref=e376]:
+        - text: "{ \"Code\": 0, \"Message\": \"success\", \"Data\": { \"HasMore\": false, \"Items\": [{ \"Title\": \"ChatGPT现在还值得开会员吗？\", \"ContentType\": \"Answer\", \"ContentID\": \"1903044959663284716\", \"ContentText\": \"首先要澄清一个常见误解：ChatGPT的免费版和付费版使用的是不同模型与功能配置，体验差距确实很大。很多人用了一下免费版就觉得\"就这？\"，其实是没体验过付费版完整的能力，比如文件上传、多模态理解等功能。\\n虽然免费版目前也使用了GPT-4-turbo模型，但功能上仍有限，例如不能用代码解释器、不支持上传文件、无长期记忆能力等，而且还有使用频率限制。\\n相比之下，花20美金开通的付费版支持更多高级功能，比如处理图片、文档、复杂代码分析、图表生成等，在实际使用中效率和精度明显提升。\\n如果你每天只是问几句闲聊或搜索类问题，的确不必付费，国产的一些大模型（如DeepSeek、Kimi）也能胜任。但如果你依赖它来工作学习、频繁做复杂任务，这20美元绝对是值得投入的，光省下的时间就够本。\\n最后不建议拼会员，多人共用一个账号容易导致模型输出错乱，影响效果；账号安全、IP污染等问题也无法忽视。一个账号专人使用，才是最稳定、最优的体验方式。\", \"Url\": \"https://www.zhihu.com/answer/1903044959663284716?utm_medium=openapi_platform&utm_source=6d23634e\", \"CommentCount\": 22, \"VoteUpCount\": 18, \"AuthorName\": \"时光纪\", \"AuthorAvatar\": \"https://picx.zhimg.com/50/v2-84ce3330420f9332a1d69d4cd1f10c2f_l.jpg?source=f1558865\", \"AuthorBadge\": \"\", \"AuthorBadgeText\": \"\", \"EditTime\": 1748355858, \"CommentInfoList\": [{ \"Content\": \"没啥区别，免费也是4o 收费你也是用4o 那o1 o3都跟智障似的 4o也差不多，但是他比较快。 本月开始不续费了，换了gemini2.5 强太多了，除了think太啰嗦，翻译还是得用回不think的模型\" }, { \"Content\": \"免费版现在也可以用gpt4o啊，只不过有限制，用的不多也够用\" }], \"AuthorityLevel\":\"2\", }, { \"Title\": \"ChatGPT电脑桌面版安装指南+使用技巧（超详细）\", \"ContentType\": \"Article\", \"ContentID\": \"18698154193\", \"ContentText\": \" macOS 版本：14及以上\\n 处理器： 建议使用M1芯片或更新的Mac电脑，以获得最佳性能（旧款设备可能出现卡顿）。\\n 下载步骤：\\n1.打开浏览器，打开 OpenAI 官方下载页面：https://openai.com/chatgpt/desktop/\\n2.点击 \"Download for macOS\" 按钮，开始下载。\\n安装步骤：\\n1.下载完成后，双击 .dmg 文件，将 ChatGPT 应用拖动到 \"应用程序\" 文件夹。\\n2.如果系统提示 \"来自未知开发者\"，请在 \"系统偏好设置\">\"安全性与隐私\" 中点击 \"仍要打开\"。\\n安装完成： 完成以上步骤，macOS 用户即可正常使用桌面版 ChatGPT。\\n 2. Windows 用户安装指南系统时区设置： 需将电脑系统地区和时区设置为阿美莉卡（或其他OpenAI支持服务的地区）。\\n1.打开电脑的\"设置\">\"时间和语言\">\"日期和时间\"。\\n2.在\"自动设置时区\"中，先关闭自动设置，然后在\"时区\"中选择阿美莉卡（或OpenAI支持的地区）的时区。\\n下载步骤：\\n1.设置好之后，打开OpenAI 官方下载页面： https://openai.com/chatgpt/desktop/\\n2.点击 \"Download for Windows\" 按钮。\\n安装步骤：\\n1.浏览器会自动打开到微软应用商店页面。\\n2.点击 \"View in Store/在Microsoft Store中查看\" 按钮，跳转到微软应用商店，按照提示完成安装。\\n安装完成： 完成以上步骤，Windows 用户即可正常使用桌面版 ChatGPT。\\n 三、ChatGPT桌面版使用技巧安装好 ChatGPT 桌面版之后，如何充分利用它的功能，提高效率呢？\\n接下来，我分享一些实用的使用技巧：\\n1. 快捷键：使用快捷键可以随时随地唤出 ChatGPT，无需切换窗口，非常便捷。\\nmacOS： Option + 空格Windows： Alt + 空格 (可以自定义)2. 多模态输入：截图功能： 遇到问题，直接截图发给ChatGPT，它可以帮你分析解读，无论是编程题、Excel 表格，还是其他数据报表，通通不在话下。拍照功能： 拍照上传，可以让 ChatGPT 解答数学题、识别物体等。多文件上传： 可一次性上传多个文档，让 ChatGPT 帮你总结、归纳。3. 高级语音模式：点击输入框右侧的语音图标，即可开始与 ChatGPT 进行语音对话。免费用户也可以体验高级语音模式（有体验时长限制），ChatGPT Plus用户可以享受更长时间的语音对话。4. 多窗口支持：在桌面版中，你可以同时打开多个对话窗口，方便你同时进行多个任务。设置方式：鼠标放到左侧栏相应对话后的\"···\"，在选项弹窗中选择\"在伴随浮窗中打开\"。5. 自定义快捷键：如果你觉得默认的快捷键用着不习惯，可以在系统设置中自定义快捷键，让操作更加顺手。设置方式：点击左下角的账号头像>设置>应用，选择\"伴随浮窗热键\"进行更改。6. 直接启动第三方应用（macOS 独享）：macOS的ChatGPT Plus/Pro和Teams订阅用户，可以直接在ChatGPT中启动VS Code、Xcode、Terminal等第三方应用，进行跨应用协作。对于编辑器类应用，ChatGPT能够读取最前窗口的完整内容；对于终端类应用，可以读取最后200行内容。四、桌面版跟网页版有什么不一样？ChatGPT 桌面版和网页版虽然都使用相同的模型，但使用体验却大相径庭。\\n来看一下两者之间的主要区别：\\n如果你是一个经常要用的ChatGPT的用户，从效率和功能角度看，桌面版无疑是更好的选择。\\n五、ChatGPT Plus或Pro方法不管是哪个端，如果你想解锁ChatGPT的全部功能，包括o1模型、sora、task、高级语音模式等，就需要订阅 ChatGPT Plus或者Pro。\\n具体可以看⬇️：\\nChatGPT Plus如何升级订阅最新方法全网汇总以上。\\n如果有啥疑问也可以在留言告诉我。\", \"Url\": \"https://zhuanlan.zhihu.com/p/18698154193?utm_medium=openapi_platform&utm_source=6d23634e\", \"CommentCount\": 15, \"VoteUpCount\": 27, \"AuthorName\": \"文字机器凸哥\", \"AuthorAvatar\": \"https://picx.zhimg.com/50/v2-df39523084f28b407d21394b6210653c_l.jpg?source=f1558865\", \"AuthorBadge\": \"\", \"AuthorBadgeText\": \"\", \"EditTime\": 1753954052, \"CommentInfoList\": [{ \"Content\": \"今天发现有桌面端 下下来后才发现似乎与网页端没什么区别 伴随浮窗无法使用 alt+space快捷键仅仅是呼出/隐藏桌面端主窗口 不知道为什么\" }, { \"Content\": \"显示网络设置有问题咋办[发呆]\" }], \"AuthorityLevel\":\"1\", }] }"
+        - text: "}"
+      - heading "代码示例" [level=2] [ref=e377]
+      - paragraph [ref=e378]: "Curl 请求示例:"
+      - code [ref=e381]: "curl -G 'https://developer.zhihu.com/api/v1/content/global_search' \\ --data-urlencode 'Query=怎么理解rave文化' \\ --data-urlencode 'Filter=host==\"example.com\" AND publish_time>=1778494631' \\ --data-urlencode 'SearchDB=all' \\ -d 'Count=5' \\ -H 'Authorization: Bearer <your_access_secret>' \\ -H \"X-Request-Timestamp: $(date +%s)\""
+      - paragraph [ref=e382]: "Go 语言请求示例:"
+      - code [ref=e385]:
+        - text: package main
+        - text: import ( "flag" "fmt" "io" "net/http" "net/url" "time"
+        - text: )
+        - text: const ( RequestGlobalSearchURL = "https://developer.zhihu.com/api/v1/content/global_search"
+        - text: )
+        - text: "func main() { accessSecret := flag.String(\"access-secret\", \"\", \"Access secret for Bearer authentication\") query := flag.String(\"query\", \"chatgpt\", \"Search query\") count := flag.Int(\"count\", 10, \"Number of results to return\") filter := flag.String(\"filter\", \"\", \"Advanced filter expression\") searchDB := flag.String(\"search-db\", \"\", \"Search index: all, realtime, static\") flag.Parse() response, err := RequestGlobalSearch(*accessSecret, *query, *count, *filter, *searchDB) if err != nil { fmt.Printf(\"Failed to request global search: %v\\n\", err) return } fmt.Printf(\"response: %+v\\n\", response)"
+        - text: "}"
+        - text: "func RequestGlobalSearch(accessSecret string, query string, count int, filter string, searchDB string) (string, error) { params := url.Values{} params.Set(\"Query\", query) params.Set(\"Count\", fmt.Sprintf(\"%d\", count)) if filter != \"\" { params.Set(\"Filter\", filter) } if searchDB != \"\" { params.Set(\"SearchDB\", searchDB) } req, err := http.NewRequest(\"GET\", RequestGlobalSearchURL, nil) if err != nil { return \"\", fmt.Errorf(\"failed to create request: %w\", err) } req.URL.RawQuery = params.Encode() req.Header.Set(\"Authorization\", \"Bearer \"+accessSecret) req.Header.Set(\"X-Request-Timestamp\", fmt.Sprintf(\"%d\", time.Now().Unix())) client := &http.Client{} resp, err := client.Do(req) if err != nil { return \"\", fmt.Errorf(\"failed to send request: %w\", err) } defer func() { if err := resp.Body.Close(); err != nil { fmt.Printf(\"Failed to close response body: %v\\n\", err) } }() body, err := io.ReadAll(resp.Body) if err != nil { return \"\", fmt.Errorf(\"failed to read response: %w\", err) } return string(body), nil"
+        - text: "}"

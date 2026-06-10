@@ -1,0 +1,932 @@
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "雪球 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img "雪球" [ref=e11]
+          - generic [ref=e12]: 首页
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "搜索" [ref=e15]
+          - button "" [ref=e17] [cursor=pointer]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link [ref=e20] [cursor=pointer]:
+              - /url: https://ai.xueqiu.com/chat
+              - img [ref=e21]
+          - listitem [ref=e22]:
+            - link "" [ref=e23] [cursor=pointer]:
+              - /url: /snb/web/cs?from=xq
+          - listitem [ref=e24]:
+            - link "" [ref=e25] [cursor=pointer]:
+              - /url: javascript:;
+          - listitem [ref=e26]:
+            - link "下载App" [ref=e27] [cursor=pointer]:
+              - /url: "javascript:"
+          - listitem [ref=e28]:
+            - generic [ref=e29] [cursor=pointer]: 发帖
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - strong [ref=e32]: 公司概况
+      - list [ref=e33]:
+        - listitem [ref=e34]:
+          - link "公司简介" [ref=e35] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/GSJJ
+        - listitem [ref=e36]:
+          - link "公司高管" [ref=e37] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/GSGG
+      - strong [ref=e38]: 股权信息
+      - list [ref=e39]:
+        - listitem [ref=e40]:
+          - link "股本结构" [ref=e41] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/GBJG
+        - listitem [ref=e42]:
+          - link "十大股东" [ref=e43] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/SDGD
+        - listitem [ref=e44]:
+          - link "十大流通股东" [ref=e45] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/LTGD
+        - listitem [ref=e46]:
+          - link "基金持股" [ref=e47] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/JJCG
+        - listitem [ref=e48]:
+          - link "高管增减持" [ref=e49] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/GGZJC
+        - listitem [ref=e50]:
+          - link "股东人数" [ref=e51] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/GDRS
+        - listitem [ref=e52]:
+          - link "限售解禁" [ref=e53] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/XSJJ
+      - strong [ref=e54]: 股票交易
+      - list [ref=e55]:
+        - listitem [ref=e56]:
+          - link "成交明细" [ref=e57] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/provider/zz/gp_detail?symbol=SZ002050
+        - listitem [ref=e58]:
+          - link "分价表" [ref=e59] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/provider/zz/gp_price?symbol=SZ002050
+        - listitem [ref=e60]:
+          - link "大单统计" [ref=e61] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/provider/zz/gp_dadan?symbol=SZ002050
+        - listitem [ref=e62]:
+          - link "大宗交易" [ref=e63] [cursor=pointer]:
+            - /url: http://data.eastmoney.com/dzjy/detail/002050.html
+        - listitem [ref=e64]:
+          - link "龙虎榜数据" [ref=e65] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/LHB
+        - listitem [ref=e66]:
+          - link "融资融券" [ref=e67] [cursor=pointer]:
+            - /url: http://stockdata.stock.hexun.com/rzrq/s002050.shtml
+      - strong [ref=e68]: 公司公告
+      - list [ref=e69]:
+        - listitem [ref=e70]:
+          - link "最新公告" [ref=e71] [cursor=pointer]:
+            - /url: http://www.szse.cn/disclosure/listed/notice/index.html?stock=002050
+        - listitem [ref=e72]:
+          - link "年度报告" [ref=e73] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vCB_Bulletin/stockid/002050/page_type/ndbg.phtml
+      - strong [ref=e74]: 公司运作
+      - list [ref=e75]:
+        - listitem [ref=e76]:
+          - link "股东大会" [ref=e77] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vGP_StockHolderMeeting/stockid/002050.phtml
+        - listitem [ref=e78]:
+          - link "收入构成" [ref=e79] [cursor=pointer]:
+            - /url: http://stockpage.10jqka.com.cn/002050/operate/#analysis
+        - listitem [ref=e80]:
+          - link "重大事项" [ref=e81] [cursor=pointer]:
+            - /url: http://q.stock.sohu.com/cn/002050/bw.shtml
+        - listitem [ref=e82]:
+          - link "分红送配" [ref=e83] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/FHPS
+        - listitem [ref=e84]:
+          - link "增发一览" [ref=e85] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/ZFYLB
+        - listitem [ref=e86]:
+          - link "内部交易" [ref=e87] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/INSIDER
+      - strong [ref=e88]: 财务数据
+      - list [ref=e89]:
+        - listitem [ref=e90]:
+          - link "业绩预告" [ref=e91] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vFD_AchievementNotice/stockid/002050.phtml
+        - listitem [ref=e92]:
+          - link "主要指标" [ref=e93] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/ZYCWZB
+        - listitem [ref=e94]:
+          - link "利润表" [ref=e95] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/GSLRB
+        - listitem [ref=e96]:
+          - link "资产负债表" [ref=e97] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/ZCFZB
+        - listitem [ref=e98]:
+          - link "现金流量表" [ref=e99] [cursor=pointer]:
+            - /url: /S/SZ002050/detail/#/XJLLB
+        - listitem [ref=e100]:
+          - link "所有者权益变动" [ref=e101] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_BenifitChange/stockid/002050/displaytype/4.phtml
+        - listitem [ref=e102]:
+          - link "雪球选股器" [ref=e103] [cursor=pointer]:
+            - /url: /stock/screener
+      - strong [ref=e104]: 研究分析
+      - list [ref=e105]:
+        - listitem [ref=e106]:
+          - link "杜邦分析" [ref=e107] [cursor=pointer]:
+            - /url: https://vip.stock.finance.sina.com.cn/corp/go.php/vFD_DupontAnalysis/stockid/002050/displaytype/10.phtml
+        - listitem [ref=e108]:
+          - link "研究报告" [ref=e109] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/q/go.php/vReport_List/kind/search/index.phtml?t1=2&symbol=002050
+      - strong [ref=e110]: APP专享
+      - list [ref=e111]:
+        - listitem [ref=e112] [cursor=pointer]: 大盘异动
+        - listitem [ref=e113] [cursor=pointer]: 股价提醒
+        - listitem [ref=e114] [cursor=pointer]: 购买指数
+        - listitem [ref=e115] [cursor=pointer]: 相关ETF
+    - generic [ref=e116]:
+      - heading "三花智控(SZ:002050)" [level=1] [ref=e117]
+      - generic [ref=e118]:
+        - generic [ref=e119]: 深股通
+        - generic [ref=e120]: 可融资
+        - generic [ref=e121]: 可卖空
+      - generic [ref=e122]:
+        - img "微信分享" [ref=e125] [cursor=pointer]
+        - link "" [ref=e127] [cursor=pointer]:
+          - /url: "#"
+        - link "加自选" [ref=e128] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e130]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - strong [ref=e134]: ¥50.55
+            - generic [ref=e135]: "-1.78 -3.40%"
+          - generic [ref=e136]:
+            - generic [ref=e137]: 28.03 万球友关注
+            - generic [ref=e138]: 已收盘 05-20 15:04:30 北京时间
+        - link "H股： 33.68-0.66-1.92%溢价(H/A):-42.1%" [ref=e139] [cursor=pointer]:
+          - /url: ./02050
+          - text: H股：
+          - generic [ref=e140]: 33.68-0.66-1.92%溢价(H/A):-42.1%
+        - table [ref=e141]:
+          - rowgroup [ref=e142]:
+            - row "最高：51.72 今开：51.70 涨停：57.56 成交量：157.01万手" [ref=e143]:
+              - cell "最高：51.72" [ref=e144]
+              - cell "今开：51.70" [ref=e145]
+              - cell "涨停：57.56" [ref=e146]
+              - cell "成交量：157.01万手" [ref=e147]
+            - row "最低：50.22 昨收：52.33 跌停：47.10 成交额：79.68亿" [ref=e148]:
+              - cell "最低：50.22" [ref=e149]
+              - cell "昨收：52.33" [ref=e150]
+              - cell "跌停：47.10" [ref=e151]
+              - cell "成交额：79.68亿" [ref=e152]
+            - row "量比：0.83 换手：4.26% 市盈率(动)：57.33 市盈率(TTM)：52.05" [ref=e153]:
+              - cell "量比：0.83" [ref=e154]
+              - cell "换手：4.26%" [ref=e155]
+              - cell "市盈率(动)：57.33" [ref=e156]
+              - cell "市盈率(TTM)：52.05" [ref=e157]
+            - row "委比：-13.94% 振幅：2.87% 市盈率(静)：52.36 市净率：6.52" [ref=e158]:
+              - cell "委比：-13.94%" [ref=e159]
+              - cell "振幅：2.87%" [ref=e160]
+              - cell "市盈率(静)：52.36" [ref=e161]
+              - cell "市净率：6.52" [ref=e162]
+            - row "每股收益：0.97 股息(TTM)：0.40 总股本：42.08亿 总市值：2127.15亿" [ref=e163]:
+              - cell "每股收益：0.97" [ref=e164]
+              - cell "股息(TTM)：0.40" [ref=e165]
+              - cell "总股本：42.08亿" [ref=e166]
+              - cell "总市值：2127.15亿" [ref=e167]
+            - row "每股净资产：7.75 股息率(TTM)：0.79% 流通股：36.84亿 流通值：1862.36亿" [ref=e168]:
+              - cell "每股净资产：7.75" [ref=e169]
+              - cell "股息率(TTM)：0.79%" [ref=e170]
+              - cell "流通股：36.84亿" [ref=e171]
+              - cell "流通值：1862.36亿" [ref=e172]
+            - row "52周最高：60.77 52周最低：23.75 注册制：否 货币单位：CNY" [ref=e173]:
+              - cell "52周最高：60.77" [ref=e174]
+              - cell "52周最低：23.75" [ref=e175]
+              - cell "注册制：否" [ref=e176]
+              - cell "货币单位：CNY" [ref=e177]
+      - generic [ref=e179]:
+        - generic [ref=e180] [cursor=pointer]:
+          - generic [ref=e181]:
+            - generic [ref=e182]: 分时
+            - generic [ref=e183]: 五日
+            - generic [ref=e184]: 日K
+            - generic [ref=e185]: 周K
+            - generic [ref=e186]: 月K
+            - generic [ref=e187]: 季K
+            - generic [ref=e188]: 年K
+            - generic [ref=e189]: 120分
+            - generic [ref=e190]: 60分
+            - generic [ref=e191]: 30分
+            - generic [ref=e192]: 15分
+            - generic [ref=e193]: 5分
+            - generic [ref=e194]: 1分
+          - list [ref=e195]:
+            - listitem [ref=e196]: 区间统计
+            - listitem [ref=e197]: 全屏显示
+        - paragraph [ref=e200] [cursor=pointer]: 手机版沪深Lv2行情
+      - link "都在问 三 花 智 控 2 0 2 5 年 度 业 绩 说 明 会 主 要 讨 论 哪 些 内 容 ？" [ref=e203] [cursor=pointer]:
+        - /url: https://ai.xueqiu.com/ai/seekball/chat?shareId=s-c6306e35-60a5-40c1-a63c-ff5298bcc6c0&navBarTransparent=1&navBarTheme=dark&ref=1&module=2&symbol=SZ002050
+        - paragraph [ref=e204]:
+          - generic [ref=e205]: 都在问
+          - generic [ref=e206]: 三
+          - generic [ref=e207]: 花
+          - generic [ref=e208]: 智
+          - generic [ref=e209]: 控
+          - generic [ref=e210]: "2"
+          - generic [ref=e211]: "0"
+          - generic [ref=e212]: "2"
+          - generic [ref=e213]: "5"
+          - generic [ref=e214]: 年
+          - generic [ref=e215]: 度
+          - generic [ref=e216]: 业
+          - generic [ref=e217]: 绩
+          - generic [ref=e218]: 说
+          - generic [ref=e219]: 明
+          - generic [ref=e220]: 会
+          - generic [ref=e221]: 主
+          - generic [ref=e222]: 要
+          - generic [ref=e223]: 讨
+          - generic [ref=e224]: 论
+          - generic [ref=e225]: 哪
+          - generic [ref=e226]: 些
+          - generic [ref=e227]: 内
+          - generic [ref=e228]: 容
+          - generic [ref=e229]: ？
+      - generic [ref=e231]:
+        - img [ref=e232]
+        - generic [ref=e233]:
+          - generic [ref=e235]: $三花智控(SZ002050)$
+          - generic [ref=e236]:
+            - generic [ref=e237]:
+              - link "" [ref=e239] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e240]: 
+              - link "" [ref=e241] [cursor=pointer]:
+                - /url: javascript:;
+                - generic [ref=e242]: 
+              - link "" [ref=e243] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e244]: 
+              - link "" [ref=e245] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e246]: 
+              - link "" [ref=e247] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e248]: 
+              - link [ref=e250] [cursor=pointer]:
+                - /url: ""
+                - img [ref=e251]
+              - link " 长文" [ref=e253] [cursor=pointer]:
+                - /url: https://mp.xueqiu.com/write/?position=pc_stock_post
+                - generic [ref=e254]: 
+                - text: 长文
+            - link "发布" [ref=e256]:
+              - /url: ""
+      - generic [ref=e257]:
+        - generic [ref=e258]:
+          - link "全部" [ref=e259] [cursor=pointer]:
+            - /url: ""
+          - link "讨论" [ref=e260] [cursor=pointer]:
+            - /url: ""
+          - link "交易" [ref=e261] [cursor=pointer]:
+            - /url: ""
+          - link "资讯" [ref=e262] [cursor=pointer]:
+            - /url: ""
+          - link "公告" [ref=e263] [cursor=pointer]:
+            - /url: ""
+        - generic [ref=e264]:
+          - generic [ref=e266]:
+            - link "新帖" [ref=e267] [cursor=pointer]:
+              - /url: ""
+            - link "热帖" [ref=e268] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e270]:
+            - textbox "搜索该股票相关信息" [ref=e271]
+            - generic [ref=e272]: 
+        - generic [ref=e273]:
+          - article [ref=e274]:
+            - link [ref=e275] [cursor=pointer]:
+              - /url: /3520581951
+              - img [ref=e276]
+            - generic [ref=e277]:
+              - generic [ref=e279]:
+                - link "扛把子123" [ref=e280] [cursor=pointer]:
+                  - /url: /3520581951
+                - link "23分钟前· 来自iPhone" [ref=e281] [cursor=pointer]:
+                  - /url: /3520581951/389968955
+              - generic [ref=e285]:
+                - link "$三花智控(SZ002050)$" [ref=e286] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 这么多股东人数，一看就是散户大本营，能涨起来有鬼了。估计马上百万韭菜了，吓人！
+                - img "[大笑]" [ref=e287]
+                - img "[大笑]" [ref=e288]
+                - img "[大笑]" [ref=e289]
+              - generic [ref=e290]:
+                - link " 转发" [ref=e291] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e292]: 
+                  - generic [ref=e293]: 转发
+                - link " 讨论" [ref=e294] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e295]: 
+                  - generic [ref=e296]: 讨论
+                - link " 1" [ref=e297] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e298]: 
+                  - generic [ref=e299]: "1"
+                - link " 收藏" [ref=e300] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e301]: 
+                  - generic [ref=e302]: 收藏
+          - article [ref=e303]:
+            - link [ref=e304] [cursor=pointer]:
+              - /url: /1864355522
+              - img [ref=e305]
+            - generic [ref=e306]:
+              - generic [ref=e308]:
+                - link "丽丽臭泔水" [ref=e309] [cursor=pointer]:
+                  - /url: /1864355522
+                - link "30分钟前· 来自Android" [ref=e310] [cursor=pointer]:
+                  - /url: /1864355522/389967453
+              - generic [ref=e314]:
+                - link "$三花智控(SZ002050)$" [ref=e315] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 再等半个月切一部分过来
+              - generic [ref=e316]:
+                - link " 转发" [ref=e317] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e318]: 
+                  - generic [ref=e319]: 转发
+                - link " 讨论" [ref=e320] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e321]: 
+                  - generic [ref=e322]: 讨论
+                - link " 赞" [ref=e323] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e324]: 
+                  - generic [ref=e325]: 赞
+                - link " 收藏" [ref=e326] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e327]: 
+                  - generic [ref=e328]: 收藏
+          - article [ref=e329]:
+            - link [ref=e330] [cursor=pointer]:
+              - /url: /8071913020
+              - img [ref=e331]
+            - generic [ref=e332]:
+              - generic [ref=e334]:
+                - link "股道热场号" [ref=e335] [cursor=pointer]:
+                  - /url: /8071913020
+                - link "1小时前· 来自雪球" [ref=e336] [cursor=pointer]:
+                  - /url: /8071913020/389959138
+              - generic [ref=e340]:
+                - link "$三花智控(SZ002050)$" [ref=e341] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 你总不能比拓扑差吧？
+              - generic [ref=e342]:
+                - link " 转发" [ref=e343] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e344]: 
+                  - generic [ref=e345]: 转发
+                - link " 讨论" [ref=e346] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e347]: 
+                  - generic [ref=e348]: 讨论
+                - link " 赞" [ref=e349] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e350]: 
+                  - generic [ref=e351]: 赞
+                - link " 收藏" [ref=e352] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e353]: 
+                  - generic [ref=e354]: 收藏
+          - article [ref=e355]:
+            - link [ref=e356] [cursor=pointer]:
+              - /url: /1101910399
+              - img [ref=e357]
+            - generic [ref=e358]:
+              - generic [ref=e360]:
+                - link "用户1101910399" [ref=e361] [cursor=pointer]:
+                  - /url: /1101910399
+                - link "4小时前· 来自雪球" [ref=e362] [cursor=pointer]:
+                  - /url: /1101910399/389913001
+              - generic [ref=e366]:
+                - link "$三花智控(SZ002050)$" [ref=e367] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 占不上五日线啊 很难了
+              - generic [ref=e368]:
+                - link " 转发" [ref=e369] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e370]: 
+                  - generic [ref=e371]: 转发
+                - link " 7" [ref=e372] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e373]: 
+                  - generic [ref=e374]: "7"
+                - link " 5" [ref=e375] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e376]: 
+                  - generic [ref=e377]: "5"
+                - link " 收藏" [ref=e378] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e379]: 
+                  - generic [ref=e380]: 收藏
+          - article [ref=e381]:
+            - link [ref=e382] [cursor=pointer]:
+              - /url: /7438912188
+              - img [ref=e383]
+            - generic [ref=e384]:
+              - generic [ref=e386]:
+                - link "悟fak" [ref=e387] [cursor=pointer]:
+                  - /url: /7438912188
+                - link "5小时前· 来自Android" [ref=e388] [cursor=pointer]:
+                  - /url: /7438912188/389902907
+              - generic [ref=e392]:
+                - link "$三花智控(SZ002050)$" [ref=e393] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 缩量洗盘，明天有戏
+              - generic [ref=e394]:
+                - link " 转发" [ref=e395] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e396]: 
+                  - generic [ref=e397]: 转发
+                - link " 2" [ref=e398] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e399]: 
+                  - generic [ref=e400]: "2"
+                - link " 8" [ref=e401] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e402]: 
+                  - generic [ref=e403]: "8"
+                - link " 收藏" [ref=e404] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e405]: 
+                  - generic [ref=e406]: 收藏
+          - article [ref=e407]:
+            - link [ref=e408] [cursor=pointer]:
+              - /url: /7438912188
+              - img [ref=e409]
+            - generic [ref=e410]:
+              - generic [ref=e412]:
+                - link "悟fak" [ref=e413] [cursor=pointer]:
+                  - /url: /7438912188
+                - link "5小时前· 来自Android" [ref=e414] [cursor=pointer]:
+                  - /url: /7438912188/389901370
+              - generic [ref=e418]:
+                - link "$三花智控(SZ002050)$" [ref=e419] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 56.20买了50万块钱，不知道明天会涨不
+              - generic [ref=e420]:
+                - link " 转发" [ref=e421] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e422]: 
+                  - generic [ref=e423]: 转发
+                - link " 3" [ref=e424] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e425]: 
+                  - generic [ref=e426]: "3"
+                - link " 9" [ref=e427] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e428]: 
+                  - generic [ref=e429]: "9"
+                - link " 收藏" [ref=e430] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e431]: 
+                  - generic [ref=e432]: 收藏
+          - article [ref=e433]:
+            - link [ref=e434] [cursor=pointer]:
+              - /url: /1877915616
+              - img [ref=e435]
+            - generic [ref=e436]:
+              - generic [ref=e438]:
+                - link "虫子快跑" [ref=e439] [cursor=pointer]:
+                  - /url: /1877915616
+                - link "6小时前· 来自Android" [ref=e440] [cursor=pointer]:
+                  - /url: /1877915616/389882541
+              - generic [ref=e444]:
+                - link "$三花智控(SZ002050)$" [ref=e445] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 今天有冲动想加仓，幸好没钱了，都他么绿着呢
+                - img "[捂脸]" [ref=e446]
+                - img "[捂脸]" [ref=e447]
+                - img "[捂脸]" [ref=e448]
+              - generic [ref=e449]:
+                - link " 转发" [ref=e450] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e451]: 
+                  - generic [ref=e452]: 转发
+                - link " 4" [ref=e453] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e454]: 
+                  - generic [ref=e455]: "4"
+                - link " 4" [ref=e456] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e457]: 
+                  - generic [ref=e458]: "4"
+                - link " 收藏" [ref=e459] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e460]: 
+                  - generic [ref=e461]: 收藏
+          - article [ref=e462]:
+            - link [ref=e463] [cursor=pointer]:
+              - /url: /1914671495
+              - img [ref=e464]
+            - generic [ref=e465]:
+              - generic [ref=e467]:
+                - link "卫道的财经小游乐场" [ref=e468] [cursor=pointer]:
+                  - /url: /1914671495
+                - link "7小时前· 来自雪球" [ref=e469] [cursor=pointer]:
+                  - /url: /1914671495/389876997
+              - generic [ref=e473]:
+                - link "$三花智控(SZ002050)$" [ref=e474] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 和5月14号走势太像了，开盘价都一样。观察尾盘，破新低再微拉，怕是主力又一次暴力洗盘。
+              - generic [ref=e475]:
+                - link " 转发" [ref=e476] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e477]: 
+                  - generic [ref=e478]: 转发
+                - link " 讨论" [ref=e479] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e480]: 
+                  - generic [ref=e481]: 讨论
+                - link " 9" [ref=e482] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e483]: 
+                  - generic [ref=e484]: "9"
+                - link " 收藏" [ref=e485] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e486]: 
+                  - generic [ref=e487]: 收藏
+          - article [ref=e488]:
+            - link [ref=e489] [cursor=pointer]:
+              - /url: /1660372777
+              - img [ref=e490]
+            - generic [ref=e491]:
+              - generic [ref=e493]:
+                - link "Erin艾琳" [ref=e494] [cursor=pointer]:
+                  - /url: /1660372777
+                - link "7小时前· 来自iPhone" [ref=e495] [cursor=pointer]:
+                  - /url: /1660372777/389876220
+              - generic [ref=e496]:
+                - generic [ref=e498]:
+                  - generic [ref=e499]:
+                    - link "$三花智控(SZ002050)$" [ref=e500] [cursor=pointer]:
+                      - /url: https://xueqiu.com/S/SZ002050
+                    - text: 兰剑智能发布对标figure的人形分拣机器人，准备直播pk验证
+                    - link "$兰剑智能(SH688557)$" [ref=e501] [cursor=pointer]:
+                      - /url: https://xueqiu.com/S/SH688557
+                  - link "展开" [ref=e502] [cursor=pointer]:
+                    - /url: ""
+                - img [ref=e504]
+              - generic [ref=e505]:
+                - link " 转发" [ref=e506] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e507]: 
+                  - generic [ref=e508]: 转发
+                - link " 讨论" [ref=e509] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e510]: 
+                  - generic [ref=e511]: 讨论
+                - link " 2" [ref=e512] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e513]: 
+                  - generic [ref=e514]: "2"
+                - link " 收藏" [ref=e515] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e516]: 
+                  - generic [ref=e517]: 收藏
+          - article [ref=e518]:
+            - link [ref=e519] [cursor=pointer]:
+              - /url: /8511347304
+              - img [ref=e520]
+            - generic [ref=e521]:
+              - generic [ref=e523]:
+                - link "此男子淡漠" [ref=e524] [cursor=pointer]:
+                  - /url: /8511347304
+                - link "7小时前· 来自雪球" [ref=e525] [cursor=pointer]:
+                  - /url: /8511347304/389875918
+              - generic [ref=e529]:
+                - link "$三花智控(SZ002050)$" [ref=e530] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002050
+                - text: 有科创板权限的还是买
+                - link "$绿的谐波(SH688017)$" [ref=e531] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SH688017
+                - text: 合适，三花散户太多了
+              - generic [ref=e532]:
+                - link " 转发" [ref=e533] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e534]: 
+                  - generic [ref=e535]: 转发
+                - link " 1" [ref=e536] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e537]: 
+                  - generic [ref=e538]: "1"
+                - link " 1" [ref=e539] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e540]: 
+                  - generic [ref=e541]: "1"
+                - link " 收藏" [ref=e542] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e543]: 
+                  - generic [ref=e544]: 收藏
+        - generic [ref=e545]:
+          - link "1" [ref=e546] [cursor=pointer]:
+            - /url: ""
+          - link "2" [ref=e547] [cursor=pointer]:
+            - /url: ""
+          - link "3" [ref=e548] [cursor=pointer]:
+            - /url: ""
+          - link "4" [ref=e549] [cursor=pointer]:
+            - /url: ""
+          - link "5" [ref=e550] [cursor=pointer]:
+            - /url: ""
+          - text: ...
+          - link "100" [ref=e551] [cursor=pointer]:
+            - /url: ""
+          - link "下一页" [ref=e552] [cursor=pointer]:
+            - /url: ""
+          - textbox [ref=e553]
+    - generic [ref=e554]:
+      - generic [ref=e555]:
+        - generic [ref=e557]: 简介
+        - generic [ref=e559]:
+          - text: 浙江三花智能控制股份有限公司的主营业务是制冷空调电器与汽车的零件部件组件的研发、生产与销售。公司的主要产品是阀、换热器、泵、控制器...
+          - link "展开" [ref=e560] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e561]:
+        - generic [ref=e563]: 业务
+        - generic [ref=e564]: 制冷空调电器与汽车的零件部件组件的研发、生产与销售。
+      - generic [ref=e565]:
+        - generic [ref=e567]: 大事件
+        - list [ref=e569]:
+          - listitem [ref=e570]: 2026-06-03解禁10.20万股(预计值)，占总股本0.00%
+      - generic [ref=e571]:
+        - generic [ref=e572]:
+          - generic [ref=e573]: 影响力用户
+          - link "下五位" [ref=e575] [cursor=pointer]:
+            - /url: "#"
+        - list [ref=e577]:
+          - link "等着蚂蚁变大象 193788粉丝、30条相关讨论" [ref=e578] [cursor=pointer]:
+            - /url: /u/7351106301
+            - listitem [ref=e579]:
+              - img [ref=e581]
+              - generic [ref=e582]:
+                - generic [ref=e583]: 等着蚂蚁变大象
+                - generic [ref=e584]: 193788粉丝、30条相关讨论
+          - link "老马盘股 13901粉丝、92条相关讨论" [ref=e585] [cursor=pointer]:
+            - /url: /u/1155695148
+            - listitem [ref=e586]:
+              - img [ref=e588]
+              - generic [ref=e589]:
+                - generic [ref=e590]: 老马盘股
+                - generic [ref=e591]: 13901粉丝、92条相关讨论
+          - link "渊谳资本 2864粉丝、10条相关讨论" [ref=e592] [cursor=pointer]:
+            - /url: /u/2776972185
+            - listitem [ref=e593]:
+              - img [ref=e595]
+              - generic [ref=e596]:
+                - generic [ref=e597]: 渊谳资本
+                - generic [ref=e598]: 2864粉丝、10条相关讨论
+          - link "老巴他二叔 715粉丝、19条相关讨论" [ref=e599] [cursor=pointer]:
+            - /url: /u/3760095011
+            - listitem [ref=e600]:
+              - img [ref=e602]
+              - generic [ref=e603]:
+                - generic [ref=e604]: 老巴他二叔
+                - generic [ref=e605]: 715粉丝、19条相关讨论
+          - link "焦爷之涅槃重生 98647粉丝、38条相关讨论" [ref=e606] [cursor=pointer]:
+            - /url: /u/1079054508
+            - listitem [ref=e607]:
+              - img [ref=e609]
+              - generic [ref=e610]:
+                - generic [ref=e611]: 焦爷之涅槃重生
+                - generic [ref=e612]: 98647粉丝、38条相关讨论
+      - generic [ref=e613]:
+        - generic [ref=e615]:
+          - link "280268" [ref=e616] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/S/SZ002050/detail#/follow
+          - text: 人关注了该股票
+        - list [ref=e618]:
+          - listitem [ref=e619]:
+            - link [ref=e620] [cursor=pointer]:
+              - /url: /4320094719
+              - img [ref=e621]
+          - listitem [ref=e622]:
+            - link [ref=e623] [cursor=pointer]:
+              - /url: /4877088677
+              - img [ref=e624]
+          - listitem [ref=e625]:
+            - link [ref=e626] [cursor=pointer]:
+              - /url: /1890171331
+              - img [ref=e627]
+          - listitem [ref=e628]:
+            - link [ref=e629] [cursor=pointer]:
+              - /url: /2261062719
+              - img [ref=e630]
+          - listitem [ref=e631]:
+            - link [ref=e632] [cursor=pointer]:
+              - /url: /9750517154
+              - img [ref=e633]
+          - listitem [ref=e634]:
+            - link [ref=e635] [cursor=pointer]:
+              - /url: /9796088689
+              - img [ref=e636]
+          - listitem [ref=e637]:
+            - link [ref=e638] [cursor=pointer]:
+              - /url: /jinyu
+              - img [ref=e639]
+          - listitem [ref=e640]:
+            - link [ref=e641] [cursor=pointer]:
+              - /url: /1074031076
+              - img [ref=e642]
+          - listitem [ref=e643]:
+            - link [ref=e644] [cursor=pointer]:
+              - /url: /9153011033
+              - img [ref=e645]
+          - listitem [ref=e646]:
+            - link [ref=e647] [cursor=pointer]:
+              - /url: /3482928151
+              - img [ref=e648]
+          - listitem [ref=e649]:
+            - link [ref=e650] [cursor=pointer]:
+              - /url: /6823163054
+              - img [ref=e651]
+          - listitem [ref=e652]:
+            - link [ref=e653] [cursor=pointer]:
+              - /url: /3921362085
+              - img [ref=e654]
+      - generic [ref=e655]:
+        - generic [ref=e657]: 相关股票
+        - list [ref=e659]:
+          - generic [ref=e660]:
+            - generic [ref=e661]:
+              - link "拓普集团" [ref=e662] [cursor=pointer]:
+                - /url: /S/SH601689
+              - generic [ref=e663]: SH601689
+            - generic [ref=e664]:
+              - generic [ref=e665]: "70.20"
+              - generic [ref=e666]: "-1.42%"
+          - generic [ref=e667]:
+            - generic [ref=e668]:
+              - link "浙江荣泰" [ref=e669] [cursor=pointer]:
+                - /url: /S/SH603119
+              - generic [ref=e670]: SH603119
+            - generic [ref=e671]:
+              - generic [ref=e672]: "76.89"
+              - generic [ref=e673]: +3.57%
+          - generic [ref=e674]:
+            - generic [ref=e675]:
+              - link "鸣志电器" [ref=e676] [cursor=pointer]:
+                - /url: /S/SH603728
+              - generic [ref=e677]: SH603728
+            - generic [ref=e678]:
+              - generic [ref=e679]: "66.47"
+              - generic [ref=e680]: "-1.83%"
+          - generic [ref=e681]:
+            - generic [ref=e682]:
+              - link "五洲新春" [ref=e683] [cursor=pointer]:
+                - /url: /S/SH603667
+              - generic [ref=e684]: SH603667
+            - generic [ref=e685]:
+              - generic [ref=e686]: "80.00"
+              - generic [ref=e687]: "-4.63%"
+          - generic [ref=e688]:
+            - generic [ref=e689]:
+              - link "双环传动" [ref=e690] [cursor=pointer]:
+                - /url: /S/SZ002472
+              - generic [ref=e691]: SZ002472
+            - generic [ref=e692]:
+              - generic [ref=e693]: "43.08"
+              - generic [ref=e694]: "-2.11%"
+      - generic [ref=e695]:
+        - generic [ref=e697]: 相关基金
+        - list [ref=e699]:
+          - generic [ref=e700]:
+            - generic [ref=e701]:
+              - link "汇添富消费行业混合" [ref=e702] [cursor=pointer]:
+                - /url: /S/F000083
+              - generic [ref=e703]: 基金季报中持仓包含三花智控所属板块
+              - generic [ref=e704]:
+                - generic [ref=e705]: 金牛奖
+                - generic [ref=e706]: 胡昕炜管理
+            - generic [ref=e707]:
+              - generic [ref=e708]: "-7.76%"
+              - generic [ref=e709]: 近1年
+          - generic [ref=e710]:
+            - generic [ref=e711]:
+              - link "九泰锐富事件驱动混合（LOF）A" [ref=e712] [cursor=pointer]:
+                - /url: /S/F168102
+              - generic [ref=e713]: 基金季报中持仓包含三花智控所属板块
+              - generic [ref=e714]:
+                - generic [ref=e715]: 5年老将
+                - generic [ref=e716]: 袁多武管理
+            - generic [ref=e717]:
+              - generic [ref=e718]: +10.11%
+              - generic [ref=e719]: 近1年
+          - generic [ref=e720]:
+            - generic [ref=e721]:
+              - link "大成高鑫股票A" [ref=e722] [cursor=pointer]:
+                - /url: /S/F000628
+              - generic [ref=e723]: 基金季报中持仓包含三花智控所属板块
+              - generic [ref=e724]:
+                - generic [ref=e725]: 金牛奖
+                - generic [ref=e726]: 刘旭管理
+            - generic [ref=e727]:
+              - generic [ref=e728]: +7.64%
+              - generic [ref=e729]: 近1年
+          - generic [ref=e730]:
+            - generic [ref=e731]:
+              - link "惠升优势企业一年持有期混合" [ref=e732] [cursor=pointer]:
+                - /url: /S/F012239
+              - generic [ref=e733]: 三花智控占比3.64%
+              - generic [ref=e734]:
+                - generic [ref=e735]: 张玉坤管理
+                - generic [ref=e736]: 9年老将
+            - generic [ref=e737]:
+              - generic [ref=e738]: +53.12%
+              - generic [ref=e739]: 近1年
+          - generic [ref=e740]:
+            - generic [ref=e741]:
+              - link "永赢恒生消费指数发起(QDII)C" [ref=e742] [cursor=pointer]:
+                - /url: /S/F024394
+              - generic [ref=e743]: 基金季报中持仓包含三花智控所属板块
+              - generic [ref=e744]:
+                - generic [ref=e745]: 买入费率为0
+                - generic [ref=e746]: 陈方圆等人管理
+            - generic [ref=e747]:
+              - generic [ref=e748]: "-14.25%"
+              - generic [ref=e749]: 成立以来
+  - contentinfo [ref=e750]:
+    - generic [ref=e751]:
+      - generic [ref=e752]:
+        - link "微信" [ref=e753] [cursor=pointer]:
+          - /url: javascript:;
+          - img "微信" [ref=e754]
+        - link "微博" [ref=e755] [cursor=pointer]:
+          - /url: https://weibo.com/xueqiucom
+          - img "微博" [ref=e756]
+        - link "邮箱" [ref=e757] [cursor=pointer]:
+          - /url: mailto:snowball@xueqiu.com
+          - img "邮箱" [ref=e758]
+      - generic [ref=e759]:
+        - link "A股开户｜" [ref=e760] [cursor=pointer]:
+          - /url: https://broker.xueqiu.com/open/pingan
+        - link "雪球基金｜" [ref=e761] [cursor=pointer]:
+          - /url: https://danjuanfunds.com/
+        - link "投资者教育｜" [ref=e762] [cursor=pointer]:
+          - /url: https://xueqiu.com/edu/invest-edu
+        - link "风险提示" [ref=e763] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq#6_0
+      - generic [ref=e764]: 风险提示：雪球里任何用户或者嘉宾的发言，都有其特定立场，投资决策需要建立在独立思考之上
+      - generic [ref=e765]:
+        - generic [ref=e766]:
+          - text: 其他建议反馈欢迎点击
+          - link "#我给雪球提建议#" [ref=e768] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-aIkee7membqueQg-aPkOW7uuiuriM=
+          - text: 如受到欺诈信息骚扰请至
+          - link "#防诈骗举报专区#" [ref=e770] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-mYsuiviOmql-S4vuaKpeS4k-WMuiM=
+        - generic [ref=e771]:
+          - text: 互联网违法和不良信息投诉：01061840634 / tousu@xueqiu.com
+          - generic [ref=e772]: 举报中心
+          - link "侵权投诉指引" [ref=e773] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/tortreport
+          - link "雪球服务协议" [ref=e774] [cursor=pointer]:
+            - /url: https://xueqiu.com/about/terms
+          - link "雪球隐私政策" [ref=e775] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/privacy
+          - text: © 2026 XUEQIU.COM 北京雪球信息科技有限公司
+          - link "京公网安备 11010502040379号" [ref=e776] [cursor=pointer]:
+            - /url: https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502040379
+          - link "京ICP证100666号" [ref=e777] [cursor=pointer]:
+            - /url: https://xqdoc.imedao.com/198bc1b4fb41d6523feaace4.jpg
+          - link "京ICP备10040543" [ref=e778] [cursor=pointer]:
+            - /url: https://beian.miit.gov.cn/
+          - link "京金信备〔2022〕3号" [ref=e779] [cursor=pointer]:
+            - /url: https://fisbaobei.ifcert.cn/Home/homeIindex
+          - link "营业执照" [ref=e780] [cursor=pointer]:
+            - /url: https://xqimg.imedao.com/1798dc30dead0453fd6075d8.png
+          - generic [ref=e781]:
+            - link "证券业协会会员单位（代码817027）" [ref=e782] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/14d52aefd15e8f3fc0ce1fbd.png
+            - 'link "广播电视节目制作经营许可证: (京)字第08638号" [ref=e783] [cursor=pointer]':
+              - /url: https://xqdoc.imedao.com/198c1a776442061d3fe4efd5.pdf
+            - link "出版物经营许可证" [ref=e784] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/181b337b7742caf83fee6640.png
+          - link "人工智能服务登记编号：Beijing-XueQiuHuiJian-2S0033" [ref=e786]:
+            - /url: javascript:;
+      - generic [ref=e787]:
+        - link "常见问题｜" [ref=e788] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq
+        - link "加入我们｜" [ref=e789] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/jobs
+        - link "关于雪球" [ref=e790] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/what-is-xueqiu
+  - text: "* * · * * *"
+  - generic [ref=e792]:
+    - img "fold" [ref=e793]
+    - generic [ref=e794]: 问问投资的问题吧，帮你发现投资好机会

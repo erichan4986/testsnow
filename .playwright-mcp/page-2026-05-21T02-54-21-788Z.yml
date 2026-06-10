@@ -1,0 +1,1310 @@
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "雪球 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img "雪球" [ref=e11]
+          - generic [ref=e12]: 首页
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "搜索" [ref=e15]
+          - button "" [ref=e17] [cursor=pointer]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link [ref=e20] [cursor=pointer]:
+              - /url: https://ai.xueqiu.com/chat
+              - img [ref=e21]
+          - listitem [ref=e22]:
+            - link "" [ref=e23] [cursor=pointer]:
+              - /url: /snb/web/cs?from=xq
+          - listitem [ref=e24]:
+            - link "" [ref=e25] [cursor=pointer]:
+              - /url: javascript:;
+          - listitem [ref=e26]:
+            - link "下载App" [ref=e27] [cursor=pointer]:
+              - /url: "javascript:"
+          - listitem [ref=e28]:
+            - generic [ref=e29] [cursor=pointer]: 发帖
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - generic [ref=e32]:
+        - link [ref=e33] [cursor=pointer]:
+          - /url: /u/8680319853
+          - img [ref=e34]
+        - link "用户8680319853" [ref=e35] [cursor=pointer]:
+          - /url: /u/8680319853
+        - generic [ref=e36]:
+          - link "关注0" [ref=e38] [cursor=pointer]:
+            - /url: /center/#/friends
+          - link "粉丝0" [ref=e40] [cursor=pointer]:
+            - /url: /center/#/fans
+        - button "发帖" [ref=e42] [cursor=pointer]
+      - list [ref=e43]:
+        - listitem [ref=e44]:
+          - link " 首页" [ref=e45] [cursor=pointer]:
+            - /url: /#/?t=1779332061534
+            - generic [ref=e46]: 
+            - generic [ref=e47]: 首页
+        - listitem [ref=e48]:
+          - link " 自选" [ref=e49] [cursor=pointer]:
+            - /url: /#/optional?t=1779332061534
+            - generic [ref=e50]: 
+            - generic [ref=e51]: 自选
+        - listitem [ref=e52]:
+          - link " 行情" [ref=e53] [cursor=pointer]:
+            - /url: /hq
+            - generic [ref=e54]: 
+            - generic [ref=e55]: 行情
+        - listitem [ref=e56]:
+          - link " 基金" [ref=e57] [cursor=pointer]:
+            - /url: https://xueqiu.com/f/new/node/pages/token-jump?url=https://danjuanfunds.com/
+            - generic [ref=e58]: 
+            - generic [ref=e59]: 基金
+        - listitem [ref=e60]:
+          - link " 私募" [ref=e61] [cursor=pointer]:
+            - /url: https://xueqiu.com/f/new/node/pages/token-jump?url=https://danjuanfunds.com/rn/pf-shelves/home
+            - generic [ref=e62]: 
+            - generic [ref=e63]: 私募
+        - listitem [ref=e64]:
+          - link " 我的资产" [ref=e65] [cursor=pointer]:
+            - /url: /center/#/assets?t=1779332061534
+            - generic [ref=e66]: 
+            - generic [ref=e67]: 我的资产
+        - listitem [ref=e68]:
+          - link " 创作者中心" [ref=e69] [cursor=pointer]:
+            - /url: https://mp.xueqiu.com/
+            - generic [ref=e70]: 
+            - generic [ref=e71]: 创作者中心
+        - listitem [ref=e72]:
+          - link "我的消息" [ref=e73] [cursor=pointer]:
+            - /url: javascript:;
+            - img [ref=e74]
+            - generic [ref=e75]: 我的消息
+          - list [ref=e76]:
+            - listitem [ref=e77]:
+              - link "回复" [ref=e78] [cursor=pointer]:
+                - /url: /center/#/comments?t=1779332061403
+            - listitem [ref=e79]:
+              - link "@我" [ref=e80] [cursor=pointer]:
+                - /url: /center/#/mention?t=1779332061403
+            - listitem [ref=e81]:
+              - link "赞" [ref=e82] [cursor=pointer]:
+                - /url: /center/#/likes?t=1779332061403
+            - listitem [ref=e83]:
+              - link "我的粉丝" [ref=e84] [cursor=pointer]:
+                - /url: /center/#/fans?t=1779332061403
+            - listitem [ref=e85]:
+              - link "系统消息 55" [ref=e86] [cursor=pointer]:
+                - /url: /center/#/sys-message
+                - text: 系统消息
+                - generic [ref=e87]: "55"
+            - listitem [ref=e88]:
+              - link "私信" [ref=e89] [cursor=pointer]:
+                - /url: /center/#/user-message
+    - generic [ref=e90]:
+      - generic [ref=e91]:
+        - generic [ref=e92]:
+          - link "郭小松驾道" [ref=e93] [cursor=pointer]:
+            - /url: /8025337289
+            - img "郭小松驾道" [ref=e94]
+          - link "郭小松驾道" [ref=e96] [cursor=pointer]:
+            - /url: /8025337289
+          - generic [ref=e97]:
+            - link "发布于2026-05-14 21:43" [ref=e98] [cursor=pointer]:
+              - /url: /8025337289/388940496
+              - text: 发布于
+              - time [ref=e99]: 2026-05-14 21:43
+            - generic [ref=e100]: 来自雪球
+            - text: ·
+            - generic [ref=e101]: 北京
+          - generic [ref=e102] [cursor=pointer]: 关注
+        - article [ref=e103]:
+          - heading "黑芝麻智能（二）：性价比占优 ， 全面进入比亚迪供应链" [level=1] [ref=e104]:
+            - text: 黑芝麻智能
+            - generic [ref=e105]: （
+            - text: 二
+            - generic:
+              - generic: ）
+            - generic [ref=e107]: ：
+            - text: 性价比占优
+            - generic [ref=e109]: ，
+            - text: 全面进入比亚迪供应链
+          - generic [ref=e110]:
+            - text: 来自
+            - link "郭小松驾道的雪球专栏" [ref=e111] [cursor=pointer]:
+              - /url: /8025337289/column
+          - generic [ref=e112]:
+            - img [ref=e113]
+            - paragraph [ref=e114]:
+              - link "$黑芝麻智能(02533)$" [ref=e115] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533
+            - paragraph [ref=e116]:
+              - text: 如果按照
+              - link "黑芝麻智能" [ref=e117] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533?from=status_stock_match
+              - text: 自己的业务框架来看
+              - generic [ref=e119]: ，
+              - text: 这家公司的业务大致分为智驾
+              - generic [ref=e121]: 、
+              - text: 智能影像
+              - generic [ref=e123]: 、
+              - text: 具身智能三大块
+              - generic [ref=e125]: ，
+              - text: 其中智驾业务是公司营收占比最高的业务
+              - generic [ref=e127]: ，
+              - text: 具身智能业务则刚刚实现了从无到有的突破
+              - generic [ref=e129]: ，
+              - text: 被视为潜在第二增长曲线
+              - generic [ref=e130]: 。
+            - paragraph [ref=e131]:
+              - img [ref=e132]
+            - paragraph [ref=e133]:
+              - text: 有关
+              - link "黑芝麻智能" [ref=e134] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533?from=status_stock_match
+              - text: 的梳理
+              - generic [ref=e136]: ，
+              - text: 笔者也将基于这三大块业务进行
+              - generic [ref=e138]: ，
+              - text: 但会做更为详细具体的呈现
+              - generic [ref=e140]: 。
+              - text: 智驾业务部分将分为三条线
+              - generic [ref=e141]: ——
+              - text: C1296
+              - generic [ref=e142]: （
+              - text: 舱行泊一体普及基础L2功能
+              - generic [ref=e144]: ）
+              - generic [ref=e146]: 、
+              - text: C1236
+              - generic [ref=e147]: （
+              - text: 中低端车型实现城市NOA
+              - generic [ref=e149]: ）
+              - generic [ref=e151]: 、
+              - text: A2000系列
+              - generic [ref=e152]: （
+              - text: 中高端车型实现高阶NOA
+              - generic [ref=e154]: ）
+              - generic [ref=e155]: 。
+            - paragraph [ref=e156]:
+              - text: 第一篇我们已经梳理了C1296舱行泊一体芯片的落地情况及增长潜力
+              - generic [ref=e158]: ，
+              - text: 第二篇我们来梳理C1236的落地情况及增长潜力
+              - generic [ref=e159]: 。
+            - heading "性价比优势：单颗便宜200-300元" [level=4] [ref=e160]:
+              - generic [ref=e161]:
+                - text: 性价比优势
+                - generic [ref=e162]: ：
+                - text: 单颗便宜200-300元
+            - paragraph [ref=e163]:
+              - text: 首先需要明确
+              - generic [ref=e165]: ，
+              - text: 相比C1296的舱行泊一体
+              - generic [ref=e167]: ，
+              - text: 也就是所谓的舱驾一体
+              - generic [ref=e169]: ，
+              - text: C1236是一款纯智驾的芯片
+              - generic [ref=e171]: ，
+              - text: 所以
+              - generic [ref=e172]:
+                - text: 它针对的是10-20万元
+                - generic [ref=e173]: （
+                - text: 核心10-15万元
+                - generic [ref=e174]: ）
+                - text: 价位中低端车型升级智驾功能
+                - generic [ref=e176]: ，
+                - text: 基本是实现高速NOA+城市无图NOA+自动泊车功能
+                - generic [ref=e177]: 。
+            - paragraph [ref=e178]:
+              - img [ref=e179]
+            - paragraph [ref=e180]:
+              - text: 虽然这个价位区间尚存增量空间
+              - generic [ref=e182]: ，
+              - text: 但目前竞争比较激烈
+              - generic [ref=e184]: ，
+              - text: C1236是要与地平线J6M
+              - generic [ref=e186]: 、
+              - link "英伟达" [ref=e187] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/NVDA?from=status_stock_match
+              - text: Orin N等芯片正面竞争的
+              - generic [ref=e188]: 。
+            - paragraph [ref=e189]:
+              - text: 明确了这一点
+              - generic [ref=e191]: ，
+              - text: 我们就需要知道
+              - generic [ref=e193]: ，
+              - text: 面对上面两个市场份额占比排在前三的对手
+              - generic [ref=e195]: ，
+              - text: C1236必须拿出更高的性价比来
+              - generic [ref=e197]: ，
+              - text: 好在
+              - link "黑芝麻智能" [ref=e198] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533?from=status_stock_match
+              - text: 做到了
+              - generic [ref=e199]: 。
+            - paragraph [ref=e200]:
+              - text: 有必要对比一下这三块芯片的算力和价格
+              - generic [ref=e202]: ，
+              - text: 稠密算力维度来看
+              - generic [ref=e204]: ，
+              - text: Orin N最高
+              - generic [ref=e206]: ，
+              - text: 84TOPS
+              - generic [ref=e207]: ，
+              - text: C1236约70TOPS
+              - generic [ref=e209]: ，
+              - text: J6M大约64TOPS
+              - generic [ref=e211]: ，
+              - text: 数据来自行业分析
+              - generic [ref=e213]: ，
+              - text: 未必100%准确
+              - generic [ref=e215]: ，
+              - text: 但大差不差
+              - generic [ref=e216]: ，
+              - text: 这说明三者算力性能基本在同一水平
+              - generic [ref=e218]: ，
+              - text: C1236并不算出众
+              - generic [ref=e219]: 。
+            - paragraph [ref=e220]:
+              - img [ref=e221]
+            - paragraph [ref=e222]:
+              - text: 但在价格上
+              - generic [ref=e224]: ，
+              - text: C1236有明显的优势
+              - generic [ref=e226]: ，
+              - text: 关于这三块芯片的定价
+              - generic [ref=e228]: ，
+              - text: 行业内有多种数据维度
+              - generic [ref=e230]: ，
+              - text: 价格本身也跟采购量有关
+              - generic [ref=e232]: ，
+              - text: 从我的调研来看
+              - generic [ref=e234]: ，
+              - generic [ref=e235]:
+                - text: Orin N大约150-200美金/颗
+                - generic [ref=e237]: ，
+                - text: J6M低于Orin N
+                - generic [ref=e238]: ，
+                - text: 大约100-200美金/颗
+                - generic [ref=e240]: ，
+                - text: C1236更低
+                - generic [ref=e242]: ，
+                - text: 大约100-150美金/颗
+                - generic [ref=e243]: 。
+            - paragraph [ref=e244]:
+              - generic [ref=e245]:
+                - text: 同样采购量情况下
+                - generic [ref=e247]: ，
+                - text: C1236单颗成本比J6M便宜200-300元人民币
+                - generic [ref=e249]: ，
+              - text: 对于10-20万元
+              - generic [ref=e250]: （
+              - text: 核心10-15万元
+              - generic [ref=e251]: ）
+              - text: 价位区间的主流细分市场来说
+              - generic [ref=e253]: ，
+              - text: 这样的降本幅度是非常可观的
+              - generic [ref=e255]: ，
+              - text: 在如此内卷的当下
+              - generic [ref=e257]: ，
+              - text: 这就是C1236最大的优势所在
+              - generic [ref=e258]: 。
+            - paragraph [ref=e259]:
+              - text: 随便算算就知道了
+              - generic [ref=e261]: ，
+              - text: 对于一家车企来说
+              - generic [ref=e263]: ，
+              - text: 如果主流车型年销有50万辆
+              - generic [ref=e265]: ，
+              - text: 仅芯片这一项就是上亿的利润差了
+              - generic [ref=e266]: 。
+            - heading "杀入龙头供应链：搭载天神之眼C" [level=4] [ref=e267]:
+              - generic [ref=e268]:
+                - text: 杀入龙头供应链
+                - generic [ref=e269]: ：
+                - text: 搭载天神之眼C
+            - paragraph [ref=e270]:
+              - text: 前面铺垫了这么多
+              - generic [ref=e272]: ，
+              - text: 可以上干货了
+              - generic [ref=e274]: ，
+              - text: 因为如此明显的价格优势
+              - generic [ref=e276]: ，
+              - generic [ref=e277]:
+                - link "黑芝麻智能" [ref=e278] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/02533?from=status_stock_match
+                - text: C1236成功进入了
+                - link "比亚迪" [ref=e279] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002594?from=status_stock_match
+                - text: 供应链
+                - generic [ref=e281]: ，
+                - text: 即将搭载在天神之眼C方案的车型上
+                - generic [ref=e282]: ！
+            - paragraph [ref=e283]:
+              - text: 重点是
+              - generic [ref=e285]: ，
+              - link "黑芝麻智能" [ref=e286] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533?from=status_stock_match
+              - text: 不是成为所谓的三供或备供角色
+              - generic [ref=e288]: ，
+              - text: 而是会占据不小的规模
+              - generic [ref=e289]: 。
+            - paragraph [ref=e290]:
+              - img [ref=e291]
+            - paragraph [ref=e292]:
+              - text: 去年的全民智驾发布会
+              - generic [ref=e294]: ，
+              - text: 地平线高调亮相
+              - generic [ref=e296]: ，
+              - text: 但实际上后续的事实证明
+              - generic [ref=e298]: ，
+              - text: 天神之眼C的最主力芯片是
+              - link "英伟达" [ref=e299] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/NVDA?from=status_stock_match
+              - text: Orin N
+              - generic [ref=e301]: ，
+              - text: J6M并没有大规模的装车
+              - generic [ref=e303]: ，
+              - text: 起码是远没有达到发布会刚开始后外界的预期的
+              - generic [ref=e304]: 。
+            - paragraph [ref=e305]:
+              - text: 但C1236不同
+              - generic [ref=e307]: ，
+              - text: 据我了解的信息
+              - generic [ref=e309]: ，
+              - generic [ref=e310]:
+                - text: C1236今年在
+                - link "比亚迪" [ref=e311] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002594?from=status_stock_match
+                - text: 一家就会有不错的出货量
+                - generic [ref=e313]: ，
+              - text: 具体数量恐怕会超出很多人的预期
+              - generic [ref=e315]: ，
+              - text: 可惜具体数字我暂时不能透露
+              - generic [ref=e316]: 。
+            - paragraph [ref=e317]:
+              - text: 同时
+              - generic [ref=e319]: ，
+              - text: 节奏上
+              - generic [ref=e321]: ，
+              - text: C1236目前已经在
+              - link "比亚迪" [ref=e322] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/SZ002594?from=status_stock_match
+              - text: 实现出货
+              - generic [ref=e324]: ，
+              - text: 正处在产能爬坡期
+              - generic [ref=e326]: ，
+              - text: 只是还没有对外官宣
+              - generic [ref=e327]: 。
+            - paragraph [ref=e328]:
+              - text: 至于官宣时间
+              - generic [ref=e330]: ，
+              - text: 据我了解
+              - generic [ref=e331]:
+                - link "比亚迪" [ref=e332] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ002594?from=status_stock_match
+                - text: 2026年的天神之眼发布会将在5月底
+                - generic [ref=e333]: （
+                - text: 或28日
+                - generic [ref=e334]: ）
+                - text: 召开
+                - generic [ref=e335]: 。
+            - paragraph [ref=e336]:
+              - img [ref=e337]
+            - paragraph [ref=e338]:
+              - text: 最好的剧情是
+              - generic [ref=e340]: ，
+              - text: 在这场发布会上
+              - generic [ref=e342]: ，
+              - link "比亚迪" [ref=e343] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/SZ002594?from=status_stock_match
+              - text: 能像去年官宣跟地平线的合作一样
+              - generic [ref=e345]: ，
+              - text: 把
+              - link "黑芝麻智能" [ref=e346] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533?from=status_stock_match
+              - text: 带到台前
+              - generic [ref=e348]: ，
+              - text: 就算不能
+              - generic [ref=e350]: ，
+              - text: 起码在发布会之后
+              - generic [ref=e352]: ，
+              - text: 官方也终于可以官宣这个消息了
+              - generic [ref=e353]: 。
+            - paragraph [ref=e354]:
+              - text: 无论是哪种剧情
+              - generic [ref=e356]: ，
+              - text: 相信都会对
+              - link "黑芝麻智能" [ref=e357] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/02533?from=status_stock_match
+              - text: 的股价起到明显的提振作用
+              - generic [ref=e358]: 。
+            - heading "全面出击" [level=4] [ref=e359]
+            - paragraph [ref=e360]:
+              - text: 进入龙头供应链只是个开始
+              - generic [ref=e362]: ，
+              - text: 在
+              - link "比亚迪" [ref=e363] [cursor=pointer]:
+                - /url: https://xueqiu.com/S/SZ002594?from=status_stock_match
+              - text: 这
+              - generic [ref=e365]: ，
+              - text: 今年也只是刚开始起量
+              - generic [ref=e367]: ，
+              - text: 明年会更多
+              - generic [ref=e368]: 。
+            - paragraph [ref=e369]:
+              - text: 此外
+              - generic [ref=e371]: ，
+              - text: 以这样的成本优势
+              - generic [ref=e373]: ，
+              - generic [ref=e374]:
+                - link "黑芝麻智能" [ref=e375] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/02533?from=status_stock_match
+                - text: C1236会成为10-20万元中低端车型升级高阶NOA的有力选手
+                - generic [ref=e377]: ，
+              - text: 未来可期
+              - generic [ref=e379]: ，
+              - text: 明年的黑芝麻智有望成为汽车芯片领域最靓的仔
+              - generic [ref=e380]: ！
+              - text: 至于它的更多潜力
+              - generic [ref=e381]: ，
+              - text: 请期待下一篇
+              - generic [ref=e382]: 。
+        - paragraph [ref=e383]: 风险提示：用户发表的所有文章仅代表个人观点，与雪球的立场无关。投资决策需建立在独立思考之上。
+        - generic [ref=e384]:
+          - link "郭小松驾道的专栏 24篇文章 · 737人关注 " [ref=e385] [cursor=pointer]:
+            - /url: /8025337289/column
+            - generic [ref=e386]:
+              - generic [ref=e387]:
+                - generic [ref=e388]:
+                  - img [ref=e389]
+                  - generic [ref=e390]: 郭小松驾道的专栏
+                - generic [ref=e391]: 24篇文章 · 737人关注
+              - generic [ref=e392]: 
+          - generic [ref=e394]:
+            - generic [ref=e395] [cursor=pointer]:
+              - generic [ref=e396]: 
+              - generic [ref=e398]: "24"
+            - generic [ref=e399] [cursor=pointer]:
+              - generic [ref=e400]: 
+              - generic [ref=e402]: "12"
+        - generic [ref=e404]:
+          - img "微信分享" [ref=e408] [cursor=pointer]
+          - generic [ref=e409]:
+            - link " 1" [ref=e410] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e411]: 
+              - paragraph [ref=e412]: "1"
+            - link " 67" [ref=e413] [cursor=pointer]:
+              - /url: "#"
+              - generic [ref=e414]: 
+              - paragraph [ref=e415]: "67"
+          - link "投诉" [ref=e418] [cursor=pointer]:
+            - /url: ""
+            - paragraph [ref=e419]: 投诉
+        - generic [ref=e421]:
+          - generic [ref=e422]:
+            - img [ref=e423]
+            - generic [ref=e424]:
+              - generic [ref=e425]:
+                - generic [ref=e426]: 回复@郭小松驾道
+                - textbox [ref=e427]:
+                  - paragraph [ref=e428]
+              - generic [ref=e429]:
+                - generic [ref=e430]:
+                  - link "" [ref=e432] [cursor=pointer]:
+                    - /url: ""
+                    - generic [ref=e433]: 
+                  - link "" [ref=e434] [cursor=pointer]:
+                    - /url: ""
+                    - generic [ref=e435]: 
+                  - link "" [ref=e436] [cursor=pointer]:
+                    - /url: javascript:;
+                    - generic [ref=e437]: 
+                  - generic [ref=e439]:
+                    - checkbox "仅在正文下讨论" [ref=e440]
+                    - generic [ref=e441]: 仅在正文下讨论
+                    - img [ref=e443]
+                - link "发布" [ref=e445]:
+                  - /url: ""
+          - generic [ref=e448]:
+            - heading "全部讨论（67）" [level=3] [ref=e449]
+            - generic [ref=e450]:
+              - link "最热" [ref=e451] [cursor=pointer]:
+                - /url: ""
+              - link "最新" [ref=e452] [cursor=pointer]:
+                - /url: ""
+              - link "最早" [ref=e453] [cursor=pointer]:
+                - /url: ""
+            - generic [ref=e454]:
+              - generic [ref=e455]:
+                - generic [ref=e456]:
+                  - link [ref=e457] [cursor=pointer]:
+                    - /url: /1651082208
+                    - img [ref=e458]
+                  - generic [ref=e459]:
+                    - generic [ref=e460]:
+                      - link "血战缅甸" [ref=e461] [cursor=pointer]:
+                        - /url: /1651082208
+                      - generic [ref=e462]: 05-14 22:47 · 北京
+                    - paragraph [ref=e463]: 有理有据，令人信服😀
+                - generic [ref=e464]:
+                  - link "讨论" [ref=e465] [cursor=pointer]:
+                    - /url: ""
+                  - link "4" [ref=e466] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e467]:
+                - generic [ref=e468]:
+                  - link [ref=e469] [cursor=pointer]:
+                    - /url: /1048797612
+                    - img [ref=e470]
+                  - generic [ref=e471]:
+                    - generic [ref=e472]:
+                      - link "叶十七" [ref=e473] [cursor=pointer]:
+                        - /url: /1048797612
+                      - generic [ref=e474]: 05-14 23:48 · 广东
+                    - paragraph [ref=e475]: 感觉不像假的，假的不会把时间说在5月底揭晓，那不是马上戳穿吗。我觉得你可能是受了公司的委托，因为公司自己还不能公布，但是又迫切地需要维护市值，就找做车媒体的人帮忙公布
+                - generic [ref=e476]:
+                  - link "讨论" [ref=e477] [cursor=pointer]:
+                    - /url: ""
+                  - link "3" [ref=e478] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e479]:
+                - generic [ref=e480]:
+                  - link [ref=e481] [cursor=pointer]:
+                    - /url: /8710966224
+                    - img [ref=e482]
+                  - generic [ref=e483]:
+                    - generic [ref=e484]:
+                      - link "陈海涛周游世界" [ref=e485] [cursor=pointer]:
+                        - /url: /8710966224
+                      - img "荣誉认证" [ref=e486] [cursor=pointer]
+                      - generic [ref=e487]: 05-14 23:32 · 广东
+                    - paragraph [ref=e488]: 分析详细，符合逻辑，用心了啊，天神之眼合作还需确认
+                - blockquote [ref=e489]:
+                  - generic [ref=e490]:
+                    - link "只信老王" [ref=e491] [cursor=pointer]:
+                      - /url: /3240702838
+                    - text: ：陈总的消息还不能确定天神之眼的合作吗？
+                  - generic [ref=e492]:
+                    - link "郭小松驾道 作者" [ref=e493] [cursor=pointer]:
+                      - /url: /8025337289
+                    - text: ：
+                    - generic [ref=e494] [cursor=pointer]:
+                      - text: 慢慢等黑芝麻的业绩兑现吧
+                      - img "[吃瓜]" [ref=e495]
+                - generic [ref=e496]:
+                  - link "2" [ref=e497] [cursor=pointer]:
+                    - /url: ""
+                  - link "3" [ref=e498] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e499]:
+                - generic [ref=e500]:
+                  - link [ref=e501] [cursor=pointer]:
+                    - /url: /2575637181
+                    - img [ref=e502]
+                  - generic [ref=e503]:
+                    - generic [ref=e504]:
+                      - link "股海渡梦" [ref=e505] [cursor=pointer]:
+                        - /url: /2575637181
+                      - generic [ref=e506]: 05-14 22:30 · 北京
+                    - paragraph [ref=e507]:
+                      - link "$地平线机器人-W(09660)$" [ref=e508] [cursor=pointer]:
+                        - /url: https://xueqiu.com/S/09660
+                      - link "$黑芝麻智能(02533)$" [ref=e509] [cursor=pointer]:
+                        - /url: https://xueqiu.com/S/02533
+                      - text: 有质量的文章，至少我仔细读下来了，如果真的这样那么地平线跌也好理解了，可能还有很多其他类似于这样的潜在风险。但非业内人士不得而知，只能看走势感觉不是单纯的调整，一般的调整的话现在指数并没有单边下跌地平线不会一个个跌破6.53，本来预期6.53会止跌下，结果势如破竹。不知道还有多少未知的东西
+                - generic [ref=e510]:
+                  - link "讨论" [ref=e511] [cursor=pointer]:
+                    - /url: ""
+                  - link "3" [ref=e512] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e513]:
+                - generic [ref=e514]:
+                  - link [ref=e515] [cursor=pointer]:
+                    - /url: /7777622508
+                    - img [ref=e516]
+                  - generic [ref=e517]:
+                    - generic [ref=e518]:
+                      - link "黑之马" [ref=e519] [cursor=pointer]:
+                        - /url: /7777622508
+                      - generic [ref=e520]: 05-15 11:47 · 广东
+                    - paragraph [ref=e521]:
+                      - text: 姐。今天还更吗。催更
+                      - img "[木鱼]" [ref=e522]
+                      - img "[狗头]" [ref=e523]
+                - generic [ref=e524]:
+                  - link "讨论" [ref=e525] [cursor=pointer]:
+                    - /url: ""
+                  - link "2" [ref=e526] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e527]:
+                - generic [ref=e528]:
+                  - link [ref=e529] [cursor=pointer]:
+                    - /url: /1508468549
+                    - img [ref=e530]
+                  - generic [ref=e531]:
+                    - generic [ref=e532]:
+                      - link "益知" [ref=e533] [cursor=pointer]:
+                        - /url: /1508468549
+                      - generic [ref=e534]: 05-14 22:28 · 福建
+                    - paragraph [ref=e535]: C1236已经进入比亚迪天神之眼C平台海洋系列，之前路演说具体车型还在谈，估计这个量不会少。海洋系列15万以内有海鸥，海狮，海豚，海豹等主力车型，销量一年一款都几十万俩，另外加五菱宏光MINIEV搭载C1296，年销量40万，今年CEO目标翻倍也是大概率的事。这只是比亚迪和五菱宏光的量，还没算东风智驾PLUS平台的车型，吉利，长城和奇瑞也在考虑进C1200系列，大概率会拿下。另外听说一汽和比亚迪还定点A2000系列，等到时候公布吧。黑芝麻未来可期。地平线只能走下坡路不断被蚕食份额。按目前特斯拉15PS参考，地平线给15PS市值500亿，还得腰斩。。。下跌趋势抄底地平线的慎重吧。。。
+                - blockquote [ref=e536]:
+                  - generic [ref=e537]:
+                    - link "用户3882460503" [ref=e538] [cursor=pointer]:
+                      - /url: /3882460503
+                    - text: 回复
+                    - link "@概率论英雄" [ref=e539] [cursor=pointer]:
+                      - /url: /2146554880
+                    - text: ：大资金还没搜集够筹码会大量拉升吗？看现在的成交量，大家基本都看好远景握住筹码。
+                  - generic [ref=e540]:
+                    - link "玖命" [ref=e541] [cursor=pointer]:
+                      - /url: /5610782848
+                    - text: 回复
+                    - link "@概率论英雄" [ref=e542] [cursor=pointer]:
+                      - /url: /2146554880
+                    - text: ：你想想速腾为什么涨，就大概知道黑子为什么拖到现在未涨了。包括当年余哥的金刚光伏也一样
+                  - generic [ref=e543]:
+                    - link "概率论英雄" [ref=e544] [cursor=pointer]:
+                      - /url: /2146554880
+                    - text: 回复
+                    - link "@自省自洽" [ref=e545] [cursor=pointer]:
+                      - /url: /2721552739
+                    - text: ：
+                    - generic [ref=e546] [cursor=pointer]:
+                      - text: 逻辑可以自洽
+                      - img "[捂脸]" [ref=e547]
+                      - img "[献花花]" [ref=e548]
+                      - img "[献花花]" [ref=e549]
+                  - generic [ref=e550]: 查看13条回复
+                - generic [ref=e551]:
+                  - link "13" [ref=e552] [cursor=pointer]:
+                    - /url: ""
+                  - link "2" [ref=e553] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e554]:
+                - generic [ref=e555]:
+                  - link [ref=e556] [cursor=pointer]:
+                    - /url: /5610782848
+                    - img [ref=e557]
+                  - generic [ref=e558]:
+                    - generic [ref=e559]:
+                      - link "玖命" [ref=e560] [cursor=pointer]:
+                        - /url: /5610782848
+                      - generic [ref=e561]: 修改于 2026-05-14 22:01 · 广东
+                    - paragraph [ref=e562]:
+                      - text: 希望带来更多黑子海外布局的内参👏🏻
+                      - text: 去年说海外定点车型创历史新高，但语焉不详。国内车企海外销量大增，这是蓝海，A2000获准全球销售，以前黑子是借船出海策略，现在杨宇欣也说有直接在对接海外主机厂谈沟通合作，这一块对黑子智驾方面应该是最大的潜在利好。
+                - blockquote [ref=e563]:
+                  - generic [ref=e564]:
+                    - link "玖命" [ref=e565] [cursor=pointer]:
+                      - /url: /5610782848
+                    - text: 回复
+                    - link "@概率论英雄" [ref=e566] [cursor=pointer]:
+                      - /url: /2146554880
+                    - text: ：A2000让海外客户信黑子有实力产品够安全就行了，低阶智驾不需要过审，但是走量恰好就要靠低阶智驾。
+                  - generic [ref=e567]:
+                    - link "概率论英雄" [ref=e568] [cursor=pointer]:
+                      - /url: /2146554880
+                    - text: ：海外的支架能力不强，大多处于l二级，l2加加水平最多也就是用j6m或者c1236, a2000对他们来说都是高配。
+                - generic [ref=e569]:
+                  - link "2" [ref=e570] [cursor=pointer]:
+                    - /url: ""
+                  - link "2" [ref=e571] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e572]:
+                - generic [ref=e573]:
+                  - link [ref=e574] [cursor=pointer]:
+                    - /url: /1999636560
+                    - img [ref=e575]
+                  - generic [ref=e576]:
+                    - generic [ref=e577]:
+                      - link "高颜的加薪小马戏团" [ref=e578] [cursor=pointer]:
+                        - /url: /1999636560
+                      - generic [ref=e579]: 05-17 19:44 · 浙江
+                    - paragraph [ref=e580]: 那为何股东低位减持是不想高位多赚点吗？
+                - generic [ref=e581]:
+                  - link "讨论" [ref=e582] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e583] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e584]:
+                - generic [ref=e585]:
+                  - link [ref=e586] [cursor=pointer]:
+                    - /url: /1710079574
+                    - img [ref=e587]
+                  - generic [ref=e588]:
+                    - generic [ref=e589]:
+                      - link "灵巧的赚钱小爱心" [ref=e590] [cursor=pointer]:
+                        - /url: /1710079574
+                      - generic [ref=e591]: 05-15 13:30 · 福建
+                    - paragraph [ref=e592]: 期待下一篇
+                - generic [ref=e593]:
+                  - link "讨论" [ref=e594] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e595] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e596]:
+                - generic [ref=e597]:
+                  - link [ref=e598] [cursor=pointer]:
+                    - /url: /1890884012
+                    - img [ref=e599]
+                  - generic [ref=e600]:
+                    - generic [ref=e601]:
+                      - link "风的泪9219" [ref=e602] [cursor=pointer]:
+                        - /url: /1890884012
+                      - generic [ref=e603]: 05-14 22:19 · 重庆
+                    - paragraph [ref=e604]: 姐你有两只猫吗？我家四猫一狗！最近我在路边又捡了一窝小猫，它们的妈被压死了！现在家里十只猫了！要疯了
+                - generic [ref=e605]:
+                  - link "讨论" [ref=e606] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e607] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e608]:
+                - generic [ref=e609]:
+                  - link [ref=e610] [cursor=pointer]:
+                    - /url: /8803031791
+                    - img [ref=e611]
+                  - generic [ref=e612]:
+                    - generic [ref=e613]:
+                      - link "持有是金" [ref=e614] [cursor=pointer]:
+                        - /url: /8803031791
+                      - generic [ref=e615]: 05-14 22:06 · 福建
+                    - paragraph [ref=e616]: 早已实锤了，就看发布会有没有超预期的东西
+                - generic [ref=e617]:
+                  - link "讨论" [ref=e618] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e619] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e620]:
+                - generic [ref=e621]:
+                  - link [ref=e622] [cursor=pointer]:
+                    - /url: /8554622034
+                    - img [ref=e623]
+                  - generic [ref=e624]:
+                    - generic [ref=e625]:
+                      - link "金融抓鳄" [ref=e626] [cursor=pointer]:
+                        - /url: /8554622034
+                      - generic [ref=e627]: 05-14 21:58 · 湖南
+                    - paragraph [ref=e628]: 从机器人平台来看，C1236就是70T标注算力，结合官网信息 比A1000提升20%算力，58✖1.2也是70T稠密算力，这样来看和地平线的J6M算力方面可以对标，其他CPU等性能指标数据差一点，但是胜在便宜，HNOA用自研的端到端算法轻松达成，城市无图NOA24年已经发布，经过这么久的打磨，应该可以达到可以用的状态，但是有一个问题，C1236和 A2000N 对应的中阶智驾方面有所重叠，看后续的产品定位吧。
+                - generic [ref=e629]:
+                  - link "讨论" [ref=e630] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e631] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e632]:
+                - generic [ref=e633]:
+                  - link [ref=e634] [cursor=pointer]:
+                    - /url: /1999636560
+                    - img [ref=e635]
+                  - generic [ref=e636]:
+                    - generic [ref=e637]:
+                      - link "高颜的加薪小马戏团" [ref=e638] [cursor=pointer]:
+                        - /url: /1999636560
+                      - generic [ref=e639]: 05-14 21:50 · 浙江
+                    - paragraph [ref=e640]: 大哥，别造谣了啊！
+                - blockquote [ref=e641]:
+                  - generic [ref=e642]:
+                    - link "概率论英雄" [ref=e643] [cursor=pointer]:
+                      - /url: /2146554880
+                    - text: ：
+                    - generic [ref=e644] [cursor=pointer]:
+                      - text: 到时候就知道是李逵还是李鬼。
+                      - img "[捂脸]" [ref=e645]
+                      - text: 不过看你分析挺专业的，感觉是雪球里最懂黑芝麻智能的人,没有之一。
+                  - generic [ref=e646]:
+                    - link "郭小松驾道 作者" [ref=e647] [cursor=pointer]:
+                      - /url: /8025337289
+                    - text: 回复
+                    - link "@高颜的加薪小马戏团" [ref=e648] [cursor=pointer]:
+                      - /url: /1999636560
+                    - text: ：
+                    - generic [ref=e649] [cursor=pointer]:
+                      - text: 因为我瞎说的呀
+                      - img "[狗头]" [ref=e650]
+                  - generic [ref=e651]:
+                    - link "高颜的加薪小马戏团" [ref=e652] [cursor=pointer]:
+                      - /url: /1999636560
+                    - text: 回复
+                    - link "@郭小松驾道" [ref=e653] [cursor=pointer]:
+                      - /url: /8025337289
+                    - text: ：公司都没用公布你为啥能过审公布？
+                  - generic [ref=e654]: 查看4条回复
+                - generic [ref=e655]:
+                  - link "4" [ref=e656] [cursor=pointer]:
+                    - /url: ""
+                  - link "1" [ref=e657] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e658]:
+                - generic [ref=e659]:
+                  - link [ref=e660] [cursor=pointer]:
+                    - /url: /7050120879
+                    - img [ref=e661]
+                  - generic [ref=e662]:
+                    - generic [ref=e663]:
+                      - link "该躺平就躺平" [ref=e664] [cursor=pointer]:
+                        - /url: /7050120879
+                      - generic [ref=e665]: 05-18 18:40 · 北京
+                    - paragraph [ref=e666]: 不论真假，很好奇为什么比亚迪和黑芝麻都允许这篇文章存在
+                - blockquote [ref=e667]:
+                  - generic [ref=e668]:
+                    - link "居里投研" [ref=e669] [cursor=pointer]:
+                      - /url: /8348219410
+                    - text: ：看了姐对吉利的分析和预测，我就对小黑的预测放心了
+                  - generic [ref=e670]:
+                    - link "郭小松驾道 作者" [ref=e671] [cursor=pointer]:
+                      - /url: /8025337289
+                    - text: ：
+                    - generic [ref=e672] [cursor=pointer]:
+                      - text: 你这话说的，我是干了什么大逆不道的事吗？
+                      - img "[绝望]" [ref=e673]
+                  - generic [ref=e674]: 查看3条回复
+                - generic [ref=e675]:
+                  - link "3" [ref=e676] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e677] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e678]:
+                - generic [ref=e679]:
+                  - link [ref=e680] [cursor=pointer]:
+                    - /url: /9138278045
+                    - img [ref=e681]
+                  - generic [ref=e682]:
+                    - generic [ref=e683]:
+                      - link "leyi315" [ref=e684] [cursor=pointer]:
+                        - /url: /9138278045
+                      - generic [ref=e685]: 05-18 14:56 · 湖北
+                    - paragraph [ref=e686]: 催更了 如此行情 更需要催更来做按摩了
+                - generic [ref=e687]:
+                  - link "讨论" [ref=e688] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e689] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e690]:
+                - generic [ref=e691]:
+                  - link [ref=e692] [cursor=pointer]:
+                    - /url: /8164159289
+                    - img [ref=e693]
+                  - generic [ref=e694]:
+                    - generic [ref=e695]:
+                      - link "高瞻的增长天使" [ref=e696] [cursor=pointer]:
+                        - /url: /8164159289
+                      - generic [ref=e697]: 05-15 10:14 · 浙江
+                    - paragraph [ref=e698]: 图片评论
+                    - img [ref=e700]
+                - blockquote [ref=e701]:
+                  - generic [ref=e702]:
+                    - link "hankisadog" [ref=e703] [cursor=pointer]:
+                      - /url: /5756284204
+                    - text: ：Ta果然是糊完吉利再糊黑芝麻
+                  - generic [ref=e704]:
+                    - link "lok666-" [ref=e705] [cursor=pointer]:
+                      - /url: /8262395626
+                    - text: ：
+                    - generic [ref=e706] [cursor=pointer]:
+                      - link "@郭小松驾道" [ref=e707]:
+                        - /url: https://xueqiu.com/n/郭小松驾道
+                      - text: 跟吉利还有合作吗？下一篇讲吉利吗
+                  - generic [ref=e708]:
+                    - link "心急资本" [ref=e709] [cursor=pointer]:
+                      - /url: /9221390289
+                    - text: ：吉利不用… 那又是一大退步…
+                  - generic [ref=e710]: 查看4条回复
+                - generic [ref=e711]:
+                  - link "4" [ref=e712] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e713] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e714]:
+                - generic [ref=e715]:
+                  - link [ref=e716] [cursor=pointer]:
+                    - /url: /8164159289
+                    - img [ref=e717]
+                  - generic [ref=e718]:
+                    - generic [ref=e719]:
+                      - link "高瞻的增长天使" [ref=e720] [cursor=pointer]:
+                        - /url: /8164159289
+                      - generic [ref=e721]: 05-15 10:13 · 浙江
+                    - paragraph [ref=e722]:
+                      - text: 通过亲戚了解到的，他问了智驾圈大佬给的回复。
+                      - text: A2000比亚迪在用，一汽也在推。
+                - blockquote [ref=e723]:
+                  - generic [ref=e724]:
+                    - link "jdhbxjdjsjs" [ref=e725] [cursor=pointer]:
+                      - /url: /6856264627
+                    - text: ：A2000还是刚开始，慢慢的扩大朋友圈
+                - generic [ref=e726]:
+                  - link "1" [ref=e727] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e728] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e729]:
+                - generic [ref=e730]:
+                  - link [ref=e731] [cursor=pointer]:
+                    - /url: /Fion
+                    - img [ref=e732]
+                  - generic [ref=e733]:
+                    - generic [ref=e734]:
+                      - link "飛揚fev" [ref=e735] [cursor=pointer]:
+                        - /url: /Fion
+                      - generic [ref=e736]: 05-15 00:54 · 北京
+                    - paragraph [ref=e737]: 希望实事求是
+                - generic [ref=e738]:
+                  - link "讨论" [ref=e739] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e740] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e741]:
+                - generic [ref=e742]:
+                  - link [ref=e743] [cursor=pointer]:
+                    - /url: /1048797612
+                    - img [ref=e744]
+                  - generic [ref=e745]:
+                    - generic [ref=e746]:
+                      - link "叶十七" [ref=e747] [cursor=pointer]:
+                        - /url: /1048797612
+                      - generic [ref=e748]: 05-14 23:49 · 广东
+                    - paragraph [ref=e749]:
+                      - text: 姐姐，你公司招不招人啊，想找个工作打发时间
+                      - img "[捂脸]" [ref=e750]
+                - generic [ref=e751]:
+                  - link "讨论" [ref=e752] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e753] [cursor=pointer]:
+                    - /url: ""
+              - generic [ref=e754]:
+                - generic [ref=e755]:
+                  - link [ref=e756] [cursor=pointer]:
+                    - /url: /7290480665
+                    - img [ref=e757]
+                  - generic [ref=e758]:
+                    - generic [ref=e759]:
+                      - link "持重的翻倍小烧烤店" [ref=e760] [cursor=pointer]:
+                        - /url: /7290480665
+                      - generic [ref=e761]: 05-14 23:10 · 上海
+                    - paragraph [ref=e762]:
+                      - text: 关注了，5.28再来
+                      - img "[狗头]" [ref=e763]
+                - generic [ref=e764]:
+                  - link "讨论" [ref=e765] [cursor=pointer]:
+                    - /url: ""
+                  - link "赞" [ref=e766] [cursor=pointer]:
+                    - /url: ""
+            - link "展开查看更多" [ref=e767] [cursor=pointer]:
+              - /url: ""
+              - generic [ref=e768]: 展开查看更多
+              - img [ref=e769]
+      - generic [ref=e771]:
+        - generic [ref=e772]:
+          - heading "热门话题" [level=3] [ref=e773]
+          - table [ref=e775]:
+            - row "1 半导体设备股大涨，北方华创创新高" [ref=e776]:
+              - cell "1" [ref=e777]
+              - cell "半导体设备股大涨，北方华创创新高" [ref=e778]:
+                - link "半导体设备股大涨，北方华创创新高" [ref=e779] [cursor=pointer]:
+                  - /url: /k?q=%23%E5%8D%8A%E5%AF%BC%E4%BD%93%E8%AE%BE%E5%A4%87%E8%82%A1%E5%A4%A7%E6%B6%A8%EF%BC%8C%E5%8C%97%E6%96%B9%E5%8D%8E%E5%88%9B%E5%88%9B%E6%96%B0%E9%AB%98%23
+            - row "2 芯片板块走强，兆易创新创新高" [ref=e780]:
+              - cell "2" [ref=e781]
+              - cell "芯片板块走强，兆易创新创新高" [ref=e782]:
+                - link "芯片板块走强，兆易创新创新高" [ref=e783] [cursor=pointer]:
+                  - /url: /k?q=%23%E8%8A%AF%E7%89%87%E6%9D%BF%E5%9D%97%E8%B5%B0%E5%BC%BA%EF%BC%8C%E5%85%86%E6%98%93%E5%88%9B%E6%96%B0%E5%88%9B%E6%96%B0%E9%AB%98%23
+            - row "3 CPU概念活跃，禾盛新材涨停" [ref=e784]:
+              - cell "3" [ref=e785]
+              - cell "CPU概念活跃，禾盛新材涨停" [ref=e786]:
+                - link "CPU概念活跃，禾盛新材涨停" [ref=e787] [cursor=pointer]:
+                  - /url: /k?q=%23CPU%E6%A6%82%E5%BF%B5%E6%B4%BB%E8%B7%83%EF%BC%8C%E7%A6%BE%E7%9B%9B%E6%96%B0%E6%9D%90%E6%B6%A8%E5%81%9C%23
+            - row "4 汽车整车板块拉升，赛力斯涨停" [ref=e788]:
+              - cell "4" [ref=e789]
+              - cell "汽车整车板块拉升，赛力斯涨停" [ref=e790]:
+                - link "汽车整车板块拉升，赛力斯涨停" [ref=e791] [cursor=pointer]:
+                  - /url: /k?q=%23%E6%B1%BD%E8%BD%A6%E6%95%B4%E8%BD%A6%E6%9D%BF%E5%9D%97%E6%8B%89%E5%8D%87%EF%BC%8C%E8%B5%9B%E5%8A%9B%E6%96%AF%E6%B6%A8%E5%81%9C%23
+            - row "5 金融板块强势上涨，大智慧股价封涨停" [ref=e792]:
+              - cell "5" [ref=e793]
+              - cell "金融板块强势上涨，大智慧股价封涨停" [ref=e794]:
+                - link "金融板块强势上涨，大智慧股价封涨停" [ref=e795] [cursor=pointer]:
+                  - /url: /k?q=%23%E9%87%91%E8%9E%8D%E6%9D%BF%E5%9D%97%E5%BC%BA%E5%8A%BF%E4%B8%8A%E6%B6%A8%EF%BC%8C%E5%A4%A7%E6%99%BA%E6%85%A7%E8%82%A1%E4%BB%B7%E5%B0%81%E6%B6%A8%E5%81%9C%23
+            - row "6 招商南油领涨航运板块，股价强势封板" [ref=e796]:
+              - cell "6" [ref=e797]
+              - cell "招商南油领涨航运板块，股价强势封板" [ref=e798]:
+                - link "招商南油领涨航运板块，股价强势封板" [ref=e799] [cursor=pointer]:
+                  - /url: /k?q=%23%E6%8B%9B%E5%95%86%E5%8D%97%E6%B2%B9%E9%A2%86%E6%B6%A8%E8%88%AA%E8%BF%90%E6%9D%BF%E5%9D%97%EF%BC%8C%E8%82%A1%E4%BB%B7%E5%BC%BA%E5%8A%BF%E5%B0%81%E6%9D%BF%23
+            - row "7 PCB概念走强，鹏鼎控股创新高" [ref=e800]:
+              - cell "7" [ref=e801]
+              - cell "PCB概念走强，鹏鼎控股创新高" [ref=e802]:
+                - link "PCB概念走强，鹏鼎控股创新高" [ref=e803] [cursor=pointer]:
+                  - /url: /k?q=%23PCB%E6%A6%82%E5%BF%B5%E8%B5%B0%E5%BC%BA%EF%BC%8C%E9%B9%8F%E9%BC%8E%E6%8E%A7%E8%82%A1%E5%88%9B%E6%96%B0%E9%AB%98%23
+            - row "8 智能驾驶板块异动，浙江世宝涨停" [ref=e804]:
+              - cell "8" [ref=e805]
+              - cell "智能驾驶板块异动，浙江世宝涨停" [ref=e806]:
+                - link "智能驾驶板块异动，浙江世宝涨停" [ref=e807] [cursor=pointer]:
+                  - /url: /k?q=%23%E6%99%BA%E8%83%BD%E9%A9%BE%E9%A9%B6%E6%9D%BF%E5%9D%97%E5%BC%82%E5%8A%A8%EF%BC%8C%E6%B5%99%E6%B1%9F%E4%B8%96%E5%AE%9D%E6%B6%A8%E5%81%9C%23
+            - row "9 京东方A与康宁公司签署合作备忘录" [ref=e808]:
+              - cell "9" [ref=e809]
+              - cell "京东方A与康宁公司签署合作备忘录" [ref=e810]:
+                - link "京东方A与康宁公司签署合作备忘录" [ref=e811] [cursor=pointer]:
+                  - /url: /k?q=%23%E4%BA%AC%E4%B8%9C%E6%96%B9A%E4%B8%8E%E5%BA%B7%E5%AE%81%E5%85%AC%E5%8F%B8%E7%AD%BE%E7%BD%B2%E5%90%88%E4%BD%9C%E5%A4%87%E5%BF%98%E5%BD%95%23
+            - row "10 五粮液百亿回购计划启动" [ref=e812]:
+              - cell "10" [ref=e813]
+              - cell "五粮液百亿回购计划启动" [ref=e814]:
+                - link "五粮液百亿回购计划启动" [ref=e815] [cursor=pointer]:
+                  - /url: /k?q=%23%E4%BA%94%E7%B2%AE%E6%B6%B2%E7%99%BE%E4%BA%BF%E5%9B%9E%E8%B4%AD%E8%AE%A1%E5%88%92%E5%90%AF%E5%8A%A8%23
+        - generic [ref=e816]:
+          - heading "热股榜 更多" [level=3] [ref=e817]:
+            - text: 热股榜
+            - link "更多" [ref=e818] [cursor=pointer]:
+              - /url: /hq#hot
+          - generic [ref=e819]:
+            - link "全球" [ref=e820] [cursor=pointer]:
+              - /url: ""
+            - link "沪深" [ref=e821] [cursor=pointer]:
+              - /url: ""
+            - link "港股" [ref=e822] [cursor=pointer]:
+              - /url: ""
+            - link "美股" [ref=e823] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e824]:
+            - link "1小时内最热" [ref=e825] [cursor=pointer]:
+              - /url: ""
+            - link "24小时内最热" [ref=e826] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e827]:
+            - generic [ref=e829]:
+              - generic [ref=e830]: "1"
+              - link "京东方A" [ref=e832] [cursor=pointer]:
+                - /url: /S/SZ000725
+              - generic [ref=e833]: +10.09%
+            - generic [ref=e835]:
+              - generic [ref=e836]: "2"
+              - link "澜起科技" [ref=e838] [cursor=pointer]:
+                - /url: /S/SH688008
+              - generic [ref=e839]: +8.05%
+            - generic [ref=e841]:
+              - generic [ref=e842]: "3"
+              - link "*ST闻泰" [ref=e844] [cursor=pointer]:
+                - /url: /S/SH600745
+              - generic [ref=e845]: +3.00%
+            - generic [ref=e847]:
+              - generic [ref=e848]: "4"
+              - link "赛力斯" [ref=e850] [cursor=pointer]:
+                - /url: /S/SH601127
+              - generic [ref=e851]: +7.74%
+            - generic [ref=e853]:
+              - generic [ref=e854]: "5"
+              - link "北方华创" [ref=e856] [cursor=pointer]:
+                - /url: /S/SZ002371
+              - generic [ref=e857]: +6.71%
+            - generic [ref=e859]:
+              - generic [ref=e860]: "6"
+              - link "科创半导体ETF华夏" [ref=e862] [cursor=pointer]:
+                - /url: /S/SH588170
+              - generic [ref=e863]: "-0.92%"
+            - generic [ref=e865]:
+              - generic [ref=e866]: "7"
+              - link "兆易创新" [ref=e868] [cursor=pointer]:
+                - /url: /S/SH603986
+              - generic [ref=e869]: +0.14%
+            - generic [ref=e871]:
+              - generic [ref=e872]: "8"
+              - link "长电科技" [ref=e874] [cursor=pointer]:
+                - /url: /S/SH600584
+              - generic [ref=e875]: +4.47%
+        - generic [ref=e876]:
+          - heading "涨跌幅榜 更多" [level=3] [ref=e877]:
+            - text: 涨跌幅榜
+            - link "更多" [ref=e878] [cursor=pointer]:
+              - /url: /hq#rank
+          - generic [ref=e879]:
+            - link "沪深" [ref=e880] [cursor=pointer]:
+              - /url: ""
+            - link "港股" [ref=e881] [cursor=pointer]:
+              - /url: ""
+            - link "美股" [ref=e882] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e883]:
+            - link "涨幅榜" [ref=e884] [cursor=pointer]:
+              - /url: ""
+            - link "跌幅榜" [ref=e885] [cursor=pointer]:
+              - /url: ""
+          - table [ref=e886]:
+            - row "1 纬达光电 +28.99%" [ref=e887]:
+              - cell "1" [ref=e888]
+              - cell "纬达光电" [ref=e889]:
+                - link "纬达光电" [ref=e890] [cursor=pointer]:
+                  - /url: /S/BJ920001
+              - cell [ref=e891]
+              - cell "+28.99%" [ref=e892]
+            - row "2 龙腾光电 +20.04%" [ref=e893]:
+              - cell "2" [ref=e894]
+              - cell "龙腾光电" [ref=e895]:
+                - link "龙腾光电" [ref=e896] [cursor=pointer]:
+                  - /url: /S/SH688055
+              - cell [ref=e897]
+              - cell "+20.04%" [ref=e898]
+            - row "3 金利华电 +19.99%" [ref=e899]:
+              - cell "3" [ref=e900]
+              - cell "金利华电" [ref=e901]:
+                - link "金利华电" [ref=e902] [cursor=pointer]:
+                  - /url: /S/SZ300069
+              - cell [ref=e903]
+              - cell "+19.99%" [ref=e904]
+            - row "4 华灿光电 +18.59%" [ref=e905]:
+              - cell "4" [ref=e906]
+              - cell "华灿光电" [ref=e907]:
+                - link "华灿光电" [ref=e908] [cursor=pointer]:
+                  - /url: /S/SZ300323
+              - cell [ref=e909]
+              - cell "+18.59%" [ref=e910]
+            - row "5 美迪凯 +17.83%" [ref=e911]:
+              - cell "5" [ref=e912]
+              - cell "美迪凯" [ref=e913]:
+                - link "美迪凯" [ref=e914] [cursor=pointer]:
+                  - /url: /S/SH688079
+              - cell [ref=e915]
+              - cell "+17.83%" [ref=e916]
+            - row "6 大族数控 +16.87%" [ref=e917]:
+              - cell "6" [ref=e918]
+              - cell "大族数控" [ref=e919]:
+                - link "大族数控" [ref=e920] [cursor=pointer]:
+                  - /url: /S/SZ301200
+              - cell [ref=e921]
+              - cell "+16.87%" [ref=e922]
+            - row "7 力诺药包 +16.49%" [ref=e923]:
+              - cell "7" [ref=e924]
+              - cell "力诺药包" [ref=e925]:
+                - link "力诺药包" [ref=e926] [cursor=pointer]:
+                  - /url: /S/SZ301188
+              - cell [ref=e927]
+              - cell "+16.49%" [ref=e928]
+            - row "8 豪恩汽电 +16.20%" [ref=e929]:
+              - cell "8" [ref=e930]
+              - cell "豪恩汽电" [ref=e931]:
+                - link "豪恩汽电" [ref=e932] [cursor=pointer]:
+                  - /url: /S/SZ301488
+              - cell [ref=e933]
+              - cell "+16.20%" [ref=e934]
+            - row "9 联影医疗 +16.08%" [ref=e935]:
+              - cell "9" [ref=e936]
+              - cell "联影医疗" [ref=e937]:
+                - link "联影医疗" [ref=e938] [cursor=pointer]:
+                  - /url: /S/SH688271
+              - cell [ref=e939]
+              - cell "+16.08%" [ref=e940]
+            - row "10 瑞华技术 +14.69%" [ref=e941]:
+              - cell "10" [ref=e942]
+              - cell "瑞华技术" [ref=e943]:
+                - link "瑞华技术" [ref=e944] [cursor=pointer]:
+                  - /url: /S/BJ920099
+              - cell [ref=e945]
+              - cell "+14.69%" [ref=e946]
+        - generic [ref=e947]:
+          - heading "热门基金" [level=3] [ref=e948]
+          - table [ref=e949]:
+            - row "1 财通价值动量混合A 年化(近5年) +26.43%" [ref=e950]:
+              - cell "1" [ref=e951]
+              - cell "财通价值动量混合A" [ref=e952]:
+                - link "财通价值动量混合A" [ref=e953] [cursor=pointer]:
+                  - /url: /S/F720001
+              - cell "年化(近5年)" [ref=e954]
+              - cell "+26.43%" [ref=e955]
+            - row "2 财通新视野混合A 年化(近5年) +24.55%" [ref=e956]:
+              - cell "2" [ref=e957]
+              - cell "财通新视野混合A" [ref=e958]:
+                - link "财通新视野混合A" [ref=e959] [cursor=pointer]:
+                  - /url: /S/F005851
+              - cell "年化(近5年)" [ref=e960]
+              - cell "+24.55%" [ref=e961]
+            - row "3 华夏行业景气混合A 年化(近5年) +22.97%" [ref=e962]:
+              - cell "3" [ref=e963]
+              - cell "华夏行业景气混合A" [ref=e964]:
+                - link "华夏行业景气混合A" [ref=e965] [cursor=pointer]:
+                  - /url: /S/F003567
+              - cell "年化(近5年)" [ref=e966]
+              - cell "+22.97%" [ref=e967]
+            - row "4 易方达标普信息科技指数（QDII-LOF）A 年化(近5年) +21.91%" [ref=e968]:
+              - cell "4" [ref=e969]
+              - cell "易方达标普信息科技指数（QDII-LOF）A" [ref=e970]:
+                - link "易方达标普信息科技指数（QDII-LOF）A" [ref=e971] [cursor=pointer]:
+                  - /url: /S/F161128
+              - cell "年化(近5年)" [ref=e972]
+              - cell "+21.91%" [ref=e973]
+            - row "5 万家品质生活混合 年化(近5年) +20.92%" [ref=e974]:
+              - cell "5" [ref=e975]
+              - cell "万家品质生活混合" [ref=e976]:
+                - link "万家品质生活混合" [ref=e977] [cursor=pointer]:
+                  - /url: /S/F519195
+              - cell "年化(近5年)" [ref=e978]
+              - cell "+20.92%" [ref=e979]
+            - row "6 中加转型动力混合A 年化(近5年) +19.90%" [ref=e980]:
+              - cell "6" [ref=e981]
+              - cell "中加转型动力混合A" [ref=e982]:
+                - link "中加转型动力混合A" [ref=e983] [cursor=pointer]:
+                  - /url: /S/F005775
+              - cell "年化(近5年)" [ref=e984]
+              - cell "+19.90%" [ref=e985]
+            - row "7 银华智荟内在价值灵活配置混合发起式A 年化(近5年) +18.26%" [ref=e986]:
+              - cell "7" [ref=e987]
+              - cell "银华智荟内在价值灵活配置混合发起式A" [ref=e988]:
+                - link "银华智荟内在价值灵活配置混合发起式A" [ref=e989] [cursor=pointer]:
+                  - /url: /S/F005119
+              - cell "年化(近5年)" [ref=e990]
+              - cell "+18.26%" [ref=e991]
+            - row "8 华安标普全球石油指数 年化(近5年) +17.58%" [ref=e992]:
+              - cell "8" [ref=e993]
+              - cell "华安标普全球石油指数" [ref=e994]:
+                - link "华安标普全球石油指数" [ref=e995] [cursor=pointer]:
+                  - /url: /S/F160416
+              - cell "年化(近5年)" [ref=e996]
+              - cell "+17.58%" [ref=e997]
+            - row "9 易方达新兴成长 年化(近5年) +17.29%" [ref=e998]:
+              - cell "9" [ref=e999]
+              - cell "易方达新兴成长" [ref=e1000]:
+                - link "易方达新兴成长" [ref=e1001] [cursor=pointer]:
+                  - /url: /S/F000404
+              - cell "年化(近5年)" [ref=e1002]
+              - cell "+17.29%" [ref=e1003]
+            - row "10 银河创新混合A 年化(近5年) +17.14%" [ref=e1004]:
+              - cell "10" [ref=e1005]
+              - cell "银河创新混合A" [ref=e1006]:
+                - link "银河创新混合A" [ref=e1007] [cursor=pointer]:
+                  - /url: /S/F519674
+              - cell "年化(近5年)" [ref=e1008]
+              - cell "+17.14%" [ref=e1009]
+        - generic [ref=e1010]:
+          - generic [ref=e1011]:
+            - link "常见问题" [ref=e1012] [cursor=pointer]:
+              - /url: /about/faq
+            - text: ｜
+            - link "关于雪球" [ref=e1013] [cursor=pointer]:
+              - /url: /about/what-is-xueqiu
+            - text: ｜
+            - link "投资者教育" [ref=e1014] [cursor=pointer]:
+              - /url: /edu/invest-edu
+            - text: ｜
+            - link "风险提示" [ref=e1015] [cursor=pointer]:
+              - /url: /about/faq#6_0
+          - generic [ref=e1016]:
+            - text: © 2026 XUEQIU.COM 北京雪球信息科技有限公司
+            - link "京公网安备 11010502040379号" [ref=e1017] [cursor=pointer]:
+              - /url: https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502040379
+            - text: ·
+            - link "京ICP证100666号" [ref=e1018] [cursor=pointer]:
+              - /url: https://xqdoc.imedao.com/198bc1b4fb41d6523feaace4.jpg
+            - link "京ICP备10040543" [ref=e1019] [cursor=pointer]:
+              - /url: https://beian.miit.gov.cn/
+            - text: ·
+            - link "京金信备〔2022〕3号" [ref=e1020] [cursor=pointer]:
+              - /url: https://fisbaobei.ifcert.cn/Home/homeIindex
+            - link "营业执照" [ref=e1021] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/1798dc30dead0453fd6075d8.png
+            - text: ·
+            - link "侵权投诉指引" [ref=e1022] [cursor=pointer]:
+              - /url: /law/tortreport
+            - text: ·
+            - link "出版物经营许可证" [ref=e1023] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/181b337b7742caf83fee6640.png
+  - text: "* * · * * *"
+  - generic [ref=e1025]:
+    - img "fold" [ref=e1026]
+    - generic [ref=e1027]: 问问投资的问题吧，帮你发现投资好机会

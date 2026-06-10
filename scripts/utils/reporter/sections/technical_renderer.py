@@ -58,17 +58,76 @@ class TechnicalRenderer:
             lines.append(summary)
         lines.append("")
 
+        # 评分子项表格
+        components = th.get("components", {})
+        if components:
+            _cn = {
+                "weekly_structure": "周线结构",
+                "daily_ma_alignment": "日线MA趋势",
+                "price_structure": "价格结构",
+                "volume_confirmation": "成交量确认",
+                "volatility_condition": "波动率条件",
+            }
+            lines.append("| 维度 | 得分 | 说明 |")
+            lines.append("|------|------|------|")
+            for name, comp in components.items():
+                label = _cn.get(name, name)
+                lines.append(f"| {label} | {comp.get('score', 0)}/{comp.get('max', 0)} | {comp.get('evidence', '')} |")
+            lines.append("")
+            # P2-5: 综合评分雷达摘要
+            radar_text = self._build_radar_summary(components, score)
+            if radar_text:
+                lines.append(f"📊 **综合评分摘要**：{radar_text}")
+                lines.append("")
+
+        # P2-1: 信号优先级排序 — 多个预警并存时突出最重要的一条
+        priority = self._pick_priority_signal(resonance)
+        if priority:
+            lines.append(f"> **优先关注 — {priority['emoji']}**：{priority['text']}**")
+            if priority.get('detail'):
+                lines.append(f"> 依据：{priority['detail']}")
+            lines.append("")
+
         lines.append("**关键观察位**：")
         sz = kl.get("support_zone")
         rz = kl.get("resistance_zone")
+        sr_diag = kl.get("diagnostics")
         if sz:
             lines.append(f"- 支撑区：【{sz.get('zone_low', '—')} - {sz.get('zone_high', '—')}】（{sz.get('strength', '弱')}）")
         else:
-            lines.append("- 支撑区：暂无可靠支撑区，原因：历史数据不足或有效触及次数不足。")
+            lines.append("- 支撑区：暂无可靠支撑区")
+            if sr_diag:
+                reason = sr_diag.get('reason')
+                if reason:
+                    lines.append(f"  - 原因：{reason}")
+                touches = sr_diag.get('valid_support_touches')
+                req = sr_diag.get('required_touches')
+                if touches is not None and req is not None:
+                    if touches < req:
+                        lines.append(f"  - 诊断：满足有效反弹条件的谷点仅 {touches} 次（需≥{req} 次）")
+                    else:
+                        lines.append(f"  - 诊断：谷点触及 {touches} 次已满足要求，但分布在多个价位未形成聚集区")
+                raw_v = sr_diag.get('raw_valleys')
+                if raw_v is not None:
+                    lines.append(f"  - 原始极值点：{raw_v} 个谷点（部分因反弹幅度不足被过滤）")
         if rz:
             lines.append(f"- 压力区：【{rz.get('zone_low', '—')} - {rz.get('zone_high', '—')}】（{rz.get('strength', '弱')}）")
         else:
-            lines.append("- 压力区：暂无可靠压力区，原因：历史数据不足或有效触及次数不足。")
+            lines.append("- 压力区：暂无可靠压力区")
+            if sr_diag:
+                reason = sr_diag.get('reason')
+                if reason:
+                    lines.append(f"  - 原因：{reason}")
+                touches = sr_diag.get('valid_resistance_touches')
+                req = sr_diag.get('required_touches')
+                if touches is not None and req is not None:
+                    if touches < req:
+                        lines.append(f"  - 诊断：满足有效回落条件的峰点仅 {touches} 次（需≥{req} 次）")
+                    else:
+                        lines.append(f"  - 诊断：峰点触及 {touches} 次已满足要求，但分布在多个价位未形成聚集区")
+                raw_p = sr_diag.get('raw_peaks')
+                if raw_p is not None:
+                    lines.append(f"  - 原始极值点：{raw_p} 个峰点（部分因回落幅度不足被过滤）")
 
         # 当支撑/压力区缺失时，补充 MA 观察位
         if not sz and not rz:
@@ -137,6 +196,17 @@ class TechnicalRenderer:
             lines.append(f"- 位置：{pos}")
             if channel.get("breakout_status") != "未突破":
                 lines.append(f"- 突破状态：{channel['breakout_status']}")
+            # P2-4: 水平箱体时给出具体操作建议
+            if ch_state == "水平箱体" and channel.get("breakout_status") == "未突破":
+                upper = channel.get("upper")
+                lower = channel.get("lower")
+                if upper is not None and lower is not None:
+                    if pos == "接近上轨":
+                        lines.append(f"- 建议：箱体上沿（{upper:.2f}）附近承压，若无量能配合突破，宜减仓或观望")
+                    elif pos == "接近下轨":
+                        lines.append(f"- 建议：箱体下沿（{lower:.2f}）附近关注支撑有效性，若企稳可观察低吸机会")
+                    elif pos == "中部":
+                        lines.append(f"- 建议：箱体中部（{lower:.2f}-{upper:.2f}）方向不明，观望等待突破确认")
             lines.append(f"- 提示：{channel.get('action_hint', '')}")
             lines.append("")
 
@@ -161,6 +231,7 @@ class TechnicalRenderer:
             lines.append(f"- 失效条件：{dart.get('invalid_if', '')}")
             lines.append("")
 
+        # P2-2: 市场/板块共振 — 表格化三线并排
         mr = resonance.get("market_resonance")
         if mr:
             mr_state = mr.get("state", "未知")
@@ -168,19 +239,31 @@ class TechnicalRenderer:
             impact = mr.get("impact", "")
             relative = mr.get("relative_strength", "未知")
             missing = mr.get("missing", [])
+
+            # 从 evidence 解析个股/大盘/行业趋势
+            trend_map = {}
+            for ev in mr.get("evidence", []):
+                if "：" in ev:
+                    k, v = ev.split("：", 1)
+                    trend_map[k] = v
+
             lines.append(f"**市场/板块共振**：{mr_state}（置信度：{mr_conf}）")
+            lines.append("| 维度 | 趋势状态 | 备注 |")
+            lines.append("|------|----------|------|")
+            stock_stage = trend_map.get("个股趋势", ts.get("stage", "未知"))
+            lines.append(f"| 个股 | {stock_stage} | — |")
+            if "大盘趋势" in trend_map:
+                lines.append(f"| 大盘 | {trend_map['大盘趋势']} | — |")
+            if "行业趋势" in trend_map:
+                rel = relative if relative != "未知" else "—"
+                lines.append(f"| 行业 | {trend_map['行业趋势']} | 个股相对行业：{rel} |")
+            lines.append("")
+
             if impact:
                 lines.append(f"- 影响：{impact}")
-            if relative and relative != "未知":
-                lines.append(f"- 相对行业：{relative}")
-            for ev in mr.get("evidence", [])[:3]:
-                lines.append(f"- {ev}")
-            real_missing = [m for m in missing if not m.startswith("以")]
             proxy_notes = [m for m in missing if m.startswith("以")]
             if proxy_notes:
                 lines.append(f"- 说明：{'; '.join(proxy_notes[:2])}")
-            if real_missing:
-                lines.append(f"- 缺失：{'; '.join(real_missing[:3])}")
             lines.append(f"- 提示：{mr.get('action_hint', '')}")
             lines.append("")
 
@@ -215,33 +298,54 @@ class TechnicalRenderer:
             lines.append(f"**卖出三要素**：满足 {met}/3 条，{rec}。")
             lines.append("")
 
-        adv_lines = []
-        for name, info in advisors.items():
-            meaning = info.get("meaning", "")
-            adv_lines.append(f"{name.upper()}：{info.get('state', '—')}（{meaning}）")
-        if adv_lines:
-            lines.append("**谋士团**：" + " | ".join(adv_lines))
+        if advisors:
+            lines.append("**谋士团**：")
+            lines.append("| 指标 | 状态 | 含义 |")
+            lines.append("|------|------|------|")
+            for name, info in advisors.items():
+                lines.append(f"| {name.upper()} | {info.get('state', '—')} | {info.get('meaning', '')} |")
             lines.append("")
 
         bias_extreme = resonance.get("bias_extreme")
         if bias_extreme:
             lines.append(f"**BIAS预警**：{bias_extreme['warning']}（{bias_extreme['level']}）")
+            ev = bias_extreme.get("evidence")
+            if ev:
+                lines.append(f"- BIAS(5) = {ev.get('bias_5', 'N/A')}% | BIAS(10) = {ev.get('bias_10', 'N/A')}%")
+                lines.append(f"- 判定标准：{ev.get('threshold_desc', 'N/A')}（回看窗口：{ev.get('window', 'N/A')}）")
             lines.append("")
 
         false_rebound = resonance.get("false_rebound")
         if false_rebound:
             lines.append(f"**假反弹预警**：{false_rebound['signal']}（{false_rebound['confidence']}）")
+            lines.append(f"- 触发依据：{false_rebound.get('reason', 'N/A')}")
             lines.append("")
 
         false_breakout = resonance.get("false_breakout")
         if false_breakout:
             lines.append(f"**假突破预警**：{false_breakout['signal']}（{false_breakout['confidence']}）")
+            lines.append(f"- 触发依据：{false_breakout.get('reason', 'N/A')}")
             lines.append("")
 
         div = resonance.get("divergence_scan")
         if div:
             lines.append(f"**背离预警**：{div.get('type', '')}（{div.get('confidence', '')}）")
-            lines.append(f"处置：{div.get('action', '观望')}")
+            ev = div.get("evidence")
+            if ev:
+                boll = ev.get("boll")
+                if boll:
+                    lines.append(f"- BOLL：收盘价 {boll.get('price', 'N/A')} {boll.get('state', '')}（上轨 {boll.get('upper', 'N/A')} / 下轨 {boll.get('lower', 'N/A')}）")
+                rsi = ev.get("rsi")
+                if rsi:
+                    rsi_val = rsi.get('value')
+                    rsi_str = f"{rsi_val:.2f}" if isinstance(rsi_val, (int, float)) else str(rsi_val)
+                    lines.append(f"- RSI：{rsi_str} → {rsi.get('state', '')}")
+                macd = ev.get("macd")
+                if macd:
+                    macd_hist = macd.get('hist')
+                    macd_str = f"{macd_hist:.2f}" if isinstance(macd_hist, (int, float)) else str(macd_hist)
+                    lines.append(f"- MACD柱线：{macd_str} → {macd.get('state', '')}")
+            lines.append(f"- 处置：{div.get('action', '观望')}")
             lines.append("")
 
         # 价格目标分析
@@ -251,24 +355,99 @@ class TechnicalRenderer:
             pt_score = price_target.get("confidence_score", 0)
             pt_dir = price_target.get("direction", "")
             dir_label = "看涨" if pt_dir == "bullish" else ("看跌" if pt_dir == "bearish" else "观望")
-            lines.append(f"**价格目标分析**（置信度：{pt_conf}，评分：{pt_score}/100，方向：{dir_label}）")
-            for level in ["conservative", "base", "aggressive"]:
+            lines.append(f"**价格目标分析**（置信度：{pt_conf}，评分：{pt_score}/10，方向：{dir_label}）")
+            lines.append("")
+
+            # 目标价表格
+            targets_table = []
+            for level, label in [("conservative", "保守"), ("base", "基准"), ("aggressive", "激进")]:
                 val = price_target.get(level)
                 if val is not None:
-                    label = {"conservative": "保守", "base": "基准", "aggressive": "激进"}.get(level, level)
-                    lines.append(f"- {label}目标：{val:.2f}")
+                    targets_table.append(f"| {label} | {val:.2f} |")
+            if targets_table:
+                lines.append("| 目标 | 价格 |")
+                lines.append("|------|------|")
+                lines.extend(targets_table)
+                lines.append("")
+
+            # 触发条件
+            trig = price_target.get("trigger_conditions", {})
+            if trig:
+                lines.append("**触发条件**")
+                for k, v in trig.items():
+                    if v:
+                        lines.append(f"- {k}：{v}")
+                lines.append("")
+
+            # 止损
+            if price_target.get("stop_loss"):
+                lines.append(f"**止损**：{price_target['stop_loss']}")
+                lines.append("")
+
+            # 失效条件
+            failures = price_target.get("failure_conditions", [])
+            if failures:
+                lines.append("**失效条件**")
+                for f in failures:
+                    lines.append(f"- {f}")
+                lines.append("")
+
+            # 时间预期
             te = price_target.get("time_estimate", {})
             if te:
-                lines.append(f"- 时间预期：保守{te.get('conservative', '')} / 基准{te.get('base', '')}")
-            trig = price_target.get("trigger_conditions", {})
-            if trig.get("price"):
-                lines.append(f"- 触发条件：{trig['price']}")
-            if price_target.get("stop_loss"):
-                lines.append(f"- 止损：{price_target['stop_loss']}")
-            lines.append("")
+                parts = []
+                for level, label in [("conservative", "保守"), ("base", "基准"), ("aggressive", "激进")]:
+                    if te.get(level):
+                        parts.append(f"{label}{te[level]}")
+                if parts:
+                    lines.append(f"**时间预期**：{' / '.join(parts)}")
+                    lines.append("")
+
         elif price_target and price_target.get("error"):
-            lines.append(f"**价格目标分析**：{price_target['error']}（{price_target.get('reason', '')}）")
+            error_text = price_target.get("error", "关注")
+            reason = price_target.get("reason", "")
+            lines.append("**价格目标分析**")
             lines.append("")
+            lines.append(f"> **当前状态**：{error_text}（{reason}）")
+            lines.append("")
+
+            # 诊断信息：为什么不满足
+            diagnostics = price_target.get("diagnostics")
+            if diagnostics:
+                lines.append("**为什么不满足条件**")
+                for k, v in diagnostics.items():
+                    lines.append(f"- {k}：{v}")
+                lines.append("")
+
+            # 盈亏比不足的详细数据
+            profit_risk = price_target.get("profit_risk")
+            if profit_risk:
+                lines.append("**形态测算结果**（因盈亏比不足暂不建议）")
+                lines.append(f"- 触发价：{profit_risk.get('trigger_price', 'N/A')}")
+                lines.append(f"- 止损价：{profit_risk.get('stop_price', 'N/A')}")
+                lines.append(f"- 盈亏比：{profit_risk.get('ratio', 'N/A')}:1（要求≥1.5:1）")
+                lines.append(f"- 潜在收益：{profit_risk.get('potential_gain', 'N/A')}")
+                lines.append(f"- 初始风险：{profit_risk.get('initial_risk', 'N/A')}")
+                lines.append("")
+
+            # 当前趋势参考
+            weekly_trend = price_target.get("weekly_trend")
+            if weekly_trend:
+                lines.append("**当前趋势参考**")
+                lines.append(f"- 周线方向：{weekly_trend.get('direction', '未知')}（ADX={weekly_trend.get('adx', 'N/A')}）")
+                lines.append("")
+
+            # 满足条件后的预期
+            targets = price_target.get("targets")
+            if targets and isinstance(targets, dict):
+                lines.append("**一旦满足条件，预期目标**")
+                for level, label in [("conservative", "保守"), ("base", "基准"), ("aggressive", "激进")]:
+                    val = targets.get(level)
+                    if val is not None:
+                        lines.append(f"- {label}：{val:.2f}")
+                if targets.get("method"):
+                    lines.append(f"- 测算方法：{targets['method']}")
+                lines.append("")
 
         chart_paths = ctx.get("chart_paths", {})
         tech_chart = chart_paths.get("technical")
@@ -298,26 +477,12 @@ class TechnicalRenderer:
         lines.insert(insert_idx + 7, f"- MA60 方向：{ds.get('ma60_direction', '未知')}")
         lines.insert(insert_idx + 8, f"- 价格位置：{ds.get('price_vs_ma20', '未知')} MA20")
         lines.insert(insert_idx + 9, "")
-        lines.insert(insert_idx + 10, "### 3. 健康度评分")
-        th = resonance.get("trend_health", {})
-        _cn = {
-            "weekly_structure": "周线结构",
-            "daily_ma_alignment": "日线MA趋势",
-            "price_structure": "价格结构",
-            "volume_confirmation": "成交量确认",
-            "volatility_condition": "波动率条件",
-        }
-        for name, comp in th.get("components", {}).items():
-            label = _cn.get(name, name)
-            lines.insert(insert_idx + 11, f"- {label}：{comp.get('score', 0)}/{comp.get('max', 0)} ({comp.get('evidence', '')})")
-        lines.insert(insert_idx + 12, "")
-
-        # After health score section
+        # After daily structure section
         sell_assessment = resonance.get("sell_assessment")
         if sell_assessment and sell_assessment.get("met_count", 0) >= 1:
-            lines.insert(insert_idx + 13, "### 卖出三要素评估")
-            lines.insert(insert_idx + 14, "")
-            offset = insert_idx + 15
+            lines.insert(insert_idx + 10, "### 卖出三要素评估")
+            lines.insert(insert_idx + 11, "")
+            offset = insert_idx + 12
             for f in sell_assessment.get("factors", []):
                 lines.insert(offset, f"- {f}")
                 offset += 1
@@ -325,6 +490,51 @@ class TechnicalRenderer:
             lines.insert(offset + 1, "")
 
         return "\n".join(lines)
+
+    def _pick_priority_signal(self, resonance: Dict) -> Dict | None:
+        """从多个预警中选出优先级最高的一条。"""
+        candidates = []
+
+        div = resonance.get("divergence_scan")
+        if div:
+            candidates.append({
+                "rank": 1,
+                "emoji": "背离预警",
+                "text": div.get("type", "背离预警"),
+                "detail": f"置信度 {div.get('confidence', '')}，处置：{div.get('action', '观望')}",
+            })
+
+        bias = resonance.get("bias_extreme")
+        if bias:
+            candidates.append({
+                "rank": 2,
+                "emoji": "BIAS预警",
+                "text": bias.get("warning", "BIAS极端"),
+                "detail": f"等级：{bias.get('level', '')}",
+            })
+
+        fb = resonance.get("false_breakout")
+        if fb:
+            candidates.append({
+                "rank": 3,
+                "emoji": "假突破预警",
+                "text": fb.get("signal", "假突破"),
+                "detail": fb.get("reason", ""),
+            })
+
+        fr = resonance.get("false_rebound")
+        if fr:
+            candidates.append({
+                "rank": 4,
+                "emoji": "假反弹预警",
+                "text": fr.get("signal", "假反弹"),
+                "detail": fr.get("reason", ""),
+            })
+
+        if not candidates:
+            return None
+        best = min(candidates, key=lambda x: x["rank"])
+        return best
 
     def _render_legacy(self, resonance: Dict, indicators: Dict, stock_name: str, ctx: Dict) -> str:
         """旧版技术指标快照渲染（降级）。"""
@@ -449,38 +659,87 @@ class TechnicalRenderer:
 
         return "\n".join(lines)
 
+    def _build_radar_summary(self, components: dict, total_score: int) -> str:
+        """根据评分子项生成一句话雷达摘要。"""
+        if not components:
+            return ""
+        # 找出最强和最弱维度
+        ratios = {}
+        for name, comp in components.items():
+            max_ = comp.get("max", 1)
+            score = comp.get("score", 0)
+            ratios[name] = score / max_ if max_ > 0 else 0
+
+        if not ratios:
+            return ""
+
+        best = max(ratios, key=ratios.get)
+        worst = min(ratios, key=ratios.get)
+        _cn = {
+            "weekly_structure": "周线结构",
+            "daily_ma_alignment": "日线MA趋势",
+            "price_structure": "价格结构",
+            "volume_confirmation": "成交量确认",
+            "volatility_condition": "波动率条件",
+        }
+        best_label = _cn.get(best, best)
+        worst_label = _cn.get(worst, worst)
+
+        best_ratio = ratios[best]
+        worst_ratio = ratios[worst]
+
+        if total_score >= 70:
+            overall = "整体健康"
+        elif total_score >= 50:
+            overall = "结构尚可"
+        else:
+            overall = "结构偏弱"
+
+        parts = [f"{overall}，{best_label}最强"]
+        if worst_ratio < 0.4:
+            parts.append(f"{worst_label}偏弱需关注")
+        return "；".join(parts) + "。"
+
     def _build_conclusion(self, ts: dict, th: dict, inv: dict, advisors: dict, bottom: dict | None, resonance: dict) -> str:
         """基于实际状态生成结论文案，避免模板残留无关内容。"""
         primary = ts.get("primary_state", "")
         stage = ts.get("stage", "")
+        score = th.get("score", 0)
 
-        parts = ["趋势仍可跟踪"]
+        is_weak = score < 50 or stage == "破坏期" or primary == "下降趋势"
+
+        if is_weak:
+            parts = ["中期趋势已走弱" if primary == "下降趋势" else "趋势结构转弱"]
+        else:
+            parts = ["趋势仍可跟踪"]
 
         active_warnings = []
 
         bias = advisors.get("bias", {})
         bias_state = bias.get("state", "")
-        if "偏高" in bias_state:
+        if "偏高" in bias_state or "正偏离" in bias_state:
             active_warnings.append("BIAS 偏高")
         elif "负偏离" in bias_state:
             active_warnings.append("BIAS 负偏离")
 
         rsi = advisors.get("rsi", {})
         rsi_state = rsi.get("state", "")
-        if "钝化" in rsi_state or "超买" in rsi_state:
+        if "超买" in rsi_state or "钝化" in rsi_state:
             active_warnings.append("RSI 超买/钝化")
+        elif "超卖" in rsi_state:
+            active_warnings.append("RSI 超卖")
 
         divergence = resonance.get("divergence_scan")
         if divergence and "背离" in divergence.get("type", ""):
             active_warnings.append("MACD 背离")
 
         if active_warnings:
-            parts.append(f"但不适合将 {'、'.join(active_warnings)} 单独视为卖出信号")
+            parts.append(f"但不适合将 {'、'.join(active_warnings)} 单独视为买卖信号")
 
         if primary == "震荡转弱" and "临界" in stage:
             parts.append("日线跌破MA20，中期结构转弱，需观察能否收回MA60；若连续收盘无法收回，则中期结构破坏风险进一步上升")
         elif primary == "下降趋势":
-            parts.append("中期趋势已走弱，建议降低仓位或观望")
+            parts.append("建议降低仓位或观望")
 
         if bottom and bottom.get("state") != "none":
             parts.append("底部区域仅作观察，不构成买入信号")

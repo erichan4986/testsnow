@@ -1,0 +1,77 @@
+[
+  {
+    "quality_score": 65,
+    "content_type": "事件点评",
+    "valid_until": "2026-07-02",
+    "summary": "本文是对Mobileye CEO Amnon Shashua的访谈记录，主要讨论了自动驾驶行业路径的转变：从最初认为应从消费级L4自动驾驶逐步过渡到Robotaxi，转变为现在Waymo的成功证明Robotaxi可以先行建立商业模式，再将其技术经验延伸至消费级汽车。文章还提到中国L2++已普及，但下一步是直接迈向L3还是通过Robotaxi降低成本再回归消费级尚无定论。Mobileye则采取全线并行布局，同时研发L2+、L3和L4级系统。文章提供了行业观点，但缺乏具体数据支撑，且内容偏向行业动态报道，分析深度有限。",
+    "logic_chain": {
+      "premise": "自动驾驶行业路径正在从消费级L4先行转变为Robotaxi先行。",
+      "evidence": "Waymo在旧金山的Robotaxi收费比人工出租车高4-5美元，证明商业模式可行。",
+      "reasoning": "既然Robotaxi能盈利，就可以先发展Robotaxi，再将其技术下放到消费级汽车。",
+      "conclusion": "Mobileye的全线并行布局使其能适应行业路径变化。"
+    },
+    "judgment": "文章观点合理，但缺乏对Waymo盈利模式的深入分析，且未讨论中国市场的特殊性。认可其行业观察，但建议补充数据验证。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 72,
+    "content_type": "产业深度分析",
+    "valid_until": "2026-11-28",
+    "summary": "本文详细分析了Mobileye的EyeQ系列芯片演进历程，从EyeQ4（28nm，2.5 TOPS）到EyeQ5（7nm，15-24 TOPS），再到最新的EyeQ6系列（5nm，EyeQ6L约5 TOPS，EyeQ6H达67 TOPS）。文章介绍了各代芯片的制程、算力、架构特点及适用场景，如EyeQ4支持L2+，EyeQ5面向L3及以上，EyeQ6L针对L2，EyeQ6H用于高阶自动驾驶。内容技术细节丰富，但缺乏对市场竞争格局和商业前景的讨论，且部分数据可能需更新。",
+    "logic_chain": {
+      "premise": "Mobileye的自动驾驶技术依赖EyeQ系列芯片。",
+      "evidence": "各代芯片的制程、算力、架构参数。",
+      "reasoning": "芯片性能提升推动自动驾驶等级演进。",
+      "conclusion": "EyeQ系列芯片是Mobileye技术路线的核心。"
+    },
+    "judgment": "技术分析扎实，但视角单一，未涉及竞争对手或行业趋势。建议补充对比分析。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 80,
+    "content_type": "产业深度分析",
+    "valid_until": "2026-11-18",
+    "summary": "地平线发布并开源HoloMotion-1，这是一个面向人形机器人全身控制的4亿参数级小脑大模型。该模型采用MoE稀疏激活与KV-cache推理机制，在端侧实现约300FPS实时推理，显著高于常见50Hz控制频率要求。文章强调传统小规模控制模型仅适用于有限动作集，而HoloMotion-1凭借更大模型容量，能建模更复杂的身体协同关系，实现高动态全身运动。地平线希望通过开源降低研发门槛，推动机器人小脑从实验室走向规模化应用。内容技术前沿，数据详实，但缺乏商业应用案例。",
+    "logic_chain": {
+      "premise": "人形机器人需要高动态全身控制，传统小模型能力不足。",
+      "evidence": "HoloMotion-1参数4亿，端侧300FPS，MoE+KV-cache。",
+      "reasoning": "更大模型容量和高效推理机制可实现复杂运动控制。",
+      "conclusion": "开源HoloMotion-1将推动机器人小脑技术发展。"
+    },
+    "judgment": "技术方案创新性强，开源策略有利于生态建设。认可其价值，但需关注实际部署效果。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 85,
+    "content_type": "产业深度分析",
+    "valid_until": "2026-11-26",
+    "summary": "本文解读了地平线与华科团队发布的RAD-2，一种面向端到端自动驾驶的闭环强化学习训练框架。文章指出，在端到端时代，纯模仿学习的开环训练存在随机不稳定、缺乏负反馈等问题，而闭环RL能通过反馈机制解决轨迹恶化。RAD-2面临两大难点：高维连续动作空间导致梯度发散，以及信用分配失真。文章结合行业背景，引用李志琦的观点，强调闭环RL对量产的重要性。内容专业，分析深入，但未提供RAD-2的具体技术细节或实验结果。",
+    "logic_chain": {
+      "premise": "端到端自动驾驶需要闭环训练来弥补开环不足。",
+      "evidence": "开环训练存在随机不稳定、无负反馈、训练与部署不匹配。",
+      "reasoning": "闭环RL通过反馈机制能有效处理轨迹错误，但面临高维动作空间和信用分配难题。",
+      "conclusion": "RAD-2是解决闭环RL难题的重要尝试。"
+    },
+    "judgment": "观点深刻，抓住了行业痛点。建议补充RAD-2的架构细节和实车验证结果以增强说服力。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  },
+  {
+    "quality_score": 70,
+    "content_type": "事件点评",
+    "valid_until": "2026-07-05",
+    "summary": "本文是对黑芝麻智能CMO杨宇欣的访谈，回顾了公司从2016年成立到A1000芯片量产、与吉利联合开发、再到2025年底发布A2000系列的发展历程。文章强调黑芝麻通过“联合开发”模式与车企深度合作，在12个月内完成领克08的高速NOA方案落地。A2000系列采用自研九韶NPU架构，支持全场景智驾、Robotaxi及机器人等领域。内容以公司宣传为主，缺乏对技术细节和市场竞争的客观分析，时效性一般。",
+    "logic_chain": {
+      "premise": "黑芝麻智能通过联合开发模式赢得车企信任。",
+      "evidence": "与吉利合作12个月完成领克08高速NOA方案。",
+      "reasoning": "联合开发降低了车企使用新芯片的风险，加速量产。",
+      "conclusion": "黑芝麻智能的A2000系列将拓展至机器人和通用推理领域。"
+    },
+    "judgment": "文章偏向企业公关稿，缺乏独立分析。认可其商业模式，但需关注技术竞争力。",
+    "include_in_report": true,
+    "reason_if_excluded": ""
+  }
+]

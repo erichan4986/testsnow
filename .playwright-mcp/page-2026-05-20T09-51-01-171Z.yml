@@ -1,0 +1,963 @@
+- generic [ref=e2]:
+  - navigation [ref=e4]:
+    - generic [ref=e5]:
+      - generic [ref=e6]:
+        - link [ref=e8] [cursor=pointer]:
+          - /url: /
+        - link "雪球 首页" [ref=e10] [cursor=pointer]:
+          - /url: /
+          - img "雪球" [ref=e11]
+          - generic [ref=e12]: 首页
+      - generic [ref=e13]:
+        - generic [ref=e14]:
+          - textbox "搜索" [ref=e15]
+          - button "" [ref=e17] [cursor=pointer]
+        - list [ref=e18]:
+          - listitem [ref=e19]:
+            - link [ref=e20] [cursor=pointer]:
+              - /url: https://ai.xueqiu.com/chat
+              - img [ref=e21]
+          - listitem [ref=e22]:
+            - link "" [ref=e23] [cursor=pointer]:
+              - /url: /snb/web/cs?from=xq
+          - listitem [ref=e24]:
+            - link "" [ref=e25] [cursor=pointer]:
+              - /url: javascript:;
+          - listitem [ref=e26]:
+            - link "下载App" [ref=e27] [cursor=pointer]:
+              - /url: "javascript:"
+          - listitem [ref=e28]:
+            - generic [ref=e29] [cursor=pointer]: 发帖
+  - generic [ref=e30]:
+    - generic [ref=e31]:
+      - strong [ref=e32]: 公司概况
+      - list [ref=e33]:
+        - listitem [ref=e34]:
+          - link "公司简介" [ref=e35] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/GSJJ
+        - listitem [ref=e36]:
+          - link "公司高管" [ref=e37] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/GSGG
+      - strong [ref=e38]: 股权信息
+      - list [ref=e39]:
+        - listitem [ref=e40]:
+          - link "股本结构" [ref=e41] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/GBJG
+        - listitem [ref=e42]:
+          - link "十大股东" [ref=e43] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/SDGD
+        - listitem [ref=e44]:
+          - link "十大流通股东" [ref=e45] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/LTGD
+        - listitem [ref=e46]:
+          - link "基金持股" [ref=e47] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/JJCG
+        - listitem [ref=e48]:
+          - link "高管增减持" [ref=e49] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/GGZJC
+        - listitem [ref=e50]:
+          - link "股东人数" [ref=e51] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/GDRS
+        - listitem [ref=e52]:
+          - link "限售解禁" [ref=e53] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/XSJJ
+      - strong [ref=e54]: 股票交易
+      - list [ref=e55]:
+        - listitem [ref=e56]:
+          - link "成交明细" [ref=e57] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/provider/zz/gp_detail?symbol=SZ300777
+        - listitem [ref=e58]:
+          - link "分价表" [ref=e59] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/provider/zz/gp_price?symbol=SZ300777
+        - listitem [ref=e60]:
+          - link "大单统计" [ref=e61] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/provider/zz/gp_dadan?symbol=SZ300777
+        - listitem [ref=e62]:
+          - link "大宗交易" [ref=e63] [cursor=pointer]:
+            - /url: http://data.eastmoney.com/dzjy/detail/300777.html
+        - listitem [ref=e64]:
+          - link "龙虎榜数据" [ref=e65] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/LHB
+        - listitem [ref=e66]:
+          - link "融资融券" [ref=e67] [cursor=pointer]:
+            - /url: http://stockdata.stock.hexun.com/rzrq/s300777.shtml
+      - strong [ref=e68]: 公司公告
+      - list [ref=e69]:
+        - listitem [ref=e70]:
+          - link "最新公告" [ref=e71] [cursor=pointer]:
+            - /url: http://www.szse.cn/disclosure/listed/notice/index.html?stock=300777
+        - listitem [ref=e72]:
+          - link "年度报告" [ref=e73] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vCB_Bulletin/stockid/300777/page_type/ndbg.phtml
+      - strong [ref=e74]: 公司运作
+      - list [ref=e75]:
+        - listitem [ref=e76]:
+          - link "股东大会" [ref=e77] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vGP_StockHolderMeeting/stockid/300777.phtml
+        - listitem [ref=e78]:
+          - link "收入构成" [ref=e79] [cursor=pointer]:
+            - /url: http://stockpage.10jqka.com.cn/300777/operate/#analysis
+        - listitem [ref=e80]:
+          - link "重大事项" [ref=e81] [cursor=pointer]:
+            - /url: http://q.stock.sohu.com/cn/300777/bw.shtml
+        - listitem [ref=e82]:
+          - link "分红送配" [ref=e83] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/FHPS
+        - listitem [ref=e84]:
+          - link "增发一览" [ref=e85] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/ZFYLB
+        - listitem [ref=e86]:
+          - link "内部交易" [ref=e87] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/INSIDER
+      - strong [ref=e88]: 财务数据
+      - list [ref=e89]:
+        - listitem [ref=e90]:
+          - link "业绩预告" [ref=e91] [cursor=pointer]:
+            - /url: http://money.finance.sina.com.cn/corp/go.php/vFD_AchievementNotice/stockid/300777.phtml
+        - listitem [ref=e92]:
+          - link "主要指标" [ref=e93] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/ZYCWZB
+        - listitem [ref=e94]:
+          - link "利润表" [ref=e95] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/GSLRB
+        - listitem [ref=e96]:
+          - link "资产负债表" [ref=e97] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/ZCFZB
+        - listitem [ref=e98]:
+          - link "现金流量表" [ref=e99] [cursor=pointer]:
+            - /url: /S/SZ300777/detail/#/XJLLB
+        - listitem [ref=e100]:
+          - link "所有者权益变动" [ref=e101] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/corp/go.php/vFD_BenifitChange/stockid/300777/displaytype/4.phtml
+        - listitem [ref=e102]:
+          - link "雪球选股器" [ref=e103] [cursor=pointer]:
+            - /url: /stock/screener
+      - strong [ref=e104]: 研究分析
+      - list [ref=e105]:
+        - listitem [ref=e106]:
+          - link "杜邦分析" [ref=e107] [cursor=pointer]:
+            - /url: https://vip.stock.finance.sina.com.cn/corp/go.php/vFD_DupontAnalysis/stockid/300777/displaytype/10.phtml
+        - listitem [ref=e108]:
+          - link "研究报告" [ref=e109] [cursor=pointer]:
+            - /url: http://vip.stock.finance.sina.com.cn/q/go.php/vReport_List/kind/search/index.phtml?t1=2&symbol=300777
+      - strong [ref=e110]: APP专享
+      - list [ref=e111]:
+        - listitem [ref=e112] [cursor=pointer]: 大盘异动
+        - listitem [ref=e113] [cursor=pointer]: 股价提醒
+        - listitem [ref=e114] [cursor=pointer]: 购买指数
+        - listitem [ref=e115] [cursor=pointer]: 相关ETF
+    - generic [ref=e116]:
+      - heading "中简科技(SZ:300777)" [level=1] [ref=e117]
+      - generic [ref=e118]:
+        - generic [ref=e119]: 深股通
+        - generic [ref=e120]: 可融资
+        - generic [ref=e121]: 可卖空
+      - generic [ref=e122]:
+        - img "微信分享" [ref=e125] [cursor=pointer]
+        - link "" [ref=e127] [cursor=pointer]:
+          - /url: "#"
+        - link "加自选" [ref=e128] [cursor=pointer]:
+          - /url: "#"
+      - generic [ref=e130]:
+        - generic [ref=e131]:
+          - generic [ref=e132]:
+            - strong [ref=e134]: ¥38.10
+            - generic [ref=e135]: "-0.59 -1.52%"
+          - generic [ref=e136]:
+            - generic [ref=e137]: 5.05 万球友关注
+            - generic [ref=e138]: 已收盘 05-20 15:34:45 北京时间
+        - table [ref=e139]:
+          - rowgroup [ref=e140]:
+            - row "最高：38.60 今开：38.53 涨停：46.43 成交量：12.97万手" [ref=e141]:
+              - cell "最高：38.60" [ref=e142]
+              - cell "今开：38.53" [ref=e143]
+              - cell "涨停：46.43" [ref=e144]
+              - cell "成交量：12.97万手" [ref=e145]
+            - row "最低：37.24 昨收：38.69 跌停：30.95 成交额：4.89亿" [ref=e146]:
+              - cell "最低：37.24" [ref=e147]
+              - cell "昨收：38.69" [ref=e148]
+              - cell "跌停：30.95" [ref=e149]
+              - cell "成交额：4.89亿" [ref=e150]
+            - row "换手：3.07% 盘后量：0手 量比：0.77 总市值：167.53亿" [ref=e151]:
+              - cell "换手：3.07%" [ref=e152]
+              - cell "盘后量：0手" [ref=e153]
+              - cell "量比：0.77" [ref=e154]
+              - cell "总市值：167.53亿" [ref=e155]
+            - row "振幅：3.52% 盘后额：0.00 委比：-47.86% 流通值：160.93亿" [ref=e156]:
+              - cell "振幅：3.52%" [ref=e157]
+              - cell "盘后额：0.00" [ref=e158]
+              - cell "委比：-47.86%" [ref=e159]
+              - cell "流通值：160.93亿" [ref=e160]
+            - row "市盈率(动)：219.50 市盈率(TTM)：76.01 每股收益：0.50 股息(TTM)：0.23" [ref=e161]:
+              - cell "市盈率(动)：219.50" [ref=e162]
+              - cell "市盈率(TTM)：76.01" [ref=e163]
+              - cell "每股收益：0.50" [ref=e164]
+              - cell "股息(TTM)：0.23" [ref=e165]
+            - row "市盈率(静)：53.24 市净率：3.65 每股净资产：10.43 股息率(TTM)：0.60%" [ref=e166]:
+              - cell "市盈率(静)：53.24" [ref=e167]
+              - cell "市净率：3.65" [ref=e168]
+              - cell "每股净资产：10.43" [ref=e169]
+              - cell "股息率(TTM)：0.60%" [ref=e170]
+            - row "52周最高：49.08 总股本：4.40亿 质押率：-- 注册制：否" [ref=e171]:
+              - cell "52周最高：49.08" [ref=e172]
+              - cell "总股本：4.40亿" [ref=e173]
+              - cell "质押率：--" [ref=e174]
+              - cell "注册制：否" [ref=e175]
+            - row "52周最低：29.55 流通股：4.22亿 商誉/净资产：-- 货币单位：CNY" [ref=e176]:
+              - cell "52周最低：29.55" [ref=e177]
+              - cell "流通股：4.22亿" [ref=e178]
+              - cell "商誉/净资产：--" [ref=e179]
+              - cell "货币单位：CNY" [ref=e180]
+      - generic [ref=e182]:
+        - generic [ref=e183] [cursor=pointer]:
+          - generic [ref=e184]:
+            - generic [ref=e185]: 分时
+            - generic [ref=e186]: 五日
+            - generic [ref=e187]: 日K
+            - generic [ref=e188]: 周K
+            - generic [ref=e189]: 月K
+            - generic [ref=e190]: 季K
+            - generic [ref=e191]: 年K
+            - generic [ref=e192]: 120分
+            - generic [ref=e193]: 60分
+            - generic [ref=e194]: 30分
+            - generic [ref=e195]: 15分
+            - generic [ref=e196]: 5分
+            - generic [ref=e197]: 1分
+          - list [ref=e198]:
+            - listitem [ref=e199]: 区间统计
+            - listitem [ref=e200]: 全屏显示
+        - paragraph [ref=e203] [cursor=pointer]: 手机版沪深Lv2行情
+      - link "都在问 中 简 科 技 2 0 2 6 年 一 季 度 业 绩 为 何 大 幅 下 滑 ？" [ref=e206] [cursor=pointer]:
+        - /url: https://ai.xueqiu.com/ai/seekball/chat?shareId=s-59febbb2-dd4b-454c-b3a5-036cecf76bf9&navBarTransparent=1&navBarTheme=dark&ref=1&module=2&symbol=SZ300777
+        - paragraph [ref=e207]:
+          - generic [ref=e208]: 都在问
+          - generic [ref=e209]: 中
+          - generic [ref=e210]: 简
+          - generic [ref=e211]: 科
+          - generic [ref=e212]: 技
+          - generic [ref=e213]: "2"
+          - generic [ref=e214]: "0"
+          - generic [ref=e215]: "2"
+          - generic [ref=e216]: "6"
+          - generic [ref=e217]: 年
+          - generic [ref=e218]: 一
+          - generic [ref=e219]: 季
+          - generic [ref=e220]: 度
+          - generic [ref=e221]: 业
+          - generic [ref=e222]: 绩
+          - generic [ref=e223]: 为
+          - generic [ref=e224]: 何
+          - generic [ref=e225]: 大
+          - generic [ref=e226]: 幅
+          - generic [ref=e227]: 下
+          - generic [ref=e228]: 滑
+          - generic [ref=e229]: ？
+      - generic [ref=e231]:
+        - img [ref=e232]
+        - generic [ref=e233]:
+          - generic [ref=e235]: $中简科技(SZ300777)$
+          - generic [ref=e236]:
+            - generic [ref=e237]:
+              - link "" [ref=e239] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e240]: 
+              - link "" [ref=e241] [cursor=pointer]:
+                - /url: javascript:;
+                - generic [ref=e242]: 
+              - link "" [ref=e243] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e244]: 
+              - link "" [ref=e245] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e246]: 
+              - link "" [ref=e247] [cursor=pointer]:
+                - /url: ""
+                - generic [ref=e248]: 
+              - link [ref=e250] [cursor=pointer]:
+                - /url: ""
+                - img [ref=e251]
+              - link " 长文" [ref=e253] [cursor=pointer]:
+                - /url: https://mp.xueqiu.com/write/?position=pc_stock_post
+                - generic [ref=e254]: 
+                - text: 长文
+            - link "发布" [ref=e256]:
+              - /url: ""
+      - generic [ref=e257]:
+        - generic [ref=e258]:
+          - link "全部" [ref=e259] [cursor=pointer]:
+            - /url: ""
+          - link "讨论" [ref=e260] [cursor=pointer]:
+            - /url: ""
+          - link "交易" [ref=e261] [cursor=pointer]:
+            - /url: ""
+          - link "资讯" [ref=e262] [cursor=pointer]:
+            - /url: ""
+          - link "公告" [ref=e263] [cursor=pointer]:
+            - /url: ""
+        - generic [ref=e264]:
+          - generic [ref=e266]:
+            - link "新帖" [ref=e267] [cursor=pointer]:
+              - /url: ""
+            - link "热帖" [ref=e268] [cursor=pointer]:
+              - /url: ""
+          - generic [ref=e270]:
+            - textbox "搜索该股票相关信息" [ref=e271]
+            - generic [ref=e272]: 
+        - generic [ref=e273]:
+          - article [ref=e274]:
+            - link [ref=e275] [cursor=pointer]:
+              - /url: /7046662371
+              - img [ref=e276]
+            - generic [ref=e277]:
+              - generic [ref=e279]:
+                - link "起个名字真他吗烦" [ref=e280] [cursor=pointer]:
+                  - /url: /7046662371
+                - link "昨天 22:18· 来自Android" [ref=e281] [cursor=pointer]:
+                  - /url: /7046662371/389780095
+              - generic [ref=e284]:
+                - generic [ref=e285]:
+                  - link "$中简科技(SZ300777)$" [ref=e286] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SZ300777
+                  - text: 中简科技短期很难走一波流畅的大幅主升浪，大涨难度极大，原因就是四个死穴：超高融资盘 ，大股东集中减持压力，叠加基本面恶化，属于蹭概念。
+                  - text: 1，基本面大幅恶化2026年一季度，扣非净利润同比下滑85.87%。业绩下滑的原因是客户需求量阶段性减少。在此背景下维持高估值缺...
+                - link "展开" [ref=e287] [cursor=pointer]:
+                  - /url: ""
+              - generic [ref=e288]:
+                - link " 转发" [ref=e289] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e290]: 
+                  - generic [ref=e291]: 转发
+                - link " 1" [ref=e292] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e293]: 
+                  - generic [ref=e294]: "1"
+                - link " 2" [ref=e295] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e296]: 
+                  - generic [ref=e297]: "2"
+                - link " 收藏" [ref=e298] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e299]: 
+                  - generic [ref=e300]: 收藏
+          - article [ref=e301]:
+            - link [ref=e302] [cursor=pointer]:
+              - /url: /9326522215
+              - img [ref=e303]
+            - generic [ref=e304]:
+              - generic [ref=e306]:
+                - link "一眼眼而已" [ref=e307] [cursor=pointer]:
+                  - /url: /9326522215
+                - link "05-18 16:13· 来自Android" [ref=e308] [cursor=pointer]:
+                  - /url: /9326522215/389494770
+              - generic [ref=e312]:
+                - link "$中简科技(SZ300777)$" [ref=e313] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ300777
+                - text: 业绩不行永远都是拿货节奏的问题，说实话这种话讲一遍两遍还让人信，但是年年如此，还仅仅是拿货节奏的问题吗？股价永远都是在利空来之前提前暴跌，老杨你能不能讲几句真话，毕竟不是看小品，咱们都是真金白银的投入！
+              - generic [ref=e314]:
+                - link " 转发" [ref=e315] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e316]: 
+                  - generic [ref=e317]: 转发
+                - link " 1" [ref=e318] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e319]: 
+                  - generic [ref=e320]: "1"
+                - link " 1" [ref=e321] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e322]: 
+                  - generic [ref=e323]: "1"
+                - link " 收藏" [ref=e324] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e325]: 
+                  - generic [ref=e326]: 收藏
+          - article [ref=e327]:
+            - link [ref=e328] [cursor=pointer]:
+              - /url: /1962514682
+              - img [ref=e329]
+            - generic [ref=e330]:
+              - generic [ref=e332]:
+                - link "无限不循环整数" [ref=e333] [cursor=pointer]:
+                  - /url: /1962514682
+                - link "05-18 08:16· 来自Android" [ref=e334] [cursor=pointer]:
+                  - /url: /1962514682/389366464
+              - generic [ref=e338]:
+                - link "$中简科技(SZ300777)$" [ref=e339] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ300777
+                - text: 物理ai最正宗的材料标的了
+              - generic [ref=e340]:
+                - link " 转发" [ref=e341] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e342]: 
+                  - generic [ref=e343]: 转发
+                - link " 讨论" [ref=e344] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e345]: 
+                  - generic [ref=e346]: 讨论
+                - link " 1" [ref=e347] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e348]: 
+                  - generic [ref=e349]: "1"
+                - link " 收藏" [ref=e350] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e351]: 
+                  - generic [ref=e352]: 收藏
+          - article [ref=e353]:
+            - link [ref=e354] [cursor=pointer]:
+              - /url: /9326522215
+              - img [ref=e355]
+            - generic [ref=e356]:
+              - generic [ref=e358]:
+                - link "一眼眼而已" [ref=e359] [cursor=pointer]:
+                  - /url: /9326522215
+                - link "05-17 11:51· 来自Android" [ref=e360] [cursor=pointer]:
+                  - /url: /9326522215/389303921
+              - generic [ref=e363]:
+                - generic [ref=e364]:
+                  - link "$中简科技(SZ300777)$" [ref=e365] [cursor=pointer]:
+                    - /url: https://xueqiu.com/S/SZ300777
+                  - text: 这货当时跟蓝思同时暴跌，蓝蓝大股东借款增持，现在上了国宴，风光无限，人气霸榜！反观阿简，不仅杨不增持，懂事，高管也无一人增持！既然是因为客户阶段性拿货节奏变化那总也是影响一段时间而已，等恢复了按照三期建成产能算这个价买入还能亏你不成?但是很奇怪，压根就没董...
+                - link "展开" [ref=e366] [cursor=pointer]:
+                  - /url: ""
+              - generic [ref=e367]:
+                - link " 转发" [ref=e368] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e369]: 
+                  - generic [ref=e370]: 转发
+                - link " 讨论" [ref=e371] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e372]: 
+                  - generic [ref=e373]: 讨论
+                - link " 赞" [ref=e374] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e375]: 
+                  - generic [ref=e376]: 赞
+                - link " 收藏" [ref=e377] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e378]: 
+                  - generic [ref=e379]: 收藏
+          - article [ref=e380]:
+            - link [ref=e381] [cursor=pointer]:
+              - /url: /6508957297
+              - img [ref=e382]
+            - generic [ref=e383]:
+              - generic [ref=e385]:
+                - link "kaivy" [ref=e386] [cursor=pointer]:
+                  - /url: /6508957297
+                - link "05-15 15:18· 来自iPhone" [ref=e387] [cursor=pointer]:
+                  - /url: /6508957297/389114213
+              - generic [ref=e391]:
+                - link "$中简科技(SZ300777)$" [ref=e392] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ300777
+                - text: 我个人的判断是一季报爆雷后当天有那种专门做超跌反弹的游资资金抄底，然后借筹码出清拉起来容易每天花小钱拉一下形成新的多头排列，然后借板块行情慢慢出货。
+              - generic [ref=e393]:
+                - link " 转发" [ref=e394] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e395]: 
+                  - generic [ref=e396]: 转发
+                - link " 讨论" [ref=e397] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e398]: 
+                  - generic [ref=e399]: 讨论
+                - link " 4" [ref=e400] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e401]: 
+                  - generic [ref=e402]: "4"
+                - link " 收藏" [ref=e403] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e404]: 
+                  - generic [ref=e405]: 收藏
+          - article [ref=e406]:
+            - link [ref=e407] [cursor=pointer]:
+              - /url: /4542722577
+              - img [ref=e408]
+            - generic [ref=e409]:
+              - generic [ref=e411]:
+                - link "红肥君" [ref=e412] [cursor=pointer]:
+                  - /url: /4542722577
+                - link "05-15 09:36· 来自HarmonyOS" [ref=e413] [cursor=pointer]:
+                  - /url: /4542722577/388999254
+              - generic [ref=e417]:
+                - link "$中简科技(SZ300777)$" [ref=e418] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ300777
+                - text: 公司积极推进碳纤维及相关制品在民用市场的应用，部分产品已经送样、试用，目前已得到重要客户的高度认可。—5月14投资互动
+              - generic [ref=e419]:
+                - link " 转发" [ref=e420] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e421]: 
+                  - generic [ref=e422]: 转发
+                - link " 2" [ref=e423] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e424]: 
+                  - generic [ref=e425]: "2"
+                - link " 3" [ref=e426] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e427]: 
+                  - generic [ref=e428]: "3"
+                - link " 收藏" [ref=e429] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e430]: 
+                  - generic [ref=e431]: 收藏
+          - article [ref=e432]:
+            - link [ref=e433] [cursor=pointer]:
+              - /url: /8205947583
+              - img [ref=e434]
+            - generic [ref=e435]:
+              - generic [ref=e437]:
+                - link "这是个好股" [ref=e438] [cursor=pointer]:
+                  - /url: /8205947583
+                - link "05-13 10:13· 来自iPhone" [ref=e439] [cursor=pointer]:
+                  - /url: /8205947583/388528146
+              - generic [ref=e443]:
+                - link "$中简科技(SZ300777)$" [ref=e444] [cursor=pointer]:
+                  - /url: https://xueqiu.com/S/SZ300777
+                - text: 已经中度控盘，别恐高
+                - img "[献花花]" [ref=e445]
+              - generic [ref=e446]:
+                - link " 转发" [ref=e447] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e448]: 
+                  - generic [ref=e449]: 转发
+                - link " 3" [ref=e450] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e451]: 
+                  - generic [ref=e452]: "3"
+                - link " 2" [ref=e453] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e454]: 
+                  - generic [ref=e455]: "2"
+                - link " 收藏" [ref=e456] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e457]: 
+                  - generic [ref=e458]: 收藏
+          - article [ref=e459]:
+            - link [ref=e460] [cursor=pointer]:
+              - /url: /8019589642
+              - img [ref=e461]
+            - generic [ref=e462]:
+              - generic [ref=e464]:
+                - link "历史的进程2022" [ref=e465] [cursor=pointer]:
+                  - /url: /8019589642
+                - link "05-12 17:00· 来自雪球" [ref=e466] [cursor=pointer]:
+                  - /url: /8019589642/388412847
+              - generic [ref=e467]:
+                - generic [ref=e469]:
+                  - text: 1、近半年来中国航司总计向空客下单300多架空客A320NEO系列飞机，订单集中在2028年至2032年间分批交付，交付节奏跨度近5年，恰好覆盖未来数年的持续生产窗口。与此同时，空客天津第二条A320系列总装线已于2026年初全面投入运营，天津基地进入双线运行新阶段，整体产能占空客全球总装能力的比重进一...
+                  - link "展开" [ref=e470] [cursor=pointer]:
+                    - /url: ""
+                - blockquote [ref=e471] [cursor=pointer]:
+                  - link "@历史的进程2022 ：" [ref=e473]:
+                    - /url: /8019589642
+                    - generic [ref=e474]: "@历史的进程2022"
+                    - generic [ref=e475]: ：
+                  - generic [ref=e476]:
+                    - heading "专栏丨 中简科技26Q1 | 始料不及，也只能耐心等待，相信确定性压到波动性" [level=5] [ref=e477]:
+                      - strong [ref=e478]: 专栏丨
+                      - link "中简科技26Q1 | 始料不及，也只能耐心等待，相信确定性压到波动性" [ref=e479]:
+                        - /url: /8019589642/384184563
+                    - generic [ref=e481]:
+                      - link "$中简科技(SZ300777)$" [ref=e482]:
+                        - /url: https://xueqiu.com/S/SZ300777
+                      - text: 始料不及的一季报预告，将近阶段企业的困境，无滤镜地呈现在大家面前。关注公司的时间比较久，很多朋友私信我——确实很煎熬。
+                      - text: 首先引用一下公司对一季度业绩变动原因说明。
+                      - text: 报告期内，影响公司业绩变动的主要原因：
+                      - text: 1、客户对公司部分产品的需求量阶段性减少导...
+                  - generic [ref=e484]:
+                    - text: 04-16 14:18 · 转发 1
+                    - link "· 讨论 70" [ref=e485]:
+                      - /url: /8019589642/384184563#comment
+                    - text: · 赞 29
+              - generic [ref=e486]:
+                - link " 转发" [ref=e487] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e488]: 
+                  - generic [ref=e489]: 转发
+                - link " 5" [ref=e490] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e491]: 
+                  - generic [ref=e492]: "5"
+                - link " 6" [ref=e493] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e494]: 
+                  - generic [ref=e495]: "6"
+                - link " 收藏" [ref=e496] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e497]: 
+                  - generic [ref=e498]: 收藏
+          - article [ref=e499]:
+            - link [ref=e500] [cursor=pointer]:
+              - /url: /2999276473
+              - img [ref=e501]
+            - generic [ref=e502]:
+              - generic [ref=e504]:
+                - link "只见半山残照" [ref=e505] [cursor=pointer]:
+                  - /url: /2999276473
+                - link "05-09 07:49· 来自Android" [ref=e506] [cursor=pointer]:
+                  - /url: /2999276473/387903924
+              - generic [ref=e507]:
+                - generic [ref=e509]: 你睁大眼睛好好看看，官方明确说中简科技的材料T1000强度指标都没达到，还量产T1100，在你家量产的啊，你这个人成天释放垃圾假消息，要不就是弄个豆包胡吹
+                - blockquote [ref=e510] [cursor=pointer]:
+                  - link "@红肥君 ：" [ref=e512]:
+                    - /url: /4542722577
+                    - generic [ref=e513]: "@红肥君"
+                    - generic [ref=e514]: ：
+                  - generic [ref=e515]:
+                    - heading "重磅突破！中国“全碳纤维箭体+全流量发动机”问世，商业航天迎来质变时刻" [level=5] [ref=e516]:
+                      - link "重磅突破！中国“全碳纤维箭体+全流量发动机”问世，商业航天迎来质变时刻" [ref=e517]:
+                        - /url: /4542722577/387875901
+                    - generic [ref=e518]: 2026年中国航天大会（4月23 - 24日，成都）传来重磅消息：国内商业航天新锐微光启航，全球首次公开“全碳纤维箭体+全流量分级燃烧液氧甲烷发动机”组合方案，旗下“微光一号”火箭与“华光一号”发动机惊艳亮相，直接捅破商业航天“高成本、低运力”天花板，中国商业航天正式迈入“材料+动力”双...
+                    - img [ref=e520]
+                  - generic [ref=e521]:
+                    - text: 05-08 22:29
+                    - link "· 讨论 4" [ref=e522]:
+                      - /url: /4542722577/387875901#comment
+                    - text: · 赞 10
+              - generic [ref=e523]:
+                - link " 转发" [ref=e524] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e525]: 
+                  - generic [ref=e526]: 转发
+                - link " 2" [ref=e527] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e528]: 
+                  - generic [ref=e529]: "2"
+                - link " 赞" [ref=e530] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e531]: 
+                  - generic [ref=e532]: 赞
+                - link " 收藏" [ref=e533] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e534]: 
+                  - generic [ref=e535]: 收藏
+          - article [ref=e536]:
+            - link [ref=e537] [cursor=pointer]:
+              - /url: /4542722577
+              - img [ref=e538]
+            - generic [ref=e539]:
+              - generic [ref=e541]:
+                - link "红肥君" [ref=e542] [cursor=pointer]:
+                  - /url: /4542722577
+                - link "05-08 22:29· 来自HarmonyOS" [ref=e543] [cursor=pointer]:
+                  - /url: /4542722577/387875901
+              - generic [ref=e545] [cursor=pointer]:
+                - heading "重磅突破！中国“全碳纤维箭体+全流量发动机”问世，商业航天迎来质变时刻" [level=3] [ref=e546]
+                - generic [ref=e547]: 2026年中国航天大会（4月23 - 24日，成都）传来重磅消息：国内商业航天新锐微光启航，全球首次公开“全碳纤维箭体+全流量分级燃烧液氧甲烷发动机”组合方案，旗下“微光一号”火箭与“华光一号”发动机惊艳亮相，直接捅破商业航天“高成本、低运力”天花板，中国商业航天正式迈入“材料+动力”双...
+                - img [ref=e549]
+              - generic [ref=e550]:
+                - link " 转发" [ref=e551] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e552]: 
+                  - generic [ref=e553]: 转发
+                - link " 4" [ref=e554] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e555]: 
+                  - generic [ref=e556]: "4"
+                - link " 10" [ref=e557] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e558]: 
+                  - generic [ref=e559]: "10"
+                - link " 收藏" [ref=e560] [cursor=pointer]:
+                  - /url: ""
+                  - generic [ref=e561]: 
+                  - generic [ref=e562]: 收藏
+        - generic [ref=e563]:
+          - link "1" [ref=e564] [cursor=pointer]:
+            - /url: ""
+          - link "2" [ref=e565] [cursor=pointer]:
+            - /url: ""
+          - link "3" [ref=e566] [cursor=pointer]:
+            - /url: ""
+          - link "4" [ref=e567] [cursor=pointer]:
+            - /url: ""
+          - link "5" [ref=e568] [cursor=pointer]:
+            - /url: ""
+          - text: ...
+          - link "100" [ref=e569] [cursor=pointer]:
+            - /url: ""
+          - link "下一页" [ref=e570] [cursor=pointer]:
+            - /url: ""
+          - textbox [ref=e571]
+    - generic [ref=e572]:
+      - generic [ref=e573]:
+        - generic [ref=e575]: 简介
+        - generic [ref=e577]:
+          - text: 中简科技股份有限公司的主营业务是高性能碳纤维及织物的研发、生产、销售。公司的主要产品是高强型ZT7系列（高于T700级）、ZT8系...
+          - link "展开" [ref=e578] [cursor=pointer]:
+            - /url: "#"
+      - generic [ref=e579]:
+        - generic [ref=e581]: 业务
+        - generic [ref=e582]: 高性能碳纤维及织物的研发、生产、销售。
+      - generic [ref=e583]:
+        - generic [ref=e584]:
+          - generic [ref=e585]: 影响力用户
+          - link "下五位" [ref=e587] [cursor=pointer]:
+            - /url: "#"
+        - list [ref=e589]:
+          - link "历史的进程2022 1314粉丝、223条相关讨论" [ref=e590] [cursor=pointer]:
+            - /url: /u/8019589642
+            - listitem [ref=e591]:
+              - img [ref=e593]
+              - generic [ref=e594]:
+                - generic [ref=e595]: 历史的进程2022
+                - generic [ref=e596]: 1314粉丝、223条相关讨论
+          - link "万中财经 4262粉丝、19条相关讨论" [ref=e597] [cursor=pointer]:
+            - /url: /u/1175272722
+            - listitem [ref=e598]:
+              - img [ref=e600]
+              - generic [ref=e601]:
+                - generic [ref=e602]: 万中财经
+                - generic [ref=e603]: 4262粉丝、19条相关讨论
+          - link "山涧苍松 280粉丝、54条相关讨论" [ref=e604] [cursor=pointer]:
+            - /url: /u/5182633703
+            - listitem [ref=e605]:
+              - img [ref=e607]
+              - generic [ref=e608]:
+                - generic [ref=e609]: 山涧苍松
+                - generic [ref=e610]: 280粉丝、54条相关讨论
+          - link "红肥君 454粉丝、99条相关讨论" [ref=e611] [cursor=pointer]:
+            - /url: /u/4542722577
+            - listitem [ref=e612]:
+              - img [ref=e614]
+              - generic [ref=e615]:
+                - generic [ref=e616]: 红肥君
+                - generic [ref=e617]: 454粉丝、99条相关讨论
+          - link "聚焦企业内在价值 39087粉丝、4条相关讨论" [ref=e618] [cursor=pointer]:
+            - /url: /u/3237139935
+            - listitem [ref=e619]:
+              - img [ref=e621]
+              - generic [ref=e622]:
+                - generic [ref=e623]: 聚焦企业内在价值
+                - generic [ref=e624]: 39087粉丝、4条相关讨论
+      - generic [ref=e625]:
+        - generic [ref=e627]:
+          - link "50538" [ref=e628] [cursor=pointer]:
+            - /url: https://xueqiu.com/snowman/S/SZ300777/detail#/follow
+          - text: 人关注了该股票
+        - list [ref=e630]:
+          - listitem [ref=e631]:
+            - link [ref=e632] [cursor=pointer]:
+              - /url: /3629948604
+              - img [ref=e633]
+          - listitem [ref=e634]:
+            - link [ref=e635] [cursor=pointer]:
+              - /url: /9465503939
+              - img [ref=e636]
+          - listitem [ref=e637]:
+            - link [ref=e638] [cursor=pointer]:
+              - /url: /7018331400
+              - img [ref=e639]
+          - listitem [ref=e640]:
+            - link [ref=e641] [cursor=pointer]:
+              - /url: /3890434297
+              - img [ref=e642]
+          - listitem [ref=e643]:
+            - link [ref=e644] [cursor=pointer]:
+              - /url: /2522595847
+              - img [ref=e645]
+          - listitem [ref=e646]:
+            - link [ref=e647] [cursor=pointer]:
+              - /url: /3667198008
+              - img [ref=e648]
+          - listitem [ref=e649]:
+            - link [ref=e650] [cursor=pointer]:
+              - /url: /3236917918
+              - img [ref=e651]
+          - listitem [ref=e652]:
+            - link [ref=e653] [cursor=pointer]:
+              - /url: /4198555029
+              - img [ref=e654]
+          - listitem [ref=e655]:
+            - link [ref=e656] [cursor=pointer]:
+              - /url: /2778694893
+              - img [ref=e657]
+          - listitem [ref=e658]:
+            - link [ref=e659] [cursor=pointer]:
+              - /url: /1246061355
+              - img [ref=e660]
+          - listitem [ref=e661]:
+            - link [ref=e662] [cursor=pointer]:
+              - /url: /1844522996
+              - img [ref=e663]
+          - listitem [ref=e664]:
+            - link [ref=e665] [cursor=pointer]:
+              - /url: /9333789595
+              - img [ref=e666]
+          - listitem [ref=e667]:
+            - link [ref=e668] [cursor=pointer]:
+              - /url: /3397227948
+              - img [ref=e669]
+          - listitem [ref=e670]:
+            - link [ref=e671] [cursor=pointer]:
+              - /url: /8073691291
+              - img [ref=e672]
+      - generic [ref=e673]:
+        - generic [ref=e675]: 相关股票
+        - list [ref=e677]:
+          - generic [ref=e678]:
+            - generic [ref=e679]:
+              - link "光威复材" [ref=e680] [cursor=pointer]:
+                - /url: /S/SZ300699
+              - generic [ref=e681]: SZ300699
+            - generic [ref=e682]:
+              - generic [ref=e683]: "33.20"
+              - generic [ref=e684]: "-2.52%"
+          - generic [ref=e685]:
+            - generic [ref=e686]:
+              - link "隆利科技" [ref=e687] [cursor=pointer]:
+                - /url: /S/SZ300752
+              - generic [ref=e688]: SZ300752
+            - generic [ref=e689]:
+              - generic [ref=e690]: "19.79"
+              - generic [ref=e691]: "-1.74%"
+          - generic [ref=e692]:
+            - generic [ref=e693]:
+              - link "三角防务" [ref=e694] [cursor=pointer]:
+                - /url: /S/SZ300775
+              - generic [ref=e695]: SZ300775
+            - generic [ref=e696]:
+              - generic [ref=e697]: "29.15"
+              - generic [ref=e698]: "-0.34%"
+          - generic [ref=e699]:
+            - generic [ref=e700]:
+              - link "家联科技" [ref=e701] [cursor=pointer]:
+                - /url: /S/SZ301193
+              - generic [ref=e702]: SZ301193
+            - generic [ref=e703]:
+              - generic [ref=e704]: "25.01"
+              - generic [ref=e705]: "-1.96%"
+          - generic [ref=e706]:
+            - generic [ref=e707]:
+              - link "新劲刚" [ref=e708] [cursor=pointer]:
+                - /url: /S/SZ300629
+              - generic [ref=e709]: SZ300629
+            - generic [ref=e710]:
+              - generic [ref=e711]: "26.89"
+              - generic [ref=e712]: "-1.28%"
+      - generic [ref=e713]:
+        - generic [ref=e715]: 相关基金
+        - list [ref=e717]:
+          - generic [ref=e718]:
+            - generic [ref=e719]:
+              - link "国投瑞银国家安全混合" [ref=e720] [cursor=pointer]:
+                - /url: /S/F001838
+              - generic [ref=e721]: 基金季报中持仓包含中简科技所属板块
+              - generic [ref=e722]:
+                - generic [ref=e723]: 10年老将
+                - generic [ref=e724]: 李轩管理
+            - generic [ref=e725]:
+              - generic [ref=e726]: +24.88%
+              - generic [ref=e727]: 近1年
+          - generic [ref=e728]:
+            - generic [ref=e729]:
+              - link "博时军工主题股票" [ref=e730] [cursor=pointer]:
+                - /url: /S/F004698
+              - generic [ref=e731]: 基金季报中持仓包含中简科技所属板块
+              - generic [ref=e732]:
+                - generic [ref=e733]: 曾鹏管理
+                - generic [ref=e734]: 13年老将
+            - generic [ref=e735]:
+              - generic [ref=e736]: +66.37%
+              - generic [ref=e737]: 近1年
+          - generic [ref=e738]:
+            - generic [ref=e739]:
+              - link "华安大安全主题混合A" [ref=e740] [cursor=pointer]:
+                - /url: /S/F002181
+              - generic [ref=e741]: 基金季报中持仓包含中简科技所属板块
+              - generic [ref=e742]:
+                - generic [ref=e743]: 近4年业绩同类排名前22%
+                - generic [ref=e744]: 舒灏管理
+            - generic [ref=e745]:
+              - generic [ref=e746]: +43.35%
+              - generic [ref=e747]: 近1年
+          - generic [ref=e748]:
+            - generic [ref=e749]:
+              - link "格林高股息优选混合A" [ref=e750] [cursor=pointer]:
+                - /url: /S/F015289
+              - generic [ref=e751]: 中简科技占比8.06%
+              - generic [ref=e752]:
+                - generic [ref=e753]: 近3年业绩同类排名前21%
+                - generic [ref=e754]: 刘赞管理
+            - generic [ref=e755]:
+              - generic [ref=e756]: +16.42%
+              - generic [ref=e757]: 近1年
+          - generic [ref=e758]:
+            - generic [ref=e759]:
+              - link "格林高股息优选混合C" [ref=e760] [cursor=pointer]:
+                - /url: /S/F015290
+              - generic [ref=e761]: 中简科技占比8.06%
+              - generic [ref=e762]:
+                - generic [ref=e763]: 买入费率为0
+                - generic [ref=e764]: 近3年业绩同类排名前22%
+            - generic [ref=e765]:
+              - generic [ref=e766]: +15.95%
+              - generic [ref=e767]: 近1年
+  - contentinfo [ref=e768]:
+    - generic [ref=e769]:
+      - generic [ref=e770]:
+        - link "微信" [ref=e771] [cursor=pointer]:
+          - /url: javascript:;
+          - img "微信" [ref=e772]
+        - link "微博" [ref=e773] [cursor=pointer]:
+          - /url: https://weibo.com/xueqiucom
+          - img "微博" [ref=e774]
+        - link "邮箱" [ref=e775] [cursor=pointer]:
+          - /url: mailto:snowball@xueqiu.com
+          - img "邮箱" [ref=e776]
+      - generic [ref=e777]:
+        - link "A股开户｜" [ref=e778] [cursor=pointer]:
+          - /url: https://broker.xueqiu.com/open/pingan
+        - link "雪球基金｜" [ref=e779] [cursor=pointer]:
+          - /url: https://danjuanfunds.com/
+        - link "投资者教育｜" [ref=e780] [cursor=pointer]:
+          - /url: https://xueqiu.com/edu/invest-edu
+        - link "风险提示" [ref=e781] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq#6_0
+      - generic [ref=e782]: 风险提示：雪球里任何用户或者嘉宾的发言，都有其特定立场，投资决策需要建立在独立思考之上
+      - generic [ref=e783]:
+        - generic [ref=e784]:
+          - text: 其他建议反馈欢迎点击
+          - link "#我给雪球提建议#" [ref=e786] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-aIkee7membqueQg-aPkOW7uuiuriM=
+          - text: 如受到欺诈信息骚扰请至
+          - link "#防诈骗举报专区#" [ref=e788] [cursor=pointer]:
+            - /url: https://xueqiu.com/hashtag/I-mYsuiviOmql-S4vuaKpeS4k-WMuiM=
+        - generic [ref=e789]:
+          - text: 互联网违法和不良信息投诉：01061840634 / tousu@xueqiu.com
+          - generic [ref=e790]: 举报中心
+          - link "侵权投诉指引" [ref=e791] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/tortreport
+          - link "雪球服务协议" [ref=e792] [cursor=pointer]:
+            - /url: https://xueqiu.com/about/terms
+          - link "雪球隐私政策" [ref=e793] [cursor=pointer]:
+            - /url: https://xueqiu.com/law/privacy
+          - text: © 2026 XUEQIU.COM 北京雪球信息科技有限公司
+          - link "京公网安备 11010502040379号" [ref=e794] [cursor=pointer]:
+            - /url: https://www.beian.gov.cn/portal/registerSystemInfo?recordcode=11010502040379
+          - link "京ICP证100666号" [ref=e795] [cursor=pointer]:
+            - /url: https://xqdoc.imedao.com/198bc1b4fb41d6523feaace4.jpg
+          - link "京ICP备10040543" [ref=e796] [cursor=pointer]:
+            - /url: https://beian.miit.gov.cn/
+          - link "京金信备〔2022〕3号" [ref=e797] [cursor=pointer]:
+            - /url: https://fisbaobei.ifcert.cn/Home/homeIindex
+          - link "营业执照" [ref=e798] [cursor=pointer]:
+            - /url: https://xqimg.imedao.com/1798dc30dead0453fd6075d8.png
+          - generic [ref=e799]:
+            - link "证券业协会会员单位（代码817027）" [ref=e800] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/14d52aefd15e8f3fc0ce1fbd.png
+            - 'link "广播电视节目制作经营许可证: (京)字第08638号" [ref=e801] [cursor=pointer]':
+              - /url: https://xqdoc.imedao.com/198c1a776442061d3fe4efd5.pdf
+            - link "出版物经营许可证" [ref=e802] [cursor=pointer]:
+              - /url: https://xqimg.imedao.com/181b337b7742caf83fee6640.png
+          - link "人工智能服务登记编号：Beijing-XueQiuHuiJian-2S0033" [ref=e804]:
+            - /url: javascript:;
+      - generic [ref=e805]:
+        - link "常见问题｜" [ref=e806] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/faq
+        - link "加入我们｜" [ref=e807] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/jobs
+        - link "关于雪球" [ref=e808] [cursor=pointer]:
+          - /url: https://xueqiu.com/about/what-is-xueqiu
+  - text: "* * · * * *"
+  - generic [ref=e810]:
+    - img "fold" [ref=e811]
+    - generic [ref=e812]: 问问投资的问题吧，帮你发现投资好机会

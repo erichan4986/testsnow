@@ -1,0 +1,290 @@
+- generic [ref=e3]:
+  - banner [ref=e4]:
+    - generic [ref=e5]:
+      - button "知乎数据开放平台" [ref=e6] [cursor=pointer]:
+        - img [ref=e7]:
+          - generic [ref=e9]: 知
+        - generic [ref=e10]: 知乎数据开放平台
+      - navigation [ref=e11]:
+        - button "搜索产品" [ref=e12] [cursor=pointer]
+        - button "直答 Agent" [ref=e13] [cursor=pointer]
+        - button "知乎热榜" [ref=e14] [cursor=pointer]
+      - generic [ref=e15]:
+        - generic [ref=e16]:
+          - button "文档中心" [ref=e17] [cursor=pointer]:
+            - img [ref=e18]
+            - generic [ref=e20]: 文档中心
+          - button "联系我们" [ref=e22] [cursor=pointer]:
+            - img [ref=e23]
+            - generic [ref=e26]: 联系我们
+        - button "登录" [ref=e27] [cursor=pointer]
+        - button "注册" [ref=e28] [cursor=pointer]
+  - generic [ref=e30]:
+    - paragraph [ref=e31]: DOCUMENTATION
+    - heading "文档中心" [level=1] [ref=e32]
+    - paragraph [ref=e33]: 接口说明、鉴权方式、示例代码与接入指南。
+  - generic [ref=e40]:
+    - generic [ref=e41]:
+      - generic [ref=e42]: Docs
+      - generic [ref=e43]:
+        - generic [ref=e44]:
+          - button "开始使用" [ref=e45] [cursor=pointer]:
+            - generic [ref=e46]: 开始使用
+            - img [ref=e47]
+          - button "鉴权" [ref=e52] [cursor=pointer]
+        - generic [ref=e53]:
+          - button "知乎搜索" [ref=e54] [cursor=pointer]:
+            - generic [ref=e55]: 知乎搜索
+            - img [ref=e56]
+          - generic [ref=e60]:
+            - button "知乎搜索 API" [ref=e61] [cursor=pointer]
+            - button "知乎搜索 Skill" [ref=e62] [cursor=pointer]
+            - button "知乎搜索 MCP" [ref=e63] [cursor=pointer]
+        - generic [ref=e64]:
+          - button "全网搜索" [active] [ref=e65] [cursor=pointer]:
+            - generic [ref=e66]: 全网搜索
+            - img [ref=e67]
+          - generic [ref=e71]:
+            - button "全网搜索 API" [ref=e72] [cursor=pointer]
+            - button "全网搜索 Skill" [ref=e73] [cursor=pointer]
+            - button "全网搜索 MCP" [ref=e74] [cursor=pointer]
+        - generic [ref=e75]:
+          - button "直答" [ref=e76] [cursor=pointer]:
+            - generic [ref=e77]: 直答
+            - img [ref=e78]
+          - generic [ref=e82]:
+            - button "直答 API" [ref=e83] [cursor=pointer]
+            - button "直答 Skill" [ref=e84] [cursor=pointer]
+            - button "直答 MCP" [ref=e85] [cursor=pointer]
+        - generic [ref=e86]:
+          - button "热榜" [ref=e87] [cursor=pointer]:
+            - generic [ref=e88]: 热榜
+            - img [ref=e89]
+          - generic [ref=e93]:
+            - button "知乎热榜 API" [ref=e94] [cursor=pointer]
+            - button "知乎热榜 Skill" [ref=e95] [cursor=pointer]
+            - button "知乎热榜 MCP" [ref=e96] [cursor=pointer]
+    - generic [ref=e100]:
+      - heading "知乎搜索 API" [level=1] [ref=e386]
+      - heading "接口说明" [level=2] [ref=e148]
+      - paragraph [ref=e103]: 该接口用于知乎站内内容搜索，返回与查询相关的问题、回答或文章结果。
+      - heading "接口信息" [level=2] [ref=e149]
+      - table [ref=e121]:
+        - rowgroup [ref=e122]:
+          - row "说明 值" [ref=e150]:
+            - columnheader "说明" [ref=e151]
+            - columnheader "值" [ref=e152]
+        - rowgroup [ref=e127]:
+          - row "HTTP URL https://developer.zhihu.com/api/v1/content/zhihu_search" [ref=e387]:
+            - cell "HTTP URL" [ref=e154]
+            - cell "https://developer.zhihu.com/api/v1/content/zhihu_search" [ref=e388]:
+              - link "https://developer.zhihu.com/api/v1/content/zhihu_search" [ref=e389] [cursor=pointer]:
+                - /url: https://developer.zhihu.com/api/v1/content/zhihu_search
+          - row "HTTP Method GET" [ref=e157]:
+            - cell "HTTP Method" [ref=e158]
+            - cell "GET" [ref=e159]
+      - heading "请求参数" [level=2] [ref=e160]
+      - heading "Header" [level=3] [ref=e161]
+      - list [ref=e113]:
+        - listitem [ref=e114]:
+          - text: Authorization：
+          - code [ref=e162]: Bearer <your_access_secret>
+        - listitem [ref=e115]: X-Request-Timestamp：秒级 Unix 时间戳
+        - listitem [ref=e118]:
+          - text: Content-Type：固定值
+          - code [ref=e119]: application/json
+      - heading "Query" [level=3] [ref=e163]
+      - table [ref=e164]:
+        - rowgroup [ref=e165]:
+          - row "名称 类型 必填 说明" [ref=e166]:
+            - columnheader "名称" [ref=e167]
+            - columnheader "类型" [ref=e168]
+            - columnheader "必填" [ref=e169]
+            - columnheader "说明" [ref=e170]
+        - rowgroup [ref=e171]:
+          - row "Query String 是 查询关键词" [ref=e172]:
+            - cell "Query" [ref=e173]
+            - cell "String" [ref=e174]
+            - cell "是" [ref=e175]
+            - cell "查询关键词" [ref=e176]
+          - row "Count Int32 否 请求数量，默认 10，最大 10" [ref=e390]:
+            - cell "Count" [ref=e178]
+            - cell "Int32" [ref=e179]
+            - cell "否" [ref=e180]
+            - cell "请求数量，默认 10，最大 10" [ref=e391]
+      - paragraph [ref=e105]: 说明：
+      - list [ref=e234]:
+        - listitem [ref=e235]:
+          - code [ref=e236]: Query
+          - text: 不能为空。
+        - listitem [ref=e241]:
+          - text: 当
+          - code [ref=e242]: Count <= 0
+          - text: 时，服务端默认回退为
+          - code [ref=e243]: "10"
+          - text: 。
+        - listitem [ref=e392]:
+          - text: 当
+          - code [ref=e393]: Count > 10
+          - text: 时，服务端会自动截断为
+          - code [ref=e394]: "10"
+          - text: 。
+      - heading "响应参数" [level=2] [ref=e260]
+      - paragraph [ref=e110]: Data：
+      - table [ref=e195]:
+        - rowgroup [ref=e196]:
+          - row "参数名 类型 是否必返 描述" [ref=e395]:
+            - columnheader "参数名" [ref=e396]
+            - columnheader "类型" [ref=e397]
+            - columnheader "是否必返" [ref=e398]
+            - columnheader "描述" [ref=e399]
+        - rowgroup [ref=e200]:
+          - row "HasMore Bool 是 当前实现固定返回 false" [ref=e400]:
+            - cell "HasMore" [ref=e401]
+            - cell "Bool" [ref=e402]
+            - cell "是" [ref=e403]
+            - cell "当前实现固定返回 false" [ref=e404]:
+              - text: 当前实现固定返回
+              - code [ref=e405]: "false"
+          - row "SearchHashId String 是 搜索请求标识" [ref=e406]:
+            - cell "SearchHashId" [ref=e407]
+            - cell "String" [ref=e408]
+            - cell "是" [ref=e409]
+            - cell "搜索请求标识" [ref=e410]
+          - row "Items Array[Item] 是 搜索结果列表" [ref=e411]:
+            - cell "Items" [ref=e412]
+            - cell "Array[Item]" [ref=e413]
+            - cell "是" [ref=e414]
+            - cell "搜索结果列表" [ref=e415]
+          - row "EmptyReason String 否 无结果时的原因说明" [ref=e416]:
+            - cell "EmptyReason" [ref=e417]
+            - cell "String" [ref=e418]
+            - cell "否" [ref=e419]
+            - cell "无结果时的原因说明" [ref=e420]
+      - paragraph [ref=e112]: Item：
+      - table [ref=e214]:
+        - rowgroup [ref=e215]:
+          - row "参数名 类型 是否必返 描述" [ref=e421]:
+            - columnheader "参数名" [ref=e422]
+            - columnheader "类型" [ref=e423]
+            - columnheader "是否必返" [ref=e424]
+            - columnheader "描述" [ref=e425]
+        - rowgroup [ref=e221]:
+          - row "Title String 是 内容标题" [ref=e426]:
+            - cell "Title" [ref=e427]
+            - cell "String" [ref=e428]
+            - cell "是" [ref=e429]
+            - cell "内容标题" [ref=e430]
+          - row "ContentType String 是 内容类型" [ref=e431]:
+            - cell "ContentType" [ref=e432]
+            - cell "String" [ref=e433]
+            - cell "是" [ref=e434]
+            - cell "内容类型" [ref=e435]
+          - row "ContentID String 是 内容标识" [ref=e436]:
+            - cell "ContentID" [ref=e437]
+            - cell "String" [ref=e438]
+            - cell "是" [ref=e439]
+            - cell "内容标识" [ref=e440]
+          - row "ContentText String 是 内容摘要" [ref=e441]:
+            - cell "ContentText" [ref=e442]
+            - cell "String" [ref=e443]
+            - cell "是" [ref=e444]
+            - cell "内容摘要" [ref=e445]
+          - row "Url String 是 内容链接（带溯源 utm 参数）" [ref=e446]:
+            - cell "Url" [ref=e447]
+            - cell "String" [ref=e448]
+            - cell "是" [ref=e449]
+            - cell "内容链接（带溯源 utm 参数）" [ref=e450]
+          - row "CommentCount Int32 是 评论数" [ref=e451]:
+            - cell "CommentCount" [ref=e452]
+            - cell "Int32" [ref=e453]
+            - cell "是" [ref=e454]
+            - cell "评论数" [ref=e455]
+          - row "VoteUpCount Int32 是 赞同数" [ref=e456]:
+            - cell "VoteUpCount" [ref=e457]
+            - cell "Int32" [ref=e458]
+            - cell "是" [ref=e459]
+            - cell "赞同数" [ref=e460]
+          - row "AuthorName String 是 作者昵称" [ref=e461]:
+            - cell "AuthorName" [ref=e462]
+            - cell "String" [ref=e463]
+            - cell "是" [ref=e464]
+            - cell "作者昵称" [ref=e465]
+          - row "AuthorAvatar String 是 作者头像" [ref=e466]:
+            - cell "AuthorAvatar" [ref=e467]
+            - cell "String" [ref=e468]
+            - cell "是" [ref=e469]
+            - cell "作者头像" [ref=e470]
+          - row "AuthorBadge String 是 作者认证图标" [ref=e471]:
+            - cell "AuthorBadge" [ref=e472]
+            - cell "String" [ref=e473]
+            - cell "是" [ref=e474]
+            - cell "作者认证图标" [ref=e475]
+          - row "AuthorBadgeText String 是 作者认证文案" [ref=e476]:
+            - cell "AuthorBadgeText" [ref=e477]
+            - cell "String" [ref=e478]
+            - cell "是" [ref=e479]
+            - cell "作者认证文案" [ref=e480]
+          - row "EditTime Int32 是 发布时间或更新时间戳" [ref=e481]:
+            - cell "EditTime" [ref=e482]
+            - cell "Int32" [ref=e483]
+            - cell "是" [ref=e484]
+            - cell "发布时间或更新时间戳" [ref=e485]
+          - row "CommentInfoList Array[CommentInfo] 否 精选评论" [ref=e486]:
+            - cell "CommentInfoList" [ref=e487]
+            - cell "Array[CommentInfo]" [ref=e488]
+            - cell "否" [ref=e489]
+            - cell "精选评论" [ref=e490]
+          - row "AuthorityLevel String 是 权威等级" [ref=e491]:
+            - cell "AuthorityLevel" [ref=e492]
+            - cell "String" [ref=e493]
+            - cell "是" [ref=e494]
+            - cell "权威等级" [ref=e495]
+          - row "RankingScore Float32 是 排序分数" [ref=e496]:
+            - cell "RankingScore" [ref=e497]
+            - cell "Float32" [ref=e498]
+            - cell "是" [ref=e499]
+            - cell "排序分数" [ref=e500]
+      - paragraph [ref=e249]: CommentInfo：
+      - table [ref=e262]:
+        - rowgroup [ref=e263]:
+          - row "参数名 类型 是否必返 描述" [ref=e264]:
+            - columnheader "参数名" [ref=e265]
+            - columnheader "类型" [ref=e266]
+            - columnheader "是否必返" [ref=e267]
+            - columnheader "描述" [ref=e268]
+        - rowgroup [ref=e269]:
+          - row "Content String 是 评论内容" [ref=e501]:
+            - cell "Content" [ref=e502]
+            - cell "String" [ref=e503]
+            - cell "是" [ref=e273]
+            - cell "评论内容" [ref=e504]
+      - paragraph [ref=e259]: 响应示例：
+      - code [ref=e146]:
+        - text: "{ \"Code\": 0, \"Message\": \"success\", \"Data\": { \"HasMore\": false, \"SearchHashId\": \"1234567890\", \"Items\": [ { \"Title\": \"RAG 评测方法综述\", \"ContentType\": \"Article\", \"ContentID\": \"123456789\", \"ContentText\": \"本文介绍了主流 RAG 评测框架，包括 RAGAS、TruLens ...\", \"Url\": \"https://zhuanlan.zhihu.com/p/123456789?utm_medium=openapi_platform&utm_source=6d23634e\", \"CommentCount\": 15, \"VoteUpCount\": 128, \"AuthorName\": \"张三\", \"AuthorAvatar\": \"https://picx.zhimg.com/example.jpg\", \"AuthorBadge\": \"\", \"AuthorBadgeText\": \"\", \"EditTime\": 1710000000, \"CommentInfoList\": [], \"AuthorityLevel\": \"2\", \"RankingScore\": 0.98 } ] }"
+        - text: "}"
+      - heading "错误码说明" [level=2] [ref=e505]
+      - table [ref=e281]:
+        - rowgroup [ref=e282]:
+          - row "错误码 说明" [ref=e506]:
+            - columnheader "错误码" [ref=e507]
+            - columnheader "说明" [ref=e508]
+        - rowgroup [ref=e288]:
+          - row "0 成功" [ref=e509]:
+            - cell "0" [ref=e510]
+            - cell "成功" [ref=e511]
+          - row "10001 参数错误" [ref=e512]:
+            - cell "10001" [ref=e513]
+            - cell "参数错误" [ref=e514]
+          - row "20001 鉴权失败" [ref=e515]:
+            - cell "20001" [ref=e516]
+            - cell "鉴权失败" [ref=e517]
+          - row "30001 频率限制" [ref=e518]:
+            - cell "30001" [ref=e519]
+            - cell "频率限制" [ref=e520]
+          - row "90001 内部错误" [ref=e521]:
+            - cell "90001" [ref=e522]
+            - cell "内部错误" [ref=e523]
+      - heading "代码示例" [level=2] [ref=e524]
+      - paragraph [ref=e261]: "Curl 请求示例:"
+      - code [ref=e376]: "curl -G 'https://developer.zhihu.com/api/v1/content/zhihu_search' \\ --data-urlencode 'Query=怎么理解rave文化' \\ -d 'Count=5' \\ -H 'Authorization: Bearer <your_access_secret>' \\ -H \"X-Request-Timestamp: $(date +%s)\""
