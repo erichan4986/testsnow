@@ -28,6 +28,11 @@ cache/
 *.log
 *.tmp
 
+# Runtime caches and artifacts
+.cache/
+.playwright-mcp/
+data/raw/2026*/
+
 # Data and reports (keep directory structure but ignore content)
 /data/raw/*.json
 /data/processed/
