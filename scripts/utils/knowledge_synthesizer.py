@@ -8,7 +8,7 @@ import json
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from .source_adapter import SynthesisItem
@@ -100,6 +100,7 @@ class KnowledgeSynthesizer:
         Args:
             client: 已初始化的 OpenAI-compatible LLM 客户端。
                     为 None 时自动从环境变量初始化（DEEPSEEK_API_KEY 或 MOONSHOT_API_KEY）。
+                    如果环境变量不存在则保持 None，便于测试隔离。
         """
         self.client = client
         self.source_index: Dict[int, Dict] = {}
@@ -152,6 +153,7 @@ class KnowledgeSynthesizer:
             }
         """
         items: List[SynthesisItem] = all_data.get("items", [])
+        claim_verification_context = all_data.get("claim_verification_context")
         if not items:
             logger.warning(f"[{stock_name}] 无内容可供合成")
             return {k: "" for k in THEMES} | {"citations": {}}
@@ -178,7 +180,7 @@ class KnowledgeSynthesizer:
                     if v and k in THEMES
                 }
                 narrative, citations = self._synthesize_theme(
-                    stock_name, theme_key, items, previous_narratives
+                    stock_name, theme_key, items, previous_narratives, claim_verification_context
                 )
                 result[theme_key] = narrative
                 # 合并引用（全局去重）
@@ -209,9 +211,10 @@ class KnowledgeSynthesizer:
         theme_key: str,
         items: List[SynthesisItem],
         previous_narratives: Dict[str, str] = None,
+        claim_verification_context: Dict[str, Any] = None,
     ) -> Tuple[str, Dict[int, Dict]]:
         """合成单个主题，返回 (叙事文本, 该主题使用的引用字典)"""
-        prompt = self._build_prompt(stock_name, theme_key, items, previous_narratives)
+        prompt = self._build_prompt(stock_name, theme_key, items, previous_narratives, claim_verification_context)
         response_text = self._call_llm(prompt)
         return self._parse_with_citations(response_text)
 
@@ -221,6 +224,7 @@ class KnowledgeSynthesizer:
         theme_key: str,
         items: List[SynthesisItem],
         previous_narratives: Dict[str, str] = None,
+        claim_verification_context: Dict[str, Any] = None,
     ) -> str:
         """为特定主题构建 LLM prompt。"""
         prefix_template = THEME_PROMPT_PREFIX.get(theme_key, THEMES["industry_logic"][0])
@@ -244,6 +248,12 @@ class KnowledgeSynthesizer:
 
         prompt = prefix + "\n\n信息来源：\n" + "\n".join(source_lines)
 
+        # Append optional claim verification context after numbered sources.
+        if claim_verification_context:
+            appendix = self._format_claim_verification_context(claim_verification_context)
+            if appendix:
+                prompt += "\n\n---\n\n" + appendix
+
         # 追加前置板块上下文，避免跨板块重复展开
         if previous_narratives:
             prompt += "\n\n---\n\n注意：以下内容是本报告已生成的其他板块分析。"
@@ -256,6 +266,64 @@ class KnowledgeSynthesizer:
                 prompt += f"【{prev_title}】\n{truncated}\n\n"
 
         return prompt
+
+    def _format_claim_verification_context(self, context: Dict[str, Any]) -> str:
+        """Render a guarded, non-citable claim verification appendix for prompts."""
+        if not context or not context.get("enabled"):
+            return ""
+
+        counts = context.get("counts", {})
+        lines = [
+            "Claim Verification Context（以下不是新的引用来源）",
+            "",
+            "重要约束：",
+            "- 以下内容不是新的引用来源，不能用 [^n] 引用，也不能单独作为事实写入正文。",
+            "- 它只用于判断社区观点的可信度，帮助你决定如何强调或弱化某些信息。",
+            "",
+            f"统计：高信用声明 {counts.get('high_credit_claims', 0)} 条，低信用声明 {counts.get('low_credit_claims', 0)} 条，"
+            f"已验证 {counts.get('verified', 0)} 条，中等支持 {counts.get('supported', 0)} 条，"
+            f"未验证 {counts.get('unverified', 0)} 条，需复核 {counts.get('needs_review', 0)} 条。",
+            "",
+            "可信度使用规则：",
+            "- verified：只有当同一事实也出现在上方编号信息来源中时，才可作为重点线索使用，并必须引用上方编号来源。",
+            "- supported：可描述为“有中等信用来源支持的线索”，但不得写成已确认事实。",
+            "- unverified：只能作为“待验证市场观点/社区讨论”，不得进入核心事实基座。",
+            "- needs_review：仅提示存在相关信息，但当前证据不足，不得写入正文。",
+            "",
+        ]
+
+        def _render_bucket(label: str, rows: List[Dict[str, Any]]) -> List[str]:
+            if not rows:
+                return []
+            out = [f"{label}："]
+            for row in rows:
+                text = row.get("claim_text", "")
+                action = row.get("action", "")
+                confidence = row.get("confidence")
+                reason = row.get("reason", "")
+                titles = row.get("verified_by_titles", [])
+                parts = [f"- [{action}] {text}"]
+                if confidence is not None:
+                    parts.append(f"（置信度 {confidence}）")
+                if titles:
+                    parts.append(f"[依据标题: {' / '.join(titles)}]")
+                if reason:
+                    parts.append(f"[原因: {reason}]")
+                out.append(" ".join(parts))
+            return out
+
+        lines.extend(_render_bucket("已验证声明", context.get("verified_claims", [])))
+        if context.get("supported_claims"):
+            lines.append("")
+        lines.extend(_render_bucket("中等支持声明", context.get("supported_claims", [])))
+        if context.get("needs_review_claims"):
+            lines.append("")
+        lines.extend(_render_bucket("需复核声明", context.get("needs_review_claims", [])))
+        if context.get("unverified_claims"):
+            lines.append("")
+        lines.extend(_render_bucket("未验证声明", context.get("unverified_claims", [])))
+
+        return "\n".join(lines)
 
     def _call_llm(self, prompt: str) -> str:
         """调用 LLM，重试 1 次。"""

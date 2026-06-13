@@ -1,5 +1,6 @@
 """Data loading and quality gate skills."""
 
+import logging
 import sys
 from pathlib import Path
 
@@ -36,6 +37,9 @@ except ImportError:
         fetch_ps,
         fetch_competitor_metrics,
     )
+
+
+logger = logging.getLogger(__name__)
 
 
 @skill(name="data_loading")
@@ -108,7 +112,11 @@ def competitor_fetching_skill(ctx: SkillContext) -> SkillContext:
 
     competitor_metrics = None
     if stock_name and stock_codes:
-        competitor_metrics = fetch_competitor_metrics(stock_name, stock_codes)
+        try:
+            competitor_metrics = fetch_competitor_metrics(stock_name, stock_codes)
+        except Exception as e:
+            logger.warning(f"[{stock_name}] 同业估值指标获取失败，跳过: {e}")
+            ctx.set("competitor_metrics_error", str(e))
 
     ctx.set("competitor_metrics", competitor_metrics)
     return ctx

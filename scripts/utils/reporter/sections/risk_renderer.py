@@ -67,6 +67,8 @@ class RiskRenderer:
 
         # 预定义的风险提示与关注要点
         risk_analyses = self._risks_and_watch(stock_name, all_posts)
+        if risk_analyses:
+            risk_analyses = self._annotate_static_risks(risk_analyses)
 
         parts = []
         if specific_risk:
@@ -77,6 +79,17 @@ class RiskRenderer:
             parts.append(risk_analyses)
 
         return "\n\n".join(parts)
+
+    def _annotate_static_risks(self, markdown: str) -> str:
+        """Mark predefined risk text as a static checklist, not live data."""
+        normalized = markdown.replace("### 📅 下周关注要点", "### 后续关注要点")
+        normalized = normalized.replace("### 📅 下周关注点", "### 后续关注要点")
+        normalized = normalized.replace("当前市值", "风险库记录市值")
+        note = (
+            "> **说明**：以下内容来自预置风险库，用于提醒需要核查的结构性风险；"
+            "涉及市值、价位、时间表或持仓比例时，应以实时行情、公告和最新数据复核。"
+        )
+        return normalized.replace("### 🔴 核心风险", f"{note}\n\n### 核心风险", 1)
 
     def _risks_and_watch(self, stock_name: str, posts: List[Dict]) -> str:
         """风险提示与关注要点（预定义内容）。"""

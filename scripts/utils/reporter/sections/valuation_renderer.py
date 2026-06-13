@@ -150,15 +150,6 @@ class ValuationRenderer:
                 lines.append(competitor_metrics_table(stock_name, comp_metrics))
                 lines.append("")
 
-        # 估值对比图
-        chart_paths = ctx.get("chart_paths", ctx.get("_chart_paths", {}))
-        valuation_chart = chart_paths.get("valuation")
-        if valuation_chart:
-            lines.append("### 同业估值对比")
-            lines.append("")
-            lines.append(f"![{stock_name} 估值对比]({valuation_chart})")
-            lines.append("")
-
         return "\n".join(lines)
 
     def _quarterly_financials_table(self, code: str) -> str:

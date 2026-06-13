@@ -53,13 +53,13 @@ def load_stock_posts(stock_name: str, date_str: str) -> list:
     return posts
 
 
-def main():
+def main(argv=None):
     parser = argparse.ArgumentParser(description="雪球帖子详情页批量提取")
     parser.add_argument("--stock", type=str, help="指定股票名称")
     parser.add_argument("--all", action="store_true", help="处理全部6只股票")
     parser.add_argument("--date", type=str, default=datetime.now().strftime("%Y%m%d"), help="列表页数据日期 (默认今天)")
     parser.add_argument("--cdp-port", type=int, default=CDP_PORT, help="Chrome CDP 端口")
-    args = parser.parse_args()
+    args = parser.parse_args(argv)
 
     stocks_to_process = []
     if args.all:
@@ -110,7 +110,7 @@ def main():
             success_urls = fetcher.fetch_posts(stock_name, dp_posts)
             logger.info(f"[{stock_name}] 详情页提取完成: {len(success_urls)}/{len(dp_posts)}")
     finally:
-        fetcher._close_browser()
+        fetcher.close()
 
     logger.info("全部完成")
 

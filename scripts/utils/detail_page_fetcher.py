@@ -35,6 +35,7 @@ class DetailPageFetcher:
         headless: bool = False,
         delay_range: Tuple[int, int] = (3, 8),
         request_interval: int = 5,
+        cdp_url: Optional[str] = None,
     ):
         """
         Args:
@@ -43,14 +44,19 @@ class DetailPageFetcher:
             headless: 是否无头模式（默认 False）
             delay_range: 页面加载后随机停留秒数
             request_interval: 请求最小间隔秒数
+            cdp_url: Chrome DevTools Protocol URL (optional)
         """
         self.vault_base = Path(vault_base)
         self.user_data_dir = Path(user_data_dir) if user_data_dir else None
         self.headless = headless
         self.delay_range = delay_range
         self.request_interval = request_interval
+        self.cdp_url = cdp_url
         self._context = None
         self._playwright = None
+        self._browser = None
+        self._owns_context = False
+        self._owns_browser = False
 
     def _extract_post_id(self, url: str) -> str:
         """Extract post ID from Xueqiu URL (last path segment)."""
@@ -109,6 +115,34 @@ class DetailPageFetcher:
 
         self._playwright = sync_playwright().start()
 
+        if self.cdp_url:
+            self._browser = self._playwright.chromium.connect_over_cdp(self.cdp_url)
+            self._owns_browser = False
+            if self._browser.contexts:
+                self._context = self._browser.contexts[0]
+                self._owns_context = False
+            else:
+                self._context = self._browser.new_context(
+                    viewport={"width": 1366, "height": 768},
+                    user_agent=(
+                        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                        "AppleWebKit/537.36 (KHTML, like Gecko) "
+                        "Chrome/120.0.0.0 Safari/537.36"
+                    ),
+                )
+                self._owns_context = True
+            self._context.set_viewport_size({"width": 1366, "height": 768})
+            self._context.add_init_script("""
+                Object.defineProperty(navigator, 'webdriver', {
+                    get: () => undefined
+                });
+                if (window.__playwright) {
+                    delete window.__playwright;
+                }
+            """)
+            logger.info("Browser connected over CDP: %s", self.cdp_url)
+            return
+
         launch_args = [
             "--disable-blink-features=AutomationControlled",
             "--disable-web-security",
@@ -120,12 +154,14 @@ class DetailPageFetcher:
                 headless=self.headless,
                 args=launch_args,
             )
+            self._owns_context = True
+            self._owns_browser = True
         else:
-            browser = self._playwright.chromium.launch(
+            self._browser = self._playwright.chromium.launch(
                 headless=self.headless,
                 args=launch_args,
             )
-            self._context = browser.new_context(
+            self._context = self._browser.new_context(
                 viewport={"width": 1366, "height": 768},
                 user_agent=(
                     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -133,6 +169,8 @@ class DetailPageFetcher:
                     "Chrome/120.0.0.0 Safari/537.36"
                 ),
             )
+            self._owns_context = True
+            self._owns_browser = True
 
         # Set viewport and user agent on the default context
         self._context.set_viewport_size({"width": 1366, "height": 768})
@@ -290,12 +328,26 @@ class DetailPageFetcher:
         logger.info("Successfully fetched %d / %d posts", len(success_urls), len(posts))
         return success_urls
 
-    def _close_browser(self):
-        """Clean up browser and playwright resources."""
-        if self._context:
+    def close(self):
+        """Clean up browser and playwright resources.
+
+        Only closes contexts and browsers created by this fetcher.
+        In CDP mode, reused browser contexts and the connected browser
+        are left open to preserve the user's logged-in Chrome session.
+        """
+        if self._context and self._owns_context:
             self._context.close()
             self._context = None
+        if self._browser and self._owns_browser:
+            self._browser.close()
+            self._browser = None
         if self._playwright:
             self._playwright.stop()
             self._playwright = None
+        self._owns_context = False
+        self._owns_browser = False
         logger.info("Browser closed")
+
+    def _close_browser(self):
+        """Compatibility alias for close()."""
+        self.close()

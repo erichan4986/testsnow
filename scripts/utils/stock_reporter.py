@@ -17,13 +17,23 @@ logger = logging.getLogger(__name__)
 class PerStockReporter:
     """个股深度报告生成器 —— 仅保留 facade 接口，所有板块渲染已迁移至 SectionRenderers。"""
 
-    def __init__(self, stocks_data: Dict[str, List[Dict]] = None, data_path: str = None, stock_codes: Dict[str, str] = None, raw_data: Dict[str, Any] = None):
+    def __init__(
+        self,
+        stocks_data: Dict[str, List[Dict]] = None,
+        data_path: str = None,
+        stock_codes: Dict[str, str] = None,
+        raw_data: Dict[str, Any] = None,
+        agent_reach_configs: Dict[str, Dict] = None,
+        enable_agent_reach: bool = False,
+    ):
         """
         Args:
             stocks_data: 直接传入股票数据字典
             data_path: 或从JSON文件路径加载
             stock_codes: 股票名称到6位代码的映射，如 {"乐鑫科技": "688018"}
             raw_data: 原始采集数据（研报、公告、资金流向等）
+            agent_reach_configs: 每只股票 Agent-Reach 配置，如 {"黑芝麻智能": {"enabled": True, "web_urls": [...]}}
+            enable_agent_reach: 全局启用 Agent-Reach（默认 False）
         """
         if stocks_data:
             self.stocks_data = stocks_data
@@ -35,6 +45,8 @@ class PerStockReporter:
 
         self.stock_codes = stock_codes or {}
         self.raw_data = raw_data or {}
+        self.agent_reach_configs = agent_reach_configs or {}
+        self.enable_agent_reach = enable_agent_reach
         self.date_str = datetime.now().strftime("%Y%m%d")
         self.date_display = datetime.now().strftime("%Y年%m月%d日")
 
@@ -78,15 +90,60 @@ class PerStockReporter:
 
         try:
             from .report_skills import build_stock_report_pipeline
-            pipeline = build_stock_report_pipeline()
-            ctx = pipeline.run({
+
+            ar_cfg = self.agent_reach_configs.get(stock_name, {})
+            agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
+            evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
+            evidence_notes_enabled = bool(evidence_cfg.get("enabled", False))
+            cv_cfg = ar_cfg.get("claim_verification", {}) or {}
+            claim_verification_enabled = bool(cv_cfg.get("enabled", False))
+            pipeline = build_stock_report_pipeline(
+                enable_agent_reach=agent_reach_enabled,
+                enable_evidence_notes=agent_reach_enabled and evidence_notes_enabled,
+            )
+
+            pipeline_input = {
                 "stock_name": stock_name,
                 "date_str": self.date_str,
                 "output_dir": output_dir,
                 "stocks_data": self.stocks_data,
                 "raw_data": self.raw_data,
                 "stock_codes": self.stock_codes,
-            })
+            }
+
+            if claim_verification_enabled:
+                pipeline_input["enable_claim_verification_context"] = True
+                if cv_cfg.get("base_dir"):
+                    pipeline_input["claim_verification_base_dir"] = cv_cfg["base_dir"]
+                if cv_cfg.get("max_verified") is not None:
+                    pipeline_input["claim_verification_max_verified"] = cv_cfg["max_verified"]
+                if cv_cfg.get("max_supported") is not None:
+                    pipeline_input["claim_verification_max_supported"] = cv_cfg["max_supported"]
+                if cv_cfg.get("max_unverified") is not None:
+                    pipeline_input["claim_verification_max_unverified"] = cv_cfg["max_unverified"]
+
+            if agent_reach_enabled:
+                pipeline_input["enable_agent_reach"] = True
+                web_urls = ar_cfg.get("web_urls", []) or ar_cfg.get("urls", [])
+                if web_urls:
+                    pipeline_input["agent_reach_urls"] = web_urls
+                rss_feeds = ar_cfg.get("rss_feeds", [])
+                if rss_feeds:
+                    pipeline_input["agent_reach_rss_feeds"] = rss_feeds
+                rss_filter_terms = ar_cfg.get("rss_filter_terms", [])
+                if rss_filter_terms:
+                    pipeline_input["agent_reach_rss_filter_terms"] = rss_filter_terms
+                official_domains = ar_cfg.get("official_domains", [])
+                if official_domains:
+                    pipeline_input["agent_reach_official_domains"] = official_domains
+
+                if evidence_notes_enabled:
+                    pipeline_input["enable_evidence_notes"] = True
+                    pipeline_input["evidence_notes_dry_run"] = evidence_cfg.get("dry_run", True)
+                    if evidence_cfg.get("base_dir"):
+                        pipeline_input["knowledge_base_dir"] = evidence_cfg["base_dir"]
+
+            ctx = pipeline.run(pipeline_input)
             md_path = ctx.output.get("md_path", "")
             html_path = ctx.output.get("html_path", "")
             if md_path:

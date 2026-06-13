@@ -1,5 +1,6 @@
 """Report assembly skill."""
 
+import json
 import logging
 from pathlib import Path
 
@@ -17,13 +18,13 @@ HEADER_TEMPLATE = """# {stock_name} 舆情深度报告
 **报告日期**: {date_display}
 **所属赛道**: {industry}
 **可比公司**: {competitors}
-**数据来源**: 雪球网热门讨论
+**数据来源**: {data_sources}
 
 ---"""
 
 FOOTER_TEMPLATE = """---
 
-*本报告基于雪球网公开讨论数据由 Claude AI 深度分析生成，仅供参考，不构成投资建议。*
+*本报告基于公开数据、技术指标、规则评分与可选 LLM 综合分析生成，仅供参考，不构成投资建议。*
 *报告生成时间: {date_display}*
 """
 
@@ -39,6 +40,7 @@ class ReportAssemblySkill(BaseSkill):
         ("technical", "utils.reporter.sections.technical_renderer", "TechnicalRenderer"),
         ("price_target", "utils.reporter.sections.price_target_renderer", "PriceTargetRenderer"),
         ("deep_analysis", "utils.reporter.sections.deep_analysis_renderer", "DeepAnalysisRenderer"),
+        ("agent_reach_evidence", "utils.reporter.sections.agent_reach_evidence_renderer", "AgentReachEvidenceRenderer"),
         ("risk", "utils.reporter.sections.risk_renderer", "RiskRenderer"),
     ]
 
@@ -59,7 +61,27 @@ class ReportAssemblySkill(BaseSkill):
 
         ctx.set("md_path", str(md_path))
         ctx.set("html_path", str(html_path))
+
+        self._persist_agent_reach_audit(ctx, output_dir, stock_name, date_str)
         return ctx
+
+    def _persist_agent_reach_audit(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
+        """Persist compact Agent-Reach audit summary to sidecar JSON."""
+        if not ctx.get("agent_reach_enabled", False):
+            return
+        summary = ctx.get("agent_reach_run_summary")
+        if not summary:
+            return
+        try:
+            audit_path = Path(output_dir) / f"{stock_name}_{date_str}_agent_reach.json"
+            audit_path.write_text(
+                json.dumps(summary, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+            ctx.set("agent_reach_audit_path", str(audit_path))
+            logger.info(f"Agent-Reach audit persisted: {audit_path}")
+        except Exception as e:
+            logger.warning(f"Agent-Reach audit persistence failed: {e}")
 
     def _header(self, ctx: SkillContext) -> str:
         stock_name = ctx.get("stock_name", "")
@@ -67,12 +89,50 @@ class ReportAssemblySkill(BaseSkill):
         date_display = f"{date_str[:4]}年{date_str[4:6]}月{date_str[6:]}日" if len(date_str) == 8 else date_str
         industry = INDUSTRY_MAP.get(stock_name, "—")
         competitors = "、".join(COMPETITOR_MAP.get(stock_name, [])) or "—"
+        data_sources = self._data_sources(ctx)
         return HEADER_TEMPLATE.format(
             stock_name=stock_name,
             date_display=date_display,
             industry=industry,
             competitors=competitors,
+            data_sources=data_sources,
         )
+
+    def _data_sources(self, ctx: SkillContext) -> str:
+        stock_raw = ctx.get("stock_raw", {}) or {}
+        sources = []
+
+        if ctx.get("all_posts"):
+            sources.append("雪球/社区讨论")
+        if ctx.get("synthesis_sources"):
+            sources.extend(ctx.get("synthesis_sources", []))
+        if stock_raw.get("technical") or ctx.get("technical"):
+            sources.append("技术行情数据")
+        if stock_raw.get("reports"):
+            sources.append("券商研报")
+        if stock_raw.get("announcements"):
+            sources.append("公司公告")
+        if stock_raw.get("fundflow"):
+            sources.append("资金流向")
+        if stock_raw.get("news"):
+            sources.append("新闻资讯")
+        if ctx.get("quote"):
+            sources.append("实时行情/估值")
+
+        ar_enabled = ctx.get("agent_reach_enabled", False)
+        ar_quality_status = ctx.get("agent_reach_quality_status", "")
+        ar_keep = ctx.get("agent_reach_keep_items", []) or []
+        ar_demote = ctx.get("agent_reach_demote_items", []) or []
+        if ar_enabled and ar_quality_status == "ok" and (ar_keep or ar_demote):
+            sources.append("Agent-Reach外部检索")
+
+        seen = set()
+        unique = []
+        for source in sources:
+            if source and source not in seen:
+                unique.append(source)
+                seen.add(source)
+        return "、".join(unique) if unique else "—"
 
     def _footer(self, ctx: SkillContext) -> str:
         date_str = ctx.get("date_str", "")
@@ -111,7 +171,6 @@ class ReportAssemblySkill(BaseSkill):
         for name, module_path, class_name in self.RENDERERS:
             sections.append(self._render_section(name, module_path, class_name, ctx))
 
-        sections.append("> **精品帖子深度解读与关键评论摘录已迁移至知识库。**")
         sections.append(self._footer(ctx))
 
         return "\n\n".join(s for s in sections if s)

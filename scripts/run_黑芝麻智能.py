@@ -4,6 +4,7 @@
 import json
 import logging
 import sys
+import argparse
 from datetime import datetime
 from pathlib import Path
 
@@ -36,6 +37,74 @@ STOCK = {
 STOCK_NAME = STOCK["name"]
 
 KEYWORDS = ["智能驾驶芯片", "自动驾驶", "华山芯片", "黑芝麻", "地平线", "Mobileye"]
+
+
+def _parse_args(argv=None):
+    parser = argparse.ArgumentParser(description="生成黑芝麻智能单股深度报告")
+    parser.add_argument(
+        "--fast-test",
+        action="store_true",
+        help="工程验证模式：跳过知乎采集和 LLM curator，优先复用缓存知乎数据。",
+    )
+    return parser.parse_args([] if argv is None else argv)
+
+
+def _empty_zhihu_data() -> dict:
+    return {
+        "report_items": [],
+        "knowledge_items": [],
+        "gate_stats": {},
+        "total": 0,
+        "api_calls": 0,
+        "fast_test": True,
+    }
+
+
+def _load_cached_zhihu_data(stock_name: str, date_str: str) -> dict:
+    """Load zhihu data from saved report_input JSON for fast engineering runs."""
+    raw_dir = Path(__file__).parent.parent / "data" / "raw"
+
+    candidates = [raw_dir / f"report_input_{date_str}_{stock_name}.json"]
+    latest = sorted(
+        raw_dir.glob(f"report_input_*_{stock_name}.json"),
+        key=lambda p: p.stat().st_mtime,
+        reverse=True,
+    )
+    candidates.extend([p for p in latest if p not in candidates])
+
+    for path in candidates:
+        if not path.exists():
+            continue
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                payload = json.load(f)
+            zhihu_data = (
+                payload.get("raw_data", {})
+                .get(stock_name, {})
+                .get("zhihu")
+            )
+            if isinstance(zhihu_data, dict):
+                logger.info(f"  快速测试复用知乎缓存: {path.name}")
+                return zhihu_data
+        except Exception as e:
+            logger.warning(f"读取知乎缓存失败 {path.name}: {e}")
+    return {}
+
+
+def _load_agent_reach_config(stock_name: str) -> dict:
+    """Load per-stock Agent-Reach config from config/stocks.json."""
+    config_path = Path(__file__).parent.parent / "config" / "stocks.json"
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            stocks = json.load(f)
+    except Exception as e:
+        logger.warning(f"读取 Agent-Reach 配置失败: {e}")
+        return {}
+
+    for stock in stocks:
+        if stock.get("name") == stock_name and stock.get("agent_reach"):
+            return {stock_name: stock["agent_reach"]}
+    return {}
 
 
 def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
@@ -80,7 +149,8 @@ def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
     return []
 
 
-def main():
+def main(argv=None):
+    args = _parse_args(argv)
     date_str = datetime.now().strftime("%Y%m%d")
     report_dir = Path(__file__).parent.parent / "reports"
     report_dir.mkdir(parents=True, exist_ok=True)
@@ -112,14 +182,18 @@ def main():
             p["comment"] = 5
 
     # 2. 采集知乎内容（站内搜索 + 全网搜索）
-    logger.info("\n[2/4] 采集知乎内容...")
-    zhihu_collector = ZhihuCollector()
-    zhihu_data = zhihu_collector.collect(
-        stock_name=STOCK_NAME,
-        keywords=KEYWORDS,
-        limit=8,
-        use_curator=True,
-    )
+    if args.fast_test:
+        logger.info("\n[2/4] 快速测试模式：跳过知乎采集和 LLM curator")
+        zhihu_data = _load_cached_zhihu_data(STOCK_NAME, date_str) or _empty_zhihu_data()
+    else:
+        logger.info("\n[2/4] 采集知乎内容...")
+        zhihu_collector = ZhihuCollector()
+        zhihu_data = zhihu_collector.collect(
+            stock_name=STOCK_NAME,
+            keywords=KEYWORDS,
+            limit=8,
+            use_curator=True,
+        )
     report_items = zhihu_data.get("report_items", [])
     knowledge_items = zhihu_data.get("knowledge_items", [])
     gate_stats = zhihu_data.get("gate_stats", {})
@@ -153,10 +227,12 @@ def main():
     # 4. 生成报告
     logger.info("\n[4/4] 生成个股深度报告...")
     stock_codes = {STOCK_NAME: "02533"}
+    agent_reach_configs = _load_agent_reach_config(STOCK_NAME)
     reporter = PerStockReporter(
         stocks_data=stocks_data,
         stock_codes=stock_codes,
         raw_data=collected_data,
+        agent_reach_configs=agent_reach_configs,
     )
     md_path, html_path = reporter.generate_stock_report(STOCK_NAME, str(report_dir))
     logger.info(f"  报告已生成: {md_path}")
@@ -184,4 +260,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    main(sys.argv[1:])

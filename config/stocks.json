@@ -3,7 +3,19 @@
     "name": "黑芝麻智能",
     "code": "02533",
     "xueqiu_code": "HK02533",
-    "gid": "hk02533"
+    "gid": "hk02533",
+    "agent_reach": {
+      "enabled": true,
+      "web_urls": [
+        "https://www.blacksesame.com/zh/list_10/972.html",
+        "https://www.blacksesame.com/zh/list_9/977.html",
+        "https://www.blacksesame.com/zh/list_9/966.html",
+        "https://www.blacksesame.com/zh/list_9/964.html",
+        "https://www.blacksesame.com/zh/list_9/961.html",
+        "https://www.blacksesame.com/zh/list_10/912.html"
+      ],
+      "official_domains": ["blacksesame.com"]
+    }
   },
   {
     "name": "长春高新",

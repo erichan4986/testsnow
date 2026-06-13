@@ -36,3 +36,6 @@ from .scoring_engine import (
 
 # 协调器（从原文件延迟导入，避免循环依赖）
 # 外部仍通过 from scripts.utils.stock_reporter import PerStockReporter 使用
+
+# 报告管理器
+from .report_manager import ReportManager

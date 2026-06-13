@@ -46,6 +46,44 @@ def sentiment_ratio(posts: List[Dict]) -> Dict[str, float]:
     }
 
 
+def _technical_score_from_indicators(indicators: Dict[str, Any]) -> tuple[float, str]:
+    """Compute technical pillar score from the richest available signal.
+
+    The advanced technical analyzer writes trend health into
+    indicators["_resonance"]["trend_health"]. When present, that score is the
+    canonical medium-term technical view and should drive the report-level
+    pillar. Older cached payloads fall back to RSI/MACD/MA20.
+    """
+    resonance = indicators.get("_resonance", {}) if isinstance(indicators, dict) else {}
+    trend_health = resonance.get("trend_health", {}) if isinstance(resonance, dict) else {}
+    health_score = trend_health.get("score") if isinstance(trend_health, dict) else None
+
+    if isinstance(health_score, (int, float)):
+        score = round(max(0.0, min(10.0, float(health_score) / 10.0)), 1)
+        trend_state = resonance.get("trend_state", {}) if isinstance(resonance, dict) else {}
+        primary = trend_state.get("primary_state", "") if isinstance(trend_state, dict) else ""
+        stage = trend_state.get("stage", "") if isinstance(trend_state, dict) else ""
+        if primary == "下降趋势" or stage == "破坏期":
+            score = min(score, 4.0)
+        return score, "trend_health"
+
+    tech_score = 5.0
+    rsi = indicators.get("rsi_14")
+    macd = indicators.get("macd")
+    ma20 = indicators.get("ma_20")
+    close = indicators.get("close")
+    if rsi is not None:
+        if 45 <= rsi <= 65:
+            tech_score += 1.5
+        elif rsi > 70 or rsi < 30:
+            tech_score -= 1.5
+    if macd is not None:
+        tech_score += 1.0 if macd > 0 else -1.0
+    if close and ma20:
+        tech_score += 1.0 if close > ma20 else -1.0
+    return round(max(0.0, min(10.0, tech_score)), 1), "legacy_indicators"
+
+
 def compute_pillar_scores(
     stock_raw: Dict,
     posts: List[Dict],
@@ -121,21 +159,7 @@ def compute_pillar_scores(
     valuation_score = round(max(0.0, min(10.0, valuation_score)), 1)
 
     # 2. 技术面强度 (M) — 0-10
-    tech_score = 5.0
-    rsi = indicators.get("rsi_14")
-    macd = indicators.get("macd")
-    ma20 = indicators.get("ma_20")
-    close = indicators.get("close")
-    if rsi is not None:
-        if 45 <= rsi <= 65:
-            tech_score += 1.5
-        elif rsi > 70 or rsi < 30:
-            tech_score -= 1.5
-    if macd is not None:
-        tech_score += 1.0 if macd > 0 else -1.0
-    if close and ma20:
-        tech_score += 1.0 if close > ma20 else -1.0
-    tech_score = round(max(0.0, min(10.0, tech_score)), 1)
+    tech_score, technical_score_source = _technical_score_from_indicators(indicators)
 
     # 3. 情绪面温度 (M) — 0-10（中性偏乐观最佳，过热扣分）
     bullish_pct = sentiment.get("bullish", 0)
@@ -194,6 +218,7 @@ def compute_pillar_scores(
         "bearish_pct": sentiment.get("bearish", 0),
         "has_fund": bool(fund),
         "indicators": indicators,
+        "technical_score_source": technical_score_source,
         "ps": ps,
         "uses_ps": uses_ps,
     }
@@ -370,6 +395,23 @@ def composite_score_section(
     macd_val = indicators.get('macd')
     rsi_str = f"{rsi_val:.1f}" if isinstance(rsi_val, (int, float)) else 'N/A'
     macd_str = f"{macd_val:.1f}" if isinstance(macd_val, (int, float)) else 'N/A'
+    tech_desc = f"RSI {rsi_str}, MACD {macd_str}"
+    if pillar.get("technical_score_source") == "trend_health":
+        resonance = indicators.get("_resonance", {}) if isinstance(indicators, dict) else {}
+        trend_health = resonance.get("trend_health", {}) if isinstance(resonance, dict) else {}
+        trend_state = resonance.get("trend_state", {}) if isinstance(resonance, dict) else {}
+        health_score = trend_health.get("score")
+        grade = trend_health.get("grade", "")
+        stage = trend_state.get("stage", "")
+        parts = []
+        if health_score is not None:
+            parts.append(f"趋势健康度 {health_score}/100")
+        if grade:
+            parts.append(f"等级 {grade}")
+        if stage:
+            parts.append(f"阶段 {stage}")
+        if parts:
+            tech_desc = "，".join(parts)
 
     ev_pct = ev.get('ev_pct')
     ev_str = f"{ev_pct:+.2f}" if ev_pct is not None else 'N/A'
@@ -389,7 +431,7 @@ def composite_score_section(
         "| 维度 | 权重 | 得分(0-10) | 说明 |",
         "|------|------|------------|------|",
         f"| 估值健康度(B) | 30% | {pillar['valuation']} | {val_desc} |",
-        f"| 技术面强度(M) | 25% | {pillar['technical']} | RSI {rsi_str}, MACD {macd_str} |",
+        f"| 技术面强度(M) | 25% | {pillar['technical']} | {tech_desc} |",
         f"| 情绪面温度(M) | 20% | {pillar['sentiment']} | 看多 {pillar.get('bullish_pct', 0):.0f}% / 看空 {pillar.get('bearish_pct', 0):.0f}% |",
         f"| 基本面趋势(B) | 15% | {pillar['fundamental']} | 预期 EPS 增速 {eps_str}% |",
         f"| 资金关注度(M) | 10% | {pillar['fundflow']} | 近5日主力净流入 {'有' if pillar.get('has_fund') else '无数据'} |",

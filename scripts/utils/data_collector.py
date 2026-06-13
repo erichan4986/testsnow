@@ -152,7 +152,7 @@ class TechnicalCollector:
             except Exception as e:
                 logger.warning(f"mootdx 初始化失败: {e}")
 
-    def fetch_kline(self, code: str, market: int = 0, days: int = 120, adjustment: str | None = None) -> Optional[pd.DataFrame]:
+    def fetch_kline(self, code: str, market: int | str = 0, days: int = 120, adjustment: str | None = None) -> Optional[pd.DataFrame]:
         """
         获取日K线数据。
         优先级：1) akshare qfq  2) mootdx raw
@@ -162,15 +162,23 @@ class TechnicalCollector:
         # --- Priority 1: akshare qfq (unless raw explicitly requested) ---
         if ak is not None and adjustment != "raw":
             helper = AkshareHelper()
-            prefix = "SZ" if market == 0 else "SH"
-            symbol = f"{prefix}{code}"
-            df = helper.call(
-                ak.stock_zh_a_hist,
-                symbol=symbol,
-                period="daily",
-                start_date=(datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d"),
-                adjust="qfq",
-            )
+            if market == "hk":
+                df = helper.call(
+                    ak.stock_hk_hist,
+                    symbol=code,
+                    period="daily",
+                    start_date=(datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d"),
+                )
+            else:
+                prefix = "SZ" if market == 0 else "SH"
+                symbol = f"{prefix}{code}"
+                df = helper.call(
+                    ak.stock_zh_a_hist,
+                    symbol=symbol,
+                    period="daily",
+                    start_date=(datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d"),
+                    adjust="qfq",
+                )
             if df is not None and not df.empty:
                 column_map = {
                     "日期": "date", "开盘": "open", "最高": "high",
@@ -185,9 +193,13 @@ class TechnicalCollector:
                 if df is not None:
                     if len(df) > days:
                         df = df.tail(days).reset_index(drop=True)
-                    df.attrs["adjustment"] = "qfq"
-                    df.attrs["data_source"] = "akshare"
+                    df.attrs["adjustment"] = "raw" if market == "hk" else "qfq"
+                    df.attrs["data_source"] = "akshare_hk" if market == "hk" else "akshare"
                     return df
+
+        if market == "hk":
+            logger.warning(f"{code} 港股日K获取失败，跳过 mootdx A股回退")
+            return None
 
         # --- Priority 2: mootdx raw ---
         if self.client is None:
@@ -234,14 +246,14 @@ class TechnicalCollector:
 
         return None
 
-    def fetch_weekly_kline(self, code: str, market: int = 0, weeks: int = 72) -> Optional[pd.DataFrame]:
+    def fetch_weekly_kline(self, code: str, market: int | str = 0, weeks: int = 72) -> Optional[pd.DataFrame]:
         """
         获取周K线数据。
         优先 mootdx (frequency=1)，回退 akshare。
         港股: 备选 akshare stock_hk_hist。
         """
         # --- 优先 1: mootdx ---
-        if self.client is not None:
+        if market != "hk" and self.client is not None:
             try:
                 end = datetime.now()
                 begin = end - timedelta(days=weeks * 7 * 2)
@@ -401,7 +413,7 @@ class TechnicalCollector:
             logger.error(f"计算技术指标失败: {e}")
             return {}
 
-    def collect(self, code: str, market: int = 0, days: int = 120, adjustment: str | None = None) -> Dict:
+    def collect(self, code: str, market: int | str = 0, days: int = 120, adjustment: str | None = None) -> Dict:
         """一键采集技术指标（含日线+周线+价格目标）"""
         df_daily = self.fetch_kline(code, market, days, adjustment=adjustment)
         if df_daily is None or df_daily.empty:

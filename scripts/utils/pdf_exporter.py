@@ -211,6 +211,26 @@ a {
     text-decoration: none;
 }
 
+/* 图片与图表 */
+p:has(> img) {
+    margin: 12pt 0;
+    text-align: center;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    max-height: 210mm;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    margin: 8pt auto;
+    page-break-inside: avoid;
+    break-inside: avoid;
+}
+
 /* Emoji和图标 */
 .emoji {
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";

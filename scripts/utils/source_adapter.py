@@ -6,7 +6,12 @@ SourceAdapter: 统一多源数据格式，供 KnowledgeSynthesizer 使用。
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Dict, List, Optional, Protocol
+from typing import Any, Dict, List, Optional, Protocol
+
+if __name__.startswith("utils."):
+    from .source_credit import score_source_credit
+else:
+    from scripts.utils.source_credit import score_source_credit
 
 
 @dataclass
@@ -175,6 +180,67 @@ class WechatAdapter:
         )
 
 
+class AgentReachAdapter:
+    """Agent-Reach 多平台适配器（Twitter / Reddit / Bilibili / Wechat / Xiaohongshu）"""
+
+    @staticmethod
+    def to_synthesis_item(raw: Dict) -> SynthesisItem:
+        platform = raw.get("_platform", "") or raw.get("platform", "")
+        source_platform = f"AgentReach({platform})" if platform else "AgentReach"
+
+        title = raw.get("title", "") or ""
+        content = raw.get("content", "") or raw.get("summary", "") or raw.get("text", "") or ""
+        author = raw.get("author", "") or raw.get("author_name", "") or raw.get("user", "") or ""
+        url = raw.get("url", "") or ""
+        publish_time = raw.get("publish_time", "") or raw.get("created_at", "") or raw.get("time", "") or ""
+
+        interaction_score = 0
+        for key in ("interaction_score", "likes", "like_count", "upvotes", "votes", "reads", "read_count", "comments", "comment_count", "shares", "reposts", "repost_count"):
+            val = raw.get(key)
+            if isinstance(val, (int, float)):
+                interaction_score = int(val)
+                break
+
+        extra = {"raw": raw}
+
+        # Attach deterministic source-credit metadata without changing
+        # SynthesisItem fields or constructor signature.
+        credit = score_source_credit(
+            url=url,
+            source_platform=source_platform,
+            author=author,
+            raw=raw,
+        )
+        extra.update({
+            "source_credit": credit.source_credit,
+            "source_type": credit.source_type,
+            "source_domain": credit.source_domain,
+            "verification_status": credit.verification_status,
+            "credit_reasons": credit.credit_reasons,
+            "knowledge_eligible": credit.knowledge_eligible,
+            "report_eligible": credit.report_eligible,
+        })
+
+        return SynthesisItem(
+            title=title,
+            content=content,
+            author=author,
+            source_platform=source_platform,
+            url=url,
+            publish_time=publish_time,
+            interaction_score=interaction_score,
+            extra=extra,
+        )
+
+
+def _as_records(value: Any) -> List[Dict]:
+    if not value:
+        return []
+    if isinstance(value, dict):
+        return [value]
+    return [item for item in value if isinstance(item, dict)]
+
+
 def adapt_all(
     xueqiu_items: List[Dict] = None,
     zhihu_items: List[Dict] = None,
@@ -183,21 +249,16 @@ def adapt_all(
     fundflow: List[Dict] = None,
     news: List[Dict] = None,
     wechat_items: List[Dict] = None,
+    agent_reach_items: List[Dict] = None,
 ) -> List[SynthesisItem]:
     """批量适配所有来源的数据为统一 SynthesisItem 列表。"""
     result = []
-    if xueqiu_items:
-        result.extend([XueqiuAdapter.to_synthesis_item(i) for i in xueqiu_items])
-    if zhihu_items:
-        result.extend([ZhihuAdapter.to_synthesis_item(i) for i in zhihu_items])
-    if reports:
-        result.extend([ReportAdapter.to_synthesis_item(i) for i in reports])
-    if announcements:
-        result.extend([AnnouncementAdapter.to_synthesis_item(i) for i in announcements])
-    if fundflow:
-        result.extend([FundFlowAdapter.to_synthesis_item(i) for i in fundflow])
-    if news:
-        result.extend([NewsAdapter.to_synthesis_item(i) for i in news])
-    if wechat_items:
-        result.extend([WechatAdapter.to_synthesis_item(i) for i in wechat_items])
+    result.extend([XueqiuAdapter.to_synthesis_item(i) for i in _as_records(xueqiu_items)])
+    result.extend([ZhihuAdapter.to_synthesis_item(i) for i in _as_records(zhihu_items)])
+    result.extend([ReportAdapter.to_synthesis_item(i) for i in _as_records(reports)])
+    result.extend([AnnouncementAdapter.to_synthesis_item(i) for i in _as_records(announcements)])
+    result.extend([FundFlowAdapter.to_synthesis_item(i) for i in _as_records(fundflow)])
+    result.extend([NewsAdapter.to_synthesis_item(i) for i in _as_records(news)])
+    result.extend([WechatAdapter.to_synthesis_item(i) for i in _as_records(wechat_items)])
+    result.extend([AgentReachAdapter.to_synthesis_item(i) for i in _as_records(agent_reach_items)])
     return result

@@ -15,6 +15,7 @@ def _chart_paths(ctx: Dict[str, Any]) -> Dict[str, str]:
     return ctx.get("chart_paths", ctx.get("_chart_paths", {}))
 
 
+from .agent_reach_evidence_renderer import AgentReachEvidenceRenderer
 from .executive_summary_renderer import ExecutiveSummaryRenderer
 from .composite_score_renderer import CompositeScoreRenderer
 from .valuation_renderer import ValuationRenderer
@@ -27,6 +28,7 @@ from .price_target_renderer import PriceTargetRenderer
 __all__ = [
     "SectionRenderer",
     "_chart_paths",
+    "AgentReachEvidenceRenderer",
     "ExecutiveSummaryRenderer",
     "CompositeScoreRenderer",
     "ValuationRenderer",

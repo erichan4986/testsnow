@@ -6,6 +6,10 @@ from typing import Any, Dict
 class TechnicalRenderer:
     """技术面分析板块 — 中期趋势提醒系统。"""
 
+    @staticmethod
+    def _as_dict(value: Any) -> Dict:
+        return value if isinstance(value, dict) else {}
+
     def render(self, ctx: Dict[str, Any]) -> str:
         stock_name = ctx.get("stock_name", "")
         stock_raw = ctx.get("stock_raw", {})
@@ -170,7 +174,11 @@ class TechnicalRenderer:
             lines.append(f"**主要风险**：【{'，'.join(deductions)}】")
             lines.append("")
 
-        ds = resonance.get("daily_structure", {})
+        raw_daily_structure = resonance.get("daily_structure", {})
+        if isinstance(raw_daily_structure, str) and raw_daily_structure:
+            lines.append(f"**日线结构**：{raw_daily_structure}")
+            lines.append("")
+        ds = self._as_dict(raw_daily_structure)
         candle_signal = ds.get("candle_signal")
         if candle_signal:
             lines.append(f"**K线形态**：{candle_signal['signal']}（位置：{candle_signal['location']}）")
@@ -463,8 +471,10 @@ class TechnicalRenderer:
         """完整版渲染，包含更多细节。"""
         lines = self._render_compact(resonance, stock_name, ctx).split("\n")
         ts = resonance.get("trend_state", {})
-        wb = resonance.get("weekly_background", {})
-        ds = resonance.get("daily_structure", {})
+        wb = self._as_dict(resonance.get("weekly_background", {}))
+        raw_daily_structure = resonance.get("daily_structure", {})
+        ds = self._as_dict(raw_daily_structure)
+        daily_summary = raw_daily_structure if isinstance(raw_daily_structure, str) else ""
 
         insert_idx = 2
         lines.insert(insert_idx, "")
@@ -476,7 +486,11 @@ class TechnicalRenderer:
         lines.insert(insert_idx + 6, f"- MA20 方向：{ds.get('ma20_direction', '未知')}")
         lines.insert(insert_idx + 7, f"- MA60 方向：{ds.get('ma60_direction', '未知')}")
         lines.insert(insert_idx + 8, f"- 价格位置：{ds.get('price_vs_ma20', '未知')} MA20")
-        lines.insert(insert_idx + 9, "")
+        if daily_summary:
+            lines.insert(insert_idx + 9, f"- 结构摘要：{daily_summary}")
+            lines.insert(insert_idx + 10, "")
+        else:
+            lines.insert(insert_idx + 9, "")
         # After daily structure section
         sell_assessment = resonance.get("sell_assessment")
         if sell_assessment and sell_assessment.get("met_count", 0) >= 1:

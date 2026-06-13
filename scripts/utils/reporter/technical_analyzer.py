@@ -147,7 +147,7 @@ def _build_advisors(indicators: dict) -> dict:
             else:
                 bias_state = "正常"
                 bias_meaning = "价格与均线偏离在正常波动范围内"
-        elif bias_5 < -3:
+        elif bias_5 <= -2:
             bias_state = "负偏离"
             bias_meaning = "价格低于均线，提示短线已有回撤"
         elif bias_5 > 3:

@@ -125,7 +125,7 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
             tech_data = tech_collector.collect(code, market=market, days=120)
             if tech_data:
                 (raw_data_dir / f"technical_{code}.json").write_text(
-                    json.dumps(tech_data, ensure_ascii=False, indent=2), encoding="utf-8"
+                    json.dumps(tech_data, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
                 )
                 writer.write_atomic_note(
                     stock_name=name, code=code, date=date_str,
@@ -140,7 +140,7 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
             reports = report_collector.collect(code, months=4)
             if reports:
                 (raw_data_dir / f"reports_{code}.json").write_text(
-                    json.dumps(reports, ensure_ascii=False, indent=2), encoding="utf-8"
+                    json.dumps(reports, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
                 )
                 writer.write_atomic_note(
                     stock_name=name, code=code, date=date_str,
@@ -153,7 +153,7 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
             anns = ann_collector.collect(code, months=3)
             if anns:
                 (raw_data_dir / f"announcements_{code}.json").write_text(
-                    json.dumps(anns, ensure_ascii=False, indent=2), encoding="utf-8"
+                    json.dumps(anns, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
                 )
                 writer.write_atomic_note(
                     stock_name=name, code=code, date=date_str,
@@ -166,7 +166,7 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
             fund = fund_collector.collect(code, days=7)
             if fund:
                 (raw_data_dir / f"fundflow_{code}.json").write_text(
-                    json.dumps(fund, ensure_ascii=False, indent=2), encoding="utf-8"
+                    json.dumps(fund, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
                 )
                 stock_raw["fundflow"] = fund
 
@@ -174,7 +174,7 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
             news = news_collector.collect(code, days=30)
             if news:
                 (raw_data_dir / f"news_{code}.json").write_text(
-                    json.dumps(news, ensure_ascii=False, indent=2), encoding="utf-8"
+                    json.dumps(news, ensure_ascii=False, indent=2, default=str), encoding="utf-8"
                 )
                 stock_raw["news"] = news
 
@@ -220,7 +220,17 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
     try:
         from utils.stock_reporter import PerStockReporter
         stock_codes = {s["name"]: s["code"] for s in stocks}
-        reporter = PerStockReporter(stocks_data=stocks_data, stock_codes=stock_codes, raw_data=collected_data)
+        agent_reach_configs = {
+            s["name"]: s["agent_reach"]
+            for s in stocks
+            if s.get("agent_reach")
+        }
+        reporter = PerStockReporter(
+            stocks_data=stocks_data,
+            stock_codes=stock_codes,
+            raw_data=collected_data,
+            agent_reach_configs=agent_reach_configs,
+        )
         report_paths = reporter.generate_all_reports(output_dir=report_mgr.report_dir)
         for rp in report_paths:
             logger.info(f"  报告已生成: {rp}")
