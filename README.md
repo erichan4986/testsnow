@@ -319,6 +319,10 @@ pytest tests/reporter/ -v
 # 单个模块
 pytest tests/reporter/test_technical_state_machine.py -v
 
+# 报告质量检查（可先跑内置最小样例）
+python3 scripts/check_report_quality.py --sample
+python3 scripts/check_report_quality.py reports/圣邦股份_20260604.md
+
 # 端到端
 python scripts/run_澜起科技技术分析_真实数据.py
 ```

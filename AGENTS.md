@@ -18,14 +18,17 @@
 ## 3. 运行命令
 
 ```bash
-# 主流程（每周手动运行，生成全部6只股票报告）
+# 首选样例报告 / runtime 验证入口（以黑芝麻智能为例）
+cd scripts && python run_黑芝麻智能.py --fast-test
+
+# 正式刷新知乎/LLM材料时才运行完整单股报告
+cd scripts && python run_黑芝麻智能.py
+
+# 批量轻量报告入口（旧主流程；不要作为默认测试入口）
 cd scripts && python xueqiu_monitor_v2.py
 
-# 带雪球社区采集（需 Chrome 已登录并开启 CDP 远程调试）
+# 带雪球社区采集（高风险；需 Chrome 已登录并开启 CDP 远程调试）
 cd scripts && python xueqiu_monitor_v2.py --xueqiu
-
-# 单股快速测试（以黑芝麻智能为例）
-cd scripts && python run_黑芝麻智能.py
 
 # 纯技术形态分析（独立流程，不走主 pipeline）
 cd scripts && python run_technical_analysis.py <股票名称> <代码> <市场(0=深圳/1=上海)>
@@ -42,8 +45,8 @@ pytest tests/reporter/test_technical_*.py -v
 
 ```
 scripts/
-  xueqiu_monitor_v2.py          # 主入口：采集 → 分析 → 报告 → PDF
-  run_*.py                      # 单股入口（6只股票各一个）
+  run_*.py                      # 单股深度报告入口；测试/试跑优先使用，黑芝麻智能为默认样例
+  xueqiu_monitor_v2.py          # 批量轻量报告/采集调度入口；不作为默认测试入口
   run_technical_analysis.py     # 纯技术分析入口
   utils/
     skill_pipeline.py           # Pipeline 框架（SkillContext + BaseSkill）
@@ -83,13 +86,21 @@ reports/                        # Markdown/HTML/PDF 报告输出
 - **不要引入大型框架**：当前依赖仅 11 个（requests/python-dotenv/openai/playwright/mardown/mootdx/stockstats/akshare/plotly/kaleido）。不要引入 Django/FastAPI/Flask 等 Web 框架。
 - **不要删除现有入口**：`xueqiu_monitor_v2.py`、`run_*.py`、`run_technical_analysis.py` 是用户的使用入口，不能删除或改名。
 - **不要修改核心业务代码 unless 明确 requested**：如 scoring_engine.py 的阈值、technical_*.py 的算法，修改前需写测试验证。
+- **不要把 `xueqiu_monitor_v2.py` 当默认验证入口**：报告试跑、runtime validation、样例报告验收应优先使用 `scripts/run_黑芝麻智能.py --fast-test` 或对应单股 `run_*.py` 的快速验证模式。只有验证批量调度/采集本身时才运行 `xueqiu_monitor_v2.py`。
+- **不要在普通工程验证中消耗知乎/LLM token**：`run_黑芝麻智能.py --fast-test` 会跳过知乎采集和 ZhihuCurator，优先复用本地 `data/raw/report_input_*_黑芝麻智能.json` 中的知乎数据；只有任务明确要求刷新知乎内容质量或正式生成最新基本面材料时，才运行不带 `--fast-test` 的完整入口。
+
+## 5.1 入口演进方向
+
+- `run_*.py` / `PerStockReporter` / `report_skills` 是深度报告主路径。后续新功能、Agent-Reach、质量门、报告结构优化，应优先围绕单股深度报告 pipeline 设计和验证。
+- `xueqiu_monitor_v2.py` 后续降级为批量轻量报告/采集调度器：负责批量枚举股票、保存轻量汇总、调用单股报告能力，但不继续承载深度报告核心逻辑。
+- 新增或重构深度报告能力时，不要继续往 `xueqiu_monitor_v2.py` 里堆业务逻辑；应抽到可单股调用、可测试、可复用的模块或 skill。
 
 ## 6. 完成标准
 
 任何修改完成后，必须满足：
 
 - [ ] **测试通过**：`pytest` 无失败（现有测试覆盖技术形态模块和 pipeline 集成）。
-- [ ] **样例报告可生成**：能成功运行至少一只股票的报告生成（如 `python run_黑芝麻智能.py`），输出 Markdown 文件到 `reports/`。
+- [ ] **样例报告可生成**：优先运行单股快速入口（默认 `cd scripts && python run_黑芝麻智能.py --fast-test`），输出 Markdown 文件到 `reports/`。除非任务明确涉及知乎刷新/正式基本面材料更新，不要默认消耗 ZhihuCurator/DeepSeek token；除非任务明确涉及批量调度，不要用 `xueqiu_monitor_v2.py` 作为完成标准。
 - [ ] **技术面报告完整性**：包含趋势背景、日线结构、周线结构、价格位置、成交量确认、波动率条件、综合评分、背离预警、关键观察位（支撑/压力）、趋势失效条件、趋势结构、谋士团指标状态。
 - [ ] **基本面报告完整性**：包含执行摘要、核心事实基座、产业逻辑、业绩路径、估值多空分歧、资金面与催化剂、引用来源。
 - [ ] **风险提示完整**：风险评分因子表、行业特有风险（如亏损芯片企业专项风险表）、关注要点。
@@ -141,3 +152,175 @@ git clone --depth=1 https://gitclone.com/github.com/OWNER/REPO.git /tmp/REPO
 ## 8. Codex Skill 使用规则
 
 Codex may use repository skills under `.agents/skills` when relevant.
+
+---
+
+## 9. Codex 编排、本地 Claude Code 执行协作规则
+
+当任务属于 major plan/design 或高风险实现时，必须使用 `docs/agent_workflow/` 中定义的文件化协作流程。轻量任务可使用短 prompt handoff，不必为每个小改动创建 workflow 文件。
+
+重要约束：Codex 在当前环境中不直接调用外部 Claude/Kimi 处理私有仓库上下文。Codex 负责写 design、review prompt、implementation task 和验收报告；用户在本地终端触发 Claude Code；Claude Code 将反馈、notes 或代码 diff 写回仓库；Codex 再读取文件和 diff 继续推进。
+
+### 适用范围
+
+协作强度分为四级，必须选择最轻但足够安全的流程：
+
+- **Level 0: Direct Prompt Handoff** — 小型实现任务，边界清楚，通常 1-2 个文件：Codex 直接给一段可粘贴给 Claude Code 的短 prompt；Claude 实现后，Codex 只审 diff、notes/summary 和 focused tests。
+- **Level 1: Codex Direct** — 小文档、错别字、窄范围测试、简单局部修改，或用户希望 Codex 直接改时，由 Codex 直接实现并验证。
+- **Level 2: File Task Handoff** — 中等风险、需要较清晰审计边界的任务：Codex 写 `claude-task.md`，用户本地触发 Claude Code 实现，Codex 验收 diff 和测试。
+- **Level 3: Full Design Review** — 高风险或设计不明确的任务：必须先做 Round 1 design review；Round 2 仅在 blocker、未解决 must-fix 或高风险设计变化时触发。
+
+默认选择规则：
+
+- 用户说“交给 agent / Claude Code”且任务很小：默认 Level 0，给短 prompt，不创建 workflow 文件。
+- 用户说“试跑报告 / 生成报告看看 / 跑一下报告入口”且不要求修改代码：默认 Level 0，给报告试跑短 prompt，由 Claude Code 本地执行，Codex 再验收生成物和质量门。默认试跑入口是 `scripts/run_黑芝麻智能.py --fast-test`；不要默认运行 `scripts/xueqiu_monitor_v2.py`，也不要默认刷新知乎/LLM curator。
+- Codex 沙箱无法可靠执行的本地浏览器/GUI 验证（例如 Playwright/Chromium PDF 导出、需要 macOS 浏览器权限的截图/预览）默认交给用户本地 Claude Code 执行。Codex 应记录失败原因，给 Level 0 短 prompt，让 Claude Code 本地验证并回报结果；不要反复在沙箱里申请权限硬跑。
+- 用户说“走 workflow / 写 task 文件 / 需要审计记录”：使用 Level 2 或 Level 3。
+- Codex 判断涉及数据完整性、账号安全、LLM prompt、评分/技术算法、报告核心逻辑时，必须升级到 Level 2 或 Level 3，并说明原因。
+
+以下任务必须走 Level 3：
+
+- 修改架构、Pipeline 顺序、报告结构或多个 renderer/skill 的协作方式
+- 修改 `KnowledgeSynthesizer` prompt、LLM 合成逻辑或引用生成逻辑
+- 修改 `scoring_engine.py`、技术分析算法、风险评分、趋势/评分一致性规则
+- 修改数据采集逻辑，尤其是雪球、Playwright、CDP 或外部 API 相关逻辑
+- 预计改动超过 3 个文件，或需要多轮设计/验收的任务
+
+### Level 3 设计互评规则
+
+major task 在实现前必须至少完成 Round 1 设计审查；Round 2 条件触发：
+
+1. Codex 起草 `docs/agent_workflow/YYYY-MM-DD-topic-design.md`
+   - design 必须包含 failure modes：会坏在哪里、坏了怎么表现、哪个测试捕获。
+2. Codex 写 `YYYY-MM-DD-topic-claude-review-round1.md`，并给出可直接交给本地 Claude Code 的 prompt。
+3. 用户在本地终端运行 Claude Code 第一轮 review；Claude 只提风险、遗漏、测试缺口，不写代码；反馈必须标注 `blocker / must-fix / nice-to-have`。
+4. Codex 读取 Claude 写回的 design/notes，修订 design，并只写 compact `Design Delta`：
+   - accepted：采纳了什么，改了哪节
+   - rejected：拒绝了什么，技术理由
+   - deferred：延期什么，为什么不在本轮做
+   - R2 required：yes/no 及原因
+5. 若 Round 1 只有 nice-to-have，或 must-fix 已被 Codex 明确修正且不改变高风险边界，可跳过 Round 2，直接写 implementation task。
+6. 只有存在 blocker、未解决 must-fix、高风险设计变化、或 Codex 拒绝了影响正确性的 must-fix 时，Codex 才写 `YYYY-MM-DD-topic-claude-review-round2.md` 并触发第二轮 review。
+7. Codex 锁定 design 后，再写 `YYYY-MM-DD-topic-claude-task.md`，由用户本地触发 Claude Code 实现。
+8. Claude notes 对非平凡任务必须包含 requirement-test matrix：设计要求、实现位置、测试/验证。
+
+### Agent prompt 交付规则
+
+- 当用户要求“交给 agent / Claude Code / 本地 agent 执行”时，Codex 必须提供一段可直接粘贴给 agent 的 prompt，而不是只给 bash 命令。
+- Level 0 短 prompt 必须包含目标、允许修改范围、禁止事项、测试要求、完成后回报格式和停止条件；不要求写入 `docs/agent_workflow/`。
+- Level 2/3 文件化 prompt 必须包含任务文件路径、目标、允许修改范围、禁止事项、测试要求、notes 输出路径和停止条件。
+- 如已生成 `docs/agent_workflow/YYYY-MM-DD-topic-claude-task.md`，Codex 应先提示“把下面这段交给 Claude Code”，并在 prompt 中要求 agent 读取该 task 文件；bash 命令只能作为可选附注，不能作为主要交付物。
+- 如果用户明确说“不要 bash 命令”，最终回复中不得以 bash 命令作为执行入口。
+
+Level 0 短 prompt 模板：
+
+```text
+你是 Claude Code，在 /Users/erichan/testsnow 仓库里做一个小范围实现。
+
+目标：
+[一句话目标]
+
+允许修改：
+- [file_a]
+- [test_file]
+
+禁止修改：
+- 入口脚本，除非明确列入允许修改
+- scoring_engine.py、technical_analyzer.py、KnowledgeSynthesizer
+- data/raw、reports、knowledge
+- 与任务无关的重构或格式化
+
+要求：
+1. 先写失败测试，再实现最小代码。
+2. 不要访问外部网站，不要启动 Chrome，不要抓雪球详情页。
+3. 跑 focused tests：[列出测试]
+4. 完成后回复：改了哪些文件、测试结果、偏离点、blocker。
+
+停止条件：
+- 需要改允许范围之外的文件
+- 需要修改评分/技术算法/LLM prompt
+- 测试暴露出无关大范围失败
+```
+
+报告试跑 Level 0 prompt 模板：
+
+```text
+你是 Claude Code，在 /Users/erichan/testsnow 仓库里做一次报告试跑，不要修改代码。
+
+目标：
+试跑 [股票名] 的现有报告生成入口，确认 Markdown/HTML/PDF 生成情况，并记录质量检查结果。
+
+禁止事项：
+- 不要修改任何代码。
+- 不要抓雪球详情页，不要启动或控制已登录 Chrome/CDP。
+- 不要改评分、技术分析、LLM prompt、报告模板。
+- 不要改 data/raw、reports 里已有文件，除非报告入口自然生成新输出。
+- 如果入口要求外部登录或危险采集，停止并汇报。
+
+执行：
+1. 运行对应单股入口：[脚本路径，默认 scripts/run_黑芝麻智能.py --fast-test]
+2. 如果生成 Markdown，运行：python3 scripts/check_report_quality.py [生成的 Markdown 路径]
+3. 记录 Markdown、HTML、PDF 是否生成以及路径/大小。
+4. 简查报告是否包含趋势背景、日线结构、周线结构、成交量确认、波动率条件、综合评分、分析可信度、风险提示。
+5. 不要修复问题，只记录。
+
+完成后回复：
+- 运行了哪个入口
+- 生成了哪些文件
+- 质量检查 PASS/FAIL/WARNING
+- 主要 warning/error
+- 是否有网络、LLM、Chrome/PDF 问题
+- 是否发现明显报告矛盾
+- git status 是否出现非报告输出以外的改动
+```
+
+本地浏览器/PDF 验证 Level 0 prompt 模板：
+
+```text
+你是 Claude Code，在 /Users/erichan/testsnow 仓库里做一次本地验证。
+
+目标：
+验证 [具体目标，例如重新导出 reports/黑芝麻智能_20260611.pdf，并确认 PDF 图片完整显示、不被裁切]。
+
+允许修改：
+- 如需修复，只允许修改与该问题直接相关的文件：[列出文件]
+- 对应 focused test：[列出测试文件]
+
+禁止事项：
+- 不要抓雪球详情页，不要连接或控制已登录 Chrome/CDP。
+- 不要修改评分、技术分析算法、LLM prompt、报告核心结构。
+- 不要做无关重构或格式化。
+- 不要删除已有报告/数据文件；报告入口或 PDF 导出自然覆盖目标输出可以接受。
+
+要求：
+1. 如果需要改代码，先写/保留失败测试，再做最小修复。
+2. 在本地环境运行必要的 Playwright/Chromium/PDF 导出验证。
+3. 检查生成 PDF 中图片是否等比缩放、完整显示、没有只露出局部的裁切问题。
+4. 跑 focused tests：[列出命令]
+
+完成后回复：
+- 是否修改代码，改了哪些文件
+- 本地验证了哪个 PDF/截图/浏览器输出
+- focused tests 结果
+- PDF 图片排版是否仍有裁切/溢出
+- git status 中新增/修改了哪些报告或缓存文件
+- blocker 或需要 Codex 继续审查的 diff
+```
+
+### 上下文与 token 控制
+
+- Level 0 可通过短 prompt 和 Claude 的简短结果摘要传递上下文，不创建 Markdown 交接文件。
+- Level 2/3 通过 Markdown 文件传递上下文，不粘贴完整对话 transcript。
+- 不再默认生成冗长 `codex-response.md`；用 design 内的 compact `Design Delta` 替代。
+- Codex 不尝试绕过沙箱/网络/数据外传限制来直接调用 Claude/Kimi。
+- Claude Code 的执行结果写入 `YYYY-MM-DD-topic-claude-notes.md`，只记录改动、测试结果、偏离点和 blocker。
+- Codex 验收必须看实际 diff 和测试结果，不能只依赖 Claude Code 总结。
+
+### 验收责任
+
+Codex 负责最终验收：
+
+- 对照 design 和 `YYYY-MM-DD-topic-claude-task.md` 检查是否越界
+- 运行必要测试和样例报告生成
+- 检查是否违反雪球采集、数据来源、LLM 不编造、引用可追溯等项目规则
+- 如涉及 LLM 合成 prompt 或合成逻辑，必须向用户展示样例输出并获得确认
