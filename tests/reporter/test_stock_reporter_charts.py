@@ -12,7 +12,7 @@ from utils.stock_reporter import PerStockReporter
 
 class TestStockReporterChartIntegration:
     def test_generate_stock_report_embeds_chart_images(self, tmp_path):
-        """验证 generate_stock_report 在 Markdown 中嵌入了 4 张图表的图片引用。"""
+        """验证 generate_stock_report 在 Markdown 中嵌入报告图表，不生成估值折线图。"""
         stock_name = "测试科技"
         posts = [
             {"title": "看好", "content": "增长突破", "_track": "featured"},
@@ -83,11 +83,11 @@ class TestStockReporterChartIntegration:
         md_content = Path(md_path).read_text(encoding="utf-8")
         html_content = Path(html_path).read_text(encoding="utf-8")
 
-        # Assert all 4 chart image references are present in Markdown
+        # Assert report chart image references are present in Markdown
         assert f"![{stock_name} 技术面分析](" in md_content
         assert f"![{stock_name} 多空论点对比](" in md_content
-        assert f"![{stock_name} 五维评分雷达图](" in md_content
-        assert f"![{stock_name} 估值对比](" in md_content
+        assert f'alt="{stock_name} 五维评分雷达图"' in md_content
+        assert f"![{stock_name} 估值对比](" not in md_content
 
         # Assert HTML Dashboard was generated with key sections
         assert f"<title>{stock_name} 舆情 Dashboard</title>" in html_content
@@ -105,4 +105,4 @@ class TestStockReporterChartIntegration:
         mock_tech.assert_called_once()
         mock_bb.assert_called_once()
         mock_radar.assert_called_once()
-        mock_val.assert_called_once()
+        mock_val.assert_not_called()

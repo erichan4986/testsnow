@@ -106,3 +106,14 @@ def test_missing_support_resistance():
     ctx["stock_raw"]["technical"]["indicators"]["_resonance"]["key_levels"]["support_zone"] = None
     output = renderer.render(ctx)
     assert "暂无可靠支撑区" in output
+
+
+def test_string_daily_structure_does_not_break_rendering():
+    renderer = TechnicalRenderer()
+    ctx = _make_ctx(with_new_fields=True, mode="compact")
+    ctx["stock_raw"]["technical"]["indicators"]["_resonance"]["daily_structure"] = "日线沿20日均线上行。"
+
+    output = renderer.render(ctx)
+
+    assert "中期趋势提醒" in output
+    assert "日线沿20日均线上行" in output

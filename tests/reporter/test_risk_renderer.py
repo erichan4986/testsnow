@@ -26,6 +26,10 @@ def test_render_basic():
     assert isinstance(result, str)
     assert len(result) > 0
     assert "风险提示与关注要点" in result
+    assert "预置风险库" in result
+    assert "后续关注要点" in result
+    assert "下周关注要点" not in result
+    assert "风险库记录市值" in result
 
 
 def test_render_unknown_stock():

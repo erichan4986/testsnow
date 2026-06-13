@@ -49,3 +49,22 @@ def test_render_with_pillar():
     result = renderer.render(ctx)
     assert "综合评分" in result
     assert "估值健康度" in result
+
+
+def test_render_places_small_radar_image_inside_score_section():
+    renderer = CompositeScoreRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "posts": [],
+        "stock_raw": {},
+        "chart_paths": {"radar": "/tmp/radar.png"},
+    }
+
+    result = renderer.render(ctx)
+
+    assert "五维评分雷达图" in result
+    assert "<img" in result
+    assert 'src="/tmp/radar.png"' in result
+    assert "max-width: 360px" in result
+    assert "width: 70%" in result
+    assert "![TestStock 五维评分雷达图]" not in result

@@ -59,9 +59,65 @@ class TestTechnicalAnalysisSkill:
 
         assert result.get("chart_technical") is None
 
+    def test_uses_normalized_ctx_technical_data(self, tmp_path):
+        ctx = SkillContext(input={
+            "stock_name": "测试股",
+            "stock_raw": {},
+            "technical": {
+                "indicators": {
+                    "rsi_14": 50.0,
+                    "macd": 0.5,
+                    "_patterns": [],
+                },
+            },
+            "daily_data": {
+                "close": [100.0] * 10,
+                "volume": [1000] * 10,
+            },
+            "output_dir": str(tmp_path),
+        })
+
+        with patch("report_skills.chart_skills.generate_technical_panel", return_value=str(tmp_path / "tech.png")) as mock_gen:
+            skill = TechnicalAnalysisSkill()
+            result = skill.run(ctx)
+
+        assert result.get("chart_technical") == str(tmp_path / "tech.png")
+        mock_gen.assert_called_once()
+
+    def test_skips_technical_chart_when_renderer_fails(self, tmp_path):
+        ctx = SkillContext(input={
+            "stock_name": "测试股",
+            "stock_raw": {},
+            "technical": {
+                "indicators": {
+                    "rsi_14": 50.0,
+                    "macd": 0.5,
+                    "_patterns": [],
+                },
+            },
+            "daily_data": {
+                "close": [100.0] * 10,
+                "volume": [1000] * 10,
+                "open": [99.0] * 10,
+                "high": [101.0] * 10,
+                "low": [98.0] * 10,
+            },
+            "output_dir": str(tmp_path),
+        })
+
+        with patch(
+            "report_skills.chart_skills.generate_technical_panel",
+            side_effect=RuntimeError("chrome unavailable"),
+        ):
+            skill = TechnicalAnalysisSkill()
+            result = skill.run(ctx)
+
+        assert result.get("chart_technical") is None
+        assert result.get("chart_paths")["technical"] is None
+
 
 class TestChartGenerationSkill:
-    def test_generates_all_charts(self, tmp_path):
+    def test_generates_report_charts_without_valuation_line_chart(self, tmp_path):
         ctx = SkillContext(input={
             "stock_name": "测试股",
             "stock_raw": {
@@ -100,13 +156,13 @@ class TestChartGenerationSkill:
 
         assert result.get("chart_radar") == str(tmp_path / "radar.png")
         assert result.get("chart_bullbear") == str(tmp_path / "bb.png")
-        assert result.get("chart_valuation") == str(tmp_path / "val.png")
+        assert result.get("chart_valuation") is None
         assert result.get("total_score") is not None
         assert "pillar_scores" in result.output
         mock_score.assert_called_once()
         mock_radar.assert_called_once()
         mock_bb.assert_called_once()
-        mock_val.assert_called_once()
+        mock_val.assert_not_called()
 
     def test_skips_valuation_without_competitor_metrics(self, tmp_path):
         ctx = SkillContext(input={

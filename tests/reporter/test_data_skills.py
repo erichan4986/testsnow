@@ -2,8 +2,15 @@ import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+from unittest.mock import patch
+
 from skill_pipeline import SkillContext
-from report_skills.data_skills import data_loading_skill, quality_gate_skill, quote_fetching_skill
+from report_skills.data_skills import (
+    competitor_fetching_skill,
+    data_loading_skill,
+    quality_gate_skill,
+    quote_fetching_skill,
+)
 
 
 def test_data_loading_skill():
@@ -51,3 +58,19 @@ def test_quote_fetching_skill_with_code():
     assert "consensus" in result.output
     assert "ind_fwd_pe" in result.output
     assert "ps" in result.output
+
+
+def test_competitor_fetching_failure_does_not_abort_pipeline():
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_codes": {"测试股": "000001"},
+    })
+
+    with patch(
+        "report_skills.data_skills.fetch_competitor_metrics",
+        side_effect=RuntimeError("network unavailable"),
+    ):
+        result = competitor_fetching_skill(ctx)
+
+    assert result.get("competitor_metrics") is None
+    assert result.get("competitor_metrics_error") == "network unavailable"
