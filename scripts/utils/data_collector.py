@@ -55,7 +55,7 @@ def _baidu_fund_flow_history(code: str, days: int = 20) -> list[dict]:
             })
         return rows
     except Exception as e:
-        logger.warning(f"百度资金流向获取失败: {e}")
+        logger.info(f"可选数据源 百度资金流向 不可用，已跳过: {e}")
         return []
 
 
@@ -90,7 +90,7 @@ def _baidu_concept_blocks(code: str) -> dict:
                     result["region"].append(entry)
         return result
     except Exception as e:
-        logger.warning(f"百度概念板块获取失败: {e}")
+        logger.info(f"可选数据源 百度概念板块 不可用，已跳过: {e}")
         return {}
 
 
@@ -108,11 +108,20 @@ class AkshareHelper:
         self.max_retries = max_retries
         self._last_call_time = 0.0
 
-    def call(self, func: Callable, *args, **kwargs) -> Any:
+    def call(
+        self,
+        func: Callable,
+        *args,
+        optional: bool = False,
+        source_name: str | None = None,
+        fallback_name: str | None = None,
+        **kwargs,
+    ) -> Any:
         """
         带限速和重试地调用 akshare 函数。
         返回函数结果，或在所有重试失败后返回 None。
         """
+        label = source_name or getattr(func, "__name__", "akshare")
         # 限速：确保两次调用间隔至少 delay_sec
         elapsed = time.time() - self._last_call_time
         if elapsed < self.delay_sec:
@@ -128,16 +137,24 @@ class AkshareHelper:
                 err_name = type(e).__name__
                 if "RemoteDisconnected" in err_name or "ConnectionError" in err_name or "Connection aborted" in str(e):
                     wait = attempt * 2  # 2s, 4s, 6s
-                    logger.warning(f"akshare 调用 {func.__name__} 失败 (attempt {attempt}/{self.max_retries}): {e}")
+                    log = logger.info if optional else logger.warning
+                    log(f"akshare 调用 {label} 失败 (attempt {attempt}/{self.max_retries}): {e}")
                     if attempt < self.max_retries:
                         logger.info(f"等待 {wait}s 后重试...")
                         time.sleep(wait)
                 else:
                     # 非网络错误，不重试
-                    logger.warning(f"akshare 调用 {func.__name__} 失败 (非网络错误): {e}")
+                    log = logger.info if optional else logger.warning
+                    log(f"akshare 调用 {label} 失败 (非网络错误): {e}")
                     break
 
-        logger.error(f"akshare 调用 {func.__name__} 最终失败: {last_error}")
+        if optional:
+            if fallback_name:
+                logger.info(f"可选数据源 {label} 不可用，已交给 {fallback_name}: {last_error}")
+            else:
+                logger.info(f"可选数据源 {label} 不可用，已跳过: {last_error}")
+        else:
+            logger.error(f"akshare 调用 {label} 最终失败: {last_error}")
         return None
 
 
@@ -178,6 +195,9 @@ class TechnicalCollector:
                     period="daily",
                     start_date=(datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d"),
                     adjust="qfq",
+                    optional=True,
+                    source_name="akshare stock_zh_a_hist",
+                    fallback_name="mootdx raw",
                 )
             if df is not None and not df.empty:
                 column_map = {
@@ -280,9 +300,24 @@ class TechnicalCollector:
         if market == 0 or market == 1:
             prefix = "SZ" if market == 0 else "SH"
             symbol = f"{prefix}{code}"
-            df = helper.call(ak.stock_zh_a_hist, symbol=symbol, period="weekly", start_date="20200101", adjust="qfq")
+            df = helper.call(
+                ak.stock_zh_a_hist,
+                symbol=symbol,
+                period="weekly",
+                start_date="20200101",
+                adjust="qfq",
+                optional=True,
+                source_name="akshare stock_zh_a_hist weekly",
+            )
         else:
-            df = helper.call(ak.stock_hk_hist, symbol=code, period="weekly", start_date="20200101")
+            df = helper.call(
+                ak.stock_hk_hist,
+                symbol=code,
+                period="weekly",
+                start_date="20200101",
+                optional=True,
+                source_name="akshare stock_hk_hist weekly",
+            )
 
         if df is None or df.empty:
             return None
@@ -598,7 +633,13 @@ class FundFlowCollector:
             logger.warning("akshare 未安装，跳过资金流向采集")
             return []
         market = "sz" if code.startswith(("00", "30")) else "sh"
-        df = self.helper.call(ak.stock_individual_fund_flow, stock=code, market=market)
+        df = self.helper.call(
+            ak.stock_individual_fund_flow,
+            stock=code,
+            market=market,
+            optional=True,
+            source_name="akshare stock_individual_fund_flow",
+        )
         if df is None or df.empty:
             return []
         # akshare returns data in reverse chronological order

@@ -7,6 +7,7 @@ import urllib.request
 from typing import Any, Dict, List, Optional
 
 from .constants import COMPETITOR_CODES, COMPETITOR_MAP
+from .manual_financial_loader import load_manual_financials
 
 # Mac 环境下 Python 的 SSL 证书可能未正确配置
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -22,6 +23,11 @@ DATACENTER_URL = "https://datacenter-web.eastmoney.com/api/data/v1/get"
 def _is_hk_code(code: str) -> bool:
     """判断是否为港股代码: 5位数字且以0开头（如 02533）"""
     return len(code) == 5 and code.startswith("0")
+
+
+def _is_standard_a_share_code(code: str) -> bool:
+    """判断是否为可直接传给 A 股 akshare 财务接口的 6 位数字代码。"""
+    return re.fullmatch(r"\d{6}", str(code or "").strip()) is not None
 
 
 def eastmoney_datacenter(report_name: str, columns: str = "ALL",
@@ -172,6 +178,19 @@ def fund_flow_daily(ticker_or_code: str, secid_prefix: int = 105, limit: int = 1
             "main_pct": float(parts[6]) if len(parts) > 6 and parts[6] else 0,
         })
     return result
+
+
+def _manual_financials_for_code(code: str) -> Optional[Dict[str, Any]]:
+    manual_fin = load_manual_financials(code)
+    if manual_fin:
+        return manual_fin
+    pure_code = code.upper().replace(".HK", "")
+    for name, mapped_code in COMPETITOR_CODES.items():
+        if mapped_code.upper().replace(".HK", "") == pure_code:
+            manual_fin = load_manual_financials(name)
+            if manual_fin:
+                return manual_fin
+    return None
 
 
 def fetch_ps(code: str, quote: Optional[Dict]) -> Optional[float]:
@@ -391,6 +410,11 @@ def fetch_consensus_eps(code: str) -> Optional[Dict[str, Any]]:
 
 def fetch_financial_abstract(code: str) -> Optional[Dict]:
     """调用 akshare 获取财务分析指标（存货周转、应收周转、毛利率等）"""
+    code = str(code or "").strip()
+    if not _is_standard_a_share_code(code):
+        logger.info(f"[{code}] 非标准A股代码，已跳过财务摘要接口")
+        return None
+
     try:
         import akshare as ak
         import pandas as pd
@@ -483,7 +507,10 @@ def fetch_competitor_metrics(stock_name: str, stock_codes: Dict[str, str]) -> Di
         # 财务数据：港股 vs A股 vs 美股
         is_hk = _is_hk_code(code) or ".HK" in code.upper()
         is_us = code.isalpha()
-        if is_hk:
+        manual_fin = load_manual_financials(name) or load_manual_financials(code)
+        if manual_fin:
+            metrics.update(manual_fin)
+        elif is_hk:
             # 港股用东财 GMAININDICATOR（返回年报数据，无需年化）
             secucode = code if ".HK" in code.upper() else f"{code}.HK"
             hk_indicators = hk_key_indicators(secucode, page_size=1)
@@ -510,6 +537,8 @@ def fetch_competitor_metrics(stock_name: str, stock_codes: Dict[str, str]) -> Di
                 inv_days, rec_days = _extract_turnover_days(row)
                 metrics["inventory_days"] = inv_days
                 metrics["receivable_days"] = rec_days
+        elif code.upper().startswith("H"):
+            pass
         else:
             fin = fetch_financial_abstract(code)
             if fin:
@@ -625,6 +654,10 @@ def fetch_latest_quarterly_financials(code: str) -> Optional[Dict[str, Any]]:
         }
     """
     try:
+        manual_fin = _manual_financials_for_code(code)
+        if manual_fin:
+            return manual_fin
+
         if _is_hk_code(code):
             secucode = f"{code}.HK"
             indicators = hk_key_indicators(secucode, page_size=1)
@@ -656,6 +689,9 @@ def fetch_latest_quarterly_financials(code: str) -> Optional[Dict[str, Any]]:
                 "debt_ratio": row.get("DEBT_ASSET_RATIO"),
                 "source": "eastmoney_gmainindicator",
             }
+        elif not _is_standard_a_share_code(code):
+            logger.info(f"[{code}] 非标准A股代码，已跳过季度财务接口")
+            return None
         else:
             # A股：使用 akshare 财务摘要
             import akshare as ak
