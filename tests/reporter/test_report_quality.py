@@ -61,3 +61,86 @@ def test_weak_trend_high_score_contradiction_fails():
     assert "contradiction_weak_trend_high_total_score" in codes
     assert "contradiction_weak_trend_high_technical_score" in codes
     assert "contradiction_low_trend_health_high_total_score" in codes
+
+
+def test_blocked_entry_strong_recommendation_warns():
+    text = """
+# 圣邦股份 舆情深度报告
+
+## 一、综合评分与推荐
+
+### 综合评分: 7.5/10 | EV: +10.25%（强烈看多）
+
+> **AI 综合推荐**：**强烈看多** — 加权 EV +10.25%。
+
+## 技术面分析：中期趋势提醒
+
+**分析可信度**：中
+
+### 1. 趋势背景
+- 周线大背景：单边上涨
+- MA 结构：MA5>MA10>MA20
+
+### 2. 日线结构
+- MA20 方向：向上
+- 价格位置：站上MA20
+- 成交量：量能正常
+- 波动率条件：BOLL正常
+
+**当前状态**：关注/不操作（形态存在但盈亏比不足（1.06:1），等待更好的入场点）
+**结论**：趋势仍可跟踪。但当前不适合追高。
+**主要风险**：【BIAS偏高】
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 积极配置，最大仓位 20%
+
+## 风险提示与关注要点
+- 追高风险需关注。
+"""
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert result.passed
+    assert "contradiction_blocked_entry_strong_recommendation" in codes
+
+
+def test_tempered_entry_guardrail_report_has_no_blocked_entry_warning():
+    text = """
+# 圣邦股份 舆情深度报告
+
+## 一、综合评分与推荐
+
+### 综合评分: 6.5/10 | EV: +7.66%（看多但等待入场）
+
+> **AI 综合推荐**：**看多但等待入场** — 加权 EV +7.66%。技术面提示当前不适合追高，需等待回调或盈亏比改善。
+
+## 技术面分析：中期趋势提醒
+
+**分析可信度**：中
+
+### 1. 趋势背景
+- 周线大背景：单边上涨
+- MA 结构：MA5>MA10>MA20
+
+### 2. 日线结构
+- MA20 方向：向上
+- 价格位置：站上MA20
+- 成交量：量能正常
+- 波动率条件：BOLL正常
+
+**当前状态**：关注/不操作（形态存在但盈亏比不足（1.06:1），等待更好的入场点）
+**主要风险**：【BIAS偏高】
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 当前入场质量不足，建议等待回调或盈亏比改善，仓位 5-10%
+> **入场约束**: 技术面提示关注/不操作或追高风险，仓位建议已按入场质量降级。
+
+## 风险提示与关注要点
+- 追高风险需关注。
+"""
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "contradiction_blocked_entry_strong_recommendation" not in codes

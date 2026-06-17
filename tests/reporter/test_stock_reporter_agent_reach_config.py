@@ -7,8 +7,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 from utils.stock_reporter import PerStockReporter
 
 
-def test_default_reporter_does_not_enable_claim_verification():
-    """Default reporter without claim_verification config should not enable it."""
+def test_default_reporter_does_not_enable_claim_risk_signals():
+    """Default reporter without claim_verification.risk_signals should not enable it."""
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
         stock_codes={"测试股": "000001"},
@@ -24,10 +24,118 @@ def test_default_reporter_does_not_enable_claim_verification():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_claim_risk_signals") is False
+
+
+def test_claim_risk_signals_enabled_passes_through():
+    """claim_verification.risk_signals=True should pass enable_claim_risk_signals=True."""
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        agent_reach_configs={
+            "测试股": {
+                "enabled": False,
+                "claim_verification": {
+                    "enabled": False,
+                    "risk_signals": True,
+                    "base_dir": "/tmp/kb",
+                },
+            }
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=True,
+        enable_source_intake=False,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_claim_risk_signals") is True
     assert "enable_claim_verification_context" not in call_input
-    assert "claim_verification_base_dir" not in call_input
-    assert "claim_verification_max_verified" not in call_input
+    assert call_input.get("claim_verification_base_dir") == "/tmp/kb"
+
+
+def test_claim_risk_signals_independent_of_claim_verification_enabled():
+    """risk_signals=True should work even when claim_verification.enabled=False."""
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        agent_reach_configs={
+            "测试股": {
+                "enabled": False,
+                "claim_verification": {
+                    "enabled": False,
+                    "risk_signals": True,
+                },
+            }
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_claim_risk_signals") is True
+    assert "enable_claim_verification_context" not in call_input
+
+
+def test_other_stocks_unaffected_by_claim_risk_signals_config():
+    """Stocks without claim_verification.risk_signals should keep default behavior."""
+    reporter = PerStockReporter(
+        stocks_data={
+            "测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}],
+            "unaffected股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}],
+        },
+        stock_codes={"测试股": "000001", "unaffected股": "000002"},
+        raw_data={"测试股": {}, "unaffected股": {}},
+        agent_reach_configs={
+            "测试股": {
+                "enabled": False,
+                "claim_verification": {"enabled": False, "risk_signals": True},
+            }
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("unaffected股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
 
 
 def test_per_stock_claim_verification_enabled_without_agent_reach():
@@ -59,13 +167,57 @@ def test_per_stock_claim_verification_enabled_without_agent_reach():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=False, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert call_input.get("enable_claim_verification_context") is True
     assert call_input.get("claim_verification_base_dir") == "/tmp/kb"
     assert call_input.get("claim_verification_max_verified") == 3
     assert call_input.get("claim_verification_max_supported") == 2
     assert call_input.get("claim_verification_max_unverified") == 1
+
+
+def test_claim_verification_and_risk_signals_enable_independent_flags():
+    """claim_verification.enabled and risk_signals=True should set both independent flags."""
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        agent_reach_configs={
+            "测试股": {
+                "enabled": False,
+                "claim_verification": {
+                    "enabled": True,
+                    "risk_signals": True,
+                    "base_dir": "/tmp/kb",
+                },
+            }
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=True,
+        enable_source_intake=False,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_claim_verification_context") is True
+    assert call_input.get("enable_claim_risk_signals") is True
+    assert call_input.get("claim_verification_base_dir") == "/tmp/kb"
 
 
 def test_per_stock_claim_verification_disabled_does_not_pass():
@@ -144,7 +296,12 @@ def test_default_reporter_does_not_enable_agent_reach():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=False, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert "agent_reach_urls" not in call_input
     assert "agent_reach_rss_feeds" not in call_input
@@ -176,7 +333,12 @@ def test_per_stock_config_enables_agent_reach_and_passes_url():
 
         reporter.generate_stock_report("黑芝麻智能", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=True, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=True,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert call_input.get("enable_agent_reach") is True
     assert call_input.get("agent_reach_urls") == ["https://www.blacksesame.com/zh/list_10/972.html"]
@@ -205,7 +367,12 @@ def test_disabled_per_stock_config_does_not_enable_agent_reach():
 
         reporter.generate_stock_report("黑芝麻智能", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=False, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert "agent_reach_urls" not in call_input
     assert "enable_evidence_notes" not in call_input
@@ -229,7 +396,12 @@ def test_global_enable_overrides_per_stock():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=True, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=True,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
 
 
 def test_rss_config_mapping_when_enabled():
@@ -311,7 +483,12 @@ def test_no_evidence_notes_config_does_not_enable_evidence_notes():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=True, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=True,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert "enable_evidence_notes" not in call_input
 
@@ -339,7 +516,12 @@ def test_evidence_notes_enabled_with_agent_reach():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=True, enable_evidence_notes=True)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=True,
+        enable_evidence_notes=True,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert call_input.get("enable_evidence_notes") is True
     assert call_input.get("evidence_notes_dry_run") is True
@@ -372,7 +554,12 @@ def test_evidence_notes_dry_run_and_base_dir_passed():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=True, enable_evidence_notes=True)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=True,
+        enable_evidence_notes=True,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert call_input.get("evidence_notes_dry_run") is False
     assert call_input.get("knowledge_base_dir") == "/tmp/evidence_kb"
@@ -401,6 +588,11 @@ def test_evidence_notes_enabled_without_agent_reach_does_not_enable():
 
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(enable_agent_reach=False, enable_evidence_notes=False)
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
     call_input = mock_pipeline.run.call_args[0][0]
     assert "enable_evidence_notes" not in call_input

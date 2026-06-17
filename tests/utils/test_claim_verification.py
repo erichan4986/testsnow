@@ -92,7 +92,8 @@ def test_moc_md_skipped(tmp_path):
     skipped_mocs = [s for s in plan.skipped_files if s["reason"] == "moc_index"]
     assert len(skipped_mocs) == 1
     assert "MOC.md" in skipped_mocs[0]["path"]
-    assert len(plan.low_credit_claims) == 1
+    assert len(plan.low_credit_claims) == 0
+    assert any(s["reason"] == "placeholder_claim_skipped" for s in plan.skipped_files)
 
 
 def test_moc_md_lowercase_skipped(tmp_path):
@@ -118,11 +119,10 @@ def test_social_no_claims_creates_stub(tmp_path):
         "# 深度分析\n正文",
     )
     plan = build_claim_verification_plan("黑芝麻智能", root)
-    assert len(plan.low_credit_claims) == 1
-    claim = plan.low_credit_claims[0]
-    assert claim.extraction_method == "legacy_social_stub"
-    assert claim.claim_status == "unverified_claim"
-    assert "深度分析" in claim.claim_text
+    assert len(plan.low_credit_claims) == 0
+    skipped = [s for s in plan.skipped_files if s["reason"] == "placeholder_claim_skipped"]
+    assert len(skipped) == 1
+    assert "20260612-深度分析.md" in skipped[0]["path"]
 
 
 def test_social_body_confirmed_facts_extracted_as_unverified(tmp_path):
@@ -263,8 +263,8 @@ def test_empty_counts_without_child_bullets_do_not_create_claims(tmp_path):
     plan = build_claim_verification_plan("黑芝麻智能", root)
     body_claims = [c for c in plan.low_credit_claims if c.extraction_method == "legacy_social_body_rule"]
     assert len(body_claims) == 0
-    assert len(plan.low_credit_claims) == 1
-    assert plan.low_credit_claims[0].extraction_method == "legacy_social_stub"
+    assert len(plan.low_credit_claims) == 0
+    assert any(s["reason"] == "placeholder_claim_skipped" for s in plan.skipped_files)
 
 
 def test_noisy_bullets_filtered(tmp_path):
@@ -341,8 +341,8 @@ def test_fallback_stub_when_no_body_claims(tmp_path):
         "# 最新研报\n无结构数据。",
     )
     plan = build_claim_verification_plan("黑芝麻智能", root)
-    assert len(plan.low_credit_claims) == 1
-    assert plan.low_credit_claims[0].extraction_method == "legacy_social_stub"
+    assert len(plan.low_credit_claims) == 0
+    assert any(s["reason"] == "placeholder_claim_skipped" for s in plan.skipped_files)
 
 
 def test_topic_inference_for_body_claims(tmp_path):
@@ -425,6 +425,47 @@ claims:
     v = plan.verifications[0]
     assert v.action in ("verified", "supported", "needs_review")
     assert len(v.verified_by) >= 1
+
+
+def test_customer_demand_decline_claim_verified_by_official_fact(tmp_path):
+    root = tmp_path / "knowledge"
+    stock_dir = root / "10-Stocks" / "中简科技"
+    evidence_dir = stock_dir / "evidence"
+    official_claim = "客户对公司部分产品的需求量阶段性减少导致发货暂时减少，其中收入下降约 50%-60%"
+    write_note(
+        evidence_dir / "official.md",
+        f"""stock: 中简科技
+source_type: exchange_announcement
+source_credit: 98
+verification_status: primary_source
+title: 中简科技2026年第一季度业绩预告
+claims:
+  - claim_text: {official_claim}
+    claim_status: fact_candidate
+    topics:
+      - earnings_business
+      - customer_orders
+""",
+        "body",
+    )
+    write_note(
+        stock_dir / "community.md",
+        (
+            '{"stock": "中简科技", "source_type": "social_discussion", "source_credit": 35, '
+            '"verification_status": "market_opinion", "claims": ['
+            '{"claim_text": "报告期内，客户对公司部分产品的需求量阶段性减少导致发货暂时减少，其中收入下降约 50%-60%"}'
+            "]}"
+        ),
+        "body",
+    )
+
+    plan = build_claim_verification_plan("中简科技", root)
+
+    assert len(plan.verifications) == 1
+    verification = plan.verifications[0]
+    assert verification.action == "verified"
+    assert verification.confidence > 0
+    assert any("specific terms" in reason for reason in verification.reasons)
 
 
 def test_technical_notes_skipped_without_stub(tmp_path):
@@ -519,7 +560,10 @@ def test_body_extracted_social_claims_never_verify_other_social_claims(tmp_path)
         body_b,
     )
     plan = build_claim_verification_plan("黑芝麻智能", root)
-    assert len(plan.low_credit_claims) == 2
+    assert len(plan.low_credit_claims) == 1
+    assert "20260612-a.md" in plan.low_credit_claims[0].source_file
+    assert "20260612-b.md" in plan.low_credit_claims[0].source_file
+    assert any(s["reason"] == "duplicate_low_credit_claim" for s in plan.skipped_files)
     assert len(plan.high_credit_claims) == 0
     for v in plan.verifications:
         assert v.action == "unverified"
@@ -569,8 +613,8 @@ def test_social_company_announcement_category_stays_low_credit(tmp_path):
     )
     plan = build_claim_verification_plan("黑芝麻智能", root)
     assert len(plan.high_credit_claims) == 0
-    assert len(plan.low_credit_claims) == 1
-    assert plan.low_credit_claims[0].source_type == "social_discussion"
+    assert len(plan.low_credit_claims) == 0
+    assert any(s["reason"] == "placeholder_claim_skipped" for s in plan.skipped_files)
 
 
 def test_high_credit_evidence_enters_high_bucket(tmp_path):
@@ -597,6 +641,44 @@ claims:
     assert len(plan.high_credit_claims) == 1
     assert len(plan.low_credit_claims) == 0
     assert plan.high_credit_claims[0].source_credit == 85
+
+
+def test_duplicate_high_credit_claims_merge_structured_provenance(tmp_path):
+    root = tmp_path / "knowledge"
+    stock_dir = root / "10-Stocks" / "黑芝麻智能"
+    evidence_dir = stock_dir / "evidence"
+    for name, credit, source_type in [
+        ("company.md", 90, "company_official"),
+        ("official.md", 98, "exchange_announcement"),
+    ]:
+        write_note(
+            evidence_dir / name,
+            f"""stock: 黑芝麻智能
+source_type: {source_type}
+source_credit: {credit}
+verification_status: primary_source
+claims:
+  - claim_text: A2000U获得ASIL-D认证
+    claim_status: confirmed_fact
+    topics:
+      - product_progress
+""",
+            "body",
+        )
+
+    plan = build_claim_verification_plan("黑芝麻智能", root)
+
+    assert len(plan.high_credit_claims) == 1
+    claim = plan.high_credit_claims[0]
+    assert claim.source_files == [
+        "10-Stocks/黑芝麻智能/evidence/company.md",
+        "10-Stocks/黑芝麻智能/evidence/official.md",
+    ]
+    assert claim.source_types == ["company_official", "exchange_announcement"]
+    assert claim.source_credits == [90, 98]
+    assert claim.max_source_credit == 98
+    assert claim.source_count == 2
+    assert any(s["reason"] == "duplicate_high_credit_claim" for s in plan.skipped_files)
 
 
 def test_social_claim_enters_low_bucket(tmp_path):
@@ -656,10 +738,40 @@ def test_social_claim_never_verifies_another_social_claim(tmp_path):
         "# B",
     )
     plan = build_claim_verification_plan("黑芝麻智能", root)
-    assert len(plan.low_credit_claims) == 2
+    assert len(plan.low_credit_claims) == 1
+    assert "20260612-a.md" in plan.low_credit_claims[0].source_file
+    assert "20260612-b.md" in plan.low_credit_claims[0].source_file
+    assert plan.low_credit_claims[0].source_files == [
+        "knowledge/10-Stocks/黑芝麻智能/20260612-a.md",
+        "knowledge/10-Stocks/黑芝麻智能/20260612-b.md",
+    ]
+    assert plan.low_credit_claims[0].source_types == ["social_discussion"]
+    assert plan.low_credit_claims[0].source_credits == [35]
+    assert plan.low_credit_claims[0].max_source_credit == 35
+    assert plan.low_credit_claims[0].source_count == 2
     assert len(plan.high_credit_claims) == 0
     for v in plan.verifications:
         assert v.action == "unverified"
+
+
+def test_claim_candidate_derives_structured_provenance_defaults():
+    candidate = ClaimCandidate(
+        claim_id="c1",
+        stock="黑芝麻智能",
+        source_file="knowledge/10-Stocks/黑芝麻智能/source.md",
+        source_type="social_discussion",
+        source_credit=35,
+        verification_status="market_opinion",
+        claim_status="unverified_claim",
+        claim_text="社区观点",
+        topics=[],
+    )
+
+    assert candidate.source_files == ["knowledge/10-Stocks/黑芝麻智能/source.md"]
+    assert candidate.source_types == ["social_discussion"]
+    assert candidate.source_credits == [35]
+    assert candidate.max_source_credit == 35
+    assert candidate.source_count == 1
 
 
 def test_high_credit_verifies_matching_social_claim(tmp_path):
@@ -1014,6 +1126,8 @@ def test_all_test_data_under_tmp_path(tmp_path):
         "# 深度分析",
     )
     plan = build_claim_verification_plan("黑芝麻智能", root)
-    assert len(plan.low_credit_claims) == 1
-    assert Path(plan.low_credit_claims[0].source_file).parts[0] == "knowledge"
-    assert str(tmp_path) not in plan.low_credit_claims[0].source_file
+    assert len(plan.low_credit_claims) == 0
+    skipped = [s for s in plan.skipped_files if s["reason"] == "placeholder_claim_skipped"]
+    assert len(skipped) == 1
+    assert Path(skipped[0]["path"]).parts[0] == "knowledge"
+    assert str(tmp_path) not in skipped[0]["path"]

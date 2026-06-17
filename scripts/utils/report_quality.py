@@ -74,6 +74,18 @@ STRONG_RECOMMENDATION_PATTERNS = [
     r"趋势仍可跟踪",
 ]
 
+BLOCKED_ENTRY_STRONG_RECOMMENDATION_PATTERNS = [
+    r"强烈看多",
+    r"积极配置",
+    r"建议加仓",
+]
+
+BLOCKED_ENTRY_PATTERNS = [
+    r"关注/不操作",
+    r"盈亏比不足",
+    r"BIAS[^。\n]*严重正偏离",
+]
+
 
 def check_report_file(path: str | Path) -> QualityResult:
     """Check a Markdown report file."""
@@ -124,6 +136,18 @@ def _check_required_signals(text: str) -> Iterable[QualityIssue]:
 
 
 def _check_contradictions(text: str) -> Iterable[QualityIssue]:
+    blocked_entry = any(re.search(p, text, flags=re.IGNORECASE) for p in BLOCKED_ENTRY_PATTERNS)
+    strong_recommendation = any(re.search(p, text) for p in STRONG_RECOMMENDATION_PATTERNS)
+    blocked_entry_strong_recommendation = any(
+        re.search(p, text) for p in BLOCKED_ENTRY_STRONG_RECOMMENDATION_PATTERNS
+    )
+    if blocked_entry and blocked_entry_strong_recommendation:
+        yield QualityIssue(
+            code="contradiction_blocked_entry_strong_recommendation",
+            severity="warning",
+            message="报告出现入场质量不足/追高风险信号，同时包含偏积极建议，需人工复核。",
+        )
+
     weak = any(re.search(p, text, flags=re.IGNORECASE) for p in WEAK_TREND_PATTERNS)
     if not weak:
         return
@@ -157,7 +181,7 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
                 evidence=f"趋势健康度={trend_health}/100, 综合评分={total_score}/10",
             )
 
-    if any(re.search(p, text) for p in STRONG_RECOMMENDATION_PATTERNS):
+    if strong_recommendation:
         yield QualityIssue(
             code="contradiction_weak_trend_strong_recommendation",
             severity="warning",

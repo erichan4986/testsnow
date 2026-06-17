@@ -21,6 +21,8 @@ class RiskRenderer:
         consensus = ctx.get("consensus")
         ind_fwd_pe = ctx.get("industry_fwd_pe")
         synthesis_text = ctx.get("synthesis_text", "")
+        structured_risk_signals = ctx.get("structured_risk_signals", []) or []
+        score_llm_keyword_risks = bool(ctx.get("score_llm_keyword_risks", False))
 
         # 行业特有风险表
         try:
@@ -63,6 +65,8 @@ class RiskRenderer:
                 industry_fwd_pe=ind_fwd_pe,
                 watch_points_md="",
                 synthesis_text=synthesis_text,
+                structured_risk_signals=structured_risk_signals,
+                score_llm_keyword_risks=score_llm_keyword_risks,
             )
 
         # 预定义的风险提示与关注要点

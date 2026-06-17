@@ -1,0 +1,253 @@
+"""Tests for PerStockReporter Source Intake config wiring."""
+
+import sys
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
+
+from utils.stock_reporter import PerStockReporter
+
+
+def test_default_reporter_does_not_enable_source_intake():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
+
+
+def test_source_intake_enabled_passes_flag():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {"enabled": True},
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("source_intake_enabled") is True
+    assert call_input.get("source_intake_config") == {"enabled": True}
+
+
+def test_source_intake_evidence_notes_enabled_without_agent_reach():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "evidence_notes": {"enabled": True},
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=True,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_evidence_notes") is True
+    assert call_input.get("evidence_notes_dry_run") is True
+
+
+def test_source_intake_config_separate_from_agent_reach():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        agent_reach_configs={
+            "测试股": {"enabled": True, "web_urls": ["https://example.com"]},
+        },
+        source_intake_configs={
+            "测试股": {"enabled": True},
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=True,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+    )
+
+
+def test_source_intake_disabled_per_stock():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {"enabled": False},
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=False,
+    )
+
+
+def test_source_intake_with_dry_run_false():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "evidence_notes": {"enabled": True, "dry_run": False},
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("evidence_notes_dry_run") is False
+
+
+def test_source_intake_claim_verification_enabled_passes_context():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "claim_verification": {
+                    "enabled": True,
+                    "base_dir": "/tmp/kb",
+                    "max_verified": 5,
+                    "max_supported": 3,
+                    "max_unverified": 2,
+                },
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_claim_verification_context") is True
+    assert call_input.get("claim_verification_base_dir") == "/tmp/kb"
+    assert call_input.get("claim_verification_max_verified") == 5
+    assert call_input.get("claim_verification_max_supported") == 3
+    assert call_input.get("claim_verification_max_unverified") == 2
+
+
+def test_source_intake_claim_risk_signals_enabled_passes_pipeline_flag():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "claim_verification": {"enabled": False, "risk_signals": True},
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=True,
+        enable_source_intake=True,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input.get("enable_claim_risk_signals") is True

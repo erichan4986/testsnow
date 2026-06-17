@@ -24,6 +24,7 @@ class PerStockReporter:
         stock_codes: Dict[str, str] = None,
         raw_data: Dict[str, Any] = None,
         agent_reach_configs: Dict[str, Dict] = None,
+        source_intake_configs: Dict[str, Dict] = None,
         enable_agent_reach: bool = False,
     ):
         """
@@ -32,7 +33,8 @@ class PerStockReporter:
             data_path: 或从JSON文件路径加载
             stock_codes: 股票名称到6位代码的映射，如 {"乐鑫科技": "688018"}
             raw_data: 原始采集数据（研报、公告、资金流向等）
-            agent_reach_configs: 每只股票 Agent-Reach 配置，如 {"黑芝麻智能": {"enabled": True, "web_urls": [...]}}
+            agent_reach_configs: 每只股票 Agent-Reach 配置
+            source_intake_configs: 每只股票 Source Intake v2 配置
             enable_agent_reach: 全局启用 Agent-Reach（默认 False）
         """
         if stocks_data:
@@ -46,6 +48,7 @@ class PerStockReporter:
         self.stock_codes = stock_codes or {}
         self.raw_data = raw_data or {}
         self.agent_reach_configs = agent_reach_configs or {}
+        self.source_intake_configs = source_intake_configs or {}
         self.enable_agent_reach = enable_agent_reach
         self.date_str = datetime.now().strftime("%Y%m%d")
         self.date_display = datetime.now().strftime("%Y年%m月%d日")
@@ -92,14 +95,23 @@ class PerStockReporter:
             from .report_skills import build_stock_report_pipeline
 
             ar_cfg = self.agent_reach_configs.get(stock_name, {})
+            si_cfg = self.source_intake_configs.get(stock_name, {})
             agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
-            evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
-            evidence_notes_enabled = bool(evidence_cfg.get("enabled", False))
-            cv_cfg = ar_cfg.get("claim_verification", {}) or {}
+            source_intake_enabled = bool(si_cfg.get("enabled", False))
+            ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
+            si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
+            evidence_notes_enabled = bool(
+                (agent_reach_enabled and ar_evidence_cfg.get("enabled", False))
+                or (source_intake_enabled and si_evidence_cfg.get("enabled", False))
+            )
+            cv_cfg = ar_cfg.get("claim_verification", {}) or si_cfg.get("claim_verification", {}) or {}
             claim_verification_enabled = bool(cv_cfg.get("enabled", False))
+            claim_risk_signals_enabled = bool(cv_cfg.get("risk_signals", False))
             pipeline = build_stock_report_pipeline(
                 enable_agent_reach=agent_reach_enabled,
-                enable_evidence_notes=agent_reach_enabled and evidence_notes_enabled,
+                enable_evidence_notes=evidence_notes_enabled,
+                enable_claim_risk_signals=claim_risk_signals_enabled,
+                enable_source_intake=source_intake_enabled,
             )
 
             pipeline_input = {
@@ -109,10 +121,13 @@ class PerStockReporter:
                 "stocks_data": self.stocks_data,
                 "raw_data": self.raw_data,
                 "stock_codes": self.stock_codes,
+                "enable_claim_risk_signals": claim_risk_signals_enabled,
             }
 
             if claim_verification_enabled:
                 pipeline_input["enable_claim_verification_context"] = True
+
+            if claim_verification_enabled or claim_risk_signals_enabled:
                 if cv_cfg.get("base_dir"):
                     pipeline_input["claim_verification_base_dir"] = cv_cfg["base_dir"]
                 if cv_cfg.get("max_verified") is not None:
@@ -137,11 +152,16 @@ class PerStockReporter:
                 if official_domains:
                     pipeline_input["agent_reach_official_domains"] = official_domains
 
-                if evidence_notes_enabled:
-                    pipeline_input["enable_evidence_notes"] = True
-                    pipeline_input["evidence_notes_dry_run"] = evidence_cfg.get("dry_run", True)
-                    if evidence_cfg.get("base_dir"):
-                        pipeline_input["knowledge_base_dir"] = evidence_cfg["base_dir"]
+            if source_intake_enabled:
+                pipeline_input["source_intake_enabled"] = True
+                pipeline_input["source_intake_config"] = si_cfg
+
+            if evidence_notes_enabled:
+                pipeline_input["enable_evidence_notes"] = True
+                evidence_cfg = ar_evidence_cfg if ar_evidence_cfg.get("enabled") else si_evidence_cfg
+                pipeline_input["evidence_notes_dry_run"] = evidence_cfg.get("dry_run", True)
+                if evidence_cfg.get("base_dir"):
+                    pipeline_input["knowledge_base_dir"] = evidence_cfg["base_dir"]
 
             ctx = pipeline.run(pipeline_input)
             md_path = ctx.output.get("md_path", "")

@@ -18,7 +18,7 @@ import hashlib
 import json
 import logging
 import re
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass, field, replace
 from pathlib import Path
 from typing import Any, Dict, List, Tuple, Union
 
@@ -53,6 +53,42 @@ class ClaimCandidate:
     title: str = ""
     source_platforms: List[str] = field(default_factory=list)
     extraction_method: str = ""
+    source_files: List[str] = field(default_factory=list)
+    source_types: List[str] = field(default_factory=list)
+    source_credits: List[int] = field(default_factory=list)
+    max_source_credit: int = 0
+    source_count: int = 0
+
+    def __post_init__(self) -> None:
+        source_files = list(self.source_files) if self.source_files else []
+        if not source_files and self.source_file:
+            source_files = [self.source_file]
+
+        source_types = list(self.source_types) if self.source_types else []
+        if self.source_type and self.source_type not in source_types:
+            source_types.append(self.source_type)
+
+        source_credits = [int(c) for c in self.source_credits if c is not None] if self.source_credits else []
+        if self.source_credit and int(self.source_credit) not in source_credits:
+            source_credits.append(int(self.source_credit))
+
+        max_source_credit = int(self.max_source_credit or 0)
+        if source_credits:
+            max_source_credit = max(max_source_credit, max(source_credits))
+        else:
+            max_source_credit = max(max_source_credit, int(self.source_credit or 0))
+
+        source_count = int(self.source_count or 0)
+        if source_files:
+            source_count = max(source_count, len(source_files))
+        elif self.source_file:
+            source_count = max(source_count, 1)
+
+        object.__setattr__(self, "source_files", source_files)
+        object.__setattr__(self, "source_types", source_types)
+        object.__setattr__(self, "source_credits", source_credits)
+        object.__setattr__(self, "max_source_credit", max_source_credit)
+        object.__setattr__(self, "source_count", source_count)
 
 
 @dataclass(frozen=True)
@@ -98,6 +134,9 @@ _SPECIFIC_TERMS = {
     "认证",
     "获奖",
     "营收",
+    "需求量",
+    "发货",
+    "研发费用",
     "亏损",
     "毛利率",
     "同比",
@@ -326,6 +365,106 @@ def _build_stub_candidate(
         source_platforms=_normalize_source_platforms(meta),
         extraction_method="legacy_social_stub",
     )
+
+
+def _normalize_claim_text_for_dedupe(text: str) -> str:
+    """Normalize claim text for low-credit dedupe."""
+    text = str(text or "")
+    text = re.sub(r"\[\^?\d+\]", "", text)
+    text = re.sub(r"https?://\S+", "", text)
+    text = re.sub(r"\s+", "", text)
+    text = re.sub(r"[，。,.；;：:、\"'“”‘’（）()【】\[\]\-—_]", "", text)
+    return text.lower()
+
+
+def _is_placeholder_low_credit_claim(candidate: ClaimCandidate) -> bool:
+    text = str(candidate.claim_text or "")
+    return (
+        candidate.extraction_method == "legacy_social_stub"
+        and "该社区笔记包含待验证观点" in text
+        and "需用高信用来源核查" in text
+    )
+
+
+def _merge_claim_candidates(existing: ClaimCandidate, duplicate: ClaimCandidate) -> ClaimCandidate:
+    """Merge provenance from duplicate low-credit candidates."""
+    source_files = []
+    for value in list(existing.source_files) + list(duplicate.source_files):
+        if value and value not in source_files:
+            source_files.append(value)
+
+    topics = list(existing.topics)
+    for topic in duplicate.topics:
+        if topic not in topics:
+            topics.append(topic)
+
+    platforms = list(existing.source_platforms)
+    for platform in duplicate.source_platforms:
+        if platform not in platforms:
+            platforms.append(platform)
+
+    source_types = list(existing.source_types)
+    for source_type in duplicate.source_types:
+        if source_type not in source_types:
+            source_types.append(source_type)
+
+    source_credits = list(existing.source_credits)
+    for credit in duplicate.source_credits:
+        if credit not in source_credits:
+            source_credits.append(credit)
+
+    return replace(
+        existing,
+        source_file=", ".join(source_files),
+        topics=topics,
+        source_platforms=platforms,
+        source_files=source_files,
+        source_types=source_types,
+        source_credits=source_credits,
+        max_source_credit=max(source_credits) if source_credits else max(existing.max_source_credit, duplicate.max_source_credit),
+        source_count=len(source_files),
+    )
+
+
+def _dedupe_claim_candidates(
+    claims: List[ClaimCandidate],
+    skipped_files: List[Dict[str, str]],
+    duplicate_reason: str,
+) -> List[ClaimCandidate]:
+    """Dedupe claim candidates by normalized text, merging provenance."""
+    cleaned: List[ClaimCandidate] = []
+    seen: Dict[str, int] = {}
+
+    for claim in claims:
+        key = _normalize_claim_text_for_dedupe(claim.claim_text)
+        if not key:
+            skipped_files.append({"path": claim.source_file, "reason": "empty_claim_skipped"})
+            continue
+
+        if key in seen:
+            idx = seen[key]
+            cleaned[idx] = _merge_claim_candidates(cleaned[idx], claim)
+            skipped_files.append({"path": claim.source_file, "reason": duplicate_reason})
+            continue
+
+        seen[key] = len(cleaned)
+        cleaned.append(claim)
+
+    return cleaned
+
+
+def _clean_low_credit_claims(
+    claims: List[ClaimCandidate],
+    skipped_files: List[Dict[str, str]],
+) -> List[ClaimCandidate]:
+    """Drop placeholder low-credit claims and dedupe by normalized text."""
+    non_placeholder: List[ClaimCandidate] = []
+    for claim in claims:
+        if _is_placeholder_low_credit_claim(claim):
+            skipped_files.append({"path": claim.source_file, "reason": "placeholder_claim_skipped"})
+            continue
+        non_placeholder.append(claim)
+    return _dedupe_claim_candidates(non_placeholder, skipped_files, "duplicate_low_credit_claim")
 
 
 # ---------------------------------------------------------------------------
@@ -797,7 +936,20 @@ def build_claim_verification_plan(
     high_credit_claims, medium_credit_claims = _extract_evidence_claims(
         stock_name, evidence_dir, skipped_files
     )
-    low_credit_claims = _extract_social_claims(stock_name, stock_dir, skipped_files)
+    high_credit_claims = _dedupe_claim_candidates(
+        high_credit_claims,
+        skipped_files,
+        "duplicate_high_credit_claim",
+    )
+    medium_credit_claims = _dedupe_claim_candidates(
+        medium_credit_claims,
+        skipped_files,
+        "duplicate_medium_credit_claim",
+    )
+    low_credit_claims = _clean_low_credit_claims(
+        _extract_social_claims(stock_name, stock_dir, skipped_files),
+        skipped_files,
+    )
 
     verifications: List[ClaimVerification] = []
     for low in low_credit_claims:

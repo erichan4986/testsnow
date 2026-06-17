@@ -8,7 +8,10 @@ else:
 from .agent_reach_query_skill import agent_reach_query_skill
 from .agent_reach_skill import agent_reach_fetch_skill
 from .agent_reach_quality_skill import agent_reach_quality_skill
+from .a_stock_source_intake_skill import a_stock_source_intake_skill
+from .source_intake_merge_skill import source_intake_merge_skill
 from .evidence_note_skill import evidence_note_writer_skill
+from .claim_risk_signal_skill import claim_risk_signal_skill
 from .analysis_skills import cross_source_consolidation_skill, scoring_skill
 from .chart_skills import ChartGenerationSkill, TechnicalAnalysisSkill
 from .data_skills import (
@@ -25,7 +28,10 @@ __all__ = [
     "agent_reach_query_skill",
     "agent_reach_fetch_skill",
     "agent_reach_quality_skill",
+    "a_stock_source_intake_skill",
+    "source_intake_merge_skill",
     "evidence_note_writer_skill",
+    "claim_risk_signal_skill",
     "cross_source_consolidation_skill",
     "data_loading_skill",
     "quality_gate_skill",
@@ -41,7 +47,13 @@ __all__ = [
 ]
 
 
-def build_stock_report_pipeline(llm_client=None, enable_agent_reach: bool = False, enable_evidence_notes: bool = False) -> SkillPipeline:
+def build_stock_report_pipeline(
+    llm_client=None,
+    enable_agent_reach: bool = False,
+    enable_evidence_notes: bool = False,
+    enable_claim_risk_signals: bool = False,
+    enable_source_intake: bool = False,
+) -> SkillPipeline:
     """构建股票报告生成 Pipeline。"""
     skills = [
         data_loading_skill,
@@ -54,8 +66,15 @@ def build_stock_report_pipeline(llm_client=None, enable_agent_reach: bool = Fals
             agent_reach_fetch_skill,
             agent_reach_quality_skill,
         ])
-        if enable_evidence_notes:
-            skills.append(evidence_note_writer_skill)
+
+    if enable_source_intake:
+        skills.append(a_stock_source_intake_skill)
+
+    if enable_agent_reach or enable_source_intake:
+        skills.append(source_intake_merge_skill)
+
+    if enable_evidence_notes and (enable_agent_reach or enable_source_intake):
+        skills.append(evidence_note_writer_skill)
 
     skills.extend([
         cross_source_consolidation_skill,
@@ -64,6 +83,12 @@ def build_stock_report_pipeline(llm_client=None, enable_agent_reach: bool = Fals
         technical_fetching_skill,
         TechnicalAnalysisSkill(),
         SynthesisSkill(llm_client=llm_client),
+    ])
+
+    if enable_claim_risk_signals:
+        skills.append(claim_risk_signal_skill)
+
+    skills.extend([
         scoring_skill,
         ChartGenerationSkill(),
         ReportAssemblySkill(),
