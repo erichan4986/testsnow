@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""圣邦股份全流程报告生成（A股 + 知乎搜索 + 技术面分析）"""
+"""中简科技全流程报告生成（A股 + 知乎搜索 + 读取已抓取雪球/知识库数据）"""
 
 import argparse
 import json
@@ -30,20 +30,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 STOCK = {
-    "name": "圣邦股份",
-    "code": "300661",
-    "xueqiu_code": "SZ300661",
-    "gid": "300661",
+    "name": "中简科技",
+    "code": "300777",
+    "xueqiu_code": "SZ300777",
+    "gid": "300777",
 }
 STOCK_NAME = STOCK["name"]
 
-KEYWORDS = ["圣邦股份", "模拟芯片", "电源管理芯片", "半导体", "PMIC"]
+KEYWORDS = ["中简科技", "碳纤维", "航空航天", "军工", "复合材料", "T1100", "ZM40X"]
+
 
 _CITATION_RE = re.compile(r"\[\^?\d+\]")
 
 
 def _parse_args(argv=None):
-    parser = argparse.ArgumentParser(description="生成圣邦股份单股深度报告")
+    parser = argparse.ArgumentParser(description="生成中简科技单股深度报告")
     parser.add_argument(
         "--fast-test",
         action="store_true",
@@ -314,7 +315,7 @@ def main(argv=None):
             json.dump(
                 {
                     "date": date_str,
-                    "stock_codes": {STOCK_NAME: STOCK["code"]},
+                    "stock_codes": {STOCK_NAME: "300777"},
                     "stocks_data": stocks_data,
                     "raw_data": collected_data,
                 },
@@ -329,7 +330,7 @@ def main(argv=None):
 
     # 4. 生成报告
     logger.info("\n[4/4] 生成个股深度报告...")
-    stock_codes = {STOCK_NAME: STOCK["code"]}
+    stock_codes = {STOCK_NAME: "300777"}
     agent_reach_configs = _load_agent_reach_config(STOCK_NAME)
     source_intake_configs = _load_source_intake_config(STOCK_NAME)
     reporter = PerStockReporter(

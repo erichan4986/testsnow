@@ -40,6 +40,24 @@ def test_black_sesame_entry_passes_agent_reach_config(monkeypatch, tmp_path):
 
     monkeypatch.setattr(module, "export_pdf", MagicMock())
 
+    monkeypatch.setattr(
+        module, "_load_agent_reach_config", lambda *a, **k: {
+            "黑芝麻智能": {
+                "enabled": True,
+                "web_urls": [
+                    "https://www.blacksesame.com/zh/list_10/972.html",
+                    "https://www.blacksesame.com/zh/list_9/977.html",
+                    "https://www.blacksesame.com/zh/list_9/966.html",
+                    "https://www.blacksesame.com/zh/list_9/964.html",
+                    "https://www.blacksesame.com/zh/list_9/961.html",
+                    "https://www.blacksesame.com/zh/list_10/912.html",
+                ],
+                "official_domains": ["blacksesame.com"],
+                "claim_verification": {"enabled": True, "risk_signals": True},
+            }
+        }
+    )
+
     module.main()
 
     kwargs = reporter_cls.call_args.kwargs
@@ -55,6 +73,7 @@ def test_black_sesame_entry_passes_agent_reach_config(monkeypatch, tmp_path):
                 "https://www.blacksesame.com/zh/list_10/912.html",
             ],
             "official_domains": ["blacksesame.com"],
+            "claim_verification": {"enabled": True, "risk_signals": True},
         }
     }
 

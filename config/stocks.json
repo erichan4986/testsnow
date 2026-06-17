@@ -33,13 +33,104 @@
     "name": "中简科技",
     "code": "300777",
     "xueqiu_code": "SZ300777",
-    "gid": "300777"
+    "gid": "300777",
+    "source_intake": {
+      "enabled": true,
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": ["年度报告", "季度报告", "业绩预告", "权益分派", "投资者关系活动", "风险提示"],
+          "read_detail_content": true,
+          "detail_content_categories": ["业绩预告", "季度报告", "一季度报告", "三季度报告"],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": true,
+          "max_items": 10
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": false,
+          "max_items": 5
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      }
+    }
   },
   {
     "name": "圣邦股份",
     "code": "300661",
     "xueqiu_code": "SZ300661",
-    "gid": "300661"
+    "gid": "300661",
+    "source_intake": {
+      "enabled": true,
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告",
+            "风险提示"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": true,
+          "max_items": 10
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": false,
+          "max_items": 5
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      }
+    }
   },
   {
     "name": "乐鑫科技",
