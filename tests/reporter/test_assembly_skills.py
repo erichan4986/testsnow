@@ -132,7 +132,77 @@ def test_header_uses_dynamic_data_sources():
     assert "雪球网热门讨论" not in header
 
 
-def test_agent_reach_evidence_renderer_order():
+def test_source_intake_evidence_renderer_order():
+    skill = ReportAssemblySkill()
+    names = [name for name, _, _ in skill.RENDERERS]
+    assert "source_intake_evidence" in names
+    assert names.index("deep_analysis") < names.index("source_intake_evidence")
+    assert names.index("source_intake_evidence") < names.index("agent_reach_evidence")
+    assert names.index("source_intake_evidence") < names.index("risk")
+
+
+def test_report_renders_when_source_intake_keys_absent(tmp_path):
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7.0, "technical": 6.0, "sentiment": 5.0, "fundamental": 6.0, "fundflow": 5.0},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20.0},
+        "consensus": {},
+        "ind_fwd_pe": 25.0,
+        "synthesis": {
+            "industry_logic": "行业逻辑",
+            "fundamentals": "基本面",
+            "valuation_debate": "估值多空",
+            "funding_sentiment": "资金情绪",
+            "events_catalysts": "事件催化",
+        },
+        "keep_posts": [],
+        "cross_source_summary": "",
+    })
+    result = skill.run(ctx)
+    md_path = result.get("md_path")
+    assert md_path is not None
+    md_content = Path(md_path).read_text(encoding="utf-8")
+    assert "Source Intake" not in md_content
+    assert "source_intake_evidence: skipped" not in md_content
+
+
+def test_agent_reach_only_report_does_not_render_source_intake_section(tmp_path):
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7.0, "technical": 6.0, "sentiment": 5.0, "fundamental": 6.0, "fundflow": 5.0},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20.0},
+        "consensus": {},
+        "ind_fwd_pe": 25.0,
+        "synthesis": {
+            "industry_logic": "行业逻辑",
+            "fundamentals": "基本面",
+            "valuation_debate": "估值多空",
+            "funding_sentiment": "资金情绪",
+            "events_catalysts": "事件催化",
+        },
+        "keep_posts": [],
+        "cross_source_summary": "",
+        "agent_reach_enabled": True,
+        "agent_reach_quality_status": "ok",
+        "agent_reach_keep_items": [{"title": "t"}],
+        "agent_reach_demote_items": [],
+    })
+    result = skill.run(ctx)
+    md_path = result.get("md_path")
+    assert md_path is not None
+    md_content = Path(md_path).read_text(encoding="utf-8")
+    assert "Agent-Reach 外部证据观察" in md_content
+    assert "Source Intake" not in md_content
+
+
     skill = ReportAssemblySkill()
     names = [name for name, _, _ in skill.RENDERERS]
     assert "deep_analysis" in names

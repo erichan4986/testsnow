@@ -84,6 +84,23 @@ def test_canonical_url_normalization():
     assert _canonical_url("") == ""
 
 
+def test_canonical_url_preserves_cninfo_disclosure_identity():
+    url_a = (
+        "http://www.cninfo.com.cn/new/disclosure/detail?"
+        "stockCode=300777&announcementId=1225145344&orgId=9900034129"
+        "&announcementTime=2026-04-23%2000:00:00"
+    )
+    url_b = (
+        "http://www.cninfo.com.cn/new/disclosure/detail?"
+        "stockCode=300777&announcementId=1225106812&orgId=9900034129"
+        "&announcementTime=2026-04-15%2018:22:28"
+    )
+
+    assert _canonical_url(url_a) == "cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225145344"
+    assert _canonical_url(url_b) == "cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225106812"
+    assert _canonical_url(url_a) != _canonical_url(url_b)
+
+
 def test_safe_filename_segment():
     assert _safe_filename_segment("Hello World!") == "hello-world"
     assert _safe_filename_segment("中文.test") == "test"
@@ -242,6 +259,45 @@ def test_high_credit_official_item_dry_run_generates_fact_candidate(tmp_path):
     assert "fact_candidate" in plan.written[0]["reason"]
     assert plan.written[0]["planned_path"].endswith(".md")
     assert not (tmp_path / "10-Stocks" / "黑芝麻智能" / "evidence").exists()
+
+
+def test_official_announcement_extracts_key_fact_claims(tmp_path):
+    item = _make_item(
+        title="中简科技2026年第一季度业绩预告",
+        content=(
+            "报告期内，影响公司业绩变动的主要原因：1、客户对公司部分产品的需求量阶段性减少"
+            "导致发货暂时减少，其中收入下降约 50%-60%。"
+            "2、围绕新领域的应用需求，公司持续加大研发投入，研发费用同比增长约 175%-185%。"
+        ),
+        url=(
+            "http://www.cninfo.com.cn/new/disclosure/detail?"
+            "stockCode=300777&announcementId=1225106812&orgId=9900034129"
+        ),
+        source_type="exchange_announcement",
+        source_domain="cninfo.com.cn",
+        source_credit=98,
+        verification_status="primary_source",
+        credit_reasons=["交易所/监管公告域名: cninfo.com.cn"],
+        report_eligible=True,
+    )
+
+    write_evidence_notes(
+        stock_name="中简科技",
+        stock_code="300777",
+        items=[item],
+        base_dir=tmp_path,
+        collected_at="2026-06-14T19:00:00+08:00",
+        dry_run=False,
+    )
+
+    evidence_dir = tmp_path / "10-Stocks" / "中简科技" / "evidence"
+    written = next(evidence_dir.glob("*.md"))
+    content = written.read_text(encoding="utf-8")
+    assert "客户对公司部分产品的需求量阶段性减少导致发货暂时减少，其中收入下降约 50%-60%" in content
+    assert "研发费用同比增长约 175%-185%" in content
+    assert "extracted_from: official_content_rule" in content
+    assert "earnings_business" in content
+    assert "customer_orders" in content
 
 
 def test_dry_run_does_not_write_files(tmp_path):
@@ -494,6 +550,65 @@ def test_duplicate_canonical_url_second_call_skips(tmp_path):
     assert "already exists" in plan2.skipped_existing[0]["reason"]
 
 
+def test_duplicate_with_fresh_detail_content_refreshes_existing_note(tmp_path):
+    old_item = _make_item(
+        title="中简科技2026年第一季度业绩预告",
+        content="中简科技2026年第一季度业绩预告",
+        url=(
+            "http://www.cninfo.com.cn/new/disclosure/detail?"
+            "stockCode=300777&announcementId=1225106812&orgId=9900034129"
+        ),
+        source_type="exchange_announcement",
+        source_domain="cninfo.com.cn",
+        source_credit=95,
+        verification_status="confirmed_fact",
+        report_eligible=True,
+    )
+    first = write_evidence_notes(
+        stock_name="中简科技",
+        stock_code="300777",
+        items=[old_item],
+        base_dir=tmp_path,
+        dry_run=False,
+    )
+    assert len(first.written) == 1
+    existing_path = Path(first.written[0]["planned_path"])
+    old_text = existing_path.read_text(encoding="utf-8")
+    assert "official_content_rule" not in old_text
+
+    fresh_item = _make_item(
+        title="中简科技2026年第一季度业绩预告",
+        content=(
+            "报告期内，客户对公司部分产品的需求量阶段性减少导致发货暂时减少，"
+            "其中收入下降约 50%-60%。研发费用同比增长约 175%-185%。"
+        ),
+        url=old_item.url,
+        source_type="exchange_announcement",
+        source_domain="cninfo.com.cn",
+        source_credit=95,
+        verification_status="confirmed_fact",
+        report_eligible=True,
+    )
+    fresh_item.extra["detail_content_status"] = "ok"
+
+    second = write_evidence_notes(
+        stock_name="中简科技",
+        stock_code="300777",
+        items=[fresh_item],
+        base_dir=tmp_path,
+        dry_run=False,
+    )
+
+    assert len(second.written) == 1
+    assert second.written[0]["reason"] == "refreshed_existing_detail_content"
+    assert second.written[0]["planned_path"] == str(existing_path)
+    assert len(second.skipped_existing) == 0
+    refreshed = existing_path.read_text(encoding="utf-8")
+    assert "official_content_rule" in refreshed
+    assert "收入下降约 50%-60%" in refreshed
+    assert "研发费用同比增长约 175%-185%" in refreshed
+
+
 def test_no_url_item_uses_fallback_key_and_writes(tmp_path):
     item = _make_item(
         title="黑芝麻智能 某讨论",
@@ -704,6 +819,35 @@ def test_source_credit_not_recomputed(tmp_path):
     content = path.read_text(encoding="utf-8")
     assert "source_credit: 999" in content
     assert "claim_status: fact_candidate" in content
+
+
+def test_periodic_report_excerpt_never_becomes_fact_candidate(tmp_path):
+    item = _make_item(
+        title="2025年年度报告 | 财报排雷观察",
+        content="存货周转和应收账款需要结合附注继续核查。",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225000000",
+        source_type="periodic_report_excerpt",
+        source_domain="cninfo.com.cn",
+        source_credit=95,
+        verification_status="financial_forensics",
+        knowledge_eligible=True,
+        report_eligible=True,
+    )
+    plan = write_evidence_notes(
+        stock_name="中简科技",
+        stock_code="300777",
+        items=[item],
+        base_dir=tmp_path,
+        dry_run=False,
+    )
+
+    assert len(plan.written) == 1
+    path = Path(plan.written[0]["planned_path"])
+    content = path.read_text(encoding="utf-8")
+    assert "source_credit: 95" in content
+    assert "source_type: periodic_report_excerpt" in content
+    assert "claim_status: professional_analysis" in content
+    assert "claim_status: fact_candidate" not in content
 
 
 # ---------------------------------------------------------------------------

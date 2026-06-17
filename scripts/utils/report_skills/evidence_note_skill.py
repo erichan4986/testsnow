@@ -92,11 +92,12 @@ def _set_terminal_state(
 
 @skill(name="evidence_note_writer")
 def evidence_note_writer_skill(ctx: SkillContext) -> SkillContext:
-    """Write or dry-run Agent-Reach evidence notes after the quality gate.
+    """Write or dry-run external evidence notes after the quality gate.
 
-    Reads keep/demote items from ctx, calls ``write_evidence_notes``, and writes
-    status/plan/summary/error back to ctx. Never mutates the original keep/demote
-    lists. Catches all writer exceptions so the pipeline continues.
+    Reads keep/demote items from merged external evidence buckets when present,
+    otherwise falls back to existing Agent-Reach buckets. Writes status/plan/
+    summary/error back to ctx. Never mutates the original input lists. Catches
+    all writer exceptions so the pipeline continues.
     """
     stock_name = ctx.get("stock_name", "")
     stock_codes = ctx.get("stock_codes", {}) or {}
@@ -110,24 +111,33 @@ def evidence_note_writer_skill(ctx: SkillContext) -> SkillContext:
     if not enable_evidence_notes:
         return _set_terminal_state(ctx, "disabled", "disabled")
 
-    # 2. Agent-Reach disabled (defensive; builder normally prevents this path)
-    if not agent_reach_enabled:
-        return _set_terminal_state(ctx, "skipped", "agent_reach_disabled")
+    # 2. Determine evidence source: prefer merged external evidence buckets.
+    has_merged_buckets = (
+        "external_evidence_keep_items" in ctx.output
+        or "external_evidence_demote_items" in ctx.output
+        or "external_evidence_keep_items" in ctx.input
+        or "external_evidence_demote_items" in ctx.input
+    )
+    external_keep = list(ctx.get("external_evidence_keep_items", []) or [])
+    external_demote = list(ctx.get("external_evidence_demote_items", []) or [])
+    using_merged = has_merged_buckets
 
-    # 3. Quality gate did not produce usable items
-    if quality_status != "ok":
-        return _set_terminal_state(
-            ctx,
-            "skipped",
-            f"agent_reach_quality_status={quality_status}",
-        )
+    if not using_merged:
+        # Fall back to legacy Agent-Reach-only path.
+        if not agent_reach_enabled:
+            return _set_terminal_state(ctx, "skipped", "agent_reach_disabled")
+        if quality_status != "ok":
+            return _set_terminal_state(
+                ctx,
+                "skipped",
+                f"agent_reach_quality_status={quality_status}",
+            )
+        external_keep = list(ctx.get("agent_reach_keep_items", []) or [])
+        external_demote = list(ctx.get("agent_reach_demote_items", []) or [])
 
-    # Read keep/demote lists defensively and copy them to avoid mutation.
-    keep_items: List[Any] = list(ctx.get("agent_reach_keep_items", []) or [])
-    demote_items: List[Any] = list(ctx.get("agent_reach_demote_items", []) or [])
-    items = keep_items + demote_items
+    items = external_keep + external_demote
 
-    # 4. No items to process
+    # 3. No items to process
     if not items:
         return _set_terminal_state(ctx, "empty", "no_keep_or_demote_items")
 

@@ -319,3 +319,113 @@ def test_summary_counts_match_plan(tmp_path):
     assert summary["filtered_count"] == len(plan["filtered"])
     assert summary["dry_run"] is True
     assert summary["base_dir"] == str(tmp_path)
+
+
+def _ctx_with_external_items(items, dry_run=True, enable_evidence_notes=True):
+    return SkillContext(
+        input={
+            "stock_name": "中简科技",
+            "stock_codes": {"中简科技": "300777"},
+            "agent_reach_enabled": False,
+            "agent_reach_quality_status": "",
+            "agent_reach_keep_items": [],
+            "agent_reach_demote_items": [],
+            "enable_evidence_notes": enable_evidence_notes,
+            "evidence_notes_dry_run": dry_run,
+            "external_evidence_keep_items": items,
+            "external_evidence_demote_items": [],
+        }
+    )
+
+
+def test_source_intake_only_can_write_evidence_notes_without_agent_reach(tmp_path):
+    item = _make_item(title="cninfo公告", source_credit=95, source_type="exchange_announcement")
+    ctx = _ctx_with_external_items([item], dry_run=True)
+    ctx.input["knowledge_base_dir"] = str(tmp_path)
+
+    result = evidence_note_writer_skill(ctx)
+
+    assert result.get("evidence_note_status") == "dry_run"
+    plan = result.get("evidence_note_write_plan")
+    assert len(plan["written"]) == 1
+
+
+def test_source_intake_empty_merged_buckets_returns_empty_not_agent_reach_disabled(tmp_path):
+    ctx = _ctx_with_external_items([], dry_run=True)
+    ctx.input["knowledge_base_dir"] = str(tmp_path)
+
+    result = evidence_note_writer_skill(ctx)
+
+    assert result.get("evidence_note_status") == "empty"
+    assert result.get("evidence_note_summary")["reason"] == "no_keep_or_demote_items"
+
+
+def test_prefers_external_evidence_over_agent_reach_buckets():
+    external_item = _make_item(title="external", source_credit=95, source_type="exchange_announcement")
+    agent_item = _make_item(title="agent", source_credit=70, source_type="web")
+
+    captured = {}
+
+    def fake_writer(stock_name, stock_code, items, base_dir, collected_at=None, dry_run=False):
+        captured["items"] = items
+        from evidence_note_writer import EvidenceWritePlan
+        return EvidenceWritePlan(written=[{"title": i.title} for i in items], skipped_existing=[], filtered=[])
+
+    import report_skills.evidence_note_skill as ens
+
+    original_writer = ens.write_evidence_notes
+    ens.write_evidence_notes = fake_writer
+    try:
+        ctx = SkillContext(
+            input={
+                "stock_name": "中简科技",
+                "stock_codes": {"中简科技": "300777"},
+                "agent_reach_enabled": True,
+                "agent_reach_quality_status": "ok",
+                "agent_reach_keep_items": [agent_item],
+                "agent_reach_demote_items": [],
+                "enable_evidence_notes": True,
+                "evidence_notes_dry_run": True,
+                "external_evidence_keep_items": [external_item],
+                "external_evidence_demote_items": [],
+            }
+        )
+        evidence_note_writer_skill(ctx)
+    finally:
+        ens.write_evidence_notes = original_writer
+
+    assert len(captured["items"]) == 1
+    assert captured["items"][0].title == "external"
+
+
+def test_falls_back_to_agent_reach_when_external_evidence_missing():
+    agent_item = _make_item(title="agent", source_credit=70, source_type="web")
+
+    captured = {}
+
+    def fake_writer(stock_name, stock_code, items, base_dir, collected_at=None, dry_run=False):
+        captured["items"] = items
+        from evidence_note_writer import EvidenceWritePlan
+        return EvidenceWritePlan(written=[{"title": i.title} for i in items], skipped_existing=[], filtered=[])
+
+    import report_skills.evidence_note_skill as ens
+    original_writer = ens.write_evidence_notes
+    ens.write_evidence_notes = fake_writer
+    try:
+        ctx = _ctx_with_items([agent_item], dry_run=True)
+        evidence_note_writer_skill(ctx)
+    finally:
+        ens.write_evidence_notes = original_writer
+
+    assert len(captured["items"]) == 1
+    assert captured["items"][0].title == "agent"
+
+
+def test_source_intake_only_with_evidence_notes_disabled_is_disabled(tmp_path):
+    item = _make_item(title="cninfo公告", source_credit=95, source_type="exchange_announcement")
+    ctx = _ctx_with_external_items([item], enable_evidence_notes=False)
+    ctx.input["knowledge_base_dir"] = str(tmp_path)
+
+    result = evidence_note_writer_skill(ctx)
+
+    assert result.get("evidence_note_status") == "disabled"

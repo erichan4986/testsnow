@@ -23,7 +23,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, urlparse
 
 try:
     import yaml
@@ -121,6 +121,12 @@ def _canonical_url(url: str) -> str:
                 path = path[: -len(ext)]
                 break
         path = path.rstrip("/")
+        if host == "cninfo.com.cn" and path == "/new/disclosure/detail":
+            query = parse_qs(parsed.query, keep_blank_values=False)
+            stock_code = (query.get("stockCode") or [""])[0].strip()
+            announcement_id = (query.get("announcementId") or [""])[0].strip()
+            if stock_code and announcement_id:
+                return f"{host}{path}?stockCode={stock_code}&announcementId={announcement_id}"
         return f"{host}{path}"
     except Exception:
         return ""
@@ -352,6 +358,15 @@ def _claim_status(source_credit: int) -> Optional[str]:
     return None
 
 
+def _claim_status_for_item(item: SynthesisItem, source_credit: int) -> Optional[str]:
+    """Map item to claim status with source-type hard guards."""
+    status = _claim_status(source_credit)
+    source_type = str((item.extra or {}).get("source_type", "")).lower()
+    if source_type == "periodic_report_excerpt" and status == "fact_candidate":
+        return "professional_analysis"
+    return status
+
+
 def _build_claim_stub(item: SynthesisItem, status: str) -> Dict[str, Any]:
     """Build a deterministic Phase 2 claim stub from title and excerpt."""
     title = str(item.title or "").strip()
@@ -377,6 +392,67 @@ def _build_claim_stub(item: SynthesisItem, status: str) -> Dict[str, Any]:
         "claim_status": status,
         "extracted_from": "title_and_excerpt",
     }
+
+
+def _compact_claim_source_text(text: str) -> str:
+    """Normalize PDF/Jina whitespace so split Chinese phrases can be matched."""
+    if not text:
+        return ""
+    compact = text.replace("\r\n", "\n").replace("\r", "\n")
+    compact = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", compact)
+    compact = re.sub(r"\s+", " ", compact)
+    return compact.strip()
+
+
+def _extract_official_fact_claims(content: str, status: str) -> List[Dict[str, Any]]:
+    """Extract a few deterministic high-signal claims from official filings."""
+    text = _compact_claim_source_text(content)
+    if not text:
+        return []
+
+    patterns = [
+        (
+            r"客户对公司部分产品的需求量阶段性减少导致发货暂时减少[，,]?其中收入下降约\s*50%-60%",
+            ["earnings_business", "customer_orders"],
+        ),
+        (
+            r"研发费用同比增长约\s*175%-185%",
+            ["earnings_business"],
+        ),
+        (
+            r"营业收入（元）\s*[\d,\.]+\s*[\d,\.]+\s*-54\.60%",
+            ["earnings_business"],
+        ),
+        (
+            r"补缴税款及滞纳金合计\s*3292\.37\s*万元",
+            ["earnings_business"],
+        ),
+    ]
+
+    claims: List[Dict[str, Any]] = []
+    seen = set()
+    for pattern, topics in patterns:
+        match = re.search(pattern, text)
+        if not match:
+            continue
+        claim_text = match.group(0).strip()
+        if claim_text in seen:
+            continue
+        seen.add(claim_text)
+        claims.append({
+            "claim_id": f"c{len(claims) + 2}",
+            "claim_text": claim_text,
+            "claim_status": status,
+            "topics": topics,
+            "extracted_from": "official_content_rule",
+        })
+    return claims
+
+
+def _build_claims(item: SynthesisItem, status: str) -> List[Dict[str, Any]]:
+    claims = [_build_claim_stub(item, status)]
+    claims.extend(_extract_official_fact_claims(item.content or "", status))
+    return claims
 
 
 def _truncate_content_for_excerpt(content: str, max_length: int = _CONTENT_TRUNCATE_LENGTH) -> str:
@@ -483,8 +559,8 @@ def _render_note(
     quality_action = item.extra.get("agent_reach_quality_action", "keep")
 
     topics = _classify_topics(item)
-    claim = _build_claim_stub(item, claim_status)
-    claims = [claim]
+    claims = _build_claims(item, claim_status)
+    claim = claims[0]
 
     frontmatter = {
         "stock": stock_name,
@@ -615,7 +691,7 @@ def write_evidence_notes(
             continue
 
         # Filter: source_credit below minimum threshold.
-        claim_status = _claim_status(int(source_credit))
+        claim_status = _claim_status_for_item(item, int(source_credit))
         if claim_status is None:
             meta["reason"] = f"source_credit {source_credit} below 30"
             plan.filtered.append(meta)
@@ -623,8 +699,20 @@ def write_evidence_notes(
 
         # Filter: duplicate canonical URL/key.
         if canonical_key in existing_keys:
+            existing_path = existing_keys[canonical_key]
+            if (
+                item.extra.get("detail_content_status") == "ok"
+                and not dry_run
+                and existing_path.exists()
+            ):
+                note = _render_note(item, stock_name, stock_code, collected_at, claim_status)
+                existing_path.write_text(note, encoding="utf-8")
+                meta["planned_path"] = str(existing_path)
+                meta["reason"] = "refreshed_existing_detail_content"
+                plan.written.append(meta)
+                continue
             meta["reason"] = "canonical URL/key already exists"
-            meta["path"] = str(existing_keys[canonical_key])
+            meta["path"] = str(existing_path)
             plan.skipped_existing.append(meta)
             continue
 

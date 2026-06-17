@@ -40,6 +40,7 @@ class ReportAssemblySkill(BaseSkill):
         ("technical", "utils.reporter.sections.technical_renderer", "TechnicalRenderer"),
         ("price_target", "utils.reporter.sections.price_target_renderer", "PriceTargetRenderer"),
         ("deep_analysis", "utils.reporter.sections.deep_analysis_renderer", "DeepAnalysisRenderer"),
+        ("source_intake_evidence", "utils.reporter.sections.source_intake_evidence_renderer", "SourceIntakeEvidenceRenderer"),
         ("agent_reach_evidence", "utils.reporter.sections.agent_reach_evidence_renderer", "AgentReachEvidenceRenderer"),
         ("risk", "utils.reporter.sections.risk_renderer", "RiskRenderer"),
     ]
