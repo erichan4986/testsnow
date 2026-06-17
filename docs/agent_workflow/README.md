@@ -1,6 +1,6 @@
 # Codex + Local Claude Code Collaboration Workflow
 
-> **Purpose**: Use Codex as planner/reviewer and locally triggered Claude Code as reviewer/executor for major work, while keeping context transfer cheap, auditable, and bounded.
+> **Purpose**: Use Codex as planner, implementer, and reviewer, with locally triggered Claude Code as a second reviewer/executor for work that benefits from local environment access or independent implementation. The default priority is quality and speed, while context transfer remains auditable and bounded.
 
 This workflow is intended for tasks that change architecture, reporting behavior, LLM prompts, scoring logic, data collection, or any other high-risk part of the stock report pipeline. For small, well-bounded tasks, prefer the lighter Direct Prompt Handoff described below instead of creating full workflow files.
 
@@ -12,13 +12,33 @@ Important constraint: in the Codex environment, Codex should not directly invoke
 
 | Agent | Primary Role | Should Do | Should Avoid |
 |------|--------------|-----------|--------------|
-| Codex | Planner, prompt author, and reviewer | Define scope, write design, create Claude prompt files, review diff, run verification | Directly invoking external Claude/Kimi with private repo context, delegating vague tasks, accepting summaries without checking code/tests |
+| Codex | Planner, implementer for narrow work, prompt author, and final reviewer | Define scope, write design, implement small focused fixes, create Claude prompt files, review diff, run verification | Directly invoking external Claude/Kimi with private repo context, delegating vague tasks, accepting summaries without checking code/tests |
 | User | Local trigger and risk owner | Run Claude Code locally, approve design, authorize risky data collection, confirm LLM synthesis quality when required | Pasting long transcripts when a notes file/diff is enough |
 | Claude Code | Local reviewer and executor | Review design for implementation risks, implement locked tasks, run local checks, write concise notes | Broad refactors, changing data sources, weakening tests, modifying core business logic without explicit approval |
 
 ---
 
-## 2. Workflow Levels
+## 2. Fast Quality Mode
+
+The default collaboration mode is **Fast Quality Mode**: prioritize high-quality progress and verification speed over minimizing Codex token usage.
+
+Practical defaults:
+
+- Use Codex Direct for small docs, tests, local bug fixes, narrow scripts, renderer tweaks, and focused review fixes.
+- Use Claude Code when the work benefits from local network access, local provider setup, browser/PDF/Playwright permissions, long-running report trials, or a second implementation pass.
+- After Claude Code implements a task, Codex may directly fix narrow review findings with tests instead of sending another handoff, as long as the fix stays inside the agreed scope.
+- Re-handoff to Claude Code when the fix needs local network/browser/permissions, expands allowed files, changes architecture, or touches high-risk modules.
+- Keep design/task files compact: target, boundaries, failure modes, test gates, notes format, and stop conditions.
+
+Hard gates still apply:
+
+- Prompt/synthesis/citation logic, scoring, technical algorithms, report structure, Xueqiu/CDP/Playwright, and external API collection require Level 2 or Level 3.
+- LLM synthesis changes require user-visible sample output before acceptance.
+- Codex final review must inspect actual files/diff and run relevant verification; Claude summaries are not sufficient.
+
+---
+
+## 3. Workflow Levels
 
 Do not use the full two-round workflow for every change. Pick the lightest level that protects quality.
 
@@ -29,7 +49,7 @@ Do not use the full two-round workflow for every change. Pick the lightest level
 | Level 2: File Task Handoff | Medium implementation tasks with clear scope; likely 1-3 files; behavior is testable; risk is moderate; audit trail is useful | Codex writes `claude-task.md` -> user runs Claude locally -> Codex reviews diff/tests | Skip two-round design review unless ambiguity appears. |
 | Level 3: Full Design Review | High-risk or ambiguous work: prompts/LLM synthesis, scoring, technical algorithms, report structure, data collection, Xueqiu/Playwright/CDP, external APIs, or changes touching more than 3 files | Design -> Claude Round 1 -> Design Delta -> optional Round 2 only if needed -> Claude implement -> Codex review | Use the complete workflow below. |
 
-Default to Level 0 when the user asks to "hand this to an agent" and the task is small. Default to Level 1 when the user wants speed and Codex can safely implement directly. Use Level 2 when the implementation needs a written boundary. Escalate to Level 3 when the task can affect data integrity, account safety, report correctness, or user-facing financial conclusions.
+Default to Level 1 when Codex can safely implement or fix the issue directly. Default to Level 0 when the user asks to "hand this to an agent" and the task is small. Use Level 2 when the implementation needs a written boundary or local Claude execution. Escalate to Level 3 when the task can affect data integrity, account safety, report correctness, or user-facing financial conclusions.
 
 If Codex cannot reliably run a local browser or GUI-dependent verification inside the sandbox, such as Playwright/Chromium PDF export, screenshots, or visual preview checks that require macOS browser permissions, use Level 0 handoff. Codex should record the sandbox failure reason, give the user a pasteable prompt for local Claude Code, and review the resulting diff/output afterward instead of repeatedly requesting sandbox escalation.
 
@@ -37,7 +57,7 @@ Report trial runs should use the single-stock deep-report entry point by default
 
 ---
 
-## 3. Lessons From The CDP Extraction Pilot
+## 4. Lessons From The CDP Extraction Pilot
 
 The first pilot task validated the workflow:
 
@@ -57,11 +77,12 @@ The pilot and Wind Excel loader task also showed where to keep the process lean:
 
 ---
 
-## 4. Token And Efficiency Rules
+## 5. Efficiency And Context Rules
 
-The workflow saves Codex tokens only when context transfer stays disciplined. For small tasks, avoid creating long design/task files unless the audit record is worth the cost.
+The workflow should keep context transfer disciplined, but token minimization is no longer the primary objective. Prefer the fastest path that preserves reviewability and the project guardrails.
 
-- Prefer Level 0 short prompts for narrow, low-risk implementation tasks.
+- Prefer Level 1 direct Codex work for narrow, low-risk implementation tasks when Codex can verify locally.
+- Prefer Level 0 short prompts when local Claude Code is needed but a file-based audit record is not.
 - Use Markdown files as the handoff boundary.
 - Prefer `git diff`, notes, and focused tests over pasted transcripts.
 - Keep Claude notes to: files changed, tests run, deviations, blockers.
@@ -71,10 +92,11 @@ The workflow saves Codex tokens only when context transfer stays disciplined. Fo
 - Replace long Codex response documents with a compact "Design Delta" section: accepted items, rejected items with reason, changed sections. Do not restate the whole design.
 - Run Round 2 only when Round 1 has blockers, unresolved `must-fix` items, or changes that affect data integrity, account safety, scoring/technical algorithms, LLM prompts, report structure, or external data access.
 - If full `pytest` has a known unrelated collection failure, record it once in the review file and rely on focused tests for subsequent fix rounds.
+- If Codex review finds a narrow implementation bug, Codex should add/adjust the focused test and apply the minimal fix directly unless doing so would expand the task boundary.
 
 ---
 
-## 5. When To Use This Workflow
+## 6. When To Use This Workflow
 
 Use Level 0 direct prompt handoff for:
 
@@ -105,12 +127,14 @@ Use Level 1 Codex direct work for:
 - Small documentation edits.
 - Typo/copy fixes.
 - Very narrow tests or local-only cleanup.
+- Narrow review fixes after Claude Code implementation when the bug is already isolated and local verification is available.
+- Small scripts/smoke-test improvements that do not touch high-risk data collection or report conclusions.
 
 For small typo fixes, narrow renderer copy edits, or local test-only changes, normal Codex-only work is enough.
 
 ---
 
-## 6. File Layout
+## 7. File Layout
 
 Create one dated folder or dated file set per task:
 
@@ -126,7 +150,7 @@ Keep all agent-to-agent communication in these files. Do not paste full chat tra
 
 ---
 
-## 7. Level 0 Direct Prompt Handoff
+## 8. Level 0 Direct Prompt Handoff
 
 Use this when the task is small and the user wants Claude Code to implement. Codex does not create workflow files. Codex sends a short, pasteable prompt and later verifies the actual diff.
 
@@ -247,7 +271,7 @@ Reply with:
 
 ---
 
-## 8. Required Flow For Level 3 Major Tasks
+## 9. Required Flow For Level 3 Major Tasks
 
 This is a user-triggered handoff flow. Codex writes the prompts; the user runs Claude Code locally; Claude writes feedback or implementation notes into repository files; Codex reviews those files and the actual diff.
 
@@ -398,9 +422,11 @@ Codex must verify:
 
 Codex writes `YYYY-MM-DD-topic-codex-review.md` with findings and final status.
 
+If review finds a narrow task-contract bug, Codex may directly add a focused regression test and minimal fix before writing the final review. The review file must record the finding, the Codex fix, and fresh verification output.
+
 ---
 
-## 9. Level 2 File Task Handoff Flow
+## 10. Level 2 File Task Handoff Flow
 
 Use this for medium tasks where the design is already clear.
 
@@ -412,9 +438,11 @@ Use this for medium tasks where the design is already clear.
 
 Level 2 still requires strict scope, allowed files, stop conditions, and tests. It simply skips the two design review rounds.
 
+As in Level 3, Codex may directly fix narrow review findings with tests when the fix stays inside the Level 2 task boundary.
+
 ---
 
-## 10. Why Codex Does Not Directly Run Claude Here
+## 11. Why Codex Does Not Directly Run Claude Here
 
 Codex may be able to execute local shell commands, but this environment has sandbox, network, and data-export controls. Directly invoking Claude/Kimi from Codex can fail because:
 
@@ -442,7 +470,7 @@ Codex should not attempt indirect workarounds for this restriction.
 
 ---
 
-## 11. Token-Saving Rules
+## 12. Context Rules
 
 - Transfer state through Markdown files, not chat transcripts.
 - For Level 0, transfer only the short prompt and Claude's concise files/tests summary; do not paste full transcripts.
@@ -450,11 +478,11 @@ Codex should not attempt indirect workarounds for this restriction.
 - Codex should inspect diffs and targeted files instead of reading entire generated reports unless report quality is the subject.
 - Claude Code should stop and ask when scope changes, rather than solving a larger problem opportunistically.
 - Keep each task small enough that Codex can review the full diff comfortably.
-- Prefer local Claude commands with small `--max-budget-usd` values during review rounds.
+- Use local Claude budget limits when useful, but do not sacrifice review quality solely to minimize Codex usage.
 
 ---
 
-## 12. Project-Specific Guardrails
+## 13. Project-Specific Guardrails
 
 - Do not rewrite the repository.
 - Do not replace established data sources without explicit design approval and field compatibility tests.
@@ -465,7 +493,7 @@ Codex should not attempt indirect workarounds for this restriction.
 
 ---
 
-## 13. Recommended Handoff Patterns
+## 14. Recommended Handoff Patterns
 
 When the user asks for an agent handoff, Codex should provide a pasteable prompt as the primary artifact. Do not respond with only a shell command.
 

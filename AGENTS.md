@@ -161,6 +161,25 @@ Codex may use repository skills under `.agents/skills` when relevant.
 
 重要约束：Codex 在当前环境中不直接调用外部 Claude/Kimi 处理私有仓库上下文。Codex 负责写 design、review prompt、implementation task 和验收报告；用户在本地终端触发 Claude Code；Claude Code 将反馈、notes 或代码 diff 写回仓库；Codex 再读取文件和 diff 继续推进。
 
+### Fast Quality Mode（默认协作策略）
+
+当前默认目标是**效率和质量优先**，不再以最小化 Codex token 为第一目标。Codex 应更主动承担规划、实现、审查和窄范围修复，Claude Code 主要用于本地执行、第二视角 review、长时间/网络/浏览器/PDF 验证和较大实现任务。
+
+默认分工：
+
+- Codex 可以直接处理小文档、测试、局部 bugfix、窄范围脚本/renderer/skill 调整，并运行 focused tests。
+- Claude Code 更适合本地网络访问、Jina/Agent-Reach 实跑、Chrome/PDF/Playwright、需要用户本机权限的验证、以及中等以上实现。
+- Claude Code 完成后，如 Codex 验收发现窄范围 bug、测试缺口或任务契约偏差，Codex 可以直接补最小修复和测试，不必再开一轮 Claude handoff。
+- 只有当修复会扩大允许文件、改变设计边界、涉及高风险模块，或需要本地权限/网络复验时，才重新交给 Claude Code。
+- 设计和交接文档保持短而硬：目标、边界、失败模式、测试门、stop conditions；避免重复性 `codex-response.md` 和长篇复述。
+
+仍然必须保留的硬门：
+
+- 修改 `KnowledgeSynthesizer` prompt、LLM 合成逻辑、引用生成、评分/技术算法、风险规则、Xueqiu/CDP/Playwright/外部 API 采集逻辑，必须走 Level 3 或明确的 Level 2 task。
+- 涉及 LLM 合成内容的改动，必须向用户展示样例输出并确认无编造数据。
+- 涉及雪球详情页、登录态 Chrome/CDP、批量采集或账号安全时，必须明确授权并遵守 3-5 秒延迟规则。
+- Codex 验收必须看真实 diff、关键文件和测试输出，不能只采信 Claude Code 摘要。
+
 ### 适用范围
 
 协作强度分为四级，必须选择最轻但足够安全的流程：
@@ -172,6 +191,7 @@ Codex may use repository skills under `.agents/skills` when relevant.
 
 默认选择规则：
 
+- 默认优先考虑 Codex Direct（Level 1）或紧凑 Level 2；只有风险或本地环境要求足够高时，才升级到文件化 review 或 Claude 本地执行。
 - 用户说“交给 agent / Claude Code”且任务很小：默认 Level 0，给短 prompt，不创建 workflow 文件。
 - 用户说“试跑报告 / 生成报告看看 / 跑一下报告入口”且不要求修改代码：默认 Level 0，给报告试跑短 prompt，由 Claude Code 本地执行，Codex 再验收生成物和质量门。默认试跑入口是 `scripts/run_黑芝麻智能.py --fast-test`；不要默认运行 `scripts/xueqiu_monitor_v2.py`，也不要默认刷新知乎/LLM curator。
 - Codex 沙箱无法可靠执行的本地浏览器/GUI 验证（例如 Playwright/Chromium PDF 导出、需要 macOS 浏览器权限的截图/预览）默认交给用户本地 Claude Code 执行。Codex 应记录失败原因，给 Level 0 短 prompt，让 Claude Code 本地验证并回报结果；不要反复在沙箱里申请权限硬跑。
@@ -307,11 +327,12 @@ Level 0 短 prompt 模板：
 - blocker 或需要 Codex 继续审查的 diff
 ```
 
-### 上下文与 token 控制
+### 上下文与效率控制
 
 - Level 0 可通过短 prompt 和 Claude 的简短结果摘要传递上下文，不创建 Markdown 交接文件。
 - Level 2/3 通过 Markdown 文件传递上下文，不粘贴完整对话 transcript。
 - 不再默认生成冗长 `codex-response.md`；用 design 内的 compact `Design Delta` 替代。
+- 当 Codex 已经通过 diff 定位到窄范围问题时，优先直接补测试和最小修复；除非需要本地网络/浏览器/权限或会扩大设计边界，否则不再为小修重新派单。
 - Codex 不尝试绕过沙箱/网络/数据外传限制来直接调用 Claude/Kimi。
 - Claude Code 的执行结果写入 `YYYY-MM-DD-topic-claude-notes.md`，只记录改动、测试结果、偏离点和 blocker。
 - Codex 验收必须看实际 diff 和测试结果，不能只依赖 Claude Code 总结。

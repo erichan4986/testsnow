@@ -21,6 +21,24 @@ python run_黑芝麻智能.py --fast-test
 - 其他单股入口同理：`run_圣邦股份.py`、`run_中简科技.py` 等。
 - 只有需要正式刷新知乎/LLM 基本面材料时，才运行不带 `--fast-test` 的完整入口。
 
+### 黑芝麻智能默认证据链
+
+黑芝麻智能当前默认启用：
+
+- Agent-Reach 官方种子源：读取 `config/stocks.json` 中的 `blacksesame.com` 官方 URL，作为高信用外部证据。
+- 官方 evidence notes：写入/读取 `knowledge/10-Stocks/黑芝麻智能/evidence/` 下的高信用事实候选。
+- 雪球缓存低信用 claim 池：读取本地 `data/raw/xueqiu_data_*_黑芝麻智能.json`，生成/使用 `knowledge/10-Stocks/黑芝麻智能/*雪球缓存社区claims.md`。
+- Claim verification risk bridge：高信用证据验证低信用 claim；未验证 claim 只进入“结构化风险观察（不计分）”，不影响风险评分。
+
+轻量检查入口：
+
+```bash
+python scripts/smoke_cached_community_claims.py --stock 黑芝麻智能 --code 02533 --json
+python scripts/smoke_agent_reach_claim_bridge.py --stock 黑芝麻智能 --json
+```
+
+这两个 smoke 脚本用于调试证据链，不替代最终报告验收。正式验收仍使用 `cd scripts && python run_黑芝麻智能.py --fast-test`。
+
 ---
 
 ## 2. 批量轻量报告 / legacy monitor
