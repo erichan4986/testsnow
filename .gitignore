@@ -25,21 +25,27 @@ build/
 logs/
 tmp/
 cache/
+.cache/
+.playwright-mcp/
 *.log
 *.tmp
 
-# Runtime caches and artifacts
-.cache/
-.playwright-mcp/
-data/raw/2026*/
-
 # Data and reports (keep directory structure but ignore content)
 /data/raw/*.json
+/data/raw/2026*/
 /data/processed/
 /reports/*.md
 /reports/*.html
 /reports/*.pdf
+/reports/*.png
 /reports/charts/*.png
+/reports/*_agent_reach*.json
+/reports/*_technical.png
+/reports/*_radar.png
+/reports/*_valuation.png
+
+# Generated source-intake evidence notes
+/knowledge/10-Stocks/**/evidence/
 
 # IDE
 .vscode/
