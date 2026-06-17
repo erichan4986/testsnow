@@ -1,8 +1,8 @@
 """Experimental full-text periodic report LLM analysis path.
 
 This module intentionally runs in parallel to the deterministic evidence-pack
-path.  It keeps larger annual-report chunks for LLM reading, while reusing the
-v2 validator so outputs remain grounded by evidence refs.
+path. It keeps larger annual-report chunks for LLM reading, while shared
+validation helpers keep outputs grounded by evidence refs.
 """
 
 from __future__ import annotations
@@ -12,13 +12,12 @@ import re
 from typing import Any, Dict, List
 
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack
-from periodic_report_llm_analysis_v2 import (
-    PeriodicReportLLMv2Error,
-    _check_fidelity,
-    _has_citation_markers,
-    _has_raw_url,
-    _normalize_confidence,
-    _sanitize_text,
+from periodic_report_validation import (
+    check_fidelity,
+    has_citation_markers,
+    has_raw_url,
+    normalize_confidence,
+    sanitize_text,
 )
 
 
@@ -390,18 +389,18 @@ def validate_periodic_report_fulltext_output(
                 )
             refs = judgment.get("evidence_refs")
             _reject_invalid_evidence_refs(refs, item_map)
-            confidence = _normalize_confidence(judgment.get("confidence"))
+            confidence = normalize_confidence(judgment.get("confidence"))
             if confidence is None:
                 continue
             text = str(judgment.get("judgment", ""))
-            if _has_citation_markers(text):
+            if has_citation_markers(text):
                 raise PeriodicReportFulltextError("judgment contains citation marker")
-            if _has_raw_url(text):
+            if has_raw_url(text):
                 raise PeriodicReportFulltextError("judgment contains raw URL")
-            text = _sanitize_text(text)
+            text = sanitize_text(text)
             if not text:
                 continue
-            if not _check_fidelity(text, refs, item_map):
+            if not check_fidelity(text, refs, item_map):
                 continue
             normalized_judgments.append({
                 "judgment": text,
@@ -505,7 +504,7 @@ def _call_client(client: object, prompt: Dict[str, Any]) -> str:
             model=getattr(client, "model", "default"),
         )
         return _extract_completion_text(response)
-    raise PeriodicReportLLMv2Error(
+    raise PeriodicReportFulltextError(
         "client must provide .chat(prompt) or .chat.completions.create(...)"
     )
 
@@ -565,26 +564,26 @@ def _normalize_financial_risks(
             continue
         refs = risk.get("evidence_refs")
         _reject_invalid_evidence_refs(refs, item_map)
-        confidence = _normalize_confidence(risk.get("confidence"))
+        confidence = normalize_confidence(risk.get("confidence"))
         if confidence is None:
             continue
 
-        summary = _sanitize_text(str(risk.get("summary", "")))
-        mechanism = _sanitize_text(str(risk.get("mechanism", "")))
+        summary = sanitize_text(str(risk.get("summary", "")))
+        mechanism = sanitize_text(str(risk.get("mechanism", "")))
         tracking_indicators = risk.get("tracking_indicators") or []
         if not isinstance(tracking_indicators, list):
             continue
         tracking_indicators = [
-            _sanitize_text(str(item)) for item in tracking_indicators if _sanitize_text(str(item))
+            sanitize_text(str(item)) for item in tracking_indicators if sanitize_text(str(item))
         ]
         combined_text = " ".join([summary, mechanism, " ".join(tracking_indicators)]).strip()
         if not combined_text:
             continue
-        if _has_citation_markers(combined_text):
+        if has_citation_markers(combined_text):
             raise PeriodicReportFulltextError("financial_risk contains citation marker")
-        if _has_raw_url(combined_text):
+        if has_raw_url(combined_text):
             raise PeriodicReportFulltextError("financial_risk contains raw URL")
-        if not _check_fidelity(combined_text, refs, item_map):
+        if not check_fidelity(combined_text, refs, item_map):
             continue
 
         normalized_risk = {
@@ -777,7 +776,7 @@ def _build_item_map(fulltext_pack: Dict[str, Any]) -> Dict[str, Dict[str, Any]]:
 
 
 def _normalize_custom_label(value: Any) -> str:
-    label = _sanitize_text(str(value or ""))
+    label = sanitize_text(str(value or ""))
     if label.lower() in {"none", "null", "n/a", "na"} or label in {"无", "不适用", "无自定义标签"}:
         return ""
     return label

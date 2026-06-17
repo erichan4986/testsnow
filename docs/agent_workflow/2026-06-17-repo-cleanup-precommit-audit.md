@@ -115,14 +115,11 @@ Likely files:
 - `scripts/periodic_report_extractor.py`
 - `scripts/utils/periodic_report_extractor.py`
 - `scripts/utils/periodic_report_evidence_pack.py`
-- `scripts/utils/periodic_report_llm_analysis.py`
-- `scripts/utils/periodic_report_llm_analysis_v2.py`
 - `scripts/utils/periodic_report_fulltext_llm_analysis.py`
 - `scripts/utils/periodic_report_required_metrics.py`
+- `scripts/utils/periodic_report_validation.py`
 - `tests/utils/test_periodic_report_extractor.py`
 - `tests/utils/test_periodic_report_evidence_pack.py`
-- `tests/utils/test_periodic_report_llm_analysis.py`
-- `tests/utils/test_periodic_report_llm_analysis_v2.py`
 - `tests/utils/test_periodic_report_fulltext_llm_analysis.py`
 - `tests/utils/test_periodic_report_required_metrics.py`
 - related `docs/agent_workflow/2026-06-16-periodic-report-*`
@@ -133,8 +130,6 @@ Focused tests:
 python3 -m pytest \
   tests/utils/test_periodic_report_extractor.py \
   tests/utils/test_periodic_report_evidence_pack.py \
-  tests/utils/test_periodic_report_llm_analysis.py \
-  tests/utils/test_periodic_report_llm_analysis_v2.py \
   tests/utils/test_periodic_report_fulltext_llm_analysis.py \
   tests/utils/test_periodic_report_required_metrics.py -q
 ```
@@ -144,11 +139,15 @@ Current known passing subset from latest run:
 ```bash
 python3 -m pytest \
   tests/utils/test_periodic_report_evidence_pack.py \
-  tests/utils/test_periodic_report_llm_analysis_v2.py \
   tests/utils/test_periodic_report_required_metrics.py \
   tests/utils/test_periodic_report_fulltext_llm_analysis.py -q
-# 108 passed
 ```
+
+Cleanup note:
+
+- `periodic_report_llm_analysis.py` and `periodic_report_llm_analysis_v2.py` were experimental predecessors.
+- The current recommended path is `fulltext_llm_analysis + required_metrics + evidence_pack`.
+- Shared grounding helpers live in `periodic_report_validation.py`.
 
 ### 3. Source Intake / Evidence Notes / Source Visibility
 
