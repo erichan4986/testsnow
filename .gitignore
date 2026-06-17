@@ -30,6 +30,13 @@ cache/
 *.log
 *.tmp
 
+# Local visual verification scratch files
+/visual_report_*.png
+/e2e_*.png
+/pdf_preview_*.png
+/pdf_page1.png
+/snapshot.yml
+
 # Data and reports (keep directory structure but ignore content)
 /data/raw/*.json
 /data/raw/2026*/
@@ -46,6 +53,8 @@ cache/
 
 # Generated source-intake evidence notes
 /knowledge/10-Stocks/**/evidence/
+/knowledge/10-Stocks/测试股/
+/knowledge/10-Stocks/测试科技/
 
 # IDE
 .vscode/
