@@ -12,8 +12,20 @@ from typing import Any, Dict, List, Optional, Tuple
 
 try:
     from .source_adapter import SynthesisItem
+    from .synthesis_credit import (
+        credit_usage_rules_text,
+        format_synthesis_source_line,
+        format_claim_verification_appendix,
+        sanitize_citation_markers,
+    )
 except ImportError:
     from source_adapter import SynthesisItem
+    from synthesis_credit import (
+        credit_usage_rules_text,
+        format_synthesis_source_line,
+        format_claim_verification_appendix,
+        sanitize_citation_markers,
+    )
 
 logger = logging.getLogger(__name__)
 
@@ -235,18 +247,10 @@ class KnowledgeSynthesizer:
 
         source_lines = []
         for i, item in enumerate(items):
-            # 限制单条内容长度，防止 prompt 过长
-            content_snippet = item.content[:500] if len(item.content) > 500 else item.content
-            line = (
-                f"[{i+1}] 标题: {item.title} | "
-                f"来源: {item.source_platform} | "
-                f"作者: {item.author} | "
-                f"时间: {item.publish_time} | "
-                f"内容: {content_snippet}"
-            )
-            source_lines.append(line)
+            source_lines.append(format_synthesis_source_line(i + 1, item))
 
-        prompt = prefix + "\n\n信息来源：\n" + "\n".join(source_lines)
+        rules = credit_usage_rules_text()
+        prompt = prefix + "\n\n" + rules + "\n\n信息来源：\n" + "\n".join(source_lines)
 
         # Append optional claim verification context after numbered sources.
         if claim_verification_context:
@@ -269,61 +273,7 @@ class KnowledgeSynthesizer:
 
     def _format_claim_verification_context(self, context: Dict[str, Any]) -> str:
         """Render a guarded, non-citable claim verification appendix for prompts."""
-        if not context or not context.get("enabled"):
-            return ""
-
-        counts = context.get("counts", {})
-        lines = [
-            "Claim Verification Context（以下不是新的引用来源）",
-            "",
-            "重要约束：",
-            "- 以下内容不是新的引用来源，不能用 [^n] 引用，也不能单独作为事实写入正文。",
-            "- 它只用于判断社区观点的可信度，帮助你决定如何强调或弱化某些信息。",
-            "",
-            f"统计：高信用声明 {counts.get('high_credit_claims', 0)} 条，低信用声明 {counts.get('low_credit_claims', 0)} 条，"
-            f"已验证 {counts.get('verified', 0)} 条，中等支持 {counts.get('supported', 0)} 条，"
-            f"未验证 {counts.get('unverified', 0)} 条，需复核 {counts.get('needs_review', 0)} 条。",
-            "",
-            "可信度使用规则：",
-            "- verified：只有当同一事实也出现在上方编号信息来源中时，才可作为重点线索使用，并必须引用上方编号来源。",
-            "- supported：可描述为“有中等信用来源支持的线索”，但不得写成已确认事实。",
-            "- unverified：只能作为“待验证市场观点/社区讨论”，不得进入核心事实基座。",
-            "- needs_review：仅提示存在相关信息，但当前证据不足，不得写入正文。",
-            "",
-        ]
-
-        def _render_bucket(label: str, rows: List[Dict[str, Any]]) -> List[str]:
-            if not rows:
-                return []
-            out = [f"{label}："]
-            for row in rows:
-                text = row.get("claim_text", "")
-                action = row.get("action", "")
-                confidence = row.get("confidence")
-                reason = row.get("reason", "")
-                titles = row.get("verified_by_titles", [])
-                parts = [f"- [{action}] {text}"]
-                if confidence is not None:
-                    parts.append(f"（置信度 {confidence}）")
-                if titles:
-                    parts.append(f"[依据标题: {' / '.join(titles)}]")
-                if reason:
-                    parts.append(f"[原因: {reason}]")
-                out.append(" ".join(parts))
-            return out
-
-        lines.extend(_render_bucket("已验证声明", context.get("verified_claims", [])))
-        if context.get("supported_claims"):
-            lines.append("")
-        lines.extend(_render_bucket("中等支持声明", context.get("supported_claims", [])))
-        if context.get("needs_review_claims"):
-            lines.append("")
-        lines.extend(_render_bucket("需复核声明", context.get("needs_review_claims", [])))
-        if context.get("unverified_claims"):
-            lines.append("")
-        lines.extend(_render_bucket("未验证声明", context.get("unverified_claims", [])))
-
-        return "\n".join(lines)
+        return format_claim_verification_appendix(context)
 
     def _call_llm(self, prompt: str) -> str:
         """调用 LLM，重试 1 次。"""
@@ -360,6 +310,10 @@ class KnowledgeSynthesizer:
         if not text:
             return "", {}
 
+        # Strip non-numeric markers such as [^supported] / [^needs_review]
+        # before extracting numbered citations.
+        text = sanitize_citation_markers(text)
+
         # 提取所有 [^n] 引用
         refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", text))
         citations = {}
@@ -387,17 +341,24 @@ class KnowledgeSynthesizer:
             return []
 
         narrative_text = "\n\n".join(
-            f"【{THEMES.get(k, (k, 0))[0]}】\n{v}"
+            f"【{THEMES.get(k, (k, 0))[0]}】\n{sanitize_citation_markers(v)}"
             for k, v in narratives.items() if v
         )
 
         prompt = (
             f"你是资深财经数据编辑。请从以下关于{stock_name}的分析文本中，提取8-12条核心事实。"
-            "每条事实必须包含：事实陈述、支撑数据、置信度（高/中/低）。"
+            "每条事实必须包含：事实陈述、支撑数据、置信度（高/中/低）、以及 source_refs。"
+            "source_refs 必须从分析文本中的 [^n] 引用标记里提取；如果某条事实没有对应引用标记，请输出空数组 []。"
+            "不要编造不存在的 source ID，不要输出分析文本中没有的引用编号。"
             "只提取客观事实和数据，不要提取观点、判断或预测。"
+            "不要提取券商/媒体观点本身、社区讨论观点本身、supported/unverified discussion、多源低信用社区共振线索或 analyst inference。"
+            "不要提取任何含有“可能、预计、推测、若...则...”等推断性措辞的句子。"
+            "只有当事实由公告/官方/交易所/巨潮/高信用 confirmed 来源支持时，才可进入核心事实；"
+            "由研报、新闻、雪球、知乎、微信公众号、AgentReach、资金流向等中低信用来源支撑的内容不得成为核心事实。"
             "去重：同一事实在不同段落中出现时只保留一次。"
+            "不要在 fact 和 data 字段里包含 [1] 或 [^1] 等引用标记。"
             "\n\n输出格式（JSON）："
-            '\n[\n  {"fact_id": 1, "fact": "2025年营收", "data": "8.22亿元，同比+73.4%", "confidence": "高"},\n  ...\n]'
+            '\n[\n  {"fact_id": 1, "fact": "2025年营收", "data": "8.22亿元，同比+73.4%", "confidence": "高", "source_refs": [2]},\n  ...\n]'
             "\n\n分析文本：\n"
             f"{narrative_text[:3000]}"
         )
@@ -408,7 +369,7 @@ class KnowledgeSynthesizer:
                 return []
 
             # 提取 JSON 块（处理 markdown code block）
-            text = response_text
+            text = sanitize_citation_markers(response_text)
             if text.startswith("```json"):
                 text = text[7:]
             elif text.startswith("```"):
@@ -424,11 +385,45 @@ class KnowledgeSynthesizer:
             normalized = []
             for i, f in enumerate(facts, 1):
                 if isinstance(f, dict) and f.get("fact"):
+                    fact_text = str(f.get("fact", ""))
+                    data_text = str(f.get("data", ""))
+                    # Strip inline citation markers like [1] or [^1] from displayed fields
+                    fact_text = re.sub(r"\[\^?\d+\]", "", fact_text).strip()
+                    data_text = re.sub(r"\[\^?\d+\]", "", data_text).strip()
+                    # Also strip non-numeric markers such as [^supported].
+                    fact_text = sanitize_citation_markers(fact_text).strip()
+                    data_text = sanitize_citation_markers(data_text).strip()
+
+                    raw_refs = f.get("source_refs", [])
+                    if not isinstance(raw_refs, list):
+                        raw_refs = []
+
+                    seen = set()
+                    clean_refs = []
+                    for ref in raw_refs:
+                        if isinstance(ref, bool):
+                            continue
+                        if isinstance(ref, int):
+                            ref_int = ref
+                        elif isinstance(ref, str) and re.fullmatch(r"\d+", ref.strip()):
+                            ref_int = int(ref.strip())
+                        else:
+                            continue
+                        if ref_int <= 0:
+                            continue
+                        if ref_int in seen:
+                            continue
+                        seen.add(ref_int)
+                        clean_refs.append(ref_int)
+                        if len(clean_refs) >= 3:
+                            break
+
                     normalized.append({
                         "fact_id": f.get("fact_id", i),
-                        "fact": str(f.get("fact", "")),
-                        "data": str(f.get("data", "")),
+                        "fact": fact_text,
+                        "data": data_text,
                         "confidence": str(f.get("confidence", "中")),
+                        "source_refs": clean_refs,
                     })
             return normalized
         except json.JSONDecodeError as e:

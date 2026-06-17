@@ -25,6 +25,128 @@ def test_build_prompt_includes_source_list():
     assert "估值争议" in prompt or "估值" in prompt
 
 
+def test_build_prompt_includes_credit_usage_rules_before_sources():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="Q1业绩分析", content="营收增长40%", author="张三",
+            source_platform="雪球", url="http://x", publish_time="2026-05-20",
+            interaction_score=100,
+        ),
+    ]
+    prompt = synth._build_prompt("圣邦股份", "valuation_debate", items)
+    rules_pos = prompt.find("证据信用与写法规则")
+    sources_pos = prompt.find("信息来源：")
+    assert rules_pos != -1
+    assert sources_pos != -1
+    assert rules_pos < sources_pos
+    assert "不得写成公司确认" in prompt
+    assert "Phase 1 不使用 corroborated schema" in prompt
+
+
+def test_build_prompt_source_line_includes_credit_label():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="一季报", content="营收增长40%", author="公司",
+            source_platform="公告", url="", publish_time="2026-04-30",
+        ),
+        SynthesisItem(
+            title="研报", content="目标价", author="券商",
+            source_platform="研报", url="", publish_time="2026-05-01",
+        ),
+        SynthesisItem(
+            title="新闻", content="行业动态", author="媒体",
+            source_platform="新闻", url="", publish_time="2026-05-02",
+        ),
+        SynthesisItem(
+            title="帖子", content="社区观点", author="用户",
+            source_platform="雪球", url="", publish_time="2026-05-03",
+        ),
+    ]
+    prompt = synth._build_prompt("圣邦股份", "valuation_debate", items)
+    assert "信用层: high" in prompt
+    assert "可用方式: core_fact_allowed" in prompt
+    assert "信用层: medium" in prompt
+    assert "可用方式: professional_observation" in prompt
+    assert "信用层: low" in prompt
+    assert "可用方式: discussion_only" in prompt
+
+
+def test_build_prompt_claim_verification_appendix_has_new_wording():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="Q1业绩分析", content="营收增长40%", author="张三",
+            source_platform="雪球", url="http://x", publish_time="2026-05-20",
+            interaction_score=100,
+        ),
+    ]
+    context = {
+        "enabled": True,
+        "stock": "圣邦股份",
+        "counts": {"verified": 1, "supported": 0, "unverified": 0, "needs_review": 0, "high_credit_claims": 1, "low_credit_claims": 1, "skipped_files": 0},
+        "verified_claims": [{"claim_text": "营收增长", "action": "verified", "verified_by_titles": ["公司业绩公告"], "confidence": 85}],
+        "supported_claims": [],
+        "unverified_claims": [],
+    }
+    prompt = synth._build_prompt("圣邦股份", "fundamentals", items, claim_verification_context=context)
+    assert "已验证讨论线索" in prompt
+    assert "部分支持讨论线索" in prompt
+    assert "未验证市场讨论" in prompt
+    assert "Phase 1 不输出 corroborated bucket" in prompt
+    assert "社区共振/市场关注" in prompt
+
+
+def test_extract_core_facts_prompt_excludes_professional_and_community_claims():
+    synth = KnowledgeSynthesizer(client=object())
+    llm_output = '[{"fact_id": 1, "fact": "营收增长", "data": "10%", "confidence": "高", "source_refs": []}]'
+    captured = []
+
+    def spy_call_llm(prompt):
+        captured.append(prompt)
+        return llm_output
+
+    synth._call_llm = spy_call_llm
+    synth.extract_core_facts("测试股", {"industry_logic": "营收增长。"})
+    prompt = captured[0]
+    assert "不要提取券商/媒体观点本身" in prompt
+    assert "社区讨论观点本身" in prompt
+    assert "多源低信用社区共振线索" in prompt
+    assert "可能、预计、推测、若...则..." in prompt
+    assert "公告/官方/交易所/巨潮/高信用 confirmed" in prompt
+    assert "研报、新闻、雪球、知乎、微信公众号、AgentReach、资金流向" in prompt
+
+
+def test_parse_citations_sanitizes_non_numeric_markers():
+    synth = KnowledgeSynthesizer(client=None)
+    text = "收入同比增长40%[^1]，社区讨论[^supported]，毛利率51.6%[^needs_review]。"
+    parsed, cites = synth._parse_with_citations(text)
+    assert "[^supported]" not in parsed
+    assert "[^needs_review]" not in parsed
+    assert "[^1]" in parsed
+    assert 1 in cites
+    assert len(cites) == 1
+
+
+def test_extract_core_facts_sanitizes_non_numeric_markers():
+    synth = KnowledgeSynthesizer(client=object())
+    llm_output = (
+        '[{"fact_id": 1, "fact": "营收增长[^supported]", "data": "10%[^needs_review]", '
+        '"confidence": "高", "source_refs": [1]}]'
+    )
+    synth._call_llm = lambda prompt: llm_output
+    result = synth.extract_core_facts("测试股", {"industry_logic": "营收增长。"})
+    assert len(result) == 1
+    assert "[^supported]" not in result[0]["fact"]
+    assert "[^needs_review]" not in result[0]["data"]
+    assert result[0]["fact"] == "营收增长"
+    assert result[0]["data"] == "10%"
+
+
+# --- original tests continue below ---
+
+
 def test_build_prompt_includes_claim_verification_appendix():
     synth = KnowledgeSynthesizer(client=None)
     items = [
@@ -107,6 +229,8 @@ def test_parse_citations_unchanged_by_verification_context():
 def test_synthesize_passes_context_to_build_prompt(monkeypatch):
     """When context is provided, _build_prompt receives it."""
     synth = KnowledgeSynthesizer(client=None)
+    # Bypass the client check so we can spy on _build_prompt without a real API key.
+    synth.client = object()
     items = [
         SynthesisItem(
             title="Q1业绩分析", content="营收增长40%", author="张三",
@@ -160,3 +284,52 @@ def test_synthesize_skips_when_items_too_few():
     result = synth.synthesize("圣邦股份", {"items": items})
     # With no client, everything is empty
     assert result["industry_logic"] == ""
+
+
+# --- source_refs normalization tests ---
+
+def test_extract_core_facts_normalizes_source_refs():
+    """LLM output with source_refs is normalized to ints and capped."""
+    synth = KnowledgeSynthesizer(client=object())
+    llm_output = (
+        '[{"fact_id": 1, "fact": "营收增长", "data": "10%", "confidence": "高", "source_refs": [1, "2", 3, 4]}]'
+    )
+    synth._call_llm = lambda prompt: llm_output
+    result = synth.extract_core_facts("测试股", {"industry_logic": "营收增长[^1][^2]，毛利提升[^3][^4]。"})
+    assert len(result) == 1
+    assert result[0]["source_refs"] == [1, 2, 3]
+
+
+def test_extract_core_facts_missing_source_refs_becomes_empty():
+    synth = KnowledgeSynthesizer(client=object())
+    llm_output = '[{"fact_id": 1, "fact": "营收增长", "data": "10%", "confidence": "高"}]'
+    synth._call_llm = lambda prompt: llm_output
+    result = synth.extract_core_facts("测试股", {"industry_logic": "营收增长。"})
+    assert len(result) == 1
+    assert result[0]["source_refs"] == []
+
+
+def test_extract_core_facts_drops_invalid_and_duplicate_refs():
+    synth = KnowledgeSynthesizer(client=object())
+    llm_output = (
+        '[{"fact_id": 1, "fact": "营收增长", "data": "10%", "confidence": "高", "source_refs": [1, -1, 0, "abc", 1, 2.7, true, "2"]}]'
+    )
+    synth._call_llm = lambda prompt: llm_output
+    result = synth.extract_core_facts("测试股", {"industry_logic": "营收增长[^1][^2]。"})
+    assert len(result) == 1
+    assert result[0]["source_refs"] == [1, 2]
+
+
+def test_extract_core_facts_strips_inline_citation_markers():
+    synth = KnowledgeSynthesizer(client=object())
+    llm_output = (
+        '[{"fact_id": 1, "fact": "营收增长[1][^2]", "data": "10% [^3]", "confidence": "高", "source_refs": []}]'
+    )
+    synth._call_llm = lambda prompt: llm_output
+    result = synth.extract_core_facts("测试股", {"industry_logic": "营收增长。"})
+    assert len(result) == 1
+    assert "[1]" not in result[0]["fact"]
+    assert "[^2]" not in result[0]["fact"]
+    assert "[^3]" not in result[0]["data"]
+    assert result[0]["fact"] == "营收增长"
+    assert result[0]["data"] == "10%"

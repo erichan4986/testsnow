@@ -7,10 +7,24 @@ if __name__.startswith("utils."):
     from ..skill_pipeline import BaseSkill, SkillContext
     from ..knowledge_synthesizer import KnowledgeSynthesizer
     from ..source_adapter import adapt_all
+    from ..synthesis_credit import (
+        credit_usage_rules_text,
+        derive_synthesis_usage,
+        format_synthesis_source_line,
+        is_core_fact_supporting_source,
+        format_claim_verification_appendix,
+    )
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
     from source_adapter import adapt_all
+    from synthesis_credit import (
+        credit_usage_rules_text,
+        derive_synthesis_usage,
+        format_synthesis_source_line,
+        is_core_fact_supporting_source,
+        format_claim_verification_appendix,
+    )
 
 
 SYNTHESIS_KEYS = [
@@ -78,6 +92,7 @@ class SynthesisSkill(BaseSkill):
             all_data["claim_verification_context"] = cv_context
         result = synthesizer.synthesize(stock_name, all_data)
         result = self._fill_citation_metadata(result, items)
+        result = self._enrich_core_fact_provenance(result)
 
         if not any(result.get(k) for k in SYNTHESIS_KEYS):
             return self._template_synthesize(
@@ -171,6 +186,7 @@ class SynthesisSkill(BaseSkill):
                 filled[ref_id] = meta
                 continue
 
+            extra = item.extra or {}
             filled[ref_id] = {
                 "source": item.source_platform,
                 "author": item.author,
@@ -178,9 +194,132 @@ class SynthesisSkill(BaseSkill):
                 "url": item.url,
                 "date": item.publish_time,
                 "interaction_score": item.interaction_score,
+                "source_credit": extra.get("source_credit"),
+                "source_type": extra.get("source_type"),
+                "verification_status": extra.get("verification_status"),
             }
         synthesis["citations"] = filled
         return synthesis
+
+    def _enrich_core_fact_provenance(self, synthesis: dict) -> dict:
+        """Deterministically enrich core_facts with source labels, evidence type, and provenance status.
+
+        Uses existing citation metadata; does not call LLM or add new data sources.
+        Only high-credit official/announcement/exchange sources can support core facts;
+        news/research/community/AgentReach/fundflow sources are rejected by the hard filter.
+        """
+        core_facts = synthesis.get("core_facts", []) or []
+        if not core_facts:
+            return synthesis
+
+        citations = synthesis.get("citations", {}) or {}
+        # Build an int-keyed lookup from possibly string-keyed citations
+        citation_lookup = {}
+        for raw_key, meta in citations.items():
+            try:
+                int_key = int(raw_key)
+            except (TypeError, ValueError):
+                int_key = raw_key
+            citation_lookup[int_key] = meta
+
+        for fact in core_facts:
+            raw_refs = fact.get("source_refs", []) or []
+            refs = []
+            for r in raw_refs:
+                if isinstance(r, bool):
+                    continue
+                if isinstance(r, int):
+                    r_int = r
+                elif isinstance(r, str) and r.strip().isdigit():
+                    r_int = int(r.strip())
+                else:
+                    continue
+                if r_int > 0:
+                    refs.append(r_int)
+
+            accepted_labels = []
+            invalid_or_excluded = False
+            seen_labels = set()
+
+            for ref in refs:
+                meta = citation_lookup.get(ref)
+                if not meta or not isinstance(meta, dict):
+                    invalid_or_excluded = True
+                    continue
+
+                source = str(meta.get("source", "")).strip()
+                if not source:
+                    invalid_or_excluded = True
+                    continue
+
+                # Deterministic hard filter: only allowed sources support core facts.
+                if not is_core_fact_supporting_source(source, meta):
+                    invalid_or_excluded = True
+                    continue
+
+                family = self._normalize_source_family(source)
+                if family not in seen_labels:
+                    seen_labels.add(family)
+                    if len(accepted_labels) < 2:
+                        accepted_labels.append(family)
+
+            fact["source_labels"] = accepted_labels
+            fact["evidence_type"] = self._derive_evidence_type(accepted_labels)
+            fact["provenance_status"] = self._derive_provenance_status(refs, accepted_labels, invalid_or_excluded)
+
+        return synthesis
+
+    @staticmethod
+    def _normalize_source_family(source: str) -> str:
+        """Map fine-grained source_platform values to stable source families."""
+        s = source.strip()
+        lower = s.lower()
+
+        if "知乎" in s:
+            return "知乎"
+        if lower in ("xueqiu", "雪球"):
+            return "雪球"
+        if "研报" in s or lower == "research_report":
+            return "研报"
+        if "公告" in s or lower == "announcement":
+            return "公告"
+        if "资金流向" in s or lower == "fundflow":
+            return "资金流向"
+        if "新闻" in s or lower == "news":
+            return "新闻"
+        return s
+
+    @staticmethod
+    def _derive_evidence_type(labels: list) -> str:
+        if not labels:
+            return "unknown"
+
+        families = set(labels)
+        if len(families) > 1:
+            return "mixed"
+
+        label = labels[0]
+        if label == "公告":
+            return "announcement"
+        if label == "研报":
+            return "research_report"
+        if label in ("雪球", "知乎"):
+            return "community"
+        if label == "新闻":
+            return "news"
+        if label == "资金流向":
+            return "fundflow"
+        return "unknown"
+
+    @staticmethod
+    def _derive_provenance_status(refs: list, accepted_labels: list, invalid_or_excluded: bool) -> str:
+        if not refs:
+            return "missing_ref"
+        if accepted_labels:
+            if invalid_or_excluded:
+                return "partially_supported"
+            return "supported"
+        return "invalid_ref"
 
     def _source_list(self, items: list) -> List[str]:
         return sorted({item.source_platform for item in items if item.source_platform})
@@ -189,7 +328,7 @@ class SynthesisSkill(BaseSkill):
         return "\n".join(str(synthesis.get(k, "")) for k in SYNTHESIS_KEYS if synthesis.get(k))
 
     def _build_prompt(self, stock_name: str, stock_raw: dict, keep_posts: list, cv_context: Dict = None) -> str:
-        """构建 LLM prompt。"""
+        """构建 LLM prompt（legacy chat 路径，复用现代路径的信用规则）。"""
         tech = stock_raw.get("technical", {})
         reports = stock_raw.get("reports", [])
         anns = stock_raw.get("announcements", [])
@@ -202,6 +341,8 @@ class SynthesisSkill(BaseSkill):
 最新公告数量：{len(anns)}
 知乎相关文章数量：{len(zhihu)}
 高质量社区帖子数量：{len(keep_posts)}
+
+{credit_usage_rules_text()}
 
 请按以下 JSON 格式返回：
 {{
@@ -220,43 +361,7 @@ class SynthesisSkill(BaseSkill):
 
     def _format_claim_verification_appendix(self, context: Dict) -> str:
         """Render guarded non-citable appendix for legacy prompt."""
-        if not context or not context.get("enabled"):
-            return ""
-        counts = context.get("counts", {})
-        lines = [
-            "Claim Verification Context（以下不是新的引用来源）",
-            "",
-            "重要约束：以下内容不是新的引用来源，不能用 [^n] 引用，也不能单独作为事实写入正文。",
-            f"统计：已验证 {counts.get('verified', 0)} 条，中等支持 {counts.get('supported', 0)} 条，未验证 {counts.get('unverified', 0)} 条。",
-            "",
-            "使用规则：",
-            "- verified：只有当同一事实也出现在其他可引用来源中时，才可作为重点线索使用。",
-            "- supported：仅表示有中等信用来源支持，不得写成已确认事实。",
-            "- unverified：只能作为待验证市场观点/社区讨论，不得进入核心事实。",
-        ]
-        for bucket, label in (
-            ("verified_claims", "已验证声明"),
-            ("supported_claims", "中等支持声明"),
-            ("unverified_claims", "未验证声明"),
-        ):
-            rows = context.get(bucket, [])
-            if rows:
-                lines.extend(["", f"{label}："])
-                for row in rows:
-                    text = row.get("claim_text", "")
-                    action = row.get("action", "")
-                    confidence = row.get("confidence")
-                    reason = row.get("reason", "")
-                    titles = row.get("verified_by_titles", [])
-                    parts = [f"- [{action}] {text}"]
-                    if confidence is not None:
-                        parts.append(f"（置信度 {confidence}）")
-                    if titles:
-                        parts.append(f"[依据: {' / '.join(titles)}]")
-                    if reason:
-                        parts.append(f"[原因: {reason}]")
-                    lines.append(" ".join(parts))
-        return "\n".join(lines)
+        return format_claim_verification_appendix(context, is_legacy=True)
 
     def _template_synthesize(self, stock_raw: dict, items_count: int = 0, sources: List[str] = None) -> dict:
         """无 LLM 时的降级模板，只描述可验证状态，不生成伪基本面结论。"""
