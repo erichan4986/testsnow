@@ -293,7 +293,15 @@ def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
 
         start_date = (datetime.now() - timedelta(days=days * 2)).strftime("%Y%m%d")
         if helper is not None:
-            df = helper.call(ak.index_zh_a_hist, symbol=symbol, period="daily", start_date=start_date)
+            df = helper.call(
+                ak.index_zh_a_hist,
+                symbol=symbol,
+                period="daily",
+                start_date=start_date,
+                optional=True,
+                source_name="akshare index_zh_a_hist",
+                fallback_name="mootdx index",
+            )
         else:
             df = ak.index_zh_a_hist(symbol=symbol, period="daily", start_date=start_date)
 
