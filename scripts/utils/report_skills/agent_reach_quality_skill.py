@@ -383,6 +383,15 @@ def _to_quality_result_dict(
     return audit
 
 
+def _annotate_item_quality(item: SynthesisItem, result: dict) -> None:
+    """Attach quality-gate metadata for downstream evidence-note writing."""
+    if item.extra is None:
+        item.extra = {}
+    item.extra["agent_reach_quality_score"] = int(result.get("score", 0))
+    item.extra["agent_reach_quality_action"] = result.get("action", "")
+    item.extra["agent_reach_quality_reasons"] = list(result.get("reasons", []) or [])
+
+
 def _build_compact_queries(search_queries: List[dict]) -> List[dict]:
     """Return query metadata without full content."""
     compact = []
@@ -477,6 +486,7 @@ def agent_reach_quality_skill(ctx: SkillContext) -> SkillContext:
 
     for item in items:
         result = score_agent_reach_item(item, stock_name, search_queries)
+        _annotate_item_quality(item, result)
         action = result["action"]
 
         if action == "keep":

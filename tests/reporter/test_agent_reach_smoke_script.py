@@ -352,17 +352,63 @@ def test_smoke_summary_does_not_contain_full_content(monkeypatch, tmp_path):
     assert "content" not in str(summary)
 
 
-def test_smoke_loads_config_from_stocks_json():
+def test_smoke_loads_config_from_stocks_json(tmp_path, monkeypatch):
     """load_stock_config must read from config/stocks.json and return the agent_reach block for the named stock."""
     module = _load_smoke_module()
+    fake_config = tmp_path / "stocks.json"
+    fake_config.write_text(
+        json.dumps([
+            {
+                "name": "黑芝麻智能",
+                "agent_reach": {
+                    "enabled": True,
+                    "official_domains": ["blacksesame.com"],
+                    "web_urls": ["https://www.blacksesame.com/a"],
+                },
+            }
+        ], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "_CONFIG_PATH", fake_config)
     cfg = module.load_stock_config("黑芝麻智能")
     assert cfg.get("enabled") is True
     assert "blacksesame.com" in cfg.get("official_domains", [])
 
 
-def test_smoke_config_not_present_for_other_stocks():
+def test_smoke_loads_zhongjian_cninfo_config_from_stocks_json(tmp_path, monkeypatch):
     module = _load_smoke_module()
-    for name in ["长春高新", "三花智控", "中简科技", "圣邦股份", "乐鑫科技"]:
+    fake_config = tmp_path / "stocks.json"
+    fake_config.write_text(
+        json.dumps([
+            {
+                "name": "中简科技",
+                "agent_reach": {
+                    "enabled": True,
+                    "official_domains": ["cninfo.com.cn"],
+                    "web_urls": [
+                        "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1",
+                        "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=2",
+                        "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=3",
+                        "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=4",
+                    ],
+                },
+            }
+        ], ensure_ascii=False),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(module, "_CONFIG_PATH", fake_config)
+    cfg = module.load_stock_config("中简科技")
+    assert cfg.get("enabled") is True
+    assert "cninfo.com.cn" in cfg.get("official_domains", [])
+    assert len(cfg.get("web_urls", [])) >= 4
+
+
+def test_smoke_config_not_present_for_other_stocks(tmp_path, monkeypatch):
+    module = _load_smoke_module()
+    fake_config = tmp_path / "stocks.json"
+    fake_config.write_text(json.dumps([], ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(module, "_CONFIG_PATH", fake_config)
+    for name in ["长春高新", "三花智控", "圣邦股份", "乐鑫科技"]:
         cfg = module.load_stock_config(name)
         assert not cfg.get("enabled", False), f"{name} must not have agent_reach.enabled"
 

@@ -47,10 +47,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+_CONFIG_PATH = Path(__file__).parent.parent / "config" / "stocks.json"
+
 
 def load_stock_config(stock_name: str) -> dict:
     """Load per-stock Agent-Reach config from config/stocks.json."""
-    config_path = Path(__file__).parent.parent / "config" / "stocks.json"
+    config_path = _CONFIG_PATH
     try:
         with open(config_path, "r", encoding="utf-8") as f:
             stocks = json.load(f)

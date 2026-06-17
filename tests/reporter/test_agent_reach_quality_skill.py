@@ -198,6 +198,30 @@ def test_quality_results_do_not_include_full_content():
     assert "reasons" in results[0]
 
 
+def test_quality_skill_annotates_items_for_evidence_notes():
+    item = _make_item(
+        title="黑芝麻智能财报",
+        content="黑芝麻智能自动驾驶芯片量产，营收增长35%。",
+        source_platform="AgentReach(web)",
+        url="https://www.blacksesame.com/zh/list_10/972.html",
+        extra={"raw": {"user_provided_url": True, "official_seed_url": True, "source_type": "official"}},
+    )
+    ctx = SkillContext(input={
+        "stock_name": "黑芝麻智能",
+        "agent_reach_enabled": True,
+        "agent_reach_status": "ok",
+        "agent_reach_items": [item],
+        "search_queries": [],
+    })
+    agent_reach_quality_skill(ctx)
+    keep_items = ctx.get("agent_reach_keep_items")
+    demote_items = ctx.get("agent_reach_demote_items")
+    scored_item = (keep_items or demote_items)[0]
+    assert scored_item.extra["agent_reach_quality_score"] > 0
+    assert scored_item.extra["agent_reach_quality_action"] in ("keep", "demote")
+    assert scored_item.extra["agent_reach_quality_reasons"]
+
+
 def test_official_seed_url_calibrated_reasons():
     """Official seed URL with navigation-heavy but article-rich content should be keep/demote and use calibrated reason."""
     lines = [

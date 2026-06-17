@@ -22,6 +22,13 @@ _TOPIC_LABELS: Dict[str, str] = {
     "to_verify": "待核查线索",
 }
 
+_CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
+    "1225145344": "2026年第一季度报告",
+    "1225106812": "2026年第一季度业绩预告",
+    "1225102392": "补缴税款及滞纳金事项公告",
+    "1225362219": "2025年年度权益分派实施公告",
+}
+
 
 def classify_agent_reach_topic(item: Any, quality_result: Optional[Dict] = None) -> str:
     """Deterministic topic classification for an Agent-Reach SynthesisItem.
@@ -54,6 +61,7 @@ class AgentReachEvidenceRenderer:
 
     MAX_KEEP_ITEMS = 6
     MAX_DEMOTE_ITEMS = 4
+    MAX_FACT_GAP_OBSERVATIONS = 4
 
     @staticmethod
     def required_keys() -> List[str]:
@@ -80,6 +88,7 @@ class AgentReachEvidenceRenderer:
         quality_results = ctx.get("agent_reach_quality_results", []) or []
         summary = ctx.get("agent_reach_quality_summary", {}) or {}
         fetch_status = ctx.get("agent_reach_status", "")
+        core_facts = ctx.get("core_facts", []) or []
 
         quality_lookup = self._build_quality_lookup(quality_results)
 
@@ -90,6 +99,15 @@ class AgentReachEvidenceRenderer:
             qr = quality_lookup.get(key, {})
             topic = classify_agent_reach_topic(item, qr)
             keep_by_topic.setdefault(topic, []).append((item, qr))
+
+        # Build core-fact topic coverage for gap audit
+        covered_topics = self._build_core_fact_topic_coverage(core_facts)
+        gap_topics = []
+        for topic_key in keep_by_topic:
+            if topic_key == "to_verify":
+                continue
+            if topic_key not in covered_topics:
+                gap_topics.append(topic_key)
 
         lines = []
         lines.append("## Agent-Reach 外部证据观察")
@@ -112,6 +130,11 @@ class AgentReachEvidenceRenderer:
 
         lines.append(f"- 检索状态：{fetch_status}；质量门：{quality_status}")
         lines.append("")
+
+        # Fact gap audit (read-only, before themed evidence)
+        if gap_topics:
+            lines.append(self._render_fact_gap_audit(gap_topics, keep_by_topic))
+            lines.append("")
 
         # Themed evidence
         if keep_by_topic:
@@ -152,6 +175,65 @@ class AgentReachEvidenceRenderer:
             "",
             "Agent-Reach 未检索到可用外部证据。",
         ]
+        return "\n".join(lines)
+
+    def _build_core_fact_topic_coverage(self, core_facts: List[Dict]) -> set:
+        """Return the set of Agent-Reach topics covered by the core fact base.
+
+        Scans each fact's `fact` and `data` fields for the same keyword groups
+        used to classify Agent-Reach evidence. Read-only: does not mutate input.
+        """
+        covered: set = set()
+        if not core_facts:
+            return covered
+
+        for fact in core_facts:
+            text_parts = [
+                str(fact.get("fact", "") or ""),
+                str(fact.get("data", "") or ""),
+            ]
+            text = " ".join(text_parts)
+            for topic_key, keywords in _TOPIC_KEYWORDS:
+                if topic_key in covered:
+                    continue
+                for kw in keywords:
+                    if kw in text:
+                        covered.add(topic_key)
+                        break
+        return covered
+
+    def _render_fact_gap_audit(
+        self, gap_topics: List[str], keep_by_topic: Dict[str, List[Any]]
+    ) -> str:
+        """Render a read-only audit comparing kept evidence to core fact coverage.
+
+        This subsection is display-only and must not affect scoring, risk,
+        synthesis, or numbered citations.
+        """
+        lines = [
+            "### 核心事实缺口观察",
+            "",
+            "> 以下仅提示外部证据与核心事实基座之间的覆盖差异，不构成事实确认，也不影响评分或结论。",
+            "",
+            "| 主题 | 外部证据提示 | 当前状态 | 建议动作 |",
+            "|------|--------------|----------|----------|",
+        ]
+
+        for topic_key in gap_topics[: self.MAX_FACT_GAP_OBSERVATIONS]:
+            items = keep_by_topic.get(topic_key, [])
+            if not items:
+                continue
+            item, qr = items[0]
+            topic_label = _TOPIC_LABELS.get(topic_key, topic_key)
+            title = self._clean_jina_title(getattr(item, "title", "") or "—")
+            title = self._escape_md(title)
+            excerpt = self._make_excerpt(item)
+            excerpt = self._escape_md(excerpt)
+            prompt_text = f"{title} — {excerpt}" if excerpt and excerpt != title else title
+            lines.append(
+                f"| {topic_label} | {prompt_text} | 核心事实基座未覆盖该主题 | 人工复核是否需要补充事实基座 |"
+            )
+
         return "\n".join(lines)
 
     def _build_quality_lookup(self, quality_results: List[Dict]) -> Dict:
@@ -223,6 +305,12 @@ class AgentReachEvidenceRenderer:
         # Remove standalone "Markdown Content:" label line.
         text = re.sub(r"\n?Markdown Content:\n?", "\n", text)
 
+        # Remove common Jina/PDF metadata from cninfo disclosure pages.
+        text = re.sub(r"(?im)^\s*Published Time:\s*.*(?:\n|$)", "\n", text)
+        text = re.sub(r"(?im)^\s*Number of Pages:\s*\d+\s*(?:\n|$)", "\n", text)
+        text = re.sub(r"(?m)^\s*证券代码[:：][^\n]*(?:\n|$)", "\n", text)
+        text = re.sub(r"证券代码[:：]\s*\S+\s+证券简称[:：]\s*\S+\s+公告编号[:：]\s*\S+", "", text)
+
         # Remove duplicated title/H1 fragments so we don't render "title — title...".
         if title:
             stripped_title = title.lstrip("#").strip()
@@ -267,6 +355,8 @@ class AgentReachEvidenceRenderer:
             # Also drop the title if it appears as a plain prefix in the body.
             text = re.sub(rf"^\s*{re.escape(stripped_title)}\s*", "", text)
 
+        text = self._clean_cninfo_disclosure_boilerplate(text)
+
         # Strip common Black Sesame official-site navigation boilerplate that
         # survives the article extraction (e.g. "联系我们", "商务合作", "首页",
         # "公司信息" and their trailing fragments).
@@ -307,6 +397,25 @@ class AgentReachEvidenceRenderer:
 
         return text
 
+    def _clean_cninfo_disclosure_boilerplate(self, text: str) -> str:
+        """Remove common cninfo disclosure boilerplate while preserving facts."""
+        if "中简科技股份有限公司" not in text and "证券代码" not in text:
+            return text
+
+        disclosure_titles = (
+            r"20\d{2}\s*年第[一二三四]季度(?:报告|业绩预告)|"
+            r"20\d{2}\s*年年度权益分派实施公告|"
+            r"关于补缴税款的公告"
+        )
+        text = re.sub(r"(?m)^\s*[#> ]*\d+\s*$", "\n", text)
+        text = re.sub(r"(?m)^\s*[#> ]*中简科技股份有限公司\s*$", "\n", text)
+        text = re.sub(rf"(?m)^\s*[#> ]*(?:{disclosure_titles})\s*$", "\n", text)
+        text = re.sub(rf"中简科技股份有限公司\s*(?:{disclosure_titles})\s*\d*", "", text)
+        text = re.sub(r"本公司及董事会全体成员保证信息披露(?:的)?内容?[^。]*。", "", text)
+        text = re.sub(r"(?:重要内容提示|特别提示)[:：][^。]*。", "", text)
+        text = re.sub(r"\s*[#>]+\s*", " ", text)
+        return text
+
     @staticmethod
     def _clean_jina_title(title: str) -> str:
         """Strip the leading 'Title: ' prefix that Jina Reader puts on the first line."""
@@ -315,7 +424,16 @@ class AgentReachEvidenceRenderer:
         title = title.strip()
         if title.startswith("Title:"):
             title = title[len("Title:"):].strip()
+        title = AgentReachEvidenceRenderer._humanize_cninfo_pdf_title(title)
         return title
+
+    @staticmethod
+    def _humanize_cninfo_pdf_title(title: str) -> str:
+        match = re.search(r"\b(\d{8,})\.PDF\b", title, flags=re.IGNORECASE)
+        if not match:
+            return title
+        announcement_id = match.group(1)
+        return _CNINFO_PDF_TITLE_MAP.get(announcement_id, title)
 
     @staticmethod
     def _escape_md(text: str) -> str:

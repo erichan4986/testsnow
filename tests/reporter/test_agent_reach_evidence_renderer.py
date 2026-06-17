@@ -35,6 +35,7 @@ def _make_ctx(
     quality_results=None,
     fetch_status="ok",
     warnings=None,
+    core_facts=None,
 ) -> SkillContext:
     return SkillContext(input={
         "agent_reach_enabled": enabled,
@@ -45,6 +46,7 @@ def _make_ctx(
         "agent_reach_discard_items": discard_items or [],
         "agent_reach_quality_results": quality_results or [],
         "agent_reach_warnings": warnings or [],
+        "core_facts": core_facts or [],
         "agent_reach_quality_summary": {
             "keep": len(keep_items or []),
             "demote": len(demote_items or []),
@@ -642,6 +644,121 @@ def test_black_sesame_list9_body_keeps_key_info():
     assert "r1\\|r2" in result
 
 
+def test_cninfo_pdf_evidence_summary_uses_human_title_and_strips_pdf_metadata():
+    title = "Title: 1225106812.PDF"
+    content = (
+        "Title: 1225106812.PDF\n"
+        "Published Time: Wed, 15 Apr 2026 10:22:39 GMT\n"
+        "Number of Pages: 2\n"
+        "证券代码： 300777 证券简称：中简科技 公告编号： 2026 -017\n"
+        "中简科技股份有限公司 2026 年第一季度业绩预告\n"
+        "客户对公司部分产品的需求量阶段性减少导致发货暂时减少，其中收入下降约50%-60%。"
+    )
+    item = _make_item(
+        title=title,
+        content=content,
+        source_platform="AgentReach(web)",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225106812",
+    )
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 77,
+        "reasons": ["官方/认证来源"],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result])
+
+    result = AgentReachEvidenceRenderer().render(ctx)
+    row = [ln for ln in result.splitlines() if ln.startswith("| — |")][0]
+
+    assert "2026年第一季度业绩预告" in row
+    assert "收入下降约50%-60%" in row
+    assert "1225106812.PDF" not in row
+    assert "Published Time" not in row
+    assert "Number of Pages" not in row
+    assert "证券代码" not in row
+    assert "证券简称" not in row
+
+
+def test_cninfo_pdf_fact_gap_uses_clean_summary():
+    item = _make_item(
+        title="Title: 1225145344.PDF",
+        content=(
+            "Title: 1225145344.PDF\n"
+            "Published Time: Wed, 22 Apr 2026 09:11:39 GMT\n"
+            "Number of Pages: 10\n"
+            "中简科技股份有限公司 2026 年第一季度报告\n"
+            "营业收入（元） 108,547,445.05 239,073,276.33 -54.60%"
+        ),
+        source_platform="AgentReach(web)",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225145344",
+    )
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 77,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result], core_facts=[])
+
+    result = AgentReachEvidenceRenderer().render(ctx)
+    gap_section = result.split("### 核心事实缺口观察")[1].split("### 主题化证据观察")[0]
+
+    assert "2026年第一季度报告" in gap_section
+    assert "营业收入" in gap_section
+    assert "1225145344.PDF" not in gap_section
+    assert "Published Time" not in gap_section
+    assert "Number of Pages" not in gap_section
+
+
+def test_cninfo_pdf_summary_removes_disclosure_boilerplate_and_preserves_fact():
+    item = _make_item(
+        title="Title: 1225145344.PDF",
+        content=(
+            "Title: 1225145344.PDF\n"
+            "Published Time: Wed, 22 Apr 2026 09:11:39 GMT\n"
+            "Number of Pages: 10\n"
+            "中简科技股份有限公司 2026 年第一季度报告 1\n"
+            "# 中简科技股份有限公司\n"
+            "# 2026 年第一季度报告\n"
+            "本公司及董事会全体成员保证信息披露的内容真实、准确、完整，没有虚假记载、误导性陈述或重大遗漏。\n"
+            "# 重要内容提示： 1. 董事会及监事会已审议通过。\n"
+            "营业收入（元） 108,547,445.05 239,073,276.33 -54.60%"
+        ),
+        source_platform="AgentReach(web)",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225145344",
+    )
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 77,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result])
+
+    result = AgentReachEvidenceRenderer().render(ctx)
+    row = [ln for ln in result.splitlines() if ln.startswith("| — |")][0]
+
+    assert "营业收入（元）" in row
+    assert "-54.60%" in row
+    assert "本公司及董事会" not in row
+    assert "虚假记载" not in row
+    assert "重要内容提示" not in row
+    assert "# 2026" not in row
+
+
 def test_renderer_supports_six_black_sesame_keep_items():
     """Renderer table should display up to six keep items (Black Sesame URL cap)."""
     urls = [
@@ -674,7 +791,153 @@ def test_renderer_supports_six_black_sesame_keep_items():
 
     for url in urls:
         assert url in result
-    assert result.count("| — |") == 6
+    # Count only rows under the themed evidence section (exclude fact-gap rows).
+    themed_section = result.split("### 主题化证据观察")[1].split("### 待人工复核线索")[0] if "### 待人工复核线索" in result else result.split("### 主题化证据观察")[1]
+    assert themed_section.count("| — |") == 6
     assert "联系我们" not in result
     assert "首页" not in result
     assert "# 黑芝麻智能" not in result
+
+
+# --- Fact gap audit tests ---
+
+def test_fact_gap_subsection_renders_for_uncovered_topic():
+    """When core_facts does not cover a keep item's topic, render a gap observation."""
+    item = _make_item(title="黑芝麻智能量产进展", content="芯片量产良率达到95%", url="http://a")
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 70,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result], core_facts=[])
+    result = AgentReachEvidenceRenderer().render(ctx)
+
+    assert "### 核心事实缺口观察" in result
+    assert "产品/量产进展" in result
+    assert "核心事实基座未覆盖该主题" in result
+    assert "人工复核是否需要补充事实基座" in result
+
+
+def test_fact_gap_subsection_absent_when_topic_covered():
+    """When core_facts already covers the topic, no gap observation is rendered."""
+    item = _make_item(title="黑芝麻智能量产进展", content="芯片量产良率达到95%", url="http://a")
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 70,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    core_facts = [
+        {"fact_id": 1, "fact": "量产进展顺利", "data": "芯片良率达到95%", "confidence": "高"},
+    ]
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result], core_facts=core_facts)
+    result = AgentReachEvidenceRenderer().render(ctx)
+
+    assert "### 核心事实缺口观察" not in result
+    assert "核心事实基座未覆盖该主题" not in result
+
+
+def test_demote_items_do_not_create_fact_gaps():
+    """Demoted items must not contribute to fact gap observations."""
+    item = _make_item(title="黑芝麻智能量产进展", content="芯片量产良率达到95%", url="http://a")
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "demote",
+        "score": 45,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(demote_items=[item], quality_results=[quality_result], core_facts=[])
+    result = AgentReachEvidenceRenderer().render(ctx)
+
+    assert "### 核心事实缺口观察" not in result
+    assert "核心事实基座未覆盖该主题" not in result
+
+
+def test_fact_gap_disclaimer_present():
+    """Gap subsection must include the read-only, non-impact disclaimer."""
+    item = _make_item(title="黑芝麻智能量产进展", content="芯片量产良率达到95%", url="http://a")
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 70,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result], core_facts=[])
+    result = AgentReachEvidenceRenderer().render(ctx)
+
+    assert "以下仅提示外部证据与核心事实基座之间的覆盖差异" in result
+    assert "不构成事实确认" in result
+    assert "也不影响评分或结论" in result
+
+
+def test_fact_gap_has_no_numbered_citations():
+    """Gap subsection must not emit numbered citation markers like [^1]."""
+    item = _make_item(title="黑芝麻智能量产进展", content="芯片量产良率达到95%", url="http://a")
+    quality_result = {
+        "title": item.title,
+        "source": item.source_platform,
+        "action": "keep",
+        "score": 70,
+        "reasons": [],
+        "url": item.url,
+        "fetch_status": "ok",
+        "quality_status": "ok",
+    }
+    ctx = _make_ctx(keep_items=[item], quality_results=[quality_result], core_facts=[])
+    result = AgentReachEvidenceRenderer().render(ctx)
+
+    gap_section = result.split("### 核心事实缺口观察")[1].split("### 主题化证据观察")[0]
+    assert "[^" not in gap_section
+
+
+def test_fact_gap_rows_capped_at_four():
+    """At most four gap observations are rendered."""
+    topic_specs = [
+        ("黑芝麻智能芯片量产", "量产良率95%", "product_progress"),
+        ("黑芝麻智能获客户定点", "主机厂订单落地", "customer_orders"),
+        ("黑芝麻智能竞争格局", "对手英伟达压制", "competition"),
+        ("黑芝麻智能财报营收", "收入增长亏损收窄", "earnings_business"),
+        ("黑芝麻智能市场热度", "投资者关注提升", "market_sentiment"),
+        ("黑芝麻智能产品发布", "新版本芯片发布", "product_progress"),
+    ]
+    items = []
+    quality_results = []
+    for i, (title, content, expected_topic) in enumerate(topic_specs):
+        item = _make_item(title=title, content=content, url=f"http://a{i}")
+        items.append(item)
+        quality_results.append({
+            "title": item.title,
+            "source": item.source_platform,
+            "action": "keep",
+            "score": 70,
+            "reasons": [],
+            "url": item.url,
+            "fetch_status": "ok",
+            "quality_status": "ok",
+        })
+    ctx = _make_ctx(keep_items=items, quality_results=quality_results, core_facts=[])
+    result = AgentReachEvidenceRenderer().render(ctx)
+
+    gap_section = result.split("### 核心事实缺口观察")[1].split("### 主题化证据观察")[0]
+    gap_rows = [ln for ln in gap_section.splitlines() if ln.startswith("|") and "核心事实基座未覆盖该主题" in ln]
+    assert len(gap_rows) == 4
+    # product_progress appears only once despite two items
+    product_rows = [ln for ln in gap_rows if "产品/量产进展" in ln]
+    assert len(product_rows) == 1
