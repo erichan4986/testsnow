@@ -63,6 +63,17 @@ def test_shengbang_entry_passes_source_intake_config():
     assert cfg.get("claim_verification", {}).get("risk_signals") is True
 
 
+def test_shengbang_config_enables_periodic_report_fulltext():
+    """config/stocks.json should enable 圣邦股份 annual fulltext intake for cross-stock validation."""
+    cfg = run_shengbang._load_source_intake_config(STOCK_NAME)[STOCK_NAME]
+
+    assert cfg["enabled"] is True
+    assert cfg["periodic_report_fulltext"] == {
+        "enabled": True,
+        "report_type": "annual_report",
+    }
+
+
 def test_fast_test_mode_skips_zhihu_collector():
     """--fast-test must never instantiate or call ZhihuCollector."""
     with patch.object(run_shengbang, "ZhihuCollector") as mock_zhihu:
