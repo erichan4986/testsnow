@@ -101,6 +101,64 @@ def test_source_intake_periodic_fulltext_enabled_passes_pipeline_flag(tmp_path):
     assert call_input.get("periodic_report_fulltext_report_type") == "annual_report"
 
 
+def test_global_periodic_fulltext_flag_enables_source_intake_fulltext():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={"测试股": {"enabled": True}},
+        enable_periodic_report_fulltext_intake=True,
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+        enable_periodic_report_fulltext_intake=True,
+    )
+
+
+def test_periodic_fulltext_stock_config_can_disable_global_flag():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "periodic_report_fulltext": {"enabled": False},
+            }
+        },
+        enable_periodic_report_fulltext_intake=True,
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+    )
+
+
 def test_source_intake_evidence_notes_enabled_without_agent_reach():
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},

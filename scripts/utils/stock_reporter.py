@@ -26,6 +26,7 @@ class PerStockReporter:
         agent_reach_configs: Dict[str, Dict] = None,
         source_intake_configs: Dict[str, Dict] = None,
         enable_agent_reach: bool = False,
+        enable_periodic_report_fulltext_intake: bool = False,
     ):
         """
         Args:
@@ -36,6 +37,7 @@ class PerStockReporter:
             agent_reach_configs: 每只股票 Agent-Reach 配置
             source_intake_configs: 每只股票 Source Intake v2 配置
             enable_agent_reach: 全局启用 Agent-Reach（默认 False）
+            enable_periodic_report_fulltext_intake: 全局启用年报全文材料层（默认 False；单股配置优先）
         """
         if stocks_data:
             self.stocks_data = stocks_data
@@ -50,6 +52,7 @@ class PerStockReporter:
         self.agent_reach_configs = agent_reach_configs or {}
         self.source_intake_configs = source_intake_configs or {}
         self.enable_agent_reach = enable_agent_reach
+        self.enable_periodic_report_fulltext_intake = enable_periodic_report_fulltext_intake
         self.date_str = datetime.now().strftime("%Y%m%d")
         self.date_display = datetime.now().strftime("%Y年%m月%d日")
 
@@ -99,8 +102,12 @@ class PerStockReporter:
             agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
             source_intake_enabled = bool(si_cfg.get("enabled", False))
             periodic_fulltext_cfg = si_cfg.get("periodic_report_fulltext", {}) or {}
+            if "enabled" in periodic_fulltext_cfg:
+                periodic_fulltext_requested = bool(periodic_fulltext_cfg.get("enabled", False))
+            else:
+                periodic_fulltext_requested = bool(self.enable_periodic_report_fulltext_intake)
             periodic_fulltext_enabled = bool(
-                source_intake_enabled and periodic_fulltext_cfg.get("enabled", False)
+                source_intake_enabled and periodic_fulltext_requested
             )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
