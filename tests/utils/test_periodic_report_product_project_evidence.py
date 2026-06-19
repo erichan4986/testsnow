@@ -13,6 +13,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import periodic_report_product_project_evidence as product_project_evidence
 from periodic_report_product_project_evidence import (
     build_company_profile_backfill,
     build_rd_progress_backfill,
@@ -61,6 +62,35 @@ def _make_item_map(*texts):
         }
         for index, text in enumerate(texts)
     }
+
+
+def test_extract_snippets_caches_marker_patterns(monkeypatch):
+    """Snippet extraction should reuse compiled marker patterns across calls."""
+    calls = []
+    original_spaced_pattern = product_project_evidence._spaced_pattern
+
+    def counting_spaced_pattern(marker):
+        calls.append(marker)
+        return original_spaced_pattern(marker)
+
+    product_project_evidence._compiled_marker_pattern.cache_clear()
+    monkeypatch.setattr(product_project_evidence, "_spaced_pattern", counting_spaced_pattern)
+
+    text = "公司产品应用于智能手机，覆盖 2G/3G/4G/5G 通信频段，并已进入头部客户。"
+    first = product_project_evidence._extract_snippets(
+        text,
+        ("应用于", "覆盖", "进入"),
+        require_tokens=("智能手机", "客户", "通信频段"),
+    )
+    second = product_project_evidence._extract_snippets(
+        text,
+        ("应用于", "覆盖", "进入"),
+        require_tokens=("智能手机", "客户", "通信频段"),
+    )
+
+    assert first
+    assert second == first
+    assert calls == ["应用于", "覆盖", "进入"]
 
 
 def test_extracts_customer_chain_near_customer_and_odm_markers():
@@ -665,7 +695,8 @@ def test_rd_progress_backfill_avoids_mid_word_carbon_fiber_concat():
     evidence = extract_product_project_evidence(item_map)
     judgment, refs = build_rd_progress_backfill(evidence)
 
-    assert "法工艺" not in judgment
+    assert "产品/项目进展：法工艺" not in judgment
+    assert "认证与导入：法工艺" not in judgment
     assert "研发研发" not in judgment
     assert "提升竞争力国产" not in judgment
     assert any(term in judgment for term in ("湿法工艺", "T1100", "ZM40X", "T1000"))

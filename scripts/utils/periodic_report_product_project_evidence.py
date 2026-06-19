@@ -9,6 +9,7 @@ are suitable for deterministic backfill of full-text LLM summaries.
 from __future__ import annotations
 
 import re
+from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
 
@@ -1099,17 +1100,28 @@ def _extract_snippets(
 ) -> List[str]:
     """Extract bounded snippets around each marker occurrence."""
     snippets: List[str] = []
-    for marker in markers:
-        pattern = _spaced_pattern(marker)
+    if not text or not markers:
+        return snippets
+
+    seen: set[str] = set()
+    for marker in dict.fromkeys(markers):
+        pattern = _compiled_marker_pattern(marker)
         for match in re.finditer(pattern, text):
             snippet = _bounded_snippet(text, match.start(), match.end())
             if not snippet:
                 continue
             if not _snippet_matches_context(snippet, marker, require_tokens):
                 continue
-            if snippet not in snippets:
+            if snippet not in seen:
+                seen.add(snippet)
                 snippets.append(snippet)
     return snippets
+
+
+@lru_cache(maxsize=32)
+def _compiled_marker_pattern(marker: str) -> re.Pattern:
+    """Return a cached regex pattern for one marker."""
+    return re.compile(_spaced_pattern(marker))
 
 
 def _snippet_matches_context(
