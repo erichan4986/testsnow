@@ -69,6 +69,25 @@ YINGJIXIN_CUSTOMER_SUPPLIER_TEXT = """
 合计 / 97,080.28 73.45 /
 """
 
+HUIZHIWEI_SEGMENT_INVENTORY_TEXT = """
+主营业务分产品情况
+分产品 营业收入 营业成本 毛利率（%） 营业收入比上年增减（%） 营业成本比上年增减（%） 毛利率比上年增减（%）
+4G 模组 328,312,300.00 313,073,600.00 4.64 66.69 70.10 减少1.91个百分点
+5G 模组 475,731,700.00 434,765,300.00 8.61 45.92 31.81 增加9.80个百分点
+产销量情况分析表
+主要产品 单位 生产量 销售量 库存量 生产量比上年增减（%） 销售量比上年增减（%） 库存量比上年增减（%）
+4G 模组 万颗 19,235.56 20,289.91 2,585.09 39.71 40.56 -34.11
+5G 模组 万颗 26,694.89 23,713.77 5,852.31 75.42 50.33 94.01
+"""
+
+HUADAJIUTIAN_SEGMENT_MARGIN_TEXT = """
+主营业务分产品情况
+分产品 营业收入 营业成本 毛利率（%） 营业收入比上年增减（%） 营业成本比上年增减（%） 毛利率比上年增减（%）
+EDA 软件销售 1,074,512,360.11 0.00 100.00% -1.63% 0.00%
+技术服务 201,282,884.21 111,431,188.39 44.64% 74.93% 57.18% 6.25%
+主营业务分地区情况
+"""
+
 YINGJIXIN_FULL_REPORT = (
     YINGJIXIN_SEGMENT_MARGIN_TEXT + "\n" +
     YINGJIXIN_INVENTORY_TEXT + "\n" +
@@ -91,6 +110,128 @@ ZHONGJIAN_CUSTOMER_TEXT = """
 公司前五名客户
 序号 客户名称 销售额 占年度销售总额比例（%） 是否与上市公司存在关联关系
 1 客户 A 86,560.30 87.4 9 否
+"""
+
+ZHONGJIAN_ACTUAL_INVENTORY_TEXT = """
+产销量情况
+销售量 KG 315,326.80 301,915.01 4.44%
+生产量 KG 388,277.44 306,163.72 26.82%
+库存量 KG 94,938.11 37,831.74 150.95%
+随着三期各生产线正常投产，产量有所上升，客户四季度需求呈现阶段性放缓，导致年末库存量增大。
+"""
+
+ZHONGJIAN_ACTUAL_CUSTOMER_SUPPLIER_TEXT = """
+前五名客户合计销售金额（元） 841,075,474.56
+前五名客户合计销售金额占年度销售总额比例 99. 42%
+前五名客户销售额中关联方销售额占年度销售总额比例 1. 54%
+公司前 5 大客户资料
+序号 客户名称 销售额（元） 占年度销售总额比例
+1 客户 A 740,169,474.89 87.4 9%
+合计 -- 841,075,474.56 99.42%
+
+前五名供应商合计采购金额（元） 357,509,148.64
+前五名供应商合计采购金额占年度采购总额比例 41.58%
+前五名供应商采购额中关联方采购额占年度采购总额比例 0.00%
+公司前 5 大供应商资料
+序号 供应商名称 采购额（元） 占年度采购总额比例
+1 供应商 A 133,000,000.00 15.48%
+合计 -- 357,509,148.64 41.58%
+"""
+
+SHENGBANG_ACTUAL_INVENTORY_TEXT = """
+产销量情况
+销售量 颗 7,862,728,539 5,964,060,712 31.84%
+生产量 颗 8,610,305,518 6,481,555,180 32.84%
+库存量 颗 2,593,446,280 1,838,773,138 41.04%
+销售量本报告期比上一个报告期增加系营业收入增加，相应销售数量增加所致。
+"""
+
+SHENGBANG_ACTUAL_CUSTOMER_SUPPLIER_TEXT = """
+前五名客户合计销售金额（元） 1,291,257,970.80
+前五名客户合计销售金额占年度销售总额比例 33.13%
+前五名客户销售额中关联方销售额占年度销售总额比例 0.00%
+公司前 5 大客户资料
+序号 客户名称 销售额（元） 占年度销售总额比例
+1 第一名 303,592,511.98 7.79%
+合计 -- 1,291,257,970.80 33.13%
+
+前五名供应商合计采购金额（元） 2,180,676,102.11
+前五名供应商合计采购金额占年度采购总额比例 90.99%
+前五名供应商采购额中关联方采购额占年度采购总额比例 0.00%
+公司前 5 大供应商资料
+序号 供应商名称 采购额（元） 占年度采购总额比例
+1 第一名 949,000,000.00 39.61%
+合计 -- 2,180,676,102.11 90.99%
+"""
+
+SHENGBANG_COMBINED_SEGMENT_MARGIN_TEXT = """
+营业收入 营业成本 毛利率 营业收入比上 年同期增减 营业成本比上 年同期增减 毛利率比上年 同期增减
+分行业
+集成电路行业 3,898,054,583.68 1,912,334,714.23 50.94% 16.46% 17.72% -0.52%
+分产品
+信号链产品 1,471,022,875.27 615,285,480.40 58.17% 26.23% 26.62% -0.13%
+电源管理产品 2,379,833,746.57 1,276,179,316.39 46.38% 9.08% 12.09% -1.43%
+分地区 圣邦微电子（北京）股份有限公司 2025 年年度报告全文 22
+大陆 1,635,122,171.09 792,836,248.42 51.51% 9.18% 17.17% -3.31%
+香港 1,921,049,328.98 947,182,843.23 50.69% 29.37% 24.16% 2.07%
+分销售模式
+经销 3,609,911,439.81 1,746,401,174.88 51.62% 20.37% 21.03% -0.27%
+"""
+
+HK_BLACK_SESAME_BUSINESS_TEXT = """
+收入
+我們的收入由截至 2024 年12 月31 日止年度的人民幣 474.3 百萬元增加 73.4% 至截至 2025 年12 月31 日止年度的人民幣 822.3 百萬元。
+輔助駕駛產品及解決方案
+我們的輔助駕駛產品及解決方案收入由截至 2024 年12 月31 日止年度的人民幣 438.0 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 686.9 百萬元。
+智能影像解決方案
+我們的智能影像解決方案收入由截至 2024 年12 月31 日止年度的人民幣 36.3 百萬元增加 7.9%，至截至 2025 年12 月31 日止年度的人民幣 39.2 百萬元。
+具身智能解決方案
+我們的具身智能解決方案，截至 2025 年12 月31 日止年度的收入為人民幣 96.3 百萬元。
+
+輔助駕駛產品及解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 274.2 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 429.8 百萬元。
+智能影像解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 5.3 百萬元增加 12.4% 至截至 2025 年12 月31 日止年度的人民幣 6.0 百萬元。
+具身智能解決方案的銷售成本，截至 2025 年12 月31 日止年度為人民幣 49.4 百萬元。
+
+毛利及毛利率
+我們輔助駕駛產品及解決方案的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至 2025 年12 月31 日止年度均為 37.4%。
+我們智能影像解決方案業務的毛利率同樣保持相對穩定，截至 2024 年12 月31 日止年度與截至2025 年12 月31 日止年度的分別為 85.4% 與84.7%。
+此外，我們的新業務具身智能解決方案的毛利率截至 2025 年12 月31 日止年度為 48.7%。
+
+於報告期內，本集團五大客戶產生的收入約佔本集團總收入的 38.1%，而最大客戶產生的收入約佔本集團總收入的 9.1%。
+於報告期內，本集團五大供應商的採購額約佔本集團採購總額的 27.6%，而最大供應商的採購額約佔本集團採購總額的 10.2%。
+"""
+
+HK_BLACK_SESAME_REALISTIC_ADAS_MARGIN_TEXT = """
+收入
+我們的輔助駕駛產品及解決方案收入由截至 2024 年12 月31 日止年度的人民幣 438.0 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 686.9 百萬元。
+輔助駕駛產品及解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 274.2 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 429.8 百萬元。
+由於上述原因，我們的整體毛利由截至 2024 年12 月31 日止年度的人民幣 194.7 百萬元增加 73.1% 至截至 2025 年12 月31 日止年度的人民幣 337.1 百萬元。我們輔助駕駛產品及解決方案的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至 2025 年12 月31 日止年度均為 37.4%。
+"""
+
+HK_HORIZON_BUSINESS_LINE_TEXT = """
+收入
+截至 2025 年12 月31 日止年度，收入同比增加 57.7% 至人民幣 3,758.3 百萬元。下表載列我們截至 2025 年及2024 年12 月31 日止年度按收入來源劃分的收入：
+> 汽車解決方案
+> 產品解決方案 1,622,274 43.2% 664,237 27.9%
+> 授權及服務業務 1,934,913 51.4% 1,647,466 69.1%
+> 非車解決方案 201,081 5.3% 71,851 3.0%
+截至 2025 年12 月31 日止年度，汽車解決方案的收入同比增加 53.9% 至人民幣 3,557.2 百萬元。
+截至 2025 年12 月31 日止年度，產品解決方案的收入同比增加 144.2% 至人民幣 1,622.3 百萬元。
+截至 2025 年12 月31 日止年度，授權及服務業務的收入同比增加 17.4% 至人民幣 1,934.9 百萬元。
+截至 2025 年12 月31 日止年度，非車解決方案的收入同比增加 179.9% 至人民幣 201.1 百萬元。
+
+毛利及毛利率
+於2025 年，毛利為人民幣 2,425.7 百萬元，同比增加 31.7% 。毛利率由 2024 年的 77.3% 下降至 2025 年的 64.5% 。
+下表載列我們截至 2025 年及 2024 年12 月31 日止年度按汽車解決方案的業務線劃分的毛利及毛利率：
+> 毛利 毛利率 毛利 毛利率 （人民幣千元，百分比除外）
+> 汽車解決方案
+> 產品解決方案 559,898 34.5% 308,059 46.4%
+> 授權及服務業務 1,829,426 94.5% 1,516,480 92.0%
+> 總計 2,389,324 67.2% 1,824,539 78.9%
+－ 截至 2025 年12 月31 日止年度，汽車解決方案的毛利同比增加 31.0% 至人民幣 2,389.3 百萬元，而汽車解決方案的毛利率由上年的 78.9% 下降至 67.2% 。
+• 截至 2025 年12 月31 日止年度，產品解決方案的毛利同比增加 81.8% 至人民幣 559.9 百萬元，而毛利率由 2024 年的 46.4% 下降至 34.5% 。
+• 截至 2025 年12 月31 日止年度，授權及服務業務的毛利同比增加 20.6% 至人民幣 1,829.4 百萬元，而毛利率由上年的 92.0% 增加至 94.5% 。
+－ 截至 2025 年12 月31 日止年度，非車解決方 案的毛利同比增加 116.2% 至人民幣 36.4 百萬元，而毛利率由去年的 23.4% 下降至 18.1% 。
 """
 
 ZHONGJIAN_FULL_REPORT = ZHONGJIAN_SEGMENT_INVENTORY_TEXT + "\n" + ZHONGJIAN_CUSTOMER_TEXT
@@ -140,6 +281,92 @@ def test_extracts_yingjixin_segment_margin_rows_from_evidence_block():
     assert soc["gross_margin_delta"]["text"] in {"-4.84", "减少4.84个百分点", "-4.84pct"}
 
 
+def test_extracts_hk_business_segment_rows_and_concentration_from_narrative():
+    evidence_pack = build_periodic_report_evidence_pack(HK_BLACK_SESAME_BUSINESS_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=HK_BLACK_SESAME_BUSINESS_TEXT,
+    )
+
+    adas = _find_row(metrics["segment_rows"], "輔助駕駛產品及解決方案")
+    imaging = _find_row(metrics["segment_rows"], "智能影像解決方案")
+    embodied = _find_row(metrics["segment_rows"], "具身智能解決方案")
+
+    assert adas is not None
+    assert adas["revenue"]["normalized"] == "68690.00万元"
+    assert adas["cost"]["normalized"] == "42980.00万元"
+    assert adas["revenue_yoy"]["text"] == "56.8%"
+    assert adas["gross_margin"]["text"] == "37.4%"
+
+    assert imaging is not None
+    assert imaging["revenue"]["normalized"] == "3920.00万元"
+    assert imaging["cost"]["normalized"] == "600.00万元"
+    assert imaging["revenue_yoy"]["text"] == "7.9%"
+    assert imaging["gross_margin"]["text"] == "84.7%"
+
+    assert embodied is not None
+    assert embodied["revenue"]["normalized"] == "9630.00万元"
+    assert embodied["cost"]["normalized"] == "4940.00万元"
+    assert embodied["gross_margin"]["text"] == "48.7%"
+
+    customer = metrics["customer_concentration"]
+    assert customer["present"]
+    assert customer["top_five_percentage"]["text"] == "38.1%"
+    assert customer["largest_percentage"]["text"] == "9.1%"
+
+    supplier = metrics["supplier_concentration"]
+    assert supplier["present"]
+    assert supplier["top_five_percentage"]["text"] == "27.6%"
+    assert supplier["largest_percentage"]["text"] == "10.2%"
+
+
+def test_hk_business_segment_margin_handles_realistic_long_adas_sentence():
+    evidence_pack = build_periodic_report_evidence_pack(HK_BLACK_SESAME_REALISTIC_ADAS_MARGIN_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=HK_BLACK_SESAME_REALISTIC_ADAS_MARGIN_TEXT,
+    )
+
+    adas = _find_row(metrics["segment_rows"], "輔助駕駛產品及解決方案")
+    assert adas is not None
+    assert adas["revenue"]["normalized"] == "68690.00万元"
+    assert adas["cost"]["normalized"] == "42980.00万元"
+    assert adas["gross_margin"]["text"] == "37.4%"
+
+
+def test_extracts_hk_horizon_business_line_revenue_and_margin_rows():
+    evidence_pack = build_periodic_report_evidence_pack(HK_HORIZON_BUSINESS_LINE_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=HK_HORIZON_BUSINESS_LINE_TEXT,
+    )
+
+    auto = _find_row(metrics["segment_rows"], "汽車解決方案")
+    product = _find_row(metrics["segment_rows"], "產品解決方案")
+    license_service = _find_row(metrics["segment_rows"], "授權及服務業務")
+    non_auto = _find_row(metrics["segment_rows"], "非車解決方案")
+    labels = {row["label"] for row in metrics["segment_rows"]}
+
+    assert auto is not None
+    assert auto["revenue"]["normalized"] == "355720.00万元"
+    assert auto["revenue_yoy"]["text"] == "53.9%"
+    assert auto["gross_margin"]["text"] == "67.2%"
+
+    assert product is not None
+    assert product["revenue"]["normalized"] == "162230.00万元"
+    assert product["revenue_yoy"]["text"] == "144.2%"
+    assert product["gross_margin"]["text"] == "34.5%"
+
+    assert license_service is not None
+    assert license_service["revenue"]["normalized"] == "193490.00万元"
+    assert license_service["gross_margin"]["text"] == "94.5%"
+
+    assert non_auto is not None
+    assert non_auto["revenue"]["normalized"] == "20110.00万元"
+    assert non_auto["gross_margin"]["text"] == "18.1%"
+    assert "而汽車解決方案" not in labels
+
+
 def test_extracts_yingjixin_inventory_rows_from_evidence_block():
     evidence_pack = build_periodic_report_evidence_pack(YINGJIXIN_FULL_REPORT)
     metrics = build_required_business_metrics(evidence_pack)
@@ -156,6 +383,36 @@ def test_extracts_yingjixin_inventory_rows_from_evidence_block():
     soc = _find_row(metrics["inventory_rows"], "数模混合 SoC 类")
     assert soc is not None
     assert soc["inventory_yoy"]["text"] == "61.04%"
+
+
+def test_preserves_product_labels_that_start_with_4g_or_5g():
+    evidence_pack = build_periodic_report_evidence_pack(HUIZHIWEI_SEGMENT_INVENTORY_TEXT)
+    metrics = build_required_business_metrics(evidence_pack, raw_text=HUIZHIWEI_SEGMENT_INVENTORY_TEXT)
+
+    segment_labels = [row["label"] for row in metrics["segment_rows"]]
+    inventory_labels = [row["label"] for row in metrics["inventory_rows"]]
+
+    assert "4G 模组" in segment_labels
+    assert "5G 模组" in segment_labels
+    assert "4G 模组" in inventory_labels
+    assert "5G 模组" in inventory_labels
+    assert "G 模组" not in segment_labels + inventory_labels
+
+
+def test_extracts_zero_cost_software_segment_row_alongside_full_rows():
+    evidence_pack = build_periodic_report_evidence_pack(HUADAJIUTIAN_SEGMENT_MARGIN_TEXT)
+    metrics = build_required_business_metrics(evidence_pack, raw_text=HUADAJIUTIAN_SEGMENT_MARGIN_TEXT)
+
+    software = _find_row(metrics["segment_rows"], "EDA 软件销售")
+    service = _find_row(metrics["segment_rows"], "技术服务")
+
+    assert software is not None
+    assert software["revenue"]["normalized"] == "107451.24万元"
+    assert software["cost"]["normalized"] == "0.00万元"
+    assert software["gross_margin"]["text"] == "100.00%"
+    assert software["revenue_yoy"]["text"] == "-1.63%"
+    assert service is not None
+    assert service["gross_margin"]["text"] == "44.64%"
 
 
 def test_extracts_yingjixin_customer_supplier_concentration_from_evidence_block():
@@ -176,6 +433,57 @@ def test_extracts_yingjixin_customer_supplier_concentration_from_evidence_block(
     assert supplier["top_five_percentage"]["text"] == "73.45%"
     assert supplier["largest_amount"]["text"] == "43,030.34"
     assert supplier["largest_percentage"]["text"] == "32.56%"
+
+
+def test_customer_concentration_uses_raw_fallback_when_evidence_block_is_truncated():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "customer_supplier_table-0",
+                "usage": "customer_supplier_table",
+                "text": (
+                    "前五名客户销售额 49,019.50 万元，占年度销售总额 30.46%；"
+                    "公司前五名客户 √适用 □不适用"
+                ),
+            }
+        ],
+    }
+    metrics = build_required_business_metrics(evidence_pack, raw_text=YINGJIXIN_CUSTOMER_SUPPLIER_TEXT)
+
+    customer = metrics["customer_concentration"]
+    assert customer["top_five_percentage"]["text"] == "30.46%"
+    assert customer["largest_amount"]["text"] == "10,835.52"
+    assert customer["largest_percentage"]["text"] == "6.73%"
+
+
+def test_sales_mode_merges_rows_from_multiple_candidate_blocks():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "segment_margin_table-0",
+                "usage": "segment_margin_table",
+                "text": (
+                    "主营业务分销售模式情况 "
+                    "分销售模式 营业收入 营业成本 毛利率 营业收入比上年增减 营业成本比上年增减 毛利率比上年增减 "
+                    "经销 3,609,911,439.81 1,746,401,174.88 51.62% 20.37% 21.03% -0.27%"
+                ),
+            },
+            {
+                "id": "segment_table-0",
+                "usage": "segment_table",
+                "text": (
+                    "分销售模式 "
+                    "经销 3,609,911,439.81 92.61% 2,999,043,790.63 89.60% 20.37% "
+                    "直销 280,648,096.22 7.20% 347,939,330.03 10.40% -19.34%"
+                ),
+            },
+        ],
+    }
+    metrics = build_required_business_metrics(evidence_pack)
+    labels = {row["label"] for row in metrics["sales_mode_rows"]}
+    assert {"经销", "直销"}.issubset(labels)
 
 
 def test_region_and_sales_mode_rows_for_yingjixin():
@@ -199,6 +507,140 @@ def test_region_and_sales_mode_rows_for_yingjixin():
     distributor = _find_row(metrics["sales_mode_rows"], "经销模式")
     assert distributor is not None
     assert distributor["revenue_yoy"]["text"] == "15.67%"
+
+
+def test_region_and_sales_mode_rows_do_not_include_product_rows():
+    evidence_pack = build_periodic_report_evidence_pack(YINGJIXIN_FULL_REPORT)
+    metrics = build_required_business_metrics(evidence_pack)
+
+    assert {row["label"] for row in metrics["region_rows"]} == {"国内销售", "国外销售"}
+    assert {row["label"] for row in metrics["sales_mode_rows"]} == {"直销模式", "经销模式"}
+
+
+def test_combined_margin_block_splits_segment_region_and_sales_mode_cleanly():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "segment_margin_table-0",
+                "usage": "segment_margin_table",
+                "text": SHENGBANG_COMBINED_SEGMENT_MARGIN_TEXT,
+            }
+        ],
+    }
+    metrics = build_required_business_metrics(evidence_pack)
+
+    assert {row["label"] for row in metrics["segment_rows"]} == {"信号链产品", "电源管理产品"}
+    assert {row["label"] for row in metrics["region_rows"]} == {"大陆", "香港"}
+    assert {row["label"] for row in metrics["sales_mode_rows"]} == {"经销"}
+    mainland = _find_row(metrics["region_rows"], "大陆")
+    assert mainland["revenue_yoy"]["text"] == "9.18%"
+
+
+def test_extracts_actual_three_line_inventory_table_for_zhongjian():
+    evidence_pack = build_periodic_report_evidence_pack(ZHONGJIAN_ACTUAL_INVENTORY_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=ZHONGJIAN_ACTUAL_INVENTORY_TEXT,
+    )
+
+    row = _find_row(metrics["inventory_rows"], "整体")
+    assert row is not None
+    assert row["quantity_unit"] == "KG"
+    assert row["sales_volume"]["text"] == "315,326.80"
+    assert row["production_volume"]["text"] == "388,277.44"
+    assert row["inventory_volume"]["text"] == "94,938.11"
+    assert row["inventory_yoy"]["text"] == "150.95%"
+
+
+def test_extracts_actual_three_line_inventory_table_for_shengbang():
+    evidence_pack = build_periodic_report_evidence_pack(SHENGBANG_ACTUAL_INVENTORY_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=SHENGBANG_ACTUAL_INVENTORY_TEXT,
+    )
+
+    row = _find_row(metrics["inventory_rows"], "整体")
+    assert row is not None
+    assert row["quantity_unit"] == "颗"
+    assert row["sales_volume"]["text"] == "7,862,728,539"
+    assert row["production_volume"]["text"] == "8,610,305,518"
+    assert row["inventory_volume"]["text"] == "2,593,446,280"
+    assert row["inventory_yoy"]["text"] == "41.04%"
+
+
+def test_extracts_actual_zhongjian_customer_supplier_concentration():
+    evidence_pack = build_periodic_report_evidence_pack(ZHONGJIAN_ACTUAL_CUSTOMER_SUPPLIER_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=ZHONGJIAN_ACTUAL_CUSTOMER_SUPPLIER_TEXT,
+    )
+
+    customer = metrics["customer_concentration"]
+    assert customer["present"]
+    assert customer["top_five_amount"]["normalized"] == "84107.55万元"
+    assert customer["top_five_percentage"]["text"] == "99.42%"
+    assert customer["largest_amount"]["normalized"] == "74016.95万元"
+    assert customer["largest_percentage"]["text"] == "87.49%"
+    assert customer["related_party_percentage"]["text"] == "1.54%"
+
+    supplier = metrics["supplier_concentration"]
+    assert supplier["present"]
+    assert supplier["top_five_amount"]["normalized"] == "35750.91万元"
+    assert supplier["top_five_percentage"]["text"] == "41.58%"
+    assert supplier["largest_percentage"]["text"] == "15.48%"
+
+
+def test_extracts_actual_shengbang_customer_supplier_concentration():
+    evidence_pack = build_periodic_report_evidence_pack(SHENGBANG_ACTUAL_CUSTOMER_SUPPLIER_TEXT)
+    metrics = build_required_business_metrics(
+        evidence_pack,
+        raw_text=SHENGBANG_ACTUAL_CUSTOMER_SUPPLIER_TEXT,
+    )
+
+    customer = metrics["customer_concentration"]
+    assert customer["present"]
+    assert customer["top_five_amount"]["normalized"] == "129125.80万元"
+    assert customer["top_five_percentage"]["text"] == "33.13%"
+    assert customer["largest_amount"]["normalized"] == "30359.25万元"
+    assert customer["largest_percentage"]["text"] == "7.79%"
+
+    supplier = metrics["supplier_concentration"]
+    assert supplier["present"]
+    assert supplier["top_five_amount"]["normalized"] == "218067.61万元"
+    assert supplier["top_five_percentage"]["text"] == "90.99%"
+    assert supplier["largest_amount"]["normalized"] == "94900.00万元"
+    assert supplier["largest_percentage"]["text"] == "39.61%"
+
+
+def test_rejects_hk_english_concentration_year_false_positive():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "customer_supplier_table-0",
+                "usage": "customer_supplier_table",
+                "text": (
+                    "Black Sesame International Holding Limited 2025 Annual Report "
+                    "1 Customer A 31, 2025 Notes to the Consolidated Financial Statements"
+                ),
+            },
+            {
+                "id": "supplier_concentration_table-0",
+                "usage": "supplier_concentration_table",
+                "text": (
+                    "Black Sesame International Holding Limited 2025 Annual Report "
+                    "1 Supplier A 31, 2025 Notes to the Consolidated Financial Statements"
+                ),
+            },
+        ],
+    }
+
+    metrics = build_required_business_metrics(evidence_pack)
+
+    assert not metrics["customer_concentration"]["present"]
+    assert not metrics["supplier_concentration"]["present"]
+    assert "2025%" not in metrics["normalized_values"]
 
 
 def test_required_metrics_preserve_original_units_and_normalized_values():

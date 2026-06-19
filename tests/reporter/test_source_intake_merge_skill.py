@@ -176,6 +176,45 @@ def test_periodic_report_excerpt_survives_same_url_dedup():
     assert {item.extra["source_type"] for item in keep} == {"exchange_announcement", "periodic_report_excerpt"}
 
 
+def test_periodic_report_fulltext_items_are_isolated_from_url_merge():
+    original = _make_item(
+        title="2025年年度报告",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225000000",
+        source_credit=95,
+        source_type="exchange_announcement",
+        source_domain="cninfo.com.cn",
+        verification_status="confirmed_fact",
+    )
+    fulltext = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        url=original.url,
+        source_credit=75,
+        source_type="periodic_report_fulltext_analysis",
+        source_domain="cninfo.com.cn",
+        verification_status="professional_analysis",
+        knowledge_eligible=False,
+        report_eligible=False,
+    )
+    fulltext.extra["periodic_report_fulltext_id"] = "fulltext-abc123"
+
+    ctx = SkillContext(
+        input={
+            "agent_reach_enabled": False,
+            "source_intake_enabled": True,
+            "source_intake_status": "ok",
+            "source_intake_items": [original],
+            "periodic_report_fulltext_items": [fulltext],
+        }
+    )
+
+    result = source_intake_merge_skill(ctx)
+
+    keep = result.get("external_evidence_keep_items")
+    assert len(keep) == 1
+    assert keep[0].title == "2025年年度报告"
+    assert result.get("periodic_report_fulltext_items") == [fulltext]
+
+
 def test_merge_tie_prefers_source_intake_for_official():
     ar_item = _make_item(title="ar web", url="https://cninfo.com.cn/a", source_credit=95, source_type="web")
     si_item = _make_item(title="cninfo", url="https://cninfo.com.cn/a", source_credit=95, source_type="exchange_announcement")

@@ -12,6 +12,7 @@ from .a_stock_source_intake_skill import a_stock_source_intake_skill
 from .source_intake_merge_skill import source_intake_merge_skill
 from .evidence_note_skill import evidence_note_writer_skill
 from .claim_risk_signal_skill import claim_risk_signal_skill
+from .periodic_report_fulltext_intake_skill import periodic_report_fulltext_intake_skill
 from .analysis_skills import cross_source_consolidation_skill, scoring_skill
 from .chart_skills import ChartGenerationSkill, TechnicalAnalysisSkill
 from .data_skills import (
@@ -32,6 +33,7 @@ __all__ = [
     "source_intake_merge_skill",
     "evidence_note_writer_skill",
     "claim_risk_signal_skill",
+    "periodic_report_fulltext_intake_skill",
     "cross_source_consolidation_skill",
     "data_loading_skill",
     "quality_gate_skill",
@@ -53,6 +55,7 @@ def build_stock_report_pipeline(
     enable_evidence_notes: bool = False,
     enable_claim_risk_signals: bool = False,
     enable_source_intake: bool = False,
+    enable_periodic_report_fulltext_intake: bool = False,
 ) -> SkillPipeline:
     """构建股票报告生成 Pipeline。"""
     skills = [
@@ -72,6 +75,9 @@ def build_stock_report_pipeline(
 
     if enable_agent_reach or enable_source_intake:
         skills.append(source_intake_merge_skill)
+
+    if enable_periodic_report_fulltext_intake:
+        skills.append(periodic_report_fulltext_intake_skill)
 
     if enable_evidence_notes and (enable_agent_reach or enable_source_intake):
         skills.append(evidence_note_writer_skill)

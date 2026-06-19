@@ -65,6 +65,10 @@
         "enabled": true,
         "dry_run": false
       },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
       "claim_verification": {
         "enabled": true,
         "risk_signals": true,

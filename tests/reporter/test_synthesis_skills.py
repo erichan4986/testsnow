@@ -181,6 +181,49 @@ def test_periodic_report_excerpt_does_not_enter_synthesis_items():
     assert all(item.source_platform != "定期报告摘录" for item in all_data["items"])
 
 
+def test_periodic_report_fulltext_items_do_not_enter_synthesis_items():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    fulltext_item = SynthesisItem(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="这段全文摘要不应进入默认 synthesis items。",
+        author="",
+        source_platform="定期报告全文",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1225000000",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "claim_status": "professional_analysis",
+            "knowledge_eligible": False,
+            "report_eligible": False,
+        },
+    )
+    ctx = SkillContext(input={
+        "stock_name": "中简科技",
+        "periodic_report_fulltext_items": [fulltext_item],
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "中简科技研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert fake.calls
+    _, all_data = fake.calls[0]
+    assert all(
+        item.extra.get("source_type") != "periodic_report_fulltext_analysis"
+        for item in all_data["items"]
+    )
+    assert all(item.source_platform != "定期报告全文" for item in all_data["items"])
+
+
 def test_synthesis_skill_error_in_context_build_falls_back_to_normal():
     from unittest.mock import patch, MagicMock
 

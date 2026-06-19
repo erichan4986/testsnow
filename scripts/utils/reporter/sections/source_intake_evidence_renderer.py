@@ -7,6 +7,7 @@ from typing import Any, Dict, List, Optional
 _SOURCE_TYPE_LABELS = {
     "exchange_announcement": "官方公告",
     "periodic_report_excerpt": "定期报告摘录",
+    "periodic_report_fulltext_analysis": "定期报告全文摘要",
     "news": "东方财富新闻",
     "research_report": "券商研报摘要",
 }
@@ -14,12 +15,14 @@ _SOURCE_TYPE_LABELS = {
 _SOURCE_TYPE_PRIORITY = {
     "exchange_announcement": 0,
     "periodic_report_excerpt": 1,
-    "research_report": 2,
-    "news": 3,
+    "periodic_report_fulltext_analysis": 2,
+    "research_report": 3,
+    "news": 4,
 }
 
 _MAX_REPRESENTATIVE_ROWS = 6
 _MAX_PERIODIC_ROWS = 8
+_MAX_FULLTEXT_PREVIEW_CHARS = 1600
 _PERIODIC_STATUS_LABELS = {
     "risk_disclosure": "风险披露",
     "management_view": "管理层观点",
@@ -157,13 +160,19 @@ class SourceIntakeEvidenceRenderer:
             return ""
 
         items = self._collect_items(ctx)
-        if not items:
+        fulltext_items = self._collect_fulltext_items(ctx)
+        if not items and not fulltext_items:
             return ""
 
-        # Build credit-tier summary table.
-        summary_rows = self._build_summary_rows(items)
-        periodic_rows = self._build_periodic_rows(items)
-        representative_rows = self._build_representative_rows(items)
+        # Build credit-tier summary table. Exclude fulltext items from the
+        # representative/periodic paths; they get their own subsection.
+        summary_items = [item for item in items if self._item_source_type(item) != "periodic_report_fulltext_analysis"]
+        summary_rows = self._build_summary_rows(summary_items)
+        fulltext_summary_row = self._build_fulltext_summary_row(fulltext_items)
+        if fulltext_summary_row:
+            summary_rows.append(fulltext_summary_row)
+        periodic_rows = self._build_periodic_rows(summary_items)
+        representative_rows = self._build_representative_rows(summary_items)
 
         lines = [
             "## Source Intake 分层证据观察",
@@ -199,7 +208,113 @@ class SourceIntakeEvidenceRenderer:
             lines.extend(representative_rows)
             lines.append("")
 
+        fulltext_section = self._build_fulltext_section(fulltext_items)
+        if fulltext_section:
+            lines.extend(fulltext_section)
+            lines.append("")
+
         return "\n".join(lines)
+
+    def _build_fulltext_summary_row(self, fulltext_items: List[Any]) -> str:
+        """Return a single summary line for fulltext items, mirroring main table style."""
+        if not fulltext_items:
+            return ""
+        count = len(fulltext_items)
+        credits = sorted({self._item_credit(item) for item in fulltext_items if self._item_credit(item)})
+        credit_text = str(credits[0]) if len(credits) == 1 else f"{credits[0]}-{credits[-1]}" if credits else "—"
+        return f"| 定期报告全文摘要 | {count} | {credit_text} | professional_analysis | 年报/半年报全文材料层 |"
+
+    def _build_fulltext_section(self, fulltext_items: List[Any]) -> List[str]:
+        """Render periodic_report_fulltext_items as a dedicated experimental subsection.
+
+        These items are display-only, never enter representative/periodic tables,
+        and always show professional_analysis regardless of stored status.
+        """
+        if not fulltext_items:
+            return []
+
+        valid_items = [
+            item for item in fulltext_items
+            if self._item_source_type(item) == "periodic_report_fulltext_analysis"
+        ]
+        if not valid_items:
+            return []
+
+        ordered = sorted(
+            valid_items,
+            key=lambda item: (getattr(item, "publish_time", "") or "", getattr(item, "title", "") or ""),
+            reverse=True,
+        )
+
+        lines = [
+            "### 定期报告全文摘要（实验路径）",
+            "",
+            "> 本小节为年报/半年报全文实验路径的 deterministic preview，仅供材料层参考；",
+            "> 不进入核心事实、评分、风险评分或最终建议。",
+            "",
+        ]
+        for index, item in enumerate(ordered):
+            publish_time = self._clean_metadata_text(getattr(item, "publish_time", "") or "—")
+            title = self._clean_metadata_text(getattr(item, "title", "") or "—")
+            credit = self._item_credit(item)
+            status = self._item_verification_status(item)
+            experimental_marker = " [实验]" if (getattr(item, "extra", {}) or {}).get("experimental") else ""
+            preview = self._render_fulltext_preview(getattr(item, "content", "") or "")
+            if index:
+                lines.append("---")
+                lines.append("")
+            lines.extend([
+                f"- **时间**：{publish_time}",
+                f"- **标题**：{title}",
+                f"- **信用等级**：{credit}",
+                f"- **状态**：{status}{experimental_marker}",
+                "",
+            ])
+            if preview:
+                lines.extend(["**内容预览**：", "", preview, ""])
+        return lines
+
+    def _render_fulltext_preview(self, content: str) -> str:
+        """Downgrade Markdown headings and truncate the preview for safe embedding."""
+        if not content:
+            return ""
+        # Downgrade headings so embedded #/## do not collide with report structure.
+        # First pass: match exactly one leading '#' up to three '#'.
+        text = re.sub(r"(?m)^###(?!#)\s+", "##### ", content)
+        text = re.sub(r"(?m)^##(?!#)\s+", "#### ", text)
+        text = re.sub(r"(?m)^#(?!#)\s+", "### ", text)
+        # Remove top-level duplicate title line if it matches the known heading.
+        text = re.sub(r"(?m)^#+\s*定期报告全文判断摘要\s*\n?", "", text)
+        text = self._normalize_preview_markdown(text)
+        if len(text) > _MAX_FULLTEXT_PREVIEW_CHARS:
+            text = text[:_MAX_FULLTEXT_PREVIEW_CHARS].rstrip() + "..."
+        return text
+
+    def _normalize_preview_markdown(self, text: str) -> str:
+        """Trim noisy whitespace while preserving Markdown block structure."""
+        lines = [line.rstrip() for line in text.splitlines()]
+        normalized: List[str] = []
+        blank_count = 0
+        for line in lines:
+            if line.strip():
+                normalized.append(line)
+                blank_count = 0
+                continue
+            blank_count += 1
+            if normalized and blank_count <= 1:
+                normalized.append("")
+        while normalized and not normalized[-1].strip():
+            normalized.pop()
+        return "\n".join(normalized).strip()
+
+    def _collect_fulltext_items(self, ctx: Dict[str, Any]) -> List[Any]:
+        """Collect fulltext items from their independent ctx key."""
+        items = ctx.get("periodic_report_fulltext_items", []) or []
+        return [
+            item
+            for item in items
+            if self._item_source_type(item) == "periodic_report_fulltext_analysis"
+        ]
 
     def _collect_items(self, ctx: Dict[str, Any]) -> List[Any]:
         """Collect Source Intake items from the original list or merged keep items.
@@ -249,6 +364,8 @@ class SourceIntakeEvidenceRenderer:
             return "professional_observation"
         if source_type == "periodic_report_excerpt":
             return status if status in _PERIODIC_ALLOWED_STATUSES else "management_view"
+        if source_type == "periodic_report_fulltext_analysis":
+            return "professional_analysis"
         return status if status else "unknown"
 
     def _build_summary_rows(self, items: List[Any]) -> List[str]:
@@ -281,6 +398,8 @@ class SourceIntakeEvidenceRenderer:
                 purpose = "可用于事实确认"
             elif source_type == "periodic_report_excerpt":
                 purpose = "年报/半年报规则摘录"
+            elif source_type == "periodic_report_fulltext_analysis":
+                purpose = "年报/半年报全文材料层"
             elif source_type == "news":
                 purpose = "背景资讯"
             else:
@@ -304,7 +423,7 @@ class SourceIntakeEvidenceRenderer:
         )
         rows = []
         for item in ordered[:_MAX_PERIODIC_ROWS]:
-            publish_time = getattr(item, "publish_time", "") or "—"
+            publish_time = self._clean_metadata_text(getattr(item, "publish_time", "") or "—")
             status = self._item_verification_status(item)
             status_label = _PERIODIC_STATUS_LABELS.get(status, "管理层观点")
             title = self._clean_text(getattr(item, "title", "") or "")
@@ -326,7 +445,7 @@ class SourceIntakeEvidenceRenderer:
         )
         rows = []
         for item in ordered[:_MAX_REPRESENTATIVE_ROWS]:
-            publish_time = getattr(item, "publish_time", "") or "—"
+            publish_time = self._clean_metadata_text(getattr(item, "publish_time", "") or "—")
             source_label = _SOURCE_TYPE_LABELS.get(self._item_source_type(item), "其他来源")
             title = self._clean_text(getattr(item, "title", "") or "—")
             content = self._clean_text(getattr(item, "content", "") or "")
@@ -457,11 +576,28 @@ class SourceIntakeEvidenceRenderer:
         text = re.sub(r"(?im)^\s*Markdown Content:\s*(?:\n|$)", "\n", text)
         # Remove standalone H1 lines that duplicate a title fragment.
         text = re.sub(r"(?m)^\s*#\s*[^\n]+\n?", "", text)
-        # Escape markdown table pipes.
-        text = text.replace("|", "\\|")
+        # Escape markdown control characters that can break table/list layout.
+        text = self._escape_markdown_control_chars(text)
         # Collapse whitespace.
         text = re.sub(r"\s+", " ", text).strip()
         text = self._normalize_pdf_spacing_artifacts(text)
+        return text
+
+    def _clean_metadata_text(self, text: str) -> str:
+        if not text:
+            return ""
+        text = str(text)
+        text = re.sub(r"\[\^\d+\]", "", text)
+        text = re.sub(r"\[\d+\]", "", text)
+        text = re.sub(r"\bAgentReach\([^)]*\)", "", text, flags=re.IGNORECASE)
+        text = re.sub(r"https?://\S+", "", text)
+        text = re.sub(r"\s+", " ", text).strip()
+        return self._escape_markdown_control_chars(text)
+
+    def _escape_markdown_control_chars(self, text: str) -> str:
+        text = re.sub(r"(?<!\\)\|", r"\\|", text)
+        text = re.sub(r"(?<!\\)`", r"\\`", text)
+        text = re.sub(r"(?<!\\)\*", r"\\*", text)
         return text
 
     def _normalize_pdf_spacing_artifacts(self, text: str) -> str:

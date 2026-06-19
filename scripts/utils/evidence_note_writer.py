@@ -364,6 +364,8 @@ def _claim_status_for_item(item: SynthesisItem, source_credit: int) -> Optional[
     source_type = str((item.extra or {}).get("source_type", "")).lower()
     if source_type == "periodic_report_excerpt" and status == "fact_candidate":
         return "professional_analysis"
+    if source_type == "periodic_report_fulltext_analysis" and status == "fact_candidate":
+        return "professional_analysis"
     return status
 
 

@@ -850,6 +850,61 @@ def test_periodic_report_excerpt_never_becomes_fact_candidate(tmp_path):
     assert "claim_status: fact_candidate" not in content
 
 
+def test_periodic_report_fulltext_analysis_is_filtered_from_knowledge(tmp_path):
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="全文实验路径预览内容。",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300661&announcementId=1225000001",
+        source_type="periodic_report_fulltext_analysis",
+        source_domain="cninfo.com.cn",
+        source_credit=75,
+        verification_status="professional_analysis",
+        knowledge_eligible=False,
+        report_eligible=False,
+    )
+    plan = write_evidence_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        items=[item],
+        base_dir=tmp_path,
+        dry_run=False,
+    )
+
+    assert len(plan.filtered) == 1
+    assert "knowledge_eligible=False" in plan.filtered[0]["reason"]
+    assert len(plan.written) == 0
+    assert not (tmp_path / "10-Stocks" / "圣邦股份" / "evidence").exists()
+
+
+def test_periodic_report_fulltext_analysis_never_becomes_fact_candidate_even_if_credit_rises(tmp_path):
+    """Guard against future threshold changes: credit>=80 must not promote fulltext analysis to fact_candidate."""
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="全文实验路径预览内容。",
+        url="http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300661&announcementId=1225000001",
+        source_type="periodic_report_fulltext_analysis",
+        source_domain="cninfo.com.cn",
+        source_credit=85,
+        verification_status="professional_analysis",
+        knowledge_eligible=True,
+        report_eligible=False,
+    )
+    plan = write_evidence_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        items=[item],
+        base_dir=tmp_path,
+        dry_run=False,
+    )
+
+    assert len(plan.written) == 1
+    path = Path(plan.written[0]["planned_path"])
+    content = path.read_text(encoding="utf-8")
+    assert "source_type: periodic_report_fulltext_analysis" in content
+    assert "claim_status: professional_analysis" in content
+    assert "claim_status: fact_candidate" not in content
+
+
 # ---------------------------------------------------------------------------
 # Cross-stock isolation
 # ---------------------------------------------------------------------------

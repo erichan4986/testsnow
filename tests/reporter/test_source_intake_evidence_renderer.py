@@ -30,6 +30,7 @@ def _make_ctx(
     items=None,
     keep_items=None,
     demote_items=None,
+    fulltext_items=None,
 ) -> SkillContext:
     return SkillContext(input={
         "stock_name": "测试股",
@@ -38,6 +39,7 @@ def _make_ctx(
         "source_intake_items": items or [],
         "external_evidence_keep_items": keep_items or [],
         "external_evidence_demote_items": demote_items or [],
+        "periodic_report_fulltext_items": fulltext_items or [],
         "source_intake_summary": {"status": status, "count": len(items or [])},
     })
 
@@ -157,6 +159,274 @@ def test_malformed_periodic_excerpt_confirmed_fact_is_guarded():
     result = renderer.render(ctx)
     assert "confirmed_fact" not in result
     assert "management_view" in result
+
+
+def test_malformed_periodic_fulltext_analysis_confirmed_fact_is_guarded():
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="公司画像、主营业务表现和财务风险摘要。",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 95,
+            "verification_status": "confirmed_fact",
+            "claim_status": "confirmed_fact",
+        },
+    )
+    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "confirmed_fact" not in result
+    assert "professional_analysis" in result
+
+
+def test_periodic_report_fulltext_items_renders_dedicated_experimental_section():
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="# 定期报告全文判断摘要\n\n## 必备经营指标摘录\n\n收入情况。",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "claim_status": "professional_analysis",
+            "experimental": True,
+        },
+    )
+    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "### 定期报告全文摘要（实验路径）" in result
+    assert "2026-04-15" in result
+    assert "2025年年度报告" in result
+    assert "定期报告全文摘要（实验路径）" in result
+    assert "75" in result
+    assert "professional_analysis" in result
+    assert "experimental" in result.lower() or "实验" in result
+    assert "| 定期报告全文摘要 | 1 | 75 | professional_analysis | 年报/半年报全文材料层 |" in result
+
+
+def test_fulltext_metadata_markdown_is_sanitized_without_double_escaping():
+    item = _make_item(
+        title="2025年年度报告 | 已转义\\|字段\n下一行",
+        content="摘要正文。",
+        publish_time="2026-04-15 | 注入\n坏行",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "experimental": True,
+        },
+    )
+    ctx = _make_ctx(items=[], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+
+    assert "2026-04-15 \\| 注入 坏行" in result
+    assert "2025年年度报告 \\| 已转义\\|字段 下一行" in result
+    assert "\\\\|字段" not in result
+
+
+def test_representative_table_cells_escape_unescaped_pipes_only():
+    item = _make_item(
+        title="公司|公告",
+        content="已转义\\|字段，收入增长|毛利率提升。",
+        publish_time="2026-04-15|bad",
+        extra={
+            "source_type": "exchange_announcement",
+            "source_credit": 95,
+            "verification_status": "confirmed_fact",
+        },
+    )
+    ctx = _make_ctx(items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+
+    assert "2026-04-15\\|bad" in result
+    assert "公司\\|公告" in result
+    assert "已转义\\|字段" in result
+    assert "已转义\\\\|字段" not in result
+
+
+def test_periodic_report_fulltext_items_render_without_source_intake_items():
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="全文摘要内容。",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "experimental": True,
+        },
+    )
+    ctx = _make_ctx(items=[], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "### 定期报告全文摘要（实验路径）" in result
+    assert "2025年年度报告" in result
+    assert "professional_analysis" in result
+
+
+def test_periodic_report_fulltext_section_renders_each_item():
+    annual = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="年度摘要。",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "experimental": True,
+        },
+    )
+    interim = _make_item(
+        title="2025年半年度报告 | 定期报告全文摘要（实验路径）",
+        content="半年度摘要。",
+        publish_time="2025-08-30",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "experimental": True,
+        },
+    )
+    ctx = _make_ctx(items=[], fulltext_items=[annual, interim])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "2025年年度报告" in result
+    assert "2025年半年度报告" in result
+    assert "年度摘要" in result
+    assert "半年度摘要" in result
+
+
+def test_malformed_fulltext_item_confirmed_fact_still_renders_professional_analysis():
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="全文摘要内容。",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 85,
+            "verification_status": "confirmed_fact",
+            "claim_status": "confirmed_fact",
+            "experimental": True,
+        },
+    )
+    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "confirmed_fact" not in result
+    assert "fact_candidate" not in result
+    assert "professional_analysis" in result
+
+
+def test_fulltext_item_excluded_from_representative_rows():
+    fulltext = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="公司画像、主营业务表现和财务风险摘要。",
+        publish_time="2026-04-15",
+        extra={"source_type": "periodic_report_fulltext_analysis", "source_credit": 75, "verification_status": "professional_analysis"},
+    )
+    official = _make_item(
+        title="2026年第一季度业绩预告",
+        content="收入下降。",
+        publish_time="2026-04-15",
+        extra={"source_type": "exchange_announcement", "source_credit": 95, "verification_status": "confirmed_fact"},
+    )
+    ctx = _make_ctx(items=[official, fulltext], fulltext_items=[fulltext])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    representative = result.split("### 代表性证据摘录", 1)[1].split("### 定期报告全文摘要（实验路径）", 1)[0]
+    assert "2026年第一季度业绩预告" in representative
+    assert "定期报告全文摘要（实验路径）" not in representative
+
+
+def test_fulltext_item_excluded_from_periodic_excerpt_table():
+    fulltext = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="全文摘要。",
+        publish_time="2026-04-15",
+        extra={"source_type": "periodic_report_fulltext_analysis", "source_credit": 75, "verification_status": "professional_analysis"},
+    )
+    excerpt = _make_item(
+        title="2025年年度报告 | 管理层观点",
+        content="管理层观点摘录。",
+        publish_time="2026-04-15",
+        extra={"source_type": "periodic_report_excerpt", "source_credit": 75, "verification_status": "management_view"},
+    )
+    ctx = _make_ctx(items=[excerpt, fulltext], fulltext_items=[fulltext])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    periodic = result.split("### 定期报告关键摘录", 1)[1].split("### 定期报告全文摘要（实验路径）", 1)[0]
+    assert "管理层观点" in periodic
+    assert "定期报告全文摘要（实验路径）" not in periodic
+
+
+def test_fulltext_long_markdown_content_is_heading_downgraded_and_truncated():
+    long_content = "# 定期报告全文判断摘要\n\n## 必备经营指标摘录\n\n" + "经营指标内容。" * 500
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content=long_content,
+        publish_time="2026-04-15",
+        extra={"source_type": "periodic_report_fulltext_analysis", "source_credit": 75, "verification_status": "professional_analysis"},
+    )
+    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "# 定期报告全文判断摘要" not in result
+    # Heading downgrade happens inside content preview, but source section heading stays as H3.
+    assert "#### 必备经营指标摘录" in result
+    assert "### 定期报告全文摘要（实验路径）" in result
+    assert "..." in result
+    assert len(result) < len(long_content) + 1000
+
+
+def test_fulltext_preview_preserves_markdown_table_line_breaks():
+    content = "\n".join([
+        "# 定期报告全文判断摘要",
+        "",
+        "## 必备经营指标摘录",
+        "",
+        "### 分产品/业务毛利率",
+        "| 项目 | 收入 | 毛利率 |",
+        "|------|------|--------|",
+        "| 碳纤维 | 44349.44万元 | 55.21% |",
+    ])
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content=content,
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+        },
+    )
+    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+
+    assert "\n##### 分产品/业务毛利率\n| 项目 | 收入 | 毛利率 |\n|------|------|--------|" in result
+    assert "分产品/业务毛利率 | 项目 | 收入" not in result
+
+
+def test_renderer_does_not_mutate_fulltext_ctx_or_item():
+    item = _make_item(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="# 摘要\n\n正文。",
+        publish_time="2026-04-15",
+        extra={"source_type": "periodic_report_fulltext_analysis", "source_credit": 75, "verification_status": "professional_analysis"},
+    )
+    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    original_input = deepcopy(ctx.input)
+    original_output = deepcopy(ctx.output)
+    original_extra = deepcopy(item.extra)
+    renderer = SourceIntakeEvidenceRenderer()
+    renderer.render(ctx)
+    assert ctx.input == original_input
+    assert ctx.output == original_output
+    assert item.extra == original_extra
 
 
 def test_malformed_news_claiming_confirmed_fact_is_normalized_down():

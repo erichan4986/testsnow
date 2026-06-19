@@ -98,6 +98,10 @@ class PerStockReporter:
             si_cfg = self.source_intake_configs.get(stock_name, {})
             agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
             source_intake_enabled = bool(si_cfg.get("enabled", False))
+            periodic_fulltext_cfg = si_cfg.get("periodic_report_fulltext", {}) or {}
+            periodic_fulltext_enabled = bool(
+                source_intake_enabled and periodic_fulltext_cfg.get("enabled", False)
+            )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -107,12 +111,15 @@ class PerStockReporter:
             cv_cfg = ar_cfg.get("claim_verification", {}) or si_cfg.get("claim_verification", {}) or {}
             claim_verification_enabled = bool(cv_cfg.get("enabled", False))
             claim_risk_signals_enabled = bool(cv_cfg.get("risk_signals", False))
-            pipeline = build_stock_report_pipeline(
-                enable_agent_reach=agent_reach_enabled,
-                enable_evidence_notes=evidence_notes_enabled,
-                enable_claim_risk_signals=claim_risk_signals_enabled,
-                enable_source_intake=source_intake_enabled,
-            )
+            pipeline_kwargs = {
+                "enable_agent_reach": agent_reach_enabled,
+                "enable_evidence_notes": evidence_notes_enabled,
+                "enable_claim_risk_signals": claim_risk_signals_enabled,
+                "enable_source_intake": source_intake_enabled,
+            }
+            if periodic_fulltext_enabled:
+                pipeline_kwargs["enable_periodic_report_fulltext_intake"] = True
+            pipeline = build_stock_report_pipeline(**pipeline_kwargs)
 
             pipeline_input = {
                 "stock_name": stock_name,
@@ -155,6 +162,12 @@ class PerStockReporter:
             if source_intake_enabled:
                 pipeline_input["source_intake_enabled"] = True
                 pipeline_input["source_intake_config"] = si_cfg
+
+            if periodic_fulltext_enabled:
+                if periodic_fulltext_cfg.get("cache_dir"):
+                    pipeline_input["periodic_report_fulltext_cache_dir"] = periodic_fulltext_cfg["cache_dir"]
+                if periodic_fulltext_cfg.get("report_type"):
+                    pipeline_input["periodic_report_fulltext_report_type"] = periodic_fulltext_cfg["report_type"]
 
             if evidence_notes_enabled:
                 pipeline_input["enable_evidence_notes"] = True

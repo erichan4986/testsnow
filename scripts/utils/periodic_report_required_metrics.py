@@ -180,7 +180,7 @@ def _normalize_line(line: str) -> str:
     # CJK and Latin sequences so "SoC 类" stays readable.
     line = re.sub(r"([一-鿿])\s+(?=[一-鿿])", r"\1", line)
     # Preserve space around unit words so they remain separate tokens.
-    line = re.sub(r"([一-鿿A-Za-z])\s*(万颗|kg|吨|万件|台|件|米|个)\s*", r"\1 \2 ", line)
+    line = re.sub(r"([一-鿿A-Za-z])\s*(万颗|kg|吨|万件|台|件|米|个|颗)\s*", r"\1 \2 ", line)
     return line.strip()
 
 
@@ -289,10 +289,14 @@ def _clean_table_text(text: str) -> str:
 
 def _section_between(text: str, start_markers: Tuple[str, ...], end_markers: Tuple[str, ...]) -> str:
     compact = _clean_table_text(text)
-    starts = [compact.find(marker) for marker in start_markers if compact.find(marker) >= 0]
-    if not starts:
+    start = -1
+    for marker in start_markers:
+        pos = compact.find(marker)
+        if pos >= 0:
+            start = pos
+            break
+    if start < 0:
         return ""
-    start = min(starts)
     end_candidates = [
         compact.find(marker, start + 1)
         for marker in end_markers
@@ -305,7 +309,12 @@ def _section_between(text: str, start_markers: Tuple[str, ...], end_markers: Tup
 def _normalize_label(label: str) -> str:
     label = _normalize_line(label)
     label = re.sub(r"\s+", " ", label).strip()
-    label = re.sub(r"^[/\d\.\(\)（）]+", "", label).strip()
+    label = re.sub(r"^[/\.\(\)（）]+", "", label).strip()
+    label = re.sub(r"^(?:\d+[\.、)]|\(\d+\)|（\d+）)\s*", "", label).strip()
+    label = re.sub(r"^\d+\s+(?=[一-鿿])", "", label).strip()
+    label = re.sub(r".*?股份有限公司\s*\d{4}\s*年年度报告全文\s*\d+\s*", "", label)
+    label = re.sub(r"^其中[:：]?", "", label).strip()
+    label = re.sub(r"^(?:分行业|分产品|分地区|分销售模式|销售模式)", "", label).strip()
     label = re.sub(r"([一-鿿])\s+(?=[一-鿿])", r"\1", label)
     label = label.replace("数模混合 So C", "数模混合 SoC")
     label = label.replace("So C", "SoC")
@@ -354,8 +363,6 @@ def _parse_metric_rows_from_section(section: str) -> List[Dict[str, Any]]:
     )
     for match in row_re.finditer(section):
         _append_metric_row(rows, match)
-    if rows:
-        return rows
 
     compact_row_re = re.compile(
         rf"(?P<label>{_LABEL})\s+"
@@ -365,14 +372,24 @@ def _parse_metric_rows_from_section(section: str) -> List[Dict[str, Any]]:
         rf"(?P<revenue_yoy>{_RATE_WITH_OPTIONAL_PERCENT})\s+"
         rf"(?P<gross_margin_delta>{_DELTA})"
     )
+    seen_labels = {row["label"] for row in rows}
     for match in compact_row_re.finditer(section):
+        label = _normalize_label(match.group("label"))
+        if label in seen_labels:
+            continue
+        before_count = len(rows)
         _append_metric_row(rows, match)
+        if len(rows) > before_count:
+            seen_labels.add(rows[-1]["label"])
     return rows
 
 
 def _append_metric_row(rows: List[Dict[str, Any]], match: re.Match[str]) -> None:
     label = _normalize_label(match.group("label"))
-    if not label or any(token in label for token in ("主营业务", "营业收入", "毛利率", "单位")):
+    if not label or any(
+        token in label
+        for token in ("主营业务", "营业收入", "毛利率", "单位", "百分点", "增加", "减少", "%")
+    ):
         return
     row = {
         "label": label,
@@ -392,7 +409,7 @@ def _parse_segment_table(text: str) -> List[Dict[str, Any]]:
     section = _section_between(
         text,
         ("主营业务分产品情况", "分产品"),
-        ("主营业务分地区情况", "主营业务分销售模式情况", "产销量情况", "前五名客户", "(2)."),
+        ("主营业务分地区情况", "分地区", "主营业务分销售模式情况", "分销售模式", "产销量情况", "前五名客户", "(2)."),
     )
     rows = _parse_metric_rows_from_section(section)
     # If only an industry table exists, keep it as a conservative segment row.
@@ -408,24 +425,64 @@ def _parse_segment_table(text: str) -> List[Dict[str, Any]]:
 
 def _parse_region_or_sales_table(text: str, keyword: str) -> List[Dict[str, Any]]:
     if "地区" in keyword:
-        end_markers = ("主营业务分销售模式情况", "产销量情况", "(2).")
+        end_markers = ("主营业务分销售模式情况", "分销售模式", "产销量情况", "(2).")
         start_markers = ("主营业务分地区情况", "分地区")
     else:
         end_markers = ("产销量情况", "(2).")
         start_markers = ("主营业务分销售模式情况", "销售模式")
     section = _section_between(text, start_markers, end_markers)
-    return _parse_metric_rows_from_section(section)
+    rows = _parse_metric_rows_from_section(section)
+    if not rows:
+        rows = _parse_revenue_composition_rows(section)
+    return rows
+
+
+def _parse_revenue_composition_rows(section: str) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    if not section:
+        return rows
+    section = re.sub(
+        r"(?:分行业|分产品|分地区|分销售模式)?\s*"
+        r"(?:2025\s*年\s*2024\s*年\s*同比增减|金额\s+占营业收入比重\s+金额\s+占营业收入比重)",
+        " ",
+        section,
+    )
+    row_re = re.compile(
+        rf"(?P<label>{_LABEL})\s+"
+        rf"(?P<revenue>{_AMOUNT})\s+"
+        rf"(?P<revenue_share>{_RATE_WITH_OPTIONAL_PERCENT})\s+"
+        rf"(?P<previous_revenue>{_AMOUNT})\s+"
+        rf"(?P<previous_share>{_RATE_WITH_OPTIONAL_PERCENT})\s+"
+        rf"(?P<revenue_yoy>{_RATE_WITH_OPTIONAL_PERCENT})"
+    )
+    for match in row_re.finditer(section):
+        label = _normalize_label(match.group("label"))
+        if not label or any(token in label for token in ("营业收入", "单位", "合计")):
+            continue
+        rows.append({
+            "label": label,
+            "revenue": _value_cell(match.group("revenue"), "元"),
+            "cost": None,
+            "gross_margin": None,
+            "revenue_yoy": _value_cell(match.group("revenue_yoy"), "%"),
+            "cost_yoy": None,
+            "gross_margin_delta": None,
+        })
+    return rows
 
 
 def _parse_inventory_table(text: str) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
     section = _section_between(
         text,
-        ("产销量情况分析表", "主要产品 单位 生产量 销售量 库存量"),
+        ("产销量情况分析表", "产销量情况", "主要产品 单位 生产量 销售量 库存量", "销售量"),
         ("产销量情况说明", "成本分析表", "公司前五名", "(3)."),
     )
     if not section:
         return rows
+    aggregate_rows = _parse_aggregate_inventory_table(section)
+    if aggregate_rows:
+        return aggregate_rows
     section = re.sub(
         r"主要产品\s+单位\s+生产量\s+销售量\s+库存量\s+生产量比上年增减（?%?）?\s+"
         r"销售量比上年增减（?%?）?\s+库存量比上年增减（?%?）?",
@@ -462,15 +519,69 @@ def _parse_inventory_table(text: str) -> List[Dict[str, Any]]:
     return [r for r in rows if r.get("production_volume") or r.get("sales_volume") or r.get("inventory_volume")]
 
 
+def _parse_aggregate_inventory_table(section: str) -> List[Dict[str, Any]]:
+    """Parse A-share aggregate inventory rows: 销售量/生产量/库存量 each on a separate line."""
+    metric_cells: Dict[str, Tuple[str, str, str]] = {}
+    metric_re = re.compile(
+        rf"(?P<metric>销售量|生产量|库存量)\s+"
+        rf"(?P<unit>万颗|KG|kg|吨|万件|台|件|米|个|颗)\s+"
+        rf"(?P<current>{_AMOUNT})\s+"
+        rf"(?P<previous>{_AMOUNT})\s+"
+        rf"(?P<yoy>{_RATE})\s*%?"
+    )
+    for match in metric_re.finditer(section):
+        metric_cells[match.group("metric")] = (
+            match.group("unit"),
+            match.group("current"),
+            match.group("yoy"),
+        )
+    if not {"销售量", "生产量", "库存量"}.issubset(metric_cells):
+        return []
+    unit = (
+        metric_cells["销售量"][0]
+        or metric_cells["生产量"][0]
+        or metric_cells["库存量"][0]
+    )
+    return [{
+        "label": "整体",
+        "quantity_unit": unit,
+        "production_volume": _value_cell(metric_cells["生产量"][1], unit),
+        "sales_volume": _value_cell(metric_cells["销售量"][1], unit),
+        "inventory_volume": _value_cell(metric_cells["库存量"][1], unit),
+        "production_yoy": _value_cell(metric_cells["生产量"][2], "%"),
+        "sales_yoy": _value_cell(metric_cells["销售量"][2], "%"),
+        "inventory_yoy": _value_cell(metric_cells["库存量"][2], "%"),
+    }]
+
+
 
 def _parse_concentration(text: str, customer: bool = True) -> Dict[str, Any]:
     result = _empty_concentration()
     kind = "客户" if customer else "供应商"
     amount_keyword = "销售额" if customer else "采购额"
     compact_text = _clean_table_text(text)
+    kind_pattern = rf"(?:前五名{kind}|前\s*5\s*大{kind})"
+    if not _has_concentration_context(compact_text, kind):
+        return result
+    if customer:
+        customer_pos = compact_text.find("前五名客户")
+        company_customer_pos = compact_text.find("公司前五名客户")
+        starts = [pos for pos in (customer_pos, company_customer_pos) if pos >= 0]
+        if starts:
+            compact_text = compact_text[min(starts):]
+        supplier_pos = compact_text.find("前五名供应商")
+        if supplier_pos >= 0:
+            compact_text = compact_text[:supplier_pos]
+    else:
+        supplier_pos = compact_text.find("前五名供应商")
+        company_supplier_pos = compact_text.find("公司前 5 大供应商")
+        starts = [pos for pos in (supplier_pos, company_supplier_pos) if pos >= 0]
+        if starts:
+            compact_text = compact_text[min(starts):]
+    total_amount_word = "销售(?:额|金额)" if customer else "采购(?:额|金额)"
 
     top_five_match = re.search(
-        rf"前五名{kind}{amount_keyword}\s*([\d,\.]+)\s*([万亿元万]+)?\s*[，,；;]\s*占年度(?:销售|采购)总额\s*([\d\.]+)\s*%",
+        rf"{kind_pattern}{amount_keyword}\s*([\d,\.]+)\s*([万亿元万]+)?\s*[，,；;]\s*占年度(?:销售|采购)总额\s*([\d\.]+)\s*%",
         compact_text,
     )
     if top_five_match:
@@ -486,6 +597,16 @@ def _parse_concentration(text: str, customer: bool = True) -> Dict[str, Any]:
             "unit": "%",
             "normalized": _normalize_numeric(top_five_match.group(3) + "%"),
         }
+
+    if not result["top_five_amount"]:
+        total_amount_match = re.search(
+            rf"{kind_pattern}合计{total_amount_word}（?元）?\s*([\d,\.]+)",
+            compact_text,
+        )
+        if total_amount_match:
+            result["present"] = True
+            result["headers_found"].append(f"前五名{kind}")
+            result["top_five_amount"] = _value_cell(total_amount_match.group(1), "元")
 
     if not result["top_five_amount"]:
         total_match = re.search(
@@ -508,7 +629,7 @@ def _parse_concentration(text: str, customer: bool = True) -> Dict[str, Any]:
 
     if not result["top_five_percentage"]:
         top_five_pct_match = re.search(
-            rf"前五名{kind}{amount_keyword}?占年度(?:销售|采购)总额\s*([\d\.]+)\s*%",
+            rf"{kind_pattern}(?:合计)?{total_amount_word}占年度(?:销售|采购)总额比例?\s*([\d\.]+)\s*%",
             compact_text,
         )
         if top_five_pct_match:
@@ -521,18 +642,23 @@ def _parse_concentration(text: str, customer: bool = True) -> Dict[str, Any]:
             }
 
     largest_match = re.search(
-        rf"\b1\s+{kind}\s*[一二三四五A]?\s+([\d,\.]+)\s+([\d\.]+)",
+        rf"\b1\s+(?:{kind}\s*[一二三四五A]?|客户\s*A|第一名|供应商\s*[一二三四五A]?)\s+([\d,\.]+)\s+([\d\.]+)\s*%?",
         compact_text,
     )
     if largest_match:
         result["present"] = True
         if f"前五名{kind}" not in result["headers_found"]:
             result["headers_found"].append(f"前五名{kind}")
-        result["largest_amount"] = {
-            "text": largest_match.group(1),
-            "unit": result["top_five_amount"]["unit"] if result["top_five_amount"] else None,
-            "normalized": _normalize_numeric(largest_match.group(1) + (result["top_five_amount"]["unit"] if result["top_five_amount"] else "")),
-        }
+        unit = result["top_five_amount"]["unit"] if result["top_five_amount"] else None
+        largest_unit_hint = "元" if re.search(r"(销售额|采购额)（?元）", compact_text) else unit
+        if largest_unit_hint == "元":
+            result["largest_amount"] = _value_cell(largest_match.group(1), "元")
+        else:
+            result["largest_amount"] = {
+                "text": largest_match.group(1),
+                "unit": largest_unit_hint,
+                "normalized": _normalize_numeric(largest_match.group(1) + (largest_unit_hint or "")),
+            }
         result["largest_percentage"] = {
             "text": largest_match.group(2) + "%",
             "unit": "%",
@@ -550,8 +676,25 @@ def _parse_concentration(text: str, customer: bool = True) -> Dict[str, Any]:
                 "normalized": _normalize_numeric(largest_pct_match.group(1) + "%"),
             }
 
+    if not result["largest_amount"] or not result["largest_percentage"]:
+        generic_largest_match = re.search(
+            rf"\b1\s+(?!序号)(?P<label>[\u4e00-\u9fffA-Za-z0-9（）()·\-\s]+?)\s+"
+            rf"(?P<amount>{_AMOUNT})\s+(?P<pct>{_RATE})\s*%?",
+            compact_text,
+        )
+        if generic_largest_match:
+            result["present"] = True
+            if f"前五名{kind}" not in result["headers_found"]:
+                result["headers_found"].append(f"前五名{kind}")
+            result["largest_amount"] = _value_cell(generic_largest_match.group("amount"), "元")
+            result["largest_percentage"] = {
+                "text": generic_largest_match.group("pct") + "%",
+                "unit": "%",
+                "normalized": _normalize_numeric(generic_largest_match.group("pct") + "%"),
+            }
+
     related_match = re.search(
-        rf"其中前五名{kind}{amount_keyword}中关联方{amount_keyword}\s*([\d,\.]+)\s*([万亿元万]+)?\s*[，,；;]\s*占年度(?:销售|采购)总额\s*([\d\.]+)\s*%",
+        rf"其中{kind_pattern}{amount_keyword}中关联方{amount_keyword}\s*([\d,\.]+)\s*([万亿元万]+)?\s*[，,；;]\s*占年度(?:销售|采购)总额\s*([\d\.]+)\s*%",
         compact_text,
     )
     if related_match:
@@ -565,8 +708,82 @@ def _parse_concentration(text: str, customer: bool = True) -> Dict[str, Any]:
             "unit": "%",
             "normalized": _normalize_numeric(related_match.group(3) + "%"),
         }
+    elif not result["related_party_percentage"]:
+        related_pct_match = re.search(
+            rf"{kind_pattern}{amount_keyword}中关联方{amount_keyword}占年度(?:销售|采购)总额比例\s*([\d\.]+)\s*%",
+            compact_text,
+        )
+        if related_pct_match:
+            result["related_party_percentage"] = {
+                "text": related_pct_match.group(1) + "%",
+                "unit": "%",
+                "normalized": _normalize_numeric(related_pct_match.group(1) + "%"),
+            }
 
+    return _sanitize_concentration(result)
+
+
+def _has_concentration_context(text: str, kind: str) -> bool:
+    return bool(re.search(
+        rf"(?:前五名{kind}|公司前五名{kind}|前\s*5\s*大{kind}|公司前\s*5\s*大{kind}|第一大{kind}占比)",
+        text,
+    ))
+
+
+def _sanitize_concentration(result: Dict[str, Any]) -> Dict[str, Any]:
+    for key in (
+        "top_five_percentage",
+        "largest_percentage",
+        "related_party_percentage",
+    ):
+        cell = result.get(key)
+        if cell and not _valid_percentage_cell(cell):
+            result[key] = None
+
+    for key in ("top_five_amount", "largest_amount"):
+        cell = result.get(key)
+        if cell and _zero_or_empty_amount_cell(cell):
+            result[key] = None
+
+    has_required_value = any(
+        result.get(key)
+        for key in (
+            "top_five_amount",
+            "top_five_percentage",
+            "largest_amount",
+            "largest_percentage",
+        )
+    )
+    if not has_required_value:
+        cleaned = _empty_concentration()
+        cleaned["headers_found"] = result.get("headers_found", [])
+        return cleaned
     return result
+
+
+def _valid_percentage_cell(cell: Dict[str, Any]) -> bool:
+    value = str(cell.get("normalized") or cell.get("text") or "")
+    match = re.search(r"-?\d+(?:\.\d+)?", value)
+    if not match:
+        return False
+    try:
+        number = Decimal(match.group(0))
+    except InvalidOperation:
+        return False
+    if number < 0 or number > 100:
+        return False
+    return True
+
+
+def _zero_or_empty_amount_cell(cell: Dict[str, Any]) -> bool:
+    normalized = str(cell.get("normalized") or "")
+    match = re.search(r"-?\d+(?:\.\d+)?", normalized.replace(",", ""))
+    if not match:
+        return True
+    try:
+        return Decimal(match.group(0)) == 0
+    except InvalidOperation:
+        return True
 
 
 # ---------------------------------------------------------------------------
@@ -586,6 +803,13 @@ def _fallback_blocks_with(text_blocks: List[Dict[str, Any]], *markers: str) -> L
         if any(marker in text for marker in markers):
             selected.append(block)
     return selected
+
+
+def _raw_text_fallback(blocks: List[Dict[str, Any]], default: str) -> str:
+    for block in reversed(blocks):
+        if block.get("usage") == "raw_text_fallback":
+            return str(block.get("text", ""))
+    return default
 
 
 def _dedupe_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -613,12 +837,50 @@ def _parse_from_blocks(
     return parser(source_text), (blocks[0] if blocks else None), source_text
 
 
+def _parse_rows_from_all_candidate_blocks(
+    blocks: List[Dict[str, Any]],
+    parser,
+) -> List[Dict[str, Any]]:
+    rows: List[Dict[str, Any]] = []
+    seen_labels = set()
+    for block in blocks:
+        source_text = str(block.get("text", ""))
+        parsed_rows = parser(source_text)
+        if not parsed_rows:
+            continue
+        block_id, usage, excerpt = _source_info([block], source_text)
+        for row in parsed_rows:
+            label = row.get("label")
+            if not label or label in seen_labels:
+                continue
+            seen_labels.add(label)
+            row["source_block_id"] = block_id
+            row["source_usage"] = usage
+            row["source_excerpt"] = excerpt
+            rows.append(row)
+    if rows:
+        return rows
+
+    source_text = "\n\n".join(str(block.get("text", "")) for block in blocks)
+    parsed_rows = parser(source_text)
+    block_id, usage, excerpt = _source_info([blocks[0]] if blocks else [], source_text)
+    for row in parsed_rows:
+        row["source_block_id"] = block_id
+        row["source_usage"] = usage
+        row["source_excerpt"] = excerpt
+    return parsed_rows
+
+
 def _extract_segment_rows(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     candidates = _blocks_for_usages(blocks, "segment_margin_table", "segment_table")
     candidates = _dedupe_blocks(candidates + _fallback_blocks_with(blocks, "主营业务分产品情况", "分产品"))
     if not candidates:
         candidates = [{"id": "", "usage": "", "text": text}]
     rows, block, source_text = _parse_from_blocks(candidates, _parse_segment_table)
+    if not rows:
+        rows = _parse_hk_business_segment_narrative(text)
+        block = blocks[0] if blocks else None
+        source_text = text
     block_id, usage, excerpt = _source_info([block] if block else blocks, source_text)
     for row in rows:
         row["source_block_id"] = block_id
@@ -629,34 +891,215 @@ def _extract_segment_rows(text: str, source_block_ids: List[str], blocks: List[D
 
 def _extract_region_rows(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     candidates = _blocks_for_usages(blocks, "region_table", "segment_margin_table", "segment_table")
-    candidates = _dedupe_blocks(candidates + _fallback_blocks_with(blocks, "主营业务分地区情况", "分地区"))
+    if not candidates:
+        candidates = _fallback_blocks_with(blocks, "主营业务分地区情况", "分地区")
+    candidates = _dedupe_blocks(candidates)
     if not candidates:
         candidates = [{"id": "", "usage": "", "text": text}]
-    rows, block, source_text = _parse_from_blocks(
-        candidates, lambda value: _parse_region_or_sales_table(value, "主营业务分地区情况")
+    rows = _parse_rows_from_all_candidate_blocks(
+        candidates,
+        lambda value: _parse_region_or_sales_table(value, "主营业务分地区情况"),
     )
-    block_id, usage, excerpt = _source_info([block] if block else blocks, source_text)
-    for row in rows:
-        row["source_block_id"] = block_id
-        row["source_usage"] = usage
-        row["source_excerpt"] = excerpt
+    rows = [row for row in rows if _looks_like_region_label(str(row.get("label", "")))]
+    if rows:
+        return rows
+    fallback_candidates = _dedupe_blocks(_fallback_blocks_with(blocks, "主营业务分地区情况", "分地区"))
+    if fallback_candidates and fallback_candidates != candidates:
+        fallback_rows = _parse_rows_from_all_candidate_blocks(
+            fallback_candidates,
+            lambda value: _parse_region_or_sales_table(value, "主营业务分地区情况"),
+        )
+        return [row for row in fallback_rows if _looks_like_region_label(str(row.get("label", "")))]
     return rows
 
 
 def _extract_sales_mode_rows(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     candidates = _blocks_for_usages(blocks, "segment_margin_table", "segment_table")
-    candidates = _dedupe_blocks(candidates + _fallback_blocks_with(blocks, "主营业务分销售模式情况", "销售模式"))
+    if not candidates:
+        candidates = _fallback_blocks_with(blocks, "主营业务分销售模式情况", "销售模式")
+    candidates = _dedupe_blocks(candidates)
     if not candidates:
         candidates = [{"id": "", "usage": "", "text": text}]
-    rows, block, source_text = _parse_from_blocks(
-        candidates, lambda value: _parse_region_or_sales_table(value, "主营业务分销售模式情况")
+    rows = _parse_rows_from_all_candidate_blocks(
+        candidates,
+        lambda value: _parse_region_or_sales_table(value, "主营业务分销售模式情况"),
     )
-    block_id, usage, excerpt = _source_info([block] if block else blocks, source_text)
-    for row in rows:
-        row["source_block_id"] = block_id
-        row["source_usage"] = usage
-        row["source_excerpt"] = excerpt
+    rows = [row for row in rows if _looks_like_sales_mode_label(str(row.get("label", "")))]
+    if rows:
+        return rows
+    fallback_candidates = _dedupe_blocks(_fallback_blocks_with(blocks, "主营业务分销售模式情况", "销售模式"))
+    if fallback_candidates and fallback_candidates != candidates:
+        fallback_rows = _parse_rows_from_all_candidate_blocks(
+            fallback_candidates,
+            lambda value: _parse_region_or_sales_table(value, "主营业务分销售模式情况"),
+        )
+        return [row for row in fallback_rows if _looks_like_sales_mode_label(str(row.get("label", "")))]
     return rows
+
+
+def _parse_hk_business_segment_narrative(text: str) -> List[Dict[str, Any]]:
+    metric_text = _normalize_hk_metric_text(text)
+    labels = _hk_business_segment_labels(metric_text)
+    rows: List[Dict[str, Any]] = []
+    for label in labels:
+        revenue = _hk_segment_revenue(metric_text, label)
+        cost = _hk_segment_cost(metric_text, label)
+        gross_margin = _hk_segment_gross_margin(metric_text, label)
+        if not (revenue or cost or gross_margin):
+            continue
+        row = {
+            "label": label,
+            "revenue": revenue,
+            "cost": cost,
+            "gross_margin": gross_margin,
+            "revenue_yoy": _hk_segment_revenue_yoy(metric_text, label),
+            "gross_margin_delta": None,
+        }
+        rows.append({key: value for key, value in row.items() if value is not None})
+    return rows
+
+
+def _normalize_hk_metric_text(text: str) -> str:
+    text = re.sub(r"([一-鿿])\s+(?=[一-鿿])", r"\1", text)
+    text = re.sub(r"(\d)\s*\.\s*(\d)", r"\1.\2", text)
+    text = re.sub(r"(\d+\.\d)\s+(\d)\b", r"\1\2", text)
+    return text
+
+
+def _hk_business_segment_labels(text: str) -> List[str]:
+    labels = [
+        "輔助駕駛產品及解決方案",
+        "智能影像解決方案",
+        "具身智能解決方案",
+    ]
+    for pattern in (
+        rf"(?:[•－\-\s]*截至\s*2025\s*年[^\n\r。；]{{0,80}}?[，,]\s*)?"
+        rf"(?P<label>[\u4e00-\u9fffA-Za-z0-9（）\(\)\- ]{{2,30}}?)的收入同比"
+        rf"(?:增加|增長|增长|下降|減少|减少)\s*{_RATE}\s*%\s*至人民幣\s*{_AMOUNT}\s*百萬?元",
+        rf"(?P<label>[\u4e00-\u9fffA-Za-z0-9（）\(\)\- ]{{2,30}}?)收入由[^\n\r。；]{{0,180}}?"
+        rf"(?:增加|增長|增长|下降|減少|减少)\s*{_RATE}\s*%[^\n\r。；]{{0,80}}?"
+        rf"人民幣\s*{_AMOUNT}\s*百萬?元",
+        rf"(?P<label>[\u4e00-\u9fffA-Za-z0-9（）\(\)\- ]{{2,30}}?)的毛利率由[^\n\r。；]{{0,120}}?"
+        rf"(?:下降|增加|增長|增长|上升|提升)至\s*{_RATE}\s*%",
+        rf"(?P<label>[\u4e00-\u9fffA-Za-z0-9（）\(\)\- ]{{2,30}}?)的毛利[^\n\r。；]{{0,180}}?"
+        rf"毛利率由[^\n\r。；]{{0,120}}?(?:下降|增加|增長|增长|上升|提升)至\s*{_RATE}\s*%",
+    ):
+        for match in re.finditer(pattern, text):
+            label = _clean_hk_segment_label(match.group("label"))
+            if label and label not in labels:
+                labels.append(label)
+    return labels
+
+
+def _clean_hk_segment_label(label: str) -> str:
+    label = _normalize_label(label)
+    label = re.sub(r"^[•－\-\s]+", "", label).strip()
+    label = re.sub(r"^我們的", "", label).strip()
+    label = re.sub(r"^我们的", "", label).strip()
+    label = re.sub(r"^(?:而|及|且|其中|此外)", "", label).strip()
+    if not label:
+        return ""
+    if len(label) > 24:
+        return ""
+    if any(token in label for token in (
+        "截至", "收入", "毛利", "毛利率", "總", "总", "整體", "整体",
+        "綜合", "综合", "本集團", "本集团", "本公司", "下表", "年度",
+    )):
+        return ""
+    return label
+
+
+def _hk_segment_revenue(text: str, label: str) -> Optional[Dict[str, Any]]:
+    patterns = (
+        rf"{re.escape(label)}的收入同比(?:增加|增長|增长|下降|減少|减少)\s*{_RATE}\s*%\s*至人民幣\s*({_AMOUNT})\s*百萬?元",
+        rf"{re.escape(label)}收入[^\n\r。；]{{0,120}}?至截至\s*2025\s*年[^\n\r。；]{{0,80}}?人民幣\s*({_AMOUNT})\s*百萬元",
+        rf"{re.escape(label)}[^\n\r。；]{{0,80}}?收入為人民幣\s*({_AMOUNT})\s*百萬元",
+    )
+    return _first_hk_million_cell(text, patterns)
+
+
+def _hk_segment_revenue_yoy(text: str, label: str) -> Optional[Dict[str, Any]]:
+    patterns = (
+        rf"{re.escape(label)}的收入同比(?:增加|增長|增长|下降|減少|减少)\s*({_RATE})\s*%",
+        rf"{re.escape(label)}收入[^\n\r。；]{{0,120}}?(?:增加|增長|增长|下降|減少|减少)\s*({_RATE})\s*%",
+    )
+    match = None
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            break
+    if not match:
+        return None
+    return _value_cell(match.group(1), "%")
+
+
+def _hk_segment_cost(text: str, label: str) -> Optional[Dict[str, Any]]:
+    patterns = (
+        rf"{re.escape(label)}的銷售成本[^\n\r。；]{{0,120}}?至截至\s*2025\s*年[^\n\r。；]{{0,80}}?人民幣\s*({_AMOUNT})\s*百萬元",
+        rf"{re.escape(label)}的銷售成本[^\n\r。；]{{0,80}}?為人民幣\s*({_AMOUNT})\s*百萬元",
+    )
+    return _first_hk_million_cell(text, patterns)
+
+
+def _hk_segment_gross_margin(text: str, label: str) -> Optional[Dict[str, Any]]:
+    patterns = []
+    if label == "智能影像解決方案":
+        patterns.append(rf"{re.escape(label)}業務的毛利率[\s\S]{{0,260}}?與\s*({_RATE})\s*%")
+    elif label == "具身智能解決方案":
+        patterns.append(rf"{re.escape(label)}的毛利率[\s\S]{{0,160}}?為\s*({_RATE})\s*%")
+    else:
+        patterns.append(rf"{re.escape(label)}的毛利率[\s\S]{{0,260}}?均為\s*({_RATE})\s*%")
+    patterns.extend((
+        rf"{re.escape(label)}的毛利率由[^\n\r。；]{{0,120}}?(?:下降|增加|增長|增长|上升|提升)至\s*({_RATE})\s*%",
+        rf"{re.escape(label)}的毛利[^\n\r。；]{{0,220}}?毛利率由[^\n\r。；]{{0,120}}?(?:下降|增加|增長|增长|上升|提升)至\s*({_RATE})\s*%",
+    ))
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return _value_cell(match.group(1), "%")
+    return None
+
+
+def _first_hk_million_cell(text: str, patterns: Iterable[str]) -> Optional[Dict[str, Any]]:
+    for pattern in patterns:
+        match = re.search(pattern, text)
+        if match:
+            return _hk_million_cell(match.group(1))
+    return None
+
+
+def _hk_million_cell(amount: str) -> Optional[Dict[str, Any]]:
+    try:
+        value = Decimal(_normalize_numeric(amount)) * Decimal("100")
+    except (InvalidOperation, ValueError):
+        return None
+    normalized = value.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return {"text": amount, "unit": "百万元", "normalized": f"{normalized}万元"}
+
+
+def _parse_hk_concentration(text: str, *, customer: bool) -> Dict[str, Any]:
+    result = _empty_concentration()
+    if customer:
+        pattern = (
+            r"五大客戶產生的收入約佔本集團總收入的\s*([\d\.]+)\s*%[^\n\r。；]{0,80}?"
+            r"最大客戶產生的收入約佔本集團總收入的\s*([\d\.]+)\s*%"
+        )
+        headers = ["五大客戶", "最大客戶"]
+    else:
+        pattern = (
+            r"五大供應商的採購額約佔本集團採購總額的\s*([\d\.]+)\s*%[^\n\r。；]{0,80}?"
+            r"最大供應商的採購額約佔本集團採購總額的\s*([\d\.]+)\s*%"
+        )
+        headers = ["五大供應商", "最大供應商"]
+    match = re.search(pattern, text)
+    if not match:
+        return result
+    result["present"] = True
+    result["headers_found"] = headers
+    result["top_five_percentage"] = _value_cell(match.group(1), "%")
+    result["largest_percentage"] = _value_cell(match.group(2), "%")
+    result["source_excerpt"] = _excerpt(match.group(0))
+    return _sanitize_concentration(result)
 
 
 def _extract_inventory_rows(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -674,11 +1117,20 @@ def _extract_inventory_rows(text: str, source_block_ids: List[str], blocks: List
 
 
 def _extract_customer_concentration(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
-    candidates = _blocks_for_usages(blocks, "customer_supplier_table", "supplier_concentration_table")
-    candidates = _dedupe_blocks(candidates + _fallback_blocks_with(blocks, "前五名客户", "公司前五名客户"))
+    candidates = _blocks_for_usages(blocks, "customer_supplier_table")
+    if not candidates:
+        candidates = _fallback_blocks_with(blocks, "前五名客户", "公司前五名客户")
+    candidates = _dedupe_blocks(candidates)
     block = candidates[0] if candidates else None
     source_text = "\n\n".join(str(candidate.get("text", "")) for candidate in candidates) if candidates else text
     result = _parse_concentration(source_text, customer=True)
+    if not result.get("present"):
+        result = _parse_hk_concentration(source_text, customer=True)
+    fallback_text = _raw_text_fallback(blocks, text)
+    if candidates and fallback_text and fallback_text != source_text:
+        result = _merge_concentration(result, _parse_concentration(fallback_text, customer=True))
+    if not result.get("present") and fallback_text:
+        result = _parse_hk_concentration(fallback_text, customer=True)
     if block:
         result["source_block_id"] = block.get("id")
         result["source_usage"] = block.get("usage")
@@ -687,16 +1139,69 @@ def _extract_customer_concentration(text: str, source_block_ids: List[str], bloc
 
 
 def _extract_supplier_concentration(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> Dict[str, Any]:
-    candidates = _blocks_for_usages(blocks, "supplier_concentration_table", "customer_supplier_table")
-    candidates = _dedupe_blocks(candidates + _fallback_blocks_with(blocks, "前五名供应商", "公司前五名供应商"))
+    candidates = _blocks_for_usages(blocks, "supplier_concentration_table")
+    if not candidates:
+        candidates = _fallback_blocks_with(blocks, "前五名供应商", "公司前五名供应商")
+    candidates = _dedupe_blocks(candidates)
     block = candidates[0] if candidates else None
     source_text = "\n\n".join(str(candidate.get("text", "")) for candidate in candidates) if candidates else text
     result = _parse_concentration(source_text, customer=False)
+    if not result.get("present"):
+        result = _parse_hk_concentration(source_text, customer=False)
+    fallback_text = _raw_text_fallback(blocks, text)
+    if (
+        candidates
+        and fallback_text
+        and fallback_text != source_text
+        and any(not result.get(key) for key in ("top_five_amount", "top_five_percentage", "largest_amount", "largest_percentage"))
+    ):
+        result = _merge_concentration(result, _parse_concentration(fallback_text, customer=False))
+    if not result.get("present") and fallback_text:
+        result = _parse_hk_concentration(fallback_text, customer=False)
     if block:
         result["source_block_id"] = block.get("id")
         result["source_usage"] = block.get("usage")
         result["source_excerpt"] = _excerpt(source_text)
     return result
+
+
+def _merge_concentration(primary: Dict[str, Any], fallback: Dict[str, Any]) -> Dict[str, Any]:
+    merged = dict(primary)
+    if fallback.get("present"):
+        merged["present"] = True
+    headers = list(primary.get("headers_found") or [])
+    for header in fallback.get("headers_found") or []:
+        if header not in headers:
+            headers.append(header)
+    merged["headers_found"] = headers
+    for key in (
+        "top_five_amount",
+        "top_five_percentage",
+        "related_party_amount",
+        "related_party_percentage",
+    ):
+        if not merged.get(key) and fallback.get(key):
+            merged[key] = fallback[key]
+    for key in ("largest_amount", "largest_percentage"):
+        if fallback.get(key):
+            merged[key] = fallback[key]
+    return merged
+
+
+def _looks_like_region_label(label: str) -> bool:
+    if not label:
+        return False
+    if _looks_like_sales_mode_label(label):
+        return False
+    return label == "其他" or any(token in label for token in (
+        "国内", "国外", "境内", "境外", "大陆", "香港", "台湾", "北京", "上海"
+    ))
+
+
+def _looks_like_sales_mode_label(label: str) -> bool:
+    if not label:
+        return False
+    return label in {"经销", "直销", "经销模式", "直销模式", "普通销售"} or label.endswith("销售模式")
 
 
 # ---------------------------------------------------------------------------

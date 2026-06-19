@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from claim_risk_signal_skill import claim_risk_signal_skill
 from claim_verification import ClaimCandidate, ClaimVerification, ClaimVerificationPlan
 from skill_pipeline import SkillContext
+from source_adapter import SynthesisItem
 
 
 def _write_note(path: Path, frontmatter: str, body: str = "") -> Path:
@@ -149,6 +150,33 @@ def test_skill_does_not_use_truncated_summary(monkeypatch):
     claim_risk_signal_skill(ctx)
     assert called["full"]
     assert ctx.output["claim_risk_signal_status"] == "ok"
+
+
+def test_skill_does_not_consume_periodic_report_fulltext_items(tmp_path):
+    fulltext_item = SynthesisItem(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="价格战加剧，毛利率承压，但该材料不应直接进入 claim risk signals。",
+        author="",
+        source_platform="定期报告全文",
+        url="",
+        publish_time="",
+        interaction_score=0,
+        extra={"source_type": "periodic_report_fulltext_analysis"},
+    )
+    ctx = SkillContext(
+        input={
+            "stock_name": "黑芝麻智能",
+            "enable_claim_risk_signals": True,
+            "claim_verification_base_dir": str(tmp_path),
+            "periodic_report_fulltext_items": [fulltext_item],
+        }
+    )
+
+    claim_risk_signal_skill(ctx)
+
+    assert ctx.output["claim_risk_signal_status"] == "empty"
+    assert ctx.output["structured_risk_signals"] == []
+    assert ctx.get("periodic_report_fulltext_items") == [fulltext_item]
 
 
 def test_output_structured_risk_signals_passes_to_risk_section(tmp_path):
