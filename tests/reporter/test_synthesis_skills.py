@@ -198,6 +198,7 @@ def test_periodic_report_fulltext_items_do_not_enter_synthesis_items():
             "claim_status": "professional_analysis",
             "knowledge_eligible": False,
             "report_eligible": False,
+            "experimental": True,
         },
     )
     ctx = SkillContext(input={
@@ -796,6 +797,217 @@ def test_legacy_chat_prompt_includes_credit_rules():
     assert "不得写成公司确认" in client.last_prompt
     assert "已验证讨论线索" in client.last_prompt
     assert "Phase 1 不使用 corroborated schema" in client.last_prompt
+
+
+# --- periodic report fulltext as synthesis display material ---
+
+
+def _make_fulltext_item():
+    return SynthesisItem(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content="管理层讨论：降价 毛利率承压 净流出 风险。",
+        author="",
+        source_platform="定期报告全文",
+        url="",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "claim_status": "professional_analysis",
+            "knowledge_eligible": False,
+            "report_eligible": False,
+            "experimental": True,
+        },
+    )
+
+
+class DualSynthesizer:
+    """Returns enhanced narrative iff a fulltext item is present in items."""
+
+    def __init__(self):
+        self.calls = []
+
+    def synthesize(self, stock_name, all_data):
+        items = all_data["items"]
+        self.calls.append(list(items))
+        has_fulltext = any(
+            (getattr(i, "extra", {}) or {}).get("source_type")
+            == "periodic_report_fulltext_analysis"
+            for i in items
+        )
+        if has_fulltext:
+            return {
+                "industry_logic": "fulltext 降价 毛利率承压 narrative",
+                "fundamentals": "enhanced 净流出 路径",
+                "valuation_debate": "",
+                "funding_sentiment": "",
+                "events_catalysts": "",
+                "core_facts": [
+                    {"fact_id": 9, "fact": "enhanced fact", "data": "", "confidence": "高"},
+                ],
+                "citations": {},
+            }
+        return {
+            "industry_logic": "baseline narrative",
+            "fundamentals": "baseline fundamentals",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "core_facts": [
+                {"fact_id": 1, "fact": "baseline fact", "data": "", "confidence": "高"},
+            ],
+            "citations": {},
+        }
+
+
+def _fulltext_ctx(switch, fake):
+    return SkillContext(input={
+        "stock_name": "中简科技",
+        "include_periodic_report_fulltext_in_synthesis": switch,
+        "periodic_report_fulltext_items": [_make_fulltext_item()],
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+
+def test_periodic_report_fulltext_synthesis_default_off_excludes_fulltext():
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _fulltext_ctx(False, fake)
+    skill.run(ctx)
+
+    # synthesizer only ever sees ordinary items
+    assert len(fake.calls) == 1
+    assert all(
+        (getattr(i, "extra", {}) or {}).get("source_type")
+        != "periodic_report_fulltext_analysis"
+        for i in fake.calls[0]
+    )
+    assert ctx.output.get("synthesis_display") is None
+    assert ctx.get("synthesis")["industry_logic"] == "baseline narrative"
+
+
+def test_periodic_report_fulltext_synthesis_keeps_canonical_synthesis_baseline():
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _fulltext_ctx(True, fake)
+    skill.run(ctx)
+
+    assert ctx.get("synthesis")["industry_logic"] == "baseline narrative"
+    assert ctx.get("synthesis_display")["industry_logic"] == "fulltext 降价 毛利率承压 narrative"
+
+
+def test_periodic_report_fulltext_synthesis_does_not_change_synthesis_text_or_core_facts():
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _fulltext_ctx(True, fake)
+    skill.run(ctx)
+
+    synthesis_text = ctx.get("synthesis_text")
+    assert "baseline narrative" in synthesis_text
+    assert "降价" not in synthesis_text
+    assert "毛利率承压" not in synthesis_text
+    assert "净流出" not in synthesis_text
+
+    assert ctx.get("core_facts")[0]["fact"] == "baseline fact"
+
+    enhanced_flatten = ctx.get("synthesis_text_with_periodic_report_fulltext")
+    assert "降价" in enhanced_flatten
+    assert "净流出" in enhanced_flatten
+
+
+def test_periodic_report_fulltext_knowledge_persistence_would_receive_baseline():
+    """Knowledge writer reads ctx['synthesis'] which must stay baseline."""
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _fulltext_ctx(True, fake)
+    skill.run(ctx)
+
+    knowledge_input = ctx.get("synthesis")
+    flattened = "\n".join(str(v) for v in knowledge_input.values())
+    assert "baseline" in flattened
+    assert "降价" not in flattened
+    assert "毛利率承压" not in flattened
+
+
+def test_append_at_end_preserves_existing_source_order():
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _fulltext_ctx(True, fake)
+    skill.run(ctx)
+
+    assert len(fake.calls) == 2
+    baseline_items = fake.calls[0]
+    enhanced_items = fake.calls[1]
+
+    # ordinary items keep identical order at the front of the enhanced call
+    assert enhanced_items[: len(baseline_items)] == baseline_items
+    # fulltext item is appended last
+    assert (
+        (getattr(enhanced_items[-1], "extra", {}) or {}).get("source_type")
+        == "periodic_report_fulltext_analysis"
+    )
+    assert len(enhanced_items) == len(baseline_items) + 1
+
+
+def test_periodic_report_fulltext_synthesis_no_items_skips_display():
+    """Switch on but no eligible fulltext item: behaves like default off."""
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "中简科技",
+        "include_periodic_report_fulltext_in_synthesis": True,
+        "periodic_report_fulltext_items": [],
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert len(fake.calls) == 1
+    assert ctx.output.get("synthesis_display") is None
+
+
+def test_periodic_report_fulltext_synthesis_rejects_malformed_fulltext_item():
+    """A source_type match alone is not enough to enter display synthesis."""
+    malformed = _make_fulltext_item()
+    malformed.extra = {
+        **malformed.extra,
+        "source_credit": 95,
+        "verification_status": "confirmed_fact",
+        "experimental": False,
+    }
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "中简科技",
+        "include_periodic_report_fulltext_in_synthesis": True,
+        "periodic_report_fulltext_items": [malformed],
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert len(fake.calls) == 1
+    assert ctx.output.get("synthesis_display") is None
 
 
 def test_fill_citation_metadata_preserves_credit_fields():

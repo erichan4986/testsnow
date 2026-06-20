@@ -242,7 +242,7 @@ class ExecutiveSummaryRenderer:
 
     def render(self, ctx: Dict[str, Any]) -> str:
         stock_name = ctx.get("stock_name", "")
-        synthesis = ctx.get("synthesis") or {}
+        synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
         if not stock_name or not synthesis:
             return ""
 

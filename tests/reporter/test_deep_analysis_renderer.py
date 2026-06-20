@@ -506,3 +506,36 @@ def test_render_supported_claim_status_label():
     result = renderer.render(ctx)
     assert "部分支持，非官方确认" in result
     assert "| 研发费用增长 | 部分支持，非官方确认 |" in result
+
+
+def test_render_prefers_synthesis_display():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "baseline 行业逻辑。",
+            "citations": {},
+        },
+        "synthesis_display": {
+            "industry_logic": "enhanced 年报全文 行业逻辑。",
+            "citations": {},
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "enhanced 年报全文 行业逻辑" in result
+    assert "baseline 行业逻辑" not in result
+
+
+def test_render_falls_back_to_synthesis_when_no_display():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "baseline 行业逻辑。",
+            "citations": {},
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "baseline 行业逻辑" in result

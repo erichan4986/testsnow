@@ -153,3 +153,63 @@ def test_render_marks_supported_claim_bullish_point_as_non_official(monkeypatch)
 
     assert "2026年一季报净利润同比增长106.96%" in result
     assert "部分支持，非官方确认" in result
+
+
+def test_render_prefers_synthesis_display(monkeypatch):
+    captured = []
+
+    def spy_extract(text, direction, claim_verification_summary=None):
+        captured.append(text)
+        return []
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        spy_extract,
+    )
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_conclusion",
+        lambda stock_name, text: "",
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "valuation_debate": "baseline 估值。",
+            "fundamentals": "baseline 基本面。",
+        },
+        "synthesis_display": {
+            "valuation_debate": "enhanced 年报全文 估值。",
+            "fundamentals": "enhanced 年报全文 基本面。",
+        },
+    }
+    renderer.render(ctx)
+
+    assert captured
+    assert any("enhanced 年报全文" in t for t in captured)
+    assert all("baseline" not in t for t in captured)
+
+
+def test_render_falls_back_to_synthesis_when_no_display(monkeypatch):
+    captured = []
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda text, direction, claim_verification_summary=None: captured.append(text) or [],
+    )
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_conclusion",
+        lambda stock_name, text: "",
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "valuation_debate": "baseline 估值。",
+            "fundamentals": "baseline 基本面。",
+        },
+    }
+    renderer.render(ctx)
+
+    assert any("baseline" in t for t in captured)

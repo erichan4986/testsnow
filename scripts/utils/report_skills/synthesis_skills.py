@@ -50,15 +50,53 @@ class SynthesisSkill(BaseSkill):
         stock_raw = ctx.get("stock_raw", {})
         keep_posts = ctx.get("keep_posts", [])
 
-        synthesis = self._synthesize(stock_name, stock_raw, keep_posts, ctx)
-        ctx.set("synthesis", synthesis)
-        ctx.set("core_facts", synthesis.get("core_facts", []))
-        ctx.set("synthesis_text", self._flatten_synthesis_text(synthesis))
-        ctx.set("synthesis_items_count", synthesis.get("_items_count", 0))
-        ctx.set("synthesis_sources", synthesis.get("_sources", []))
+        baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx)
+        ctx.set("synthesis", baseline)
+        ctx.set("core_facts", baseline.get("core_facts", []))
+        ctx.set("synthesis_text", self._flatten_synthesis_text(baseline))
+        ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
+        ctx.set("synthesis_sources", baseline.get("_sources", []))
+
+        # Optional experimental path: periodic-report full-text material may
+        # enter the DISPLAY synthesis only.  Canonical synthesis, core_facts,
+        # synthesis_text, and synthesis_sources stay baseline so risk scoring
+        # and Knowledge persistence never see full-text-derived narrative.
+        if ctx.get("include_periodic_report_fulltext_in_synthesis"):
+            fulltext_items = self._eligible_periodic_report_fulltext_items(ctx)
+            if fulltext_items:
+                display = self._synthesize(
+                    stock_name,
+                    stock_raw,
+                    keep_posts,
+                    ctx,
+                    extra_items=fulltext_items,
+                )
+                ctx.set("synthesis_display", display)
+                ctx.set("synthesis_display_sources", display.get("_sources", []))
+                ctx.set(
+                    "synthesis_text_with_periodic_report_fulltext",
+                    self._flatten_synthesis_text(display),
+                )
         return ctx
 
-    def _synthesize(self, stock_name: str, stock_raw: dict, keep_posts: list, ctx: SkillContext = None) -> dict:
+    @staticmethod
+    def _eligible_periodic_report_fulltext_items(ctx: SkillContext) -> list:
+        """Return only legitimate periodic-report full-text material items."""
+        items = ctx.get("periodic_report_fulltext_items", []) or []
+        eligible = []
+        for item in items:
+            extra = getattr(item, "extra", {}) or {}
+            if (
+                extra.get("source_type") == "periodic_report_fulltext_analysis"
+                and extra.get("source_credit") == 75
+                and extra.get("verification_status") == "professional_analysis"
+                and extra.get("claim_status") == "professional_analysis"
+                and extra.get("experimental") is True
+            ):
+                eligible.append(item)
+        return eligible
+
+    def _synthesize(self, stock_name: str, stock_raw: dict, keep_posts: list, ctx: SkillContext = None, extra_items: list = None) -> dict:
         """调用 KnowledgeSynthesizer 或降级模板生成综合叙事。"""
         enable_cv = bool(ctx.get("enable_claim_verification_context")) if ctx else False
         cv_context = None
@@ -82,7 +120,7 @@ class SynthesisSkill(BaseSkill):
         if self.llm_client and hasattr(self.llm_client, "chat"):
             return self._legacy_llm_synthesize(stock_name, stock_raw, keep_posts, cv_context)
 
-        items = self._build_synthesis_items(stock_raw, keep_posts)
+        items = self._build_synthesis_items(stock_raw, keep_posts, extra_items=extra_items)
         if not items:
             return self._template_synthesize(stock_raw, items_count=0, sources=[])
 
@@ -161,9 +199,9 @@ class SynthesisSkill(BaseSkill):
         except Exception:
             return self._template_synthesize(stock_raw)
 
-    def _build_synthesis_items(self, stock_raw: dict, keep_posts: list):
+    def _build_synthesis_items(self, stock_raw: dict, keep_posts: list, extra_items: list = None):
         zhihu = stock_raw.get("zhihu", {})
-        return adapt_all(
+        items = adapt_all(
             xueqiu_items=keep_posts,
             zhihu_items=zhihu.get("report_items", []),
             reports=stock_raw.get("reports", []),
@@ -171,6 +209,11 @@ class SynthesisSkill(BaseSkill):
             fundflow=stock_raw.get("fundflow", []),
             news=stock_raw.get("news", []),
         )
+        # Extra material-layer items (e.g. periodic-report full text) are
+        # appended LAST so ordinary source numbering stays stable.
+        if extra_items:
+            items = list(items) + list(extra_items)
+        return items
 
     def _fill_citation_metadata(self, synthesis: dict, items: list) -> dict:
         citations = synthesis.get("citations", {}) or {}

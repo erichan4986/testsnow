@@ -49,3 +49,57 @@ def test_render_with_pillar():
     result = renderer.render(ctx)
     assert "综合评分" in result
     assert "估值健康度" in result
+
+
+def test_render_prefers_synthesis_display(monkeypatch):
+    captured = []
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda text, direction, *a, **k: captured.append(text) or [],
+    )
+
+    renderer = HTMLDashboardRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "date_str": "20260605",
+        "date_display": "2026年06月05日",
+        "stock_codes": {"TestStock": "000001"},
+        "synthesis": {
+            "valuation_debate": "baseline 估值。",
+            "fundamentals": "baseline 基本面。",
+        },
+        "synthesis_display": {
+            "valuation_debate": "enhanced 年报全文 估值。",
+            "fundamentals": "enhanced 年报全文 基本面。",
+        },
+    }
+    renderer.render(ctx)
+
+    assert captured
+    assert any("enhanced 年报全文" in t for t in captured)
+    assert all("baseline" not in t for t in captured)
+
+
+def test_render_falls_back_to_synthesis_when_no_display(monkeypatch):
+    captured = []
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda text, direction, *a, **k: captured.append(text) or [],
+    )
+
+    renderer = HTMLDashboardRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "date_str": "20260605",
+        "date_display": "2026年06月05日",
+        "stock_codes": {"TestStock": "000001"},
+        "synthesis": {
+            "valuation_debate": "baseline 估值。",
+            "fundamentals": "baseline 基本面。",
+        },
+    }
+    renderer.render(ctx)
+
+    assert any("baseline" in t for t in captured)

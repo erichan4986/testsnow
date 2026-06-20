@@ -181,6 +181,15 @@ def derive_synthesis_usage(item_or_meta: Union[SynthesisItem, Dict[str, Any], No
     platform = meta.source_platform
     family = _source_family(platform)
 
+    # Periodic-report full-text material layer: medium credit, display-only.
+    # Never core-fact eligible (enforced separately by is_core_fact_supporting_source).
+    if (meta.source_type or "").strip() == "periodic_report_fulltext_analysis":
+        return {
+            "credit_tier": "medium",
+            "usage": "annual_report_material",
+            "display_label": "中信用/annual_report_material",
+        }
+
     # High-credit confirmed metadata overrides platform fallback.
     if _is_high_credit_confirmed(meta):
         return {
@@ -266,7 +275,11 @@ def derive_synthesis_usage(item_or_meta: Union[SynthesisItem, Dict[str, Any], No
 def format_synthesis_source_line(index: int, item: SynthesisItem) -> str:
     """Format a numbered source line with credit/usage labels."""
     usage = derive_synthesis_usage(item)
-    content_snippet = item.content[:500] if len(item.content) > 500 else item.content
+    extra = item.extra or {}
+    # Periodic-report full-text material is allowed a larger excerpt cap; all
+    # other sources keep the default 500-char cap.
+    cap = 1200 if extra.get("source_type") == "periodic_report_fulltext_analysis" else 500
+    content_snippet = item.content[:cap] if len(item.content) > cap else item.content
     return (
         f"[{index}] 标题: {item.title} | "
         f"来源: {item.source_platform} | "

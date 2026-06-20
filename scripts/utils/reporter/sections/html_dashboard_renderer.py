@@ -122,7 +122,7 @@ class HTMLDashboardRenderer:
         val_img = Path(chart_paths.get("valuation", "")).name if chart_paths.get("valuation") else ""
 
         # 多空论点
-        synthesis = ctx.get("synthesis") or {}
+        synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
         debate_text = synthesis.get("valuation_debate", "")
         fund_text = synthesis.get("fundamentals", "")
         combined = debate_text + "\n" + fund_text

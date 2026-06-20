@@ -667,3 +667,24 @@ def test_moderate_guardrail_preserves_conservative_advice():
     )
     assert "风险等级: 8.0/10" in result
     assert _advice_from(result) == "建议减仓或不买入"
+
+
+def test_risk_keyword_scan_uses_baseline_synthesis_text_only():
+    """Risk scoring reads baseline synthesis_text; fulltext-enhanced narrative
+    (which may carry 降价/毛利率承压/净流出) never reaches this path."""
+    baseline_text = "公司经营稳健，订单正常，无异常信号。"
+    result = risk_score_section(
+        stock_name="测试股",
+        posts=[],
+        stock_raw=MINIMAL_STOCK_RAW,
+        quote=None,
+        consensus=None,
+        industry_fwd_pe=None,
+        synthesis_text=baseline_text,
+        score_llm_keyword_risks=True,
+    )
+    # No fulltext-derived qualitative keyword risk surfaces from baseline text.
+    assert "降价" not in result
+    assert "毛利率承压" not in result
+    assert "竞争格局恶化" not in result
+    assert "风险等级: 0.0/10" in result

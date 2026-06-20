@@ -261,3 +261,75 @@ def test_format_claim_verification_appendix_contains_required_wording():
 def test_format_claim_verification_appendix_disabled_returns_empty():
     assert format_claim_verification_appendix({"enabled": False}) == ""
     assert format_claim_verification_appendix(None) == ""
+
+
+# --- periodic report fulltext material ---
+
+
+def _fulltext_item(content="年报全文材料层内容。"):
+    return SynthesisItem(
+        title="2025年年度报告 | 定期报告全文摘要（实验路径）",
+        content=content,
+        author="",
+        source_platform="定期报告全文",
+        url="",
+        publish_time="2026-04-15",
+        extra={
+            "source_type": "periodic_report_fulltext_analysis",
+            "source_credit": 75,
+            "verification_status": "professional_analysis",
+            "claim_status": "professional_analysis",
+            "knowledge_eligible": False,
+            "report_eligible": False,
+            "experimental": True,
+        },
+    )
+
+
+def test_derive_synthesis_usage_periodic_report_fulltext_is_annual_report_material():
+    usage = derive_synthesis_usage(_fulltext_item())
+    assert usage["credit_tier"] == "medium"
+    assert usage["usage"] == "annual_report_material"
+    assert usage["display_label"] == "中信用/annual_report_material"
+
+
+def test_fulltext_source_type_cannot_be_promoted_by_malformed_confirmed_metadata():
+    item = _fulltext_item()
+    item.extra = {
+        **item.extra,
+        "source_credit": 95,
+        "verification_status": "confirmed_fact",
+    }
+    usage = derive_synthesis_usage(item)
+    assert usage["credit_tier"] == "medium"
+    assert usage["usage"] == "annual_report_material"
+
+
+def test_fulltext_is_not_core_fact_supporting():
+    meta = {
+        "source_credit": 75,
+        "source_type": "periodic_report_fulltext_analysis",
+        "verification_status": "professional_analysis",
+    }
+    assert is_core_fact_supporting_source("定期报告全文", meta) is False
+    assert is_core_fact_supporting_source("定期报告全文") is False
+
+
+def test_format_synthesis_source_line_fulltext_cap_is_1200():
+    long_content = "甲" * 2000
+    line = format_synthesis_source_line(1, _fulltext_item(content=long_content))
+    # 1200 chars retained (cap), not 500
+    assert "甲" * 1200 in line
+    assert "甲" * 1201 not in line
+    assert "可用方式: annual_report_material" in line
+
+
+def test_format_synthesis_source_line_ordinary_cap_remains_500():
+    long_content = "乙" * 2000
+    item = SynthesisItem(
+        title="研报", content=long_content, author="券商",
+        source_platform="研报", url="", publish_time="",
+    )
+    line = format_synthesis_source_line(2, item)
+    assert "乙" * 500 in line
+    assert "乙" * 501 not in line
