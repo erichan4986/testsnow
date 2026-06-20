@@ -104,6 +104,12 @@ Changes involving LLM prompts, synthesis/citation logic, scoring, technical anal
 <!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round1.md -->
 - periodic report structured facts Round 2 review prompt: `docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round2.md`
 <!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round2.md -->
+- HK periodic report evidence-pack design: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-design.md`
+<!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-design.md -->
+- HK periodic report evidence-pack Round 1 review prompt: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md`
+<!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md -->
+- HK periodic report evidence-pack Round 2 review prompt: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md`
+<!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md -->
 
 ## Runbooks
 

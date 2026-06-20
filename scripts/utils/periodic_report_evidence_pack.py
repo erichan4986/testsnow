@@ -88,6 +88,9 @@ USAGE_PRIORITY = {
     "rd_investment_table": 4,
     "rd_table": 5,
     "cash_flow_capex_table": 6,
+    "hk_income_statement_table": 0,
+    "hk_financial_summary_table": 1,
+    "hk_cash_flow_table": 6,
     "ar_customer_concentration_note": 7,
     "asset_impairment_note": 8,
     "audit_key_matters": 9,
@@ -223,6 +226,7 @@ def build_periodic_report_evidence_pack(
     blocks: List[Dict[str, Any]] = []
     blocks.extend(_extract_section_blocks(cleaned))
     blocks.extend(_extract_keyword_blocks(cleaned))
+    blocks.extend(_extract_hk_statement_blocks(cleaned))
     blocks.extend(_extract_table_blocks(cleaned))
     blocks = _dedupe_and_prioritize_blocks(blocks)
     blocks = blocks[:_MAX_BLOCKS]
@@ -366,6 +370,69 @@ def _extract_keyword_blocks(text: str) -> List[Dict[str, Any]]:
             seen_usage.add(usage)
             break
     return blocks
+
+
+def _extract_hk_statement_blocks(text: str) -> List[Dict[str, Any]]:
+    """Extract primary HK financial statement snippets.
+
+    HK annual reports often do not look like A-share table regions: they use
+    Traditional labels and IFRS statement headings. Keep this extractor narrow
+    and statement-scoped so generic labels like "收入" never anchor from raw
+    narrative text.
+    """
+    blocks: List[Dict[str, Any]] = []
+    specs = (
+        (
+            "hk_income_statement_table",
+            ("下表載列截至", "下表载列截至", "綜合全面", "綜合損益表", "合併損益表", "综合损益表"),
+            ("收入", "毛利", "年內虧損", "年内亏损"),
+        ),
+        (
+            "hk_cash_flow_table",
+            ("現金流量的概要", "现金流量的概要", "綜合現金流量表", "合併現金流量表", "综合现金流量表"),
+            ("經營活動所用現金淨額", "经营活动所用现金净额", "經營活動產生的現金流量淨額", "经营活动产生的现金流量净额"),
+        ),
+    )
+    for usage, headings, required_tokens in specs:
+        for heading in headings:
+            for match in re.finditer(re.escape(heading), text):
+                start = match.start()
+                start, end = _hk_statement_window(text, start)
+                excerpt = _strip_boilerplate(text[start:end].strip())
+                compact = re.sub(r"\s+", "", excerpt)
+                if not excerpt or _is_hk_five_year_summary_window(excerpt):
+                    continue
+                if not any(re.sub(r"\s+", "", token) in compact for token in required_tokens):
+                    continue
+                blocks.append(_block(usage, "财务报告", heading, excerpt, start, end))
+                break
+            if any(block["usage"] == usage for block in blocks):
+                break
+    return blocks
+
+
+def _hk_statement_window(text: str, start: int) -> Tuple[int, int]:
+    """Return a bounded HK statement window starting at a statement heading."""
+    next_heading = re.search(
+        (
+            r"\n\s*(?:"
+            r"綜合(?:全面收益表|財務狀況表|權益變動表|現金流量表|損益表)|"
+            r"合併(?:全面收益表|財務狀況表|權益變動表|現金流量表|損益表)|"
+            r"综合(?:全面收益表|财务状况表|权益变动表|现金流量表|损益表)|"
+            r"合并(?:全面收益表|财务状况表|权益变动表|现金流量表|损益表)|"
+            r"流動資金及財務資源|流动资金及财务资源|"
+            r"附註|附注|財務報表附註|财务报表附注"
+            r")"
+        ),
+        text[start + 20:],
+    )
+    end = start + 20 + next_heading.start() if next_heading else start + _MAX_CHARS_PER_BLOCK
+    return start, min(end, start + _MAX_CHARS_PER_BLOCK, len(text))
+
+
+def _is_hk_five_year_summary_window(text: str) -> bool:
+    compact = re.sub(r"\s+", "", text)
+    return "五年財務概要" in compact or "五年财务概要" in compact
 
 
 def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:

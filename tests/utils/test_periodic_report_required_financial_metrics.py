@@ -404,6 +404,24 @@ def test_hk_profit_metrics_prefer_main_statement_over_finance_income_and_five_ye
     assert metrics["profit_quality"]["rd_expense"]["normalized"] == "-141742.30万元"
 
 
+def test_hk_operating_cash_flow_prefers_material_outflow_over_note_heading_number():
+    text = """
+    綜合現金流量表
+    經營活動所得現金流量
+    經營所用現金 (1,042,000) (1,250,000)
+
+    # 33 現金流量資料
+    (a) 經營活動所用現金淨額 截至 12 月31 日止年度
+    2025 年 2024 年
+    人民幣千元 人民幣千元 除所得稅前 （虧損） ╱利潤 (1,424,679) 313,315
+    經營活動所用現金淨額 (985,373) (1,189,754)
+    """
+    pack = build_periodic_report_evidence_pack(text)
+    metrics = build_required_financial_risk_metrics(pack, raw_text=text)
+
+    assert metrics["cash_flow_quality"]["operating_cash_flow"]["normalized"] == "-98537.30万元"
+
+
 def test_hk_receivables_and_bills_use_note_table_not_audit_or_section_fragments():
     pack = build_periodic_report_evidence_pack(HK_BLACK_SESAME_REALISTIC_RECEIVABLES_NOTE)
     metrics = build_required_financial_risk_metrics(

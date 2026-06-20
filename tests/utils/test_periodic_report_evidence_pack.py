@@ -254,6 +254,97 @@ def test_block_has_required_keys():
         assert "end" in block["source_span"]
 
 
+HK_REPORT_WITH_CURRENT_STATEMENTS = """
+黑芝麻智能股份有限公司
+2025 年報
+
+業務回顧
+公司在智能汽車場景實現收入增長，其他收入不作為主營收入指標。
+
+五年財務概要
+截至十二月三十一日止年度
+人民幣千元 人民幣千元 人民幣千元
+收入 999,999 888,888 777,777
+經營活動所用現金淨額 (123,456) (234,567) (345,678)
+
+綜合損益表
+截至 2025 年 12 月 31 日止年度
+人民幣千元 人民幣千元
+2025 年 2024 年
+收入 822,328 535,539
+銷售成本 (627,000) (500,000)
+毛利 195,328 35,539
+年內虧損 (1,200,000) (2,000,000)
+
+綜合現金流量表
+截至 2025 年 12 月 31 日止年度
+人民幣千元 人民幣千元
+2025 年 2024 年
+經營活動所用現金淨額 (985,373) (1,300,000)
+投資活動所用現金淨額 (10,000) (20,000)
+"""
+
+
+def test_extracts_hk_income_and_cash_flow_statement_blocks_without_five_year_summary():
+    pack = build_periodic_report_evidence_pack(HK_REPORT_WITH_CURRENT_STATEMENTS)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert blocks["hk_income_statement_table"]["id"] == "hk_income_statement_table-0"
+    assert "綜合損益表" in blocks["hk_income_statement_table"]["text"]
+    assert "收入 822,328" in blocks["hk_income_statement_table"]["text"]
+    assert "五年財務概要" not in blocks["hk_income_statement_table"]["text"]
+    assert "999,999" not in blocks["hk_income_statement_table"]["text"]
+
+    assert blocks["hk_cash_flow_table"]["id"] == "hk_cash_flow_table-0"
+    assert "綜合現金流量表" in blocks["hk_cash_flow_table"]["text"]
+    assert "經營活動所用現金淨額 (985,373)" in blocks["hk_cash_flow_table"]["text"]
+    assert "五年財務概要" not in blocks["hk_cash_flow_table"]["text"]
+    assert "123,456" not in blocks["hk_cash_flow_table"]["text"]
+
+
+def test_hk_five_year_summary_only_does_not_emit_primary_statement_blocks():
+    text = """
+    五年財務概要
+    截至十二月三十一日止年度
+    人民幣千元 人民幣千元 人民幣千元
+    收入 999,999 888,888 777,777
+    經營活動所用現金淨額 (123,456) (234,567) (345,678)
+    """
+    pack = build_periodic_report_evidence_pack(text)
+    usages = {block["usage"] for block in pack["blocks"]}
+
+    assert "hk_income_statement_table" not in usages
+    assert "hk_cash_flow_table" not in usages
+
+
+def test_extracts_hk_management_discussion_financial_summary_tables():
+    text = """
+    管理層討論及分析
+    下表載列截至 2025 年及 2024 年12 月31 日止年度的比較數字：
+    截至 12 月31 日止年度
+    2025 年 2024 年
+    人民幣千元 人民幣千元 收入 822,328 474,252
+    銷售成本 (485,239) (279,544)
+    毛利 337,089 194,708
+    研發開支 (1,417,423) (1,435,156)
+    經營虧損 (1,448,320) (1,753,982)
+    年內虧損 (1,424,700) 313,315
+
+    流動資金及財務資源
+    下表載列所示年度我們現金流量的概要：
+    截至 12 月31 日止年度
+    2025 年 2024 年
+    （人民幣千元） （人民幣千元） 經營活動所用現金淨額 (985,373) (1,189,754)
+    投資活動所用現金淨額 (179,605) (223,006)
+    """
+
+    pack = build_periodic_report_evidence_pack(text)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "收入 822,328" in blocks["hk_income_statement_table"]["text"]
+    assert "經營活動所用現金淨額 (985,373)" in blocks["hk_cash_flow_table"]["text"]
+
+
 # ---------------------------------------------------------------------------
 # Real-layout fixtures (mirroring 中简科技 2025 annual report)
 # ---------------------------------------------------------------------------

@@ -18,6 +18,31 @@ SIGNED_CASHFLOW_TEXT = """
 """
 
 
+HK_REPORT_WITH_CURRENT_STATEMENTS = """
+黑芝麻智能股份有限公司
+2025 年報
+
+業務回顧
+公司在智能汽車場景實現收入增長，其他收入不作為主營收入指標。
+
+綜合損益表
+截至 2025 年 12 月 31 日止年度
+人民幣千元 人民幣千元
+2025 年 2024 年
+收入 822,328 535,539
+銷售成本 (627,000) (500,000)
+毛利 195,328 35,539
+年內虧損 (1,200,000) (2,000,000)
+
+綜合現金流量表
+截至 2025 年 12 月 31 日止年度
+人民幣千元 人民幣千元
+2025 年 2024 年
+經營活動所用現金淨額 (985,373) (1,300,000)
+投資活動所用現金淨額 (10,000) (20,000)
+"""
+
+
 def _fact_pack(raw_text: str, *, stock_code: str = "300000"):
     evidence_pack = build_periodic_report_evidence_pack(raw_text, report_type="annual")
     financial_metrics = build_required_financial_risk_metrics(evidence_pack, raw_text=raw_text)
@@ -181,3 +206,25 @@ def test_missing_net_profit_uses_missing_diagnostic_not_non_positive() -> None:
     codes = {diagnostic["code"] for diagnostic in pack["diagnostics"]}
     assert "missing_net_profit_for_cashflow_ratio" in codes
     assert "non_positive_net_profit_for_cashflow_ratio" not in codes
+
+
+def test_hk_revenue_and_negative_ocf_anchor_to_statement_blocks_without_net_profit() -> None:
+    pack = _fact_pack(HK_REPORT_WITH_CURRENT_STATEMENTS, stock_code="02533")
+
+    facts = {fact["metric_key"]: fact for fact in pack["filing_facts"]}
+
+    assert set(facts) == {"revenue", "operating_cash_flow"}
+    assert facts["revenue"]["source_block_id"] == "hk_income_statement_table-0"
+    assert facts["revenue"]["normalized_value"] == "82232.80万元"
+    assert "收入 822,328" in facts["revenue"]["source_excerpt"]
+    assert "收入增長" not in facts["revenue"]["source_excerpt"]
+
+    assert facts["operating_cash_flow"]["source_block_id"] == "hk_cash_flow_table-0"
+    assert facts["operating_cash_flow"]["normalized_value"] == "-98537.30万元"
+    assert "經營活動所用現金淨額" in facts["operating_cash_flow"]["source_excerpt"]
+
+    assert pack["derived_facts"] == []
+    assert pack["filing_risk_signals"] == []
+    codes = {diagnostic["code"] for diagnostic in pack["diagnostics"]}
+    assert "missing_required_metric" in codes
+    assert "missing_net_profit_for_cashflow_ratio" in codes

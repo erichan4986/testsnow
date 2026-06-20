@@ -20,10 +20,20 @@ else:
 STRUCTURED_FACT_SCHEMA_VERSION = "periodic_report_structured_fact.v1"
 RISK_SIGNAL_SCHEMA_VERSION = "periodic_report_risk_signal.v1"
 
-_PHASE_A_METRICS: Tuple[Tuple[str, str, str, str], ...] = (
-    ("revenue", "profit_quality", "revenue", "营业收入"),
-    ("net_profit", "profit_quality", "net_profit", "归属于上市公司股东的净利润"),
-    ("operating_cash_flow", "cash_flow_quality", "operating_cash_flow", "经营活动产生的现金流量净额"),
+_PHASE_A_METRICS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
+    ("revenue", "profit_quality", "revenue", ("营业收入", "收入", "來自客戶合同的收入", "来自客户合同的收入")),
+    ("net_profit", "profit_quality", "net_profit", ("归属于上市公司股东的净利润",)),
+    (
+        "operating_cash_flow",
+        "cash_flow_quality",
+        "operating_cash_flow",
+        (
+            "经营活动产生的现金流量净额",
+            "經營活動所用現金淨額",
+            "经营活动所用现金净额",
+            "經營活動產生的現金流量淨額",
+        ),
+    ),
 )
 
 
@@ -46,7 +56,7 @@ def build_periodic_report_structured_fact_pack(
         if isinstance(block, dict) and block.get("id") and block.get("text")
     ]
 
-    for metric_key, section_key, value_key, label in _PHASE_A_METRICS:
+    for metric_key, section_key, value_key, labels in _PHASE_A_METRICS:
         cell = (required_financial_metrics.get(section_key) or {}).get(value_key)
         if not isinstance(cell, dict):
             diagnostics.append({
@@ -55,7 +65,13 @@ def build_periodic_report_structured_fact_pack(
             })
             continue
 
-        anchor = _anchor_cell_to_block(blocks, label, cell)
+        anchor: Optional[Dict[str, str]] = None
+        matched_label = labels[0]
+        for label in labels:
+            anchor = _anchor_cell_to_block(blocks, label, cell)
+            if anchor:
+                matched_label = label
+                break
         if not anchor:
             diagnostics.append({
                 "code": "unanchored_filing_fact",
@@ -69,7 +85,7 @@ def build_periodic_report_structured_fact_pack(
             report_year=report_year,
             report_type=report_type,
             metric_key=metric_key,
-            label=label,
+            label=matched_label,
             cell=cell,
             anchor=anchor,
         ))
@@ -234,6 +250,9 @@ def _anchor_cell_to_block(
     if not text_value:
         return None
     text_value_compact = _compact_number(text_value)
+    text_value_compact_candidates = {text_value_compact}
+    if text_value_compact.startswith("-"):
+        text_value_compact_candidates.add(text_value_compact[1:])
     label_compact = _compact_text(label)
 
     for block in blocks:
@@ -241,7 +260,11 @@ def _anchor_cell_to_block(
         block_text_compact = _compact_text(block_text)
         if label_compact not in block_text_compact:
             continue
-        if text_value in block_text or text_value_compact in _compact_number(block_text):
+        block_number_compact = _compact_number(block_text)
+        if text_value in block_text or any(
+            candidate and candidate in block_number_compact
+            for candidate in text_value_compact_candidates
+        ):
             return {
                 "source_block_id": str(block["id"]),
                 "source_excerpt": _bounded_excerpt(block_text, label, text_value),
