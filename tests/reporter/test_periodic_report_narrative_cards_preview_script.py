@@ -113,3 +113,78 @@ def test_cli_runs_from_repo_root(tmp_path):
     content = output.read_text(encoding="utf-8")
     assert "Narrative Evidence Cards Preview" in content
     assert "periodic_report_narrative_evidence" in content
+
+
+def test_cli_knowledge_base_dir_defaults_to_dry_run(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    output = tmp_path / "cards.md"
+    knowledge_dir = tmp_path / "knowledge"
+    script = Path(__file__).parent.parent.parent / "scripts" / "periodic_report_narrative_cards_preview.py"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--stock-code",
+            "000001",
+            "--stock-name",
+            "测试股",
+            "--cache-dir",
+            str(cache_dir),
+            "--output",
+            str(output),
+            "--knowledge-base-dir",
+            str(knowledge_dir),
+        ],
+        cwd=Path(__file__).parent.parent.parent,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    content = output.read_text(encoding="utf-8")
+    assert "Knowledge note plan" in content
+    assert "dry_run：`true`" in content
+    assert not list(knowledge_dir.rglob("*.md"))
+
+
+def test_cli_write_knowledge_writes_tmp_notes(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    output = tmp_path / "cards.md"
+    knowledge_dir = tmp_path / "knowledge"
+    script = Path(__file__).parent.parent.parent / "scripts" / "periodic_report_narrative_cards_preview.py"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(script),
+            "--stock-code",
+            "000001",
+            "--stock-name",
+            "测试股",
+            "--cache-dir",
+            str(cache_dir),
+            "--output",
+            str(output),
+            "--knowledge-base-dir",
+            str(knowledge_dir),
+            "--write-knowledge",
+        ],
+        cwd=Path(__file__).parent.parent.parent,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    notes = list(knowledge_dir.rglob("*.md"))
+    assert notes
+    note = notes[0].read_text(encoding="utf-8")
+    assert "source_type: periodic_report_narrative_evidence" in note
+    assert "knowledge_eligible: false" in note
+    assert "knowledge_fact_status: narrative_evidence" in note

@@ -25,6 +25,9 @@ from periodic_report_narrative_evidence_cards import (  # noqa: E402
     SOURCE_TYPE,
     build_periodic_report_narrative_evidence_cards,
 )
+from periodic_report_narrative_card_note_writer import (  # noqa: E402
+    write_periodic_report_narrative_card_notes,
+)
 
 
 DEFAULT_CACHE_DIR = PROJECT_ROOT / "data" / "raw" / "periodic_reports"
@@ -48,6 +51,8 @@ def build_preview_markdown(
     report_type: str = "annual",
     report_year: int = 2025,
     include_json: bool = False,
+    knowledge_base_dir: Optional[Union[str, Path]] = None,
+    write_knowledge: bool = False,
 ) -> str:
     """Build deterministic Markdown preview from a local report cache."""
     cache_path = _find_cache_file(
@@ -80,6 +85,15 @@ def build_preview_markdown(
         evidence_pack=evidence_pack,
         raw_text=raw_text,
     )
+    write_plan = None
+    if knowledge_base_dir:
+        write_plan = write_periodic_report_narrative_card_notes(
+            title_name,
+            stock_code,
+            cards_pack,
+            knowledge_base_dir,
+            dry_run=not write_knowledge,
+        )
 
     lines = header + [
         f"- 缓存文件：`{cache_path}`",
@@ -87,6 +101,8 @@ def build_preview_markdown(
         f"- cards：{len(cards_pack.get('cards') or [])}",
         "",
     ]
+    if write_plan is not None:
+        lines.extend(_render_knowledge_plan(write_plan, knowledge_base_dir, write_knowledge))
     if not cards_pack.get("cards"):
         lines.extend(["未抽取到 narrative evidence cards。", ""])
     for idx, card in enumerate(cards_pack.get("cards") or [], 1):
@@ -112,6 +128,24 @@ def build_preview_markdown(
             "",
         ])
     return "\n".join(lines)
+
+
+def _render_knowledge_plan(write_plan: object, base_dir: Union[str, Path], write_knowledge: bool) -> list[str]:
+    written = getattr(write_plan, "written", [])
+    skipped = getattr(write_plan, "skipped_existing", [])
+    refreshed = getattr(write_plan, "refreshed", [])
+    filtered = getattr(write_plan, "filtered", [])
+    return [
+        "## Knowledge note plan",
+        "",
+        f"- base_dir：`{Path(base_dir)}`",
+        f"- dry_run：`{str(not write_knowledge).lower()}`",
+        f"- written：{len(written)}",
+        f"- skipped_existing：{len(skipped)}",
+        f"- refreshed：{len(refreshed)}",
+        f"- filtered：{len(filtered)}",
+        "",
+    ]
 
 
 def _find_cache_file(
@@ -163,6 +197,8 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--report-year", type=int, default=2025, help="Report year used in stable card ids")
     parser.add_argument("--include-json", action="store_true", help="Append raw card pack JSON")
     parser.add_argument("--output", help="Output markdown path; defaults to /tmp")
+    parser.add_argument("--knowledge-base-dir", help="Optional Knowledge base dir for note plan/write")
+    parser.add_argument("--write-knowledge", action="store_true", help="Write Knowledge notes; default is dry-run")
     args = parser.parse_args(argv)
 
     markdown = build_preview_markdown(
@@ -172,6 +208,8 @@ def main(argv: list[str] | None = None) -> int:
         report_type=args.report_type,
         report_year=args.report_year,
         include_json=args.include_json,
+        knowledge_base_dir=args.knowledge_base_dir,
+        write_knowledge=args.write_knowledge,
     )
     out_path = Path(args.output) if args.output else default_output_path(
         args.stock_name,
