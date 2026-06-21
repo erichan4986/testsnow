@@ -34,6 +34,10 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "management_strategy": ("operation_update", "rd_product_progress"),
     "management_market_view": ("management_market_view",),
     "industry_outlook": ("management_market_view",),
+    "market_demand_outlook": ("management_market_view",),
+    "competitive_position": ("management_market_view",),
+    "future_strategy": ("management_market_view",),
+    "profitability_commentary": ("management_market_view",),
     "segment_table": ("operation_update",),
     "production_sales_inventory_table": ("operation_update",),
     "rd_table": ("rd_product_progress",),
@@ -88,6 +92,15 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "资本开支",
         "算力",
         "AI",
+        "光模块",
+        "数据中心",
+        "ASIC",
+        "GPU",
+        "1.6T",
+        "3.2T",
+        "800G",
+        "硅光",
+        "相干",
         "发展战略",
         "未来发展",
         "发展趋势",
@@ -628,8 +641,34 @@ def _truncate_cards(
     """
     cards: List[Dict[str, Any]] = []
     for card_type in _CARD_TYPES:
-        group = typed_cards.get(card_type, [])[:max_cards_per_type]
+        group = _select_diverse_cards(typed_cards.get(card_type, []), max_cards_per_type)
         cards.extend(group)
         if len(cards) >= max_total_cards:
             break
     return cards[:max_total_cards]
+
+
+def _select_diverse_cards(group: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:
+    if limit <= 0:
+        return []
+    selected: List[Dict[str, Any]] = []
+    selected_ids: Set[int] = set()
+    seen_blocks: Set[str] = set()
+
+    for index, card in enumerate(group):
+        block_id = str(card.get("source_block_id") or "")
+        if block_id in seen_blocks:
+            continue
+        selected.append(card)
+        selected_ids.add(index)
+        seen_blocks.add(block_id)
+        if len(selected) >= limit:
+            return selected
+
+    for index, card in enumerate(group):
+        if index in selected_ids:
+            continue
+        selected.append(card)
+        if len(selected) >= limit:
+            break
+    return selected

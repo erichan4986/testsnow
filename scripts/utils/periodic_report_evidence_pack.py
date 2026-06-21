@@ -61,6 +61,45 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
     ("production_sales_inventory_table", ("销售量", "生产量", "库存量")),
     ("rd_investment_table", ("研发人员数量", "研发投入金额", "研发投入占营业收入比例", "研发投入资本化")),
     ("management_market_view", ("结构性分化", "产能过剩", "价格承压", "竞争加剧", "高端领域")),
+    (
+        "market_demand_outlook",
+        (
+            "市场规模将增长",
+            "复合增长率",
+            "高速光模块的需求",
+            "未来数通光模块市场需求",
+            "算力需求推动",
+        ),
+    ),
+    (
+        "competitive_position",
+        (
+            "行业竞争格局及公司竞争地位",
+            "公司竞争地位",
+            "公司行业地位",
+            "市场份额持续成长",
+            "竞争优势进一步强化",
+        ),
+    ),
+    (
+        "future_strategy",
+        (
+            "公司未来发展的展望",
+            "公司发展战略",
+            "2026 年度工作计划",
+            "持续专注于 AI 数据中心",
+            "持续专注于AI数据中心",
+        ),
+    ),
+    (
+        "profitability_commentary",
+        (
+            "毛利率较上年同期提升",
+            "盈利能力持续改善",
+            "规模效应逐步释放",
+            "高端产品出货占比提升",
+        ),
+    ),
     ("audit_key_matters", ("关键审计事项",)),
     ("ar_customer_concentration_note", ("应收账款余额前五名", "前五名客户占比", "信用集中风险")),
     ("bills_receivable_note", ("商业承兑汇票",)),
@@ -98,31 +137,35 @@ USAGE_PRIORITY = {
     "product_capacity_profile": 11,
     "sales_certification_model": 12,
     "management_market_view": 13,
-    "segment_table": 14,
-    "region_table": 15,
-    "ar_aging_note": 16,
-    "bills_receivable_note": 17,
-    "inventory_note": 18,
-    "capex_cip_note": 19,
-    "financial_assets_note": 20,
-    "restricted_assets_note": 21,
-    "related_party_transactions": 22,
-    "contingencies_litigation": 23,
-    "subsequent_events": 24,
-    "goodwill_note": 25,
-    "government_grant_note": 26,
-    "business_overview": 27,
-    "business_model": 28,
-    "industry_outlook": 29,
-    "management_strategy": 30,
-    "risk_disclosure": 31,
-    "shareholder_structure": 32,
-    "pledge": 33,
-    "commitments": 34,
-    "audit_opinion": 35,
-    "income_statement": 36,
-    "balance_sheet": 37,
-    "cash_flow": 38,
+    "market_demand_outlook": 14,
+    "competitive_position": 15,
+    "future_strategy": 16,
+    "profitability_commentary": 17,
+    "segment_table": 18,
+    "region_table": 19,
+    "ar_aging_note": 20,
+    "bills_receivable_note": 21,
+    "inventory_note": 22,
+    "capex_cip_note": 23,
+    "financial_assets_note": 24,
+    "restricted_assets_note": 25,
+    "related_party_transactions": 26,
+    "contingencies_litigation": 27,
+    "subsequent_events": 28,
+    "goodwill_note": 29,
+    "government_grant_note": 30,
+    "business_overview": 31,
+    "business_model": 32,
+    "industry_outlook": 33,
+    "management_strategy": 34,
+    "risk_disclosure": 35,
+    "shareholder_structure": 36,
+    "pledge": 37,
+    "commitments": 38,
+    "audit_opinion": 39,
+    "income_statement": 40,
+    "balance_sheet": 41,
+    "cash_flow": 42,
 }
 
 # Generic table header / structural tokens used to anchor table regions.
@@ -352,23 +395,25 @@ def _extract_keyword_blocks(text: str) -> List[Dict[str, Any]]:
         if usage in seen_usage:
             continue
         for pattern in patterns:
-            match = re.search(re.escape(pattern), text)
-            if not match:
-                continue
-            start, end = _keyword_window(text, match.start(), usage)
-            excerpt = _strip_boilerplate(text[start:end].strip())
-            if not excerpt or not _is_valid_keyword_excerpt(usage, excerpt):
-                continue
-            blocks.append(_block(
-                usage,
-                _section_for_position(match.start(), section_boundaries, text),
-                pattern,
-                excerpt,
-                start,
-                end,
-            ))
-            seen_usage.add(usage)
-            break
+            matched = False
+            for match in re.finditer(re.escape(pattern), text):
+                start, end = _keyword_window(text, match.start(), usage)
+                excerpt = _strip_boilerplate(text[start:end].strip())
+                if not excerpt or not _is_valid_keyword_excerpt(usage, excerpt):
+                    continue
+                blocks.append(_block(
+                    usage,
+                    _section_for_position(match.start(), section_boundaries, text),
+                    pattern,
+                    excerpt,
+                    start,
+                    end,
+                ))
+                seen_usage.add(usage)
+                matched = True
+                break
+            if matched:
+                break
     return blocks
 
 
@@ -446,6 +491,16 @@ def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:
             "现金及现金等价物净增加额",
         )
         return any(token in compact for token in cash_flow_markers)
+    if usage == "market_demand_outlook":
+        return any(token in compact for token in ("市场规模", "算力", "GPU", "ASIC", "光模块"))
+    if usage == "competitive_position":
+        return any(token in compact for token in ("竞争优势", "行业集中度", "市场份额", "客户认可", "交付能力"))
+    if usage == "future_strategy":
+        if any(token in compact for token in ("目录", "利润分配预案", "注意投资风险", "重要提示")):
+            return False
+        return any(token in compact for token in ("AI数据中心", "1.6T", "3.2T", "工作计划", "国际化战略", "供应链"))
+    if usage == "profitability_commentary":
+        return any(token in compact for token in ("毛利率", "盈利能力", "规模效应"))
     if usage != "product_capacity_profile":
         return True
     audit_noise = (
@@ -495,6 +550,10 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         "financial_summary_table": 46,
         "product_capacity_profile": 24,
         "sales_certification_model": 8,
+        "market_demand_outlook": 14,
+        "competitive_position": 12,
+        "future_strategy": 16,
+        "profitability_commentary": 6,
     }
     max_lines = max_lines_by_usage.get(usage, 6)
     allow_numbered_subheadings = usage in {
@@ -503,6 +562,8 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         "rd_investment_table",
         "production_sales_inventory_table",
         "cash_flow_capex_table",
+        "competitive_position",
+        "future_strategy",
     }
 
     end_index = min(len(lines), start_index + max_lines)

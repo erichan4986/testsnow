@@ -740,6 +740,109 @@ def test_management_market_view_keeps_profitability_commentary():
     assert "毛利率较上年同期提升" in cards[0]["source_excerpt"]
 
 
+def test_new_high_value_narrative_usages_map_to_management_market_view_cards():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "market_demand_outlook-0",
+                "usage": "market_demand_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "数通市场",
+                "text": "光模块是AI投资中网络端的重要环节，预计2030年整体市场规模将增长至414亿美元，复合增长率为20%。",
+            },
+            {
+                "id": "competitive_position-0",
+                "usage": "competitive_position",
+                "section": "第三节 管理层讨论与分析",
+                "title": "公司竞争地位",
+                "text": "公司凭借技术研发能力、低成本产品制造能力和全面交付能力等优势，保持市场份额持续成长。",
+            },
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来展望",
+                "text": "公司将持续专注于AI数据中心等核心市场，加大1.6T、3.2T高速率光模块、硅光、相干等技术投入。",
+            },
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "经营情况",
+                "text": "报告期内高端产品出货占比提升，规模效应释放，毛利率较上年同期提升，盈利能力持续改善。",
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        max_cards_per_type=4,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 4
+    joined = "\n".join(card["source_excerpt"] for card in cards)
+    assert "414亿美元" in joined
+    assert "市场份额持续成长" in joined
+    assert "3.2T" in joined
+    assert "毛利率较上年同期提升" in joined
+
+
+def test_truncation_prefers_diverse_source_blocks_within_same_card_type():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "market_demand_outlook-0",
+                "usage": "market_demand_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "数通市场",
+                "text": (
+                    "未来数通光模块市场需求有望由算力集群扩张和ASIC芯片规模化部署共同驱动，高速率产品需求提升。 "
+                    "AI算力需求推动数据中心持续扩容，全球云服务厂商对GPU需求持续增长，并拉动光互连升级。 "
+                    "光模块是AI投资中网络端的重要环节，全球算力投资推动市场增长，行业景气度持续提升。 "
+                ),
+            },
+            {
+                "id": "competitive_position-0",
+                "usage": "competitive_position",
+                "section": "第三节 管理层讨论与分析",
+                "title": "竞争地位",
+                "text": "公司凭借技术研发能力、低成本产品制造能力和全面交付能力等优势，保持市场份额持续成长。",
+            },
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来展望",
+                "text": "公司将持续专注于AI数据中心等核心市场，加大1.6T、3.2T高速率光模块、硅光、相干等技术投入。",
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        max_cards_per_type=3,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 3
+    assert {card["source_block_id"] for card in cards} == {
+        "market_demand_outlook-0",
+        "competitive_position-0",
+        "future_strategy-0",
+    }
+
+
 def test_table_only_dense_numeric_snippets_are_rejected():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",

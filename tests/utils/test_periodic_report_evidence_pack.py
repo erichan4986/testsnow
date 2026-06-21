@@ -345,6 +345,47 @@ def test_extracts_hk_management_discussion_financial_summary_tables():
     assert "經營活動所用現金淨額 (985,373)" in blocks["hk_cash_flow_table"]["text"]
 
 
+NARRATIVE_WINDOW_REPORT = """
+第三节 管理层讨论与分析
+一、行业情况
+未来数通光模块市场需求有望由算力集群扩张、网络架构迭代、ASIC 芯片规模化部署等因素共同驱动。
+AI 算力需求推动数据中心持续扩容，全球云服务厂商对 GPU 的需求量持续增长。
+光模块是 AI 投资中网络端的重要环节，根据 LightCounting 预测，2026 年全球数通光模块市场规模有望达到 228 亿美元，
+预计 2030 年整体市场规模将增长至 414 亿美元，对应 2025-2030 年复合增长率为 20%。
+未来三年内 800G 和 1.6T 等高速光模块的需求将占据市场主导地位，3.2T 光模块有望从 2028 年起逐步起量。
+
+二、行业竞争格局及公司竞争地位
+光模块头部厂商凭借领先的研发实力及交付能力，竞争优势进一步强化，行业集中度有望持续提升。
+公司凭借行业领先的技术研发能力、低成本产品制造能力和全面交付能力等优势，赢得海内外客户认可，并保持市场份额持续成长。
+
+三、公司未来发展的展望
+公司将持续专注于 AI 数据中心等核心市场，进一步加大 1.6T、3.2T 及以上高速率光模块、硅光、相干等核心产品或技术的投入与研究。
+2026 年度工作计划包括继续提升 1.6T、800G 等高端产品交付能力和出货量，推进国际化战略并优化供应链稳定性。
+
+四、经营情况讨论
+报告期内，公司高端产品出货占比提升，规模效应逐步释放，毛利率较上年同期提升，盈利能力持续改善。
+"""
+
+
+def test_extracts_high_value_narrative_windows_for_market_competition_strategy_profitability():
+    pack = build_periodic_report_evidence_pack(NARRATIVE_WINDOW_REPORT)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "market_demand_outlook" in blocks
+    assert "2030 年整体市场规模将增长至 414 亿美元" in blocks["market_demand_outlook"]["text"]
+    assert "800G 和 1.6T" in blocks["market_demand_outlook"]["text"]
+
+    assert "competitive_position" in blocks
+    assert "市场份额持续成长" in blocks["competitive_position"]["text"]
+
+    assert "future_strategy" in blocks
+    assert "1.6T、3.2T" in blocks["future_strategy"]["text"]
+    assert "国际化战略" in blocks["future_strategy"]["text"]
+
+    assert "profitability_commentary" in blocks
+    assert "毛利率较上年同期提升" in blocks["profitability_commentary"]["text"]
+
+
 # ---------------------------------------------------------------------------
 # Real-layout fixtures (mirroring 中简科技 2025 annual report)
 # ---------------------------------------------------------------------------
