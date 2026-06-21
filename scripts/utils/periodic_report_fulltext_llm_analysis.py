@@ -19,6 +19,7 @@ if __name__.startswith("utils."):
         build_rd_progress_backfill,
         extract_product_project_evidence,
     )
+    from .periodic_report_required_metrics import _normalize_numeric
     from .periodic_report_validation import (
         check_fidelity,
         has_citation_markers,
@@ -34,6 +35,7 @@ else:
         build_rd_progress_backfill,
         extract_product_project_evidence,
     )
+    from periodic_report_required_metrics import _normalize_numeric
     from periodic_report_validation import (
         check_fidelity,
         has_citation_markers,
@@ -107,6 +109,18 @@ _SECTION_HEADING_RE = re.compile(
 _CITATION_RE = re.compile(r"\[\^?\w+\]")
 _URL_RE = re.compile(r"https?://\S+")
 _SPACE_RE = re.compile(r"\s+")
+_GROUND_TRUTH_SKIP_KEYS = frozenset({
+    "id",
+    "source_block_id",
+    "source_block_ids",
+    "source_excerpt",
+    "evidence_ref",
+    "evidence_refs",
+    "fact_id",
+    "card_id",
+    "schema_version",
+    "diagnostics",
+})
 
 
 class PeriodicReportFulltextError(Exception):
@@ -203,6 +217,79 @@ def backfill_periodic_report_fulltext_analysis_sections(
     )
 
 
+def _build_ground_truth_prompt_block(
+    required_metrics: Dict[str, Any] | None,
+    required_financial_metrics: Dict[str, Any] | None,
+) -> str:
+    values = _collect_ground_truth_values(required_metrics, required_financial_metrics)
+    if not values:
+        return ""
+    lines = [
+        "## 财报关键数字 Ground Truth",
+        "以下数字来自确定性表格/财务指标摘录，仅用于数值校验；evidence_refs 仍只能引用 fulltext-* id。",
+    ]
+    for value in values[:80]:
+        lines.append(f"- {value}")
+    if len(values) > 80:
+        lines.append(f"- ... 另有 {len(values) - 80} 个确定性数字未展开。")
+    return "\n".join(lines)
+
+
+def _collect_ground_truth_values(
+    required_metrics: Dict[str, Any] | None,
+    required_financial_metrics: Dict[str, Any] | None,
+) -> List[str]:
+    values: List[str] = []
+    seen = set()
+
+    def add(value: Any) -> None:
+        text = str(value or "").strip()
+        if not text or not re.search(r"\d", text):
+            return
+        normalized = _normalize_numeric(text)
+        for candidate in (text, normalized):
+            candidate = str(candidate or "").strip()
+            if not candidate or not re.search(r"\d", candidate):
+                continue
+            if candidate not in seen:
+                seen.add(candidate)
+                values.append(candidate)
+
+    def walk(obj: Any, key: str = "") -> None:
+        if isinstance(obj, dict):
+            normalized = obj.get("normalized")
+            text = obj.get("text")
+            unit = obj.get("unit")
+            if normalized:
+                add(normalized)
+            if text:
+                add(f"{text}{unit}" if unit and not str(text).endswith(str(unit)) else text)
+            for child_key, child_value in obj.items():
+                if child_key in _GROUND_TRUTH_SKIP_KEYS:
+                    continue
+                if child_key in {"normalized", "text", "unit"}:
+                    continue
+                walk(child_value, child_key)
+            return
+        if isinstance(obj, list):
+            for item in obj:
+                walk(item, key)
+            return
+        if key in {"normalized_values", "derived_financial_metrics"}:
+            add(obj)
+
+    walk(required_metrics or {})
+    walk(required_financial_metrics or {})
+    return values
+
+
+def _ground_truth_fidelity_text(
+    required_metrics: Dict[str, Any] | None,
+    required_financial_metrics: Dict[str, Any] | None,
+) -> str:
+    return "；".join(_collect_ground_truth_values(required_metrics, required_financial_metrics))
+
+
 def build_periodic_report_fulltext_prompt(
     fulltext_pack: Dict[str, Any],
     *,
@@ -256,6 +343,10 @@ def build_periodic_report_fulltext_prompt(
         "允许在证据范围内做判断：你可以写“这意味着/说明/需要跟踪/形成压力/构成支撑”等分析，"
         "但每个判断必须绑定 evidence_refs，且判断中的数字、日期、产品名、客户名、供应商名必须来自对应证据块。"
         "不得补充外部事实，不得给出买卖建议、仓位建议或估值结论。\n\n"
+        "HARD RULE：财务数字只能来自 Ground Truth 或 fulltext-* 证据原文。"
+        "如果一个收入、利润、现金流、毛利率、客户占比、存货、应收、减值、capex、金融资产、政府补助等数字"
+        "无法在 Ground Truth 或所引用 fulltext-* 块中定位，必须删除该数字或删除整条判断/风险。"
+        "禁止引用训练数据、旧报告或外部记忆中的数字。\n\n"
         "必须输出严格 JSON，不要 Markdown 代码块，不要解释。schema_version 必须为 "
         f"{FULLTEXT_ANALYSIS_SCHEMA_VERSION}。允许顶层字段只有：schema_version、sections、financial_risks。\n\n"
         f"schema 示例：{schema_example}\n\n"
@@ -277,6 +368,9 @@ def build_periodic_report_fulltext_prompt(
         "3. 客户与订单结构：写客户集中、供应商集中、经销/直销、订单节奏、回款敏感性，并解释依赖或韧性。"
         "如果证据中出现终端品牌客户、ODM 厂商、模组厂商、买断式经销、导入/认证/量产等客户导入状态，"
         "必须至少形成 1 条 judgment，避免只写前五名客户占比。\n"
+        "销售模式占比要和客户/产品描述分开写：如果只引用销售模式表，只写“直销收入占比 X%”这类判断；"
+        "不要把客户定性、产品描述和销售模式表数字混在同一条 judgment。"
+        "若要写客户/产品描述，必须引用包含该描述的 fulltext 块，单独成句。\n"
         "4. 研发与技术进展：写研发费用、研发强度、资本化、研发人员、专利、新产品/项目进展，并解释技术路线和转化风险。"
         "如果证据中出现具体产品/技术名称（如高集成模组、射频前端方案等）及项目状态（量产、规模商用、预量产、"
         "验证、导入、通过认证等），必须至少形成 1 条 judgment，说明这些项目对收入转化和毛利率修复的意义。\n"
@@ -309,6 +403,12 @@ def build_periodic_report_fulltext_prompt(
         f"报告类型：{fulltext_pack.get('report_type', 'unknown')}",
         f"审计状态：{fulltext_pack.get('audit_status', 'unknown')}",
     ]
+    ground_truth_block = _build_ground_truth_prompt_block(
+        required_metrics,
+        required_financial_metrics,
+    )
+    if ground_truth_block:
+        user_parts.append(ground_truth_block)
     if required_metrics:
         user_parts.extend([
             "required_business_metrics（确定性摘录，禁止将其中 id 用作 evidence_refs）：",
@@ -531,6 +631,7 @@ def validate_periodic_report_fulltext_output(
     _reject_illegal_content(parsed)
 
     item_map = _build_item_map(fulltext_pack)
+    ground_truth_text = _ground_truth_fidelity_text(required_metrics, required_financial_metrics)
     sections = parsed.get("sections")
     if not isinstance(sections, list):
         raise PeriodicReportFulltextError("sections must be a list")
@@ -567,7 +668,7 @@ def validate_periodic_report_fulltext_output(
             text = sanitize_text(text)
             if not text:
                 continue
-            if not check_fidelity(text, refs, item_map):
+            if not _check_fidelity_with_ground_truth(text, refs, item_map, ground_truth_text):
                 continue
             normalized_judgments.append({
                 "judgment": text,
@@ -590,7 +691,7 @@ def validate_periodic_report_fulltext_output(
     normalized_sections = _deduplicate_section_judgments(normalized_sections)
 
     financial_risks = parsed.get("financial_risks") or []
-    normalized_risks = _normalize_financial_risks(financial_risks, item_map)
+    normalized_risks = _normalize_financial_risks(financial_risks, item_map, ground_truth_text)
     normalized_risks = _backfill_risks_from_sections(normalized_sections, normalized_risks)
     normalized_risks = _backfill_risks_from_required_financial_metrics(
         normalized_risks,
@@ -775,9 +876,35 @@ def _extract_completion_text(response: object) -> str:
     return str(response)
 
 
+def _check_fidelity_with_ground_truth(
+    text: str,
+    refs: List[str],
+    item_map: Dict[str, Any],
+    ground_truth_text: str = "",
+) -> bool:
+    if check_fidelity(text, refs, item_map):
+        return True
+    if not ground_truth_text:
+        return False
+    augmented_item_map: Dict[str, Any] = {}
+    for ref, item in item_map.items():
+        if not isinstance(item, dict):
+            augmented_item_map[ref] = item
+            continue
+        augmented_item = dict(item)
+        augmented_item["text"] = (
+            f"{item.get('text', '')}\n\n"
+            "Ground Truth normalized values:\n"
+            f"{ground_truth_text}"
+        )
+        augmented_item_map[ref] = augmented_item
+    return check_fidelity(text, refs, augmented_item_map)
+
+
 def _normalize_financial_risks(
     risks: Any,
     item_map: Dict[str, Any],
+    ground_truth_text: str = "",
 ) -> List[Dict[str, Any]]:
     if not isinstance(risks, list):
         raise PeriodicReportFulltextError("financial_risks must be a list")
@@ -836,7 +963,7 @@ def _normalize_financial_risks(
             raise PeriodicReportFulltextError("financial_risk contains citation marker")
         if has_raw_url(combined_text):
             raise PeriodicReportFulltextError("financial_risk contains raw URL")
-        if not check_fidelity(combined_text, refs, item_map):
+        if not _check_fidelity_with_ground_truth(combined_text, refs, item_map, ground_truth_text):
             continue
 
         normalized_risk = {

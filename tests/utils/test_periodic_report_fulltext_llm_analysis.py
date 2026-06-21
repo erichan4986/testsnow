@@ -265,6 +265,65 @@ def test_fulltext_prompt_includes_required_financial_metrics_without_schema_fiel
     assert "允许顶层字段只有：schema_version、sections、financial_risks" in prompt["system"]
 
 
+def test_fulltext_prompt_places_ground_truth_before_raw_metrics_and_fulltext_blocks():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    required_metrics = {
+        "schema_version": "test",
+        "segment_rows": [
+            {
+                "label": "经销",
+                "revenue": {"text": "360,991.14", "unit": "万元", "normalized": "360991.14万元"},
+                "source_block_id": "segment_margin_table-0",
+            }
+        ],
+        "normalized_values": ["360991.14万元"],
+    }
+    required_financial_metrics = {
+        "profit_quality": {
+            "revenue": {"text": "3,898,054,583.68", "unit": "万元", "normalized": "389805.46万元"}
+        },
+        "inventory_risk": {
+            "inventory_balance": {"text": "1,448,216,300.11", "unit": "万元", "normalized": "144821.63万元"}
+        },
+    }
+
+    prompt = build_periodic_report_fulltext_prompt(
+        pack,
+        required_metrics=required_metrics,
+        required_financial_metrics=required_financial_metrics,
+        max_prompt_chars=50000,
+    )
+
+    user = prompt["user"]
+    ground_truth_pos = user.index("Ground Truth")
+    raw_metrics_pos = user.index("required_business_metrics")
+    fulltext_pos = user.index("id: fulltext-")
+    ground_truth_block = user[ground_truth_pos:raw_metrics_pos]
+    assert ground_truth_pos < raw_metrics_pos < fulltext_pos
+    assert "360991.14万元" in ground_truth_block
+    assert "389805.46万元" in ground_truth_block
+    assert "144821.63万元" in ground_truth_block
+    assert "segment_margin_table-0" not in ground_truth_block
+
+
+def test_fulltext_prompt_adds_financial_number_hard_rule():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    prompt = build_periodic_report_fulltext_prompt(pack, max_prompt_chars=50000)
+
+    assert "财务数字只能来自 Ground Truth 或 fulltext-* 证据原文" in prompt["system"]
+    assert "禁止引用训练数据、旧报告或外部记忆中的数字" in prompt["system"]
+
+
+def test_fulltext_prompt_separates_sales_mode_ratio_from_customer_descriptions():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    prompt = build_periodic_report_fulltext_prompt(pack, max_prompt_chars=50000)
+
+    assert "销售模式占比" in prompt["system"]
+    assert "只写“直销收入占比 X%”" in prompt["system"]
+    assert "不要把客户定性、产品描述和销售模式表数字混在同一条 judgment" in prompt["system"]
+    assert "若要写客户/产品描述，必须引用包含该描述的 fulltext 块，单独成句" in prompt["system"]
+
+
 def test_fulltext_summarize_returns_fixed_judgment_sections_and_metadata():
     pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
     raw = _fixed_section_response(include_risks=True)
@@ -1025,6 +1084,147 @@ def test_fulltext_validator_drops_judgment_with_invented_number():
     result = validate_periodic_report_fulltext_output(json.dumps(parsed, ensure_ascii=False), pack)
     assert result["sections"][1]["title"] == "主营业务表现"
     assert result["sections"][1]["judgments"] == []
+
+
+def test_fulltext_validator_allows_ground_truth_number_not_in_fulltext_block():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    parsed = json.loads(_fixed_section_response())
+    parsed["sections"][1]["judgments"] = [
+        {
+            "judgment": "主营业务表现判断：确定性指标显示经销收入 360991.14万元，说明渠道规模需要单独跟踪。",
+            "evidence_refs": ["fulltext-2-0"],
+            "confidence": 80,
+        }
+    ]
+    required_metrics = {
+        "schema_version": "test",
+        "sales_mode_rows": [
+            {
+                "label": "经销",
+                "revenue": {"text": "360,991.14", "unit": "万元", "normalized": "360991.14万元"},
+            }
+        ],
+        "normalized_values": ["360991.14万元"],
+    }
+
+    result = validate_periodic_report_fulltext_output(
+        json.dumps(parsed, ensure_ascii=False),
+        pack,
+        required_metrics=required_metrics,
+    )
+
+    judgments = result["sections"][1]["judgments"]
+    assert any("360991.14万元" in item["judgment"] for item in judgments)
+
+
+def test_fulltext_validator_allows_multiple_ground_truth_numbers_without_concatenating():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    parsed = json.loads(_fixed_section_response())
+    for section in parsed["sections"]:
+        section["judgments"] = []
+    parsed["sections"][1]["judgments"] = [
+        {
+            "judgment": "主营业务表现判断：直销收入占比98.69%，约377.39亿元，说明收入主要来自直销模式。",
+            "evidence_refs": ["fulltext-2-0"],
+            "confidence": 80,
+        }
+    ]
+    required_metrics = {
+        "schema_version": "test",
+        "sales_mode_rows": [
+            {
+                "label": "直销",
+                "revenue": {"text": "3,773,895.11", "unit": "万元", "normalized": "3773895.11万元"},
+                "revenue_ratio": {"text": "98.69", "unit": "%", "normalized": "98.69%"},
+            }
+        ],
+        "normalized_values": ["3773895.11万元", "98.69%"],
+    }
+
+    result = validate_periodic_report_fulltext_output(
+        json.dumps(parsed, ensure_ascii=False),
+        pack,
+        required_metrics=required_metrics,
+    )
+
+    judgments = result["sections"][1]["judgments"]
+    assert any("377.39亿元" in item["judgment"] for item in judgments)
+
+
+def test_fulltext_validator_filters_financial_risk_with_untraceable_number():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    parsed = json.loads(_fixed_section_response(include_risks=False))
+    for section in parsed["sections"]:
+        section["judgments"] = []
+    parsed["financial_risks"] = [
+        {
+            "risk_type": "inventory_impairment",
+            "importance": "high",
+            "summary": "存货金额达到 999.99 亿元，远高于证据和确定性指标。",
+            "mechanism": "若存货规模继续扩大，可能压制毛利率。",
+            "tracking_indicators": ["存货金额 999.99 亿元", "毛利率"],
+            "evidence_refs": ["fulltext-3-0"],
+            "confidence": 85,
+        }
+    ]
+
+    result = validate_periodic_report_fulltext_output(json.dumps(parsed, ensure_ascii=False), pack)
+
+    assert all("999.99" not in risk.get("summary", "") for risk in result["financial_risks"])
+
+
+def test_fulltext_validator_allows_financial_risk_ground_truth_number_not_in_fulltext_block():
+    pack = build_periodic_report_fulltext_pack(SAMPLE_FULLTEXT_REPORT, chunk_chars=9000)
+    parsed = json.loads(_fixed_section_response(include_risks=False))
+    for section in parsed["sections"]:
+        section["judgments"] = []
+    parsed["financial_risks"] = [
+        {
+            "risk_type": "profit_quality",
+            "importance": "medium",
+            "summary": "确定性指标显示经销收入 360991.14万元，渠道收入占比需要跟踪。",
+            "mechanism": "经销渠道变化可能影响收入确认节奏和毛利率。",
+            "tracking_indicators": ["经销收入 360991.14万元", "毛利率"],
+            "evidence_refs": ["fulltext-2-0"],
+            "confidence": 80,
+        }
+    ]
+    required_metrics = {
+        "schema_version": "test",
+        "sales_mode_rows": [
+            {
+                "label": "经销",
+                "revenue": {"text": "360,991.14", "unit": "万元", "normalized": "360991.14万元"},
+            }
+        ],
+        "normalized_values": ["360991.14万元"],
+    }
+
+    result = validate_periodic_report_fulltext_output(
+        json.dumps(parsed, ensure_ascii=False),
+        pack,
+        required_metrics=required_metrics,
+    )
+
+    assert any("360991.14万元" in risk["summary"] for risk in result["financial_risks"])
+
+
+def test_fulltext_validator_keeps_product_model_numbers_and_certification_codes():
+    pack = build_periodic_report_fulltext_pack(HUIZHIWEI_LIKE_FULLTEXT_REPORT, chunk_chars=9000)
+    parsed = json.loads(_fixed_section_response(include_risks=False))
+    for section in parsed["sections"]:
+        section["judgments"] = []
+    parsed["sections"][3]["judgments"] = [
+        {
+            "judgment": "研发与技术进展判断：5G UHB L-PAMiF、RedCap 与 AEC-Q104 认证均来自年报原文，说明产品导入仍是跟踪重点。",
+            "evidence_refs": ["fulltext-2-0"],
+            "confidence": 80,
+        }
+    ]
+
+    result = validate_periodic_report_fulltext_output(json.dumps(parsed, ensure_ascii=False), pack)
+
+    assert any("AEC-Q104" in item["judgment"] for item in result["sections"][3]["judgments"])
 
 
 def test_fulltext_markdown_renders_fixed_sections_and_refs():

@@ -462,6 +462,7 @@ def _parse_revenue_composition_rows(section: str) -> List[Dict[str, Any]]:
         rows.append({
             "label": label,
             "revenue": _value_cell(match.group("revenue"), "元"),
+            "revenue_ratio": _value_cell(match.group("revenue_share"), "%"),
             "cost": None,
             "gross_margin": None,
             "revenue_yoy": _value_cell(match.group("revenue_yoy"), "%"),
@@ -842,7 +843,7 @@ def _parse_rows_from_all_candidate_blocks(
     parser,
 ) -> List[Dict[str, Any]]:
     rows: List[Dict[str, Any]] = []
-    seen_labels = set()
+    rows_by_label: Dict[str, Dict[str, Any]] = {}
     for block in blocks:
         source_text = str(block.get("text", ""))
         parsed_rows = parser(source_text)
@@ -851,12 +852,16 @@ def _parse_rows_from_all_candidate_blocks(
         block_id, usage, excerpt = _source_info([block], source_text)
         for row in parsed_rows:
             label = row.get("label")
-            if not label or label in seen_labels:
+            if not label:
                 continue
-            seen_labels.add(label)
+            existing = rows_by_label.get(str(label))
+            if existing is not None:
+                _merge_missing_row_cells(existing, row)
+                continue
             row["source_block_id"] = block_id
             row["source_usage"] = usage
             row["source_excerpt"] = excerpt
+            rows_by_label[str(label)] = row
             rows.append(row)
     if rows:
         return rows
@@ -869,6 +874,16 @@ def _parse_rows_from_all_candidate_blocks(
         row["source_usage"] = usage
         row["source_excerpt"] = excerpt
     return parsed_rows
+
+
+def _merge_missing_row_cells(target: Dict[str, Any], source: Dict[str, Any]) -> None:
+    for key, value in source.items():
+        if key == "label" or key.startswith("source_"):
+            continue
+        if value is None:
+            continue
+        if key not in target or target.get(key) is None:
+            target[key] = value
 
 
 def _extract_segment_rows(text: str, source_block_ids: List[str], blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

@@ -484,6 +484,10 @@ def test_sales_mode_merges_rows_from_multiple_candidate_blocks():
     metrics = build_required_business_metrics(evidence_pack)
     labels = {row["label"] for row in metrics["sales_mode_rows"]}
     assert {"经销", "直销"}.issubset(labels)
+    direct = _find_row(metrics["sales_mode_rows"], "直销")
+    assert direct["revenue_ratio"]["text"] == "7.20%"
+    assert direct["revenue_ratio"]["normalized"] == "7.20%"
+    assert "7.20%" in metrics["normalized_values"]
 
 
 def test_region_and_sales_mode_rows_for_yingjixin():
