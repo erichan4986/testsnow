@@ -1524,6 +1524,43 @@ def test_long_excerpt_truncates_at_sentence_boundary():
     assert excerpt.endswith("。")
 
 
+def test_long_excerpt_prefers_shorter_complete_sentence_over_mid_sentence_cut():
+    complete_sentence = (
+        "公司将持续专注于 AI 数据中心等核心市场，进一步加大 1.6T、3.2T 及以上高速率光模块、"
+        "硅光、相干等核心产品或技术的投入与研究，积极推动下一代光互连技术的发展。"
+    )
+    unfinished_tail = (
+        "同时，公司还将抓住有利经营环境持续拓展客户，围绕高速互联、云计算数据中心、"
+        "下一代网络架构和产品平台持续投入，提升规模化交付能力和全球化客户服务能力"
+        * 8
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来发展战略",
+                "text": complete_sentence + unfinished_tail,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"]
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert excerpt == complete_sentence
+    assert not excerpt.endswith("…")
+
+
 def test_stable_id_and_order_across_repeated_calls():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",

@@ -1,5 +1,6 @@
 """Tests for periodic_report_evidence_pack builder."""
 
+import re
 import sys
 from pathlib import Path
 
@@ -384,6 +385,46 @@ def test_extracts_high_value_narrative_windows_for_market_competition_strategy_p
 
     assert "profitability_commentary" in blocks
     assert "毛利率较上年同期提升" in blocks["profitability_commentary"]["text"]
+
+
+def test_keyword_window_extends_to_sentence_boundary_when_blank_lines_exhaust_line_budget():
+    report = """
+第三节 管理层讨论与分析
+
+十一、公司未来发展的展望
+
+（一）公司发展战略
+
+公司将持续专注于 AI 数据中心等核心市场，进一步加大 1.6T、3.2T 及以上高速率光模块、硅光、
+
+相干等核心产品或技术的投入与研究，积极推动下一代光互连技术的发展。同时，公司还将抓住有利经
+
+
+
+
+
+
+
+
+
+
+营环境带来的战略机遇，在保持现有行业地位的同时，加快产业链纵向与横向的投资布局，致力于成为
+
+具有国际影响力和领先水平的光互连综合解决方案提供商。
+
+（二）2026 年度工作计划
+
+继续加大 1.6T、800G 等高端产品的交付能力和出货量。
+"""
+
+    pack = build_periodic_report_evidence_pack(report)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "future_strategy" in blocks
+    text = blocks["future_strategy"]["text"]
+    assert "抓住有利经营环境" in re.sub(r"\s+", "", text)
+    assert text.rstrip().endswith("。")
+    assert not text.rstrip().endswith("有利经")
 
 
 # ---------------------------------------------------------------------------

@@ -582,7 +582,32 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
 
     start = sum(len(line) for line in lines[:start_index])
     end = min(sum(len(line) for line in lines[:end_index]), start + _MAX_CHARS_PER_BLOCK)
+    end = _extend_to_sentence_boundary(text, end, start + _MAX_CHARS_PER_BLOCK)
     return start, end
+
+
+def _extend_to_sentence_boundary(text: str, end: int, hard_end: int) -> int:
+    """Extend a keyword window to avoid cutting in the middle of a sentence."""
+    if end >= len(text):
+        return len(text)
+    if text[:end].rstrip().endswith(("。", "；", ";")):
+        return end
+
+    limit = min(len(text), hard_end, end + 600)
+    tail = text[end:limit]
+    next_heading = re.search(
+        r"\n\s*(?:第[一二三四五六七八九十]+[节章节]|[一二三四五六七八九十]+、|（[一二三四五六七八九十\d]+）|\(\d+\)|\d+[、．])",
+        tail,
+    )
+    search_tail = tail[:next_heading.start()] if next_heading else tail
+    positions = [
+        pos
+        for mark in ("。", "；", ";")
+        if (pos := search_tail.find(mark)) >= 0
+    ]
+    if not positions:
+        return end
+    return end + min(positions) + 1
 
 
 def _section_for_position(position: int, boundaries: List[Tuple[int, int]], text: str) -> str:

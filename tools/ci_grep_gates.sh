@@ -26,6 +26,7 @@ LEAK_FILES=(
   "$ROOT/scripts/utils/report_skills/knowledge_skills.py"
   "$ROOT/scripts/utils/periodic_report_filing_fact_note_writer.py"
   "$ROOT/scripts/utils/periodic_report_narrative_evidence_cards.py"
+  "$ROOT/scripts/utils/periodic_report_narrative_card_note_writer.py"
 )
 LEAK_HITS=""
 for file in "${LEAK_FILES[@]}"; do

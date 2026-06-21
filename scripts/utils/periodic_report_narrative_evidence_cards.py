@@ -326,13 +326,12 @@ def _normalize_excerpt(text: str) -> str:
 
 def _truncate_at_sentence_boundary(text: str, max_chars: int) -> str:
     window = text[:max_chars].rstrip()
-    min_cut = max(_MIN_EXCERPT_LENGTH, int(max_chars * 0.55))
     cut_positions = [
         window.rfind(mark)
         for mark in ("。", "；", ";")
     ]
     cut = max(cut_positions)
-    if cut >= min_cut:
+    if cut >= _MIN_EXCERPT_LENGTH:
         return window[: cut + 1].rstrip()
     return text[: max_chars - 1].rstrip() + "…"
 

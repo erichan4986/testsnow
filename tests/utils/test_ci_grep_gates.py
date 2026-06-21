@@ -80,6 +80,18 @@ def test_ci_grep_gates_rejects_fulltext_leakage_in_narrative_evidence_cards(tmp_
     assert "periodic_report_fulltext" in result.stdout
 
 
+def test_ci_grep_gates_rejects_fulltext_leakage_in_narrative_card_writer(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "periodic_report_narrative_card_note_writer.py"
+    target.parent.mkdir(parents=True)
+    target.write_text('value = ctx.get("periodic_report_fulltext_items")\n', encoding="utf-8")
+
+    result = _run_gate(root)
+
+    assert result.returncode != 0
+    assert "periodic_report_fulltext" in result.stdout
+
+
 def test_ci_grep_gates_rejects_requests_get_without_timeout(tmp_path: Path) -> None:
     root = _copy_gate_fixture(tmp_path)
     target = root / "scripts" / "utils" / "bad_fetcher.py"
