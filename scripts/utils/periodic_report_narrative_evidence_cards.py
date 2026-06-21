@@ -32,7 +32,7 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "product_capacity_profile": ("business_model", "rd_product_progress"),
     "sales_certification_model": ("business_model",),
     "management_strategy": ("operation_update", "rd_product_progress"),
-    "management_market_view": ("operation_update", "management_market_view"),
+    "management_market_view": ("management_market_view",),
     "industry_outlook": ("management_market_view",),
     "segment_table": ("operation_update",),
     "production_sales_inventory_table": ("operation_update",),
@@ -75,15 +75,30 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
     "management_market_view": (
         "行业",
         "竞争",
+        "核心竞争力",
+        "竞争优势",
+        "行业地位",
+        "市场份额",
         "价格承压",
         "景气",
         "需求",
         "市场",
+        "市场规模",
+        "复合增长率",
+        "资本开支",
+        "算力",
+        "AI",
+        "发展战略",
+        "未来发展",
+        "发展趋势",
         "政策",
         "国产替代",
         "技术周期",
         "产能过剩",
         "格局",
+        "毛利率",
+        "盈利能力",
+        "规模效应",
     ),
     "rd_product_progress": (
         "研发",
@@ -338,11 +353,23 @@ def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
         return False
     if _looks_like_hash_fragment(excerpt):
         return False
-    if _looks_like_table_fragment(excerpt):
+    if _looks_like_applicability_checkbox_fragment(excerpt):
+        return False
+    if _looks_like_table_fragment(excerpt, card_type):
+        return False
+    if _looks_like_policy_catalog_fragment(excerpt):
+        return False
+    if _looks_like_chart_caption_fragment(excerpt):
+        return False
+    if _looks_like_income_statement_line_fragment(excerpt):
         return False
     if card_type != "financial_note" and _looks_like_risk_paragraph(excerpt):
         return False
+    if _looks_like_page_bullet_fragment(excerpt):
+        return False
     if _looks_like_audit_matter_boilerplate(excerpt):
+        return False
+    if _looks_like_audit_response_procedure(excerpt):
         return False
     if _looks_like_accounting_policy_boilerplate(excerpt):
         return False
@@ -352,14 +379,41 @@ def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
 
 
 def _looks_like_audit_matter_boilerplate(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
     audit_boilerplate_tokens = (
         "关键审计事项是我们根据职业判断",
         "对财务报表整体进行审计",
         "不对这些事项单独发表意见",
+        "基于所实施的审计程序",
+        "管理层在商誉减值测试评估中采用的关键假设",
+        "了解、评估了与管理层计提商誉减值相关的内部控制",
+        "测试了相关控制设计和执行的有效性",
         "forming our opinion thereon",
         "do not provide a separate opinion",
     )
-    return sum(1 for token in audit_boilerplate_tokens if token in snippet) >= 2
+    return sum(
+        1
+        for token in audit_boilerplate_tokens
+        if token in snippet or _compact_text(token) in compact_snippet
+    ) >= 2
+
+
+def _looks_like_audit_response_procedure(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    procedure_tokens = (
+        "我们获取了管理层聘请的外部评估师",
+        "外部评估师的胜任能力",
+        "内部估值专家协助",
+        "商誉减值测试时所用的税前折现率",
+        "执行敏感性分析",
+    )
+    if "执行敏感性分析" in snippet or "执行敏感性分析" in compact_snippet:
+        return True
+    return sum(
+        1
+        for token in procedure_tokens
+        if token in snippet or _compact_text(token) in compact_snippet
+    ) >= 2
 
 
 def _looks_like_hash_fragment(snippet: str) -> bool:
@@ -373,7 +427,7 @@ def _looks_like_risk_paragraph(snippet: str) -> bool:
 
 def _looks_like_accounting_policy_boilerplate(snippet: str) -> bool:
     """Filter generic accounting-policy text that is not company-specific."""
-    compact_snippet = re.sub(r"\s+", "", snippet)
+    compact_snippet = _compact_text(snippet)
     if _looks_like_policy_without_company_context(snippet):
         return True
     policy_token_groups = (
@@ -450,19 +504,65 @@ def _looks_like_policy_without_company_context(snippet: str) -> bool:
     )
 
 
-def _looks_like_table_fragment(snippet: str) -> bool:
+def _looks_like_applicability_checkbox_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    has_checkbox = any(mark in compact_snippet for mark in ("□", "", "☑", "■"))
+    return has_checkbox and compact_snippet.count("适用") >= 4
+
+
+def _looks_like_page_bullet_fragment(snippet: str) -> bool:
+    return "年度报告全文" in snippet and any(mark in snippet for mark in ("", "> -"))
+
+
+def _looks_like_policy_catalog_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    catalog_tokens = (
+        "政策目录",
+        "主管部门",
+        "相关政策内容",
+        "国家发改委",
+        "国家数据局",
+        "中国证监会",
+        "关于促进数据产业高质量发展的指导意见",
+    )
+    return sum(1 for token in catalog_tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_chart_caption_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    return (
+        "年度报告全文" in compact_snippet
+        and "图" in compact_snippet[:80]
+        and ("来源" in compact_snippet[:120] or "资料来源" in compact_snippet[:120])
+    )
+
+
+def _looks_like_income_statement_line_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    return (
+        "损失以" in compact_snippet
+        and "填列" in compact_snippet
+        and len(re.findall(r"-?\d[\d,\.]*", snippet)) >= 2
+    )
+
+
+def _looks_like_table_fragment(snippet: str, card_type: str = "") -> bool:
     """Return True for dense numeric/table-only snippets."""
     if sum(1 for token in _TABLE_STRUCTURE_TOKENS if token in snippet) >= 3:
         return True
     numbers = re.findall(r"(?<![A-Za-z0-9])\d[\d,\.]*(?![A-Za-z0-9])", snippet)
-    if len(numbers) >= 3:
+    if len(numbers) >= 3 and card_type != "management_market_view":
         return True
     non_space = re.sub(r"\s+", "", snippet)
     if non_space:
         digit_ratio = sum(1 for ch in non_space if ch.isdigit()) / len(non_space)
-        if digit_ratio > 0.35:
+        if digit_ratio > 0.35 and card_type != "management_market_view":
             return True
     return False
+
+
+def _compact_text(text: str) -> str:
+    return re.sub(r"\s+", "", text)
 
 
 def _contains_llm_phrase(excerpt: str) -> bool:

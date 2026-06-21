@@ -501,6 +501,245 @@ def test_operation_update_card_from_production_sales_inventory_block():
     assert "销量" in card["source_excerpt"]
 
 
+def test_multiple_applicability_checkbox_fragment_is_rejected():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_strategy-0",
+                "usage": "management_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "关键技术指标",
+                "text": (
+                    "产品或业务适用的关键技术或性能指标情况 从事通信传输设备或其零部件制造适用的关键技术或性能指标 "
+                    "□适用 不适用 从事通信交换设备或其零部件制造适用的关键技术或性能指标 □适用 不适用 "
+                    "从事通信接入设备或其零部件制造适用的关键技术或性能指标 适用 □不适用 "
+                    "产品名称 接入网类型 传输速率 带宽 利用率 控制管理软件性能指标 光模块 光纤接入 详见下文 不适用 不适用 "
+                    "从事通信配套服务的关键技术或性能指标 □适用 不适用 "
+                    "传输速率是指理论上能达到的最高传输速率，公司产品传输速率主要为100G/200G/400G/800G/1.6T。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_management_market_view_keeps_competitive_position_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业竞争格局及公司竞争地位",
+                "text": (
+                    "光模块头部厂商凭借领先的研发实力及交付能力，竞争优势进一步强化，行业集中度有望持续提升。"
+                    "公司凭借技术研发能力、低成本产品制造能力和全面交付能力等优势，赢得海内外客户认可，并保持市场份额持续成长。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert "市场份额持续成长" in cards[0]["source_excerpt"]
+
+
+def test_management_market_view_keeps_market_outlook_and_company_strategy_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_market_view-0",
+                "usage": "management_market_view",
+                "section": "第三节 管理层讨论与分析",
+                "title": "公司未来发展的展望",
+                "text": (
+                    "未来数通光模块市场需求有望由算力集群扩张、网络架构迭代、ASIC芯片规模化部署等因素共同驱动。"
+                    "公司将持续专注于AI数据中心等核心市场，进一步加大1.6T、3.2T及以上高速率光模块、硅光、相干等核心产品或技术的投入与研究。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert "算力集群扩张" in cards[0]["source_excerpt"]
+    assert "1.6T" in cards[0]["source_excerpt"]
+    assert not any(c["card_type"] == "operation_update" for c in result["cards"])
+
+
+def test_management_market_view_keeps_numeric_market_outlook_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业发展情况",
+                "text": (
+                    "光模块是AI投资中网络端的重要环节，根据LightCounting预测，2026年全球数通光模块市场规模有望达到228亿美元，"
+                    "预计2030年整体市场规模将增长至414亿美元，对应2025-2030年复合增长率为20%。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert "414亿美元" in cards[0]["source_excerpt"]
+
+
+def test_management_market_view_rejects_policy_catalog_fragment():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业发展情况",
+                "text": (
+                    "政策目录 主管部门 时间 相关政策内容 《2025年数字经济发展工作要点》 国家发改委 2025年 "
+                    "部署7大任务，释放数据要素价值，筑牢数字基础设施，提升数字经济竞争力，支持AI创新。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_management_market_view_rejects_policy_clause_fragment():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业发展情况",
+                "text": (
+                    "7、完善体制机制（财税金融支持、数字人才培养）《关于促进数据产业高质量发展的指导意见》"
+                    "国家发改委、国家数据局、教育部、财政部、金融监管总局、中国证监会2024年提出打造全国一体化算力体系，"
+                    "数据产业结构明显优化，涌现一批具有国际竞争力的数据企业。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_management_market_view_rejects_chart_caption_fragment():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业发展情况",
+                "text": (
+                    "中际旭创股份有限公司2025年年度报告全文 -15- 图1：谷歌、豆包token调用量曲线 来源：中信建投证券 "
+                    "为了满足快速增长的推理和训练算力需求，海内外CSP厂商逐步加大资本开支投入。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_management_market_view_keeps_profitability_commentary():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_market_view-0",
+                "usage": "management_market_view",
+                "section": "第三节 管理层讨论与分析",
+                "title": "经营情况讨论",
+                "text": (
+                    "报告期内，公司高端产品出货占比提升，规模效应逐步释放，毛利率较上年同期提升，盈利能力持续改善。"
+                    "公司将继续优化产品结构和供应链管理。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert "毛利率较上年同期提升" in cards[0]["source_excerpt"]
+
+
 def test_table_only_dense_numeric_snippets_are_rejected():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -549,6 +788,37 @@ def test_investment_status_table_fragments_are_rejected():
     result = build_periodic_report_narrative_evidence_cards(
         stock_code="300661",
         stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_spaced_multiple_applicability_checkbox_fragment_is_rejected():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_strategy-0",
+                "usage": "management_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "关键技术指标",
+                "text": (
+                    "从事通信传输设备或其零部件制造适用的关键技术或性能指标 □适用  不适用 "
+                    "从事通信接入设备或其零部件制造适用的关键技术或性能指标 适用  □不适用 "
+                    "产品名称 接入网类型 传输速率 光模块 光纤接入 详见下文 不适用 不适用 "
+                    "从事通信配套服务的关键技术或性能指标 □适用  不适用 "
+                    "公司产品传输速率主要为 100G/200G/400G/800G/1.6T，报告期内未发生重大变化。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
         report_year=2025,
         report_type="annual",
         evidence_pack=evidence_pack,
@@ -948,6 +1218,168 @@ def test_financial_note_rejects_discount_rate_note_reference_boilerplate():
     result = build_periodic_report_narrative_evidence_cards(
         stock_code="300661",
         stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_key_audit_procedure_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "goodwill_note-0",
+                "usage": "goodwill_note",
+                "section": "第十节 财务报告",
+                "title": "商誉减值",
+                "text": (
+                    "基于所实施的审计程序，我们发现管理层在商誉减值测试评估中采用的关键假设可以被我们获取的证据所支持。"
+                    "我们了解、评估了与管理层计提商誉减值相关的内部控制，并测试了相关控制设计和执行的有效性。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_spaced_key_audit_procedure_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "goodwill_note-0",
+                "usage": "goodwill_note",
+                "section": "第十节 财务报告",
+                "title": "商誉减值",
+                "text": (
+                    "基于所实施的审计 程序，我们发现管理层在商誉 减值测试评估中采用的关键假设可以被我们获取的证据所支持。"
+                    "我们了解、评估了与管理层计提商誉减值相 关的 内部控制，并测试了相关控制设计和执行的有效 性。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_audit_response_procedure_bullets():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "goodwill_note-0",
+                "usage": "goodwill_note",
+                "section": "第十节 财务报告",
+                "title": "商誉减值",
+                "text": (
+                    "我们获取了管理层聘请的外部评估师出具的商誉减值报告，并对外部评估师的胜任能力、专业素质和客观性进行了评价。"
+                    "在内部估值专家协助下，我们通过比较行业或市场数据，评估了于商誉减值测试时所用的税前折现率的合理性。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_audit_sensitivity_analysis_procedure():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "goodwill_note-0",
+                "usage": "goodwill_note",
+                "section": "第十节 财务报告",
+                "title": "商誉减值",
+                "text": (
+                    "对减值评估中采用的预测期收入增长率、稳定期收入增长率、毛利率和税前折现率执行敏感性分析，"
+                    "考虑这些关键假设在合理变动时对减值测试评估结果的潜在影响。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_income_statement_line_fragment():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "asset_impairment_note-0",
+                "usage": "asset_impairment_note",
+                "section": "第十节 财务报告",
+                "title": "资产减值损失",
+                "text": "资产减值损失（损失以 “-”号填列） -125,895,310.88 -78,580,366.45 资产处置收益（损失以 “-”号填列）",
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_orphaned_note_heading_with_bullet():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "存货跌价准备",
+                "text": "存货跌价准备的评估 中际旭创股份有限公司 2025 年年度报告全文 > -87 - > ",
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
         report_year=2025,
         report_type="annual",
         evidence_pack=evidence_pack,
