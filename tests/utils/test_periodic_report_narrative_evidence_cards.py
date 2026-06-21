@@ -529,6 +529,34 @@ def test_table_only_dense_numeric_snippets_are_rejected():
     assert any(d["code"] == "no_candidate_snippets" for d in result["diagnostics"])
 
 
+def test_investment_status_table_fragments_are_rejected():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "ar_aging_note-0",
+                "usage": "ar_aging_note",
+                "section": "第十节 财务报告",
+                "title": "投资状况",
+                "text": (
+                    "七、投资状况分析 1、总体情况 适用 □不适用 "
+                    "报告期投资额（元） 上年同期投资额（元） 变动幅度。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
 def test_structural_table_header_snippets_are_rejected():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -690,6 +718,275 @@ def test_within_type_cards_are_ranked_by_score_then_source_order():
     assert len(cards) == 1
     assert cards[0]["source_block_id"] == "industry_outlook-1"
     assert "国产替代" in cards[0]["source_excerpt"]
+
+
+def test_near_duplicate_business_model_cards_are_deduplicated_across_blocks():
+    duplicated_text = (
+        "公司客户主要为国内大型航空航天企业集团，客户明确且集中度高。"
+        "公司采用直接销售方式，销售产品主要为高性能碳纤维及碳纤维织物，"
+        "产品经客户定型认证通过后进入最终用户认定的合格供方目录。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "sales_certification_model-0",
+                "usage": "sales_certification_model",
+                "section": "第三节 管理层讨论与分析",
+                "title": "销售模式",
+                "text": duplicated_text,
+            },
+            {
+                "id": "business_model-0",
+                "usage": "business_model",
+                "section": "第三节 管理层讨论与分析",
+                "title": "经营模式",
+                "text": "3、销售模式 " + duplicated_text,
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "business_model"]
+    assert len(cards) == 1
+
+
+def test_risk_disclosure_blocks_do_not_generate_narrative_cards():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "risk_disclosure-0",
+                "usage": "risk_disclosure",
+                "section": "第三节 管理层讨论与分析",
+                "title": "可能面对的风险",
+                "text": (
+                    "新产品研发风险 集成电路设计公司的营业收入及利润增长主要基于新产品的研发及销售，"
+                    "如果公司未来不能紧跟市场需求，公司将面临产品竞争力下降的风险。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_goodwill_policy_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "goodwill_note-0",
+                "usage": "goodwill_note",
+                "section": "第十节 财务报告",
+                "title": "商誉",
+                "text": (
+                    "商誉减值 本公司至少每年测试商誉是否发生减值。这要求对分配了商誉的资产组或者资产组组合"
+                    "的未来现金流量的现值进行预计。预计未来现金流量现值时，管理层必须估计该项资产组"
+                    "的预计未来现金流量，并选择恰当的折现率确定未来现金流量的现值。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_non_financial_risk_paragraphs_are_rejected():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_strategy-0",
+                "usage": "management_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "核心竞争力",
+                "text": (
+                    "新产品研发风险 集成电路设计公司的营业收入及利润增长主要基于新产品的研发及销售，"
+                    "如果公司未来不能紧跟市场需求，公司将面临产品竞争力下降的风险。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_hash_page_fragments_are_rejected():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_market_view-0",
+                "usage": "management_market_view",
+                "section": "第三节 管理层讨论与分析",
+                "title": "风险",
+                "text": (
+                    "# 化的激励措施来稳定和扩大人才队伍，但由于市场竞争加剧，进入模拟集成 # "
+                    "电路设计行业的门槛较高，加剧了对该行业的人才争夺，所以公司仍然存在 # 技术人员流失的风险。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_generic_inventory_policy_estimate_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "存货",
+                "text": (
+                    "存货跌价准备 本公司根据存货会计政策，按照成本与可变现净值孰低计量，对成本高于"
+                    "可变现净值及过时和滞销的存货，计提存货跌价准备。鉴定存货减值要求管理层"
+                    "在取得确凿证据，并且考虑持有存货的目的、资产负债表日后事项的影响等因素的基础上做出判断和估计。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_generic_fair_value_estimate_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "financial_assets_note-0",
+                "usage": "financial_assets_note",
+                "section": "第十节 财务报告",
+                "title": "金融资产",
+                "text": (
+                    "非上市股权投资的公允价值 本公司根据对当前市场状况的判断，选择确定非上市公司股权投资公允价值"
+                    "的估值方法，并作出相关假设和估计。如果任何估计和假设发生变化，可能会导致这些金融资产各自的公允价值发生重大变化。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_discount_rate_note_reference_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "goodwill_note-0",
+                "usage": "goodwill_note",
+                "section": "第十节 财务报告",
+                "title": "商誉",
+                "text": (
+                    "对未来现金流量的现值进行预计时，本公司需要预计未来资产组或者资产组组合产生的现金流量，"
+                    "同时选择恰当的折现 率确定未来现金流量的现值。详见附注七、22。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_long_excerpt_truncates_at_sentence_boundary():
+    sentence = "公司主要从事高性能碳纤维及相关产品的研发、生产、销售和技术服务，客户覆盖航空航天主机厂。"
+    long_text = sentence + (
+        "公司采用直接销售模式，产品经客户定型认证通过后进入最终用户认定的合格供方目录。"
+        * 20
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务",
+                "text": long_text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"]
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert len(excerpt) <= 500
+    assert excerpt.endswith("。")
 
 
 def test_stable_id_and_order_across_repeated_calls():

@@ -34,7 +34,6 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "management_strategy": ("operation_update", "rd_product_progress"),
     "management_market_view": ("operation_update", "management_market_view"),
     "industry_outlook": ("management_market_view",),
-    "risk_disclosure": ("management_market_view",),
     "segment_table": ("operation_update",),
     "production_sales_inventory_table": ("operation_update",),
     "rd_table": ("rd_product_progress",),
@@ -144,6 +143,10 @@ _TABLE_STRUCTURE_TOKENS = (
     "销售量",
     "生产量",
     "库存量",
+    "报告期投资额",
+    "上年同期投资额",
+    "适用 □不适用",
+    "适用 □不适用",
 )
 
 _MIN_EXCERPT_LENGTH = 40
@@ -180,10 +183,11 @@ def build_periodic_report_narrative_evidence_cards(
 
     typed_cards: Dict[str, List[Dict[str, Any]]] = {ct: [] for ct in _CARD_TYPES}
     seen_excerpts: Set[str] = set()
+    seen_fingerprints: List[str] = []
 
     for snippet, block_id, card_type, score, _source_order in candidates:
         excerpt = _normalize_excerpt(snippet)
-        if not _is_valid_excerpt(excerpt):
+        if not _is_valid_excerpt(excerpt, card_type):
             diagnostics.append({
                 "code": "filtered_invalid_excerpt",
                 "card_type": card_type,
@@ -192,7 +196,11 @@ def build_periodic_report_narrative_evidence_cards(
             continue
         if excerpt in seen_excerpts:
             continue
+        fingerprint = _excerpt_fingerprint(excerpt)
+        if _is_near_duplicate_fingerprint(fingerprint, seen_fingerprints):
+            continue
         seen_excerpts.add(excerpt)
+        seen_fingerprints.append(fingerprint)
         typed_cards[card_type].append(
             _build_card(
                 stock_code=stock_code,
@@ -284,18 +292,55 @@ def _score_snippet(snippet: str, markers: Iterable[str]) -> int:
 def _normalize_excerpt(text: str) -> str:
     excerpt = re.sub(r"\s+", " ", text).strip()
     if len(excerpt) > _MAX_EXCERPT_LENGTH:
-        excerpt = excerpt[: _MAX_EXCERPT_LENGTH - 1].rstrip() + "…"
+        excerpt = _truncate_at_sentence_boundary(excerpt, _MAX_EXCERPT_LENGTH)
     return excerpt
 
 
-def _is_valid_excerpt(excerpt: str) -> bool:
+def _truncate_at_sentence_boundary(text: str, max_chars: int) -> str:
+    window = text[:max_chars].rstrip()
+    min_cut = max(_MIN_EXCERPT_LENGTH, int(max_chars * 0.55))
+    cut_positions = [
+        window.rfind(mark)
+        for mark in ("。", "；", ";")
+    ]
+    cut = max(cut_positions)
+    if cut >= min_cut:
+        return window[: cut + 1].rstrip()
+    return text[: max_chars - 1].rstrip() + "…"
+
+
+def _excerpt_fingerprint(excerpt: str) -> str:
+    text = re.sub(r"^[#>\s\d一二三四五六七八九十、（）()：:.-]+", "", excerpt)
+    text = re.sub(r"(销售模式|经营模式|主营业务|主要产品|报告期内)", "", text)
+    return re.sub(r"[\W_]+", "", text, flags=re.UNICODE)
+
+
+def _is_near_duplicate_fingerprint(fingerprint: str, seen: Iterable[str]) -> bool:
+    if len(fingerprint) < _MIN_EXCERPT_LENGTH:
+        return False
+    for existing in seen:
+        if not existing:
+            continue
+        shorter, longer = sorted((fingerprint, existing), key=len)
+        if shorter == longer:
+            return True
+        if len(shorter) >= _MIN_EXCERPT_LENGTH and shorter in longer:
+            return len(shorter) / len(longer) >= 0.72
+    return False
+
+
+def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
     if len(excerpt) < _MIN_EXCERPT_LENGTH or len(excerpt) > _MAX_EXCERPT_LENGTH:
         return False
     if _TOC_RE.search(excerpt):
         return False
     if _URL_RE.search(excerpt):
         return False
+    if _looks_like_hash_fragment(excerpt):
+        return False
     if _looks_like_table_fragment(excerpt):
+        return False
+    if card_type != "financial_note" and _looks_like_risk_paragraph(excerpt):
         return False
     if _looks_like_audit_matter_boilerplate(excerpt):
         return False
@@ -317,8 +362,18 @@ def _looks_like_audit_matter_boilerplate(snippet: str) -> bool:
     return sum(1 for token in audit_boilerplate_tokens if token in snippet) >= 2
 
 
+def _looks_like_hash_fragment(snippet: str) -> bool:
+    return snippet.count("#") >= 2
+
+
+def _looks_like_risk_paragraph(snippet: str) -> bool:
+    risk_heading = re.search(r"(^|[#\s、，。])[^。；;]{0,18}风险", snippet)
+    return bool(risk_heading and ("将面临" in snippet or "可能导致" in snippet or "风险" in snippet[:40]))
+
+
 def _looks_like_accounting_policy_boilerplate(snippet: str) -> bool:
     """Filter generic accounting-policy text that is not company-specific."""
+    compact_snippet = re.sub(r"\s+", "", snippet)
     if _looks_like_policy_without_company_context(snippet):
         return True
     policy_token_groups = (
@@ -347,9 +402,30 @@ def _looks_like_accounting_policy_boilerplate(snippet: str) -> bool:
             "减记的金额予以恢复",
             "转回金额计入当期损益",
         ),
+        (
+            "商誉减值",
+            "本公司至少每年测试商誉是否发生减值",
+            "未来现金流量",
+            "现值",
+            "折现率",
+        ),
+        (
+            "存货跌价准备",
+            "本公司根据存货会计政策",
+            "成本与可变现净值孰低",
+            "鉴定存货减值要求管理层",
+            "做出判断和估计",
+        ),
+        (
+            "非上市股权投资的公允价值",
+            "本公司根据对当前市场状况的判断",
+            "估值方法",
+            "相关假设和估计",
+            "公允价值发生重大变化",
+        ),
     )
     return any(
-        sum(1 for token in token_group if token in snippet) >= 3
+        sum(1 for token in token_group if token in snippet or token in compact_snippet) >= 3
         for token_group in policy_token_groups
     )
 
