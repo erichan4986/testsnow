@@ -527,7 +527,18 @@ def _line_metric(text: str, label: str) -> tuple[Optional[Dict[str, Any]], Optio
 def _candidate_lines(text: str, label: str) -> List[str]:
     lines = [line for line in text.splitlines() if label in line]
     lines.extend(match.group(0) for match in re.finditer(rf"{re.escape(label)}[^\n\r。；;]{{0,260}}", text))
+    spaced_label = _spaced_label_pattern(label)
+    if spaced_label != re.escape(label):
+        lines.extend(
+            match.group(0)
+            for match in re.finditer(rf"{spaced_label}[^。；;]{{0,260}}", text)
+        )
     return lines
+
+
+def _spaced_label_pattern(label: str) -> str:
+    """Match labels that Jina sometimes splits with spaces or line breaks."""
+    return r"\s*".join(re.escape(char) for char in str(label or ""))
 
 
 def _number_tokens(text: str) -> List[tuple[str, str, str]]:

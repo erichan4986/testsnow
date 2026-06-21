@@ -267,6 +267,21 @@ def test_a_share_profit_quality_is_not_overridden_by_generic_hk_revenue_noise():
     assert metrics["profit_quality"]["revenue_yoy"]["text"] == "4.14%"
 
 
+def test_a_share_net_profit_accepts_jina_whitespace_inside_label():
+    text = """
+    主要会计数据和财务指标
+    营业收入（元） 846,092,620.66 812,470,190.54 4.14%
+    归属于上市公司股东的
+    净利润（元） 314,642,566.35 356,132,858.18 -11.65%
+    经营活动产生的现金流量净额（元） 879,650,385.66 198,848,426.09 342.37%
+    """
+    pack = build_periodic_report_evidence_pack(text)
+    metrics = build_required_financial_risk_metrics(pack, raw_text=text)
+
+    assert metrics["profit_quality"]["net_profit"]["normalized"] == "31464.26万元"
+    assert metrics["profit_quality"]["net_profit_yoy"]["text"] == "-11.65%"
+
+
 def test_a_share_empty_borrowing_rows_do_not_create_hk_borrowings():
     text = """
     资产负债表
