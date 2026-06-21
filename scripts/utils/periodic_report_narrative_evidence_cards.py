@@ -11,7 +11,7 @@ and not synthesized by KnowledgeSynthesizer.
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
 
 CARDS_SCHEMA_VERSION = "periodic_report_narrative_evidence_cards.v1"
@@ -177,6 +177,85 @@ _TABLE_STRUCTURE_TOKENS = (
     "适用 □不适用",
 )
 
+_GENERIC_GLOSSARY_TERMS = {
+    "A股",
+    "IC",
+    "公司",
+    "本公司",
+    "董事会",
+    "监事会",
+    "股东会",
+    "股东大会",
+    "报告期",
+    "本报告期",
+    "年度",
+    "报告期末",
+    "本报告期末",
+    "上年同期",
+    "元",
+    "万元",
+    "亿元",
+    "元、万元",
+    "元、万元、亿元",
+    "人民币元",
+    "人民币万元",
+    "芯片",
+    "半导体",
+    "集成电路",
+    "晶圆",
+    "封装",
+    "测试",
+    "中国证监会",
+    "上交所",
+    "深交所",
+    "证券交易所",
+    "公司章程",
+    "公司法",
+    "证券法",
+    "保荐机构",
+    "审计机构",
+}
+
+_GENERIC_GLOSSARY_SUBSTRINGS = (
+    "股份有限公司",
+    "有限责任公司",
+    "有限公司",
+    "合伙企业",
+    "股权投资",
+    "投资基金",
+    "企业管理",
+    "证券交易所",
+    "证券有限",
+    "会计师事务所",
+    "公司章程",
+    "中华人民共和国",
+    "中国证券登记结算",
+)
+
+_TECH_TERM_HINTS = (
+    "芯片",
+    "模组",
+    "模块",
+    "工艺",
+    "算法",
+    "技术",
+    "平台",
+    "系统",
+    "封装",
+    "验证",
+    "仿真",
+    "版图",
+    "模型",
+    "软件",
+    "工具",
+    "核",
+    "转换器",
+    "管理",
+    "计量",
+    "光模块",
+    "碳纤维",
+)
+
 _MIN_EXCERPT_LENGTH = 40
 _MAX_EXCERPT_LENGTH = 500
 
@@ -188,6 +267,7 @@ def build_periodic_report_narrative_evidence_cards(
     report_year: int,
     report_type: str,
     evidence_pack: dict,
+    raw_text: str = "",
     max_cards_per_type: int = 3,
     max_total_cards: int = 12,
 ) -> dict:
@@ -205,7 +285,8 @@ def build_periodic_report_narrative_evidence_cards(
             diagnostics=diagnostics,
         )
 
-    candidates = _collect_candidates(blocks, diagnostics)
+    dynamic_terms = _extract_dynamic_terms(blocks, raw_text=raw_text)
+    candidates = _collect_candidates(blocks, diagnostics, dynamic_terms)
     if not candidates:
         diagnostics.append({"code": "no_candidate_snippets"})
 
@@ -213,7 +294,7 @@ def build_periodic_report_narrative_evidence_cards(
     seen_excerpts: Set[str] = set()
     seen_fingerprints: List[str] = []
 
-    for snippet, block_id, card_type, score, _source_order in candidates:
+    for snippet, block_id, card_type, score, _source_order, matched_terms in candidates:
         excerpt = _normalize_excerpt(snippet)
         if not _is_valid_excerpt(excerpt, card_type):
             diagnostics.append({
@@ -240,6 +321,7 @@ def build_periodic_report_narrative_evidence_cards(
                 source_block_id=block_id,
                 excerpt=excerpt,
                 score=score,
+                dynamic_terms=matched_terms,
             )
         )
 
@@ -277,9 +359,10 @@ def _envelope(
 def _collect_candidates(
     blocks: Iterable[Dict[str, Any]],
     diagnostics: List[Dict[str, Any]],
-) -> List[Tuple[str, str, str, int, int]]:
-    """Return (snippet, block_id, card_type, score, source_order) candidates."""
-    candidates: List[Tuple[str, str, str, int, int]] = []
+    dynamic_terms: Sequence[str],
+) -> List[Tuple[str, str, str, int, int, Tuple[str, ...]]]:
+    """Return (snippet, block_id, card_type, score, source_order, terms) candidates."""
+    candidates: List[Tuple[str, str, str, int, int, Tuple[str, ...]]] = []
     source_order = 0
     for block in blocks:
         if not isinstance(block, dict):
@@ -293,12 +376,13 @@ def _collect_candidates(
         if not card_types:
             continue
         for snippet in _split_snippets(text):
+            matched_terms = _matched_dynamic_terms(snippet, dynamic_terms)
             for card_type in card_types:
                 markers = _CARD_TYPE_MARKERS.get(card_type, ())
-                score = _score_snippet(snippet, markers)
+                score = _score_snippet(snippet, markers, matched_terms)
                 if score <= 0:
                     continue
-                candidates.append((snippet, block_id, card_type, score, source_order))
+                candidates.append((snippet, block_id, card_type, score, source_order, matched_terms))
                 source_order += 1
     return sorted(
         candidates,
@@ -313,8 +397,11 @@ def _split_snippets(text: str) -> List[str]:
     return [piece.strip(" 　：:") for piece in pieces if len(piece.strip()) >= _MIN_EXCERPT_LENGTH]
 
 
-def _score_snippet(snippet: str, markers: Iterable[str]) -> int:
-    return sum(1 for marker in markers if marker in snippet)
+def _score_snippet(snippet: str, markers: Iterable[str], dynamic_terms: Sequence[str] = ()) -> int:
+    marker_score = sum(1 for marker in markers if marker in snippet)
+    if marker_score <= 0:
+        return 0
+    return marker_score + min(len(dynamic_terms), 4) * 2
 
 
 def _normalize_excerpt(text: str) -> str:
@@ -374,6 +461,8 @@ def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
     if _looks_like_chart_caption_fragment(excerpt):
         return False
     if _looks_like_income_statement_line_fragment(excerpt):
+        return False
+    if _looks_like_definition_fragment(excerpt):
         return False
     if card_type != "financial_note" and _looks_like_risk_paragraph(excerpt):
         return False
@@ -518,8 +607,15 @@ def _looks_like_policy_without_company_context(snippet: str) -> bool:
 
 def _looks_like_applicability_checkbox_fragment(snippet: str) -> bool:
     compact_snippet = _compact_text(snippet)
-    has_checkbox = any(mark in compact_snippet for mark in ("□", "", "☑", "■"))
-    return has_checkbox and compact_snippet.count("适用") >= 4
+    has_checkbox = any(mark in compact_snippet for mark in ("□", "", "☑", "■", "√"))
+    if has_checkbox and compact_snippet.count("适用") >= 4:
+        return True
+    return (
+        has_checkbox
+        and "适用" in compact_snippet
+        and "不适用" in compact_snippet
+        and "年度报告" in compact_snippet
+    )
 
 
 def _looks_like_page_bullet_fragment(snippet: str) -> bool:
@@ -558,6 +654,20 @@ def _looks_like_income_statement_line_fragment(snippet: str) -> bool:
     )
 
 
+def _looks_like_definition_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    if "释义项指释义内容" in compact_snippet:
+        return True
+    definition_patterns = (
+        r"^[^。；;]{1,45}指的是",
+        r"^[^。；;]{1,45}是指",
+        r"^[^。；;]{1,45}\s指\s",
+    )
+    if any(re.search(pattern, snippet) for pattern in definition_patterns):
+        return True
+    return snippet.count("指") >= 2 and any(token in snippet for token in ("释义", "指的是", "是指"))
+
+
 def _looks_like_table_fragment(snippet: str, card_type: str = "") -> bool:
     """Return True for dense numeric/table-only snippets."""
     if sum(1 for token in _TABLE_STRUCTURE_TOKENS if token in snippet) >= 3:
@@ -588,6 +698,136 @@ def _contains_llm_phrase(excerpt: str) -> bool:
     return False
 
 
+def _extract_dynamic_terms(blocks: Iterable[Dict[str, Any]], raw_text: str = "") -> Tuple[str, ...]:
+    terms: List[str] = []
+    seen: Set[str] = set()
+    for term in _extract_terms_from_text(raw_text or ""):
+        if term in seen:
+            continue
+        seen.add(term)
+        terms.append(term)
+    for block in blocks:
+        if not isinstance(block, dict):
+            continue
+        text = str(block.get("text") or "")
+        if not text:
+            continue
+        for term in _extract_terms_from_text(text):
+            if term in seen:
+                continue
+            seen.add(term)
+            terms.append(term)
+    # Longer terms first avoids letting a generic suffix dominate matching.
+    return tuple(sorted(terms, key=lambda term: (-len(_compact_text(term)), term)))
+
+
+def _extract_terms_from_text(text: str) -> List[str]:
+    normalized = _normalize_for_term_extraction(text)
+    candidates: List[str] = []
+    candidates.extend(_extract_alias_terms_before_zhi(normalized))
+    candidates.extend(_extract_parenthesized_definition_terms(normalized))
+    return [term for term in (_normalize_term(term) for term in candidates) if _is_useful_dynamic_term(term)]
+
+
+def _normalize_for_term_extraction(text: str) -> str:
+    text = re.sub(r"\s+", " ", text)
+    text = re.sub(r"([A-Za-z0-9])\s*-\s*([A-Za-z0-9])", r"\1-\2", text)
+    return text.strip()
+
+
+def _extract_alias_terms_before_zhi(text: str) -> List[str]:
+    terms: List[str] = []
+    for match in re.finditer(r"([^。；;\n]{1,48}?)\s+指(?:\s|的是)", text):
+        raw = _clean_alias_candidate(match.group(1))
+        terms.extend(_split_term_aliases(raw))
+    return terms
+
+
+def _clean_alias_candidate(raw: str) -> str:
+    raw = re.sub(r"^.*?(释义项|常用词语释义)\s+", "", raw).strip()
+    if "。" in raw:
+        raw = raw.rsplit("。", 1)[-1].strip()
+    tokens = [token for token in raw.split() if token]
+    if len(tokens) <= 1:
+        return raw
+    two_part_suffixes = ("核", "转换器", "芯片", "工艺", "技术", "管理", "计量", "模块", "模组")
+    if tokens[-1] in two_part_suffixes and re.search(r"[A-Za-z0-9/+.\-]", tokens[-2]):
+        return f"{tokens[-2]} {tokens[-1]}"
+    return tokens[-1]
+
+
+def _extract_parenthesized_definition_terms(text: str) -> List[str]:
+    terms: List[str] = []
+    for match in re.finditer(
+        r"([\u4e00-\u9fffA-Za-z0-9/+.\-\s]{2,30})[（(]\s*([A-Za-z][A-Za-z0-9/+.\-]{1,16})\s*[）)]\s*(?:指的是|是指)",
+        text,
+    ):
+        chinese_name = match.group(1).strip(" 　、，（(")
+        acronym = match.group(2)
+        terms.extend((chinese_name, acronym))
+    for match in re.finditer(r"\b([A-Z][A-Za-z0-9/+.\-]{1,16})\b\s*(?:指的是|是指)", text):
+        terms.append(match.group(1))
+    return terms
+
+
+def _split_term_aliases(raw: str) -> List[str]:
+    raw = raw.strip(" 　：:")
+    raw = re.sub(r"^[#>\d一二三四五六七八九十、（）()：:.-]+", "", raw)
+    pieces = re.split(r"\s+[／/]\s+|、|,|，|或|及", raw)
+    return [piece.strip(" 　：:（）()") for piece in pieces if piece.strip()]
+
+
+def _normalize_term(term: str) -> str:
+    term = re.sub(r"\s+", " ", term).strip(" 　：:，,。；;（）()")
+    term = re.sub(r"\s*/\s*", "/", term)
+    term = term.strip("/")
+    return term
+
+
+def _is_useful_dynamic_term(term: str) -> bool:
+    if not term:
+        return False
+    compact = _compact_text(term)
+    if len(compact) < 2 or len(compact) > 24:
+        return False
+    if compact in _GENERIC_GLOSSARY_TERMS:
+        return False
+    if any(token in compact for token in _GENERIC_GLOSSARY_SUBSTRINGS):
+        return False
+    if re.fullmatch(r"[\d年月日至.\-/]+", compact):
+        return False
+    if re.fullmatch(r"[A-Z]", compact):
+        return False
+    if re.fullmatch(r"[A-Z][A-Za-z0-9/+.\-]{1,16}", compact):
+        return True
+    if re.search(r"[A-Za-z]\d|\d[A-Za-z]", compact):
+        return True
+    return any(hint in compact for hint in _TECH_TERM_HINTS)
+
+
+def _matched_dynamic_terms(snippet: str, dynamic_terms: Sequence[str]) -> Tuple[str, ...]:
+    if not dynamic_terms:
+        return ()
+    compact_snippet = _compact_text(snippet)
+    matched: List[str] = []
+    for term in dynamic_terms:
+        if term in snippet or _compact_text(term) in compact_snippet:
+            matched.append(term)
+    return tuple(matched)
+
+
+def _merge_keywords(markers: Iterable[str], dynamic_terms: Sequence[str], excerpt: str) -> List[str]:
+    keywords: List[str] = []
+    seen: Set[str] = set()
+    for keyword in list(markers) + list(dynamic_terms):
+        if keyword in seen:
+            continue
+        if keyword in excerpt or _compact_text(keyword) in _compact_text(excerpt):
+            seen.add(keyword)
+            keywords.append(keyword)
+    return keywords
+
+
 def _build_card(
     *,
     stock_code: str,
@@ -599,13 +839,14 @@ def _build_card(
     source_block_id: str,
     excerpt: str,
     score: int,
+    dynamic_terms: Sequence[str] = (),
 ) -> Dict[str, Any]:
     card_id = (
         f"periodic:{stock_code}:{report_year}:{report_type}:"
         f"narrative:{card_type}:{card_index}"
     )
     confidence = "medium_high" if score >= 2 else "medium"
-    keywords = [m for m in _CARD_TYPE_MARKERS.get(card_type, ()) if m in excerpt]
+    keywords = _merge_keywords(_CARD_TYPE_MARKERS.get(card_type, ()), dynamic_terms, excerpt)
     return {
         "schema_version": CARD_SCHEMA_VERSION,
         "source_type": SOURCE_TYPE,

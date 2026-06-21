@@ -930,6 +930,31 @@ def test_spaced_multiple_applicability_checkbox_fragment_is_rejected():
     assert result["cards"] == []
 
 
+def test_single_applicability_checkbox_report_tail_fragment_is_rejected():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务",
+                "text": "主营业务情况 □适用 √不适用 广东赛微微电子股份有限公司 2025 年年度报告",
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688325",
+        stock_name="赛微微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
 def test_structural_table_header_snippets_are_rejected():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -1091,6 +1116,190 @@ def test_within_type_cards_are_ranked_by_score_then_source_order():
     assert len(cards) == 1
     assert cards[0]["source_block_id"] == "industry_outlook-1"
     assert "国产替代" in cards[0]["source_excerpt"]
+
+
+def test_glossary_terms_boost_company_specific_technical_sentences():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "glossary-0",
+                "usage": "glossary",
+                "section": "第一节 释义",
+                "title": "释义",
+                "text": (
+                    "释义项 指 释义内容 "
+                    "PDK 指 Process Design Kit，即工艺设计套件。 "
+                    "PPA 指 功耗、性能、面积，芯片设计中的核心评估指标。 "
+                    "版图验证 指 对芯片版图进行规则检查和验证。 "
+                    "半导体 指 常温下导电性能介于导体与绝缘体之间的材料。"
+                ),
+            },
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业情况",
+                "text": "行业竞争加剧，市场需求保持增长，公司关注政策变化并提升经营效率。",
+            },
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来展望",
+                "text": "公司将围绕PDK、PPA和版图验证能力完善产品矩阵，持续提升先进制程市场服务能力和客户支持能力。",
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="301269",
+        stock_name="华大九天",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        max_cards_per_type=1,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert cards[0]["source_block_id"] == "future_strategy-0"
+    assert {"PDK", "PPA", "版图验证"}.issubset(set(cards[0]["keywords"]))
+    assert "半导体" not in cards[0]["keywords"]
+
+
+def test_raw_text_glossary_terms_can_boost_evidence_pack_blocks():
+    raw_text = (
+        "第一节 释义\n"
+        "释义项 指 释义内容\n"
+        "PDK 指 Process Design Kit，即工艺设计套件。\n"
+        "PPA 指 功耗、性能、面积，芯片设计中的核心评估指标。\n"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业情况",
+                "text": "行业竞争加剧，市场需求保持增长，公司关注政策变化并提升经营效率。",
+            },
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来展望",
+                "text": "公司围绕PDK和PPA能力完善产品矩阵，持续提升先进制程市场服务能力和客户支持能力。",
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="301269",
+        stock_name="华大九天",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        raw_text=raw_text,
+        max_cards_per_type=1,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert cards[0]["source_block_id"] == "future_strategy-0"
+    assert {"PDK", "PPA"}.issubset(set(cards[0]["keywords"]))
+
+
+def test_glossary_terms_filter_generic_noise_but_keep_product_terms():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "glossary-0",
+                "usage": "glossary",
+                "section": "第一节 释义",
+                "title": "常用词语释义",
+                "text": (
+                    "公司、本公司 指 广东赛微微电子股份有限公司 "
+                    "报告期 指 2025年1月1日至2025年12月31日 "
+                    "元、万元 指 人民币元、万元 "
+                    "芯片 指 集成电路的载体 "
+                    "电池计量芯片 指 用于确定电池的电量状态和健康状态。 "
+                    "FastCali 指 一种电池电量算法。"
+                ),
+            },
+            {
+                "id": "rd_table-0",
+                "usage": "rd_table",
+                "section": "第三节 管理层讨论与分析",
+                "title": "研发项目",
+                "text": "公司围绕FastCali算法研发新一代电池计量芯片，产品已完成验证并进入客户导入阶段。",
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688325",
+        stock_name="赛微微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "rd_product_progress"]
+    assert len(cards) == 1
+    assert {"FastCali", "电池计量芯片"}.issubset(set(cards[0]["keywords"]))
+    assert "公司" not in cards[0]["keywords"]
+    assert "报告期" not in cards[0]["keywords"]
+    assert "元、万元" not in cards[0]["keywords"]
+    assert "芯片" not in cards[0]["keywords"]
+
+
+def test_definition_like_body_terms_boost_optical_module_strategy_sentences():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业技术趋势",
+                "text": (
+                    "光电共封装技术（CPO）指的是交换ASIC芯片和硅光引擎在同一高速主板上协同封装。"
+                    "线性驱动可插拔光模块（LPO）是指采用线性直驱技术、去除传统DSP/CDR芯片的光模块方案。"
+                ),
+            },
+            {
+                "id": "industry_outlook-1",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业情况",
+                "text": "行业竞争加剧，市场需求保持增长，公司关注政策变化并提升经营效率。",
+            },
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来展望",
+                "text": "公司将加大CPO、LPO、硅光等核心产品或技术投入，积极推动下一代光互连技术发展。",
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        max_cards_per_type=1,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
+    assert len(cards) == 1
+    assert cards[0]["source_block_id"] == "future_strategy-0"
+    assert {"CPO", "LPO"}.issubset(set(cards[0]["keywords"]))
 
 
 def test_near_duplicate_business_model_cards_are_deduplicated_across_blocks():

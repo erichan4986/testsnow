@@ -78,6 +78,7 @@ def build_preview_markdown(
         report_year=report_year,
         report_type=report_type,
         evidence_pack=evidence_pack,
+        raw_text=raw_text,
     )
 
     lines = header + [
