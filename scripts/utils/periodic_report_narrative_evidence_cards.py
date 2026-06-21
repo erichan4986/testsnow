@@ -406,9 +406,23 @@ def _score_snippet(snippet: str, markers: Iterable[str], dynamic_terms: Sequence
 
 def _normalize_excerpt(text: str) -> str:
     excerpt = re.sub(r"\s+", " ", text).strip()
+    excerpt = _trim_product_feature_table_header(excerpt)
     if len(excerpt) > _MAX_EXCERPT_LENGTH:
         excerpt = _truncate_at_sentence_boundary(excerpt, _MAX_EXCERPT_LENGTH)
     return excerpt
+
+
+def _trim_product_feature_table_header(excerpt: str) -> str:
+    header_tokens = ("产品类型", "图片示例", "主要技术特点", "主要应用领域")
+    if sum(1 for token in header_tokens if token in excerpt) < 3:
+        return excerpt
+    header_end = max(excerpt.find(token) + len(token) for token in header_tokens if token in excerpt)
+    tail = excerpt[header_end:].lstrip(" 　：:，,。；;")
+    for anchor in ("依托于公司", "公司自主研发", "报告期内", "该产品", "该系列产品"):
+        anchor_pos = tail.find(anchor)
+        if anchor_pos >= 0:
+            return tail[anchor_pos:].strip()
+    return tail.strip() or excerpt
 
 
 def _truncate_at_sentence_boundary(text: str, max_chars: int) -> str:

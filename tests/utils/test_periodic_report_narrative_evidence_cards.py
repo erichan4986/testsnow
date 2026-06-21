@@ -955,6 +955,53 @@ def test_single_applicability_checkbox_report_tail_fragment_is_rejected():
     assert result["cards"] == []
 
 
+def test_product_feature_table_header_is_trimmed_from_narrative_excerpt():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "glossary-0",
+                "usage": "glossary",
+                "section": "第一节 释义",
+                "title": "常用词语释义",
+                "text": (
+                    "电池计量芯片 指 用于确定电池的电量状态和健康状态。 "
+                    "FastCali 指 一种电池电量算法。"
+                ),
+            },
+            {
+                "id": "management_strategy-0",
+                "usage": "management_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主要产品",
+                "text": (
+                    "公司电池计量芯片主要产品如下表所示： 产品类型 图片示例 主要技术特点 主要应用领域 "
+                    "电池计量芯片 结合FastCali电池电量算法和电池建模信息，准确计算电池剩余电量，"
+                    "可监测电池在充放电状态下的电压、电流和温度。"
+                    "依托于公司自主研发的FastCali电池电量算法，公司电池计量芯片可以快速计算电池状态，"
+                    "精准提供电池生命周期内电池荷电状态。"
+                ),
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688325",
+        stock_name="赛微微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "rd_product_progress"]
+    assert len(cards) == 1
+    excerpt = cards[0]["source_excerpt"]
+    assert "产品类型" not in excerpt
+    assert "图片示例" not in excerpt
+    assert "主要技术特点" not in excerpt
+    assert "依托于公司自主研发的FastCali" in excerpt
+
+
 def test_structural_table_header_snippets_are_rejected():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
