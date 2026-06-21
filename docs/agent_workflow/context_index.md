@@ -110,6 +110,14 @@ Changes involving LLM prompts, synthesis/citation logic, scoring, technical anal
 <!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md -->
 - HK periodic report evidence-pack Round 2 review prompt: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md`
 <!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md -->
+- periodic report filing facts Knowledge design: `docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-design.md`
+<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-design.md -->
+- periodic report filing facts Knowledge Round 1 review prompt: `docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-claude-review-round1.md`
+<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-claude-review-round1.md -->
+- periodic report narrative evidence cards design: `docs/agent_workflow/2026-06-21-periodic-report-narrative-evidence-cards-design.md`
+<!-- path-check: docs/agent_workflow/2026-06-21-periodic-report-narrative-evidence-cards-design.md -->
+- Vibe-Trading walkthrough notes: `docs/agent_workflow/2026-06-21-vibe-trading-walkthrough-notes.md`
+<!-- path-check: docs/agent_workflow/2026-06-21-vibe-trading-walkthrough-notes.md -->
 
 ## Runbooks
 
