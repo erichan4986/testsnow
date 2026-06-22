@@ -92,6 +92,18 @@ def test_ci_grep_gates_rejects_fulltext_leakage_in_narrative_card_writer(tmp_pat
     assert "periodic_report_fulltext" in result.stdout
 
 
+def test_ci_grep_gates_rejects_narrative_card_leakage_in_scoring_file(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "reporter" / "scoring_engine.py"
+    target.parent.mkdir(parents=True)
+    target.write_text('source_type = "periodic_report_narrative_evidence"\n', encoding="utf-8")
+
+    result = _run_gate(root)
+
+    assert result.returncode != 0
+    assert "periodic_report_narrative_evidence" in result.stdout
+
+
 def test_ci_grep_gates_rejects_requests_get_without_timeout(tmp_path: Path) -> None:
     root = _copy_gate_fixture(tmp_path)
     target = root / "scripts" / "utils" / "bad_fetcher.py"

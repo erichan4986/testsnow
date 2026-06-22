@@ -823,7 +823,7 @@ def _make_fulltext_item():
 
 
 class DualSynthesizer:
-    """Returns enhanced narrative iff a fulltext item is present in items."""
+    """Returns enhanced narrative iff annual-report display material is present."""
 
     def __init__(self):
         self.calls = []
@@ -836,9 +836,18 @@ class DualSynthesizer:
             == "periodic_report_fulltext_analysis"
             for i in items
         )
-        if has_fulltext:
+        has_narrative_card = any(
+            (getattr(i, "extra", {}) or {}).get("source_type")
+            == "periodic_report_narrative_evidence"
+            for i in items
+        )
+        if has_fulltext or has_narrative_card:
             return {
-                "industry_logic": "fulltext 降价 毛利率承压 narrative",
+                "industry_logic": (
+                    ("fulltext 降价 毛利率承压 " if has_fulltext else "")
+                    + ("narrative cards 客户流失 净流出 " if has_narrative_card else "")
+                    + "narrative"
+                ),
                 "fundamentals": "enhanced 净流出 路径",
                 "valuation_debate": "",
                 "funding_sentiment": "",
@@ -875,6 +884,63 @@ def _fulltext_ctx(switch, fake):
         },
         "keep_posts": [],
     })
+
+
+def _write_narrative_card_note(base_dir, stock_name="中简科技"):
+    notes_dir = Path(base_dir) / "10-Stocks" / stock_name / "periodic_narrative_cards"
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    path = notes_dir / "2025-annual-management-market-view-0.md"
+    path.write_text(
+        "---\n"
+        f"stock: {stock_name}\n"
+        "code: 300777\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        "card_id: periodic:300777:2025:annual:narrative:management_market_view:0\n"
+        "schema_version: periodic_report_narrative_evidence_card.v1\n"
+        "card_type: management_market_view\n"
+        "title: 管理层市场判断\n"
+        "report_year: 2025\n"
+        "report_type: annual\n"
+        "source_credit: 75\n"
+        "source_block_id: market_demand_outlook-0\n"
+        "evidence_refs:\n"
+        "  - market_demand_outlook-0\n"
+        "source_excerpt_hash: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n"
+        "knowledge_fact_status: narrative_evidence\n"
+        "knowledge_eligible: false\n"
+        "knowledge_persisted: true\n"
+        "synthesis_eligible: false\n"
+        "experimental: true\n"
+        "---\n\n"
+        "# 中简科技 2025 annual management_market_view\n\n"
+        "## Narrative Evidence\n\n"
+        "> 年报卡片显示客户流失与净流出风险词只应进入 display synthesis。\n\n"
+        "## Source\n\n"
+        "- source_credit: 75\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _narrative_card_ctx(tmp_path, switch=True, include_fulltext=False):
+    _write_narrative_card_note(tmp_path)
+    ctx_input = {
+        "stock_name": "中简科技",
+        "knowledge_base_dir": str(tmp_path),
+        "include_periodic_narrative_cards_in_synthesis_display": switch,
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    }
+    if include_fulltext:
+        ctx_input["include_periodic_report_fulltext_in_synthesis"] = True
+        ctx_input["periodic_report_fulltext_items"] = [_make_fulltext_item()]
+    return SkillContext(input=ctx_input)
 
 
 def test_periodic_report_fulltext_synthesis_default_off_excludes_fulltext():
@@ -1008,6 +1074,64 @@ def test_periodic_report_fulltext_synthesis_rejects_malformed_fulltext_item():
 
     assert len(fake.calls) == 1
     assert ctx.output.get("synthesis_display") is None
+
+
+def test_periodic_narrative_cards_synthesis_default_off_excludes_cards(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _narrative_card_ctx(tmp_path, switch=False)
+    skill.run(ctx)
+
+    assert len(fake.calls) == 1
+    assert all(
+        (getattr(i, "extra", {}) or {}).get("source_type")
+        != "periodic_report_narrative_evidence"
+        for i in fake.calls[0]
+    )
+    assert ctx.output.get("synthesis_display") is None
+    assert ctx.get("synthesis")["industry_logic"] == "baseline narrative"
+
+
+def test_periodic_narrative_cards_synthesis_display_keeps_baseline_invariants(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _narrative_card_ctx(tmp_path, switch=True)
+    skill.run(ctx)
+
+    assert ctx.get("synthesis")["industry_logic"] == "baseline narrative"
+    assert ctx.get("core_facts")[0]["fact"] == "baseline fact"
+    assert "客户流失" not in ctx.get("synthesis_text")
+    assert "净流出" not in ctx.get("synthesis_text")
+    assert "narrative cards 客户流失" in ctx.get("synthesis_display")["industry_logic"]
+    assert "客户流失" in ctx.get("synthesis_text_with_periodic_narrative_cards")
+
+    knowledge_input = "\n".join(str(v) for v in ctx.get("synthesis").values())
+    assert "客户流失" not in knowledge_input
+    assert "narrative cards" not in knowledge_input
+
+
+def test_periodic_narrative_cards_and_fulltext_share_one_display_synthesis(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _narrative_card_ctx(tmp_path, switch=True, include_fulltext=True)
+    skill.run(ctx)
+
+    assert len(fake.calls) == 2
+    baseline_items = fake.calls[0]
+    display_items = fake.calls[1]
+    assert display_items[: len(baseline_items)] == baseline_items
+    tail_source_types = [
+        (getattr(item, "extra", {}) or {}).get("source_type")
+        for item in display_items[len(baseline_items):]
+    ]
+    assert tail_source_types == [
+        "periodic_report_fulltext_analysis",
+        "periodic_report_narrative_evidence",
+    ]
+    assert "fulltext 降价" in ctx.get("synthesis_display")["industry_logic"]
+    assert "narrative cards 客户流失" in ctx.get("synthesis_display")["industry_logic"]
+    assert "客户流失" in ctx.get("synthesis_text_with_periodic_narrative_cards")
+    assert "降价" in ctx.get("synthesis_text_with_periodic_report_fulltext")
 
 
 def test_fill_citation_metadata_preserves_credit_fields():

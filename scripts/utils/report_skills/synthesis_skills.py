@@ -14,6 +14,9 @@ if __name__.startswith("utils."):
         is_core_fact_supporting_source,
         format_claim_verification_appendix,
     )
+    from ..periodic_report_narrative_card_synthesis_items import (
+        load_periodic_narrative_card_synthesis_items,
+    )
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -24,6 +27,9 @@ else:
         format_synthesis_source_line,
         is_core_fact_supporting_source,
         format_claim_verification_appendix,
+    )
+    from periodic_report_narrative_card_synthesis_items import (
+        load_periodic_narrative_card_synthesis_items,
     )
 
 
@@ -57,26 +63,35 @@ class SynthesisSkill(BaseSkill):
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))
 
-        # Optional experimental path: periodic-report full-text material may
-        # enter the DISPLAY synthesis only.  Canonical synthesis, core_facts,
+        # Optional experimental paths: annual-report materials may enter the
+        # DISPLAY synthesis only.  Canonical synthesis, core_facts,
         # synthesis_text, and synthesis_sources stay baseline so risk scoring
-        # and Knowledge persistence never see full-text-derived narrative.
+        # and Knowledge persistence never see display-only narrative.
+        display_items = []
+        fulltext_items = []
+        narrative_card_items = []
         if ctx.get("include_periodic_report_fulltext_in_synthesis"):
             fulltext_items = self._eligible_periodic_report_fulltext_items(ctx)
+            display_items.extend(fulltext_items)
+        if ctx.get("include_periodic_narrative_cards_in_synthesis_display"):
+            narrative_card_items = self._eligible_periodic_narrative_card_items(ctx)
+            display_items.extend(narrative_card_items)
+        if display_items:
+            display = self._synthesize(
+                stock_name,
+                stock_raw,
+                keep_posts,
+                ctx,
+                extra_items=display_items,
+            )
+            display_text = self._flatten_synthesis_text(display)
+            ctx.set("synthesis_display", display)
+            ctx.set("synthesis_display_sources", display.get("_sources", []))
+            ctx.set("synthesis_text_with_periodic_display_materials", display_text)
             if fulltext_items:
-                display = self._synthesize(
-                    stock_name,
-                    stock_raw,
-                    keep_posts,
-                    ctx,
-                    extra_items=fulltext_items,
-                )
-                ctx.set("synthesis_display", display)
-                ctx.set("synthesis_display_sources", display.get("_sources", []))
-                ctx.set(
-                    "synthesis_text_with_periodic_report_fulltext",
-                    self._flatten_synthesis_text(display),
-                )
+                ctx.set("synthesis_text_with_periodic_report_fulltext", display_text)
+            if narrative_card_items:
+                ctx.set("synthesis_text_with_periodic_narrative_cards", display_text)
         return ctx
 
     @staticmethod
@@ -95,6 +110,29 @@ class SynthesisSkill(BaseSkill):
             ):
                 eligible.append(item)
         return eligible
+
+    @staticmethod
+    def _eligible_periodic_narrative_card_items(ctx: SkillContext) -> list:
+        """Load persisted periodic-report narrative cards as display-only items."""
+        stock_name = ctx.get("stock_name")
+        if not stock_name:
+            return []
+        base_dir = ctx.get("knowledge_base_dir")
+        if not base_dir:
+            base_dir = Path(__file__).resolve().parents[3] / "knowledge"
+        max_cards = ctx.get("periodic_narrative_cards_max_display_items", 12)
+        try:
+            max_cards = int(max_cards)
+        except (TypeError, ValueError):
+            max_cards = 12
+        try:
+            return load_periodic_narrative_card_synthesis_items(
+                stock_name=stock_name,
+                base_dir=base_dir,
+                max_cards=max_cards,
+            )
+        except Exception:
+            return []
 
     def _synthesize(self, stock_name: str, stock_raw: dict, keep_posts: list, ctx: SkillContext = None, extra_items: list = None) -> dict:
         """调用 KnowledgeSynthesizer 或降级模板生成综合叙事。"""
