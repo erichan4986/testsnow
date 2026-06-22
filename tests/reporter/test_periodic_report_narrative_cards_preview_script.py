@@ -193,6 +193,35 @@ def test_build_preview_markdown_existing_only_refresh_plan(tmp_path):
     assert len(list(existing_dir.glob("*.md"))) == 1
 
 
+def test_build_preview_markdown_renders_knowledge_maintenance_summary(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    knowledge_dir = tmp_path / "knowledge"
+    existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
+    existing_dir.mkdir(parents=True)
+    matching_note = existing_dir / "2025-annual-management-market-view-0.md"
+    matching_note.write_text("---\nsource_type: periodic_report_narrative_evidence\n---\n", encoding="utf-8")
+    dangling_note = existing_dir / "2025-annual-rd-product-progress-99.md"
+    dangling_note.write_text("---\nsource_type: periodic_report_narrative_evidence\n---\n", encoding="utf-8")
+
+    markdown = build_preview_markdown(
+        stock_code="000001",
+        stock_name="测试股",
+        cache_dir=cache_dir,
+        report_type="annual",
+        knowledge_base_dir=knowledge_dir,
+    )
+
+    assert "## Knowledge maintenance summary" in markdown
+    assert "- generated_cards：" in markdown
+    assert "- generated_note_candidates：" in markdown
+    assert "- existing_notes：2" in markdown
+    assert "- refreshable_notes：1" in markdown
+    assert "- dangling_notes：1" in markdown
+    assert "`2025-annual-rd-product-progress-99.md`" in markdown
+
+
 def test_cli_write_knowledge_writes_tmp_notes(tmp_path):
     cache_dir = tmp_path / "periodic_reports"
     cache_dir.mkdir()

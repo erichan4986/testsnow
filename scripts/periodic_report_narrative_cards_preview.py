@@ -89,7 +89,13 @@ def build_preview_markdown(
         raw_text=raw_text,
     )
     write_plan = None
+    maintenance_summary = None
     if knowledge_base_dir:
+        maintenance_summary = _build_knowledge_maintenance_summary(
+            cards_pack=cards_pack,
+            knowledge_base_dir=knowledge_base_dir,
+            stock_name=title_name,
+        )
         write_cards_pack = cards_pack
         if existing_only:
             existing_cards = [
@@ -119,6 +125,8 @@ def build_preview_markdown(
         "",
     ]
     if write_plan is not None:
+        if maintenance_summary is not None:
+            lines.extend(_render_maintenance_summary(maintenance_summary))
         lines.extend(_render_knowledge_plan(
             write_plan,
             knowledge_base_dir,
@@ -152,6 +160,59 @@ def build_preview_markdown(
             "",
         ])
     return "\n".join(lines)
+
+
+def _build_knowledge_maintenance_summary(
+    *,
+    cards_pack: dict,
+    knowledge_base_dir: Union[str, Path],
+    stock_name: str,
+) -> dict:
+    cards = [card for card in (cards_pack.get("cards") or []) if isinstance(card, dict)]
+    generated_paths = {
+        _card_note_path(
+            knowledge_base_dir=knowledge_base_dir,
+            stock_name=stock_name,
+            card=card,
+        )
+        for card in cards
+    }
+    notes_dir = Path(knowledge_base_dir) / "10-Stocks" / _safe_dir_segment(stock_name) / "periodic_narrative_cards"
+    existing_paths = set(notes_dir.glob("*.md")) if notes_dir.exists() else set()
+
+    refreshable_paths = sorted(existing_paths & generated_paths)
+    dangling_paths = sorted(existing_paths - generated_paths)
+    new_candidate_paths = sorted(generated_paths - existing_paths)
+    return {
+        "generated_cards": len(cards),
+        "generated_note_candidates": len(generated_paths),
+        "existing_notes": len(existing_paths),
+        "refreshable_notes": len(refreshable_paths),
+        "dangling_notes": len(dangling_paths),
+        "new_candidate_notes": len(new_candidate_paths),
+        "dangling_paths": dangling_paths,
+    }
+
+
+def _render_maintenance_summary(summary: dict) -> list[str]:
+    lines = [
+        "## Knowledge maintenance summary",
+        "",
+        f"- generated_cards：{summary.get('generated_cards', 0)}",
+        f"- generated_note_candidates：{summary.get('generated_note_candidates', 0)}",
+        f"- existing_notes：{summary.get('existing_notes', 0)}",
+        f"- refreshable_notes：{summary.get('refreshable_notes', 0)}",
+        f"- dangling_notes：{summary.get('dangling_notes', 0)}",
+        f"- new_candidate_notes：{summary.get('new_candidate_notes', 0)}",
+    ]
+    dangling_paths = summary.get("dangling_paths") or []
+    if dangling_paths:
+        lines.extend(["", "### Dangling existing notes", ""])
+        lines.extend(f"- `{path.name}`" for path in dangling_paths[:20])
+        if len(dangling_paths) > 20:
+            lines.append(f"- ... and {len(dangling_paths) - 20} more")
+    lines.append("")
+    return lines
 
 
 def _render_knowledge_plan(
