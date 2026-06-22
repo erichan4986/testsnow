@@ -59,24 +59,67 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
     ),
     ("sales_certification_model", ("合格供方目录", "定型认证", "最终用户认可", "直接销售模式")),
     ("production_sales_inventory_table", ("销售量", "生产量", "库存量")),
+    (
+        "rd_product_progress",
+        (
+            "报告期内的主要研发成果",
+            "报告期内主要研发成果",
+            "研发成果",
+            "客户验证",
+            "客户验证导入",
+            "小批量交付",
+            "小批量供货",
+            "量产应用",
+            "实现量产",
+        ),
+    ),
     ("rd_investment_table", ("研发人员数量", "研发投入金额", "研发投入占营业收入比例", "研发投入资本化")),
+    (
+        "industry_outlook",
+        (
+            "全球集成电路行业整体发展愈发景气",
+            "行业景气度进入上行通道",
+            "全球电池管理 IC 市场规模",
+            "全球电池管理IC市场规模",
+            "下游各应用领域具备较大的增长潜力",
+            "国产替代前景",
+            "先进封装占比",
+            "Chiplet",
+            "HBM 存储器封装",
+            "ABF 载板",
+            "高导热界面材料需求",
+        ),
+    ),
     ("management_market_view", ("结构性分化", "产能过剩", "价格承压", "竞争加剧", "高端领域")),
     (
         "market_demand_outlook",
         (
             "市场规模将增长",
             "复合增长率",
+            "复合年增长率",
+            "全球电池管理 IC 市场规模",
+            "全球电池管理IC市场规模",
+            "下游各应用领域具备较大的增长潜力",
+            "国产替代前景",
             "高速光模块的需求",
             "未来数通光模块市场需求",
             "算力需求推动",
+            "先进封装占比",
+            "Chiplet",
+            "HBM 存储器封装",
+            "ABF 载板",
+            "高导热界面材料需求",
         ),
     ),
     (
         "competitive_position",
         (
             "行业竞争格局及公司竞争地位",
+            "公司所处的行业地位分析",
             "公司竞争地位",
             "公司行业地位",
+            "主要的国内供应商",
+            "具有一定竞争力",
             "市场份额持续成长",
             "竞争优势进一步强化",
         ),
@@ -95,8 +138,16 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
         "profitability_commentary",
         (
             "毛利率较上年同期提升",
+            "毛利率较上年同期增加",
+            "毛利率同比提升",
+            "毛利率同比增加",
+            "毛利率同比小幅降低",
+            "毛利率基本持平",
+            "毛利率同比减少",
+            "毛利率整体保持稳中有升",
             "盈利能力持续改善",
             "规模效应逐步释放",
+            "成本规模效应",
             "高端产品出货占比提升",
         ),
     ),
@@ -126,6 +177,7 @@ USAGE_PRIORITY = {
     "production_sales_inventory_table": 3,
     "rd_investment_table": 4,
     "rd_table": 5,
+    "rd_product_progress": 5,
     "cash_flow_capex_table": 6,
     "hk_income_statement_table": 0,
     "hk_financial_summary_table": 1,
@@ -369,9 +421,9 @@ def _extract_section_blocks(text: str) -> List[Dict[str, Any]]:
                 excerpt = _strip_boilerplate(excerpt)
                 if len(excerpt) > _MAX_CHARS_PER_BLOCK:
                     excerpt = excerpt[: _MAX_CHARS_PER_BLOCK - 1].rstrip() + "…"
-                if excerpt:
+                if excerpt and _is_substantive_section_excerpt(usage, excerpt):
                     blocks.append(_block(usage, section_name, pattern, excerpt, start, end))
-                break
+                    break
             else:
                 continue
             break
@@ -415,6 +467,30 @@ def _extract_keyword_blocks(text: str) -> List[Dict[str, Any]]:
             if matched:
                 break
     return blocks
+
+
+def _is_substantive_section_excerpt(usage: str, excerpt: str) -> bool:
+    """Reject section heading fragments that do not include body text."""
+    narrative_usages = {
+        "business_overview",
+        "industry_outlook",
+        "business_model",
+        "management_strategy",
+        "risk_disclosure",
+    }
+    if usage not in narrative_usages:
+        return True
+    compact = re.sub(r"\s+", "", excerpt)
+    empty_heading_fragments = (
+        "经营模式、行业情况说明",
+        "行业情况说明",
+        "主营业务情况□适用√不适用",
+    )
+    if compact in empty_heading_fragments:
+        return False
+    if usage in {"industry_outlook", "business_model"} and len(compact) < 40:
+        return False
+    return True
 
 
 def _extract_hk_statement_blocks(text: str) -> List[Dict[str, Any]]:
@@ -491,16 +567,33 @@ def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:
             "现金及现金等价物净增加额",
         )
         return any(token in compact for token in cash_flow_markers)
+    if usage == "industry_outlook":
+        return any(token in compact for token in ("市场规模", "增长潜力", "国产替代", "行业景气", "复合年增长率", "终端市场", "先进封装", "Chiplet", "HBM", "ABF", "CoWoS", "高导热界面材料"))
     if usage == "market_demand_outlook":
-        return any(token in compact for token in ("市场规模", "算力", "GPU", "ASIC", "光模块"))
+        return any(token in compact for token in ("市场规模", "算力", "GPU", "ASIC", "光模块", "电池管理IC", "电池管理芯片", "国产替代", "增长潜力", "复合年增长率", "先进封装", "Chiplet", "HBM", "ABF", "CoWoS", "高导热界面材料"))
     if usage == "competitive_position":
-        return any(token in compact for token in ("竞争优势", "行业集中度", "市场份额", "客户认可", "交付能力"))
+        return any(token in compact for token in ("竞争优势", "行业集中度", "市场份额", "客户认可", "交付能力", "竞争力", "国内供应商", "广泛认可", "行业地位"))
     if usage == "future_strategy":
         if any(token in compact for token in ("目录", "利润分配预案", "注意投资风险", "重要提示")):
             return False
-        return any(token in compact for token in ("AI数据中心", "1.6T", "3.2T", "工作计划", "国际化战略", "供应链"))
+        return any(token in compact for token in ("AI数据中心", "1.6T", "3.2T", "工作计划", "国际化战略", "供应链", "下游市场需求", "产品结构升级", "技术研发投入", "产品线", "国产化替代"))
     if usage == "profitability_commentary":
         return any(token in compact for token in ("毛利率", "盈利能力", "规模效应"))
+    if usage == "rd_product_progress":
+        return any(
+            token in compact
+            for token in (
+                "研发成果",
+                "客户验证",
+                "验证导入",
+                "小批量交付",
+                "小批量供货",
+                "量产",
+                "技术突破",
+                "开发",
+                "产品",
+            )
+        )
     if usage != "product_capacity_profile":
         return True
     audit_noise = (
@@ -553,7 +646,8 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         "market_demand_outlook": 14,
         "competitive_position": 12,
         "future_strategy": 16,
-        "profitability_commentary": 6,
+        "profitability_commentary": 18,
+        "rd_product_progress": 16,
     }
     max_lines = max_lines_by_usage.get(usage, 6)
     allow_numbered_subheadings = usage in {
@@ -564,6 +658,8 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         "cash_flow_capex_table",
         "competitive_position",
         "future_strategy",
+        "rd_product_progress",
+        "profitability_commentary",
     }
 
     end_index = min(len(lines), start_index + max_lines)

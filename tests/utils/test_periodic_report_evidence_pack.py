@@ -387,6 +387,159 @@ def test_extracts_high_value_narrative_windows_for_market_competition_strategy_p
     assert "毛利率较上年同期提升" in blocks["profitability_commentary"]["text"]
 
 
+SAIWEI_LIKE_NARRATIVE_REPORT = """
+第三节 管理层讨论与分析
+
+一、 报告期内公司所从事的主要业务、经营模式、行业情况说明
+
+(一) 主要业务、主要产品或服务情况
+
+公司自成立以来始终致力于模拟芯片的研发与销售业务。公司以电池管理芯片为核心，辐射电源管理芯片领域。
+
+(三) 所处行业情况
+
+1、行业的发展阶段、基本特点、主要技术门槛
+
+近年来全球集成电路行业整体发展愈发景气，在此背景下集成电路设计市场也呈增长趋势。
+电池管理芯片在工业控制、消费电子、新能源汽车及储能等领域应用广泛，下游各应用领域具备较大的增长潜力。
+根据 Mordor Intelligence 预测，全球电池管理 IC 市场规模在 2026 年达到 65.2 亿美元，
+预计到 2031 年将增长到 113.4 亿美元，预测期内复合年增长率将达 11.71%，增长源于电动汽车、移动和可穿戴设备等应用领域。
+目前全球电池管理芯片市场主要被 TI、ADI 等国际龙头企业占据，国内企业布局相对有限，国产替代前景十分广阔。
+
+2、公司所处的行业地位分析及其变化情况
+
+公司致力于模拟芯片的研发和销售，主要产品包括电池安全芯片、电池计量芯片和充电管理等其他芯片。
+凭借公司持续的研发投入及优秀的研发团队，使得公司的产品在行业内处于先进水平，主要产品在市场中具有一定竞争力。
+相比竞争对手，公司专注于电池管理芯片领域，能够更为灵活和敏锐地捕捉客户需求并快速作出响应。
+目前，公司已成为电池管理芯片领域主要的国内供应商，产品均已应用于相关行业国内外知名客户的产品中，并获得广泛认可。
+
+五、报告期内主要经营情况
+
+报告期内，本期实现营业收入 48,865.97 万元，较上年同期增加 24.34%。
+公司产品主要面向工业级和消费级终端应用市场，下游终端市场需求在本年度得到延续。
+毛利率较上年同期增加 1.15%，本期价格策略没有显著变化，成本端因采购量上升进一步获得成本规模效应，毛利率整体保持稳中有升。
+
+六、公司关于公司未来发展的讨论与分析
+
+(二) 公司发展战略
+
+公司始终坚持以技术创新为发展战略方向。未来，公司将继续以下游市场需求为导向，进行新产品的研发，
+丰富现有产品服务体系，扩大下游市场覆盖面，推动公司产品的结构升级；同时，公司将加大技术研发投入，
+加强对电池管理芯片基础核心技术与前沿技术的研究，提升公司的自主研发及创新能力。
+"""
+
+
+def test_extracts_saiwei_like_generic_market_competition_margin_strategy_sections():
+    pack = build_periodic_report_evidence_pack(SAIWEI_LIKE_NARRATIVE_REPORT)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "industry_outlook" in blocks
+    assert "全球电池管理 IC 市场规模" in blocks["industry_outlook"]["text"]
+    assert blocks["industry_outlook"]["text"] != "行业情况说明"
+
+    assert "market_demand_outlook" in blocks
+    assert "复合年增长率将达 11.71%" in blocks["market_demand_outlook"]["text"]
+    assert "国产替代前景十分广阔" in blocks["market_demand_outlook"]["text"]
+
+    assert "competitive_position" in blocks
+    assert "电池管理芯片领域主要的国内供应商" in blocks["competitive_position"]["text"]
+
+    assert "profitability_commentary" in blocks
+    assert "毛利率较上年同期增加 1.15%" in blocks["profitability_commentary"]["text"]
+    assert "成本规模效应" in blocks["profitability_commentary"]["text"]
+
+    assert "future_strategy" in blocks
+    assert "下游市场需求为导向" in blocks["future_strategy"]["text"]
+    assert "产品的结构升级" in blocks["future_strategy"]["text"]
+
+
+DEBANG_LIKE_ADVANCED_PACKAGING_REPORT = """
+第三节 管理层讨论与分析
+一、经营模式、行业情况说明
+公司专注于高端电子封装材料的研发及产业化。
+
+（一）行业情况说明
+未来，先进封装占比将逐步超越传统封装，先进封装技术成为延续摩尔定律的重要方向；
+Chiplet 异构集成、2.5D/3D 封装、HBM 存储器封装等技术路径成为主流，
+带动 TSV 材料、ABF 载板、高导热界面材料需求快速提升。
+
+2、报告期内的主要研发成果
+报告期内，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计，
+超薄型 TIM、液态金属复合导热膏、高可靠合金导热片、光模块导热材料等产品
+已进入客户验证或小批量交付阶段。
+
+主营业务分产品情况
+（1）集成电路封装材料：受益于先进封装需求拉动，全年收入同比增长，
+毛利率同比提升 2.98 个百分点；（2）智能终端封装材料：受产品结构影响，
+毛利率同比小幅降低；（3）新能源应用材料：该板块全年营收同比增长 20.03%，毛利率基本持平。
+"""
+
+
+def test_extracts_debang_like_rd_progress_margin_and_advanced_packaging_outlook():
+    pack = build_periodic_report_evidence_pack(DEBANG_LIKE_ADVANCED_PACKAGING_REPORT)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "rd_product_progress" in blocks
+    assert "TIM1" in blocks["rd_product_progress"]["text"]
+    assert "小批量交付" in blocks["rd_product_progress"]["text"]
+
+    assert "profitability_commentary" in blocks
+    assert "毛利率同比提升 2.98 个百分点" in blocks["profitability_commentary"]["text"]
+    assert "毛利率基本持平" in blocks["profitability_commentary"]["text"]
+
+    assert "market_demand_outlook" in blocks or "industry_outlook" in blocks
+    outlook_text = blocks.get("market_demand_outlook", {}).get("text", "") + blocks.get("industry_outlook", {}).get("text", "")
+    assert "Chiplet" in outlook_text
+    assert "HBM" in outlook_text
+    assert "ABF" in outlook_text
+
+
+def test_profitability_commentary_window_keeps_later_margin_sentences():
+    report = """
+第三节 管理层讨论与分析
+主营业务分产品情况
+（1）集成电路封装材料：受益于先进封装需求拉动，全年收入同比增长，
+毛利率同比提升 2.98 个百分点；
+（2）智能终端封装材料：依托核心头部客户群优势，公司在巩固提升老产品市场份额的同时，
+加大产品创新及市场开拓力度，在智能穿戴、新型显示等应用场景开辟了新的增长空间，
+全年实现营收 38,325.99 万元，同比增长 48.16%。
+受供应链价格波动等因素影响，毛利率同比小幅降低；
+（3）新能源应用材料：在下游新能源装机出货量持续稳定增长的背景下，
+该板块全年营收同比增长 20.03%，毛利率基本持平。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "profitability_commentary" in blocks
+    assert "毛利率同比提升 2.98 个百分点" in blocks["profitability_commentary"]["text"]
+    assert "毛利率同比小幅降低" in blocks["profitability_commentary"]["text"]
+    assert "毛利率基本持平" in blocks["profitability_commentary"]["text"]
+
+
+def test_profitability_commentary_window_tolerates_jina_blank_lines():
+    report = """
+第三节 管理层讨论与分析
+主营业务分产品情况
+毛利率同比提升 2.98 个百分点；（ 2）智能终端封装材料：依托核心头部客户群优势，公司在巩
+
+固提升老产品市场份额的同时，加大产品创新及市场开拓力度，在智能穿戴、新型显示等应用场
+
+景开辟了新的增长空间，全年实现营收 38,325.99 万元，同比增长 48.16%。受供应链价格波动等
+
+因素影响，毛利率同比小幅降低；（ 3）新能源应用材料：在下游新能源装机出货量持续稳定增
+
+长的驱动下，公司新产线投产，产能释放，收入规模持续扩大，全年实现营收 80,884.65 万元，
+
+同比增长 18.06%。随着产能爬坡和成本优化，毛利率基本持平。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "profitability_commentary" in blocks
+    assert "毛利率同比小幅降低" in blocks["profitability_commentary"]["text"]
+    assert "毛利率基本持平" in blocks["profitability_commentary"]["text"]
+
+
 def test_keyword_window_extends_to_sentence_boundary_when_blank_lines_exhaust_line_budget():
     report = """
 第三节 管理层讨论与分析

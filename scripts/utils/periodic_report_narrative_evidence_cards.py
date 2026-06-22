@@ -22,6 +22,8 @@ _CARD_TYPES = (
     "business_model",
     "operation_update",
     "management_market_view",
+    "market_outlook",
+    "margin_competitiveness",
     "rd_product_progress",
     "financial_note",
 )
@@ -32,14 +34,15 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "product_capacity_profile": ("business_model", "rd_product_progress"),
     "sales_certification_model": ("business_model",),
     "management_strategy": ("operation_update", "rd_product_progress"),
-    "management_market_view": ("management_market_view",),
-    "industry_outlook": ("management_market_view",),
-    "market_demand_outlook": ("management_market_view",),
-    "competitive_position": ("management_market_view",),
-    "future_strategy": ("management_market_view",),
-    "profitability_commentary": ("management_market_view",),
+    "management_market_view": ("management_market_view", "market_outlook"),
+    "industry_outlook": ("management_market_view", "market_outlook"),
+    "market_demand_outlook": ("management_market_view", "market_outlook"),
+    "competitive_position": ("management_market_view", "margin_competitiveness"),
+    "future_strategy": ("management_market_view", "market_outlook"),
+    "profitability_commentary": ("management_market_view", "margin_competitiveness"),
     "segment_table": ("operation_update",),
     "production_sales_inventory_table": ("operation_update",),
+    "rd_product_progress": ("rd_product_progress",),
     "rd_table": ("rd_product_progress",),
     "rd_investment_table": ("rd_product_progress",),
     "cash_flow_capex_table": ("financial_note",),
@@ -113,6 +116,42 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "盈利能力",
         "规模效应",
     ),
+    "market_outlook": (
+        "市场需求",
+        "市场规模",
+        "复合增长率",
+        "行业景气",
+        "景气度",
+        "需求",
+        "市场",
+        "预计",
+        "预测",
+        "未来",
+        "资本开支",
+        "算力",
+        "AI",
+        "数据中心",
+        "国产替代",
+        "政策",
+        "增长",
+    ),
+    "margin_competitiveness": (
+        "毛利率",
+        "盈利能力",
+        "产品结构",
+        "高端产品",
+        "出货占比",
+        "规模效应",
+        "价格承压",
+        "价格",
+        "成本",
+        "竞争力",
+        "竞争优势",
+        "行业地位",
+        "市场份额",
+        "交付能力",
+        "产品制造能力",
+    ),
     "rd_product_progress": (
         "研发",
         "专利",
@@ -125,6 +164,11 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "工程化",
         "产业化",
         "小批量供货",
+        "小批量交付",
+        "客户验证",
+        "热界面材料",
+        "导热材料",
+        "TIM",
     ),
     "financial_note": (
         "现金流",
@@ -146,6 +190,8 @@ _CARD_TYPE_TITLES: Dict[str, str] = {
     "business_model": "主营业务与产品",
     "operation_update": "经营情况更新",
     "management_market_view": "管理层市场判断",
+    "market_outlook": "市场前景判断",
+    "margin_competitiveness": "毛利率与竞争力",
     "rd_product_progress": "研发与产品进展",
     "financial_note": "财务备注",
 }
@@ -268,8 +314,8 @@ def build_periodic_report_narrative_evidence_cards(
     report_type: str,
     evidence_pack: dict,
     raw_text: str = "",
-    max_cards_per_type: int = 3,
-    max_total_cards: int = 12,
+    max_cards_per_type: int = 12,
+    max_total_cards: int = 24,
 ) -> dict:
     """Build narrative evidence cards from an evidence pack."""
     diagnostics: List[Dict[str, Any]] = []
@@ -291,11 +337,11 @@ def build_periodic_report_narrative_evidence_cards(
         diagnostics.append({"code": "no_candidate_snippets"})
 
     typed_cards: Dict[str, List[Dict[str, Any]]] = {ct: [] for ct in _CARD_TYPES}
-    seen_excerpts: Set[str] = set()
-    seen_fingerprints: List[str] = []
+    seen_excerpts: Set[Tuple[str, str]] = set()
+    seen_fingerprints: Dict[str, List[str]] = {}
 
     for snippet, block_id, card_type, score, _source_order, matched_terms in candidates:
-        excerpt = _normalize_excerpt(snippet)
+        excerpt = _normalize_excerpt(snippet, card_type)
         if not _is_valid_excerpt(excerpt, card_type):
             diagnostics.append({
                 "code": "filtered_invalid_excerpt",
@@ -303,13 +349,16 @@ def build_periodic_report_narrative_evidence_cards(
                 "reason": "length_or_quality",
             })
             continue
-        if excerpt in seen_excerpts:
+        dedupe_scope = _dedupe_scope(card_type)
+        seen_fingerprints.setdefault(dedupe_scope, [])
+        excerpt_key = (dedupe_scope, excerpt)
+        if excerpt_key in seen_excerpts:
             continue
         fingerprint = _excerpt_fingerprint(excerpt)
-        if _is_near_duplicate_fingerprint(fingerprint, seen_fingerprints):
+        if _is_near_duplicate_fingerprint(fingerprint, seen_fingerprints[dedupe_scope]):
             continue
-        seen_excerpts.add(excerpt)
-        seen_fingerprints.append(fingerprint)
+        seen_excerpts.add(excerpt_key)
+        seen_fingerprints[dedupe_scope].append(fingerprint)
         typed_cards[card_type].append(
             _build_card(
                 stock_code=stock_code,
@@ -334,6 +383,12 @@ def build_periodic_report_narrative_evidence_cards(
         cards=cards,
         diagnostics=diagnostics,
     )
+
+
+def _dedupe_scope(card_type: str) -> str:
+    if card_type in {"business_model", "rd_product_progress"}:
+        return "business_and_rd"
+    return card_type
 
 
 def _envelope(
@@ -404,11 +459,18 @@ def _score_snippet(snippet: str, markers: Iterable[str], dynamic_terms: Sequence
     return marker_score + min(len(dynamic_terms), 4) * 2
 
 
-def _normalize_excerpt(text: str) -> str:
+def _max_excerpt_length(card_type: str = "") -> int:
+    if card_type == "margin_competitiveness":
+        return 800
+    return _MAX_EXCERPT_LENGTH
+
+
+def _normalize_excerpt(text: str, card_type: str = "") -> str:
     excerpt = re.sub(r"\s+", " ", text).strip()
     excerpt = _trim_product_feature_table_header(excerpt)
-    if len(excerpt) > _MAX_EXCERPT_LENGTH:
-        excerpt = _truncate_at_sentence_boundary(excerpt, _MAX_EXCERPT_LENGTH)
+    max_chars = _max_excerpt_length(card_type)
+    if len(excerpt) > max_chars:
+        excerpt = _truncate_at_sentence_boundary(excerpt, max_chars)
     return excerpt
 
 
@@ -458,7 +520,7 @@ def _is_near_duplicate_fingerprint(fingerprint: str, seen: Iterable[str]) -> boo
 
 
 def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
-    if len(excerpt) < _MIN_EXCERPT_LENGTH or len(excerpt) > _MAX_EXCERPT_LENGTH:
+    if len(excerpt) < _MIN_EXCERPT_LENGTH or len(excerpt) > _max_excerpt_length(card_type):
         return False
     if _TOC_RE.search(excerpt):
         return False
@@ -515,11 +577,25 @@ def _looks_like_audit_matter_boilerplate(snippet: str) -> bool:
 
 def _looks_like_audit_response_procedure(snippet: str) -> bool:
     compact_snippet = _compact_text(snippet)
+    strong_procedure_tokens = (
+        "审计程序中包括以下程序",
+        "潜在减值相关的审计程序",
+        "关键财务报告内部控制的设计和运行有效性",
+        "对管理层编制预计未来现金流量的现值时采用的关键假设进行敏感性分析",
+        "将管理层在上一年度计算预计未来现金流量的现值时使用的关键假设与本年度的实际结果进行比较",
+        "关键假设进行敏感性分析",
+        "评价是否存在管理层偏向的迹象",
+    )
+    if any(token in snippet or _compact_text(token) in compact_snippet for token in strong_procedure_tokens):
+        return True
     procedure_tokens = (
         "我们获取了管理层聘请的外部评估师",
         "外部评估师的胜任能力",
         "内部估值专家协助",
         "商誉减值测试时所用的税前折现率",
+        "关键财务报告内部控制",
+        "设计和运行有效性",
+        "关键假设进行敏感性分析",
         "执行敏感性分析",
     )
     if "执行敏感性分析" in snippet or "执行敏感性分析" in compact_snippet:
@@ -584,6 +660,37 @@ def _looks_like_accounting_policy_boilerplate(snippet: str) -> bool:
             "成本与可变现净值孰低",
             "鉴定存货减值要求管理层",
             "做出判断和估计",
+        ),
+        (
+            "存货跌价准备的确认标准和计提方法",
+            "资产负债表日",
+            "成本与可变现净值孰低计量",
+            "可变现净值低于成本",
+            "提取存货跌价准备",
+            "差额提取",
+        ),
+        (
+            "计提存货跌价准备后",
+            "以前减记存货价值的影响因素已经消失",
+            "可变现净值高于其账面价值",
+            "予以转回",
+            "转回的金额计入当期损益",
+        ),
+        (
+            "长期股权投资",
+            "同一控制下的企业合并",
+            "最终控制方合并财务报表",
+            "初始投资成本",
+            "调整资本公积",
+            "调整留存收益",
+        ),
+        (
+            "长期股权投资",
+            "非同一控制下的企业合并",
+            "购买日",
+            "合并成本",
+            "发行的权益性证券",
+            "公允价值",
         ),
         (
             "非上市股权投资的公允价值",
@@ -661,10 +768,29 @@ def _looks_like_chart_caption_fragment(snippet: str) -> bool:
 
 def _looks_like_income_statement_line_fragment(snippet: str) -> bool:
     compact_snippet = _compact_text(snippet)
-    return (
+    if (
         "损失以" in compact_snippet
         and "填列" in compact_snippet
         and len(re.findall(r"-?\d[\d,\.]*", snippet)) >= 2
+    ):
+        return True
+    if "主要为" not in snippet:
+        return False
+    numbers = re.findall(r"-?\d[\d,\.]*%?", snippet)
+    profit_loss_line_tokens = (
+        "信用减值损失",
+        "公允价值变动损益",
+        "资产减值损失",
+        "资产处置收益",
+        "投资收益",
+        "营业外收入",
+        "营业外支出",
+    )
+    starts_with_checkbox_answer = bool(re.match(r"^\s*(?:是|否)\s+", snippet))
+    return (
+        len(numbers) >= 2
+        and any(token in snippet for token in profit_loss_line_tokens)
+        and (starts_with_checkbox_answer or len(snippet) <= 120)
     )
 
 
@@ -687,12 +813,13 @@ def _looks_like_table_fragment(snippet: str, card_type: str = "") -> bool:
     if sum(1 for token in _TABLE_STRUCTURE_TOKENS if token in snippet) >= 3:
         return True
     numbers = re.findall(r"(?<![A-Za-z0-9])\d[\d,\.]*(?![A-Za-z0-9])", snippet)
-    if len(numbers) >= 3 and card_type != "management_market_view":
+    narrative_number_card_types = {"management_market_view", "margin_competitiveness"}
+    if len(numbers) >= 3 and card_type not in narrative_number_card_types:
         return True
     non_space = re.sub(r"\s+", "", snippet)
     if non_space:
         digit_ratio = sum(1 for ch in non_space if ch.isdigit()) / len(non_space)
-        if digit_ratio > 0.35 and card_type != "management_market_view":
+        if digit_ratio > 0.35 and card_type not in narrative_number_card_types:
             return True
     return False
 

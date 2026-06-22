@@ -124,6 +124,143 @@ def test_rd_product_progress_card_from_certification_text():
     assert "ZT9H" in card["source_excerpt"]
 
 
+def test_rd_product_progress_card_from_debang_like_rd_progress_block():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "rd_product_progress-0",
+                "usage": "rd_product_progress",
+                "section": "第三节 管理层讨论与分析",
+                "title": "报告期内的主要研发成果",
+                "text": (
+                    "报告期内，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计，"
+                    "超薄型 TIM、液态金属复合导热膏、高可靠合金导热片、光模块导热材料等产品"
+                    "已进入客户验证或小批量交付阶段。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "rd_product_progress"]
+    assert len(cards) >= 1
+    assert "TIM1" in cards[0]["source_excerpt"]
+    assert "小批量交付" in cards[0]["source_excerpt"]
+
+
+def test_margin_competitiveness_card_from_debang_like_margin_commentary():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务分产品情况",
+                "text": (
+                    "集成电路封装材料受益于先进封装需求拉动，全年收入同比增长，"
+                    "毛利率同比提升 2.98 个百分点；智能终端封装材料受产品结构影响，"
+                    "毛利率同比小幅降低；新能源应用材料全年营收同比增长 20.03%，毛利率基本持平。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "margin_competitiveness"]
+    assert len(cards) >= 1
+    assert "毛利率同比提升 2.98 个百分点" in cards[0]["source_excerpt"]
+    assert "毛利率基本持平" in cards[0]["source_excerpt"]
+
+
+def test_margin_competitiveness_keeps_narrative_with_revenue_numbers():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务分产品情况",
+                "text": (
+                    "毛利率同比提升 2.98 个百分点；智能终端封装材料依托核心头部客户群优势，"
+                    "全年实现营收 38,325.99 万元，同比增长 48.16%。"
+                    "受供应链价格波动等因素影响，毛利率同比小幅降低。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "margin_competitiveness"]
+    assert len(cards) >= 1
+    assert "全年实现营收 38,325.99 万元" in cards[0]["source_excerpt"]
+    assert "毛利率同比小幅降低" in cards[0]["source_excerpt"]
+
+
+def test_margin_competitiveness_keeps_later_product_margin_sentence():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务分产品情况",
+                "text": (
+                    "毛利率同比提升 2.98 个百分点；智能终端封装材料依托核心头部客户群优势，"
+                    "公司在巩固提升老产品市场份额的同时，加大产品创新及市场开拓力度，"
+                    "在智能穿戴、新型显示等应用场景开辟了新的增长空间，全年实现营收 38,325.99 万元，"
+                    "同比增长 48.16%。受供应链价格波动等因素影响，毛利率同比小幅降低；"
+                    "新能源应用材料在下游新能源装机出货量持续稳定增长的驱动下，公司新产线投产，"
+                    "产能释放，收入规模持续扩大，同时围绕核心客户优化交付节奏并提升自动化生产效率，"
+                    "持续推进原材料采购、生产工艺和订单结构优化，进一步强化规模化制造能力和快速响应能力，"
+                    "公司通过新增产线爬坡、提高良率、优化配方和扩大订单覆盖提升运营效率，"
+                    "并结合客户项目节奏持续改善交付稳定性，推动新能源应用材料板块收入规模继续扩大，"
+                    "同时在价格竞争和供应链波动环境下保持谨慎的成本管控策略，"
+                    "在产线自动化、关键设备维护、原材料替代验证、客户交期协同和质量控制体系方面持续投入，"
+                    "使得该业务在收入快速增长的同时能够维持较好的生产组织效率和成本弹性，"
+                    "并在多品类订单切换过程中降低工艺波动对单位成本的扰动，"
+                    "全年实现营收 80,884.65 万元，同比增长 18.06%。"
+                    "随着产能爬坡和成本优化，毛利率基本持平。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "margin_competitiveness"]
+    assert len(cards) >= 1
+    assert "毛利率同比提升 2.98 个百分点" in cards[0]["source_excerpt"]
+    assert "毛利率同比小幅降低" in cards[0]["source_excerpt"]
+    assert "毛利率基本持平" in cards[0]["source_excerpt"]
+
+
 def test_financial_note_card_from_impairment_note():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -172,6 +309,92 @@ def test_financial_note_rejects_generic_accounting_policy_boilerplate():
     result = build_periodic_report_narrative_evidence_cards(
         stock_code="300777",
         stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_debang_like_inventory_impairment_policy_heading():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "存货跌价",
+                "text": (
+                    "存货跌价准备的确认标准和计提方法 √适用 □不适用 "
+                    "在资产负债表日，存货按照成本与可变现净值孰低计量。"
+                    "当其可变现净值低于成本时，提取存货跌价准备。"
+                    "存货跌价准备通常按单个存货项目的成本高于其可变现净值的差额提取。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_inventory_impairment_reversal_policy_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "存货",
+                "text": (
+                    "计提存货跌价准备后，如果以前减记存货价值的影响因素已经消失，"
+                    "导致存货的可变现净值高于其账面价值的，在原已计提的存货跌价准备金额内予以转回，"
+                    "转回的金额计入当期损益。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_long_term_equity_investment_policy_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "长期股权投资",
+                "text": (
+                    "对于同一控制下的企业合并取得的长期股权投资，在合并日按照被合并方股东权益"
+                    "在最终控制方合并财务报表中的账面价值的份额作为长期股权投资的初始投资成本。"
+                    "长期股权投资初始投资成本与支付的现金、转让的非现金资产以及所承担债务账面价值之间的差额，"
+                    "调整资本公积；资本公积不足冲减的，调整留存收益。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
         report_year=2025,
         report_type="annual",
         evidence_pack=evidence_pack,
@@ -623,6 +846,128 @@ def test_management_market_view_keeps_numeric_market_outlook_text():
     cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
     assert len(cards) == 1
     assert "414亿美元" in cards[0]["source_excerpt"]
+
+
+def test_market_outlook_card_type_from_market_demand_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "market_demand_outlook-0",
+                "usage": "market_demand_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "市场需求",
+                "text": (
+                    "未来数通光模块市场需求有望由算力集群扩张、网络架构迭代、ASIC芯片规模化部署等因素共同驱动，"
+                    "预计800G和1.6T等高速光模块需求将占据市场主导地位。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "market_outlook"]
+    assert len(cards) == 1
+    assert cards[0]["title"] == "市场前景判断"
+    assert "市场需求" in cards[0]["source_excerpt"]
+
+
+def test_margin_competitiveness_card_type_from_profitability_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "盈利能力",
+                "text": (
+                    "报告期内，公司高端产品出货占比提升，产品结构持续优化，规模效应逐步释放，"
+                    "毛利率较上年同期提升，盈利能力持续改善。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "margin_competitiveness"]
+    assert len(cards) == 1
+    assert cards[0]["title"] == "毛利率与竞争力"
+    assert "毛利率较上年同期提升" in cards[0]["source_excerpt"]
+
+
+def test_business_model_excerpt_is_not_duplicated_as_rd_progress_card():
+    text = (
+        "公司主营业务为模拟芯片的研发与销售，主要产品包括电池管理芯片和电源管理芯片，"
+        "产品主要应用于消费电子、工业控制等客户场景。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "product_capacity_profile-0",
+                "usage": "product_capacity_profile",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主要产品",
+                "text": text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688325",
+        stock_name="赛微微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert any(c["card_type"] == "business_model" for c in result["cards"])
+    assert not any(c["card_type"] == "rd_product_progress" for c in result["cards"])
+
+
+def test_default_per_type_limit_allows_more_than_three_clean_cards():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": f"market_demand_outlook-{idx}",
+                "usage": "market_demand_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "市场需求",
+                "text": (
+                    f"第{idx}类下游应用市场需求保持增长，行业景气度持续提升，"
+                    f"公司关注客户结构变化和产品迭代机会，预计相关市场规模继续扩大。"
+                ),
+            }
+            for idx in range(4)
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "market_outlook"]
+    assert len(cards) == 4
 
 
 def test_management_market_view_rejects_policy_catalog_fragment():
@@ -1669,6 +2014,64 @@ def test_financial_note_rejects_audit_response_procedure_bullets():
     assert result["cards"] == []
 
 
+def test_financial_note_rejects_mixed_audit_procedure_with_specific_impairment_terms():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "ar_aging_note-0",
+                "usage": "ar_aging_note",
+                "section": "第十节 财务报告",
+                "title": "商誉减值",
+                "text": (
+                    "管理层于每年年度终了对商誉进行减值测试。管理层将含有商誉的资产组的账面价值与其可收回金额进行比较，"
+                    "以确定是否需要计提减值。可收回金额根据资产组的公允价值减去处置费用后的净额与预计未来现金流量的现值确定。"
+                    "与评价商誉的潜在减值相关的审计程序中包括以下程序：了解并评价与商誉的潜在减值测试相关的关键财务报告内部控制的设计和运行有效性；"
+                    "对管理层编制预计未来现金流量的现值时采用的关键假设进行敏感性分析。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="603986",
+        stock_name="兆易创新",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_prior_year_assumption_comparison_audit_procedure():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "存货跌价",
+                "text": (
+                    "将管理层在上一年度计算预计未来现金流量的现值时使用的关键假设与本年度的实际结果进行比较，"
+                    "以评价是否存在管理层偏向的迹象。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="603986",
+        stock_name="兆易创新",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
 def test_financial_note_rejects_audit_sensitivity_analysis_procedure():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -1714,6 +2117,56 @@ def test_financial_note_rejects_income_statement_line_fragment():
     result = build_periodic_report_narrative_evidence_cards(
         stock_code="300308",
         stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_income_statement_reason_line_fragment_with_checkbox_answer():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "asset_impairment_note-0",
+                "usage": "asset_impairment_note",
+                "section": "第三节 管理层讨论与分析",
+                "title": "利润表项目",
+                "text": "否 信用减值损失 -2,046,854.83 -0.37% 主要为 计提应收及其他应收款坏账准备。",
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_income_statement_reason_line_fragment_without_checkbox_answer():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "financial_assets_note-0",
+                "usage": "financial_assets_note",
+                "section": "第三节 管理层讨论与分析",
+                "title": "利润表项目",
+                "text": "公允价值变动损益 42,509,240.73 7.73% 主要为 交易性金融资产及其他非流动金融资产公允价值变动。",
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
         report_year=2025,
         report_type="annual",
         evidence_pack=evidence_pack,
@@ -1917,8 +2370,8 @@ def test_max_cards_per_type_and_max_total_cards_truncation_is_deterministic():
     assert sum(1 for c in cards if c["card_type"] == "financial_note") <= 2
     # Global cap.
     assert len(cards) <= 5
-    # Fixed order: business_model, operation_update, management_market_view, ...
-    expected_order = ["business_model", "management_market_view", "rd_product_progress", "financial_note"]
+    # Fixed order follows the card type priority.
+    expected_order = ["business_model", "management_market_view", "market_outlook", "rd_product_progress", "financial_note"]
     observed_types = [c["card_type"] for c in cards]
     for i, expected in enumerate(expected_order):
         if i < len(observed_types):
