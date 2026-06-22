@@ -220,6 +220,7 @@ _TABLE_STRUCTURE_TOKENS = (
     "库存量",
     "报告期投资额",
     "上年同期投资额",
+    "变动幅度",
     "适用 □不适用",
     "适用 □不适用",
 )
@@ -305,6 +306,7 @@ _TECH_TERM_HINTS = (
 
 _MIN_EXCERPT_LENGTH = 40
 _MAX_EXCERPT_LENGTH = 500
+_SENTENCE_BOUNDARY_LOOKAHEAD = 120
 
 
 def build_periodic_report_narrative_evidence_cards(
@@ -355,7 +357,7 @@ def build_periodic_report_narrative_evidence_cards(
                 "reason": "length_or_quality",
             })
             continue
-        dedupe_scope = _dedupe_scope(card_type)
+        dedupe_scope = _dedupe_scope(card_type, block_id)
         seen_fingerprints.setdefault(dedupe_scope, [])
         excerpt_key = (dedupe_scope, excerpt)
         if excerpt_key in seen_excerpts:
@@ -392,9 +394,11 @@ def build_periodic_report_narrative_evidence_cards(
     )
 
 
-def _dedupe_scope(card_type: str) -> str:
+def _dedupe_scope(card_type: str, block_id: str = "") -> str:
     if card_type in {"business_model", "rd_product_progress"}:
         return "business_and_rd"
+    if str(block_id).startswith("future_strategy-") and card_type in {"management_market_view", "market_outlook"}:
+        return "market_view"
     return card_type
 
 
@@ -475,6 +479,7 @@ def _max_excerpt_length(card_type: str = "") -> int:
 def _normalize_excerpt(text: str, card_type: str = "") -> str:
     excerpt = re.sub(r"\s+", " ", text).strip()
     excerpt = _trim_product_feature_table_header(excerpt)
+    excerpt = _strip_applicability_markers(excerpt)
     max_chars = _max_excerpt_length(card_type)
     if len(excerpt) > max_chars:
         excerpt = _truncate_at_sentence_boundary(excerpt, max_chars)
@@ -503,12 +508,33 @@ def _truncate_at_sentence_boundary(text: str, max_chars: int) -> str:
     window = text[:max_chars].rstrip()
     cut_positions = [
         window.rfind(mark)
-        for mark in ("。", "；", ";")
+        for mark in ("。", "；", ";", "！", "？")
     ]
     cut = max(cut_positions)
     if cut >= _MIN_EXCERPT_LENGTH:
         return window[: cut + 1].rstrip()
+    lookahead = text[: max_chars + _SENTENCE_BOUNDARY_LOOKAHEAD].rstrip()
+    next_cuts = [
+        pos
+        for pos in (lookahead.find(mark, max_chars) for mark in ("。", "；", ";", "！", "？"))
+        if pos >= 0
+    ]
+    if next_cuts:
+        return lookahead[: min(next_cuts) + 1].rstrip()
     return text[: max_chars - 1].rstrip() + "…"
+
+
+def _strip_applicability_markers(excerpt: str) -> str:
+    patterns = (
+        r"[√☑■]\s*适用\s*□\s*不适用",
+        r"□\s*适用\s*[√☑■]\s*不适用",
+        r"[√☑■]\s*不适用\s*□\s*适用",
+        r"□\s*不适用\s*[√☑■]\s*适用",
+    )
+    cleaned = excerpt
+    for pattern in patterns:
+        cleaned = re.sub(pattern, "", cleaned)
+    return re.sub(r"\s+", " ", cleaned).strip(" 　：:，,")
 
 
 def _excerpt_fingerprint(excerpt: str) -> str:
@@ -532,7 +558,12 @@ def _is_near_duplicate_fingerprint(fingerprint: str, seen: Iterable[str]) -> boo
 
 
 def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
-    if len(excerpt) < _MIN_EXCERPT_LENGTH or len(excerpt) > _max_excerpt_length(card_type):
+    max_length = _max_excerpt_length(card_type)
+    if len(excerpt) < _MIN_EXCERPT_LENGTH:
+        return False
+    if len(excerpt) > max_length + _SENTENCE_BOUNDARY_LOOKAHEAD:
+        return False
+    if len(excerpt) > max_length and not excerpt.endswith(("。", "；", ";", "！", "？")):
         return False
     if _TOC_RE.search(excerpt):
         return False
@@ -711,6 +742,13 @@ def _looks_like_accounting_policy_boilerplate(snippet: str) -> bool:
             "相关假设和估计",
             "公允价值发生重大变化",
         ),
+        (
+            "借款费用资本化",
+            "确认原则",
+            "符合资本化条件",
+            "投资性房地产",
+            "存货等资产",
+        ),
     )
     return any(
         sum(1 for token in token_group if token in snippet or token in compact_snippet) >= 3
@@ -742,6 +780,8 @@ def _looks_like_applicability_checkbox_fragment(snippet: str) -> bool:
     compact_snippet = _compact_text(snippet)
     has_checkbox = any(mark in compact_snippet for mark in ("□", "", "☑", "■", "√"))
     if has_checkbox and compact_snippet.count("适用") >= 4:
+        return True
+    if compact_snippet.count("适用") >= 4 and "关键技术或性能指标" in compact_snippet:
         return True
     return (
         has_checkbox

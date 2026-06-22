@@ -514,6 +514,36 @@ def test_financial_note_rejects_measurement_policy_boilerplate():
     assert result["cards"] == []
 
 
+def test_financial_note_rejects_borrowing_cost_capitalization_policy_boilerplate():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "借款费用",
+                "text": (
+                    "21、借款费用 1. 借款费用资本化的确认原则 "
+                    "本公司发生的借款费用，可直接归属于符合资本化条件的资产的购建或者生产的，"
+                    "予以资本化，计入相关资产成本；其他借款费用，在发生时根据其发生额确认为费用，计入当期损益。"
+                    "符合资本化条件的资产，是指需要经过相当长时间的购建或者生产活动才能达到预定可使用"
+                    "或者可销售状态的固定资产、投资性房地产和存货等资产。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="301269",
+        stock_name="华大九天",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
 def test_financial_note_rejects_held_for_sale_policy_without_company_specific_context():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -815,6 +845,39 @@ def test_multiple_applicability_checkbox_fragment_is_rejected():
     assert result["cards"] == []
 
 
+def test_applicability_checkbox_marker_is_stripped_from_useful_strategy_excerpt():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "公司发展战略",
+                "text": (
+                    "(二) 公司发展战略 √适用 □不适用 公司以成为全球高端封装材料引领者为愿景，"
+                    "围绕技术创新、突破增长、高效运营、国际拓展四个战略主题，"
+                    "持续为客户、员工、股东与社会创造长期价值。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] in {"management_market_view", "market_outlook"}]
+    assert cards
+    assert "√适用" not in cards[0]["source_excerpt"]
+    assert "□不适用" not in cards[0]["source_excerpt"]
+    assert "全球高端封装材料引领者" in cards[0]["source_excerpt"]
+
+
 def test_management_market_view_keeps_competitive_position_text():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -997,6 +1060,37 @@ def test_business_model_excerpt_is_not_duplicated_as_rd_progress_card():
 
     assert any(c["card_type"] == "business_model" for c in result["cards"])
     assert not any(c["card_type"] == "rd_product_progress" for c in result["cards"])
+
+
+def test_identical_market_outlook_and_management_view_is_deduplicated_once():
+    text = (
+        "未来先进封装占比将逐步超越传统封装，Chiplet、2.5D、3D、HBM 等技术路线带动材料需求提升，"
+        "国产替代从单点突破迈向全产业链系统性突破，市场规模预计持续增长。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "future_strategy-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "未来发展战略",
+                "text": text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    matching_cards = [c for c in result["cards"] if text in c["source_excerpt"]]
+    assert len(matching_cards) == 1
+    assert matching_cards[0]["card_type"] in {"management_market_view", "market_outlook"}
 
 
 def test_default_per_type_limit_allows_more_than_three_clean_cards():
@@ -2327,6 +2421,43 @@ def test_long_excerpt_prefers_shorter_complete_sentence_over_mid_sentence_cut():
     excerpt = result["cards"][0]["source_excerpt"]
     assert excerpt == complete_sentence
     assert not excerpt.endswith("…")
+
+
+def test_long_excerpt_may_extend_slightly_to_reach_nearby_sentence_boundary():
+    prefix = (
+        "公司将围绕高端封装材料持续推进客户导入、批量供货、国产化验证和核心产品平台建设，"
+        "提升先进封装材料在头部客户中的覆盖能力，"
+    )
+    filler = "并持续加强研发协同、供应链韧性、质量管控、交付体系和海外客户服务能力，" * 12
+    sentence = prefix + filler + "推动公司在先进封装材料领域的竞争力稳步提升。"
+    assert len(sentence) > 500
+    assert sentence.index("。") <= 620
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "competitive_position-0",
+                "usage": "future_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "竞争力",
+                "text": sentence + "后续第二句不应进入摘录。",
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"]
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert excerpt.endswith("。")
+    assert not excerpt.endswith("…")
+    assert "后续第二句" not in excerpt
 
 
 def test_stable_id_and_order_across_repeated_calls():
