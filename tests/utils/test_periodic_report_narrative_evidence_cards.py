@@ -348,6 +348,81 @@ def test_margin_competitiveness_keeps_later_product_margin_sentence():
     assert "毛利率基本持平" in cards[0]["source_excerpt"]
 
 
+def test_margin_competitiveness_strips_debang_like_report_page_marker():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务分产品情况",
+                "text": (
+                    "随着半导体行业人工智能、AI 算力的蓬勃发展，公司实现该板块营业收入 "
+                    "25,039.29 万元，同比增长 84.81%，烟台德邦科技股份有限公司 2025 年年度报告 > 40 /252 "
+                    "毛利率同比提升 2.98 个百分点；智能终端封装材料全年实现营收 38,325.99 万元，"
+                    "同比增长 48.16%，受供应链价格波动等因素影响，毛利率同比小幅降低。"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    cards = [c for c in result["cards"] if c["card_type"] == "margin_competitiveness"]
+    assert len(cards) >= 1
+    excerpt = cards[0]["source_excerpt"]
+    assert "烟台德邦科技股份有限公司 2025 年年度报告" not in excerpt
+    assert "> 40 /252" not in excerpt
+    assert "毛利率同比提升 2.98 个百分点" in excerpt
+    assert "毛利率同比小幅降低" in excerpt
+
+
+def test_rejects_debang_like_dangling_start_excerpt():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "profitability_commentary-1",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主营业务分产品情况",
+                "text": (
+                    "优化等举措，传导消化了一部分降价压力，但仍有部分降价没有传导消化，"
+                    "导致该业务板块平均毛利同比下降 3.66 个百分点。"
+                ),
+            },
+            {
+                "id": "competitive_position-0",
+                "usage": "competitive_position",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业地位",
+                "text": (
+                    "续研发与人才壁垒，行业需要跨学科复合型人才与长期高强度研发投入，"
+                    "形成技术、专利、品牌的综合护城河。"
+                ),
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688035",
+        stock_name="德邦科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    excerpts = [card["source_excerpt"] for card in result["cards"]]
+    assert not any(excerpt.startswith(("优化等举措", "续研发")) for excerpt in excerpts)
+
+
 def test_financial_note_card_from_impairment_note():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",

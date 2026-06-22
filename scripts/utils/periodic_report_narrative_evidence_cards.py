@@ -225,6 +225,15 @@ _TABLE_STRUCTURE_TOKENS = (
     "适用 □不适用",
     "适用 □不适用",
 )
+_REPORT_PAGE_MARKER_RE = re.compile(
+    r"[\u4e00-\u9fa5A-Za-z0-9（）()·]{2,50}\s+"
+    r"\d{4}\s*年\s*年度报告(?:全文)?\s*>\s*\d+\s*/\s*\d+"
+)
+_DANGLING_START_PATTERNS = (
+    "优化等举措",
+    "续研发",
+    "力、众多",
+)
 
 _GENERIC_GLOSSARY_TERMS = {
     "A股",
@@ -502,6 +511,7 @@ def _max_excerpt_length(card_type: str = "") -> int:
 
 def _normalize_excerpt(text: str, card_type: str = "") -> str:
     excerpt = re.sub(r"\s+", " ", text).strip()
+    excerpt = _strip_report_page_markers(excerpt)
     excerpt = _trim_product_feature_table_header(excerpt)
     excerpt = _strip_applicability_markers(excerpt)
     max_chars = _max_excerpt_length(card_type)
@@ -546,6 +556,11 @@ def _truncate_at_sentence_boundary(text: str, max_chars: int) -> str:
     if next_cuts:
         return lookahead[: min(next_cuts) + 1].rstrip()
     return text[: max_chars - 1].rstrip() + "…"
+
+
+def _strip_report_page_markers(excerpt: str) -> str:
+    cleaned = _REPORT_PAGE_MARKER_RE.sub("", excerpt)
+    return re.sub(r"\s+", " ", cleaned).strip(" 　：:，,")
 
 
 def _strip_applicability_markers(excerpt: str) -> str:
@@ -607,6 +622,8 @@ def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
         return False
     if _looks_like_definition_fragment(excerpt):
         return False
+    if _looks_like_dangling_start_excerpt(excerpt):
+        return False
     if card_type != "financial_note" and _looks_like_risk_paragraph(excerpt):
         return False
     if _looks_like_page_bullet_fragment(excerpt):
@@ -620,6 +637,11 @@ def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
     if _contains_llm_phrase(excerpt):
         return False
     return True
+
+
+def _looks_like_dangling_start_excerpt(excerpt: str) -> bool:
+    text = str(excerpt or "").strip()
+    return any(text.startswith(pattern) for pattern in _DANGLING_START_PATTERNS)
 
 
 def _looks_like_audit_matter_boilerplate(snippet: str) -> bool:
