@@ -666,6 +666,8 @@ _HK_NARRATIVE_KEYWORDS: Dict[str, Dict[str, Tuple[str, ...]]] = {
             "Robotaxi", "L2-L4", "業務展望", "业务展望", "展望未來", "展望未来",
             "平台型公司", "AI平台", "AI 平台", "智能體", "智能体",
             "Token吞吐能力", "智能供給", "智能供给", "應用層", "应用层",
+            "產業格局", "产业格局", "技術壁壘", "技术壁垒",
+            "產業生態格局", "产业生态格局",
         ),
         "support": (
             "展望", "未來", "未来", "規模化", "规模化", "商業化", "商业化",
@@ -673,7 +675,7 @@ _HK_NARRATIVE_KEYWORDS: Dict[str, Dict[str, Tuple[str, ...]]] = {
             "佈局", "布局", "機遇", "机遇", "放量", "L3", "L4",
             "模型能力", "變現模式", "变现模式", "商業化佈局", "商业化布局",
             "全球市場", "全球市场", "產業上限", "产业上限", "辦公", "办公",
-            "編程", "编程",
+            "編程", "编程", "晶圓代工", "晶圆代工", "半導體產業", "半导体产业",
         ),
     },
     "hk_financial_commentary": {
@@ -761,12 +763,47 @@ _HK_NARRATIVE_NOISE_TOKENS = (
     "非《国际财务报告准则》计量指标",
     "主要風險及不確定因素",
     "主要风险及不确定因素",
+    "財務風險",
+    "财务风险",
+    "業績波動風險",
+    "业绩波动风险",
+    "毛利率和利潤波動等風險",
+    "毛利率和利润波动等风险",
     "氣候變化風險",
     "气候变化风险",
     "風險 ╱ 機遇",
     "风险 ╱ 机遇",
+    "前瞻性陳述的風險聲明",
+    "前瞻性陈述的风险声明",
+    "以識別前瞻性陳述",
+    "以识别前瞻性陈述",
+    "該等前瞻性陳述乃根據",
+    "该等前瞻性陈述乃根据",
     "極端天氣",
     "极端天气",
+    "五年業績概要",
+    "五年业绩概要",
+    "五年財務概要",
+    "五年财务概要",
+    "主要財務指標",
+    "主要财务指标",
+    "利潤表及現金流量表相關科目變動分析表",
+    "利润表及现金流量表相关科目变动分析表",
+    "損益數據",
+    "损益数据",
+    "合併損益及其他綜合收益表",
+    "合并损益及其他综合收益表",
+    "合併損益表",
+    "合并损益表",
+    "綜合損益及其他綜合收益表",
+    "综合损益及其他综合收益表",
+    "以下各方應佔年內利潤",
+    "以下各方应占年内利润",
+    "加權平均權益報酬率",
+    "加权平均权益报酬率",
+    "EBITDA利潤率",
+    "EBITDA利润率",
+    "每股盈利",
     "金融資產的收益及虧損",
     "金融资产的收益及亏损",
     "公允價值計量且其變動計入其他全面收益",
@@ -812,7 +849,34 @@ def _strip_hk_page_markers(text: str) -> str:
 
 
 def _is_hk_narrative_noise(para: str) -> bool:
-    return any(token in para for token in _HK_NARRATIVE_NOISE_TOKENS)
+    if any(token in para for token in _HK_NARRATIVE_NOISE_TOKENS):
+        return True
+    return _looks_like_hk_project_table_fragment(para)
+
+
+def _looks_like_hk_project_table_fragment(para: str) -> bool:
+    compact = re.sub(r"\s+", "", para)
+    has_project_table_anchor = (
+        bool(re.search(r"\d+(?:\.\d+)?(?:納米|纳米|微米|nm|NM|μm|um)", compact))
+        or "研發項目表" in compact
+        or "研发项目表" in compact
+        or "持續研發項" in compact
+        or "持续研发项" in compact
+    )
+    if not has_project_table_anchor:
+        return False
+    table_markers = (
+        "PDK",
+        "中國大陸領先",
+        "中国大陆领先",
+        "主要應用",
+        "主要应用",
+        "研發項",
+        "研发项",
+        "工藝平台",
+        "工艺平台",
+    )
+    return sum(1 for token in table_markers if token in compact) >= 3
 
 
 def _is_valid_narrative_paragraph(
@@ -838,6 +902,14 @@ def _classify_hk_narrative_paragraph(para: str) -> Tuple[str, int]:
         support = sum(1 for token in spec["support"] if token in para)
         if strong == 0 and support < 2:
             continue
+        if usage == "hk_product_progress" and strong == 0:
+            progress_anchors = (
+                "發佈", "发布", "推出", "完成", "導入", "导入", "量產", "量产",
+                "流片", "送樣", "送样", "客戶驗證", "客户验证", "搭載", "搭载",
+                "定點", "定点", "新產品", "新产品",
+            )
+            if not any(anchor in para for anchor in progress_anchors):
+                continue
         score = strong * 3 + support
         if usage == "hk_market_outlook" and forward:
             score += 6

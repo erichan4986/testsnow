@@ -212,6 +212,185 @@ def test_rd_product_progress_card_from_debang_like_rd_progress_block():
     assert "小批量交付" in cards[0]["source_excerpt"]
 
 
+def test_rd_platform_capability_maps_to_technology_platform_not_product_progress():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_strategy-0",
+                "usage": "management_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "核心竞争力分析",
+                "text": (
+                    "公司的研发中心根据总体战略，以客户需求为导向，持续提升工艺研发和创新能力、"
+                    "强化平台建设、升级产品性能。研发项目在初期即充分对标产品的技术要求，"
+                    "有效利用研发资源、确保产出质量与可靠性、积极缩短研发到量产的周期。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    card_types = [card["card_type"] for card in result["cards"]]
+    assert "technology_platform" in card_types
+    assert "rd_product_progress" not in card_types
+    card = next(c for c in result["cards"] if c["card_type"] == "technology_platform")
+    assert card["title"] == "技术平台与研发能力"
+    assert "强化平台建设" in card["source_excerpt"]
+
+
+def test_generic_business_model_with_technology_words_does_not_map_to_technology_platform():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "product_capacity_profile-0",
+                "usage": "product_capacity_profile",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主要经营模式",
+                "text": (
+                    "公司主要从事基于多种技术节点和技术平台的集成电路晶圆代工业务，"
+                    "并提供设计服务与 IP 支持、光掩模制造等配套服务。"
+                ),
+            },
+            {
+                "id": "product_capacity_profile-1",
+                "usage": "product_capacity_profile",
+                "section": "第三节 管理层讨论与分析",
+                "title": "经营模式",
+                "text": (
+                    "公司结合市场供需情况、上下游发展状况、公司主营业务、主要产品、核心技术、"
+                    "自身发展阶段等因素，形成了目前的晶圆代工模式。报告期内，上述经营模式的关键因素未发生重大变化。"
+                ),
+            },
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert not any(card["card_type"] == "technology_platform" for card in result["cards"])
+
+
+def test_core_technology_system_maps_to_technology_platform_not_product_progress():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "rd_product_progress-0",
+                "usage": "rd_product_progress",
+                "section": "第三节 管理层讨论与分析",
+                "title": "核心技术与研发进展",
+                "text": (
+                    "中芯国际拥有全方位一体化的集成电路晶圆代工核心技术体系，"
+                    "快速有效地帮助客户实现新产品的导入验证到稳定量产，"
+                    "为客户提供一站式晶圆代工和技术服务。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert any(card["card_type"] == "technology_platform" for card in result["cards"])
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+def test_generic_risk_mass_production_process_does_not_map_to_product_progress():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "rd_product_progress-0",
+                "usage": "rd_product_progress",
+                "section": "第三节 管理层讨论与分析",
+                "title": "生产流程",
+                "text": (
+                    "风险量产阶段主要包括产品良率提升、生产工艺能力提升、生产产能拓展等。"
+                    "风险量产阶段完成且上述各项交付指标达标后，进入批量生产阶段。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+def test_procurement_supplier_onboarding_does_not_map_to_product_progress():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "product_capacity_profile-0",
+                "usage": "product_capacity_profile",
+                "section": "第三节 管理层讨论与分析",
+                "title": "采购模式",
+                "text": (
+                    "公司主要向供应商采购集成电路晶圆代工及配套服务所需的物料、零备件、设备、软件及技术服务等。"
+                    "公司建立了供应商准入机制、供应商考核与评价机制及供应商能力发展与提升机制，"
+                    "在与主要供应商保持长期合作关系的同时，兼顾新供应商的导入与培养。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+def test_rd_team_capability_maps_to_technology_platform_not_product_progress():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "management_strategy-0",
+                "usage": "management_strategy",
+                "section": "第三节 管理层讨论与分析",
+                "title": "研发团队优势",
+                "text": "公司通过多年集成电路研发实践，组建了高素质的核心管理团队和专业化的骨干研发队伍。",
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert any(card["card_type"] == "technology_platform" for card in result["cards"])
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
 def test_business_model_and_rd_product_progress_do_not_dedupe_each_other():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -2809,6 +2988,256 @@ def test_candidate_cards_keep_valid_unselected_cards_for_maintenance():
 
 
 # ---------------------------------------------------------------------------
+# A-share narrative card noise filters
+# ---------------------------------------------------------------------------
+
+def _build_ashare_cards(blocks):
+    return build_periodic_report_narrative_evidence_cards(
+        stock_code="688981",
+        stock_name="中芯国际",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={
+            "schema_version": "periodic_report_evidence_pack.v1",
+            "blocks": blocks,
+        },
+    )
+
+
+def test_ashare_esg_governance_strategy_does_not_generate_market_view_cards():
+    result = _build_ashare_cards([
+        {
+            "id": "future_strategy-0",
+            "usage": "future_strategy",
+            "section": "第三节 管理层讨论与分析",
+            "title": "公司发展战略",
+            "text": (
+                "研究公司发展战略，制定公司 ESG 策略、目标及发展方向。"
+                "由 ESG 指导委员会牵头，统筹推进年度 ESG 报告编制、合规治理和信息披露工作。"
+            ),
+        }
+    ])
+
+    assert not any(
+        card["card_type"] in {"management_market_view", "market_outlook"}
+        for card in result["cards"]
+    )
+
+
+def test_ashare_esg_disclosure_fragment_does_not_generate_market_view_cards():
+    result = _build_ashare_cards([
+        {
+            "id": "future_strategy-0",
+            "usage": "future_strategy",
+            "section": "第三节 管理层讨论与分析",
+            "title": "公司发展战略",
+            "text": (
+                "二十二、ESG 整体工作成果 本年度具有行业特色的 ESG 实践做法。"
+                "中芯国际高度重视 ESG 信息的披露，遵循了行业相关的 ESG 信息披露标准。"
+            ),
+        }
+    ])
+
+    assert not any(
+        card["card_type"] in {"management_market_view", "market_outlook"}
+        for card in result["cards"]
+    )
+
+
+def test_ashare_operating_mode_snippets_do_not_generate_market_outlook_cards():
+    result = _build_ashare_cards([
+        {
+            "id": "industry_outlook-0",
+            "usage": "industry_outlook",
+            "section": "第三节 管理层讨论与分析",
+            "title": "行业情况",
+            "text": (
+                "4.生产模式 公司按市场需求规划产能，并根据客户订单安排生产。"
+                "5.营销及销售模式 公司采用多种营销方式，主动联系并拜访目标客户，"
+                "与客户签订订单并提供符合其需求的解决方案。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "market_outlook" for card in result["cards"])
+
+
+def test_ashare_industry_trend_does_not_generate_rd_product_progress_card():
+    result = _build_ashare_cards([
+        {
+            "id": "product_capacity_profile-0",
+            "usage": "product_capacity_profile",
+            "section": "第三节 管理层讨论与分析",
+            "title": "产品及行业情况",
+            "text": (
+                "从产业格局来看，晶圆代工环节持续凸显战略价值，"
+                "功能安全认证体系和先进工艺平台共同推动产业生态格局演进。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+def test_ashare_industry_barrier_text_does_not_generate_rd_product_progress_card():
+    result = _build_ashare_cards([
+        {
+            "id": "product_capacity_profile-1",
+            "usage": "product_capacity_profile",
+            "section": "第三节 管理层讨论与分析",
+            "title": "行业壁垒",
+            "text": (
+                "晶圆代工行业作为半导体产业链的核心环节，技术壁垒、人才储备、持续资本投入，"
+                "形成了较高的准入门槛。该领域的竞争焦点集中在纳米尺度工艺精度控制、"
+                "新型半导体材料开发应用以及超大规模制造系统的协同优化能力。"
+                "全球领先企业维持较高的研发投入强度，持续巩固技术优势。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+def test_generic_industry_barrier_with_customer_validation_cycle_does_not_generate_rd_product_progress():
+    result = _build_ashare_cards([
+        {
+            "id": "rd_product_progress-2",
+            "usage": "rd_product_progress",
+            "section": "第三节 管理层讨论与分析",
+            "title": "行业壁垒",
+            "text": (
+                "安全规范、质量体系、国际认证严格，客户验证周期长，新进入者难以快速打开市场。"
+                "最后是持续研发与人才壁垒，行业需要跨学科复合型人才与长期高强度研发投入，"
+                "形成技术、专利、品牌的综合护城河。总体来看，高端装备制造业技术门槛高、"
+                "竞争格局集中，具备核心技术与产业链整合能力的企业将在未来竞争中占据优势。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+def test_dangling_product_progress_start_is_rejected():
+    result = _build_ashare_cards([
+        {
+            "id": "rd_product_progress-1",
+            "usage": "rd_product_progress",
+            "section": "第三节 管理层讨论与分析",
+            "title": "产品进展",
+            "text": (
+                "加速技术突破与客户验证，整体呈现从 “中低端替代 ”向“高端突破 ”的演进态势。"
+                "该段缺少前文主语和产业链对象，不能单独作为研发产品进展卡片。"
+            ),
+        }
+    ])
+
+    assert result["cards"] == []
+
+
+def test_ashare_audit_responsibility_boilerplate_does_not_generate_financial_note():
+    result = _build_ashare_cards([
+        {
+            "id": "audit_key_matters-0",
+            "usage": "audit_key_matters",
+            "section": "第十节 财务报告",
+            "title": "关键审计事项",
+            "text": (
+                "我们已经履行了本报告“注册会计师对财务报表审计的责任”部分阐述的责任，"
+                "包括与这些关键审计事项相关的责任。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "financial_note" for card in result["cards"])
+
+
+def test_ashare_business_combination_policy_does_not_generate_financial_note():
+    result = _build_ashare_cards([
+        {
+            "id": "inventory_note-0",
+            "usage": "inventory_note",
+            "section": "第十节 财务报告",
+            "title": "企业合并",
+            "text": (
+                "非同一控制下企业合并中所取得的被购买方可辨认资产、负债及或有负债"
+                "在收购日以公允价值计量，合并成本大于取得可辨认净资产公允价值份额的差额确认为商誉。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "financial_note" for card in result["cards"])
+
+
+def test_ashare_same_control_business_combination_policy_does_not_generate_financial_note():
+    result = _build_ashare_cards([
+        {
+            "id": "inventory_note-0",
+            "usage": "inventory_note",
+            "section": "第十节 财务报告",
+            "title": "企业合并",
+            "text": (
+                "参与合并的企业在合并前后均受同一方或相同的多方最终控制，且该控制并非暂时性的，"
+                "为同一控制下企业合并。合并方在同一控制下企业合并中取得的资产和负债，"
+                "包括最终控制方收购被合并方而形成的商誉，按合并日在最终控制方财务报表中的账面价值为基础进行相关会计处理。"
+                "合并方取得的净资产账面价值与支付的合并对价的账面价值的差额，"
+                "调整资本公积中的股本溢价，不足冲减的则调整留存收益。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "financial_note" for card in result["cards"])
+
+
+def test_ashare_governance_meeting_fragment_does_not_generate_financial_note():
+    result = _build_ashare_cards([
+        {
+            "id": "governance_dissent-0",
+            "usage": "governance_dissent",
+            "section": "第四节 公司治理",
+            "title": "董事会下设专门委员会情况",
+            "text": (
+                "现场结合通讯方式召开会议次数 6，董事对公司有关事项提出异议的情况 其他。"
+                "董事会下设专门委员会包括审计委员会、薪酬委员会、提名委员会和战略委员会。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "financial_note" for card in result["cards"])
+
+
+def test_ashare_importance_standard_table_line_does_not_generate_financial_note():
+    result = _build_ashare_cards([
+        {
+            "id": "inventory_note-0",
+            "usage": "inventory_note",
+            "section": "第十节 财务报告",
+            "title": "重要性标准",
+            "text": "5.重要性标准确定方法和选择依据 项目 重要性标准 重要的应收账款坏账准备收回或转回金额。",
+        }
+    ])
+
+    assert not any(card["card_type"] == "financial_note" for card in result["cards"])
+
+
+def test_ashare_rd_personnel_structure_table_does_not_generate_rd_product_progress():
+    result = _build_ashare_cards([
+        {
+            "id": "rd_investment_table-0",
+            "usage": "rd_investment_table",
+            "section": "第三节 管理层讨论与分析",
+            "title": "研发人员情况",
+            "text": (
+                "公司研发人员的数量（人） 2,403 2,330 研发人员数量占公司总人数的比例（%） 12.0 12.1。"
+                "研发人员学历结构 学历结构类别 学历结构人数 博士研究生 500 硕士研究生 1,336 本科及以下 567。"
+                "研发人员年龄结构 年龄结构类别 年龄结构人数 30 岁以下 994 30-40 岁 1,028。"
+            ),
+        }
+    ])
+
+    assert not any(card["card_type"] == "rd_product_progress" for card in result["cards"])
+
+
+# ---------------------------------------------------------------------------
 # HK narrative usage -> card_type mapping (Traditional/Simplified)
 # ---------------------------------------------------------------------------
 
@@ -2920,6 +3349,71 @@ def test_hk_business_overview_block_maps_to_business_model_card():
     result = _build_hk_cards(blocks)
     card_types = {card["card_type"] for card in result["cards"]}
     assert "business_model" in card_types
+
+
+def test_hk_near_duplicate_customer_ecosystem_cards_collapse_to_one_business_model():
+    blocks = [
+        {
+            "id": "hk_customer_ecosystem-0",
+            "usage": "hk_customer_ecosystem",
+            "section": "管理層討論及分析",
+            "title": "hk_customer_ecosystem",
+            "text": (
+                "除集成電路晶圓代工外，集團亦致力於打造平台式的生態服務模式，"
+                "為客戶提供設計服務與 IP 支持、光掩模製造等一站式配套服務，"
+                "並促進集成電路產業鏈的上下游協同。"
+            ),
+        },
+        {
+            "id": "hk_customer_ecosystem-1",
+            "usage": "hk_customer_ecosystem",
+            "section": "管理層討論及分析",
+            "title": "hk_customer_ecosystem",
+            "text": (
+                "除集成電路晶圓代工業務外，中芯國際亦致力於打造平台式的生態服務模式，"
+                "為客戶提供設計服務與 IP 支持、光掩模製造等一站式配套服務，"
+                "並促進集成電路產業鏈的上下游合作。"
+            ),
+        },
+        {
+            "id": "hk_customer_ecosystem-2",
+            "usage": "hk_customer_ecosystem",
+            "section": "管理層討論及分析",
+            "title": "hk_customer_ecosystem",
+            "text": (
+                "除集成電路晶圓代工外，中芯國際亦致力於打造平台式的生態服務模式，"
+                "為客戶提供設計服務與 IP 支持、光掩模製造等一站式配套服務，"
+                "並促進集成電路產業鏈上下游合作。"
+            ),
+        },
+    ]
+    result = _build_hk_cards(blocks)
+
+    business_cards = [card for card in result["cards"] if card["card_type"] == "business_model"]
+    assert len(business_cards) == 1
+
+
+def test_hk_bond_and_deferred_income_table_line_does_not_generate_financial_cards():
+    blocks = [
+        {
+            "id": "hk_financial_commentary-0",
+            "usage": "hk_financial_commentary",
+            "section": "綜合財務報表附註",
+            "title": "應付債券及遞延收益",
+            "text": (
+                "千美元本金額 600,000 應付債券折現 (3,232) 交易成本 (368) 596,400。"
+                "公司債券變動列示如下：千美元於2024年1月1日 599,115 利息開支 16,915 "
+                "確認應付利息 (10,772) 償還 (600,000)。"
+                "遞延收益政府資金收到後作遞延收益入賬，並於設備可使用年期內確認為其他經營收入。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+
+    assert not any(
+        card["card_type"] in {"margin_competitiveness", "financial_note"}
+        for card in result["cards"]
+    )
 
 
 def test_global_cap_reserves_slots_for_product_progress_not_only_business_model():

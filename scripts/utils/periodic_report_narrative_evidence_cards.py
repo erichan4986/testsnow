@@ -25,6 +25,7 @@ _CARD_TYPES = (
     "management_market_view",
     "market_outlook",
     "margin_competitiveness",
+    "technology_platform",
     "rd_product_progress",
     "financial_note",
 )
@@ -32,9 +33,9 @@ _CARD_TYPES = (
 _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "business_overview": ("business_model",),
     "business_model": ("business_model",),
-    "product_capacity_profile": ("business_model", "rd_product_progress"),
+    "product_capacity_profile": ("business_model", "technology_platform", "rd_product_progress"),
     "sales_certification_model": ("business_model",),
-    "management_strategy": ("operation_update", "rd_product_progress"),
+    "management_strategy": ("operation_update", "technology_platform", "rd_product_progress"),
     "management_market_view": ("management_market_view", "market_outlook"),
     "industry_outlook": ("management_market_view", "market_outlook"),
     "market_demand_outlook": ("management_market_view", "market_outlook"),
@@ -43,8 +44,8 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "profitability_commentary": ("management_market_view", "margin_competitiveness"),
     "segment_table": ("operation_update",),
     "production_sales_inventory_table": ("operation_update",),
-    "rd_product_progress": ("rd_product_progress",),
-    "rd_table": ("rd_product_progress",),
+    "rd_product_progress": ("technology_platform", "rd_product_progress"),
+    "rd_table": ("technology_platform", "rd_product_progress"),
     "rd_investment_table": ("rd_product_progress",),
     "cash_flow_capex_table": ("financial_note",),
     "asset_impairment_note": ("financial_note",),
@@ -57,7 +58,7 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "goodwill_note": ("financial_note",),
     # HK annual report narrative usages (material-layer, Traditional/Simplified).
     "hk_business_overview": ("business_model",),
-    "hk_product_progress": ("rd_product_progress", "business_model"),
+    "hk_product_progress": ("technology_platform", "rd_product_progress", "business_model"),
     "hk_customer_ecosystem": ("business_model",),
     "hk_market_outlook": ("market_outlook", "management_market_view"),
     "hk_financial_commentary": ("margin_competitiveness", "financial_note"),
@@ -221,6 +222,40 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "產品結構",
         "盈利能力",
     ),
+    "technology_platform": (
+        "核心技术",
+        "核心技術",
+        "技术体系",
+        "技術體系",
+        "研发平台",
+        "研發平台",
+        "研发中心",
+        "研發中心",
+        "平台建设",
+        "平台建設",
+        "工艺研发",
+        "工藝研發",
+        "工艺制程",
+        "工藝製程",
+        "研发流程",
+        "研發流程",
+        "技术验证",
+        "技術驗證",
+        "产品验证",
+        "產品驗證",
+        "研发资源",
+        "研發資源",
+        "技术壁垒",
+        "技術壁壘",
+        "技术平台",
+        "技術平台",
+        "研发团队",
+        "研發團隊",
+        "核心管理团队",
+        "核心管理團隊",
+        "骨干研发队伍",
+        "骨幹研發隊伍",
+    ),
     "rd_product_progress": (
         "研发",
         "专利",
@@ -306,6 +341,7 @@ _CARD_TYPE_TITLES: Dict[str, str] = {
     "management_market_view": "管理层市场判断",
     "market_outlook": "市场前景判断",
     "margin_competitiveness": "毛利率与竞争力",
+    "technology_platform": "技术平台与研发能力",
     "rd_product_progress": "研发与产品进展",
     "financial_note": "财务备注",
 }
@@ -343,6 +379,8 @@ _REPORT_PAGE_MARKER_RE = re.compile(
 )
 _DANGLING_START_PATTERNS = (
     "优化等举措",
+    "加速技术突破",
+    "加速技術突破",
     "续研发",
     "力、众多",
 )
@@ -570,6 +608,8 @@ def _collect_candidates(
             for card_type in card_types:
                 if card_type == "rd_product_progress" and _looks_like_generic_rd_business_snippet(snippet):
                     continue
+                if _should_skip_snippet_for_card_type(snippet, card_type):
+                    continue
                 markers = _CARD_TYPE_MARKERS.get(card_type, ())
                 score = _score_snippet(snippet, markers, matched_terms)
                 if score <= 0:
@@ -606,6 +646,244 @@ def _looks_like_generic_rd_business_snippet(snippet: str) -> bool:
         "专利",
     )
     return not any(token in snippet for token in progress_tokens)
+
+
+def _should_skip_snippet_for_card_type(snippet: str, card_type: str) -> bool:
+    """Filter snippets that contain relevant words but belong to another narrative role."""
+    if card_type in {"management_market_view", "market_outlook"}:
+        if _looks_like_esg_governance_fragment(snippet):
+            return True
+    if card_type == "market_outlook" and _looks_like_operating_mode_fragment(snippet):
+        return True
+    if card_type == "technology_platform" and _looks_like_industry_trend_not_product_progress(snippet):
+        return True
+    if card_type == "technology_platform" and not _looks_like_technology_platform_capability(snippet):
+        return True
+    if card_type == "rd_product_progress" and _looks_like_technology_platform_capability(snippet):
+        return True
+    if card_type == "rd_product_progress" and _looks_like_procurement_supplier_onboarding(snippet):
+        return True
+    if card_type == "rd_product_progress" and _looks_like_generic_industry_barrier_fragment(snippet):
+        return True
+    if card_type == "rd_product_progress" and _looks_like_industry_trend_not_product_progress(snippet):
+        return True
+    if card_type == "rd_product_progress" and _looks_like_rd_personnel_structure_table(snippet):
+        return True
+    if card_type == "financial_note" and _looks_like_governance_meeting_fragment(snippet):
+        return True
+    if card_type == "financial_note" and _looks_like_importance_standard_table_line(snippet):
+        return True
+    if card_type in {"financial_note", "margin_competitiveness"} and _looks_like_debt_deferred_income_table_fragment(snippet):
+        return True
+    return False
+
+
+def _looks_like_esg_governance_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    if "ESG" in snippet and any(token in snippet or token in compact_snippet for token in ("信息披露", "披露标准", "ESG实践", "ESG整體工作成果", "ESG整体工作成果")):
+        return True
+    tokens = (
+        "ESG策略",
+        "ESG指导委员会",
+        "ESG報告",
+        "ESG报告",
+        "合规治理",
+        "信息披露工作",
+        "符合法律规范",
+    )
+    return "ESG" in snippet and sum(1 for token in tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_operating_mode_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    heading_tokens = ("生产模式", "营销及销售模式", "銷售模式", "按市场需求规划产能")
+    process_tokens = ("主动联系并拜访目标客户", "与客户签订订单", "客户订单安排生产", "提供符合其需求的解决方案")
+    if any(token in snippet or token in compact_snippet for token in heading_tokens):
+        return True
+    return sum(1 for token in process_tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_industry_trend_not_product_progress(snippet: str) -> bool:
+    trend_tokens = (
+        "从产业格局来看",
+        "所处行业情况",
+        "行业的发展阶段",
+        "产业生态格局",
+        "战略价值",
+        "晶圆代工行业作为",
+        "技术壁垒",
+        "准入门槛",
+        "竞争焦点",
+    )
+    if not any(token in snippet for token in trend_tokens):
+        return False
+    progress_tokens = (
+        "报告期内获得的研发成果",
+        "成功开发",
+        "新产品",
+        "在研项目",
+        "客户验证",
+        "小批量",
+        "量产",
+        "通过认证",
+        "专利",
+    )
+    return not any(token in snippet for token in progress_tokens)
+
+
+def _looks_like_generic_industry_barrier_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    barrier_tokens = (
+        "客户验证周期长",
+        "客戶驗證周期長",
+        "新进入者难以快速打开市场",
+        "新進入者難以快速打開市場",
+        "持续研发与人才壁垒",
+        "持續研發與人才壁壘",
+        "综合护城河",
+        "綜合護城河",
+        "高端装备制造业技术门槛高",
+        "高端裝備製造業技術門檻高",
+        "竞争格局集中",
+        "競爭格局集中",
+        "行业需要跨学科复合型人才",
+        "行業需要跨學科複合型人才",
+    )
+    return sum(1 for token in barrier_tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_technology_platform_capability(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    capability_tokens = (
+        "研发中心",
+        "研發中心",
+        "研发平台",
+        "研發平台",
+        "平台建设",
+        "平台建設",
+        "研发流程",
+        "研發流程",
+        "核心技术体系",
+        "核心技術體系",
+        "工艺研发和创新能力",
+        "工藝研發和創新能力",
+        "研发资源",
+        "研發資源",
+        "多年集成电路研发实践",
+        "多年集成電路研發實踐",
+        "核心管理团队",
+        "核心管理團隊",
+        "骨干研发队伍",
+        "骨幹研發隊伍",
+        "导入验证到稳定量产",
+        "導入驗證到穩定量產",
+        "工艺技术",
+        "工藝技術",
+        "量产能力",
+        "量產能力",
+        "技术要求",
+        "技術要求",
+        "质量与可靠性",
+        "質量與可靠性",
+    )
+    if sum(1 for token in capability_tokens if token in snippet or token in compact_snippet) < 2:
+        return False
+    milestone_tokens = (
+        "已通过",
+        "已通過",
+        "已进入",
+        "已進入",
+        "已实现",
+        "已實現",
+        "小批量供货",
+        "小批量交付",
+        "客户验证",
+        "客戶驗證",
+        "搭载",
+        "搭載",
+        "定点",
+        "定點",
+        "回片",
+        "送样",
+        "送樣",
+    )
+    return not any(token in snippet or token in compact_snippet for token in milestone_tokens)
+
+
+def _looks_like_procurement_supplier_onboarding(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    tokens = (
+        "采购模式",
+        "採購模式",
+        "供应商采购",
+        "供應商採購",
+        "供应商准入",
+        "供應商准入",
+        "供应商考核",
+        "供應商考核",
+        "供应商能力发展",
+        "供應商能力發展",
+        "供应商的导入与培养",
+        "供應商的導入與培養",
+    )
+    return sum(1 for token in tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_governance_meeting_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    tokens = (
+        "现场结合通讯方式召开会议次数",
+        "董事对公司有关事项提出异议",
+        "董事会下设专门委员会",
+        "审计委员会",
+        "薪酬委员会",
+        "提名委员会",
+        "战略委员会",
+    )
+    return sum(1 for token in tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_importance_standard_table_line(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    tokens = ("重要性标准确定方法", "项目重要性标准", "重要的应收账款坏账准备", "收回或转回金额")
+    return sum(1 for token in tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_rd_personnel_structure_table(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    tokens = (
+        "研发人员的数量",
+        "研发人员数量占公司总人数的比例",
+        "研发人员学历结构",
+        "学历结构类别",
+        "研发人员年龄结构",
+        "年龄结构类别",
+        "研发人员平均薪酬",
+    )
+    return sum(1 for token in tokens if token in snippet or token in compact_snippet) >= 2
+
+
+def _looks_like_debt_deferred_income_table_fragment(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    tokens = (
+        "本金額",
+        "应付债券",
+        "應付債券",
+        "債券變動列示",
+        "债券变动列示",
+        "確認應付利息",
+        "确认应付利息",
+        "遞延收益",
+        "递延收益",
+        "政府資金收到後",
+        "政府资金收到后",
+        "交易成本",
+        "償還",
+        "偿还",
+    )
+    return len(re.findall(r"-?\(?\d[\d,\.]*\)?", snippet)) >= 4 and sum(
+        1 for token in tokens if token in snippet or token in compact_snippet
+    ) >= 3
 
 
 def _score_snippet(snippet: str, markers: Iterable[str], dynamic_terms: Sequence[str] = ()) -> int:
@@ -705,7 +983,29 @@ def _is_near_duplicate_fingerprint(fingerprint: str, seen: Iterable[str]) -> boo
             return True
         if len(shorter) >= _MIN_EXCERPT_LENGTH and shorter in longer:
             return len(shorter) / len(longer) >= 0.72
+        if _near_duplicate_ngram_similarity(shorter, longer):
+            return True
     return False
+
+
+def _near_duplicate_ngram_similarity(left: str, right: str) -> bool:
+    if len(left) < 60 or len(right) < 60:
+        return False
+    left_grams = _char_ngrams(left, 3)
+    right_grams = _char_ngrams(right, 3)
+    if not left_grams or not right_grams:
+        return False
+    intersection = len(left_grams & right_grams)
+    union = len(left_grams | right_grams)
+    jaccard = intersection / union if union else 0.0
+    overlap = intersection / min(len(left_grams), len(right_grams))
+    return jaccard >= 0.74 and overlap >= 0.86
+
+
+def _char_ngrams(text: str, size: int) -> Set[str]:
+    if len(text) < size:
+        return {text} if text else set()
+    return {text[index : index + size] for index in range(len(text) - size + 1)}
 
 
 def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
@@ -762,6 +1062,8 @@ def _looks_like_audit_matter_boilerplate(snippet: str) -> bool:
         "关键审计事项是我们根据职业判断",
         "对财务报表整体进行审计",
         "不对这些事项单独发表意见",
+        "注册会计师对财务报表审计的责任",
+        "包括与这些关键审计事项相关的责任",
         "基于所实施的审计程序",
         "管理层在商誉减值测试评估中采用的关键假设",
         "了解、评估了与管理层计提商誉减值相关的内部控制",
@@ -892,12 +1194,29 @@ def _looks_like_accounting_policy_boilerplate(snippet: str) -> bool:
             "调整留存收益",
         ),
         (
+            "同一控制下企业合并",
+            "最终控制方",
+            "形成的商誉",
+            "财务报表中的账面价值",
+            "调整资本公积",
+            "调整留存收益",
+        ),
+        (
             "长期股权投资",
             "非同一控制下的企业合并",
             "购买日",
             "合并成本",
             "发行的权益性证券",
             "公允价值",
+        ),
+        (
+            "非同一控制下企业合并",
+            "可辨认资产",
+            "负债及或有负债",
+            "收购日",
+            "公允价值",
+            "合并成本",
+            "确认为商誉",
         ),
         (
             "后续计量及损益确认方法",

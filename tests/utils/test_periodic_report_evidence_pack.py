@@ -1375,3 +1375,105 @@ MINIMAX GROUP INC. 2025年度報告
 """
     blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
     assert "hk_financial_commentary" not in {block["usage"] for block in blocks}
+
+
+def test_hk_narrative_rejects_forward_looking_statement_disclaimer():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+前瞻性陳述的風險聲明
+本報告可能載有（除歷史數據外）前瞻性陳述。該等前瞻性陳述乃根據中芯國際對未來事件或績效的現行假設、期望、信念、計劃、目標及預測而作出。中芯國際使用包括（但不限於）「相信」、「預期」、「打算」、「估計」、「預計」、「預測」、「指標」、「展望」、「繼續」、「應該」、「或許」、「尋求」、「應當」、「計劃」、「可能」、「願景」、「目標」、「旨在」、「渴望」、「目的」、「預定」、「前景」和其他類似的表述，以識別前瞻性陳述。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_market_outlook" not in {block["usage"] for block in blocks}
+
+
+def test_hk_narrative_rejects_smic_five_year_summary_and_income_statement_tables():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+五年業績概要
+損益數據 千美元 截至12月31日止年度 2025年 2024年 2023年 2022年 2021年 收入 9,326,799 8,029,921 6,321,560 7,273,284 5,443,112 銷售成本 (7,370,200) (6,581,953) 毛利 1,956,599 1,447,968 研究及開發開支 (773,634) (765,279) 經營利潤 1,109,937 473,900。
+合併損益及其他綜合收益表
+截至2025年12月31日止年度（以千美元計值，每股數據除外）附註 2025年 2024年 收入 9,326,799 8,029,921 銷售成本 (7,370,200) (6,581,953) 毛利 1,956,599 1,447,968 研究及開發開支 (773,634) (765,279) 銷售及市場推廣開支 (42,963) (39,847) 一般及行政開支 (526,237) (580,041) 年內利潤 988,944 729,993。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_financial_commentary" not in {block["usage"] for block in blocks}
+
+
+def test_hk_narrative_keeps_smic_operating_margin_commentary():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+財務回顧
+這一年，我們持續聚焦主業發展，順利推進項目進展，經營業績再上新台階。面對外部複雜多變的環境，公司保持深耕晶圓製造長期戰略不動搖，穩步實施產能擴建，折合8吋標準邏輯的月產能規模超過了100萬片；全年實現銷售收入93.27億美元，同比增長16.2%，繼續鞏固全球純晶圓代工企業第二位置；產能利用率增至93.5%，同比增長8個百分點；在折舊大幅增長的情況下，毛利率增至21%，同比增加3個百分點。
+"""
+    blocks = _hk_usages(report)
+    assert "hk_financial_commentary" in blocks
+    assert "毛利率增至21%" in blocks["hk_financial_commentary"]["text"]
+
+
+def test_hk_narrative_rejects_dense_rd_project_table_rows():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+研發項目表
+3 65納米射頻絕緣體上硅 已發佈新一代平台PDK，性能較上 新一代平台繼續提升性能至業界一 中國大陸領先 主要應用於智能手機、WIFI工藝平台持續研發項 代平台大幅提升，導入客戶新產 流水平，完成更多客戶的新產品 等射頻前端模組中的射頻目 品測試驗證中。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_product_progress" not in {block["usage"] for block in blocks}
+
+
+def test_hk_narrative_rejects_smic_key_financial_indicator_tables():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+主要財務指標
+截至12月31日止年度 2025年較2025年 2024年 2024年（%） 2023年 毛利率 21.0% 18.0% 增加3.0個百分點 19.3% 淨利率 10.6% 9.1% 增加1.5個百分點 17.8% EBITDA利潤率 56.4% 54.5% 增加1.9個百分點 64.3% 基本每股收益 0.09美元 0.06美元 50.0 0.11美元 攤薄每股收益 0.09美元 0.06美元 50.0 0.11美元。
+利潤表及現金流量表相關科目變動分析表 千美元 截至12月31日止 2025年較2025年 2024年 2024年(%) 收入 9,326,799 8,029,921 16.2 銷售成本 (7,370,200) (6,581,953) 12.0 毛利 1,956,599 1,447,968 35.1。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_financial_commentary" not in {block["usage"] for block in blocks}
+
+
+def test_hk_narrative_rejects_dense_rd_project_table_rows_without_process_node():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+研發項目表
+7 中大尺寸高壓顯示驅動 新一代中尺寸顯示驅動平台進入規 持續開發新的器件和技術平台，推 中國大陸領先 主要應用於中大尺寸屏幕顯工藝平台持續研發項 模量產；新一代大尺寸顯示驅動 出PDK，產品導入和實現批量生 示驅動芯片和車載屏幕顯目 平台工藝開發完成，PDK製作中。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_product_progress" not in {block["usage"] for block in blocks}
+
+
+def test_hk_industry_trend_paragraph_does_not_become_product_progress_without_product_anchor():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+所處行業情況
+從產業格局來看，晶圓代工環節持續凸顯戰略價值。算力芯片領域，邏輯運算類芯片需求爆發式增長，推動設計工具，工藝製程與異構封裝技術持續反覆運算，構築起涵蓋IP核、EDA工具鏈、工藝製程的全方位技術壁壘；消費電子領域，整體市場溫和復甦，系統級芯片、感測器、存儲芯片等產品持續通過工藝優化與成本管控構建競爭優勢；汽車電子與工業工控領域，由於功能安全認證體系與長週期驗證要求，形成了高度集中的產業生態格局。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    usages = {block["usage"] for block in blocks}
+    assert "hk_product_progress" not in usages
+    assert "hk_market_outlook" in usages or "hk_business_overview" in usages
+
+
+def test_hk_narrative_rejects_financial_risk_disclosure_as_margin_commentary():
+    report = """
+中芯國際集成電路製造有限公司
+2025年年度報告
+管理層討論及分析
+財務風險
+1. 業績波動風險 宏觀經濟週期的波動，集成電路行業景氣度變化，境內外客戶的訂單調整，供應鏈的價格波動，廠務、電力、設備驗證等事件造成的非計劃性生產波動等，及持續的資本開支、折舊壓力和研發支出，可能導致公司在一定時期內面臨銷售收入、毛利率和利潤波動等風險。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_financial_commentary" not in {block["usage"] for block in blocks}
