@@ -1,4 +1,6 @@
+import hashlib
 import json
+import re
 import subprocess
 import sys
 from pathlib import Path
@@ -25,6 +27,11 @@ SAMPLE_REPORT = """
 
 存货跌价风险 公司存货主要由原材料、库存商品构成。报告期末，公司存货账面价值较高。
 """
+
+
+def _preview_source_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def test_build_preview_markdown_from_local_cache(tmp_path):
@@ -277,6 +284,116 @@ def test_maintenance_summary_classifies_same_hash_renamed_notes_as_moved(tmp_pat
     assert "`2025-annual-market-outlook-0.md`" in rendered
     assert "### Dangling existing notes" in rendered
     assert "`2025-annual-rd-product-progress-99.md`" in rendered
+
+
+def test_maintenance_summary_uses_candidate_cards_for_unselected_existing_notes(tmp_path):
+    knowledge_dir = tmp_path / "knowledge"
+    existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
+    existing_dir.mkdir(parents=True)
+    candidate_hash = "c" * 64
+    existing_note = existing_dir / "2025-annual-financial-note-4.md"
+    existing_note.write_text(
+        "---\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        f"source_excerpt_hash: \"{candidate_hash}\"\n"
+        "---\n",
+        encoding="utf-8",
+    )
+    cards_pack = {
+        "cards": [
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "business_model",
+                "card_id": "periodic:000001:2025:annual:narrative:business_model:0",
+                "source_excerpt_hash": "d" * 64,
+            }
+        ],
+        "candidate_cards": [
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "business_model",
+                "card_id": "periodic:000001:2025:annual:narrative:business_model:0",
+                "source_excerpt_hash": "d" * 64,
+            },
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "financial_note",
+                "card_id": "periodic:000001:2025:annual:narrative:financial_note:4",
+                "source_excerpt_hash": candidate_hash,
+            },
+        ],
+    }
+
+    summary = _build_knowledge_maintenance_summary(
+        cards_pack=cards_pack,
+        knowledge_base_dir=knowledge_dir,
+        stock_name="测试股",
+    )
+
+    assert summary["generated_cards"] == 1
+    assert summary["generated_note_candidates"] == 2
+    assert summary["refreshable_notes"] == 1
+    assert summary["dangling_notes"] == 0
+    assert existing_note not in summary["dangling_paths"]
+
+
+def test_maintenance_summary_classifies_legacy_note_body_hash_as_moved(tmp_path):
+    knowledge_dir = tmp_path / "knowledge"
+    existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
+    existing_dir.mkdir(parents=True)
+    excerpt = "公司高度重视研发投入，打造高精度、高安全性、高稳定性、超低功耗的芯片产品。"
+    legacy_note = existing_dir / "2025-annual-rd-product-progress-1.md"
+    legacy_note.write_text(
+        "---\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        "card_id: \"periodic:000001:2025:annual:narrative:rd_product_progress:1\"\n"
+        "---\n"
+        "\n"
+        "## Narrative Evidence\n"
+        "\n"
+        f"> {excerpt}\n",
+        encoding="utf-8",
+    )
+    cards_pack = {
+        "cards": [
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "rd_product_progress",
+                "card_id": "periodic:000001:2025:annual:narrative:rd_product_progress:0",
+                "source_excerpt_hash": "not-matching",
+            }
+        ],
+        "candidate_cards": [
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "rd_product_progress",
+                "card_id": "periodic:000001:2025:annual:narrative:rd_product_progress:0",
+                "source_excerpt_hash": "not-matching",
+            },
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "rd_product_progress",
+                "card_id": "periodic:000001:2025:annual:narrative:rd_product_progress:2",
+                "source_excerpt_hash": _preview_source_hash(excerpt),
+            },
+        ],
+    }
+
+    summary = _build_knowledge_maintenance_summary(
+        cards_pack=cards_pack,
+        knowledge_base_dir=knowledge_dir,
+        stock_name="测试股",
+    )
+
+    assert summary["moved_or_reindexed_notes"] == 1
+    assert summary["dangling_notes"] == 0
+    assert legacy_note in summary["moved_or_reindexed_paths"]
 
 
 def test_cli_write_knowledge_writes_tmp_notes(tmp_path):

@@ -9,6 +9,7 @@ or knowledge/.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import sys
@@ -170,9 +171,14 @@ def _build_knowledge_maintenance_summary(
     stock_name: str,
 ) -> dict:
     cards = [card for card in (cards_pack.get("cards") or []) if isinstance(card, dict)]
+    note_candidate_cards = [
+        card
+        for card in (cards_pack.get("candidate_cards") or cards)
+        if isinstance(card, dict)
+    ]
     generated_hashes = {
         str(card.get("source_excerpt_hash", "")).strip()
-        for card in cards
+        for card in note_candidate_cards
         if str(card.get("source_excerpt_hash", "")).strip()
     }
     generated_paths = {
@@ -181,7 +187,7 @@ def _build_knowledge_maintenance_summary(
             stock_name=stock_name,
             card=card,
         )
-        for card in cards
+        for card in note_candidate_cards
     }
     notes_dir = Path(knowledge_base_dir) / "10-Stocks" / _safe_dir_segment(stock_name) / "periodic_narrative_cards"
     existing_paths = set(notes_dir.glob("*.md")) if notes_dir.exists() else set()
@@ -243,7 +249,34 @@ def _read_note_source_excerpt_hash(path: Path) -> str:
     except OSError:
         return ""
     match = re.search(r"(?m)^source_excerpt_hash:\s*['\"]?([0-9a-f]{64})['\"]?\s*$", text)
-    return match.group(1) if match else ""
+    if match:
+        return match.group(1)
+    legacy_excerpt = _extract_legacy_note_excerpt(text)
+    if legacy_excerpt:
+        return _source_text_hash(legacy_excerpt)
+    return ""
+
+
+def _extract_legacy_note_excerpt(text: str) -> str:
+    match = re.search(
+        r"(?ms)^## Narrative Evidence\s*\n+(?P<body>.*?)(?:\n## |\Z)",
+        text,
+    )
+    if not match:
+        return ""
+    lines = []
+    for line in match.group("body").splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        if stripped.startswith(">"):
+            lines.append(stripped.lstrip("> ").strip())
+    return " ".join(lines).strip()
+
+
+def _source_text_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def _render_knowledge_plan(

@@ -135,6 +135,10 @@ SAMPLE_REPORT = """
 """
 
 
+def _texts_for_usage(pack: dict, usage: str) -> str:
+    return "\n".join(block["text"] for block in pack["blocks"] if block["usage"] == usage)
+
+
 def test_locates_management_discussion_without_company_specific_terms():
     pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
     usages = [b["usage"] for b in pack["blocks"]]
@@ -478,10 +482,11 @@ Chiplet 异构集成、2.5D/3D 封装、HBM 存储器封装等技术路径成为
 def test_extracts_debang_like_rd_progress_margin_and_advanced_packaging_outlook():
     pack = build_periodic_report_evidence_pack(DEBANG_LIKE_ADVANCED_PACKAGING_REPORT)
     blocks = {block["usage"]: block for block in pack["blocks"]}
+    rd_text = _texts_for_usage(pack, "rd_product_progress")
 
     assert "rd_product_progress" in blocks
-    assert "TIM1" in blocks["rd_product_progress"]["text"]
-    assert "小批量交付" in blocks["rd_product_progress"]["text"]
+    assert "TIM1" in rd_text
+    assert "小批量交付" in rd_text
 
     assert "profitability_commentary" in blocks
     assert "毛利率同比提升 2.98 个百分点" in blocks["profitability_commentary"]["text"]
@@ -509,11 +514,114 @@ def test_profitability_commentary_window_keeps_later_margin_sentences():
 """
     pack = build_periodic_report_evidence_pack(report)
     blocks = {block["usage"]: block for block in pack["blocks"]}
+    profitability_text = _texts_for_usage(pack, "profitability_commentary")
 
     assert "profitability_commentary" in blocks
-    assert "毛利率同比提升 2.98 个百分点" in blocks["profitability_commentary"]["text"]
-    assert "毛利率同比小幅降低" in blocks["profitability_commentary"]["text"]
-    assert "毛利率基本持平" in blocks["profitability_commentary"]["text"]
+    assert "毛利率同比提升 2.98 个百分点" in profitability_text
+    assert "毛利率同比小幅降低" in profitability_text
+    assert "毛利率基本持平" in profitability_text
+
+
+def test_profitability_commentary_window_keeps_preceding_subject_line():
+    report = """
+第三节 管理层讨论与分析
+主营业务分产品情况
+电池计量芯片收入较上年同比增加 36.01%，主要受益于新产品推出，带动了该产品
+的出货量增加。毛利率较上年同期增加 1.15%，本期价格策略没有显著变化，成本端因采购量上
+升进一步获得成本规模效应，毛利率整体保持稳中有升。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    blocks = {block["usage"]: block for block in pack["blocks"]}
+
+    assert "profitability_commentary" in blocks
+    text = blocks["profitability_commentary"]["text"]
+    assert "电池计量芯片收入较上年同比增加 36.01%" in text
+    assert not text.lstrip().startswith("的出货量增加")
+
+
+def test_keeps_multiple_high_value_keyword_blocks_for_same_usage():
+    report = """
+第三节 管理层讨论与分析
+主要产品
+公司主营产品以电池管理芯片为核心，涵盖电池安全芯片、电池计量芯片和充电管理等其他芯片。
+过渡说明 01
+过渡说明 02
+过渡说明 03
+过渡说明 04
+过渡说明 05
+过渡说明 06
+过渡说明 07
+过渡说明 08
+过渡说明 09
+过渡说明 10
+过渡说明 11
+过渡说明 12
+过渡说明 13
+过渡说明 14
+过渡说明 15
+过渡说明 16
+过渡说明 17
+过渡说明 18
+过渡说明 19
+过渡说明 20
+过渡说明 21
+过渡说明 22
+过渡说明 23
+过渡说明 24
+过渡说明 25
+主要产品
+依托于公司自主研发的 FastCali 电池电量算法，公司电池计量芯片可以快速计算电池状态，
+精准提供电池生命周期内电池荷电状态，并将误差控制在 1-3%。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    product_blocks = [block for block in pack["blocks"] if block["usage"] == "product_capacity_profile"]
+
+    assert len(product_blocks) >= 2
+    assert product_blocks[0]["id"] == "product_capacity_profile-0"
+    assert product_blocks[1]["id"] == "product_capacity_profile-1"
+    assert "FastCali" in product_blocks[1]["text"]
+
+
+def test_keyword_extraction_skips_overlapping_same_usage_windows():
+    report = """
+第三节 管理层讨论与分析
+主营业务分产品情况
+电池计量芯片收入较上年同比增加 36.01%，主要受益于新产品推出，带动了该产品
+的出货量增加。毛利率较上年同期增加 1.15%，成本端因采购量上升进一步获得成本规模效应，
+毛利率整体保持稳中有升。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    profitability_blocks = [block for block in pack["blocks"] if block["usage"] == "profitability_commentary"]
+
+    assert len(profitability_blocks) == 1
+
+
+def test_competitive_position_window_keeps_preceding_subject_line():
+    report = """
+第三节 管理层讨论与分析
+公司专注于电池管理芯片领域，经过多年深耕，进行了集中的技术和资源投入，
+凭借产品的供货能力和品牌认可度，取得良好的市场份额。目前，公司已成为电池管理芯片领域
+主要的国内供应商，产品均已应用于相关行业国内外知名客户的产品中，并获得广泛认可。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    competitive_text = _texts_for_usage(pack, "competitive_position")
+
+    assert "凭借产品的供货能力和品牌认可度，取得良好的市场份额" in competitive_text
+    assert not competitive_text.lstrip().startswith("主要的国内供应商")
+
+
+def test_market_demand_window_keeps_wrapped_year_subject_line():
+    report = """
+第三节 管理层讨论与分析
+世界半导体贸易统计预计 2025
+年全球半导体营收有望同比增长 22.5%。根据 IBS 报告，预计到 2030 年中国半导体市场规模将达到 7,389 亿美元，
+占全球市场的 54.69%，2020 年至 2030 年间中国半导体市场的年均复合增长率达 11.93%。
+"""
+    pack = build_periodic_report_evidence_pack(report)
+    market_text = _texts_for_usage(pack, "market_demand_outlook")
+
+    assert "世界半导体贸易统计预计 2025" in market_text
+    assert not market_text.lstrip().startswith("年全球半导体营收")
 
 
 def test_profitability_commentary_window_tolerates_jina_blank_lines():
@@ -991,11 +1099,12 @@ SHENGBANG_LIKE_FINANCIAL_METRICS_WITH_OPERATING_CF = """
 def test_extracts_product_capacity_profile_and_sales_certification_model():
     pack = build_periodic_report_evidence_pack(ZHONGJIAN_LIKE_PROFILE_AND_MODEL)
     by_usage = {b["usage"]: b for b in pack["blocks"]}
+    product_text = _texts_for_usage(pack, "product_capacity_profile")
     assert "product_capacity_profile" in by_usage
     assert "sales_certification_model" in by_usage
-    assert "ZT7" in by_usage["product_capacity_profile"]["text"]
-    assert "ZM40X" in by_usage["product_capacity_profile"]["text"]
-    assert "2000 吨级" in by_usage["product_capacity_profile"]["text"]
+    assert "ZT7" in product_text
+    assert "ZM40X" in product_text
+    assert "2000 吨级" in product_text
     assert "合格供方目录" in by_usage["sales_certification_model"]["text"]
     assert "定型认证" in by_usage["sales_certification_model"]["text"]
 

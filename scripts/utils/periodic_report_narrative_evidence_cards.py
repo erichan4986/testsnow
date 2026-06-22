@@ -61,6 +61,7 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
     "business_model": (
         "主营业务",
         "经营模式",
+        "主营产品",
         "产品主要应用",
         "主要产品",
         "客户",
@@ -384,19 +385,19 @@ def build_periodic_report_narrative_evidence_cards(
         )
 
     cards = _truncate_cards(typed_cards, max_cards_per_type, max_total_cards)
+    candidate_cards = _flatten_cards(typed_cards)
     return _envelope(
         stock_code=stock_code,
         stock_name=stock_name,
         report_year=report_year,
         report_type=report_type,
         cards=cards,
+        candidate_cards=candidate_cards,
         diagnostics=diagnostics,
     )
 
 
 def _dedupe_scope(card_type: str, block_id: str = "") -> str:
-    if card_type in {"business_model", "rd_product_progress"}:
-        return "business_and_rd"
     if str(block_id).startswith("future_strategy-") and card_type in {"management_market_view", "market_outlook"}:
         return "market_view"
     return card_type
@@ -409,6 +410,7 @@ def _envelope(
     report_year: int,
     report_type: str,
     cards: List[Dict[str, Any]],
+    candidate_cards: Optional[List[Dict[str, Any]]] = None,
     diagnostics: List[Dict[str, Any]],
 ) -> Dict[str, Any]:
     return {
@@ -418,6 +420,7 @@ def _envelope(
         "report_year": report_year,
         "report_type": report_type,
         "cards": cards,
+        "candidate_cards": candidate_cards if candidate_cards is not None else list(cards),
         "diagnostics": diagnostics,
     }
 
@@ -444,6 +447,8 @@ def _collect_candidates(
         for snippet in _split_snippets(text):
             matched_terms = _matched_dynamic_terms(snippet, dynamic_terms)
             for card_type in card_types:
+                if card_type == "rd_product_progress" and _looks_like_generic_rd_business_snippet(snippet):
+                    continue
                 markers = _CARD_TYPE_MARKERS.get(card_type, ())
                 score = _score_snippet(snippet, markers, matched_terms)
                 if score <= 0:
@@ -461,6 +466,25 @@ def _split_snippets(text: str) -> List[str]:
     normalized = re.sub(r"\s+", " ", text).strip()
     pieces = re.split(r"(?<=[。；;])\s+", normalized)
     return [piece.strip(" 　：:") for piece in pieces if len(piece.strip()) >= _MIN_EXCERPT_LENGTH]
+
+
+def _looks_like_generic_rd_business_snippet(snippet: str) -> bool:
+    if not any(token in snippet for token in ("研发与销售", "研发、生产、销售", "主营业务")):
+        return False
+    progress_tokens = (
+        "高精度",
+        "高安全性",
+        "超低功耗",
+        "算法",
+        "技术突破",
+        "新产品",
+        "产品升级",
+        "客户验证",
+        "小批量",
+        "量产",
+        "专利",
+    )
+    return not any(token in snippet for token in progress_tokens)
 
 
 def _score_snippet(snippet: str, markers: Iterable[str], dynamic_terms: Sequence[str] = ()) -> int:
@@ -1101,6 +1125,13 @@ def _truncate_cards(
         if len(cards) >= max_total_cards:
             break
     return cards[:max_total_cards]
+
+
+def _flatten_cards(typed_cards: Dict[str, List[Dict[str, Any]]]) -> List[Dict[str, Any]]:
+    cards: List[Dict[str, Any]] = []
+    for card_type in _CARD_TYPES:
+        cards.extend(typed_cards.get(card_type, []))
+    return cards
 
 
 def _select_diverse_cards(group: List[Dict[str, Any]], limit: int) -> List[Dict[str, Any]]:

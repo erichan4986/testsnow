@@ -212,6 +212,36 @@ def test_rd_product_progress_card_from_debang_like_rd_progress_block():
     assert "小批量交付" in cards[0]["source_excerpt"]
 
 
+def test_business_model_and_rd_product_progress_do_not_dedupe_each_other():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "product_capacity_profile-0",
+                "usage": "product_capacity_profile",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主要产品",
+                "text": (
+                    "公司主营产品以电池管理芯片为核心，具体包括电池安全芯片、电池计量芯片和充电管理等其他芯片。"
+                    "对模拟芯片设计和电池电化学领域，公司高度重视并进行长期的研发投入，"
+                    "从而打造出高精度、高安全性、高稳定性、超低功耗的芯片产品。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688325",
+        stock_name="赛微微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    card_types = [card["card_type"] for card in result["cards"]]
+    assert "business_model" in card_types
+    assert "rd_product_progress" in card_types
+
+
 def test_margin_competitiveness_card_from_debang_like_margin_commentary():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -2648,3 +2678,56 @@ def test_max_cards_per_type_and_max_total_cards_truncation_is_deterministic():
     for i, expected in enumerate(expected_order):
         if i < len(observed_types):
             assert observed_types[i] == expected
+
+
+def test_candidate_cards_keep_valid_unselected_cards_for_maintenance():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "section": "第三节 管理层讨论与分析",
+                "title": "业务",
+                "text": (
+                    "公司主要从事高性能碳纤维及相关产品的研发、生产和销售业务。"
+                    "产品广泛应用于航空航天、轨道交通、新能源等领域，客户覆盖国内主要主机厂。"
+                ),
+            },
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业",
+                "text": (
+                    "碳纤维行业正由规模竞争逐步转向价值竞争，高端航空航天用碳纤维需求保持稳健增长。"
+                    "低端通用级碳纤维市场产能过剩，价格承压明显。"
+                ),
+            },
+            {
+                "id": "profitability_commentary-0",
+                "usage": "profitability_commentary",
+                "section": "第三节 管理层讨论与分析",
+                "title": "盈利能力",
+                "text": (
+                    "公司高端产品出货占比提升，产品结构优化带动毛利率同比提升，"
+                    "规模效应和成本控制持续强化公司竞争力。"
+                ),
+            },
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        max_cards_per_type=2,
+        max_total_cards=1,
+    )
+
+    assert len(result["cards"]) == 1
+    assert len(result["candidate_cards"]) > len(result["cards"])
+    candidate_types = {card["card_type"] for card in result["candidate_cards"]}
+    assert "margin_competitiveness" in candidate_types

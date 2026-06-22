@@ -305,6 +305,21 @@ _TABLE_STRUCTURAL_TOKENS = {
 _TABLE_MAX_LINES = 70
 _RD_TABLE_MAX_LINES = 180
 _TABLE_MIN_DATA_LINES = 2
+_MULTI_BLOCK_USAGE_LIMITS = {
+    "product_capacity_profile": 3,
+    "rd_product_progress": 3,
+    "competitive_position": 2,
+    "market_demand_outlook": 2,
+    "profitability_commentary": 2,
+}
+_PRE_CONTEXT_LINES_BY_USAGE = {
+    "competitive_position": 3,
+    "market_demand_outlook": 4,
+    "profitability_commentary": 3,
+}
+_NO_SENTENCE_EXTENSION_USAGES = {
+    "product_capacity_profile",
+}
 
 
 def build_periodic_report_evidence_pack(
@@ -433,7 +448,7 @@ def _extract_section_blocks(text: str) -> List[Dict[str, Any]]:
 def _extract_keyword_blocks(text: str) -> List[Dict[str, Any]]:
     """Extract bounded evidence windows for high-value annual-report signals."""
     blocks: List[Dict[str, Any]] = []
-    seen_usage: set = set()
+    usage_counts: Dict[str, int] = {}
     section_matches = list(re.finditer(r"(第[一二三四五六七八九十]+[节章节][^\n\r]{0,40})", text))
     section_boundaries = [
         (
@@ -444,12 +459,14 @@ def _extract_keyword_blocks(text: str) -> List[Dict[str, Any]]:
     ]
 
     for usage, patterns in _KEYWORD_USAGE_PATTERNS:
-        if usage in seen_usage:
-            continue
+        usage_limit = _MULTI_BLOCK_USAGE_LIMITS.get(usage, 1)
         for pattern in patterns:
-            matched = False
             for match in re.finditer(re.escape(pattern), text):
+                if usage_counts.get(usage, 0) >= usage_limit:
+                    break
                 start, end = _keyword_window(text, match.start(), usage)
+                if _overlaps_existing_usage_span(blocks, usage, start, end):
+                    continue
                 excerpt = _strip_boilerplate(text[start:end].strip())
                 if not excerpt or not _is_valid_keyword_excerpt(usage, excerpt):
                     continue
@@ -461,12 +478,31 @@ def _extract_keyword_blocks(text: str) -> List[Dict[str, Any]]:
                     start,
                     end,
                 ))
-                seen_usage.add(usage)
-                matched = True
-                break
-            if matched:
+                usage_counts[usage] = usage_counts.get(usage, 0) + 1
+            if usage_counts.get(usage, 0) >= usage_limit:
                 break
     return blocks
+
+
+def _overlaps_existing_usage_span(
+    blocks: List[Dict[str, Any]],
+    usage: str,
+    start: int,
+    end: int,
+) -> bool:
+    for block in blocks:
+        if block.get("usage") != usage:
+            continue
+        span = block.get("source_span") or {}
+        existing_start = int(span.get("start", -1))
+        existing_end = int(span.get("end", -1))
+        overlap = min(end, existing_end) - max(start, existing_start)
+        if overlap <= 0:
+            continue
+        shorter = max(1, min(end - start, existing_end - existing_start))
+        if overlap / shorter >= 0.6:
+            return True
+    return False
 
 
 def _is_substantive_section_excerpt(usage: str, excerpt: str) -> bool:
@@ -635,6 +671,18 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         previous = lines[start_index - 1].strip()
         if previous and len(previous) <= 40 and not any(ch in previous for ch in "。，；！？"):
             start_index -= 1
+    remaining_context_lines = _PRE_CONTEXT_LINES_BY_USAGE.get(usage, 0)
+    while remaining_context_lines > 0 and start_index > 0:
+        previous = lines[start_index - 1].strip()
+        if not previous:
+            start_index -= 1
+            continue
+        if previous in {"√适用 □不适用", "□适用 √不适用"}:
+            break
+        if re.match(r"^(?:第[一二三四五六七八九十]+[节章节]|[一二三四五六七八九十]+、|（[一二三四五六七八九十\d]+）|\(\d+\)|\d+[、．])", previous):
+            break
+        start_index -= 1
+        remaining_context_lines -= 1
 
     max_lines_by_usage = {
         "rd_investment_table": 36,
@@ -678,7 +726,8 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
 
     start = sum(len(line) for line in lines[:start_index])
     end = min(sum(len(line) for line in lines[:end_index]), start + _MAX_CHARS_PER_BLOCK)
-    end = _extend_to_sentence_boundary(text, end, start + _MAX_CHARS_PER_BLOCK)
+    if usage not in _NO_SENTENCE_EXTENSION_USAGES:
+        end = _extend_to_sentence_boundary(text, end, start + _MAX_CHARS_PER_BLOCK)
     return start, end
 
 
@@ -1087,16 +1136,18 @@ def _block(
 
 def _dedupe_and_prioritize_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     """Remove near-duplicate blocks, assign stable ids, and sort by priority."""
-    # Keep the first block per usage.
-    by_usage: Dict[str, Dict[str, Any]] = {}
+    by_usage: Dict[str, List[Dict[str, Any]]] = {}
     for block in blocks:
         usage = block["usage"]
-        if usage not in by_usage:
-            by_usage[usage] = block
+        limit = _MULTI_BLOCK_USAGE_LIMITS.get(usage, 1)
+        group = by_usage.setdefault(usage, [])
+        if len(group) < limit:
+            group.append(block)
     # Stable id assignment per usage group.
     grouped: Dict[str, List[Dict[str, Any]]] = {}
-    for block in by_usage.values():
-        grouped.setdefault(block["usage"], []).append(block)
+    for group in by_usage.values():
+        for block in group:
+            grouped.setdefault(block["usage"], []).append(block)
 
     prioritized: List[Tuple[int, int, Dict[str, Any]]] = []
     for usage, group in grouped.items():
