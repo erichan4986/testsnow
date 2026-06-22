@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from typing import Optional, Union
@@ -169,6 +170,11 @@ def _build_knowledge_maintenance_summary(
     stock_name: str,
 ) -> dict:
     cards = [card for card in (cards_pack.get("cards") or []) if isinstance(card, dict)]
+    generated_hashes = {
+        str(card.get("source_excerpt_hash", "")).strip()
+        for card in cards
+        if str(card.get("source_excerpt_hash", "")).strip()
+    }
     generated_paths = {
         _card_note_path(
             knowledge_base_dir=knowledge_base_dir,
@@ -181,15 +187,24 @@ def _build_knowledge_maintenance_summary(
     existing_paths = set(notes_dir.glob("*.md")) if notes_dir.exists() else set()
 
     refreshable_paths = sorted(existing_paths & generated_paths)
-    dangling_paths = sorted(existing_paths - generated_paths)
+    moved_or_reindexed_paths = []
+    dangling_paths = []
+    for path in sorted(existing_paths - generated_paths):
+        note_hash = _read_note_source_excerpt_hash(path)
+        if note_hash and note_hash in generated_hashes:
+            moved_or_reindexed_paths.append(path)
+        else:
+            dangling_paths.append(path)
     new_candidate_paths = sorted(generated_paths - existing_paths)
     return {
         "generated_cards": len(cards),
         "generated_note_candidates": len(generated_paths),
         "existing_notes": len(existing_paths),
         "refreshable_notes": len(refreshable_paths),
+        "moved_or_reindexed_notes": len(moved_or_reindexed_paths),
         "dangling_notes": len(dangling_paths),
         "new_candidate_notes": len(new_candidate_paths),
+        "moved_or_reindexed_paths": moved_or_reindexed_paths,
         "dangling_paths": dangling_paths,
     }
 
@@ -202,9 +217,16 @@ def _render_maintenance_summary(summary: dict) -> list[str]:
         f"- generated_note_candidates：{summary.get('generated_note_candidates', 0)}",
         f"- existing_notes：{summary.get('existing_notes', 0)}",
         f"- refreshable_notes：{summary.get('refreshable_notes', 0)}",
+        f"- moved_or_reindexed_notes：{summary.get('moved_or_reindexed_notes', 0)}",
         f"- dangling_notes：{summary.get('dangling_notes', 0)}",
         f"- new_candidate_notes：{summary.get('new_candidate_notes', 0)}",
     ]
+    moved_or_reindexed_paths = summary.get("moved_or_reindexed_paths") or []
+    if moved_or_reindexed_paths:
+        lines.extend(["", "### Moved or reindexed existing notes", ""])
+        lines.extend(f"- `{path.name}`" for path in moved_or_reindexed_paths[:20])
+        if len(moved_or_reindexed_paths) > 20:
+            lines.append(f"- ... and {len(moved_or_reindexed_paths) - 20} more")
     dangling_paths = summary.get("dangling_paths") or []
     if dangling_paths:
         lines.extend(["", "### Dangling existing notes", ""])
@@ -213,6 +235,15 @@ def _render_maintenance_summary(summary: dict) -> list[str]:
             lines.append(f"- ... and {len(dangling_paths) - 20} more")
     lines.append("")
     return lines
+
+
+def _read_note_source_excerpt_hash(path: Path) -> str:
+    try:
+        text = path.read_text(encoding="utf-8", errors="ignore")
+    except OSError:
+        return ""
+    match = re.search(r"(?m)^source_excerpt_hash:\s*['\"]?([0-9a-f]{64})['\"]?\s*$", text)
+    return match.group(1) if match else ""
 
 
 def _render_knowledge_plan(

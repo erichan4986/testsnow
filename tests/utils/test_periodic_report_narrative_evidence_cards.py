@@ -374,6 +374,88 @@ def test_financial_note_rejects_generic_accounting_policy_boilerplate():
     assert result["cards"] == []
 
 
+def test_financial_note_rejects_generic_inventory_valuation_basis_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "inventory_note-0",
+                "usage": "inventory_note",
+                "section": "第十节 财务报告",
+                "title": "存货",
+                "text": (
+                    "在确定存货的可变现净值时，以取得的确凿证据为基础，"
+                    "同时考虑持有存货的目的以及资产负债表日后事项的影响。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="301269",
+        stock_name="华大九天",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_generic_significant_influence_policy_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "investment_policy-0",
+                "usage": "financial_assets_note",
+                "section": "第十节 财务报告",
+                "title": "长期股权投资",
+                "text": (
+                    "参与被投资单位的政策制定过程；向被投资单位派出管理人员；"
+                    "被投资单位依赖投资公司的技术或技术资料；与被投资单位之间发生重要交易。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="301269",
+        stock_name="华大九天",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
+def test_financial_note_rejects_generic_equity_method_policy_text():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "investment_policy-0",
+                "usage": "financial_assets_note",
+                "section": "第十节 财务报告",
+                "title": "长期股权投资",
+                "text": (
+                    "后续计量及损益确认方法 本公司能够对被投资单位实施控制的长期股权投资采用成本法核算，"
+                    "对联营企业和合营企业的长期股权投资采用权益法核算。"
+                    "按照《企业会计准则第 22 号——金融工具确认和计量》的有关规定处理。"
+                ),
+            }
+        ],
+    }
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="301269",
+        stock_name="华大九天",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+
+
 def test_financial_note_rejects_debang_like_inventory_impairment_policy_heading():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",

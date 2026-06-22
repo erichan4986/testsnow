@@ -5,7 +5,12 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
-from periodic_report_narrative_cards_preview import build_preview_markdown, default_output_path
+from periodic_report_narrative_cards_preview import (
+    _build_knowledge_maintenance_summary,
+    _render_maintenance_summary,
+    build_preview_markdown,
+    default_output_path,
+)
 
 
 SAMPLE_REPORT = """
@@ -220,6 +225,58 @@ def test_build_preview_markdown_renders_knowledge_maintenance_summary(tmp_path):
     assert "- refreshable_notes：1" in markdown
     assert "- dangling_notes：1" in markdown
     assert "`2025-annual-rd-product-progress-99.md`" in markdown
+
+
+def test_maintenance_summary_classifies_same_hash_renamed_notes_as_moved(tmp_path):
+    knowledge_dir = tmp_path / "knowledge"
+    existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
+    existing_dir.mkdir(parents=True)
+    same_hash = "a" * 64
+    stale_hash = "b" * 64
+    moved_note = existing_dir / "2025-annual-market-outlook-0.md"
+    moved_note.write_text(
+        "---\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        f"source_excerpt_hash: \"{same_hash}\"\n"
+        "---\n",
+        encoding="utf-8",
+    )
+    dangling_note = existing_dir / "2025-annual-rd-product-progress-99.md"
+    dangling_note.write_text(
+        "---\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        f"source_excerpt_hash: \"{stale_hash}\"\n"
+        "---\n",
+        encoding="utf-8",
+    )
+    cards_pack = {
+        "cards": [
+            {
+                "report_year": 2025,
+                "report_type": "annual",
+                "card_type": "management_market_view",
+                "card_id": "periodic:000001:2025:annual:narrative:management_market_view:0",
+                "source_excerpt_hash": same_hash,
+            }
+        ]
+    }
+
+    summary = _build_knowledge_maintenance_summary(
+        cards_pack=cards_pack,
+        knowledge_base_dir=knowledge_dir,
+        stock_name="测试股",
+    )
+    rendered = "\n".join(_render_maintenance_summary(summary))
+
+    assert summary["moved_or_reindexed_notes"] == 1
+    assert summary["dangling_notes"] == 1
+    assert moved_note in summary["moved_or_reindexed_paths"]
+    assert dangling_note in summary["dangling_paths"]
+    assert "moved_or_reindexed_notes：1" in rendered
+    assert "### Moved or reindexed existing notes" in rendered
+    assert "`2025-annual-market-outlook-0.md`" in rendered
+    assert "### Dangling existing notes" in rendered
+    assert "`2025-annual-rd-product-progress-99.md`" in rendered
 
 
 def test_cli_write_knowledge_writes_tmp_notes(tmp_path):
