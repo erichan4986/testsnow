@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import re
 import sys
 from pathlib import Path
 
@@ -8,6 +10,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack
 from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
 from periodic_report_structured_facts import build_periodic_report_structured_fact_pack
+
+
+def _normalized_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 SIGNED_CASHFLOW_TEXT = """
@@ -74,6 +81,24 @@ def test_builds_phase_a_filing_facts_with_evidence_refs() -> None:
     assert revenue["source_block_id"]
     assert revenue["evidence_refs"] == [revenue["source_block_id"]]
     assert "营业收入" in revenue["source_excerpt"]
+
+
+def test_filing_facts_include_stable_excerpt_and_block_hashes() -> None:
+    pack = _fact_pack(SIGNED_CASHFLOW_TEXT, stock_code="300001")
+
+    facts = {fact["metric_key"]: fact for fact in pack["filing_facts"]}
+    revenue = facts["revenue"]
+    assert re.fullmatch(r"[0-9a-f]{64}", revenue["source_excerpt_hash"])
+    assert re.fullmatch(r"[0-9a-f]{64}", revenue["source_block_hash"])
+    assert revenue["source_excerpt_hash"] == _normalized_hash(revenue["source_excerpt"])
+
+    evidence_pack = build_periodic_report_evidence_pack(SIGNED_CASHFLOW_TEXT, report_type="annual")
+    block_text = next(
+        block["text"]
+        for block in evidence_pack["blocks"]
+        if block["id"] == revenue["source_block_id"]
+    )
+    assert revenue["source_block_hash"] == _normalized_hash(block_text)
 
 
 def test_unanchored_required_value_is_skipped_with_diagnostic() -> None:

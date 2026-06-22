@@ -7,6 +7,7 @@ evidence-bound filing facts plus display/compute-only derived facts and signals.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from decimal import Decimal
 from typing import Any, Dict, List, Optional, Tuple
@@ -150,6 +151,8 @@ def _filing_fact(
         "source_block_id": anchor["source_block_id"],
         "evidence_refs": [anchor["source_block_id"]],
         "source_excerpt": anchor["source_excerpt"],
+        "source_excerpt_hash": anchor["source_excerpt_hash"],
+        "source_block_hash": anchor["source_block_hash"],
         "confidence": "high",
         "source_credit": 75,
         "knowledge_eligible": False,
@@ -265,11 +268,19 @@ def _anchor_cell_to_block(
             candidate and candidate in block_number_compact
             for candidate in text_value_compact_candidates
         ):
+            source_excerpt = _bounded_excerpt(block_text, label, text_value)
             return {
                 "source_block_id": str(block["id"]),
-                "source_excerpt": _bounded_excerpt(block_text, label, text_value),
+                "source_excerpt": source_excerpt,
+                "source_excerpt_hash": _source_text_hash(source_excerpt),
+                "source_block_hash": _source_text_hash(block_text),
             }
     return None
+
+
+def _source_text_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def _cell_from_fact(fact: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:

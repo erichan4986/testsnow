@@ -8,6 +8,7 @@ only filters, sanitizes paths, and renders Markdown.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -90,6 +91,42 @@ def _render_frontmatter(entries: List[Tuple[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _source_text_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _refresh_frontmatter_hashes(
+    note_text: str,
+    *,
+    source_excerpt_hash: str,
+    source_block_hash: str = "",
+) -> str:
+    if not note_text.startswith("---\n"):
+        return note_text
+    parts = note_text.split("---", 2)
+    if len(parts) != 3:
+        return note_text
+
+    frontmatter = parts[1].strip("\n")
+    body = parts[2]
+    lines = [
+        line
+        for line in frontmatter.splitlines()
+        if not line.startswith("source_excerpt_hash:")
+        and not (source_block_hash and line.startswith("source_block_hash:"))
+    ]
+    insert_at = next(
+        (idx for idx, line in enumerate(lines) if line.startswith("knowledge_fact_status:")),
+        len(lines),
+    )
+    hash_lines = [f"source_excerpt_hash: {_yaml_scalar(source_excerpt_hash)}"]
+    if source_block_hash:
+        hash_lines.append(f"source_block_hash: {_yaml_scalar(source_block_hash)}")
+    lines[insert_at:insert_at] = hash_lines
+    return "---\n" + "\n".join(lines) + "\n---" + body
+
+
 def _coerce_int(value: Any) -> Any:
     try:
         return int(value)
@@ -128,8 +165,11 @@ def _render_note(
     report_type = str(card.get("report_type", ""))
     card_type = str(card.get("card_type", ""))
     evidence_refs = [str(ref) for ref in (card.get("evidence_refs") or [])]
+    excerpt = str(card.get("source_excerpt", "")).strip() or "（无摘录）"
+    source_excerpt_hash = str(card.get("source_excerpt_hash") or _source_text_hash(excerpt))
+    source_block_hash = str(card.get("source_block_hash") or "")
 
-    frontmatter = _render_frontmatter([
+    frontmatter_entries = [
         ("stock", stock_name),
         ("code", stock_code),
         ("source_type", NARRATIVE_CARD_SOURCE_TYPE),
@@ -142,15 +182,21 @@ def _render_note(
         ("source_credit", 75),
         ("source_block_id", str(card.get("source_block_id", ""))),
         ("evidence_refs", evidence_refs),
+        ("source_excerpt_hash", source_excerpt_hash),
         ("knowledge_fact_status", KNOWLEDGE_FACT_STATUS),
         ("knowledge_eligible", False),
         ("knowledge_persisted", True),
         ("synthesis_eligible", False),
         ("experimental", True),
         ("collected_at", collected_at),
-    ])
+    ]
+    if source_block_hash:
+        frontmatter_entries.insert(
+            next(i for i, entry in enumerate(frontmatter_entries) if entry[0] == "knowledge_fact_status"),
+            ("source_block_hash", source_block_hash),
+        )
+    frontmatter = _render_frontmatter(frontmatter_entries)
 
-    excerpt = str(card.get("source_excerpt", "")).strip() or "（无摘录）"
     body = [
         frontmatter,
         f"# {stock_name} {report_year} {report_type} {card_type}",
@@ -183,6 +229,7 @@ def write_periodic_report_narrative_card_notes(
     collected_at: Optional[str] = None,
     dry_run: bool = False,
     refresh_existing: bool = False,
+    refresh_frontmatter_only: bool = False,
 ) -> NarrativeCardWritePlan:
     """Write narrative evidence cards to Knowledge notes.
 
@@ -257,16 +304,27 @@ def write_periodic_report_narrative_card_notes(
                 plan.skipped_existing.append(meta)
                 continue
             if not dry_run:
-                target.write_text(
-                    _render_note(
-                        card,
-                        collected,
-                        stock_name=stock_name,
-                        stock_code=stock_code,
-                    ),
-                    encoding="utf-8",
-                )
-            meta["reason"] = "refreshed_existing"
+                if refresh_frontmatter_only:
+                    excerpt = str(card.get("source_excerpt", "")).strip() or "（无摘录）"
+                    refreshed_text = _refresh_frontmatter_hashes(
+                        target.read_text(encoding="utf-8"),
+                        source_excerpt_hash=str(
+                            card.get("source_excerpt_hash") or _source_text_hash(excerpt)
+                        ),
+                        source_block_hash=str(card.get("source_block_hash") or ""),
+                    )
+                    target.write_text(refreshed_text, encoding="utf-8")
+                else:
+                    target.write_text(
+                        _render_note(
+                            card,
+                            collected,
+                            stock_name=stock_name,
+                            stock_code=stock_code,
+                        ),
+                        encoding="utf-8",
+                    )
+            meta["reason"] = "refreshed_frontmatter_hashes" if refresh_frontmatter_only else "refreshed_existing"
             plan.refreshed.append(meta)
             continue
 

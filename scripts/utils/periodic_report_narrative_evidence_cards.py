@@ -10,6 +10,7 @@ and not synthesized by KnowledgeSynthesizer.
 
 from __future__ import annotations
 
+import hashlib
 import re
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Tuple
 
@@ -332,6 +333,11 @@ def build_periodic_report_narrative_evidence_cards(
         )
 
     dynamic_terms = _extract_dynamic_terms(blocks, raw_text=raw_text)
+    block_text_by_id = {
+        str(block.get("id")): str(block.get("text") or "")
+        for block in blocks
+        if isinstance(block, dict) and block.get("id")
+    }
     candidates = _collect_candidates(blocks, diagnostics, dynamic_terms)
     if not candidates:
         diagnostics.append({"code": "no_candidate_snippets"})
@@ -368,6 +374,7 @@ def build_periodic_report_narrative_evidence_cards(
                 card_type=card_type,
                 card_index=len(typed_cards[card_type]),
                 source_block_id=block_id,
+                source_block_text=block_text_by_id.get(block_id, ""),
                 excerpt=excerpt,
                 score=score,
                 dynamic_terms=matched_terms,
@@ -472,6 +479,11 @@ def _normalize_excerpt(text: str, card_type: str = "") -> str:
     if len(excerpt) > max_chars:
         excerpt = _truncate_at_sentence_boundary(excerpt, max_chars)
     return excerpt
+
+
+def _source_text_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def _trim_product_feature_table_header(excerpt: str) -> str:
@@ -978,6 +990,7 @@ def _build_card(
     card_type: str,
     card_index: int,
     source_block_id: str,
+    source_block_text: str,
     excerpt: str,
     score: int,
     dynamic_terms: Sequence[str] = (),
@@ -1001,6 +1014,8 @@ def _build_card(
         "source_block_id": source_block_id,
         "evidence_refs": [source_block_id],
         "source_excerpt": excerpt,
+        "source_excerpt_hash": _source_text_hash(excerpt),
+        "source_block_hash": _source_text_hash(source_block_text or excerpt),
         "keywords": keywords[:5],
         "confidence": confidence,
         "source_credit": 75,

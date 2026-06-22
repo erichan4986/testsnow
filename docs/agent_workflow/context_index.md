@@ -35,24 +35,56 @@ Current contract:
 - may enter display synthesis through `ctx["synthesis_display"]`
 - must not directly enter core facts, Knowledge persistence, scoring, risk scoring, `confirmed_fact`, or `fact_candidate`
 
-Key implementation files:
+## Annual Report Intake Current Map
 
-- fulltext analysis helper: `scripts/utils/periodic_report_fulltext_llm_analysis.py`
-<!-- path-check: scripts/utils/periodic_report_fulltext_llm_analysis.py -->
-- required metrics: `scripts/utils/periodic_report_required_metrics.py`
+Annual Report Intake is the shared mental model for annual/semiannual report code. Read files by layer instead of treating each helper as a separate product.
+
+Intake and extraction helpers:
+
+- raw evidence blocks: `scripts/utils/periodic_report_evidence_pack.py`
+<!-- path-check: scripts/utils/periodic_report_evidence_pack.py -->
+- required operating metrics: `scripts/utils/periodic_report_required_metrics.py`
 <!-- path-check: scripts/utils/periodic_report_required_metrics.py -->
-- required financial metrics: `scripts/utils/periodic_report_required_financial_metrics.py`
+- required financial/risk metrics: `scripts/utils/periodic_report_required_financial_metrics.py`
 <!-- path-check: scripts/utils/periodic_report_required_financial_metrics.py -->
-- product/project evidence backfill: `scripts/utils/periodic_report_product_project_evidence.py`
+- product/project/customer evidence: `scripts/utils/periodic_report_product_project_evidence.py`
 <!-- path-check: scripts/utils/periodic_report_product_project_evidence.py -->
+- narrative evidence cards: `scripts/utils/periodic_report_narrative_evidence_cards.py`
+<!-- path-check: scripts/utils/periodic_report_narrative_evidence_cards.py -->
+- structured filing facts: `scripts/utils/periodic_report_structured_facts.py`
+<!-- path-check: scripts/utils/periodic_report_structured_facts.py -->
 - HK report fetch helper: `scripts/utils/hk_periodic_report_fetcher.py`
 <!-- path-check: scripts/utils/hk_periodic_report_fetcher.py -->
-- structured filing fact helper: `scripts/utils/periodic_report_structured_facts.py`
-<!-- path-check: scripts/utils/periodic_report_structured_facts.py -->
+- standalone/legacy A-share extractor: `scripts/utils/periodic_report_extractor.py`
+<!-- path-check: scripts/utils/periodic_report_extractor.py -->
+
+Material and display helpers:
+
+- fulltext LLM analysis and Ground Truth-constrained prompt: `scripts/utils/periodic_report_fulltext_llm_analysis.py`
+<!-- path-check: scripts/utils/periodic_report_fulltext_llm_analysis.py -->
 - Source Intake fulltext skill: `scripts/utils/report_skills/periodic_report_fulltext_intake_skill.py`
 <!-- path-check: scripts/utils/report_skills/periodic_report_fulltext_intake_skill.py -->
 - Source Intake renderer: `scripts/utils/reporter/sections/source_intake_evidence_renderer.py`
 <!-- path-check: scripts/utils/reporter/sections/source_intake_evidence_renderer.py -->
+
+Knowledge writers:
+
+- narrative card notes: `scripts/utils/periodic_report_narrative_card_note_writer.py`
+<!-- path-check: scripts/utils/periodic_report_narrative_card_note_writer.py -->
+- filing fact notes, writer-only: `scripts/utils/periodic_report_filing_fact_note_writer.py`
+<!-- path-check: scripts/utils/periodic_report_filing_fact_note_writer.py -->
+
+Cross-cutting and adjacent helpers:
+
+- periodic report LLM validation/fidelity checks: `scripts/utils/periodic_report_validation.py`
+<!-- path-check: scripts/utils/periodic_report_validation.py -->
+- adjacent/legacy periodic report summary helper: `scripts/utils/periodic_reporter.py`
+<!-- path-check: scripts/utils/periodic_reporter.py -->
+
+Active unification design:
+
+- `docs/agent_workflow/2026-06-22-periodic-report-intake-unification-design.md`
+<!-- path-check: docs/agent_workflow/2026-06-22-periodic-report-intake-unification-design.md -->
 
 Current limitation:
 

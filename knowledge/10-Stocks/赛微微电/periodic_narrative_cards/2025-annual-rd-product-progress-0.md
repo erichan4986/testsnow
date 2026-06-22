@@ -12,6 +12,8 @@ source_credit: 75
 source_block_id: management_strategy-0
 evidence_refs:
   - management_strategy-0
+source_excerpt_hash: f3207e20e2c94f97748ddb61968e45529007eb0c3bd6e050c919810183e28e30
+source_block_hash: "37a0067db8b0ac33cb20b181cb3f6b9fadcc1d2b391d1a4ccb7f5b5d183dd89c"
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true

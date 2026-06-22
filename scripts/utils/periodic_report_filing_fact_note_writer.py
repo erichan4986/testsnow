@@ -21,6 +21,7 @@ Safety contract (Phase B, writer-only):
 
 from __future__ import annotations
 
+import hashlib
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -139,6 +140,42 @@ def _render_frontmatter(entries: List[Tuple[str, Any]]) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _source_text_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
+def _refresh_frontmatter_hashes(
+    note_text: str,
+    *,
+    source_excerpt_hash: str,
+    source_block_hash: str = "",
+) -> str:
+    if not note_text.startswith("---\n"):
+        return note_text
+    parts = note_text.split("---", 2)
+    if len(parts) != 3:
+        return note_text
+
+    frontmatter = parts[1].strip("\n")
+    body = parts[2]
+    lines = [
+        line
+        for line in frontmatter.splitlines()
+        if not line.startswith("source_excerpt_hash:")
+        and not (source_block_hash and line.startswith("source_block_hash:"))
+    ]
+    insert_at = next(
+        (idx for idx, line in enumerate(lines) if line.startswith("knowledge_fact_status:")),
+        len(lines),
+    )
+    hash_lines = [f"source_excerpt_hash: {_yaml_scalar(source_excerpt_hash)}"]
+    if source_block_hash:
+        hash_lines.append(f"source_block_hash: {_yaml_scalar(source_block_hash)}")
+    lines[insert_at:insert_at] = hash_lines
+    return "---\n" + "\n".join(lines) + "\n---" + body
+
+
 def _render_note(
     fact: Dict[str, Any],
     collected_at: str,
@@ -153,8 +190,11 @@ def _render_note(
     normalized_value = str(fact.get("normalized_value", ""))
     unit = str(fact.get("unit", ""))
     evidence_refs = [str(ref) for ref in (fact.get("evidence_refs") or [])]
+    excerpt = str(fact.get("source_excerpt", "")).strip() or "（无摘录）"
+    source_excerpt_hash = str(fact.get("source_excerpt_hash") or _source_text_hash(excerpt))
+    source_block_hash = str(fact.get("source_block_hash") or "")
 
-    frontmatter = _render_frontmatter([
+    frontmatter_entries = [
         ("stock", stock_name),
         ("code", stock_code),
         ("source_type", FILING_FACT_SOURCE_TYPE),
@@ -173,6 +213,7 @@ def _render_note(
         ("source_credit", _coerce_int(fact.get("source_credit", 75))),
         ("source_block_id", str(fact.get("source_block_id", ""))),
         ("evidence_refs", evidence_refs),
+        ("source_excerpt_hash", source_excerpt_hash),
         ("knowledge_fact_status", KNOWLEDGE_FACT_STATUS),
         # Filing facts stay non-eligible until invalidation machinery exists.
         ("knowledge_eligible", False),
@@ -180,9 +221,14 @@ def _render_note(
         ("verified_by", []),
         ("conflicts_with", []),
         ("collected_at", collected_at),
-    ])
+    ]
+    if source_block_hash:
+        frontmatter_entries.insert(
+            next(i for i, entry in enumerate(frontmatter_entries) if entry[0] == "knowledge_fact_status"),
+            ("source_block_hash", source_block_hash),
+        )
+    frontmatter = _render_frontmatter(frontmatter_entries)
 
-    excerpt = str(fact.get("source_excerpt", "")).strip() or "（无摘录）"
     body = [
         frontmatter,
         f"# {stock_name} {report_year} {report_type} {metric_key}",
@@ -244,6 +290,7 @@ def write_periodic_report_filing_fact_notes(
     collected_at: Optional[str] = None,
     dry_run: bool = False,
     refresh_existing: bool = False,
+    refresh_frontmatter_only: bool = False,
 ) -> FilingFactWritePlan:
     """Write exact filing facts from a structured fact pack to Knowledge notes.
 
@@ -321,16 +368,27 @@ def write_periodic_report_filing_fact_notes(
                 plan.skipped_existing.append(meta)
                 continue
             if not dry_run:
-                target.write_text(
-                    _render_note(
-                        fact,
-                        collected,
-                        stock_name=stock_name,
-                        stock_code=stock_code,
-                    ),
-                    encoding="utf-8",
-                )
-            meta["reason"] = "refreshed_existing"
+                if refresh_frontmatter_only:
+                    excerpt = str(fact.get("source_excerpt", "")).strip() or "（无摘录）"
+                    refreshed_text = _refresh_frontmatter_hashes(
+                        target.read_text(encoding="utf-8"),
+                        source_excerpt_hash=str(
+                            fact.get("source_excerpt_hash") or _source_text_hash(excerpt)
+                        ),
+                        source_block_hash=str(fact.get("source_block_hash") or ""),
+                    )
+                    target.write_text(refreshed_text, encoding="utf-8")
+                else:
+                    target.write_text(
+                        _render_note(
+                            fact,
+                            collected,
+                            stock_name=stock_name,
+                            stock_code=stock_code,
+                        ),
+                        encoding="utf-8",
+                    )
+            meta["reason"] = "refreshed_frontmatter_hashes" if refresh_frontmatter_only else "refreshed_existing"
             plan.refreshed.append(meta)
             continue
 

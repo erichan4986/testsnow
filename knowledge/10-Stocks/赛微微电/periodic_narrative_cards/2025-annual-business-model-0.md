@@ -12,6 +12,8 @@ source_credit: 75
 source_block_id: product_capacity_profile-0
 evidence_refs:
   - product_capacity_profile-0
+source_excerpt_hash: "4cffc5518fca2cd5c2d8389eb934a9d8682d8a9ffb6bc16451fa8206f1000388"
+source_block_hash: "37a0067db8b0ac33cb20b181cb3f6b9fadcc1d2b391d1a4ccb7f5b5d183dd89c"
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true

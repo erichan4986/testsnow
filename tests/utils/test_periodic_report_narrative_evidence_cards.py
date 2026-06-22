@@ -1,5 +1,6 @@
 """Tests for periodic_report_narrative_evidence_cards helper."""
 
+import hashlib
 import re
 import sys
 from pathlib import Path
@@ -11,6 +12,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from periodic_report_narrative_evidence_cards import (
     build_periodic_report_narrative_evidence_cards,
 )
+
+
+def _normalized_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def test_empty_evidence_pack_returns_empty_cards_and_diagnostics():
@@ -63,6 +69,57 @@ def test_business_model_card_from_company_description_block():
     assert card["source_block_id"] == "business_overview-0"
     assert card["evidence_refs"] == ["business_overview-0"]
     assert "高性能碳纤维" in card["source_excerpt"]
+
+
+def test_cards_include_stable_excerpt_and_block_hashes():
+    block_text = (
+        "公司主要从事高性能碳纤维及相关产品的研发、生产、销售和技术服务，"
+        " 主要产品应用于航空航天、轨道交通、新能源等领域，并持续服务核心客户。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "section": "第三节 管理层讨论与分析",
+                "title": "报告期内公司从事的主要业务",
+                "text": block_text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    card = result["cards"][0]
+    assert re.fullmatch(r"[0-9a-f]{64}", card["source_excerpt_hash"])
+    assert re.fullmatch(r"[0-9a-f]{64}", card["source_block_hash"])
+    assert card["source_excerpt_hash"] == _normalized_hash(card["source_excerpt"])
+    assert card["source_block_hash"] == _normalized_hash(block_text)
+
+    whitespace_variant = {
+        **evidence_pack,
+        "blocks": [
+            {
+                **evidence_pack["blocks"][0],
+                "text": block_text.replace("， ", "，   \n  "),
+            }
+        ],
+    }
+    variant = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=whitespace_variant,
+    )
+    assert variant["cards"][0]["source_block_hash"] == card["source_block_hash"]
 
 
 def test_management_market_view_card_from_industry_judgment_block():
@@ -663,6 +720,8 @@ def test_card_keys_match_allowlist_and_no_forbidden_fields():
         "source_block_id",
         "evidence_refs",
         "source_excerpt",
+        "source_excerpt_hash",
+        "source_block_hash",
         "keywords",
         "confidence",
         "source_credit",
