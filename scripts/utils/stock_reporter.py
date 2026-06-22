@@ -109,6 +109,12 @@ class PerStockReporter:
             periodic_fulltext_enabled = bool(
                 source_intake_enabled and periodic_fulltext_requested
             )
+            narrative_display_cfg = (
+                si_cfg.get("periodic_narrative_cards_synthesis_display", {}) or {}
+            )
+            narrative_display_enabled = bool(
+                source_intake_enabled and narrative_display_cfg.get("enabled", False)
+            )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -175,6 +181,13 @@ class PerStockReporter:
                     pipeline_input["periodic_report_fulltext_cache_dir"] = periodic_fulltext_cfg["cache_dir"]
                 if periodic_fulltext_cfg.get("report_type"):
                     pipeline_input["periodic_report_fulltext_report_type"] = periodic_fulltext_cfg["report_type"]
+
+            if narrative_display_enabled:
+                pipeline_input["include_periodic_narrative_cards_in_synthesis_display"] = True
+                if narrative_display_cfg.get("max_display_items") is not None:
+                    pipeline_input["periodic_narrative_cards_max_display_items"] = (
+                        narrative_display_cfg["max_display_items"]
+                    )
 
             if evidence_notes_enabled:
                 pipeline_input["enable_evidence_notes"] = True

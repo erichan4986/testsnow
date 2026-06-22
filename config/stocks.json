@@ -131,6 +131,10 @@
         "enabled": true,
         "report_type": "annual_report"
       },
+      "periodic_narrative_cards_synthesis_display": {
+        "enabled": true,
+        "max_display_items": 8
+      },
       "claim_verification": {
         "enabled": true,
         "risk_signals": true,

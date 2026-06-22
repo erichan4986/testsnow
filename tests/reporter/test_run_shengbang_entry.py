@@ -74,6 +74,16 @@ def test_shengbang_config_enables_periodic_report_fulltext():
     }
 
 
+def test_shengbang_config_enables_periodic_narrative_cards_display():
+    """圣邦股份 can use persisted annual-report narrative cards in display synthesis."""
+    cfg = run_shengbang._load_source_intake_config(STOCK_NAME)[STOCK_NAME]
+
+    assert cfg["periodic_narrative_cards_synthesis_display"] == {
+        "enabled": True,
+        "max_display_items": 8,
+    }
+
+
 def test_fast_test_mode_skips_zhihu_collector():
     """--fast-test must never instantiate or call ZhihuCollector."""
     with patch.object(run_shengbang, "ZhihuCollector") as mock_zhihu:
