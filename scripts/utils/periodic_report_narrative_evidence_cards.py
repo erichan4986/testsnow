@@ -55,6 +55,12 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "government_grant_note": ("financial_note",),
     "financial_assets_note": ("financial_note",),
     "goodwill_note": ("financial_note",),
+    # HK annual report narrative usages (material-layer, Traditional/Simplified).
+    "hk_business_overview": ("business_model",),
+    "hk_product_progress": ("rd_product_progress", "business_model"),
+    "hk_customer_ecosystem": ("business_model",),
+    "hk_market_outlook": ("market_outlook", "management_market_view"),
+    "hk_financial_commentary": ("margin_competitiveness", "financial_note"),
 }
 
 _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
@@ -68,6 +74,28 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "销售模式",
         "应用领域",
         "产业链",
+        # Traditional / HK variants.
+        "主營業務",
+        "經營模式",
+        "主營產品",
+        "主要產品",
+        "客戶",
+        "銷售模式",
+        "應用領域",
+        "產業鏈",
+        "解決方案",
+        "供應商",
+        "車規級",
+        "全棧",
+        "SoC",
+        "基礎模型",
+        "AI原生產品",
+        "開放平台",
+        "全模態",
+        "MiniMax",
+        "海螺AI",
+        "Talkie",
+        "星野",
     ),
     "operation_update": (
         "报告期内",
@@ -117,6 +145,18 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "毛利率",
         "盈利能力",
         "规模效应",
+        # Traditional / HK variants.
+        "行業",
+        "競爭",
+        "核心競爭力",
+        "競爭優勢",
+        "行業地位",
+        "市場份額",
+        "市場",
+        "需求",
+        "發展戰略",
+        "未來發展",
+        "格局",
     ),
     "market_outlook": (
         "市场需求",
@@ -136,6 +176,25 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "国产替代",
         "政策",
         "增长",
+        # Traditional / HK variants.
+        "市場需求",
+        "市場規模",
+        "行業景氣",
+        "市場",
+        "預計",
+        "預測",
+        "未來",
+        "佈局",
+        "規模化",
+        "商業化",
+        "Robotaxi",
+        "滲透",
+        "平台型公司",
+        "智能體",
+        "Token吞吐能力",
+        "變現模式",
+        "全球市場",
+        "產業上限",
     ),
     "margin_competitiveness": (
         "毛利率",
@@ -153,6 +212,14 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "市场份额",
         "交付能力",
         "产品制造能力",
+        # Traditional / HK variants.
+        "毛利",
+        "競爭力",
+        "競爭優勢",
+        "行業地位",
+        "市場份額",
+        "產品結構",
+        "盈利能力",
     ),
     "rd_product_progress": (
         "研发",
@@ -171,6 +238,41 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "热界面材料",
         "导热材料",
         "TIM",
+        # Traditional / HK variants.
+        "研發",
+        "專利",
+        "量產",
+        "認證",
+        "驗證",
+        "導入",
+        "技術突破",
+        "新產品",
+        "華山",
+        "武當",
+        "搭載",
+        "定點",
+        "流片",
+        "工藝",
+        "送樣",
+        "模型",
+        "大模型",
+        "語言模型",
+        "視頻模型",
+        "語音模型",
+        "音樂模型",
+        "多模態",
+        "全模態",
+        "M2",
+        "M2.1",
+        "M2.5",
+        "Hailuo",
+        "Speech",
+        "Music",
+        "MiniMax Agent",
+        "Media Agent",
+        "OpenRouter",
+        "HuggingFace",
+        "SWE-Bench",
     ),
     "financial_note": (
         "现金流",
@@ -185,6 +287,16 @@ _CARD_TYPE_MARKERS: Dict[str, Tuple[str, ...]] = {
         "跌价准备",
         "关键审计事项",
         "董事异议",
+        # Traditional / HK variants.
+        "現金流",
+        "減值",
+        "存貨",
+        "應收",
+        "審計",
+        "投資",
+        "商譽",
+        "虧損",
+        "淨額",
     ),
 }
 
@@ -930,7 +1042,11 @@ def _looks_like_table_fragment(snippet: str, card_type: str = "") -> bool:
     if sum(1 for token in _TABLE_STRUCTURE_TOKENS if token in snippet) >= 3:
         return True
     numbers = re.findall(r"(?<![A-Za-z0-9])\d[\d,\.]*(?![A-Za-z0-9])", snippet)
-    narrative_number_card_types = {"management_market_view", "margin_competitiveness"}
+    narrative_number_card_types = {
+        "management_market_view",
+        "margin_competitiveness",
+        "rd_product_progress",
+    }
     if len(numbers) >= 3 and card_type not in narrative_number_card_types:
         return True
     non_space = re.sub(r"\s+", "", snippet)
@@ -1135,17 +1251,33 @@ def _truncate_cards(
     max_cards_per_type: int,
     max_total_cards: int,
 ) -> List[Dict[str, Any]]:
-    """Apply per-type cap then global cap in fixed card_type order.
+    """Apply per-type cap then a fair global cap, in fixed card_type order.
 
-    Cards keep their per-type stable index; the global cap only limits how many
-    card types are included.
+    The global cap is shared round-robin across card types so a single
+    high-volume type (e.g. business_model on HK reports) cannot starve other
+    high-value types such as rd_product_progress. Output stays grouped by the
+    fixed card_type order; only the kept count per type is decided fairly.
     """
+    per_type_selected: Dict[str, List[Dict[str, Any]]] = {
+        card_type: _select_diverse_cards(typed_cards.get(card_type, []), max_cards_per_type)
+        for card_type in _CARD_TYPES
+    }
+    keep_counts: Dict[str, int] = {card_type: 0 for card_type in _CARD_TYPES}
+    total = 0
+    progressed = True
+    while total < max_total_cards and progressed:
+        progressed = False
+        for card_type in _CARD_TYPES:
+            if total >= max_total_cards:
+                break
+            if keep_counts[card_type] < len(per_type_selected[card_type]):
+                keep_counts[card_type] += 1
+                total += 1
+                progressed = True
+
     cards: List[Dict[str, Any]] = []
     for card_type in _CARD_TYPES:
-        group = _select_diverse_cards(typed_cards.get(card_type, []), max_cards_per_type)
-        cards.extend(group)
-        if len(cards) >= max_total_cards:
-            break
+        cards.extend(per_type_selected[card_type][: keep_counts[card_type]])
     return cards[:max_total_cards]
 
 

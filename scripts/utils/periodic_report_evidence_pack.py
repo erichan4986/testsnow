@@ -182,6 +182,11 @@ USAGE_PRIORITY = {
     "hk_income_statement_table": 0,
     "hk_financial_summary_table": 1,
     "hk_cash_flow_table": 6,
+    "hk_product_progress": 5,
+    "hk_business_overview": 11,
+    "hk_customer_ecosystem": 12,
+    "hk_market_outlook": 14,
+    "hk_financial_commentary": 17,
     "ar_customer_concentration_note": 7,
     "asset_impairment_note": 8,
     "audit_key_matters": 9,
@@ -311,6 +316,11 @@ _MULTI_BLOCK_USAGE_LIMITS = {
     "competitive_position": 2,
     "market_demand_outlook": 2,
     "profitability_commentary": 2,
+    "hk_product_progress": 4,
+    "hk_customer_ecosystem": 3,
+    "hk_market_outlook": 3,
+    "hk_financial_commentary": 3,
+    "hk_business_overview": 2,
 }
 _PRE_CONTEXT_LINES_BY_USAGE = {
     "competitive_position": 3,
@@ -337,6 +347,7 @@ def build_periodic_report_evidence_pack(
     blocks.extend(_extract_section_blocks(cleaned))
     blocks.extend(_extract_keyword_blocks(cleaned))
     blocks.extend(_extract_hk_statement_blocks(cleaned))
+    blocks.extend(_extract_hk_narrative_blocks(cleaned))
     blocks.extend(_extract_table_blocks(cleaned))
     blocks = _dedupe_and_prioritize_blocks(blocks)
     blocks = blocks[:_MAX_BLOCKS]
@@ -590,6 +601,342 @@ def _hk_statement_window(text: str, start: int) -> Tuple[int, int]:
 def _is_hk_five_year_summary_window(text: str) -> bool:
     compact = re.sub(r"\s+", "", text)
     return "五年財務概要" in compact or "五年财务概要" in compact
+
+
+# ---------------------------------------------------------------------------
+# HK narrative block extraction (Traditional / Simplified)
+# ---------------------------------------------------------------------------
+
+# HK annual reports use Traditional headings and free-form management discussion
+# paragraphs rather than A-share "第X节" sections and structured tables. The
+# generic section/keyword extractors therefore find almost no narrative blocks
+# for HK filings. This extractor classifies management-discussion paragraphs
+# into a small set of HK narrative usages so the narrative cards layer can map
+# them to existing card types. It is deliberately gated to HK-shaped text so it
+# never fires on A-share reports.
+
+_HK_REPORT_MARKERS = (
+    "國際控股有限公司",
+    "管理層討論及分析",
+    "綜合損益表",
+    "綜合全面收益表",
+    "綜合現金流量表",
+    "香港聯合交易所",
+    "聯交所",
+    "年年度報告",
+    "業務回顧",
+    "業務展望",
+)
+
+_HK_NARRATIVE_KEYWORDS: Dict[str, Dict[str, Tuple[str, ...]]] = {
+    "hk_product_progress": {
+        "strong": (
+            "華山", "华山", "武當", "武当", "A1000", "A2000", "C1200",
+            "SoC", "SesameX", "NPU", "Robotaxi",
+            "M2", "M2.1", "M2.5", "M2-her", "Hailuo", "海螺AI",
+            "Speech", "Music", "Talkie", "星野", "MiniMax Agent",
+            "Media Agent", "SWE-Bench", "OpenRouter", "HuggingFace",
+        ),
+        "support": (
+            "芯片", "量產", "量产", "流片", "先進工藝", "先进工艺", "7nm",
+            "搭載", "搭载", "車型", "车型", "定點", "定点", "送樣", "送样",
+            "產品", "产品", "計算", "计算", "算力", "工藝", "工艺", "驗證", "验证",
+            "模型", "大模型", "語言模型", "语言模型", "視頻模型", "视频模型",
+            "語音模型", "语音模型", "音樂模型", "音乐模型", "多模態", "多模态",
+            "全模態", "全模态", "工具調用", "工具调用", "深度搜索", "Token",
+            "開源", "开源", "AI原生產品", "AI原生产品",
+        ),
+    },
+    "hk_customer_ecosystem": {
+        "strong": (
+            "合作夥伴", "合作伙伴", "產業鏈", "产业链", "主機廠", "主机厂",
+            "生態", "生态", "產學研", "产学研", "聯盟", "联盟",
+            "企業客戶", "企业客户", "開發者", "开发者", "全球用戶", "全球用户",
+            "付費客戶", "付费客户", "國際市場", "国际市场",
+        ),
+        "support": (
+            "客戶", "客户", "合作", "夥伴", "伙伴", "共同推動", "共同推动",
+            "頭部", "头部", "車企", "车企", "企業合作", "企业合作",
+            "用戶", "用户", "訂閱", "订阅", "國家及地區", "国家及地区",
+            "企業服務", "企业服务", "API", "開放平台", "开放平台",
+        ),
+    },
+    "hk_market_outlook": {
+        "strong": (
+            "Robotaxi", "L2-L4", "業務展望", "业务展望", "展望未來", "展望未来",
+            "平台型公司", "AI平台", "AI 平台", "智能體", "智能体",
+            "Token吞吐能力", "智能供給", "智能供给", "應用層", "应用层",
+        ),
+        "support": (
+            "展望", "未來", "未来", "規模化", "规模化", "商業化", "商业化",
+            "滲透", "渗透", "賽道", "赛道", "市場", "市场", "趨勢", "趋势",
+            "佈局", "布局", "機遇", "机遇", "放量", "L3", "L4",
+            "模型能力", "變現模式", "变现模式", "商業化佈局", "商业化布局",
+            "全球市場", "全球市场", "產業上限", "产业上限", "辦公", "办公",
+            "編程", "编程",
+        ),
+    },
+    "hk_financial_commentary": {
+        "strong": ("毛利率", "毛利"),
+        "support": (
+            "收入", "營收", "营收", "虧損", "亏损", "同比", "銷售成本", "销售成本",
+            "經營", "经营", "淨額", "净额", "百萬元", "百万元", "億元", "亿元",
+            "盈利能力", "競爭力", "竞争力", "成本",
+        ),
+    },
+    "hk_business_overview": {
+        "strong": (
+            "車規級", "车规级", "業務回顧", "业务回顾", "全棧", "全栈",
+            "領先的", "领先的",
+            "基礎模型", "基础模型", "AI原生產品", "AI原生产品",
+            "開放平台", "开放平台", "全模態", "全模态", "AI基礎模型",
+            "AI基础模型",
+        ),
+        "support": (
+            "供應商", "供应商", "解決方案", "解决方案", "平台", "自有", "IP",
+            "主要業務", "主要业务", "領先", "领先", "全棧式", "全栈式",
+            "模型", "產品", "产品", "企業客戶", "企业客户", "消費者", "消费者",
+            "全球化", "用戶", "用户", "MiniMax", "海螺AI", "Talkie", "星野",
+        ),
+    },
+}
+
+# Tie-break order when a paragraph scores equally for several usages. More
+# specific usages win over generic overview.
+_HK_NARRATIVE_TIE_BREAK = (
+    "hk_product_progress",
+    "hk_customer_ecosystem",
+    "hk_market_outlook",
+    "hk_financial_commentary",
+    "hk_business_overview",
+)
+
+_HK_NARRATIVE_USAGE_LIMITS = {
+    "hk_product_progress": 4,
+    "hk_customer_ecosystem": 3,
+    "hk_market_outlook": 3,
+    "hk_financial_commentary": 3,
+    "hk_business_overview": 2,
+}
+
+_HK_NARRATIVE_MIN_COMPACT_LENGTH = 60
+_HK_NARRATIVE_MIN_SCORE = 3
+
+# Forward-looking markers separate a market-outlook paragraph from a
+# product-progress paragraph that happens to share product/segment vocabulary.
+_HK_FORWARD_TOKENS = (
+    "將", "将", "未來", "未来", "預計", "预计", "展望", "佈局", "布局",
+    "規劃", "规划", "下一階段", "下一阶段", "2026", "2027",
+    "邁進", "迈进", "機會", "机会",
+)
+
+_HK_NARRATIVE_NOISE_TOKENS = (
+    "環境、社會及管治",
+    "可持續性報告",
+    "可持续性报告",
+    "信息安全與隱私保護",
+    "信息安全与隐私保护",
+    "客戶隱私保護",
+    "客户隐私保护",
+    "產品責任",
+    "产品责任",
+    "ESG 工作小組",
+    "核數師",
+    "購股權",
+    "董事袍金",
+    "薪酬委員會",
+    "提名委員會",
+    "審核委員會",
+    "關連交易",
+    "釋義項",
+    "重要提示",
+    "財務摘要",
+    "财务摘要",
+    "過去四個財政年度",
+    "过去四个财政年度",
+    "資產及負債摘要",
+    "资产及负债摘要",
+    "千美元 千美元",
+    "非《國際財務報告準則》計量指標",
+    "非《国际财务报告准则》计量指标",
+    "主要風險及不確定因素",
+    "主要风险及不确定因素",
+    "氣候變化風險",
+    "气候变化风险",
+    "風險 ╱ 機遇",
+    "风险 ╱ 机遇",
+    "極端天氣",
+    "极端天气",
+    "金融資產的收益及虧損",
+    "金融资产的收益及亏损",
+    "公允價值計量且其變動計入其他全面收益",
+    "公允价值计量且其变动计入其他全面收益",
+    "財務報表附註",
+    "财务报表附注",
+)
+
+_HK_NARRATIVE_HEADING_TOKENS = (
+    "業務回顧",
+    "业务回顾",
+    "業務展望",
+    "业务展望",
+    "管理層討論及分析",
+    "管理层讨论及分析",
+    "財務回顧",
+    "财务回顾",
+    "收入",
+    "毛利及毛利率",
+)
+
+_HK_PAGE_MARKER_RES = (
+    re.compile(
+        r"\d{0,4}\s*[一-鿿]{2,24}控股有限公司\s*\d{4}\s*年年度報告"
+        r"(?:[\s一-鿿]{0,16}（續）)?"
+    ),
+    re.compile(
+        r"\d{0,4}\s*\d{4}\s*年年度報告\s*[一-鿿]{2,24}控股有限公司"
+    ),
+    re.compile(r"管理層討論及分析\s*（續）"),
+)
+
+
+def _looks_like_hk_report(text: str) -> bool:
+    return any(marker in text for marker in _HK_REPORT_MARKERS)
+
+
+def _strip_hk_page_markers(text: str) -> str:
+    cleaned = text
+    for pattern in _HK_PAGE_MARKER_RES:
+        cleaned = pattern.sub(" ", cleaned)
+    return re.sub(r"\s+", " ", cleaned).strip()
+
+
+def _is_hk_narrative_noise(para: str) -> bool:
+    return any(token in para for token in _HK_NARRATIVE_NOISE_TOKENS)
+
+
+def _is_valid_narrative_paragraph(
+    para: str,
+    *,
+    min_compact_length: int = _HK_NARRATIVE_MIN_COMPACT_LENGTH,
+) -> bool:
+    compact = re.sub(r"\s+", "", para)
+    if len(compact) < min_compact_length:
+        return False
+    if not any(punct in para for punct in ("。", "；", "，")):
+        return False
+    return True
+
+
+def _classify_hk_narrative_paragraph(para: str) -> Tuple[str, int]:
+    forward = any(token in para for token in _HK_FORWARD_TOKENS)
+    best_usage = ""
+    best_score = 0
+    for usage in _HK_NARRATIVE_TIE_BREAK:
+        spec = _HK_NARRATIVE_KEYWORDS[usage]
+        strong = sum(1 for token in spec["strong"] if token in para)
+        support = sum(1 for token in spec["support"] if token in para)
+        if strong == 0 and support < 2:
+            continue
+        score = strong * 3 + support
+        if usage == "hk_market_outlook" and forward:
+            score += 6
+        if score < _HK_NARRATIVE_MIN_SCORE:
+            continue
+        if score > best_score:
+            best_score = score
+            best_usage = usage
+    return best_usage, best_score
+
+
+def _iter_narrative_paragraph_units(
+    text: str,
+    *,
+    heading_tokens: Tuple[str, ...],
+    clean_line,
+) -> List[str]:
+    """Return paragraph-like narrative units from line-oriented report text."""
+    paragraphs: List[str] = []
+    buffer: List[str] = []
+
+    def flush() -> None:
+        if not buffer:
+            return
+        paragraph = clean_line("".join(buffer))
+        buffer.clear()
+        if paragraph:
+            paragraphs.append(paragraph)
+
+    for raw_line in text.splitlines():
+        line = clean_line(raw_line.strip())
+        if not line or line.startswith("# Page"):
+            flush()
+            continue
+        compact = re.sub(r"\s+", "", line)
+        if compact in heading_tokens:
+            flush()
+            continue
+        if len(compact) <= 14 and any(token in compact for token in heading_tokens):
+            flush()
+            continue
+        buffer.append(line)
+        if line.endswith(("。", "；", ";")) or len("".join(buffer)) >= _MAX_CHARS_PER_BLOCK:
+            flush()
+    flush()
+    return paragraphs
+
+
+def _iter_hk_narrative_paragraphs(text: str) -> List[str]:
+    """Return paragraph-like HK narrative units from Jina or PDF text."""
+    return _iter_narrative_paragraph_units(
+        text,
+        heading_tokens=_HK_NARRATIVE_HEADING_TOKENS,
+        clean_line=_strip_hk_page_markers,
+    )
+
+
+def _build_scored_narrative_blocks(
+    *,
+    text: str,
+    by_usage: Dict[str, List[Tuple[int, str]]],
+    usage_limits: Dict[str, int],
+    section: str,
+) -> List[Dict[str, Any]]:
+    blocks: List[Dict[str, Any]] = []
+    for usage, items in by_usage.items():
+        items.sort(key=lambda item: -item[0])
+        limit = usage_limits.get(usage, 1)
+        for _score, para in items[:limit]:
+            excerpt = para[:_MAX_CHARS_PER_BLOCK]
+            start = max(text.find(para[:40]), 0)
+            blocks.append(_block(usage, section, usage, excerpt, start, start + len(excerpt)))
+    return blocks
+
+
+def _extract_hk_narrative_blocks(text: str) -> List[Dict[str, Any]]:
+    """Classify HK management-discussion paragraphs into narrative usages."""
+    if not _looks_like_hk_report(text):
+        return []
+
+    by_usage: Dict[str, List[Tuple[int, str]]] = {}
+    for para in _iter_hk_narrative_paragraphs(text):
+        if not para:
+            continue
+        if not _is_valid_narrative_paragraph(para):
+            continue
+        if _is_hk_narrative_noise(para):
+            continue
+        usage, score = _classify_hk_narrative_paragraph(para)
+        if not usage:
+            continue
+        by_usage.setdefault(usage, []).append((score, para))
+
+    return _build_scored_narrative_blocks(
+        text=text,
+        by_usage=by_usage,
+        usage_limits=_HK_NARRATIVE_USAGE_LIMITS,
+        section="管理層討論及分析",
+    )
 
 
 def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:

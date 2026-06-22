@@ -1220,3 +1220,158 @@ def test_extracts_supplier_concentration_table_separately_from_customer_table():
     assert "90.99%" in block["text"]
     assert "949,187,469.36" in block["text"]
     assert "39.61%" in block["text"]
+
+
+# ---------------------------------------------------------------------------
+# HK narrative block extraction (Traditional/Simplified)
+# ---------------------------------------------------------------------------
+
+HK_NARRATIVE_REPORT = """
+黑芝麻智能國際控股有限公司
+2025 年年度報告
+
+管理層討論及分析
+
+業務回顧
+2025 年，本公司在智能汽車計算芯片領域持續鞏固領先地位，全年營收人民幣 8.22 億元，同比增長 73.4%。
+
+華山 A1000 系列芯片已成功搭載於吉利、東風、比亞迪、一汽等多款車型，成為 2025 年本公司芯片銷量的主力貢獻。武當 C1200 系列芯片 2025 年實現從定點到量產的推進，在頭部車企的新車型上已經進入量產階段。華山 A2000 系列芯片作為全球首款全景通識高算力芯片，基於 7nm 先進工藝打造，目前正與元戎啟行、Nullmax 等核心算法廠商進行端到端算法的深度適配與驗證。 8黑芝麻智能國際控股有限公司  2025 年年度報告 管理層討論及分析 （續）
+
+報告期內，本公司先後與雲深處、傅利葉智能、聯想、智平方等頭部機器人產業鏈企業合作夥伴，共同推動具身智能的商業化落地。目前已在四足機器人、航運智能巡檢等場景規模化交付，與智能駕駛形成生態協同的雙主業增長格局。
+
+業務展望
+2026 年本公司將以華山 A2000 芯片為核心，助力合作夥伴實現 L3 級高級輔助駕駛規模化落地，同步佈局 L4 級 Robotaxi 等場景，推動年內與蘿蔔快跑合作量產。依託 A2000 通過美國相關審查的全球市場准入優勢，加速海外整車項目量產應用，把握泛端側 AI 市場機遇。
+
+毛利及毛利率
+我們的整體毛利由截至 2024 年的人民幣 194.7 百萬元增加 73.1% 至截至 2025 年的人民幣 337.1 百萬元，整體毛利率保持相對穩定。我們輔助駕駛產品及解決方案的毛利率截至 2025 年為 37.4%，新業務具身智能解決方案的毛利率截至 2025 年為 48.7%，本公司產品在市場中保持有利競爭力。
+"""
+
+HK_AI_SOFTWARE_NARRATIVE_REPORT = """
+MINIMAX GROUP INC. 2025年度報告
+
+業務回顧及展望
+業務回顧
+2025年，我們構建了全模態的研發能力，語言、視頻、語音、音樂等各主要模態均擁有了具備全球競爭力的模型。同時，不斷通過技術創新給全球用戶帶來更好的體驗，升級我們的AI原生產品，包括面向企業客戶的開放平台，和面向消費者的MiniMax Agent、海螺AI、Talkie╱星野等。全球化佈局也走得更深更實。
+
+2025年全年MiniMax總收入同比增長158.9%達到7,900萬美元，其中超過70%的收入來自國際市場。截至2025年12月31日，MiniMax累計服務超過200個國家及地區的逾2.36億名用戶，以及來自超過100個國家及地區的21.4萬企業客戶以及開發者。
+
+在語言模型方面，2025年第四季度我們更新了M2、M2.1、M2-her三款模型。M2重新定義了效果、價格和速度上的平衡，具備編程、工具調用和深度搜索三項關鍵能力，發佈後迅速獲得全球開發者社區認可，成為OpenRouter上首個日Token消耗量超過500億的中國模型，並登頂HuggingFace全球熱榜第一。
+
+在多模態方面，我們已具備視頻、語音、音樂三大模型能力。2025年10月，我們發佈了視頻模型Hailuo 2.3，在人物動作、畫面質量和風格化方面實現顯著提升，同時推出更快速的Fast模型，批量創作成本最高可降低50%。我們還在海螺AI產品中升級了Media Agent，支持全模態全能創作。
+
+業務展望
+展望未來，在公司戰略層面，我們會從基礎模型公司向AI時代的平台型公司邁進。模型能力的突破、智能體應用的部署以及變現模式的成熟，都在不斷擴展產業上限。我們將持續定義和推動新的智能範式，不斷提升技術和產品的創新能力，以及可擴展的基建和Token吞吐能力，同時深化商業化佈局並深耕全球市場機會。
+"""
+
+
+def _hk_usages(text):
+    pack = build_periodic_report_evidence_pack(text, report_type="annual")
+    return {block["usage"]: block for block in pack["blocks"]}
+
+
+def test_extracts_hk_product_progress_narrative_block():
+    blocks = _hk_usages(HK_NARRATIVE_REPORT)
+    assert "hk_product_progress" in blocks
+    text = blocks["hk_product_progress"]["text"]
+    assert "A2000" in text
+    assert "華山" in text or "武當" in text
+
+
+def test_extracts_hk_customer_ecosystem_narrative_block():
+    blocks = _hk_usages(HK_NARRATIVE_REPORT)
+    assert "hk_customer_ecosystem" in blocks
+    text = blocks["hk_customer_ecosystem"]["text"]
+    assert "合作夥伴" in text or "傅利葉" in text or "生態" in text
+
+
+def test_extracts_hk_market_outlook_narrative_block():
+    blocks = _hk_usages(HK_NARRATIVE_REPORT)
+    assert "hk_market_outlook" in blocks
+    text = blocks["hk_market_outlook"]["text"]
+    assert "Robotaxi" in text or "L4" in text
+
+
+def test_extracts_hk_financial_commentary_narrative_block():
+    blocks = _hk_usages(HK_NARRATIVE_REPORT)
+    assert "hk_financial_commentary" in blocks
+    assert "毛利率" in blocks["hk_financial_commentary"]["text"]
+
+
+def test_hk_narrative_blocks_strip_embedded_page_markers():
+    blocks = _hk_usages(HK_NARRATIVE_REPORT)
+    for usage, block in blocks.items():
+        if usage.startswith("hk_"):
+            assert "（續）" not in block["text"]
+            assert "年年度報告 管理層討論及分析" not in block["text"]
+
+
+def test_hk_narrative_extraction_does_not_fire_on_ashare_report():
+    pack = build_periodic_report_evidence_pack(SAMPLE_REPORT, report_type="annual")
+    usages = {block["usage"] for block in pack["blocks"]}
+    assert not any(usage.startswith("hk_") for usage in usages)
+
+
+def test_hk_narrative_usages_have_priority():
+    for usage in (
+        "hk_business_overview",
+        "hk_product_progress",
+        "hk_market_outlook",
+        "hk_customer_ecosystem",
+        "hk_financial_commentary",
+    ):
+        assert usage in USAGE_PRIORITY
+
+
+def test_extracts_hk_ai_software_business_overview_from_minimax_style_report():
+    blocks = _hk_usages(HK_AI_SOFTWARE_NARRATIVE_REPORT)
+    assert "hk_business_overview" in blocks
+    text = blocks["hk_business_overview"]["text"]
+    assert "AI原生產品" in text
+    assert "開放平台" in text
+
+
+def test_extracts_hk_ai_software_product_progress_from_model_release_paragraphs():
+    blocks = _hk_usages(HK_AI_SOFTWARE_NARRATIVE_REPORT)
+    assert "hk_product_progress" in blocks
+    text = blocks["hk_product_progress"]["text"]
+    assert "M2" in text or "Hailuo" in text
+    assert "模型" in text
+
+
+def test_extracts_hk_ai_software_customer_ecosystem_from_user_and_developer_scale():
+    blocks = _hk_usages(HK_AI_SOFTWARE_NARRATIVE_REPORT)
+    assert "hk_customer_ecosystem" in blocks
+    text = blocks["hk_customer_ecosystem"]["text"]
+    assert "企業客戶" in text
+    assert "開發者" in text
+
+
+def test_extracts_hk_ai_software_market_outlook_from_platform_strategy():
+    blocks = _hk_usages(HK_AI_SOFTWARE_NARRATIVE_REPORT)
+    assert "hk_market_outlook" in blocks
+    text = blocks["hk_market_outlook"]["text"]
+    assert "平台型公司" in text
+    assert "Token吞吐能力" in text
+
+
+def test_hk_narrative_rejects_sustainability_privacy_boilerplate():
+    report = """
+MINIMAX GROUP INC. 2025年度報告
+管理層討論及分析
+可持續性報告
+1.5 信息安全與隱私保護
+MiniMax深刻認識到，在人工智能技術快速演進的背景下，保障數據安全與客戶隱私，不僅是對客戶與合作夥伴的莊嚴承諾，也是履行企業社會責任、遵守全球合規要求的必然選擇。我們將信息安全內嵌於產品研發、運營管理與公司治理的全過程，通過體系化的風險防控、持續的技術投入與全員的安全意識培育，構建可信賴的技術生態。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert not [block for block in blocks if str(block.get("usage", "")).startswith("hk_")]
+
+
+def test_hk_narrative_rejects_financial_summary_table_as_commentary():
+    report = """
+MINIMAX GROUP INC. 2025年度報告
+管理層討論及分析
+財務摘要
+本集團過去四個財政年度的已公佈業績以及資產及負債摘要載列如下：業績截至12月31日止年度2025年 2024年 2023年 2022年千美元 千美元 千美元 千美元收入 79,038 30,523 3,460 –毛利 20,079 3,738 (854) –稅前虧損 (1,871,617) (465,238) (269,246) (73,728)年內虧損 (1,871,617) (465,238) (269,246) (73,728)經調整淨虧損（非《國際財務報告準則》計量指標）附註。
+"""
+    blocks = build_periodic_report_evidence_pack(report, report_type="annual")["blocks"]
+    assert "hk_financial_commentary" not in {block["usage"] for block in blocks}

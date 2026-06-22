@@ -2806,3 +2806,201 @@ def test_candidate_cards_keep_valid_unselected_cards_for_maintenance():
     assert len(result["candidate_cards"]) > len(result["cards"])
     candidate_types = {card["card_type"] for card in result["candidate_cards"]}
     assert "margin_competitiveness" in candidate_types
+
+
+# ---------------------------------------------------------------------------
+# HK narrative usage -> card_type mapping (Traditional/Simplified)
+# ---------------------------------------------------------------------------
+
+def _build_hk_cards(blocks):
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": blocks,
+    }
+    return build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="黑芝麻智能",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+
+def test_hk_product_progress_block_maps_to_rd_product_progress_card():
+    blocks = [
+        {
+            "id": "hk_product_progress-0",
+            "usage": "hk_product_progress",
+            "section": "管理層討論及分析",
+            "title": "hk_product_progress",
+            "text": (
+                "華山 A1000 系列芯片已成功搭載於吉利、東風、比亞迪等多款車型。"
+                "武當 C1200 系列芯片實現從定點到量產的推進，在頭部車企新車型上已進入量產階段。"
+                "華山 A2000 系列芯片基於 7nm 先進工藝打造，目前正與核心算法廠商進行深度適配與驗證。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "rd_product_progress" in card_types
+    rd_card = next(c for c in result["cards"] if c["card_type"] == "rd_product_progress")
+    assert "A2000" in rd_card["source_excerpt"] or "C1200" in rd_card["source_excerpt"]
+    assert rd_card["source_credit"] == 75
+    assert rd_card["experimental"] is True
+    assert rd_card["knowledge_eligible"] is False
+
+
+def test_hk_market_outlook_block_maps_to_market_outlook_card():
+    blocks = [
+        {
+            "id": "hk_market_outlook-0",
+            "usage": "hk_market_outlook",
+            "section": "管理層討論及分析",
+            "title": "hk_market_outlook",
+            "text": (
+                "2026 年本公司將助力合作夥伴實現 L3 級高級輔助駕駛規模化落地，"
+                "同步佈局 L4 級 Robotaxi 等場景，並把握泛端側 AI 市場機遇，加速海外整車項目量產應用。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "market_outlook" in card_types or "management_market_view" in card_types
+
+
+def test_hk_customer_ecosystem_block_maps_to_business_model_card():
+    blocks = [
+        {
+            "id": "hk_customer_ecosystem-0",
+            "usage": "hk_customer_ecosystem",
+            "section": "管理層討論及分析",
+            "title": "hk_customer_ecosystem",
+            "text": (
+                "報告期內，本公司先後與雲深處、傅利葉智能、聯想、智平方等頭部機器人產業鏈企業合作夥伴，"
+                "共同推動具身智能的商業化落地，與智能駕駛形成生態協同的雙主業增長格局。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "business_model" in card_types
+
+
+def test_hk_financial_commentary_block_maps_to_margin_card():
+    blocks = [
+        {
+            "id": "hk_financial_commentary-0",
+            "usage": "hk_financial_commentary",
+            "section": "管理層討論及分析",
+            "title": "hk_financial_commentary",
+            "text": (
+                "我們的整體毛利由截至 2024 年的人民幣 194.7 百萬元增加至 2025 年的人民幣 337.1 百萬元，"
+                "整體毛利率保持相對穩定，輔助駕駛產品及解決方案的毛利率為 37.4%，本公司產品在市場中保持有利競爭力。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "margin_competitiveness" in card_types or "financial_note" in card_types
+
+
+def test_hk_business_overview_block_maps_to_business_model_card():
+    blocks = [
+        {
+            "id": "hk_business_overview-0",
+            "usage": "hk_business_overview",
+            "section": "管理層討論及分析",
+            "title": "hk_business_overview",
+            "text": (
+                "我們是領先的車規級智能汽車計算 SoC 及基於 SoC 的智能汽車解決方案供應商，"
+                "通過自研 IP 核、算法以及軟件驅動的 SoC 解決方案，提供全棧式高階輔助駕駛能力以滿足客戶的廣泛需求。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "business_model" in card_types
+
+
+def test_global_cap_reserves_slots_for_product_progress_not_only_business_model():
+    """A flood of business_model candidates must not starve product progress.
+
+    Regression guard for HK annual reports where many paragraphs map to
+    business_model: the global cap should be shared fairly across card types so
+    rd_product_progress (high-value product progress) still surfaces.
+    """
+    blocks = []
+    for i in range(8):
+        blocks.append({
+            "id": f"hk_business_overview-{i}",
+            "usage": "hk_business_overview",
+            "section": "管理層討論及分析",
+            "title": "hk_business_overview",
+            "text": (
+                f"我們是領先的車規級智能汽車計算 SoC 供應商之{i}，"
+                "通過自研 IP 核及算法提供全棧式智能汽車解決方案以滿足客戶廣泛需求。"
+            ),
+        })
+    for i in range(8):
+        blocks.append({
+            "id": f"hk_product_progress-{i}",
+            "usage": "hk_product_progress",
+            "section": "管理層討論及分析",
+            "title": "hk_product_progress",
+            "text": (
+                f"華山 A2000 系列芯片第{i}代基於 7nm 先進工藝打造，已實現量產並通過車規認證，"
+                "搭載於頭部車企多款新車型，目前正與核心算法廠商進行深度適配與驗證。"
+            ),
+        })
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="黑芝麻智能",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"schema_version": "periodic_report_evidence_pack.v1", "blocks": blocks},
+        max_cards_per_type=12,
+        max_total_cards=6,
+    )
+    card_types = [c["card_type"] for c in result["cards"]]
+    assert len(result["cards"]) <= 6
+    assert "rd_product_progress" in card_types
+    assert "business_model" in card_types
+
+
+def test_hk_ai_software_product_progress_block_maps_to_rd_card():
+    blocks = [
+        {
+            "id": "hk_product_progress-0",
+            "usage": "hk_product_progress",
+            "section": "業務回顧及展望",
+            "title": "hk_product_progress",
+            "text": (
+                "在語言模型方面，2025年第四季度我們更新了M2、M2.1、M2-her三款模型。"
+                "M2具備編程、工具調用和深度搜索三項關鍵能力，發佈後迅速獲得全球開發者社區認可。"
+                "視頻模型Hailuo 2.3在人物動作、畫面質量和風格化方面實現顯著提升。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "rd_product_progress" in card_types
+    rd_card = next(c for c in result["cards"] if c["card_type"] == "rd_product_progress")
+    assert "M2" in rd_card["source_excerpt"] or "Hailuo" in rd_card["source_excerpt"]
+
+
+def test_hk_ai_software_business_overview_block_maps_to_business_model_card():
+    blocks = [
+        {
+            "id": "hk_business_overview-0",
+            "usage": "hk_business_overview",
+            "section": "業務回顧及展望",
+            "title": "hk_business_overview",
+            "text": (
+                "我們構建了全模態的研發能力，升級AI原生產品，包括面向企業客戶的開放平台，"
+                "和面向消費者的MiniMax Agent、海螺AI、Talkie╱星野等，全球化佈局也走得更深更實。"
+            ),
+        }
+    ]
+    result = _build_hk_cards(blocks)
+    card_types = {card["card_type"] for card in result["cards"]}
+    assert "business_model" in card_types
