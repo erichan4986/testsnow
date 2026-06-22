@@ -151,6 +151,48 @@ def test_cli_knowledge_base_dir_defaults_to_dry_run(tmp_path):
     assert not list(knowledge_dir.rglob("*.md"))
 
 
+def test_build_preview_markdown_existing_only_refresh_plan(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    knowledge_dir = tmp_path / "knowledge"
+    existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
+    existing_dir.mkdir(parents=True)
+    existing_note = existing_dir / "2025-annual-management-market-view-0.md"
+    existing_note.write_text(
+        "---\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        "card_id: \"periodic:000001:2025:annual:narrative:management_market_view:0\"\n"
+        "knowledge_fact_status: narrative_evidence\n"
+        "---\n"
+        "\n"
+        "## Manual Note\n"
+        "\n"
+        "保留人工补充。\n",
+        encoding="utf-8",
+    )
+
+    markdown = build_preview_markdown(
+        stock_code="000001",
+        stock_name="测试股",
+        cache_dir=cache_dir,
+        report_type="annual",
+        knowledge_base_dir=knowledge_dir,
+        refresh_existing=True,
+        refresh_frontmatter_only=True,
+        existing_only=True,
+    )
+
+    assert "Knowledge note plan" in markdown
+    assert "dry_run：`true`" in markdown
+    assert "written：0" in markdown
+    assert "refreshed：1" in markdown
+    assert "skipped_existing：0" in markdown
+    assert "filtered：0" in markdown
+    assert "保留人工补充" in existing_note.read_text(encoding="utf-8")
+    assert len(list(existing_dir.glob("*.md"))) == 1
+
+
 def test_cli_write_knowledge_writes_tmp_notes(tmp_path):
     cache_dir = tmp_path / "periodic_reports"
     cache_dir.mkdir()

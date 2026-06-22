@@ -53,6 +53,9 @@ def build_preview_markdown(
     include_json: bool = False,
     knowledge_base_dir: Optional[Union[str, Path]] = None,
     write_knowledge: bool = False,
+    refresh_existing: bool = False,
+    refresh_frontmatter_only: bool = False,
+    existing_only: bool = False,
 ) -> str:
     """Build deterministic Markdown preview from a local report cache."""
     cache_path = _find_cache_file(
@@ -87,12 +90,26 @@ def build_preview_markdown(
     )
     write_plan = None
     if knowledge_base_dir:
+        write_cards_pack = cards_pack
+        if existing_only:
+            existing_cards = [
+                card
+                for card in (cards_pack.get("cards") or [])
+                if _card_note_path(
+                    knowledge_base_dir=knowledge_base_dir,
+                    stock_name=title_name,
+                    card=card,
+                ).exists()
+            ]
+            write_cards_pack = {**cards_pack, "cards": existing_cards}
         write_plan = write_periodic_report_narrative_card_notes(
             title_name,
             stock_code,
-            cards_pack,
+            write_cards_pack,
             knowledge_base_dir,
             dry_run=not write_knowledge,
+            refresh_existing=refresh_existing,
+            refresh_frontmatter_only=refresh_frontmatter_only,
         )
 
     lines = header + [
@@ -102,7 +119,14 @@ def build_preview_markdown(
         "",
     ]
     if write_plan is not None:
-        lines.extend(_render_knowledge_plan(write_plan, knowledge_base_dir, write_knowledge))
+        lines.extend(_render_knowledge_plan(
+            write_plan,
+            knowledge_base_dir,
+            write_knowledge,
+            refresh_existing=refresh_existing,
+            refresh_frontmatter_only=refresh_frontmatter_only,
+            existing_only=existing_only,
+        ))
     if not cards_pack.get("cards"):
         lines.extend(["未抽取到 narrative evidence cards。", ""])
     for idx, card in enumerate(cards_pack.get("cards") or [], 1):
@@ -130,7 +154,15 @@ def build_preview_markdown(
     return "\n".join(lines)
 
 
-def _render_knowledge_plan(write_plan: object, base_dir: Union[str, Path], write_knowledge: bool) -> list[str]:
+def _render_knowledge_plan(
+    write_plan: object,
+    base_dir: Union[str, Path],
+    write_knowledge: bool,
+    *,
+    refresh_existing: bool = False,
+    refresh_frontmatter_only: bool = False,
+    existing_only: bool = False,
+) -> list[str]:
     written = getattr(write_plan, "written", [])
     skipped = getattr(write_plan, "skipped_existing", [])
     refreshed = getattr(write_plan, "refreshed", [])
@@ -140,12 +172,39 @@ def _render_knowledge_plan(write_plan: object, base_dir: Union[str, Path], write
         "",
         f"- base_dir：`{Path(base_dir)}`",
         f"- dry_run：`{str(not write_knowledge).lower()}`",
+        f"- refresh_existing：`{str(refresh_existing).lower()}`",
+        f"- refresh_frontmatter_only：`{str(refresh_frontmatter_only).lower()}`",
+        f"- existing_only：`{str(existing_only).lower()}`",
         f"- written：{len(written)}",
         f"- skipped_existing：{len(skipped)}",
         f"- refreshed：{len(refreshed)}",
         f"- filtered：{len(filtered)}",
         "",
     ]
+
+
+def _card_note_path(
+    *,
+    knowledge_base_dir: Union[str, Path],
+    stock_name: str,
+    card: dict,
+) -> Path:
+    card_id = str(card.get("card_id", ""))
+    tail = card_id.rsplit(":", 1)[-1]
+    index = tail if tail.isdigit() else "0"
+    filename = "{year}-{rtype}-{ctype}-{idx}.md".format(
+        year=card.get("report_year", ""),
+        rtype=_safe_filename_segment(str(card.get("report_type", ""))) or "unknown",
+        ctype=_safe_filename_segment(str(card.get("card_type", ""))) or "unknown",
+        idx=index,
+    )
+    return (
+        Path(knowledge_base_dir)
+        / "10-Stocks"
+        / _safe_dir_segment(stock_name)
+        / "periodic_narrative_cards"
+        / filename
+    )
 
 
 def _find_cache_file(
@@ -186,6 +245,29 @@ def _safe_filename(value: str) -> str:
     return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in text)
 
 
+def _safe_filename_segment(segment: str) -> str:
+    if not segment:
+        return ""
+    segment = str(segment).lower()
+    segment = "".join(ch if ch.isalnum() or ch == "-" else "-" for ch in segment)
+    while "--" in segment:
+        segment = segment.replace("--", "-")
+    return segment.strip("-")
+
+
+def _safe_dir_segment(segment: str, *, fallback: str = "unknown") -> str:
+    seg = str(segment or "").replace("\x00", "")
+    for char in ("\\", "/"):
+        seg = seg.replace(char, "-")
+    while ".." in seg:
+        seg = seg.replace("..", "-")
+    seg = "-".join(seg.split())
+    while "--" in seg:
+        seg = seg.replace("--", "-")
+    seg = seg.strip("-. ")
+    return seg or fallback
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(
         description="Render local periodic-report narrative evidence cards preview"
@@ -199,6 +281,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", help="Output markdown path; defaults to /tmp")
     parser.add_argument("--knowledge-base-dir", help="Optional Knowledge base dir for note plan/write")
     parser.add_argument("--write-knowledge", action="store_true", help="Write Knowledge notes; default is dry-run")
+    parser.add_argument("--refresh-existing", action="store_true", help="Refresh existing notes instead of skipping them")
+    parser.add_argument("--refresh-frontmatter-only", action="store_true", help="Only update hash frontmatter when refreshing existing notes")
+    parser.add_argument("--existing-only", action="store_true", help="Only plan/write cards whose note file already exists")
     args = parser.parse_args(argv)
 
     markdown = build_preview_markdown(
@@ -210,6 +295,9 @@ def main(argv: list[str] | None = None) -> int:
         include_json=args.include_json,
         knowledge_base_dir=args.knowledge_base_dir,
         write_knowledge=args.write_knowledge,
+        refresh_existing=args.refresh_existing,
+        refresh_frontmatter_only=args.refresh_frontmatter_only,
+        existing_only=args.existing_only,
     )
     out_path = Path(args.output) if args.output else default_output_path(
         args.stock_name,
