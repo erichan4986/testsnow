@@ -74,6 +74,13 @@ Knowledge writers:
 - filing fact notes, writer-only: `scripts/utils/periodic_report_filing_fact_note_writer.py`
 <!-- path-check: scripts/utils/periodic_report_filing_fact_note_writer.py -->
 
+Preview and acceptance helpers:
+
+- narrative cards single-stock preview: `scripts/periodic_report_narrative_cards_preview.py`
+<!-- path-check: scripts/periodic_report_narrative_cards_preview.py -->
+- narrative cards multi-stock acceptance: `scripts/periodic_report_narrative_cards_acceptance.py`
+<!-- path-check: scripts/periodic_report_narrative_cards_acceptance.py -->
+
 Cross-cutting and adjacent helpers:
 
 - periodic report LLM validation/fidelity checks: `scripts/utils/periodic_report_validation.py`
@@ -88,8 +95,12 @@ Active unification design:
 
 Current limitation:
 
+- A-share and HK narrative evidence cards are the current primary path for writing useful annual-report text into Knowledge. They can write `periodic_report_narrative_evidence` notes under `knowledge/10-Stocks/<stock>/periodic_narrative_cards/`.
+- Fulltext LLM summaries remain material-layer display/synthesis references only. They must not enter Knowledge persistence, scoring, risk scoring, `confirmed_fact`, or `fact_candidate`.
+- Ground Truth numeric blocks constrain fulltext LLM financial numbers; they are not a separate Knowledge source.
+- Filing facts have a writer-only structured finance path, but they are not the current priority for annual-report knowledge enrichment.
 - A-share structured filing facts have a helper-only Phase A path.
-- HK structured facts are not yet supported because HK financial-statement blocks are not reliably extracted by the generic evidence pack. See the HK evidence-pack gap in `docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`.
+- HK narrative cards are supported, but HK structured facts are not yet supported because HK financial-statement blocks are not reliably extracted by the generic evidence pack. See the HK evidence-pack gap in `docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`.
 <!-- path-check: docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md -->
 
 Guardrail files:
