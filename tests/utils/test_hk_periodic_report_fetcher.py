@@ -16,6 +16,7 @@ from hk_periodic_report_fetcher import (
     HKEX_BASE_URL,
     build_hk_periodic_report_cache_path,
     build_hkex_title_search_url,
+    discover_hkex_periodic_report,
     fetch_hk_periodic_report_text,
     find_hk_periodic_report,
     resolve_hkex_stock_id,
@@ -176,13 +177,60 @@ def test_build_hkex_title_search_url_annual():
         end_date="20260430",
         report_type="annual",
     )
-    assert url.startswith("https://www1.hkexnews.hk/search/titleSearchServlet")
+    assert url.startswith("https://www1.hkexnews.hk/search/titleSearchServlet.do")
     assert "stockId=1000221013" in url
     assert "from=20250401" in url
     assert "to=20260430" in url
     assert "lang=ZH" in url
     assert "%E5%B9%B4%E5%A0%B1" in url
     assert "annual+report" not in url.lower()
+
+
+def test_discover_hkex_periodic_report_resolves_stock_id_and_pdf_url():
+    import json
+
+    loaded_search_urls = []
+
+    def fake_active_loader(lang="ZH"):
+        assert lang == "ZH"
+        return json.dumps(SAMPLE_ACTIVE_STOCK_SHORT_JSON)
+
+    def fake_title_loader(url):
+        loaded_search_urls.append(url)
+        assert "stockId=1000221013" in url
+        assert "from=20250101" in url
+        assert "to=20260630" in url
+        return SAMPLE_TITLE_SEARCH_ZH_RESPONSE
+
+    result = discover_hkex_periodic_report(
+        stock_code="02533",
+        report_year=2025,
+        active_stock_loader=fake_active_loader,
+        title_search_loader=fake_title_loader,
+    )
+
+    assert result["title"] == "2025年報"
+    assert result["url"] == (
+        "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0427/2026042701017_c.pdf"
+    )
+    assert result["stock_code"] == "02533"
+    assert result["stock_id"] == "1000221013"
+    assert result["market"] == "HK"
+    assert result["report_year"] == 2025
+    assert result["report_type"] == "annual"
+    assert result["search_url"] == loaded_search_urls[0]
+
+
+def test_discover_hkex_periodic_report_rejects_missing_stock_id():
+    import json
+
+    with pytest.raises(ValueError, match="No HKEX stockId"):
+        discover_hkex_periodic_report(
+            stock_code="09999",
+            report_year=2025,
+            active_stock_loader=lambda lang="ZH": json.dumps(SAMPLE_ACTIVE_STOCK_SHORT_JSON),
+            title_search_loader=lambda url: SAMPLE_TITLE_SEARCH_ZH_RESPONSE,
+        )
 
 
 def test_build_hkex_title_search_url_english_fallback():

@@ -20,7 +20,8 @@ from urllib.parse import quote, urlencode
 
 
 HKEX_BASE_URL = "https://www1.hkexnews.hk"
-_TITLE_SEARCH_ENDPOINT = "/search/titleSearchServlet"
+_ACTIVE_STOCK_PATH = "/ncms/script/eds/activestock_sehk_c.json"
+_TITLE_SEARCH_ENDPOINT = "/search/titleSearchServlet.do"
 logger = logging.getLogger(__name__)
 
 
@@ -181,6 +182,60 @@ def build_hkex_title_search_url(
     return f"{HKEX_BASE_URL}{_TITLE_SEARCH_ENDPOINT}?" + urlencode(params, quote_via=quote)
 
 
+def discover_hkex_periodic_report(
+    *,
+    stock_code: str,
+    report_year: int,
+    report_type: str = "annual",
+    lang: str = "ZH",
+    active_stock_loader: Any | None = None,
+    title_search_loader: Any | None = None,
+) -> Dict[str, Any]:
+    """Discover an HKEX periodic report PDF URL for a stock/year.
+
+    The discovery chain mirrors HKEX's title-search page: resolve ``stockId``
+    from the official active-stock JSON, then query ``titleSearchServlet.do``.
+    The function only returns metadata; it does not download PDFs.
+    """
+    active_loader = active_stock_loader or _load_hkex_active_stock_text
+    active_text = active_loader(lang=lang)
+    stock_id = resolve_hkex_stock_id(stock_code, active_text)
+    if not stock_id:
+        raise ValueError(f"No HKEX stockId found for {stock_code}")
+
+    start_date, end_date = _hkex_report_window(int(report_year))
+    search_url = build_hkex_title_search_url(
+        stock_id,
+        start_date=start_date,
+        end_date=end_date,
+        report_type=report_type,
+        lang=lang,
+    )
+    search_loader = title_search_loader or _load_hkex_title_search_json
+    disclosure_json = search_loader(search_url)
+    report = find_hk_periodic_report(
+        disclosure_json,
+        report_type=report_type,
+        lang=lang,
+    )
+    if not report or not report.get("pdf_url"):
+        raise ValueError(f"No HKEX {report_type} report found for {stock_code} {report_year}")
+
+    return {
+        "title": report["title"],
+        "date": report["date_time"],
+        "url": report["pdf_url"],
+        "file_link": report["file_link"],
+        "stock_code": _normalize_hk_stock_code(stock_code),
+        "stock_id": stock_id,
+        "market": "HK",
+        "report_year": int(report_year),
+        "report_type": "annual" if report_type in ("annual", "annual_report") else report_type,
+        "lang": (lang or "ZH").upper(),
+        "search_url": search_url,
+    }
+
+
 def build_hk_periodic_report_cache_path(
     cache_dir: str,
     *,
@@ -197,6 +252,39 @@ def build_hk_periodic_report_cache_path(
     normalized_lang = "zh" if (lang or "ZH").upper() == "ZH" else "en"
     filename = f"{stock_code}_{year}_{normalized_type}_{normalized_lang}_jina.txt"
     return Path(cache_dir) / "hk" / filename
+
+
+def _hkex_report_window(report_year: int) -> tuple[str, str]:
+    return f"{int(report_year)}0101", f"{int(report_year) + 1}0630"
+
+
+def _normalize_hk_stock_code(stock_code: str) -> str:
+    digits = re.sub(r"\D", "", str(stock_code or ""))
+    return digits.zfill(5) if digits else str(stock_code or "")
+
+
+def _load_hkex_active_stock_text(*, lang: str = "ZH") -> str:
+    suffix = "_c" if (lang or "ZH").upper() == "ZH" else "_e"
+    url = f"{HKEX_BASE_URL}/ncms/script/eds/activestock_sehk{suffix}.json"
+    req = urllib.request.Request(url, headers=_hkex_headers())
+    with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310
+        return response.read().decode("utf-8-sig", errors="ignore")
+
+
+def _load_hkex_title_search_json(url: str) -> Dict[str, Any]:
+    req = urllib.request.Request(url, headers=_hkex_headers())
+    with urllib.request.urlopen(req, timeout=30) as response:  # noqa: S310
+        return json.loads(response.read().decode("utf-8-sig", errors="ignore"))
+
+
+def _hkex_headers() -> Dict[str, str]:
+    return {
+        "User-Agent": (
+            "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+            "AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36"
+        ),
+        "Accept": "application/json,text/plain,*/*",
+    }
 
 
 def _download_pdf_to_cache(

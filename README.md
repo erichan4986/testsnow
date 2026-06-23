@@ -191,7 +191,27 @@ python3 scripts/periodic_report_cache.py \
   --year 2025
 ```
 
-港股当前不自动搜索 HKEX 公告，使用官方 PDF URL 或本地 PDF/TXT。用官方 PDF URL 下载并缓存：
+港股可走 HKEX 披露易发现链路。只看发现结果：
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --discover-hkex \
+  --code 02533 \
+  --year 2025
+```
+
+港股发现后直接下载并缓存：
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --discover-hkex \
+  --download-discovered \
+  --stock 黑芝麻智能 \
+  --code 02533 \
+  --year 2025
+```
+
+也可以用官方 PDF URL 下载并缓存：
 
 ```bash
 python3 scripts/periodic_report_cache.py \
@@ -213,7 +233,92 @@ python3 scripts/periodic_report_cache.py \
   --input minimax年报.pdf
 ```
 
+如果 `config/stocks.json` 的单股配置中维护了官方年报 PDF URL，可用配置入口统一准备 cache：
+
+```json
+{
+  "name": "黑芝麻智能",
+  "code": "02533",
+  "xueqiu_code": "HK02533",
+  "annual_report_url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0328/example_c.pdf"
+}
+```
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --from-config \
+  --stock 黑芝麻智能 \
+  --year 2025
+```
+
+配置入口规则：
+
+- `annual_report_url` 存在时，直接下载该官方 PDF 并写入标准 cache。
+- A 股没有 `annual_report_url` 时，会按股票代码走巨潮发现和下载链路。
+- 港股没有 `annual_report_url` 时，会按股票代码走 HKEX 披露易发现和下载链路。
+
 CLI 输出会包含 `text_path`、`meta_path`、`official_url`、`source_path`、`input_format`、`market`、`report_year` 和 `report_type`，后续 narrative cards preview 或报告入口可复用这些 cache 文件。
+
+### `scripts/prepare_annual_report_materials.py` — 一键年报材料准备
+
+把「cache + narrative cards preview + 可选 knowledge 写入」合成一条命令。
+
+```bash
+python3 scripts/prepare_annual_report_materials.py --stock 黑芝麻智能 --year 2025
+```
+
+默认只生成 cache 和 `/tmp` 下的 preview，不写入 `knowledge/`：
+
+```bash
+python3 scripts/prepare_annual_report_materials.py --stock 圣邦股份 --year 2025
+```
+
+需要沉淀 narrative cards 时再传入 `--write-knowledge`：
+
+```bash
+python3 scripts/prepare_annual_report_materials.py \
+  --stock 黑芝麻智能 \
+  --year 2025 \
+  --write-knowledge \
+  --base-dir knowledge
+```
+
+支持参数：
+
+- `--stock`：股票名/代码（需在 `config/stocks.json` 中能找到）
+- `--year`：报告年份
+- `--config`：股票配置路径，默认 `config/stocks.json`
+- `--cache-dir`：cache 目录，默认 `data/raw/periodic_reports`
+- `--report-type`：报告类型，默认 `annual`
+- `--preview-output`：覆盖默认 `/tmp/{safe_stock}_{year}_annual_narrative_cards_preview.md`
+- `--write-knowledge`：写入 `knowledge/10-Stocks/<stock>/periodic_narrative_cards/`
+- `--base-dir`：knowledge 根目录，默认 `knowledge`
+
+CLI 输出 JSON：
+
+```json
+{
+  "stock_name": "黑芝麻智能",
+  "stock_code": "02533",
+  "market": "HK",
+  "report_year": 2025,
+  "report_type": "annual",
+  "text_path": "data/raw/periodic_reports/黑芝麻智能_2025_annual_jina.txt",
+  "meta_path": "data/raw/periodic_reports/黑芝麻智能_2025_annual_meta.json",
+  "preview_path": "/tmp/__________2025_annual_narrative_cards_preview.md",
+  "evidence_blocks_count": 18,
+  "cards_count": 12,
+  "wrote_knowledge": false,
+  "knowledge_written_count": 0
+}
+```
+
+准备策略：
+
+- 配置中有 `annual_report_url` 时直接下载该 URL。
+- A 股无 URL 时走巨潮发现+下载。
+- 港股无 URL 时走 HKEX 披露易发现+下载。
+- 无法识别市场且无 URL 时非 0 退出。
 
 ### `scripts/utils/` — 核心工具
 

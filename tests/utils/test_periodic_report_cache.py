@@ -533,3 +533,195 @@ def test_periodic_report_cache_cli_discovers_and_downloads_cninfo(monkeypatch, c
     payload = json.loads(capsys.readouterr().out)
     assert payload["text_path"].endswith("圣邦股份_2025_annual_jina.txt")
     assert payload["text_chars"] == len("发现后下载文本\n")
+
+
+def test_periodic_report_cache_cli_from_config_uses_hk_annual_report_url(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    config_path = tmp_path / "stocks.json"
+    hk_pdf_url = "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0328/202603280001_c.pdf"
+    config_path.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "黑芝麻智能",
+                    "code": "02533",
+                    "xueqiu_code": "HK02533",
+                    "annual_report_url": hk_pdf_url,
+                }
+            ],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(periodic_report_cache, "_extract_pdf_text", lambda path: "HK 配置 URL 年报文本\n")
+    monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 hk config")
+
+    rc = cli.main([
+        "--from-config",
+        "--stock",
+        "黑芝麻智能",
+        "--year",
+        "2025",
+        "--config",
+        str(config_path),
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["market"] == "HK"
+    assert payload["official_url"] == hk_pdf_url
+    assert payload["text_path"].endswith("黑芝麻智能_2025_annual_jina.txt")
+
+
+def test_periodic_report_cache_cli_from_config_discovers_a_share_without_url(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    config_path = tmp_path / "stocks.json"
+    config_path.write_text(
+        json.dumps(
+            [{"name": "圣邦股份", "code": "300661", "xueqiu_code": "SZ300661"}],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    class _FakeDataFrame:
+        def to_dict(self, orient):
+            return [
+                {
+                    "公告标题": "圣邦股份：2025年年度报告",
+                    "公告时间": "2026-03-28",
+                    "公告链接": (
+                        "http://www.cninfo.com.cn/new/disclosure/detail?"
+                        "stockCode=300661&announcementId=1225045012&announcementTime=2026-03-28 00:00:00"
+                    ),
+                }
+            ]
+
+    monkeypatch.setattr(periodic_report_cache, "_extract_pdf_text", lambda path: "A 股配置巨潮年报文本\n")
+    monkeypatch.setattr(
+        cli,
+        "_load_cninfo_disclosures",
+        lambda symbol, market, start_date="", end_date="": _FakeDataFrame(),
+    )
+    monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 a config")
+
+    rc = cli.main([
+        "--from-config",
+        "--stock",
+        "圣邦股份",
+        "--year",
+        "2025",
+        "--config",
+        str(config_path),
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["market"] == "A"
+    assert payload["official_url"] == "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045012.PDF"
+    assert payload["text_path"].endswith("圣邦股份_2025_annual_jina.txt")
+
+
+def test_periodic_report_cache_cli_from_config_discovers_hk_without_url(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
+    import scripts.periodic_report_cache as cli
+
+    config_path = tmp_path / "stocks.json"
+    config_path.write_text(
+        json.dumps(
+            [{"name": "黑芝麻智能", "code": "02533", "xueqiu_code": "HK02533"}],
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    discovery = {
+        "title": "2025年報",
+        "date": "27/04/2026 16:48",
+        "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0427/2026042701017_c.pdf",
+        "stock_code": "02533",
+        "stock_id": "1000221013",
+        "market": "HK",
+        "report_year": 2025,
+        "report_type": "annual",
+        "lang": "ZH",
+        "search_url": "https://www1.hkexnews.hk/search/titleSearchServlet.do?...",
+    }
+    import periodic_report_cache
+
+    monkeypatch.setattr(cli, "discover_hkex_periodic_report", lambda **kwargs: discovery)
+    monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 hk discovered")
+    monkeypatch.setattr(periodic_report_cache, "_extract_pdf_text", lambda path: "HKEX 自动发现年报文本\n")
+
+    rc = cli.main([
+        "--from-config",
+        "--stock",
+        "黑芝麻智能",
+        "--year",
+        "2025",
+        "--config",
+        str(config_path),
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["market"] == "HK"
+    assert payload["official_url"] == discovery["url"]
+    assert payload["text_path"].endswith("黑芝麻智能_2025_annual_jina.txt")
+
+
+def test_periodic_report_cache_cli_discovers_and_downloads_hkex(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    discovery = {
+        "title": "2025年報",
+        "date": "27/04/2026 16:48",
+        "url": "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0427/2026042701017_c.pdf",
+        "stock_code": "02533",
+        "stock_id": "1000221013",
+        "market": "HK",
+        "report_year": 2025,
+        "report_type": "annual",
+        "lang": "ZH",
+        "search_url": "https://www1.hkexnews.hk/search/titleSearchServlet.do?...",
+    }
+
+    monkeypatch.setattr(cli, "discover_hkex_periodic_report", lambda **kwargs: discovery)
+    monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 hk cli")
+    monkeypatch.setattr(periodic_report_cache, "_extract_pdf_text", lambda path: "HKEX CLI 年报文本\n")
+
+    rc = cli.main([
+        "--discover-hkex",
+        "--download-discovered",
+        "--stock",
+        "黑芝麻智能",
+        "--code",
+        "02533",
+        "--year",
+        "2025",
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["market"] == "HK"
+    assert payload["official_url"] == discovery["url"]
+    assert payload["text_chars"] == len("HKEX CLI 年报文本\n")
