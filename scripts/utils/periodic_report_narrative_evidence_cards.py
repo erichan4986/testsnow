@@ -38,7 +38,7 @@ _USAGE_TO_CARD_TYPES: Dict[str, Tuple[str, ...]] = {
     "management_strategy": ("operation_update", "technology_platform", "rd_product_progress"),
     "management_market_view": ("management_market_view", "market_outlook"),
     "industry_outlook": ("management_market_view", "market_outlook"),
-    "market_demand_outlook": ("management_market_view", "market_outlook"),
+    "market_demand_outlook": ("market_outlook", "management_market_view"),
     "competitive_position": ("management_market_view", "margin_competitiveness"),
     "future_strategy": ("management_market_view", "market_outlook"),
     "profitability_commentary": ("management_market_view", "margin_competitiveness"),
@@ -557,7 +557,7 @@ def build_periodic_report_narrative_evidence_cards(
 
 
 def _dedupe_scope(card_type: str, block_id: str = "") -> str:
-    if str(block_id).startswith("future_strategy-") and card_type in {"management_market_view", "market_outlook"}:
+    if card_type in {"management_market_view", "market_outlook"}:
         return "market_view"
     return card_type
 
@@ -618,8 +618,14 @@ def _collect_candidates(
                 source_order += 1
     return sorted(
         candidates,
-        key=lambda item: (_CARD_TYPES.index(item[2]), -item[3], item[4]),
+        key=lambda item: (_candidate_card_type_sort_index(item[2], item[1]), -item[3], item[4]),
     )
+
+
+def _candidate_card_type_sort_index(card_type: str, block_id: str = "") -> int:
+    if str(block_id).startswith("market_demand_outlook-") and card_type == "market_outlook":
+        return _CARD_TYPES.index("management_market_view") - 1
+    return _CARD_TYPES.index(card_type)
 
 
 def _split_snippets(text: str) -> List[str]:
@@ -1040,6 +1046,8 @@ def _is_valid_excerpt(excerpt: str, card_type: str = "") -> bool:
         return False
     if _looks_like_page_bullet_fragment(excerpt):
         return False
+    if _looks_like_short_report_page_boilerplate(excerpt):
+        return False
     if _looks_like_audit_matter_boilerplate(excerpt):
         return False
     if _looks_like_audit_response_procedure(excerpt):
@@ -1289,6 +1297,25 @@ def _looks_like_applicability_checkbox_fragment(snippet: str) -> bool:
 
 def _looks_like_page_bullet_fragment(snippet: str) -> bool:
     return "年度报告全文" in snippet and any(mark in snippet for mark in ("", "> -"))
+
+
+def _looks_like_short_report_page_boilerplate(snippet: str) -> bool:
+    compact_snippet = _compact_text(snippet)
+    if len(compact_snippet) > 80:
+        return False
+    if "年度报告全文" not in compact_snippet:
+        return False
+    if not re.match(r"^\d{1,4}[\u4e00-\u9fa5A-Za-z（）()·]+20\d{2}年年度报告全文", compact_snippet):
+        return False
+    return any(
+        token in compact_snippet
+        for token in (
+            "主营业务未发生重大变化",
+            "主營業務未發生重大變化",
+            "未发生重大变化",
+            "未發生重大變化",
+        )
+    )
 
 
 def _looks_like_policy_catalog_fragment(snippet: str) -> bool:

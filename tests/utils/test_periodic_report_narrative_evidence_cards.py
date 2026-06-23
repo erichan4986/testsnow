@@ -1459,6 +1459,64 @@ def test_identical_market_outlook_and_management_view_is_deduplicated_once():
     assert matching_cards[0]["card_type"] in {"management_market_view", "market_outlook"}
 
 
+def test_identical_industry_outlook_and_management_view_is_deduplicated_once():
+    text = (
+        "模拟集成电路市场需求预计保持增长，国产替代持续推进，"
+        "下游客户在工业、汽车和网络与计算领域的产品迭代带动市场规模扩大。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业发展情况",
+                "text": text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    matching_cards = [c for c in result["cards"] if text in c["source_excerpt"]]
+    assert len(matching_cards) == 1
+    assert matching_cards[0]["card_type"] in {"management_market_view", "market_outlook"}
+
+
+def test_short_report_page_header_boilerplate_is_rejected():
+    text = "15 圣邦微电子（北京）股份有限公司2025年年度报告全文 报告期内的公司主营业务未发生重大变化。"
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "section": "第三节 管理层讨论与分析",
+                "title": "报告期内的公司主营业务",
+                "text": text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []
+    assert any(d["code"] == "filtered_invalid_excerpt" for d in result["diagnostics"])
+
+
 def test_default_per_type_limit_allows_more_than_three_clean_cards():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
@@ -1609,10 +1667,10 @@ def test_new_high_value_narrative_usages_map_to_management_market_view_cards():
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
             {
-                "id": "market_demand_outlook-0",
-                "usage": "market_demand_outlook",
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
                 "section": "第三节 管理层讨论与分析",
-                "title": "数通市场",
+                "title": "行业发展情况",
                 "text": "光模块是AI投资中网络端的重要环节，预计2030年整体市场规模将增长至414亿美元，复合增长率为20%。",
             },
             {
@@ -1662,10 +1720,10 @@ def test_truncation_prefers_diverse_source_blocks_within_same_card_type():
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
             {
-                "id": "market_demand_outlook-0",
-                "usage": "market_demand_outlook",
+                "id": "industry_outlook-0",
+                "usage": "industry_outlook",
                 "section": "第三节 管理层讨论与分析",
-                "title": "数通市场",
+                "title": "行业发展情况",
                 "text": (
                     "未来数通光模块市场需求有望由算力集群扩张和ASIC芯片规模化部署共同驱动，高速率产品需求提升。 "
                     "AI算力需求推动数据中心持续扩容，全球云服务厂商对GPU需求持续增长，并拉动光互连升级。 "
@@ -1701,7 +1759,7 @@ def test_truncation_prefers_diverse_source_blocks_within_same_card_type():
     cards = [c for c in result["cards"] if c["card_type"] == "management_market_view"]
     assert len(cards) == 3
     assert {card["source_block_id"] for card in cards} == {
-        "market_demand_outlook-0",
+        "industry_outlook-0",
         "competitive_position-0",
         "future_strategy-0",
     }
@@ -2927,7 +2985,7 @@ def test_max_cards_per_type_and_max_total_cards_truncation_is_deterministic():
     # Global cap.
     assert len(cards) <= 5
     # Fixed order follows the card type priority.
-    expected_order = ["business_model", "management_market_view", "market_outlook", "rd_product_progress", "financial_note"]
+    expected_order = ["business_model", "management_market_view", "rd_product_progress", "financial_note"]
     observed_types = [c["card_type"] for c in cards]
     for i, expected in enumerate(expected_order):
         if i < len(observed_types):
