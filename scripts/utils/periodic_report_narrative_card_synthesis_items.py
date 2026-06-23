@@ -8,8 +8,16 @@ from typing import Any, Dict, List, Optional
 
 if __name__.startswith("utils."):
     from .source_adapter import SynthesisItem
+    from .annual_report_material_pack import (
+        build_annual_report_material_pack,
+        selected_cards_to_synthesis_items,
+    )
 else:
     from source_adapter import SynthesisItem
+    from annual_report_material_pack import (
+        build_annual_report_material_pack,
+        selected_cards_to_synthesis_items,
+    )
 
 
 NARRATIVE_CARD_SOURCE_TYPE = "periodic_report_narrative_evidence"
@@ -31,13 +39,34 @@ def load_periodic_narrative_card_synthesis_items(
     stock_name: str,
     base_dir: str | Path,
     max_cards: int = 12,
+    use_pack: bool = False,
+    per_type_limit: int = 3,
 ) -> List[SynthesisItem]:
     """Read narrative-card Knowledge notes and convert them to display items.
 
     The reader is intentionally read-only. It parses current note-writer output:
     metadata comes from frontmatter, while source excerpts come from the
     ``## Narrative Evidence`` blockquote in the note body.
+
+    When ``use_pack`` is True, selection is delegated to
+    ``annual_report_material_pack`` for deterministic quality ranking,
+    deduplication, and card-type balancing. The legacy path (False) preserves
+    filename ordering for compatibility.
     """
+    if use_pack:
+        try:
+            pack = build_annual_report_material_pack(
+                stock_name=stock_name,
+                base_dir=base_dir,
+                max_cards=max_cards,
+                per_type_limit=per_type_limit,
+            )
+            return selected_cards_to_synthesis_items(
+                pack["selected_narrative_cards"]
+            )
+        except Exception:
+            return []
+
     notes_dir = (
         Path(base_dir)
         / "10-Stocks"

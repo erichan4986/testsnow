@@ -130,6 +130,8 @@ class SynthesisSkill(BaseSkill):
                 stock_name=stock_name,
                 base_dir=base_dir,
                 max_cards=max_cards,
+                use_pack=True,
+                per_type_limit=3,
             )
         except Exception:
             return []
