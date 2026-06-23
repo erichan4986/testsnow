@@ -15,6 +15,13 @@
         "https://www.blacksesame.com/zh/list_10/912.html"
       ],
       "official_domains": ["blacksesame.com"]
+    },
+    "source_intake": {
+      "enabled": true,
+      "periodic_narrative_cards_synthesis_display": {
+        "enabled": true,
+        "max_display_items": 8
+      }
     }
   },
   {

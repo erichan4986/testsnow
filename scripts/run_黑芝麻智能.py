@@ -107,6 +107,22 @@ def _load_agent_reach_config(stock_name: str) -> dict:
     return {}
 
 
+def _load_source_intake_config(stock_name: str) -> dict:
+    """Load per-stock Source Intake config from config/stocks.json."""
+    config_path = Path(__file__).parent.parent / "config" / "stocks.json"
+    try:
+        with open(config_path, "r", encoding="utf-8") as f:
+            stocks = json.load(f)
+    except Exception as e:
+        logger.warning(f"读取 Source Intake 配置失败: {e}")
+        return {}
+
+    for stock in stocks:
+        if stock.get("name") == stock_name and stock.get("source_intake"):
+            return {stock_name: stock["source_intake"]}
+    return {}
+
+
 def _load_xueqiu_data(stock_name: str, date_str: str) -> list:
     """加载已抓取的雪球数据。优先匹配指定日期，否则回退到最近日期的缓存。"""
     raw_dir = Path(__file__).parent.parent / "data" / "raw"
@@ -228,11 +244,13 @@ def main(argv=None):
     logger.info("\n[4/4] 生成个股深度报告...")
     stock_codes = {STOCK_NAME: "02533"}
     agent_reach_configs = _load_agent_reach_config(STOCK_NAME)
+    source_intake_configs = _load_source_intake_config(STOCK_NAME)
     reporter = PerStockReporter(
         stocks_data=stocks_data,
         stock_codes=stock_codes,
         raw_data=collected_data,
         agent_reach_configs=agent_reach_configs,
+        source_intake_configs=source_intake_configs,
     )
     md_path, html_path = reporter.generate_stock_report(STOCK_NAME, str(report_dir))
     logger.info(f"  报告已生成: {md_path}")

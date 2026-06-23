@@ -78,6 +78,62 @@ def test_black_sesame_entry_passes_agent_reach_config(monkeypatch, tmp_path):
     }
 
 
+def test_black_sesame_entry_passes_source_intake_config(monkeypatch, tmp_path):
+    module = _load_entry_module()
+
+    monkeypatch.setattr(module, "_load_xueqiu_data", lambda stock_name, date_str: [
+        {
+            "title": "黑芝麻智能量产进展",
+            "content": "黑芝麻智能华山芯片量产",
+            "like": 10,
+            "comment": 5,
+        }
+    ])
+    monkeypatch.setattr(module, "_load_agent_reach_config", lambda *a, **k: {})
+    monkeypatch.setattr(module, "_load_source_intake_config", lambda *a, **k: {
+        "黑芝麻智能": {
+            "enabled": True,
+            "periodic_narrative_cards_synthesis_display": {
+                "enabled": True,
+                "max_display_items": 8,
+            },
+        }
+    })
+
+    zhihu_collector_cls = MagicMock(side_effect=AssertionError("ZhihuCollector should not run"))
+    monkeypatch.setattr(module, "ZhihuCollector", zhihu_collector_cls)
+
+    reporter_instance = MagicMock()
+    reporter_instance.generate_stock_report.return_value = ("", "")
+    reporter_cls = MagicMock(return_value=reporter_instance)
+    monkeypatch.setattr(module, "PerStockReporter", reporter_cls)
+    monkeypatch.setattr(module, "export_pdf", MagicMock())
+
+    module.main(["--fast-test"])
+
+    kwargs = reporter_cls.call_args.kwargs
+    assert kwargs["source_intake_configs"] == {
+        "黑芝麻智能": {
+            "enabled": True,
+            "periodic_narrative_cards_synthesis_display": {
+                "enabled": True,
+                "max_display_items": 8,
+            },
+        }
+    }
+
+
+def test_black_sesame_config_enables_periodic_narrative_cards_display():
+    module = _load_entry_module()
+
+    cfg = module._load_source_intake_config("黑芝麻智能")["黑芝麻智能"]
+
+    assert cfg["periodic_narrative_cards_synthesis_display"] == {
+        "enabled": True,
+        "max_display_items": 8,
+    }
+
+
 def test_fast_test_mode_skips_zhihu_collector(monkeypatch, tmp_path):
     module = _load_entry_module()
 
