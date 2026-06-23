@@ -189,13 +189,14 @@ def discover_cninfo_annual_report(
     code = _normalize_a_share_code(stock_code)
     market = get_cninfo_market(code)
     loader = disclosure_loader or _load_cninfo_disclosures
-    rows = _records_from_disclosure_frame(loader(code, market))
+    start_date, end_date = _cninfo_annual_report_window(int(report_year))
+    rows = _records_from_disclosure_frame(loader(code, market, start_date, end_date))
 
     candidates = []
     for row in rows:
         title = _first_present(row, ("公告标题", "title", "TITLE", "announcementTitle"))
         category = _first_present(row, ("公告类型", "category", "CATEGORY", "announcementType"))
-        date = _first_present(row, ("公告日期", "date", "DATE", "announcementDate"))
+        date = _first_present(row, ("公告日期", "公告时间", "date", "DATE", "announcementDate"))
         url = _first_present(row, ("公告链接", "url", "URL", "adjunctUrl"))
         title_text = str(title or "")
         category_text = str(category or "")
@@ -221,14 +222,24 @@ def discover_cninfo_annual_report(
     return candidates[0]
 
 
-def _load_cninfo_disclosures(symbol: str, market: str) -> Any:
+def _load_cninfo_disclosures(
+    symbol: str,
+    market: str,
+    start_date: str = "",
+    end_date: str = "",
+) -> Any:
     try:
         import akshare as ak  # type: ignore
     except Exception as exc:
         raise RuntimeError(
             "CNINFO discovery requires akshare. Install akshare or pass a local report file."
         ) from exc
-    return ak.stock_zh_a_disclosure_report_cninfo(symbol=symbol, market=market)
+    kwargs = {"symbol": symbol, "market": market}
+    if start_date:
+        kwargs["start_date"] = start_date
+    if end_date:
+        kwargs["end_date"] = end_date
+    return ak.stock_zh_a_disclosure_report_cninfo(**kwargs)
 
 
 def _download_url_bytes(url: str) -> bytes:
@@ -252,6 +263,11 @@ def _records_from_disclosure_frame(frame: Any) -> list[dict]:
     if isinstance(frame, Iterable):
         return [dict(row) for row in frame]
     return []
+
+
+def _cninfo_annual_report_window(report_year: int) -> tuple[str, str]:
+    year = int(report_year)
+    return f"{year}0101", f"{year + 1}0630"
 
 
 def _is_target_annual_report(title: str, category: str, report_year: int) -> bool:

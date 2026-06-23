@@ -214,9 +214,11 @@ def test_discover_cninfo_annual_report_prefers_exact_year_annual(monkeypatch) ->
         },
     ]
 
-    def fake_loader(symbol, market):
+    def fake_loader(symbol, market, start_date="", end_date=""):
         assert symbol == "300661"
         assert market == "沪深京"
+        assert start_date == "20250101"
+        assert end_date == "20260630"
         return _FakeDataFrame(rows)
 
     result = discover_cninfo_annual_report(
@@ -247,7 +249,7 @@ def test_discover_cninfo_annual_report_rejects_missing_annual(monkeypatch) -> No
         discover_cninfo_annual_report(
             stock_code="300661",
             report_year=2025,
-            disclosure_loader=lambda symbol, market: _FakeDataFrame(),
+            disclosure_loader=lambda symbol, market, start_date="", end_date="": _FakeDataFrame(),
         )
 
 
@@ -260,7 +262,7 @@ def test_periodic_report_cache_cli_discovers_cninfo_with_loader(monkeypatch, cap
                 {
                     "公告标题": "测试股份：2025年年度报告",
                     "公告类型": "年度报告",
-                    "公告日期": "2026-04-20",
+                    "公告时间": "2026-04-20",
                     "公告链接": "https://example.com/annual.pdf",
                 }
             ]
@@ -268,7 +270,7 @@ def test_periodic_report_cache_cli_discovers_cninfo_with_loader(monkeypatch, cap
     monkeypatch.setattr(
         cli,
         "_load_cninfo_disclosures",
-        lambda symbol, market: _FakeDataFrame(),
+        lambda symbol, market, start_date="", end_date="": _FakeDataFrame(),
     )
 
     rc = cli.main([
@@ -283,6 +285,31 @@ def test_periodic_report_cache_cli_discovers_cninfo_with_loader(monkeypatch, cap
     payload = json.loads(capsys.readouterr().out)
     assert payload["url"] == "https://example.com/annual.pdf"
     assert payload["title"] == "测试股份：2025年年度报告"
+
+
+def test_discover_cninfo_annual_report_accepts_real_akshare_time_column(monkeypatch) -> None:
+    class _FakeDataFrame:
+        def to_dict(self, orient):
+            return [
+                {
+                    "公告标题": "圣邦股份：2025年年度报告",
+                    "公告时间": "2026-03-28",
+                    "公告链接": "http://www.cninfo.com.cn/new/disclosure/detail?announcementId=1225045012",
+                }
+            ]
+
+    def fake_loader(symbol, market, start_date="", end_date=""):
+        assert (start_date, end_date) == ("20250101", "20260630")
+        return _FakeDataFrame()
+
+    result = discover_cninfo_annual_report(
+        stock_code="300661",
+        report_year=2025,
+        disclosure_loader=fake_loader,
+    )
+
+    assert result["date"] == "2026-03-28"
+    assert "1225045012" in result["url"]
 
 
 def test_cache_periodic_report_from_url_downloads_pdf_and_reuses_cache(monkeypatch, tmp_path: Path) -> None:
@@ -366,7 +393,11 @@ def test_periodic_report_cache_cli_discovers_and_downloads_cninfo(monkeypatch, c
             ]
 
     monkeypatch.setattr(periodic_report_cache, "_extract_pdf_text", lambda path: "发现后下载文本\n")
-    monkeypatch.setattr(cli, "_load_cninfo_disclosures", lambda symbol, market: _FakeDataFrame())
+    monkeypatch.setattr(
+        cli,
+        "_load_cninfo_disclosures",
+        lambda symbol, market, start_date="", end_date="": _FakeDataFrame(),
+    )
     monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 discovered")
 
     rc = cli.main([
