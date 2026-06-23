@@ -39,8 +39,29 @@ Current contract:
 
 Annual Report Intake is the shared mental model for annual/semiannual report code. Read files by layer instead of treating each helper as a separate product.
 
+Canonical operator workflow:
+
+1. Prepare report materials explicitly before a report run:
+
+   ```bash
+   python3 scripts/prepare_annual_report_materials.py --stock 黑芝麻智能 --year 2025
+   ```
+
+   This prepares the local annual-report cache and writes a `/tmp` narrative cards preview. It does not write Knowledge unless `--write-knowledge` is passed.
+
+2. Inspect the `/tmp/*_narrative_cards_preview.md` output for card quality. If the cards are useful and should be persisted, rerun with `--write-knowledge`.
+3. Run the relevant single-stock fast-test report entry, for example `cd scripts && python3 run_黑芝麻智能.py --fast-test`.
+
+Do not silently auto-fetch annual reports inside ordinary report runs. Keep annual-report network/cache preparation as an explicit preflight step so generated reports remain predictable.
+
 Intake and extraction helpers:
 
+- one-command cache + preview + optional Knowledge preflight: `scripts/prepare_annual_report_materials.py`
+<!-- path-check: scripts/prepare_annual_report_materials.py -->
+- standard cache CLI for A-share CNINFO, HKEX, URL, and local files: `scripts/periodic_report_cache.py`
+<!-- path-check: scripts/periodic_report_cache.py -->
+- standard cache helpers: `scripts/utils/periodic_report_cache.py`
+<!-- path-check: scripts/utils/periodic_report_cache.py -->
 - raw evidence blocks: `scripts/utils/periodic_report_evidence_pack.py`
 <!-- path-check: scripts/utils/periodic_report_evidence_pack.py -->
 - required operating metrics: `scripts/utils/periodic_report_required_metrics.py`
@@ -95,6 +116,7 @@ Active unification design:
 
 Current limitation:
 
+- The preferred annual-report preflight is `scripts/prepare_annual_report_materials.py`; it chooses `annual_report_url` first, then CNINFO for A shares, then HKEX for HK shares.
 - A-share and HK narrative evidence cards are the current primary path for writing useful annual-report text into Knowledge. They can write `periodic_report_narrative_evidence` notes under `knowledge/10-Stocks/<stock>/periodic_narrative_cards/`.
 - Fulltext LLM summaries remain material-layer display/synthesis references only. They must not enter Knowledge persistence, scoring, risk scoring, `confirmed_fact`, or `fact_candidate`.
 - Ground Truth numeric blocks constrain fulltext LLM financial numbers; they are not a separate Knowledge source.
