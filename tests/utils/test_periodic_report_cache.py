@@ -178,10 +178,10 @@ def test_periodic_report_cache_cli_registers_text_input(tmp_path: Path) -> None:
 
 
 def test_get_cninfo_market_maps_a_share_prefixes() -> None:
-    assert get_cninfo_market("688017") == "沪市"
-    assert get_cninfo_market("300661") == "深市"
-    assert get_cninfo_market("000001") == "深市"
-    assert get_cninfo_market("832000") == "北交所"
+    assert get_cninfo_market("688017") == "沪深京"
+    assert get_cninfo_market("300661") == "沪深京"
+    assert get_cninfo_market("000001") == "沪深京"
+    assert get_cninfo_market("832000") == "沪深京"
 
 
 def test_discover_cninfo_annual_report_prefers_exact_year_annual(monkeypatch) -> None:
@@ -216,7 +216,7 @@ def test_discover_cninfo_annual_report_prefers_exact_year_annual(monkeypatch) ->
 
     def fake_loader(symbol, market):
         assert symbol == "300661"
-        assert market == "深市"
+        assert market == "沪深京"
         return _FakeDataFrame(rows)
 
     result = discover_cninfo_annual_report(
@@ -227,7 +227,7 @@ def test_discover_cninfo_annual_report_prefers_exact_year_annual(monkeypatch) ->
 
     assert result["title"] == "圣邦股份：2025年年度报告"
     assert result["url"] == "https://example.com/annual.pdf"
-    assert result["market"] == "深市"
+    assert result["market"] == "沪深京"
     assert result["report_year"] == 2025
 
 

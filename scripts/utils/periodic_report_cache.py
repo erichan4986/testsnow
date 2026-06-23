@@ -170,15 +170,8 @@ def cache_periodic_report_from_url(
 
 
 def get_cninfo_market(code: str) -> str:
-    """Return akshare/cninfo market label for an A-share code."""
-    code = str(code or "").strip().upper()
-    code = code.removeprefix("SH").removeprefix("SZ").removeprefix("BJ")
-    code = code.split(".")[0]
-    if code.startswith("6"):
-        return "沪市"
-    if code.startswith("8"):
-        return "北交所"
-    return "深市"
+    """Return akshare/cninfo column label for A-share disclosures."""
+    return "沪深京"
 
 
 def discover_cninfo_annual_report(
