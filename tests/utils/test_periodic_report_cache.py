@@ -14,6 +14,8 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 
 from periodic_report_cache import (  # noqa: E402
     cache_periodic_report,
+    discover_cninfo_annual_report,
+    get_cninfo_market,
     standard_cache_paths,
 )
 
@@ -172,3 +174,111 @@ def test_periodic_report_cache_cli_registers_text_input(tmp_path: Path) -> None:
     assert payload["text_path"].endswith("圣邦股份_2025_annual_jina.txt")
     assert payload["meta_path"].endswith("圣邦股份_2025_annual_meta.json")
     assert (cache_dir / "圣邦股份_2025_annual_jina.txt").exists()
+
+
+def test_get_cninfo_market_maps_a_share_prefixes() -> None:
+    assert get_cninfo_market("688017") == "沪市"
+    assert get_cninfo_market("300661") == "深市"
+    assert get_cninfo_market("000001") == "深市"
+    assert get_cninfo_market("832000") == "北交所"
+
+
+def test_discover_cninfo_annual_report_prefers_exact_year_annual(monkeypatch) -> None:
+    class _FakeDataFrame:
+        def __init__(self, rows):
+            self._rows = rows
+
+        def to_dict(self, orient):
+            assert orient == "records"
+            return list(self._rows)
+
+    rows = [
+        {
+            "公告标题": "圣邦股份：2025年第一季度报告",
+            "公告类型": "季度报告",
+            "公告日期": "2026-04-20",
+            "公告链接": "https://example.com/q1.pdf",
+        },
+        {
+            "公告标题": "圣邦股份：2025年年度报告摘要",
+            "公告类型": "年度报告摘要",
+            "公告日期": "2026-04-25",
+            "公告链接": "https://example.com/summary.pdf",
+        },
+        {
+            "公告标题": "圣邦股份：2025年年度报告",
+            "公告类型": "年度报告",
+            "公告日期": "2026-04-25",
+            "公告链接": "https://example.com/annual.pdf",
+        },
+    ]
+
+    def fake_loader(symbol, market):
+        assert symbol == "300661"
+        assert market == "深市"
+        return _FakeDataFrame(rows)
+
+    result = discover_cninfo_annual_report(
+        stock_code="300661",
+        report_year=2025,
+        disclosure_loader=fake_loader,
+    )
+
+    assert result["title"] == "圣邦股份：2025年年度报告"
+    assert result["url"] == "https://example.com/annual.pdf"
+    assert result["market"] == "深市"
+    assert result["report_year"] == 2025
+
+
+def test_discover_cninfo_annual_report_rejects_missing_annual(monkeypatch) -> None:
+    class _FakeDataFrame:
+        def to_dict(self, orient):
+            return [
+                {
+                    "公告标题": "圣邦股份：2025年半年度报告",
+                    "公告类型": "半年度报告",
+                    "公告日期": "2025-08-20",
+                    "公告链接": "https://example.com/semi.pdf",
+                }
+            ]
+
+    with pytest.raises(ValueError, match="No annual report announcement"):
+        discover_cninfo_annual_report(
+            stock_code="300661",
+            report_year=2025,
+            disclosure_loader=lambda symbol, market: _FakeDataFrame(),
+        )
+
+
+def test_periodic_report_cache_cli_discovers_cninfo_with_loader(monkeypatch, capsys) -> None:
+    import scripts.periodic_report_cache as cli
+
+    class _FakeDataFrame:
+        def to_dict(self, orient):
+            return [
+                {
+                    "公告标题": "测试股份：2025年年度报告",
+                    "公告类型": "年度报告",
+                    "公告日期": "2026-04-20",
+                    "公告链接": "https://example.com/annual.pdf",
+                }
+            ]
+
+    monkeypatch.setattr(
+        cli,
+        "_load_cninfo_disclosures",
+        lambda symbol, market: _FakeDataFrame(),
+    )
+
+    rc = cli.main([
+        "--discover-cninfo",
+        "--code",
+        "300661",
+        "--year",
+        "2025",
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["url"] == "https://example.com/annual.pdf"
+    assert payload["title"] == "测试股份：2025年年度报告"

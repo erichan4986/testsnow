@@ -13,7 +13,7 @@ import re
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, Tuple
+from typing import Any, Callable, Dict, Iterable, Tuple
 
 
 SCHEMA_VERSION = "periodic_report_cache_meta.v1"
@@ -119,6 +119,121 @@ def cache_periodic_report(
     return PeriodicReportCacheResult(text_path=text_path, meta_path=meta_path, meta=meta)
 
 
+def get_cninfo_market(code: str) -> str:
+    """Return akshare/cninfo market label for an A-share code."""
+    code = str(code or "").strip().upper()
+    code = code.removeprefix("SH").removeprefix("SZ").removeprefix("BJ")
+    code = code.split(".")[0]
+    if code.startswith("6"):
+        return "沪市"
+    if code.startswith("8"):
+        return "北交所"
+    return "深市"
+
+
+def discover_cninfo_annual_report(
+    *,
+    stock_code: str,
+    report_year: int,
+    disclosure_loader: Callable[[str, str], Any] | None = None,
+) -> Dict[str, Any]:
+    """Discover the official A-share annual report announcement via cninfo.
+
+    This function only discovers metadata. It does not download PDFs.
+    ``disclosure_loader`` is injectable for tests and should return an
+    akshare-like DataFrame with ``to_dict("records")``.
+    """
+    code = _normalize_a_share_code(stock_code)
+    market = get_cninfo_market(code)
+    loader = disclosure_loader or _load_cninfo_disclosures
+    rows = _records_from_disclosure_frame(loader(code, market))
+
+    candidates = []
+    for row in rows:
+        title = _first_present(row, ("公告标题", "title", "TITLE", "announcementTitle"))
+        category = _first_present(row, ("公告类型", "category", "CATEGORY", "announcementType"))
+        date = _first_present(row, ("公告日期", "date", "DATE", "announcementDate"))
+        url = _first_present(row, ("公告链接", "url", "URL", "adjunctUrl"))
+        title_text = str(title or "")
+        category_text = str(category or "")
+        if not _is_target_annual_report(title_text, category_text, int(report_year)):
+            continue
+        candidates.append({
+            "title": title_text,
+            "category": category_text,
+            "date": str(date or ""),
+            "url": str(url or ""),
+            "stock_code": code,
+            "market": market,
+            "report_year": int(report_year),
+            "report_type": "annual",
+        })
+
+    if not candidates:
+        raise ValueError(
+            f"No annual report announcement found for {code} {report_year} on cninfo"
+        )
+
+    candidates.sort(key=_annual_report_candidate_sort_key)
+    return candidates[0]
+
+
+def _load_cninfo_disclosures(symbol: str, market: str) -> Any:
+    try:
+        import akshare as ak  # type: ignore
+    except Exception as exc:
+        raise RuntimeError(
+            "CNINFO discovery requires akshare. Install akshare or pass a local report file."
+        ) from exc
+    return ak.stock_zh_a_disclosure_report_cninfo(symbol=symbol, market=market)
+
+
+def _records_from_disclosure_frame(frame: Any) -> list[dict]:
+    if hasattr(frame, "to_dict"):
+        records = frame.to_dict("records")
+        return [dict(row) for row in records]
+    if isinstance(frame, Iterable):
+        return [dict(row) for row in frame]
+    return []
+
+
+def _is_target_annual_report(title: str, category: str, report_year: int) -> bool:
+    combined = f"{title} {category}"
+    if str(report_year) not in combined:
+        return False
+    if "年度报告" not in combined:
+        return False
+    if "半年度报告" in combined:
+        return False
+    if "摘要" in combined:
+        return False
+    if "英文" in combined or "取消" in combined or "更正" in combined:
+        return False
+    return True
+
+
+def _annual_report_candidate_sort_key(row: Dict[str, Any]) -> tuple:
+    title = str(row.get("title") or "")
+    category = str(row.get("category") or "")
+    url = str(row.get("url") or "")
+    exact_title = title.endswith("年度报告") or title.endswith("年度報告")
+    pdf_url = url.lower().endswith(".pdf")
+    return (
+        0 if exact_title else 1,
+        0 if "年度报告" == category else 1,
+        0 if pdf_url else 1,
+        str(row.get("date") or ""),
+        title,
+    )
+
+
+def _first_present(row: Dict[str, Any], keys: tuple[str, ...]) -> Any:
+    for key in keys:
+        if key in row and row[key] not in (None, ""):
+            return row[key]
+    return ""
+
+
 def _detect_input_format(path: Path) -> str:
     suffix = path.suffix.lower()
     if suffix == ".pdf":
@@ -157,3 +272,11 @@ def _extract_pdf_text(path: Path) -> str:
 def _safe_filename(value: str) -> str:
     cleaned = re.sub(r"[\\/:\*\?\"<>\|\r\n\t]+", "_", str(value or "")).strip(" ._")
     return cleaned or "unknown"
+
+
+def _normalize_a_share_code(code: str) -> str:
+    code = str(code or "").strip().upper()
+    code = code.removeprefix("SH").removeprefix("SZ").removeprefix("BJ")
+    if "." in code:
+        code = code.split(".", 1)[0]
+    return code
