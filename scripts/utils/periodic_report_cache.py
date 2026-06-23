@@ -11,7 +11,7 @@ import json
 import logging
 import re
 import urllib.request
-from urllib.parse import urlparse
+from urllib.parse import parse_qs, quote, urlparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -197,7 +197,8 @@ def discover_cninfo_annual_report(
         title = _first_present(row, ("公告标题", "title", "TITLE", "announcementTitle"))
         category = _first_present(row, ("公告类型", "category", "CATEGORY", "announcementType"))
         date = _first_present(row, ("公告日期", "公告时间", "date", "DATE", "announcementDate"))
-        url = _first_present(row, ("公告链接", "url", "URL", "adjunctUrl"))
+        raw_url = str(_first_present(row, ("公告链接", "url", "URL", "adjunctUrl")) or "")
+        url = _cninfo_download_url(raw_url, str(date or ""))
         title_text = str(title or "")
         category_text = str(category or "")
         if not _is_target_annual_report(title_text, category_text, int(report_year)):
@@ -206,7 +207,8 @@ def discover_cninfo_annual_report(
             "title": title_text,
             "category": category_text,
             "date": str(date or ""),
-            "url": str(url or ""),
+            "url": url,
+            "detail_url": raw_url if raw_url != url else "",
             "stock_code": code,
             "market": market,
             "report_year": int(report_year),
@@ -244,7 +246,7 @@ def _load_cninfo_disclosures(
 
 def _download_url_bytes(url: str) -> bytes:
     request = urllib.request.Request(
-        url,
+        _sanitize_url_for_request(url),
         headers={
             "User-Agent": (
                 "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
@@ -268,6 +270,27 @@ def _records_from_disclosure_frame(frame: Any) -> list[dict]:
 def _cninfo_annual_report_window(report_year: int) -> tuple[str, str]:
     year = int(report_year)
     return f"{year}0101", f"{year + 1}0630"
+
+
+def _cninfo_download_url(url: str, announcement_date: str = "") -> str:
+    parsed = urlparse(str(url or ""))
+    query = parse_qs(parsed.query)
+    announcement_id = (query.get("announcementId") or [""])[0]
+    if "cninfo.com.cn" not in parsed.netloc or not announcement_id:
+        return _sanitize_url_for_request(url)
+
+    date_text = str(announcement_date or "").strip()
+    if not date_text:
+        date_text = (query.get("announcementTime") or [""])[0]
+    report_date = date_text.split()[0]
+    if not re.fullmatch(r"\d{4}-\d{2}-\d{2}", report_date):
+        return _sanitize_url_for_request(url)
+
+    return f"http://static.cninfo.com.cn/finalpage/{report_date}/{announcement_id}.PDF"
+
+
+def _sanitize_url_for_request(url: str) -> str:
+    return quote(str(url or ""), safe=":/?&=%#")
 
 
 def _is_target_annual_report(title: str, category: str, report_year: int) -> bool:

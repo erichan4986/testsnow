@@ -288,13 +288,19 @@ def test_periodic_report_cache_cli_discovers_cninfo_with_loader(monkeypatch, cap
 
 
 def test_discover_cninfo_annual_report_accepts_real_akshare_time_column(monkeypatch) -> None:
+    detail_url = (
+        "http://www.cninfo.com.cn/new/disclosure/detail?"
+        "stockCode=300661&announcementId=1225045012&orgId=9900024859&"
+        "announcementTime=2026-03-28 00:00:00"
+    )
+
     class _FakeDataFrame:
         def to_dict(self, orient):
             return [
                 {
                     "公告标题": "圣邦股份：2025年年度报告",
                     "公告时间": "2026-03-28",
-                    "公告链接": "http://www.cninfo.com.cn/new/disclosure/detail?announcementId=1225045012",
+                    "公告链接": detail_url,
                 }
             ]
 
@@ -309,7 +315,35 @@ def test_discover_cninfo_annual_report_accepts_real_akshare_time_column(monkeypa
     )
 
     assert result["date"] == "2026-03-28"
-    assert "1225045012" in result["url"]
+    assert result["url"] == "http://static.cninfo.com.cn/finalpage/2026-03-28/1225045012.PDF"
+    assert result["detail_url"] == detail_url
+
+
+def test_download_url_bytes_percent_encodes_control_characters(monkeypatch) -> None:
+    import periodic_report_cache
+
+    class _FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc, tb):
+            return False
+
+        def read(self):
+            return b"pdf-bytes"
+
+    def fake_urlopen(request, timeout):
+        assert "%20" in request.full_url
+        assert " " not in request.full_url
+        return _FakeResponse()
+
+    monkeypatch.setattr(periodic_report_cache.urllib.request, "urlopen", fake_urlopen)
+
+    payload = periodic_report_cache._download_url_bytes(
+        "http://www.cninfo.com.cn/new/disclosure/detail?announcementTime=2026-03-28 00:00:00"
+    )
+
+    assert payload == b"pdf-bytes"
 
 
 def test_cache_periodic_report_from_url_downloads_pdf_and_reuses_cache(monkeypatch, tmp_path: Path) -> None:
