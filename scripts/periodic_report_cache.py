@@ -19,8 +19,10 @@ if str(UTILS_DIR) not in sys.path:
     sys.path.insert(0, str(UTILS_DIR))
 
 from periodic_report_cache import (  # noqa: E402
+    _download_url_bytes,
     _load_cninfo_disclosures,
     cache_periodic_report,
+    cache_periodic_report_from_url,
     discover_cninfo_annual_report,
 )
 
@@ -36,6 +38,8 @@ def main(argv: list[str] | None = None) -> int:
         )
     )
     parser.add_argument("--discover-cninfo", action="store_true", help="Only discover A-share annual report URL via CNINFO")
+    parser.add_argument("--download-discovered", action="store_true", help="With --discover-cninfo, download the discovered URL into cache")
+    parser.add_argument("--download-url", help="Download this periodic report URL and register it into cache")
     parser.add_argument("--stock", help="Stock name, e.g. 黑芝麻智能")
     parser.add_argument("--code", help="Stock code, e.g. 02533 or 300661")
     parser.add_argument("--year", type=int, help="Report year, e.g. 2025")
@@ -50,12 +54,50 @@ def main(argv: list[str] | None = None) -> int:
     if args.discover_cninfo:
         if not args.code or not args.year:
             parser.error("--discover-cninfo requires --code and --year")
-        result = discover_cninfo_annual_report(
+        discovery = discover_cninfo_annual_report(
             stock_code=args.code,
             report_year=args.year,
             disclosure_loader=_load_cninfo_disclosures,
         )
-        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        if not args.download_discovered:
+            print(json.dumps(discovery, ensure_ascii=False, indent=2, sort_keys=True))
+            return 0
+        if not args.stock:
+            parser.error("--download-discovered requires --stock")
+        result = cache_periodic_report_from_url(
+            stock_name=args.stock,
+            stock_code=args.code,
+            report_year=args.year,
+            market=args.market or "A",
+            url=discovery["url"],
+            cache_dir=args.cache_dir,
+            report_type=args.report_type,
+            downloader=_download_url_bytes,
+        )
+        print(json.dumps(result.to_cli_payload(), ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
+
+    if args.download_url:
+        required = {
+            "--stock": args.stock,
+            "--code": args.code,
+            "--year": args.year,
+            "--market": args.market,
+        }
+        missing = [name for name, value in required.items() if value in (None, "")]
+        if missing:
+            parser.error(f"{', '.join(missing)} required with --download-url")
+        result = cache_periodic_report_from_url(
+            stock_name=args.stock,
+            stock_code=args.code,
+            report_year=args.year,
+            market=args.market,
+            url=args.download_url,
+            cache_dir=args.cache_dir,
+            report_type=args.report_type,
+            downloader=_download_url_bytes,
+        )
+        print(json.dumps(result.to_cli_payload(), ensure_ascii=False, indent=2, sort_keys=True))
         return 0
 
     required = {

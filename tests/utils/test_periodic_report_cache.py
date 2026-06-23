@@ -14,6 +14,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 
 from periodic_report_cache import (  # noqa: E402
     cache_periodic_report,
+    cache_periodic_report_from_url,
     discover_cninfo_annual_report,
     get_cninfo_market,
     standard_cache_paths,
@@ -282,3 +283,106 @@ def test_periodic_report_cache_cli_discovers_cninfo_with_loader(monkeypatch, cap
     payload = json.loads(capsys.readouterr().out)
     assert payload["url"] == "https://example.com/annual.pdf"
     assert payload["title"] == "测试股份：2025年年度报告"
+
+
+def test_cache_periodic_report_from_url_downloads_pdf_and_reuses_cache(monkeypatch, tmp_path: Path) -> None:
+    import periodic_report_cache
+
+    monkeypatch.setattr(
+        periodic_report_cache,
+        "_extract_pdf_text",
+        lambda path: "远程 PDF 文本\n收入与产品矩阵说明。\n",
+    )
+
+    result = cache_periodic_report_from_url(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        report_year=2025,
+        market="A",
+        url="https://static.cninfo.com.cn/finalpage/2026-04-25/annual.pdf",
+        cache_dir=tmp_path / "cache",
+        downloader=lambda url: b"%PDF-1.4 fake annual report",
+    )
+
+    assert result.text_path.read_text(encoding="utf-8").startswith("远程 PDF 文本")
+    meta = json.loads(result.meta_path.read_text(encoding="utf-8"))
+    assert meta["official_url"] == "https://static.cninfo.com.cn/finalpage/2026-04-25/annual.pdf"
+    assert meta["input_format"] == "pdf"
+    source_path = Path(meta["source_path"])
+    assert source_path.exists()
+    assert source_path.name == "圣邦股份_2025_annual_source.pdf"
+    assert source_path.read_bytes() == b"%PDF-1.4 fake annual report"
+
+
+def test_periodic_report_cache_cli_downloads_url_with_injected_downloader(monkeypatch, capsys, tmp_path: Path) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    monkeypatch.setattr(
+        periodic_report_cache,
+        "_extract_pdf_text",
+        lambda path: "CLI 下载 PDF 文本\n管理层讨论与产品进展。\n",
+    )
+    monkeypatch.setattr(
+        cli,
+        "_download_url_bytes",
+        lambda url: b"%PDF-1.4 cli fake report",
+    )
+
+    rc = cli.main([
+        "--download-url",
+        "https://static.cninfo.com.cn/finalpage/2026-04-25/annual.pdf",
+        "--stock",
+        "圣邦股份",
+        "--code",
+        "300661",
+        "--year",
+        "2025",
+        "--market",
+        "A",
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["text_path"].endswith("圣邦股份_2025_annual_jina.txt")
+    assert Path(payload["text_path"]).read_text(encoding="utf-8").startswith("CLI 下载 PDF 文本")
+
+
+def test_periodic_report_cache_cli_discovers_and_downloads_cninfo(monkeypatch, capsys, tmp_path: Path) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    class _FakeDataFrame:
+        def to_dict(self, orient):
+            return [
+                {
+                    "公告标题": "圣邦股份：2025年年度报告",
+                    "公告类型": "年度报告",
+                    "公告日期": "2026-04-20",
+                    "公告链接": "https://static.cninfo.com.cn/finalpage/2026-04-20/annual.pdf",
+                }
+            ]
+
+    monkeypatch.setattr(periodic_report_cache, "_extract_pdf_text", lambda path: "发现后下载文本\n")
+    monkeypatch.setattr(cli, "_load_cninfo_disclosures", lambda symbol, market: _FakeDataFrame())
+    monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 discovered")
+
+    rc = cli.main([
+        "--discover-cninfo",
+        "--download-discovered",
+        "--stock",
+        "圣邦股份",
+        "--code",
+        "300661",
+        "--year",
+        "2025",
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["text_path"].endswith("圣邦股份_2025_annual_jina.txt")
+    assert payload["text_chars"] == len("发现后下载文本\n")

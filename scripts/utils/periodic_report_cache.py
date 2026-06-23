@@ -10,6 +10,8 @@ import hashlib
 import json
 import logging
 import re
+import urllib.request
+from urllib.parse import urlparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -119,6 +121,54 @@ def cache_periodic_report(
     return PeriodicReportCacheResult(text_path=text_path, meta_path=meta_path, meta=meta)
 
 
+def cache_periodic_report_from_url(
+    *,
+    stock_name: str,
+    stock_code: str,
+    report_year: int,
+    market: str,
+    url: str,
+    cache_dir: str | Path,
+    report_type: str = DEFAULT_REPORT_TYPE,
+    downloader: Callable[[str], bytes] | None = None,
+) -> PeriodicReportCacheResult:
+    """Download a periodic report URL and register it into the standard cache.
+
+    The downloaded source file is kept under ``cache_dir/_downloads`` for
+    traceability, then the existing local-file cache path performs extraction
+    and metadata writing.
+    """
+    if not str(url or "").strip():
+        raise ValueError("Periodic report URL is required")
+
+    cache_dir = Path(cache_dir)
+    source_dir = cache_dir / "_downloads"
+    source_dir.mkdir(parents=True, exist_ok=True)
+
+    suffix = _source_suffix_from_url(url)
+    source_name = (
+        f"{_safe_filename(stock_name or stock_code)}_{int(report_year)}_"
+        f"{_safe_filename(report_type or DEFAULT_REPORT_TYPE)}_source{suffix}"
+    )
+    source_path = source_dir / source_name
+    download = downloader or _download_url_bytes
+    payload = download(url)
+    if not payload:
+        raise ValueError(f"No bytes downloaded from periodic report URL: {url}")
+    source_path.write_bytes(payload)
+
+    return cache_periodic_report(
+        stock_name=stock_name,
+        stock_code=stock_code,
+        report_year=report_year,
+        market=market,
+        input_path=source_path,
+        cache_dir=cache_dir,
+        report_type=report_type,
+        official_url=url,
+    )
+
+
 def get_cninfo_market(code: str) -> str:
     """Return akshare/cninfo market label for an A-share code."""
     code = str(code or "").strip().upper()
@@ -188,6 +238,20 @@ def _load_cninfo_disclosures(symbol: str, market: str) -> Any:
     return ak.stock_zh_a_disclosure_report_cninfo(symbol=symbol, market=market)
 
 
+def _download_url_bytes(url: str) -> bytes:
+    request = urllib.request.Request(
+        url,
+        headers={
+            "User-Agent": (
+                "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) "
+                "AppleWebKit/537.36 (KHTML, like Gecko) Safari/537.36"
+            )
+        },
+    )
+    with urllib.request.urlopen(request, timeout=30) as response:  # noqa: S310
+        return response.read()
+
+
 def _records_from_disclosure_frame(frame: Any) -> list[dict]:
     if hasattr(frame, "to_dict"):
         records = frame.to_dict("records")
@@ -239,6 +303,13 @@ def _detect_input_format(path: Path) -> str:
     if suffix == ".pdf":
         return "pdf"
     return "txt"
+
+
+def _source_suffix_from_url(url: str) -> str:
+    suffix = Path(urlparse(str(url)).path).suffix.lower()
+    if suffix in {".pdf", ".txt"}:
+        return suffix
+    return ".pdf"
 
 
 def _extract_pdf_text(path: Path) -> str:
