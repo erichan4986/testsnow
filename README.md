@@ -160,7 +160,60 @@ DeepAnalysisRenderer（新增 "4.3 项目动态与产品进展"）
 | `extract_detail.py` | 帖子详情页提取脚本 | 读取 raw JSON，提取 URL，调用 `DetailPageFetcher` 写入 knowledge |
 | `extract_detail_via_cdp.py` | CDP 模式提取详情页 | 直接连接本地 Chrome 提取雪球帖子内容 |
 | `generate_periodic_report.py` | 定期报告生成器 | CLI 包装 `PeriodicReporter`，生成季报/半年报/年报 |
+| `periodic_report_cache.py` | 年报缓存入口 | A 股可通过巨潮发现并下载官方 PDF；港股/美股用官方 PDF URL 或本地 PDF/TXT 注册到 `data/raw/periodic_reports/` |
 | `sync_vault_from_raw.py` | 从 raw 数据同步到 Obsidian | 调用 `ObsidianWriter` 将 JSON 数据写入 vault |
+
+### 年报缓存入口 usage
+
+`scripts/periodic_report_cache.py` 只负责把年报 PDF/TXT 标准化缓存到 `data/raw/periodic_reports/`，不会写 `reports/` 或 `knowledge/`。生成的标准文件包括：
+
+- `{股票名}_{年份}_{report_type}_jina.txt`
+- `{股票名}_{年份}_{report_type}_meta.json`
+- `_downloads/{股票名}_{年份}_{report_type}_source.pdf`（仅 URL 下载时）
+
+A 股优先走巨潮发现链路。只看发现结果：
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --discover-cninfo \
+  --code 300661 \
+  --year 2025
+```
+
+A 股发现后直接下载并缓存：
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --discover-cninfo \
+  --download-discovered \
+  --stock 圣邦股份 \
+  --code 300661 \
+  --year 2025
+```
+
+港股当前不自动搜索 HKEX 公告，使用官方 PDF URL 或本地 PDF/TXT。用官方 PDF URL 下载并缓存：
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --download-url "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0328/example_c.pdf" \
+  --stock 黑芝麻智能 \
+  --code 02533 \
+  --year 2025 \
+  --market HK
+```
+
+用本地 PDF/TXT 注册：
+
+```bash
+python3 scripts/periodic_report_cache.py \
+  --stock MiniMax \
+  --code 06677 \
+  --year 2025 \
+  --market HK \
+  --input minimax年报.pdf
+```
+
+CLI 输出会包含 `text_path`、`meta_path`、`official_url`、`source_path`、`input_format`、`market`、`report_year` 和 `report_type`，后续 narrative cards preview 或报告入口可复用这些 cache 文件。
 
 ### `scripts/utils/` — 核心工具
 

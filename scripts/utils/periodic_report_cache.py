@@ -34,6 +34,12 @@ class PeriodicReportCacheResult:
             "meta_path": str(self.meta_path),
             "text_hash_sha256": self.meta.get("text_hash_sha256", ""),
             "text_chars": self.meta.get("text_chars", 0),
+            "official_url": self.meta.get("official_url", ""),
+            "source_path": self.meta.get("source_path", ""),
+            "input_format": self.meta.get("input_format", ""),
+            "market": self.meta.get("market", ""),
+            "report_year": self.meta.get("report_year", 0),
+            "report_type": self.meta.get("report_type", ""),
         }
 
 

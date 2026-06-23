@@ -411,6 +411,88 @@ def test_periodic_report_cache_cli_downloads_url_with_injected_downloader(monkey
     assert Path(payload["text_path"]).read_text(encoding="utf-8").startswith("CLI 下载 PDF 文本")
 
 
+def test_periodic_report_cache_cli_downloads_hk_url_with_standard_payload(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    hk_pdf_url = "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0328/202603280001_c.pdf"
+    monkeypatch.setattr(
+        periodic_report_cache,
+        "_extract_pdf_text",
+        lambda path: "HK PDF 抽取文本\nRobotaxi 与 SesameX 平台推进。\n",
+    )
+    monkeypatch.setattr(cli, "_download_url_bytes", lambda url: b"%PDF-1.4 hk fake report")
+
+    rc = cli.main([
+        "--download-url",
+        hk_pdf_url,
+        "--stock",
+        "黑芝麻智能",
+        "--code",
+        "02533",
+        "--year",
+        "2025",
+        "--market",
+        "HK",
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["text_path"].endswith("黑芝麻智能_2025_annual_jina.txt")
+    assert payload["meta_path"].endswith("黑芝麻智能_2025_annual_meta.json")
+    assert payload["official_url"] == hk_pdf_url
+    assert payload["market"] == "HK"
+    assert payload["input_format"] == "pdf"
+    assert payload["report_year"] == 2025
+    assert payload["report_type"] == "annual"
+    assert payload["source_path"].endswith("_downloads/黑芝麻智能_2025_annual_source.pdf")
+    assert "SesameX" in Path(payload["text_path"]).read_text(encoding="utf-8")
+
+
+def test_periodic_report_cache_cli_registers_hk_local_pdf_with_standard_payload(
+    monkeypatch, capsys, tmp_path: Path
+) -> None:
+    import periodic_report_cache
+    import scripts.periodic_report_cache as cli
+
+    source_pdf = tmp_path / "minimax_annual.pdf"
+    source_pdf.write_bytes(b"%PDF-1.4 minimax fake")
+    monkeypatch.setattr(
+        periodic_report_cache,
+        "_extract_pdf_text",
+        lambda path: "MiniMax 年报文本\n多模态模型与商业化进展。\n",
+    )
+
+    rc = cli.main([
+        "--stock",
+        "MiniMax",
+        "--code",
+        "06677",
+        "--year",
+        "2025",
+        "--market",
+        "HK",
+        "--input",
+        str(source_pdf),
+        "--cache-dir",
+        str(tmp_path / "cache"),
+    ])
+
+    assert rc == 0
+    payload = json.loads(capsys.readouterr().out)
+    assert payload["text_path"].endswith("MiniMax_2025_annual_jina.txt")
+    assert payload["source_path"] == str(source_pdf)
+    assert payload["official_url"] == ""
+    assert payload["market"] == "HK"
+    assert payload["input_format"] == "pdf"
+    assert payload["report_year"] == 2025
+    assert payload["report_type"] == "annual"
+
+
 def test_periodic_report_cache_cli_discovers_and_downloads_cninfo(monkeypatch, capsys, tmp_path: Path) -> None:
     import periodic_report_cache
     import scripts.periodic_report_cache as cli
