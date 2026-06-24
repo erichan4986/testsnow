@@ -111,6 +111,56 @@ def test_write_preview_discovers_standard_stock_cache_dir(tmp_path: Path) -> Non
     assert output.exists()
 
 
+def test_write_preview_does_not_write_knowledge_by_default(tmp_path: Path) -> None:
+    pdf = tmp_path / "2026-05-12_国信证券_收入创季度新高.pdf"
+    pdf.write_bytes(b"%PDF fake")
+    knowledge_dir = tmp_path / "knowledge"
+
+    summary = write_broker_research_digest_preview(
+        pdf_dir=tmp_path,
+        stock_name="圣邦股份",
+        stock_code="300661",
+        base_dir=knowledge_dir,
+        extractor=lambda path: """
+        核心观点
+        公司2026年一季度实现收入10.98亿元，同比增长39.08%，毛利率为51.63%。
+        """,
+    )
+
+    assert summary["wrote_knowledge"] is False
+    assert summary["knowledge_written_count"] == 0
+    assert not (knowledge_dir / "10-Stocks" / "圣邦股份" / "broker_research_digest").exists()
+
+
+def test_write_preview_can_write_broker_digest_notes_when_enabled(tmp_path: Path) -> None:
+    pdf = tmp_path / "2026-05-12_国信证券_收入创季度新高.pdf"
+    pdf.write_bytes(b"%PDF fake")
+    knowledge_dir = tmp_path / "knowledge"
+
+    summary = write_broker_research_digest_preview(
+        pdf_dir=tmp_path,
+        stock_name="圣邦股份",
+        stock_code="300661",
+        base_dir=knowledge_dir,
+        write_knowledge=True,
+        extractor=lambda path: """
+        核心观点
+        公司2026年一季度实现收入10.98亿元，同比增长39.08%，毛利率为51.63%。
+        产品矩阵持续扩张，工业和汽车电子客户导入继续推进。
+        """,
+    )
+
+    notes = sorted((knowledge_dir / "10-Stocks" / "圣邦股份" / "broker_research_digest").glob("*.md"))
+    assert summary["wrote_knowledge"] is True
+    assert summary["knowledge_written_count"] == len(notes)
+    assert notes
+    text = notes[0].read_text(encoding="utf-8")
+    assert "source_type: broker_research" in text
+    assert "claim_status: professional_analysis" in text
+    assert "confirmed_fact: false" in text
+    assert "scoring_eligible: false" in text
+
+
 def test_preview_passes_page_count_to_length_classifier(tmp_path: Path) -> None:
     pdf = tmp_path / "2026-05-08_西南证券_深度报告.pdf"
     pdf.write_bytes(b"%PDF fake")

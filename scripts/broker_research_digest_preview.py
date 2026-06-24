@@ -24,6 +24,7 @@ from broker_research_digest import (  # noqa: E402
     deduplicate_broker_digest_cards_by_viewpoint,
     extract_pdf_text,
 )
+from broker_research_digest_note_writer import write_broker_research_digest_card_notes  # noqa: E402
 from source_adapter import SynthesisItem  # noqa: E402
 
 
@@ -157,6 +158,7 @@ def build_broker_research_digest_preview(
         "pdf_count": len(pdf_paths),
         "processed_pdf_count": len(processed),
         "cards_count": len(all_cards),
+        "cards": all_cards,
         "processed_pdfs": processed,
         "errors": errors,
         "markdown": markdown,
@@ -189,6 +191,9 @@ def write_broker_research_digest_preview(
     stock_name: str,
     stock_code: str = "",
     output: str | Path | None = None,
+    base_dir: str | Path = "knowledge",
+    write_knowledge: bool = False,
+    dry_run: bool = False,
     max_cards_per_pdf: int = 5,
     limit_pdfs: int | None = None,
     extractor: Callable[[str], str] = extract_pdf_text,
@@ -207,13 +212,30 @@ def write_broker_research_digest_preview(
         max_cards_per_pdf=max_cards_per_pdf,
         extractor=extractor,
     )
+    write_plan = None
+    if write_knowledge:
+        write_plan = write_broker_research_digest_card_notes(
+            stock_name=stock_name,
+            stock_code=stock_code,
+            cards=result["cards"],
+            base_dir=base_dir,
+            dry_run=dry_run,
+        )
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(result["markdown"], encoding="utf-8")
+    knowledge_written_count = len(write_plan.written) if write_plan else 0
     return {
         key: value
         for key, value in result.items()
-        if key != "markdown"
-    } | {"preview_path": str(output_path), "pdf_dir": str(resolved_pdf_dir)}
+        if key not in {"markdown", "cards"}
+    } | {
+        "preview_path": str(output_path),
+        "pdf_dir": str(resolved_pdf_dir),
+        "wrote_knowledge": bool(write_knowledge),
+        "knowledge_written_count": knowledge_written_count,
+        "knowledge_filtered_count": len(write_plan.filtered) if write_plan else 0,
+        "knowledge_skipped_existing_count": len(write_plan.skipped_existing) if write_plan else 0,
+    }
 
 
 def _parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
@@ -231,6 +253,9 @@ def _parse_args(argv: Iterable[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--stock", required=True, help="Stock name for preview metadata.")
     parser.add_argument("--code", default="", help="Stock code for preview metadata.")
     parser.add_argument("--output", default="", help="Preview markdown output path. Defaults to /tmp.")
+    parser.add_argument("--base-dir", default="knowledge", help="Knowledge base directory for --write-knowledge.")
+    parser.add_argument("--write-knowledge", action="store_true", help="Persist eligible broker digest cards to Knowledge.")
+    parser.add_argument("--dry-run", action="store_true", help="Plan Knowledge writes without creating notes.")
     parser.add_argument("--max-cards-per-pdf", type=int, default=5)
     parser.add_argument("--limit-pdfs", type=int, default=0, help="Optional PDF count limit; 0 means all.")
     return parser.parse_args(argv)
@@ -244,6 +269,9 @@ def main(argv: Iterable[str] | None = None) -> int:
         stock_name=args.stock,
         stock_code=args.code,
         output=args.output or None,
+        base_dir=args.base_dir,
+        write_knowledge=args.write_knowledge,
+        dry_run=args.dry_run,
         max_cards_per_pdf=args.max_cards_per_pdf,
         limit_pdfs=args.limit_pdfs or None,
     )
