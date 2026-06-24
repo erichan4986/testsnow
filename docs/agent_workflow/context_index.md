@@ -183,6 +183,24 @@ Verified sample:
 
 - `圣邦股份` has broker digest display enabled and validated through `scripts/run_圣邦股份.py --fast-test`.
 
+## Social Observation Current Map
+
+Social observation is not an active mainline source. The current low-risk smoke is recorded in:
+
+- `docs/agent_workflow/2026-06-24-social-observation-source-design.md`
+<!-- path-check: docs/agent_workflow/2026-06-24-social-observation-source-design.md -->
+
+Current conclusion:
+
+- do not depend on the `agent-reach` wrapper CLI; local `agent-reach doctor` fails with `ModuleNotFoundError: agent_reach.cli`
+- V2EX public API is usable but sparse
+- Jina Reader is usable for public pages and some report landing pages
+- YouTube subtitle access works when captions exist
+- Bilibili subtitle extraction is only partially validated
+- Reddit was not tested because `rdt` is not installed
+
+If reopened, keep this path preview/display-only by default. Do not write social observations to Knowledge, scoring, risk scoring, confirmed facts, fact candidates, or final recommendation logic.
+
 Guardrail files:
 
 - material-layer gate: `tools/ci_grep_gates.sh`

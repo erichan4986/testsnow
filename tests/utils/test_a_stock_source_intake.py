@@ -504,7 +504,7 @@ def test_eastmoney_stock_news_adapter_marks_professional_observation():
 
     items = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5},
+        source_config={"enabled": True, "max_items": 5, "provider": "eastmoney_raw"},
         stock_name="中简科技",
         em_get=fake_em_get,
     )
@@ -519,7 +519,8 @@ def test_eastmoney_stock_news_adapter_marks_professional_observation():
     assert item.extra["source_type"] == "mainstream_media"
     assert item.extra["source_domain"] == "eastmoney.com"
     assert item.extra["verification_status"] == "secondary_source"
-    assert item.extra["knowledge_eligible"] is True
+    assert item.extra["knowledge_eligible"] is False
+    assert item.extra["report_eligible"] is True
 
 
 def test_eastmoney_stock_news_requires_stock_name_or_code_match():
@@ -538,7 +539,7 @@ def test_eastmoney_stock_news_requires_stock_name_or_code_match():
 
     items = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5},
+        source_config={"enabled": True, "max_items": 5, "provider": "eastmoney_raw"},
         stock_name="中简科技",
         em_get=lambda *args, **kwargs: FakeResponse(),
     )
@@ -563,7 +564,7 @@ def test_eastmoney_stock_news_filters_to_lookback_days():
 
     items = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30, "provider": "eastmoney_raw"},
         stock_name="中简科技",
         today=date(2026, 6, 24),
         em_get=lambda *args, **kwargs: FakeResponse(),
@@ -597,7 +598,7 @@ def test_eastmoney_stock_news_falls_back_to_stock_name_keyword_when_code_empty()
 
     items = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30, "provider": "eastmoney_raw"},
         stock_name="中简科技",
         today=date(2026, 6, 24),
         em_get=fake_em_get,
@@ -607,6 +608,275 @@ def test_eastmoney_stock_news_falls_back_to_stock_name_keyword_when_code_empty()
     assert '"keyword":"300777"' in calls[0]
     assert '"keyword":"中简科技"' in calls[1]
     assert [item.title for item in items] == ["中简科技：名称搜索命中新闻"]
+
+
+def test_eastmoney_stock_news_defaults_to_akshare_stock_news_em():
+    from a_stock_source_intake import _adapt_eastmoney_stock_news
+
+    fake_ak = MagicMock()
+    fake_df = MagicMock()
+    fake_df.__len__.return_value = 2
+    fake_df.iterrows.return_value = [
+        (
+            0,
+            {
+                "新闻标题": "中简科技：新产品获得客户验证",
+                "新闻内容": "中简科技相关产品研发进展顺利。",
+                "发布时间": "2026-06-10 10:00:00",
+                "文章来源": "财联社",
+                "新闻链接": "https://finance.eastmoney.com/a/recent.html",
+            },
+        ),
+        (
+            1,
+            {
+                "新闻标题": "其他公司新闻",
+                "新闻内容": "与目标公司无关。",
+                "发布时间": "2026-06-10 10:00:00",
+                "文章来源": "财联社",
+                "新闻链接": "https://finance.eastmoney.com/a/other.html",
+            },
+        ),
+    ]
+    fake_ak.stock_news_em.return_value = fake_df
+
+    items = _adapt_eastmoney_stock_news(
+        stock_code="300777",
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        stock_name="中简科技",
+        today=date(2026, 6, 24),
+        ak_module=fake_ak,
+    )
+
+    fake_ak.stock_news_em.assert_called_once_with(symbol="300777")
+    assert len(items) == 1
+    assert items[0].title == "中简科技：新产品获得客户验证"
+    assert items[0].extra["source_type"] == "mainstream_media"
+    assert items[0].extra["source_domain"] == "eastmoney.com"
+    assert items[0].extra["knowledge_eligible"] is False
+    assert items[0].extra["report_eligible"] is True
+
+
+def test_akshare_stock_news_filters_generic_list_articles():
+    from a_stock_source_intake import _adapt_eastmoney_stock_news
+
+    fake_ak = MagicMock()
+    fake_df = MagicMock()
+    fake_df.__len__.return_value = 3
+    fake_df.iterrows.return_value = [
+        (
+            0,
+            {
+                "新闻标题": "圣邦股份：确定H股发行价格为每股85.20港元",
+                "新闻内容": "圣邦股份预计将于6月26日在港交所挂牌交易。",
+                "发布时间": "2026-06-23 10:00:00",
+                "文章来源": "证券时报",
+                "新闻链接": "https://finance.eastmoney.com/a/direct.html",
+            },
+        ),
+        (
+            1,
+            {
+                "新闻标题": "汽车芯片概念涨2.28%，主力资金净流入64股",
+                "新闻内容": "圣邦股份等个股出现在资金净流入名单中。",
+                "发布时间": "2026-06-23 11:00:00",
+                "文章来源": "证券时报",
+                "新闻链接": "https://finance.eastmoney.com/a/list.html",
+            },
+        ),
+        (
+            2,
+            {
+                "新闻标题": "斥资78亿元！3天2板封测龙头拟建设高端先进封测工厂|盘后公告集锦",
+                "新闻内容": "圣邦股份等公司公告被收录在集锦中。",
+                "发布时间": "2026-06-23 12:00:00",
+                "文章来源": "证券时报",
+                "新闻链接": "https://finance.eastmoney.com/a/name-list.html",
+            },
+        ),
+    ]
+    fake_ak.stock_news_em.return_value = fake_df
+
+    items = _adapt_eastmoney_stock_news(
+        stock_code="300661",
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        stock_name="圣邦股份",
+        today=date(2026, 6, 24),
+        ak_module=fake_ak,
+    )
+
+    assert [item.title for item in items] == ["圣邦股份：确定H股发行价格为每股85.20港元"]
+
+
+def test_eastmoney_global_news_filters_keywords_and_stays_out_of_knowledge():
+    from a_stock_source_intake import _adapt_eastmoney_global_news
+
+    fake_ak = MagicMock()
+    fake_df = MagicMock()
+    fake_df.__len__.return_value = 3
+    fake_df.iterrows.return_value = [
+        (
+            0,
+            {
+                "标题": "高通将收购AI芯片初创公司",
+                "摘要": "半导体行业并购事件。",
+                "发布时间": "2026-06-24 19:59:36",
+                "链接": "https://finance.eastmoney.com/a/ai-chip.html",
+            },
+        ),
+        (
+            1,
+            {
+                "标题": "普通宏观新闻",
+                "摘要": "与关键词无关。",
+                "发布时间": "2026-06-24 18:00:00",
+                "链接": "https://finance.eastmoney.com/a/macro.html",
+            },
+        ),
+        (
+            2,
+            {
+                "标题": "旧机器人新闻",
+                "摘要": "机器人产业事件。",
+                "发布时间": "2026-05-01 09:00:00",
+                "链接": "https://finance.eastmoney.com/a/old.html",
+            },
+        ),
+    ]
+    fake_ak.stock_info_global_em.return_value = fake_df
+
+    items = _adapt_eastmoney_global_news(
+        stock_code="300777",
+        source_config={
+            "enabled": True,
+            "max_items": 5,
+            "lookback_days": 30,
+            "keywords": ["AI芯片", "机器人"],
+        },
+        stock_name="中简科技",
+        today=date(2026, 6, 24),
+        ak_module=fake_ak,
+    )
+
+    assert [item.title for item in items] == ["高通将收购AI芯片初创公司"]
+    assert items[0].source_platform == "行业资讯"
+    assert items[0].extra["source_type"] == "mainstream_media"
+    assert items[0].extra["source_domain"] == "eastmoney.com"
+    assert items[0].extra["knowledge_eligible"] is False
+    assert items[0].extra["report_eligible"] is True
+    assert items[0].extra["matched_keywords"] == ["AI芯片"]
+
+
+def test_iwencai_industry_research_adapter_marks_display_only(monkeypatch):
+    import a_stock_source_intake as helper
+
+    def fake_preview(**kwargs):
+        assert kwargs["api_key"] == "test-key"
+        assert kwargs["queries"] == ["半导体 行业研究报告"]
+        assert kwargs["recent_days"] == 90
+        assert kwargs["fallback_days"] == 180
+        assert kwargs["max_items_per_query"] == 2
+        return {
+            "queries": [
+                {
+                    "query": "半导体 行业研究报告",
+                    "selected": [
+                        {
+                            "uid": "r1",
+                            "title": "电子行业中期策略：半导体迎来发展新机遇",
+                            "summary": "AI算力需求持续景气，半导体周期延续上行。",
+                            "publish_date": "2026-06-23",
+                            "organization": "中原证券",
+                            "url": "https://ms.10jqka.com.cn/report/r1",
+                            "score": 0.15,
+                            "query": "半导体 行业研究报告",
+                        }
+                    ],
+                }
+            ]
+        }
+
+    monkeypatch.setattr(helper, "_build_iwencai_industry_preview_summary", fake_preview)
+
+    items = helper._adapt_iwencai_industry_research(
+        stock_code="300661",
+        source_config={
+            "enabled": True,
+            "api_key": "test-key",
+            "queries": ["半导体 行业研究报告"],
+            "recent_days": 90,
+            "fallback_days": 180,
+            "max_items_per_query": 2,
+        },
+        stock_name="圣邦股份",
+        today=date(2026, 6, 24),
+    )
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.source_platform == "行业研报"
+    assert item.title == "电子行业中期策略：半导体迎来发展新机遇"
+    assert "AI算力需求持续景气" in item.content
+    assert item.extra["source_type"] == "industry_research"
+    assert item.extra["source_credit"] == 70
+    assert item.extra["verification_status"] == "professional_observation"
+    assert item.extra["knowledge_eligible"] is False
+    assert item.extra["report_eligible"] is True
+    assert item.extra["scoring_eligible"] is False
+    assert item.extra["risk_score_eligible"] is False
+    assert item.extra["iwencai_query"] == "半导体 行业研究报告"
+
+
+def test_collect_includes_iwencai_industry_research_status(monkeypatch):
+    import a_stock_source_intake as helper
+
+    def fake_preview(**kwargs):
+        return {
+            "queries": [
+                {
+                    "query": "存储芯片 产业链 深度报告",
+                    "selected": [
+                        {
+                            "uid": "r2",
+                            "title": "存储行业深度报告：AI纪元，存赢未来",
+                            "summary": "AI训练与推理驱动存储需求进入新周期。",
+                            "publish_date": "2026-01-14",
+                            "organization": "浙商证券",
+                            "url": "https://ms.10jqka.com.cn/report/r2",
+                            "score": 0.14,
+                        }
+                    ],
+                }
+            ]
+        }
+
+    monkeypatch.setattr(helper, "_build_iwencai_industry_preview_summary", fake_preview)
+
+    result = helper.collect_a_stock_source_items(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        config={
+            "enabled": True,
+            "a_stock": {
+                "iwencai_industry_research": {
+                    "enabled": True,
+                    "api_key": "test-key",
+                    "queries": ["存储芯片 产业链 深度报告"],
+                }
+            },
+        },
+        today=date(2026, 6, 24),
+    )
+
+    assert result["status"] == "ok"
+    assert result["source_statuses"]["iwencai_industry_research"] == {
+        "status": "ok",
+        "count": 1,
+        "error": "",
+    }
+    assert len(result["items"]) == 1
+    assert result["items"][0].extra["source_type"] == "industry_research"
+    assert result["items"][0].extra["knowledge_eligible"] is False
 
 
 def test_eastmoney_research_reports_adapter_marks_professional_observation():
@@ -1070,7 +1340,7 @@ def test_eastmoney_stock_news_fetch_error_returns_error_status():
 
     result = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5},
+        source_config={"enabled": True, "max_items": 5, "provider": "eastmoney_raw"},
         stock_name="中简科技",
         em_get=fake_em_get,
     )
@@ -1096,7 +1366,7 @@ def test_medium_credit_items_are_not_confirmed_fact():
 
     news_items = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5},
+        source_config={"enabled": True, "max_items": 5, "provider": "eastmoney_raw"},
         stock_name="中简科技",
         em_get=lambda *args, **kwargs: FakeNewsResponse(),
     )

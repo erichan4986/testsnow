@@ -10,6 +10,7 @@ _SOURCE_TYPE_LABELS = {
     "periodic_report_fulltext_analysis": "定期报告全文摘要",
     "news": "东方财富新闻",
     "research_report": "券商研报摘要",
+    "industry_research": "行业研报",
 }
 
 _SOURCE_TYPE_PRIORITY = {
@@ -17,7 +18,8 @@ _SOURCE_TYPE_PRIORITY = {
     "periodic_report_excerpt": 1,
     "periodic_report_fulltext_analysis": 2,
     "research_report": 3,
-    "news": 4,
+    "industry_research": 4,
+    "news": 5,
 }
 
 _MAX_REPRESENTATIVE_ROWS = 6

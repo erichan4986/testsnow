@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import hashlib
 import json
+import os
 import random
 import re
 import time
@@ -81,6 +82,35 @@ _EASTMONEY_REPORT_API = "https://reportapi.eastmoney.com/report/list"
 _EASTMONEY_STOCK_NEWS_API = "https://search-api-web.eastmoney.com/search/jsonp"
 _DEFAULT_BROKER_RESEARCH_CACHE_ROOT = Path("data/raw/broker_research_reports")
 _DEFAULT_RESEARCH_PDF_CACHE_DIR = Path("data/raw/research_reports/_downloads")
+_DEFAULT_INDUSTRY_EVENT_KEYWORDS = [
+    "光模块",
+    "800G",
+    "CPO",
+    "模拟芯片",
+    "AI芯片",
+    "AI 芯片",
+    "存储",
+    "机器人",
+    "半导体",
+    "算力",
+    "光通信",
+    "汽车芯片",
+]
+_LOW_SIGNAL_STOCK_NEWS_TITLE_PATTERNS = [
+    r"\d+\s*只.*股",
+    r"名单",
+    r"概念.*涨",
+    r"概念.*跌",
+    r"主力资金",
+    r"资金净流入",
+    r"资金净流出",
+    r"资金出逃",
+    r"筹码.*集中",
+    r"股东户数",
+    r"大宗交易",
+    r"融资客",
+    r"公告集锦",
+]
 _PERIODIC_REPORT_SCHEMA_VERSION = "periodic_report_extractor.v1"
 _PERIODIC_REPORT_USAGES = {
     "risk_disclosure",
@@ -421,6 +451,28 @@ def _parse_jsonp_payload(text: str) -> Dict[str, Any]:
     except Exception:
         return {}
     return payload if isinstance(payload, dict) else {}
+
+
+def _is_low_signal_stock_news_title(title: str) -> bool:
+    return any(re.search(pattern, title) for pattern in _LOW_SIGNAL_STOCK_NEWS_TITLE_PATTERNS)
+
+
+def _is_valid_akshare_stock_news(title: str, text: str, stock_name: str, stock_code: str) -> bool:
+    if not _contains_stock_reference(text, stock_name, stock_code):
+        return False
+    if _is_low_signal_stock_news_title(title) and not _contains_stock_reference(title, stock_name, stock_code):
+        return False
+    return True
+
+
+def _lazy_import_akshare(ak_module: Optional[Any] = None):
+    if ak_module is not None:
+        return ak_module, None
+    try:
+        import akshare as ak  # lazy import
+    except Exception as exc:
+        return None, f"akshare import failed: {exc}"
+    return ak, None
 
 
 def _safe_research_pdf_filename(*parts: Any) -> str:
@@ -779,6 +831,15 @@ def _adapt_eastmoney_stock_news(
     em_get=None,
 ) -> List[SynthesisItem] | Dict[str, Any]:
     """Fetch and convert Eastmoney stock news to medium-credit SynthesisItems."""
+    if str(source_config.get("provider", "akshare")).lower() != "eastmoney_raw":
+        return _adapt_akshare_stock_news(
+            stock_code=stock_code,
+            source_config=source_config,
+            stock_name=stock_name,
+            today=today,
+            ak_module=ak_module,
+        )
+
     max_items = int(source_config.get("max_items", 10))
     lookback_days = int(source_config.get("lookback_days", 30))
     page_size = int(source_config.get("page_size", max_items))
@@ -838,9 +899,69 @@ def _adapt_eastmoney_stock_news(
                     "source_type": "mainstream_media",
                     "source_domain": "eastmoney.com",
                     "verification_status": "secondary_source",
-                    "knowledge_eligible": True,
+                    "knowledge_eligible": False,
                     "report_eligible": True,
                     "raw_metadata": dict(row),
+                },
+            )
+        )
+        if len(items) >= max_items:
+            break
+
+    return items
+
+
+def _adapt_akshare_stock_news(
+    stock_code: str,
+    source_config: Dict[str, Any],
+    stock_name: str = "",
+    today: Optional[date] = None,
+    ak_module: Optional[Any] = None,
+) -> List[SynthesisItem] | Dict[str, Any]:
+    """Fetch stock-specific Eastmoney news through akshare.stock_news_em."""
+    ak, error = _lazy_import_akshare(ak_module)
+    if error:
+        return {"status": "error", "error": error}
+    if not hasattr(ak, "stock_news_em"):
+        return {"status": "unsupported_function", "error": "stock_news_em not available"}
+
+    max_items = int(source_config.get("max_items", 10))
+    lookback_days = int(source_config.get("lookback_days", 30))
+    try:
+        df = ak.stock_news_em(symbol=stock_code)
+    except Exception as exc:
+        return {"status": "error", "error": f"akshare stock_news_em fetch failed: {exc}"}
+
+    items: List[SynthesisItem] = []
+    for row in _iter_record_rows(df):
+        title = _strip_html(_find_column(row, _NEWS_TITLE_COLUMN_OPTIONS) or "")
+        content = _strip_html(_find_column(row, _NEWS_CONTENT_COLUMN_OPTIONS) or "")[:500]
+        text = f"{title} {content}"
+        if not _is_valid_akshare_stock_news(title, text, stock_name, stock_code):
+            continue
+        publish_time = _parse_publish_time(_find_column(row, _NEWS_TIME_COLUMN_OPTIONS))
+        if not _within_lookback(publish_time, lookback_days, today):
+            continue
+        source = _find_column(row, _NEWS_SOURCE_COLUMN_OPTIONS) or "东方财富"
+        url = _find_column(row, _NEWS_URL_COLUMN_OPTIONS) or ""
+        items.append(
+            SynthesisItem(
+                title=title,
+                content=content,
+                author=str(source),
+                source_platform="新闻",
+                url=str(url),
+                publish_time=publish_time,
+                interaction_score=0,
+                extra={
+                    "source_credit": 65,
+                    "source_type": "mainstream_media",
+                    "source_domain": "eastmoney.com",
+                    "verification_status": "secondary_source",
+                    "knowledge_eligible": False,
+                    "report_eligible": True,
+                    "raw_metadata": dict(row),
+                    "fetch_method": "akshare_stock_news_em",
                 },
             )
         )
@@ -1007,11 +1128,182 @@ def _adapt_eastmoney_research_reports(
     return items
 
 
+def _adapt_eastmoney_global_news(
+    stock_code: str,
+    source_config: Dict[str, Any],
+    stock_name: str = "",
+    today: Optional[date] = None,
+    ak_module: Optional[Any] = None,
+) -> List[SynthesisItem] | Dict[str, Any]:
+    """Fetch keyword-filtered Eastmoney global news as industry event flow.
+
+    This source is intentionally report/display only. It is useful context for
+    industry events, but it is not stock-specific enough to persist to
+    Knowledge by default.
+    """
+    ak, error = _lazy_import_akshare(ak_module)
+    if error:
+        return {"status": "error", "error": error}
+    if not hasattr(ak, "stock_info_global_em"):
+        return {"status": "unsupported_function", "error": "stock_info_global_em not available"}
+
+    max_items = int(source_config.get("max_items", 5))
+    lookback_days = int(source_config.get("lookback_days", 30))
+    keywords = source_config.get("keywords") or _DEFAULT_INDUSTRY_EVENT_KEYWORDS
+    keywords = [str(keyword).strip() for keyword in keywords if str(keyword).strip()]
+    if not keywords:
+        return []
+
+    try:
+        df = ak.stock_info_global_em()
+    except Exception as exc:
+        return {"status": "error", "error": f"akshare stock_info_global_em fetch failed: {exc}"}
+
+    items: List[SynthesisItem] = []
+    for row in _iter_record_rows(df):
+        title = _strip_html(_find_column(row, _NEWS_TITLE_COLUMN_OPTIONS) or "")
+        content = _strip_html(_find_column(row, _NEWS_CONTENT_COLUMN_OPTIONS) or "")[:500]
+        text = f"{title} {content}"
+        matched = [keyword for keyword in keywords if keyword in text]
+        if not matched:
+            continue
+        publish_time = _parse_publish_time(_find_column(row, _NEWS_TIME_COLUMN_OPTIONS))
+        if not _within_lookback(publish_time, lookback_days, today):
+            continue
+        url = _find_column(row, _NEWS_URL_COLUMN_OPTIONS) or ""
+        items.append(
+            SynthesisItem(
+                title=title,
+                content=content,
+                author="东方财富资讯",
+                source_platform="行业资讯",
+                url=str(url),
+                publish_time=publish_time,
+                interaction_score=0,
+                extra={
+                    "source_credit": 65,
+                    "source_type": "mainstream_media",
+                    "source_domain": "eastmoney.com",
+                    "verification_status": "secondary_source",
+                    "knowledge_eligible": False,
+                    "report_eligible": True,
+                    "raw_metadata": dict(row),
+                    "matched_keywords": matched,
+                    "fetch_method": "akshare_stock_info_global_em",
+                },
+            )
+        )
+        if len(items) >= max_items:
+            break
+
+    return items
+
+
+def _build_iwencai_industry_preview_summary(**kwargs):
+    """Build an iwencai industry research preview summary.
+
+    Kept as a tiny wrapper so Source Intake tests can monkeypatch the network
+    boundary without importing the iwencai module at test collection time.
+    """
+    try:
+        if __name__.startswith("utils."):
+            from .iwencai_industry_research import (
+                DEFAULT_IWENCAI_QUERIES,
+                build_iwencai_industry_preview,
+            )
+        else:
+            from iwencai_industry_research import (
+                DEFAULT_IWENCAI_QUERIES,
+                build_iwencai_industry_preview,
+            )
+    except Exception as exc:
+        raise RuntimeError(f"iwencai industry research import failed: {exc}") from exc
+
+    if not kwargs.get("queries"):
+        kwargs["queries"] = DEFAULT_IWENCAI_QUERIES
+    return build_iwencai_industry_preview(**kwargs)
+
+
+def _adapt_iwencai_industry_research(
+    stock_code: str,
+    source_config: Dict[str, Any],
+    stock_name: str = "",
+    today: Optional[date] = None,
+    ak_module: Optional[Any] = None,
+) -> List[SynthesisItem] | Dict[str, Any]:
+    """Fetch iwencai industry research as display/report-only context.
+
+    This source is theme-level professional observation. It is intentionally
+    not stock-specific enough for Knowledge, scoring, or risk logic.
+    """
+    api_key = str(source_config.get("api_key") or os.environ.get("IWENCAI_API_KEY", "")).strip()
+    if not api_key:
+        return {"status": "error", "error": "IWENCAI_API_KEY is required"}
+
+    try:
+        summary = _build_iwencai_industry_preview_summary(
+            api_key=api_key,
+            queries=source_config.get("queries"),
+            base_url=source_config.get("base_url", "https://openapi.iwencai.com"),
+            size=int(source_config.get("size", 50)),
+            today=today,
+            recent_days=int(source_config.get("recent_days", 90)),
+            fallback_days=int(source_config.get("fallback_days", 180)),
+            min_recent_items=int(source_config.get("min_recent_items", 3)),
+            max_items_per_query=int(source_config.get("max_items_per_query", 4)),
+        )
+    except Exception as exc:
+        return {"status": "error", "error": f"iwencai industry research fetch failed: {exc}"}
+
+    items: List[SynthesisItem] = []
+    max_items = int(source_config.get("max_items", 0) or 0)
+    for query_summary in summary.get("queries", []) or []:
+        query = str(query_summary.get("query", "")).strip()
+        for row in query_summary.get("selected", []) or []:
+            if not isinstance(row, dict):
+                continue
+            title = str(row.get("title", "")).strip()
+            if not title:
+                continue
+            content = str(row.get("summary", "") or title).strip()
+            items.append(
+                SynthesisItem(
+                    title=title,
+                    content=content,
+                    author=str(row.get("organization", "") or "同花顺问财"),
+                    source_platform="行业研报",
+                    url=str(row.get("url", "") or ""),
+                    publish_time=str(row.get("publish_date", "") or ""),
+                    interaction_score=0,
+                    extra={
+                        "source_credit": 70,
+                        "source_type": "industry_research",
+                        "source_domain": "iwencai.com",
+                        "verification_status": "professional_observation",
+                        "knowledge_eligible": False,
+                        "report_eligible": True,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                        "fetch_method": "iwencai_comprehensive_search",
+                        "iwencai_query": str(row.get("query", "") or query),
+                        "iwencai_uid": str(row.get("uid", "") or ""),
+                        "iwencai_score": row.get("score", 0),
+                        "raw_metadata": dict(row),
+                    },
+                )
+            )
+            if max_items and len(items) >= max_items:
+                return items
+
+    return items
+
+
 _SOURCE_ADAPTERS = {
     "cninfo_announcements": _adapt_cninfo_announcements,
     "eastmoney_stock_news": _adapt_eastmoney_stock_news,
     "eastmoney_research_reports": _adapt_eastmoney_research_reports,
-    "eastmoney_global_news": None,  # disabled in Phase 1
+    "eastmoney_global_news": _adapt_eastmoney_global_news,
+    "iwencai_industry_research": _adapt_iwencai_industry_research,
 }
 
 

@@ -593,6 +593,24 @@ def test_unknown_source_type_fallback():
     assert "其他来源" in result
 
 
+def test_industry_research_renders_as_industry_research():
+    item = _make_item(
+        title="半导体行业深度报告",
+        source_platform="行业研报",
+        publish_time="2026-06-24",
+        extra={
+            "source_type": "industry_research",
+            "source_credit": 70,
+            "verification_status": "professional_observation",
+        },
+    )
+    ctx = _make_ctx(items=[item])
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "| 行业研报 | 1 | 70 | professional_observation | 专业观察 |" in result
+    assert "| 2026-06-24 | 行业研报 |" in result
+
+
 def test_renderer_does_not_mutate_ctx():
     item = _make_item(
         title="标题",
