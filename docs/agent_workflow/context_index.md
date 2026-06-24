@@ -54,6 +54,13 @@ Canonical operator workflow:
 
 Do not silently auto-fetch annual reports inside ordinary report runs. Keep annual-report network/cache preparation as an explicit preflight step so generated reports remain predictable.
 
+Scope boundary for narrative cards v1:
+
+- Optimized target domain: pan-semiconductor / hard-tech annual reports, including semiconductor design, optical modules, electronic materials, AI chips, intelligent hardware, and high-end manufacturing companies with concrete product/R&D disclosures.
+- Knowledge writes are allowed by default only after preview review for this target domain.
+- Non-target industries, especially pharma/biotech, consumer, real estate, financial holding, or heavily templated filings, are preview-only in v1 unless a human explicitly approves writing. Use `长春高新` and `三花智控` as observation samples, not quality-regression baselines and not default Knowledge-write targets.
+- If broader industry coverage is needed, create a separate v2 design/schema instead of adding broad industry special cases to the current pan-semiconductor path.
+
 Intake and extraction helpers:
 
 - one-command cache + preview + optional Knowledge preflight: `scripts/prepare_annual_report_materials.py`
@@ -118,6 +125,7 @@ Current limitation:
 
 - The preferred annual-report preflight is `scripts/prepare_annual_report_materials.py`; it chooses `annual_report_url` first, then CNINFO for A shares, then HKEX for HK shares.
 - A-share and HK narrative evidence cards are the current primary path for writing useful annual-report text into Knowledge. They can write `periodic_report_narrative_evidence` notes under `knowledge/10-Stocks/<stock>/periodic_narrative_cards/`.
+- Narrative cards v1 is intentionally scoped to pan-semiconductor / hard-tech reports. Keep non-target industries preview-only by default; do not use pharma/manufacturing edge cases to tune the generic v1 extractor unless the task explicitly opens an industry-specific design.
 - Fulltext LLM summaries remain material-layer display/synthesis references only. They must not enter Knowledge persistence, scoring, risk scoring, `confirmed_fact`, or `fact_candidate`.
 - Ground Truth numeric blocks constrain fulltext LLM financial numbers; they are not a separate Knowledge source.
 - Filing facts have a writer-only structured finance path, but they are not the current priority for annual-report knowledge enrichment.

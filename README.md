@@ -273,6 +273,8 @@ python3 scripts/prepare_annual_report_materials.py --stock 黑芝麻智能 --yea
 python3 scripts/prepare_annual_report_materials.py --stock 圣邦股份 --year 2025
 ```
 
+当前 narrative cards v1 优先服务泛半导体/硬科技年报，例如芯片设计、光模块、电子材料、AI 芯片、智能硬件，以及产品/R&D 披露足够具体的高端制造公司。其他行业默认只做 preview 观察，不默认写入 Knowledge；长春高新、三花智控这类样本用于观察边界，不作为默认质量回归或默认沉淀目标。若要扩展医药、消费、地产等行业，应另开行业 v2 规则，不在当前泛半导体路径里堆特例。
+
 需要沉淀 narrative cards 时再传入 `--write-knowledge`：
 
 ```bash
