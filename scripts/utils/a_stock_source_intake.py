@@ -9,6 +9,10 @@ from __future__ import annotations
 
 import logging
 import hashlib
+import json
+import random
+import re
+import time
 from datetime import date, timedelta
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
@@ -74,6 +78,9 @@ _REPORT_STOCK_NAME_COLUMN_OPTIONS = [
 ]
 _DEFAULT_DETAIL_CONTENT_CATEGORIES = ["业绩预告", "季度报告", "一季度报告", "三季度报告"]
 _EASTMONEY_REPORT_API = "https://reportapi.eastmoney.com/report/list"
+_EASTMONEY_STOCK_NEWS_API = "https://search-api-web.eastmoney.com/search/jsonp"
+_DEFAULT_BROKER_RESEARCH_CACHE_ROOT = Path("data/raw/broker_research_reports")
+_DEFAULT_RESEARCH_PDF_CACHE_DIR = Path("data/raw/research_reports/_downloads")
 _PERIODIC_REPORT_SCHEMA_VERSION = "periodic_report_extractor.v1"
 _PERIODIC_REPORT_USAGES = {
     "risk_disclosure",
@@ -81,6 +88,36 @@ _PERIODIC_REPORT_USAGES = {
     "capital_action",
     "financial_forensics",
 }
+
+_EASTMONEY_UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36"
+_EM_MIN_INTERVAL_SECONDS = 1.0
+_em_session = None
+_em_last_call = [0.0]
+
+
+def _em_get(url: str, params: Optional[Dict[str, Any]] = None, headers: Optional[Dict[str, str]] = None, timeout: int = 15):
+    """Eastmoney request helper with serial throttling and session reuse."""
+    try:
+        import requests  # lazy import; disabled source intake should stay cheap
+    except Exception as exc:  # pragma: no cover - environment failure
+        raise RuntimeError(f"requests import failed: {exc}") from exc
+
+    wait = _EM_MIN_INTERVAL_SECONDS - (time.time() - _em_last_call[0])
+    if wait > 0:
+        time.sleep(wait + random.uniform(0.1, 0.5))
+
+    global _em_session
+    if _em_session is None:
+        _em_session = requests.Session()
+        _em_session.headers.update({"User-Agent": _EASTMONEY_UA})
+
+    request_headers = dict(headers or {})
+    request_headers.setdefault("User-Agent", _EASTMONEY_UA)
+
+    try:
+        return _em_session.get(url, params=params, headers=request_headers, timeout=timeout)
+    finally:
+        _em_last_call[0] = time.time()
 
 
 def _find_column(row: Dict[str, Any], options: List[str]) -> Optional[Any]:
@@ -103,6 +140,18 @@ def _parse_publish_time(value: Any) -> str:
     return text
 
 
+def _parse_date_value(value: Any) -> Optional[date]:
+    text = _parse_publish_time(value)
+    if not text:
+        return None
+    text = text[:10].replace("/", "-")
+    try:
+        year, month, day = text.split("-")
+        return date(int(year), int(month), int(day))
+    except Exception:
+        return None
+
+
 def _today_yyyymmdd(today: Optional[date] = None) -> str:
     d = today or date.today()
     return d.strftime("%Y%m%d")
@@ -112,6 +161,26 @@ def _start_yyyymmdd(lookback_days: int, today: Optional[date] = None) -> str:
     d = today or date.today()
     start = d - timedelta(days=lookback_days)
     return start.strftime("%Y%m%d")
+
+
+def _today_iso(today: Optional[date] = None) -> str:
+    d = today or date.today()
+    return d.strftime("%Y-%m-%d")
+
+
+def _start_iso(lookback_days: int, today: Optional[date] = None) -> str:
+    d = today or date.today()
+    start = d - timedelta(days=lookback_days)
+    return start.strftime("%Y-%m-%d")
+
+
+def _within_lookback(publish_time: str, lookback_days: int, today: Optional[date] = None) -> bool:
+    parsed = _parse_date_value(publish_time)
+    if parsed is None:
+        return True
+    end = today or date.today()
+    start = end - timedelta(days=lookback_days)
+    return start <= parsed <= end
 
 
 def _matches_category(title: str, categories: List[str]) -> bool:
@@ -334,6 +403,228 @@ def _iter_record_rows(data: Any):
             yield dict(row)
 
 
+def _strip_html(text: Any) -> str:
+    value = "" if text is None else str(text)
+    value = re.sub(r"<[^>]+>", "", value)
+    return value.strip()
+
+
+def _parse_jsonp_payload(text: str) -> Dict[str, Any]:
+    if not text:
+        return {}
+    start = text.find("(")
+    end = text.rfind(")")
+    if start < 0 or end <= start:
+        return {}
+    try:
+        payload = json.loads(text[start + 1 : end])
+    except Exception:
+        return {}
+    return payload if isinstance(payload, dict) else {}
+
+
+def _safe_research_pdf_filename(*parts: Any) -> str:
+    raw = "_".join(str(part or "").strip() for part in parts if str(part or "").strip())
+    raw = re.sub(r'[\\/:*?"<>|\s]+', "_", raw).strip("_")
+    raw = raw[:160].strip("_") or "research_report"
+    if not raw.lower().endswith(".pdf"):
+        raw += ".pdf"
+    return raw
+
+
+def _safe_research_folder_name(stock_name: str, stock_code: str) -> str:
+    raw = "_".join(part for part in [str(stock_name or "").strip(), str(stock_code or "").strip()] if part)
+    raw = re.sub(r'[\\/:*?"<>|\s]+', "_", raw).strip("_")
+    return raw[:120].strip("_") or "unknown_stock"
+
+
+def _broker_research_stock_dir(stock_name: str, stock_code: str, source_config: Dict[str, Any]) -> Path:
+    root = Path(source_config.get("broker_research_cache_root") or _DEFAULT_BROKER_RESEARCH_CACHE_ROOT)
+    return root / _safe_research_folder_name(stock_name, stock_code)
+
+
+def _research_pdf_cache_dir(stock_name: str, stock_code: str, source_config: Dict[str, Any]) -> Tuple[Path, Optional[Path]]:
+    """Return PDF download dir and optional stock-level manifest path."""
+    if source_config.get("pdf_cache_dir"):
+        return Path(source_config["pdf_cache_dir"]), None
+    if stock_name or stock_code:
+        stock_dir = _broker_research_stock_dir(stock_name, stock_code, source_config)
+        return stock_dir / "_downloads", stock_dir / "manifest.json"
+    return _DEFAULT_RESEARCH_PDF_CACHE_DIR, None
+
+
+def _record_research_pdf_manifest(
+    *,
+    manifest_path: Optional[Path],
+    stock_name: str,
+    stock_code: str,
+    title: str,
+    publish_time: str,
+    institution: str,
+    url: str,
+    target: Path,
+    content: bytes,
+    status: str,
+) -> None:
+    if manifest_path is None:
+        return
+    manifest_path.parent.mkdir(parents=True, exist_ok=True)
+    payload: Dict[str, Any] = {}
+    if manifest_path.exists():
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            payload = {}
+    reports = payload.get("reports") if isinstance(payload.get("reports"), list) else []
+    sha256 = hashlib.sha256(content).hexdigest() if content else ""
+    entry = {
+        "title": title,
+        "institution": institution,
+        "publish_time": publish_time[:10],
+        "url": url,
+        "path": str(target),
+        "filename": target.name,
+        "bytes": len(content),
+        "sha256": sha256,
+        "source": "eastmoney",
+        "status": status,
+        "added_by": "pipeline",
+    }
+    dedupe_key = sha256 or str(target)
+    kept = []
+    for report in reports:
+        old_key = report.get("sha256") or report.get("path")
+        if old_key != dedupe_key and report.get("url") != url and report.get("path") != str(target):
+            kept.append(report)
+    kept.append(entry)
+    payload = {
+        "schema_version": "broker_research_cache_manifest.v1",
+        "stock_name": stock_name,
+        "stock_code": stock_code,
+        "reports": kept,
+    }
+    manifest_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2, sort_keys=True), encoding="utf-8")
+
+
+def _download_research_report_pdf(
+    *,
+    url: str,
+    title: str,
+    publish_time: str,
+    institution: str,
+    source_config: Dict[str, Any],
+    stock_name: str = "",
+    stock_code: str = "",
+    em_get=None,
+) -> Dict[str, Any]:
+    if not url:
+        return {"pdf_download_status": "failed", "pdf_download_error": "missing PDF URL"}
+
+    cache_dir, manifest_path = _research_pdf_cache_dir(stock_name, stock_code, source_config)
+    filename = _safe_research_pdf_filename(publish_time[:10], institution, title)
+    target = cache_dir / filename
+    if target.exists() and target.stat().st_size > 0:
+        content = target.read_bytes()
+        _record_research_pdf_manifest(
+            manifest_path=manifest_path,
+            stock_name=stock_name,
+            stock_code=stock_code,
+            title=title,
+            publish_time=publish_time,
+            institution=institution,
+            url=url,
+            target=target,
+            content=content,
+            status="cached",
+        )
+        return {
+            "pdf_download_status": "cached",
+            "pdf_url": url,
+            "pdf_local_path": str(target),
+            "pdf_bytes": len(content),
+            "pdf_sha256": hashlib.sha256(content).hexdigest(),
+            **({"pdf_cache_manifest_path": str(manifest_path)} if manifest_path else {}),
+        }
+
+    request = em_get or _em_get
+    timeout = int(source_config.get("pdf_timeout", source_config.get("timeout", 30)))
+    min_bytes = int(source_config.get("pdf_min_bytes", 1024))
+    try:
+        response = request(
+            url,
+            params=None,
+            headers={"Referer": "https://data.eastmoney.com/"},
+            timeout=timeout,
+        )
+        status_code = int(getattr(response, "status_code", 200) or 200)
+        content = bytes(getattr(response, "content", b"") or b"")
+        if status_code != 200:
+            return {
+                "pdf_download_status": "failed",
+                "pdf_url": url,
+                "pdf_download_error": f"PDF HTTP {status_code}",
+            }
+        if len(content) < min_bytes or not content.lstrip().startswith(b"%PDF"):
+            return {
+                "pdf_download_status": "failed",
+                "pdf_url": url,
+                "pdf_download_error": f"invalid PDF payload ({len(content)} bytes)",
+            }
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(content)
+        _record_research_pdf_manifest(
+            manifest_path=manifest_path,
+            stock_name=stock_name,
+            stock_code=stock_code,
+            title=title,
+            publish_time=publish_time,
+            institution=institution,
+            url=url,
+            target=target,
+            content=content,
+            status="ok",
+        )
+        return {
+            "pdf_download_status": "ok",
+            "pdf_url": url,
+            "pdf_local_path": str(target),
+            "pdf_bytes": len(content),
+            "pdf_sha256": hashlib.sha256(content).hexdigest(),
+            **({"pdf_cache_manifest_path": str(manifest_path)} if manifest_path else {}),
+        }
+    except Exception as exc:
+        return {
+            "pdf_download_status": "failed",
+            "pdf_url": url,
+            "pdf_download_error": str(exc),
+        }
+
+
+def _eastmoney_stock_news_param(keyword: str, page_size: int) -> str:
+    return json.dumps(
+        {
+            "uid": "",
+            "keyword": keyword,
+            "type": ["cmsArticleWebOld"],
+            "client": "web",
+            "clientType": "web",
+            "clientVersion": "curr",
+            "param": {
+                "cmsArticleWebOld": {
+                    "searchScope": "default",
+                    "sort": "default",
+                    "pageIndex": 1,
+                    "pageSize": page_size,
+                    "preTag": "",
+                    "postTag": "",
+                }
+            },
+        },
+        ensure_ascii=False,
+        separators=(",", ":"),
+    )
+
+
 def _build_cninfo_url(row: Dict[str, Any]) -> str:
     url = _find_column(row, _CNINFO_URL_COLUMN_OPTIONS)
     if url:
@@ -485,40 +776,53 @@ def _adapt_eastmoney_stock_news(
     stock_name: str = "",
     today: Optional[date] = None,
     ak_module: Optional[Any] = None,
+    em_get=None,
 ) -> List[SynthesisItem] | Dict[str, Any]:
     """Fetch and convert Eastmoney stock news to medium-credit SynthesisItems."""
-    ak = ak_module
-    if ak is None:
-        try:
-            import akshare as ak  # lazy import
-        except Exception as exc:
-            return {"status": "error", "error": f"akshare import failed: {exc}"}
-
-    if not hasattr(ak, "stock_news_em"):
-        return {"status": "unsupported_function", "error": "stock_news_em not available"}
-
     max_items = int(source_config.get("max_items", 10))
+    lookback_days = int(source_config.get("lookback_days", 30))
+    page_size = int(source_config.get("page_size", max_items))
+    page_size = max(page_size, max_items)
+    request = em_get or _em_get
 
-    try:
-        df = ak.stock_news_em(symbol=stock_code)
-    except Exception as exc:
-        return {"status": "error", "error": f"eastmoney stock news fetch failed: {exc}"}
+    articles: List[Dict[str, Any]] = []
+    keywords = [stock_code]
+    if stock_name and stock_name not in keywords:
+        keywords.append(stock_name)
+    for keyword in keywords:
+        try:
+            response = request(
+                _EASTMONEY_STOCK_NEWS_API,
+                params={"cb": "jQuery_news", "param": _eastmoney_stock_news_param(keyword, page_size)},
+                headers={"Referer": "https://so.eastmoney.com/"},
+                timeout=int(source_config.get("timeout", 15)),
+            )
+            payload = _parse_jsonp_payload(getattr(response, "text", ""))
+        except Exception as exc:
+            return {"status": "error", "error": f"eastmoney stock news fetch failed: {exc}"}
 
-    if df is None or len(df) == 0:
+        candidate_articles = payload.get("result", {}).get("cmsArticleWebOld", []) or []
+        if isinstance(candidate_articles, list) and candidate_articles:
+            articles = [row for row in candidate_articles if isinstance(row, dict)]
+            break
+
+    if not articles:
         return []
 
     items = []
-    for _, row in df.iterrows():
-        title = _find_column(row, _NEWS_TITLE_COLUMN_OPTIONS) or ""
-        title = str(title).strip()
-        content = _find_column(row, _NEWS_CONTENT_COLUMN_OPTIONS) or ""
-        content = str(content).strip()
+    for row in articles:
+        if not isinstance(row, dict):
+            continue
+        title = _strip_html(row.get("title", ""))
+        content = _strip_html(row.get("content", ""))[:300]
         text = f"{title} {content}"
         if not _contains_stock_reference(text, stock_name, stock_code):
             continue
-        publish_time = _parse_publish_time(_find_column(row, _NEWS_TIME_COLUMN_OPTIONS))
-        source = _find_column(row, _NEWS_SOURCE_COLUMN_OPTIONS) or "东方财富"
-        url = _find_column(row, _NEWS_URL_COLUMN_OPTIONS) or ""
+        publish_time = _parse_publish_time(row.get("date", ""))
+        if not _within_lookback(publish_time, lookback_days, today):
+            continue
+        source = row.get("mediaName", "") or "东方财富"
+        url = row.get("url", "") or ""
 
         items.append(
             SynthesisItem(
@@ -530,10 +834,10 @@ def _adapt_eastmoney_stock_news(
                 publish_time=publish_time,
                 interaction_score=0,
                 extra={
-                    "source_credit": 60,
-                    "source_type": "news",
-                    "source_domain": "finance.eastmoney.com",
-                    "verification_status": "professional_observation",
+                    "source_credit": 65,
+                    "source_type": "mainstream_media",
+                    "source_domain": "eastmoney.com",
+                    "verification_status": "secondary_source",
                     "knowledge_eligible": True,
                     "report_eligible": True,
                     "raw_metadata": dict(row),
@@ -549,28 +853,22 @@ def _adapt_eastmoney_stock_news(
 def _fetch_eastmoney_reportapi_rows(
     stock_code: str,
     source_config: Dict[str, Any],
+    em_get=None,
+    today: Optional[date] = None,
 ) -> List[Dict[str, Any]] | Dict[str, Any]:
     """Fetch target-stock research reports from Eastmoney reportapi.
 
-    This direct fallback is intentionally metadata-only: it does not download
+    This direct fetch is intentionally metadata-only: it does not download
     research PDFs, and requests is lazy-imported to keep disabled runs cheap.
     """
-    try:
-        import requests  # lazy import
-    except Exception as exc:
-        return {"status": "error", "error": f"requests import failed: {exc}"}
-
     max_pages = int(source_config.get("direct_max_pages", source_config.get("max_pages", 2)))
     timeout = int(source_config.get("timeout", 30))
-    session = requests.Session()
-    session.headers.update(
-        {
-            "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36",
-            "Referer": "https://data.eastmoney.com/",
-        }
-    )
+    request = em_get or _em_get
 
     rows: List[Dict[str, Any]] = []
+    lookback_days = int(source_config.get("lookback_days", 90))
+    begin_time = source_config.get("begin_time") or _start_iso(lookback_days, today=today)
+    end_time = source_config.get("end_time") or _today_iso(today=today)
     for page in range(1, max_pages + 1):
         params = {
             "industryCode": "*",
@@ -578,8 +876,8 @@ def _fetch_eastmoney_reportapi_rows(
             "industry": "*",
             "rating": "*",
             "ratingChange": "*",
-            "beginTime": source_config.get("begin_time", "2000-01-01"),
-            "endTime": source_config.get("end_time", "2030-01-01"),
+            "beginTime": begin_time,
+            "endTime": end_time,
             "pageNo": str(page),
             "fields": "",
             "qType": "0",
@@ -591,7 +889,12 @@ def _fetch_eastmoney_reportapi_rows(
             "pageNumber": str(page),
         }
         try:
-            response = session.get(_EASTMONEY_REPORT_API, params=params, timeout=timeout)
+            response = request(
+                _EASTMONEY_REPORT_API,
+                params=params,
+                headers={"Referer": "https://data.eastmoney.com/"},
+                timeout=timeout,
+            )
             payload = response.json()
         except Exception as exc:
             return {"status": "error", "error": f"eastmoney reportapi fetch failed: {exc}"}
@@ -645,8 +948,8 @@ def _build_research_report_item(row: Dict[str, Any], fetch_method: str = "akshar
         publish_time=publish_time,
         interaction_score=0,
         extra={
-            "source_credit": 65,
-            "source_type": "research_report",
+            "source_credit": 72,
+            "source_type": "broker_research",
             "source_domain": "reportapi.eastmoney.com",
             "verification_status": "professional_observation",
             "knowledge_eligible": True,
@@ -663,60 +966,43 @@ def _adapt_eastmoney_research_reports(
     stock_name: str = "",
     today: Optional[date] = None,
     ak_module: Optional[Any] = None,
+    em_get=None,
 ) -> List[SynthesisItem] | Dict[str, Any]:
     """Fetch and convert Eastmoney research report rows to medium-credit SynthesisItems.
 
-    Uses akshare.stock_research_report_em if available; otherwise falls back to a
-    direct reportapi call wrapped in a lazy function. No PDF download.
+    Uses Eastmoney reportapi directly. No PDF download.
     """
     max_items = int(source_config.get("max_items", 8))
-    direct_fallback = source_config.get("direct_fallback", True)
-
-    df = None
-    ak = ak_module
-    ak_error = ""
-    if ak is None:
-        try:
-            import akshare as ak  # lazy import
-        except Exception as exc:
-            ak_error = f"akshare import failed: {exc}"
-
-    if ak is not None and hasattr(ak, "stock_research_report_em"):
-        try:
-            df = ak.stock_research_report_em()
-        except Exception as exc:
-            ak_error = f"stock_research_report_em failed: {exc}"
-    elif ak is not None:
-        ak_error = "stock_research_report_em not available"
 
     items = []
-    for row in _iter_record_rows(df):
-        if not _report_row_matches_target(row, stock_name, stock_code):
+    lookback_days = int(source_config.get("lookback_days", 90))
+    download_pdfs = bool(source_config.get("download_pdfs", False))
+    direct_rows = _fetch_eastmoney_reportapi_rows(stock_code, source_config, em_get=em_get, today=today)
+    if isinstance(direct_rows, dict):
+        return direct_rows
+    for row in direct_rows:
+        publish_time = _parse_publish_time(_find_column(row, _REPORT_DATE_COLUMN_OPTIONS))
+        if not _within_lookback(publish_time, lookback_days, today):
             continue
-        item = _build_research_report_item(row)
+        item = _build_research_report_item(row, fetch_method="eastmoney_reportapi")
         if item is None:
             continue
+        if download_pdfs:
+            item.extra.update(
+                _download_research_report_pdf(
+                    url=item.url,
+                    title=item.title,
+                    publish_time=item.publish_time,
+                    institution=str(item.extra.get("institution", "")),
+                    source_config=source_config,
+                    stock_name=stock_name,
+                    stock_code=stock_code,
+                    em_get=em_get,
+                )
+            )
         items.append(item)
         if len(items) >= max_items:
             break
-
-    if not items and direct_fallback:
-        direct_rows = _fetch_eastmoney_reportapi_rows(stock_code, source_config)
-        if isinstance(direct_rows, dict):
-            if ak_error:
-                direct_rows["error"] = f"{ak_error}; {direct_rows.get('error', '')}".strip("; ")
-            return direct_rows
-        for row in direct_rows:
-            item = _build_research_report_item(row, fetch_method="eastmoney_reportapi")
-            if item is None:
-                continue
-            items.append(item)
-            if len(items) >= max_items:
-                break
-
-    if not items and ak_error and not direct_fallback:
-        status = "unsupported_function" if "not available" in ak_error else "error"
-        return {"status": status, "error": ak_error}
 
     return items
 

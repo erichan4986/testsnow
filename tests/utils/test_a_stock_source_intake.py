@@ -5,7 +5,8 @@ behavior. No test should import akshare at module scope.
 """
 
 import sys
-import types
+import json
+from datetime import date
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -484,106 +485,161 @@ def test_cninfo_adapter_returns_error_status_on_exception():
 def test_eastmoney_stock_news_adapter_marks_professional_observation():
     from a_stock_source_intake import _adapt_eastmoney_stock_news
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.columns = ["新闻标题", "新闻内容", "发布时间", "文章来源", "新闻链接"]
-    fake_df.__len__.return_value = 1
-    fake_df.iterrows.return_value = [
-        (
-            0,
-            {
-                "新闻标题": "中简科技：新产品研发进展顺利",
-                "新闻内容": "公司表示当前研发投入持续增加。",
-                "发布时间": "2026-06-10 10:00:00",
-                "文章来源": "东方财富",
-                "新闻链接": "https://finance.eastmoney.com/a/202606101234.html",
-            },
+    class FakeResponse:
+        text = (
+            'jQuery_news({"result":{"cmsArticleWebOld":[{'
+            '"title":"<em>中简科技</em>：新产品研发进展顺利",'
+            '"content":"公司表示当前研发投入持续增加。",'
+            '"date":"2026-06-10 10:00:00",'
+            '"mediaName":"东方财富",'
+            '"url":"https://finance.eastmoney.com/a/202606101234.html"'
+            "}]}})"
         )
-    ]
-    fake_ak.stock_news_em.return_value = fake_df
+
+    calls = []
+
+    def fake_em_get(url, params=None, headers=None, timeout=15):
+        calls.append((url, params, headers, timeout))
+        return FakeResponse()
 
     items = _adapt_eastmoney_stock_news(
         stock_code="300777",
         source_config={"enabled": True, "max_items": 5},
         stock_name="中简科技",
-        ak_module=fake_ak,
+        em_get=fake_em_get,
     )
 
     assert len(items) == 1
     item = items[0]
+    assert calls[0][0] == "https://search-api-web.eastmoney.com/search/jsonp"
+    assert "cmsArticleWebOld" in calls[0][1]["param"]
+    assert item.title == "中简科技：新产品研发进展顺利"
     assert item.source_platform == "新闻"
-    assert item.extra["source_credit"] == 60
-    assert item.extra["source_type"] == "news"
-    assert item.extra["source_domain"] == "finance.eastmoney.com"
-    assert item.extra["verification_status"] == "professional_observation"
+    assert item.extra["source_credit"] == 65
+    assert item.extra["source_type"] == "mainstream_media"
+    assert item.extra["source_domain"] == "eastmoney.com"
+    assert item.extra["verification_status"] == "secondary_source"
     assert item.extra["knowledge_eligible"] is True
 
 
 def test_eastmoney_stock_news_requires_stock_name_or_code_match():
     from a_stock_source_intake import _adapt_eastmoney_stock_news
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.columns = ["新闻标题", "新闻内容", "发布时间", "文章来源", "新闻链接"]
-    fake_df.__len__.return_value = 1
-    fake_df.iterrows.return_value = [
-        (
-            0,
-            {
-                "新闻标题": "某 unrelated 公司发布新品",
-                "新闻内容": "与目标公司无关。",
-                "发布时间": "2026-06-10 10:00:00",
-                "文章来源": "东方财富",
-                "新闻链接": "https://finance.eastmoney.com/a/202606101234.html",
-            },
+    class FakeResponse:
+        text = (
+            'jQuery_news({"result":{"cmsArticleWebOld":[{'
+            '"title":"某 unrelated 公司发布新品",'
+            '"content":"与目标公司无关。",'
+            '"date":"2026-06-10 10:00:00",'
+            '"mediaName":"东方财富",'
+            '"url":"https://finance.eastmoney.com/a/202606101234.html"'
+            "}]}})"
         )
-    ]
-    fake_ak.stock_news_em.return_value = fake_df
 
     items = _adapt_eastmoney_stock_news(
         stock_code="300777",
         source_config={"enabled": True, "max_items": 5},
         stock_name="中简科技",
-        ak_module=fake_ak,
+        em_get=lambda *args, **kwargs: FakeResponse(),
     )
 
     assert items == []
 
 
+def test_eastmoney_stock_news_filters_to_lookback_days():
+    from a_stock_source_intake import _adapt_eastmoney_stock_news
+
+    class FakeResponse:
+        text = (
+            'jQuery_news({"result":{"cmsArticleWebOld":['
+            '{"title":"中简科技：近期新闻","content":"中简科技近期公告相关报道。",'
+            '"date":"2026-06-10 10:00:00","mediaName":"东方财富",'
+            '"url":"https://finance.eastmoney.com/a/recent.html"},'
+            '{"title":"中简科技：旧新闻","content":"中简科技较早报道。",'
+            '"date":"2026-05-01 10:00:00","mediaName":"东方财富",'
+            '"url":"https://finance.eastmoney.com/a/old.html"}'
+            "]}})"
+        )
+
+    items = _adapt_eastmoney_stock_news(
+        stock_code="300777",
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        stock_name="中简科技",
+        today=date(2026, 6, 24),
+        em_get=lambda *args, **kwargs: FakeResponse(),
+    )
+
+    assert [item.title for item in items] == ["中简科技：近期新闻"]
+
+
+def test_eastmoney_stock_news_falls_back_to_stock_name_keyword_when_code_empty():
+    from a_stock_source_intake import _adapt_eastmoney_stock_news
+
+    class EmptyResponse:
+        text = 'jQuery_news({"result":{"cmsArticleWebOld":[]}})'
+
+    class NameResponse:
+        text = (
+            'jQuery_news({"result":{"cmsArticleWebOld":[{'
+            '"title":"中简科技：名称搜索命中新闻",'
+            '"content":"中简科技相关报道。",'
+            '"date":"2026-06-10 10:00:00",'
+            '"mediaName":"东方财富",'
+            '"url":"https://finance.eastmoney.com/a/name.html"'
+            "}]}})"
+        )
+
+    calls = []
+
+    def fake_em_get(url, params=None, headers=None, timeout=15):
+        calls.append(params["param"])
+        return EmptyResponse() if len(calls) == 1 else NameResponse()
+
+    items = _adapt_eastmoney_stock_news(
+        stock_code="300777",
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        stock_name="中简科技",
+        today=date(2026, 6, 24),
+        em_get=fake_em_get,
+    )
+
+    assert len(calls) == 2
+    assert '"keyword":"300777"' in calls[0]
+    assert '"keyword":"中简科技"' in calls[1]
+    assert [item.title for item in items] == ["中简科技：名称搜索命中新闻"]
+
+
 def test_eastmoney_research_reports_adapter_marks_professional_observation():
     from a_stock_source_intake import _adapt_eastmoney_research_reports
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.columns = ["title", "publishDate", "orgSName", "infoCode", "emRatingName", "predictThisYearEps"]
-    fake_df.__len__.return_value = 1
-    fake_df.iterrows.return_value = [
-        (
-            0,
-            {
-                "title": "中简科技2024Q3业绩点评：新旧更替，万象更新",
-                "publishDate": "2026-05-12",
-                "orgSName": "国信证券",
-                "infoCode": "ABC123",
-                "emRatingName": "买入",
-                "predictThisYearEps": 1.23,
-            },
-        )
-    ]
-    fake_ak.stock_research_report_em.return_value = fake_df
+    class FakeResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "中简科技2024Q3业绩点评：新旧更替，万象更新",
+                        "publishDate": "2026-06-12",
+                        "orgSName": "国信证券",
+                        "infoCode": "ABC123",
+                        "emRatingName": "买入",
+                        "predictThisYearEps": 1.23,
+                    }
+                ],
+                "TotalPage": 1,
+            }
 
     items = _adapt_eastmoney_research_reports(
         stock_code="300777",
         source_config={"enabled": True, "max_items": 5},
         stock_name="中简科技",
-        ak_module=fake_ak,
+        em_get=lambda *args, **kwargs: FakeResponse(),
     )
 
     assert len(items) == 1
     item = items[0]
     assert item.source_platform == "研报"
-    assert item.extra["source_credit"] == 65
-    assert item.extra["source_type"] == "research_report"
+    assert item.extra["source_credit"] == 72
+    assert item.extra["source_type"] == "broker_research"
     assert item.extra["verification_status"] == "professional_observation"
     assert item.extra["knowledge_eligible"] is True
     assert item.extra.get("rating") == "买入"
@@ -591,62 +647,323 @@ def test_eastmoney_research_reports_adapter_marks_professional_observation():
     assert item.extra.get("institution") == "国信证券"
 
 
-def test_eastmoney_research_reports_requires_target_reference_without_code_column():
+def test_eastmoney_research_reports_does_not_download_pdf_by_default(tmp_path):
     from a_stock_source_intake import _adapt_eastmoney_research_reports
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.columns = ["title", "publishDate", "orgSName", "infoCode"]
-    fake_df.__len__.return_value = 1
-    fake_df.iterrows.return_value = [
-        (
-            0,
-            {
-                "title": "某半导体公司深度报告：模拟芯片周期修复",
-                "publishDate": "2026-05-12",
-                "orgSName": "国信证券",
-                "infoCode": "UNRELATED",
-            },
-        )
-    ]
-    fake_ak.stock_research_report_em.return_value = fake_df
+    class ReportListResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "中简科技深度报告：产品进展加速",
+                        "publishDate": "2026-06-12",
+                        "orgSName": "国信证券",
+                        "infoCode": "ABC123",
+                    }
+                ],
+                "TotalPage": 1,
+            }
+
+    calls = []
+
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        calls.append(url)
+        if url == "https://reportapi.eastmoney.com/report/list":
+            return ReportListResponse()
+        raise AssertionError("PDF URL should not be requested by default")
 
     items = _adapt_eastmoney_research_reports(
         stock_code="300777",
-        source_config={"enabled": True, "max_items": 5, "direct_fallback": False},
+        source_config={"enabled": True, "max_items": 5, "pdf_cache_dir": str(tmp_path)},
         stock_name="中简科技",
-        ak_module=fake_ak,
+        em_get=fake_em_get,
     )
 
-    assert items == []
+    assert len(items) == 1
+    assert calls == ["https://reportapi.eastmoney.com/report/list"]
+    assert "pdf_local_path" not in items[0].extra
 
 
-def test_eastmoney_research_reports_matches_stock_name_column():
+def test_eastmoney_research_reports_downloads_pdf_when_enabled(tmp_path):
     from a_stock_source_intake import _adapt_eastmoney_research_reports
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.columns = ["股票简称", "研报标题", "发布日期", "机构名称", "infoCode"]
-    fake_df.__len__.return_value = 1
-    fake_df.iterrows.return_value = [
-        (
-            0,
-            {
-                "股票简称": "圣邦股份",
-                "研报标题": "模拟芯片行业点评：需求边际改善",
-                "发布日期": "2026-05-12",
-                "机构名称": "中信证券",
-                "infoCode": "SB123",
-            },
-        )
-    ]
-    fake_ak.stock_research_report_em.return_value = fake_df
+    pdf_bytes = b"%PDF-1.4\n" + (b"x" * 2048)
+
+    class ReportListResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "中简科技深度报告：产品进展加速",
+                        "publishDate": "2026-06-12",
+                        "orgSName": "国信证券",
+                        "infoCode": "ABC123",
+                    }
+                ],
+                "TotalPage": 1,
+            }
+
+    class PdfResponse:
+        status_code = 200
+        content = pdf_bytes
+
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        if url == "https://reportapi.eastmoney.com/report/list":
+            return ReportListResponse()
+        if url == "https://pdf.dfcfw.com/pdf/H3_ABC123_1.pdf":
+            return PdfResponse()
+        raise AssertionError(f"unexpected URL: {url}")
+
+    items = _adapt_eastmoney_research_reports(
+        stock_code="300777",
+        source_config={
+            "enabled": True,
+            "max_items": 5,
+            "download_pdfs": True,
+            "pdf_cache_dir": str(tmp_path),
+        },
+        stock_name="中简科技",
+        em_get=fake_em_get,
+    )
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.extra["pdf_download_status"] == "ok"
+    assert item.extra["pdf_url"] == "https://pdf.dfcfw.com/pdf/H3_ABC123_1.pdf"
+    assert item.extra["pdf_bytes"] == len(pdf_bytes)
+    assert item.extra["pdf_sha256"]
+    pdf_path = Path(item.extra["pdf_local_path"])
+    assert pdf_path.parent == tmp_path
+    assert pdf_path.read_bytes() == pdf_bytes
+
+
+def test_eastmoney_research_reports_downloads_pdf_to_standard_stock_cache(tmp_path):
+    from a_stock_source_intake import _adapt_eastmoney_research_reports
+
+    pdf_bytes = b"%PDF-1.4\n" + (b"x" * 2048)
+
+    class ReportListResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "圣邦股份深度报告：产品平台扩张",
+                        "publishDate": "2026-05-12",
+                        "orgSName": "国信证券",
+                        "infoCode": "SB123",
+                    }
+                ],
+                "TotalPage": 1,
+            }
+
+    class PdfResponse:
+        status_code = 200
+        content = pdf_bytes
+
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        if url == "https://reportapi.eastmoney.com/report/list":
+            return ReportListResponse()
+        if url == "https://pdf.dfcfw.com/pdf/H3_SB123_1.pdf":
+            return PdfResponse()
+        raise AssertionError(f"unexpected URL: {url}")
+
+    cache_root = tmp_path / "broker_research_reports"
+    items = _adapt_eastmoney_research_reports(
+        stock_code="300661",
+        source_config={
+            "enabled": True,
+            "max_items": 5,
+            "download_pdfs": True,
+            "broker_research_cache_root": str(cache_root),
+        },
+        stock_name="圣邦股份",
+        em_get=fake_em_get,
+    )
+
+    assert len(items) == 1
+    item = items[0]
+    pdf_path = Path(item.extra["pdf_local_path"])
+    assert pdf_path.parent == cache_root / "圣邦股份_300661" / "_downloads"
+    assert pdf_path.read_bytes() == pdf_bytes
+    manifest_path = cache_root / "圣邦股份_300661" / "manifest.json"
+    assert item.extra["pdf_cache_manifest_path"] == str(manifest_path)
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    assert manifest["schema_version"] == "broker_research_cache_manifest.v1"
+    assert manifest["stock_name"] == "圣邦股份"
+    assert manifest["stock_code"] == "300661"
+    assert len(manifest["reports"]) == 1
+    report = manifest["reports"][0]
+    assert report["title"] == "圣邦股份深度报告：产品平台扩张"
+    assert report["institution"] == "国信证券"
+    assert report["publish_time"] == "2026-05-12"
+    assert report["url"] == "https://pdf.dfcfw.com/pdf/H3_SB123_1.pdf"
+    assert report["path"] == str(pdf_path)
+    assert report["bytes"] == len(pdf_bytes)
+    assert report["sha256"]
+
+
+def test_eastmoney_research_reports_keeps_item_when_pdf_download_fails(tmp_path):
+    from a_stock_source_intake import _adapt_eastmoney_research_reports
+
+    class ReportListResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "中简科技深度报告：产品进展加速",
+                        "publishDate": "2026-06-12",
+                        "orgSName": "国信证券",
+                        "infoCode": "ABC123",
+                    }
+                ],
+                "TotalPage": 1,
+            }
+
+    class PdfResponse:
+        status_code = 403
+        content = b""
+
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        if url == "https://reportapi.eastmoney.com/report/list":
+            return ReportListResponse()
+        return PdfResponse()
+
+    items = _adapt_eastmoney_research_reports(
+        stock_code="300777",
+        source_config={
+            "enabled": True,
+            "max_items": 5,
+            "download_pdfs": True,
+            "pdf_cache_dir": str(tmp_path),
+        },
+        stock_name="中简科技",
+        em_get=fake_em_get,
+    )
+
+    assert len(items) == 1
+    assert items[0].extra["pdf_download_status"] == "failed"
+    assert "PDF HTTP 403" in items[0].extra["pdf_download_error"]
+    assert "pdf_local_path" not in items[0].extra
+
+
+def test_eastmoney_research_reports_uses_and_enforces_lookback_window():
+    from a_stock_source_intake import _adapt_eastmoney_research_reports
+
+    class FakeResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "中简科技近期研报：产品进展加速",
+                        "publishDate": "2026-06-05",
+                        "orgSName": "华泰证券",
+                        "infoCode": "RECENT",
+                    },
+                    {
+                        "title": "中简科技旧研报：历史复盘",
+                        "publishDate": "2026-04-01",
+                        "orgSName": "华泰证券",
+                        "infoCode": "OLD",
+                    },
+                ],
+                "TotalPage": 1,
+            }
+
+    calls = []
+
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        calls.append((url, params, headers, timeout))
+        return FakeResponse()
+
+    items = _adapt_eastmoney_research_reports(
+        stock_code="300777",
+        source_config={"enabled": True, "max_items": 5, "lookback_days": 30},
+        stock_name="中简科技",
+        today=date(2026, 6, 24),
+        em_get=fake_em_get,
+    )
+
+    assert calls[0][1]["beginTime"] == "2026-05-25"
+    assert calls[0][1]["endTime"] == "2026-06-24"
+    assert [item.title for item in items] == ["中简科技近期研报：产品进展加速"]
+
+
+def test_eastmoney_research_reports_defaults_to_90_day_window():
+    from a_stock_source_intake import _adapt_eastmoney_research_reports
+
+    class FakeResponse:
+        def json(self):
+            return {"data": [], "TotalPage": 1}
+
+    calls = []
+
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        calls.append((url, params, headers, timeout))
+        return FakeResponse()
+
+    _adapt_eastmoney_research_reports(
+        stock_code="300777",
+        source_config={"enabled": True, "max_items": 5},
+        stock_name="中简科技",
+        today=date(2026, 6, 24),
+        em_get=fake_em_get,
+    )
+
+    assert calls[0][1]["beginTime"] == "2026-03-26"
+    assert calls[0][1]["endTime"] == "2026-06-24"
+
+
+def test_eastmoney_research_reports_accepts_code_scoped_reportapi_rows():
+    from a_stock_source_intake import _adapt_eastmoney_research_reports
+
+    class FakeResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "title": "某半导体公司深度报告：模拟芯片周期修复",
+                        "publishDate": "2026-06-12",
+                        "orgSName": "国信证券",
+                        "infoCode": "CODE_SCOPED",
+                    }
+                ],
+                "TotalPage": 1,
+            }
+
+    items = _adapt_eastmoney_research_reports(
+        stock_code="300777",
+        source_config={"enabled": True, "max_items": 5},
+        stock_name="中简科技",
+        em_get=lambda *args, **kwargs: FakeResponse(),
+    )
+
+    assert len(items) == 1
+    assert items[0].extra["fetch_method"] == "eastmoney_reportapi"
+
+
+def test_eastmoney_research_reports_supports_alternate_report_columns():
+    from a_stock_source_intake import _adapt_eastmoney_research_reports
+
+    class FakeResponse:
+        def json(self):
+            return {
+                "data": [
+                    {
+                        "股票简称": "圣邦股份",
+                        "研报标题": "模拟芯片行业点评：需求边际改善",
+                        "发布日期": "2026-06-12",
+                        "机构名称": "中信证券",
+                        "infoCode": "SB123",
+                    }
+                ],
+                "TotalPage": 1,
+            }
 
     items = _adapt_eastmoney_research_reports(
         stock_code="300661",
         source_config={"enabled": True, "max_items": 5},
         stock_name="圣邦股份",
-        ak_module=fake_ak,
+        em_get=lambda *args, **kwargs: FakeResponse(),
     )
 
     assert len(items) == 1
@@ -657,18 +974,13 @@ def test_eastmoney_research_reports_matches_stock_name_column():
 def test_eastmoney_research_reports_falls_back_to_direct_reportapi(monkeypatch):
     from a_stock_source_intake import _adapt_eastmoney_research_reports
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.__len__.return_value = 0
-    fake_ak.stock_research_report_em.return_value = fake_df
-
     class FakeResponse:
         def json(self):
             return {
                 "data": [
                     {
                         "title": "公司点评：新品平台持续拓展",
-                        "publishDate": "2026-05-20",
+                        "publishDate": "2026-06-20",
                         "orgSName": "华泰证券",
                         "infoCode": "DIRECT123",
                         "emRatingName": "增持",
@@ -678,33 +990,26 @@ def test_eastmoney_research_reports_falls_back_to_direct_reportapi(monkeypatch):
                 "TotalPage": 1,
             }
 
-    class FakeSession:
-        def __init__(self):
-            self.headers = {}
-            self.calls = []
+    calls = []
 
-        def get(self, url, params=None, timeout=None):
-            self.calls.append((url, params, timeout))
-            return FakeResponse()
-
-    fake_session = FakeSession()
-    fake_requests = types.SimpleNamespace(Session=lambda: fake_session)
-    monkeypatch.setitem(sys.modules, "requests", fake_requests)
+    def fake_em_get(url, params=None, headers=None, timeout=30):
+        calls.append((url, params, headers, timeout))
+        return FakeResponse()
 
     items = _adapt_eastmoney_research_reports(
         stock_code="300661",
-        source_config={"enabled": True, "max_items": 5, "direct_fallback": True},
+        source_config={"enabled": True, "max_items": 5},
         stock_name="圣邦股份",
-        ak_module=fake_ak,
+        em_get=fake_em_get,
     )
 
     assert len(items) == 1
     assert items[0].title == "公司点评：新品平台持续拓展"
     assert items[0].extra["institution"] == "华泰证券"
     assert items[0].extra["rating"] == "增持"
-    assert fake_session.calls[0][0] == "https://reportapi.eastmoney.com/report/list"
-    assert fake_session.calls[0][1]["code"] == "300661"
-    assert fake_session.calls[0][1]["pageSize"] == "100"
+    assert calls[0][0] == "https://reportapi.eastmoney.com/report/list"
+    assert calls[0][1]["code"] == "300661"
+    assert calls[0][1]["pageSize"] == "100"
 
 
 def test_adapter_error_for_one_source_does_not_block_others():
@@ -757,59 +1062,45 @@ def test_adapter_error_for_one_source_does_not_block_others():
     assert result["source_statuses"]["eastmoney_research_reports"]["status"] == "error"
 
 
-def test_unsupported_akshare_function_returns_unsupported_function(monkeypatch):
-    from a_stock_source_intake import collect_a_stock_source_items
+def test_eastmoney_stock_news_fetch_error_returns_error_status():
+    from a_stock_source_intake import _adapt_eastmoney_stock_news
 
-    class FakeAkshare:
-        pass
+    def fake_em_get(*args, **kwargs):
+        raise RuntimeError("eastmoney blocked")
 
-    fake_ak = FakeAkshare()
-    monkeypatch.setitem(sys.modules, "akshare", fake_ak)
-
-    result = collect_a_stock_source_items(
-        stock_name="中简科技",
+    result = _adapt_eastmoney_stock_news(
         stock_code="300777",
-        config={
-            "enabled": True,
-            "a_stock": {
-                "cninfo_announcements": {"enabled": False},
-                "eastmoney_stock_news": {"enabled": True, "max_items": 5},
-                "eastmoney_research_reports": {"enabled": False},
-            },
-        },
+        source_config={"enabled": True, "max_items": 5},
+        stock_name="中简科技",
+        em_get=fake_em_get,
     )
 
-    assert result["source_statuses"]["eastmoney_stock_news"]["status"] == "unsupported_function"
+    assert isinstance(result, dict)
+    assert result["status"] == "error"
+    assert "eastmoney blocked" in result["error"]
 
 
 def test_medium_credit_items_are_not_confirmed_fact():
     from a_stock_source_intake import _adapt_eastmoney_stock_news, _adapt_eastmoney_research_reports
 
-    fake_ak = MagicMock()
-    fake_df = MagicMock()
-    fake_df.columns = ["新闻标题", "新闻内容", "发布时间", "文章来源", "新闻链接"]
-    fake_df.__len__.return_value = 1
-    fake_df.iterrows.return_value = [
-        (
-            0,
-            {
-                "新闻标题": "中简科技：新产品研发进展顺利",
-                "新闻内容": "公司表示当前研发投入持续增加。",
-                "发布时间": "2026-06-10 10:00:00",
-                "文章来源": "东方财富",
-                "新闻链接": "https://finance.eastmoney.com/a/202606101234.html",
-            },
+    class FakeNewsResponse:
+        text = (
+            'jQuery_news({"result":{"cmsArticleWebOld":[{'
+            '"title":"中简科技：新产品研发进展顺利",'
+            '"content":"公司表示当前研发投入持续增加。",'
+            '"date":"2026-06-10 10:00:00",'
+            '"mediaName":"东方财富",'
+            '"url":"https://finance.eastmoney.com/a/202606101234.html"'
+            "}]}})"
         )
-    ]
-    fake_ak.stock_news_em.return_value = fake_df
 
     news_items = _adapt_eastmoney_stock_news(
         stock_code="300777",
         source_config={"enabled": True, "max_items": 5},
         stock_name="中简科技",
-        ak_module=fake_ak,
+        em_get=lambda *args, **kwargs: FakeNewsResponse(),
     )
-    assert news_items[0].extra["source_credit"] == 60
+    assert news_items[0].extra["source_credit"] == 65
     assert news_items[0].extra["verification_status"] != "confirmed_fact"
     assert news_items[0].extra["source_credit"] < 80
 

@@ -40,6 +40,7 @@ cache/
 # Data and reports (keep directory structure but ignore content)
 /data/raw/*.json
 /data/raw/2026*/
+/data/raw/broker_research_reports/
 /data/raw/periodic_reports/
 /data/processed/
 /reports/*.md
