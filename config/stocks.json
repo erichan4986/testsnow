@@ -142,6 +142,10 @@
         "enabled": true,
         "max_display_items": 8
       },
+      "broker_research_digest_synthesis_display": {
+        "enabled": true,
+        "max_display_items": 3
+      },
       "claim_verification": {
         "enabled": true,
         "risk_signals": true,
