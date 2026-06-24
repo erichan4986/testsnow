@@ -984,11 +984,18 @@ def deduplicate_broker_digest_cards_by_viewpoint(
     """Keep the best card per stock/viewpoint cluster while preserving distinct views."""
     best_by_key: Dict[Tuple[str, str], Dict[str, Any]] = {}
     order_by_key: Dict[Tuple[str, str], int] = {}
+    protected_long_body_count_by_stock: Dict[str, int] = {}
     for idx, card in enumerate(cards):
         stock_key = str(card.get("stock_code") or card.get("stock_name") or "")
         cluster = str(card.get("viewpoint_cluster") or "")
         if not cluster:
             cluster = f"{card.get('card_type', '')}:{_fingerprint(str(card.get('source_excerpt', '')))}"
+        if _is_protected_long_report_body_card(card):
+            count = protected_long_body_count_by_stock.get(stock_key, 0)
+            if count >= 3:
+                continue
+            protected_long_body_count_by_stock[stock_key] = count + 1
+            cluster = f"{cluster}:long_report_body:{idx}"
         key = (stock_key, cluster)
         order_by_key.setdefault(key, idx)
         current = best_by_key.get(key)
@@ -1007,6 +1014,19 @@ def deduplicate_broker_digest_cards_by_viewpoint(
         best_by_key[key]
         for key in sorted(order_by_key, key=lambda k: order_by_key[k])
     ]
+
+
+def _is_protected_long_report_body_card(card: Dict[str, Any]) -> bool:
+    if str(card.get("report_length_class") or "") != "long":
+        return False
+    if str(card.get("card_type") or "") != "broker_product_driver":
+        return False
+    heading = str(card.get("source_heading") or "")
+    if not heading or heading in {"投资要点", "核心观点", "事件", "观点", "点评"}:
+        return False
+    if str(card.get("viewpoint_cluster") or "").startswith("risk_"):
+        return False
+    return True
 
 
 def _fingerprint(text: str) -> str:

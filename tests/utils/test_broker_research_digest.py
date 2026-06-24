@@ -605,3 +605,30 @@ def test_deduplicates_same_viewpoint_cluster_but_preserves_distinct_clusters() -
     )
 
     assert selected == [same_stronger, distinct]
+
+
+def test_dedup_preserves_long_report_body_card_against_short_commentary_duplicate() -> None:
+    from broker_research_digest import deduplicate_broker_digest_cards_by_viewpoint
+
+    short_commentary = {
+        "card_type": "broker_product_driver",
+        "viewpoint_cluster": "business_driver_market_demand_product_mix",
+        "quality_score": 84,
+        "source_excerpt": "短评：800G和1.6T高速光模块同步放量，营收与利润共振。",
+        "stock_code": "300308",
+        "report_length_class": "short",
+        "source_heading": "投资要点",
+    }
+    long_body = {
+        "card_type": "broker_product_driver",
+        "viewpoint_cluster": "business_driver_market_demand_product_mix",
+        "quality_score": 68,
+        "source_excerpt": "长研报正文：公司形成高速光模块为收入基础、AI高端产品为核心增长引擎、供应链能力作为关键支撑的业务结构。",
+        "stock_code": "300308",
+        "report_length_class": "long",
+        "source_heading": "公司业务概况",
+    }
+
+    selected = deduplicate_broker_digest_cards_by_viewpoint([short_commentary, long_body])
+
+    assert selected == [short_commentary, long_body]
