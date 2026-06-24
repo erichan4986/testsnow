@@ -17,6 +17,9 @@ if __name__.startswith("utils."):
     from ..periodic_report_narrative_card_synthesis_items import (
         load_periodic_narrative_card_synthesis_items,
     )
+    from ..broker_research_digest_synthesis_items import (
+        load_broker_research_digest_synthesis_items,
+    )
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -30,6 +33,9 @@ else:
     )
     from periodic_report_narrative_card_synthesis_items import (
         load_periodic_narrative_card_synthesis_items,
+    )
+    from broker_research_digest_synthesis_items import (
+        load_broker_research_digest_synthesis_items,
     )
 
 
@@ -63,19 +69,23 @@ class SynthesisSkill(BaseSkill):
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))
 
-        # Optional experimental paths: annual-report materials may enter the
-        # DISPLAY synthesis only.  Canonical synthesis, core_facts,
-        # synthesis_text, and synthesis_sources stay baseline so risk scoring
-        # and Knowledge persistence never see display-only narrative.
+        # Optional experimental paths: annual-report materials and broker-research
+        # digest notes may enter the DISPLAY synthesis only.  Canonical synthesis,
+        # core_facts, synthesis_text, and synthesis_sources stay baseline so risk
+        # scoring and Knowledge persistence never see display-only material.
         display_items = []
         fulltext_items = []
         narrative_card_items = []
+        broker_digest_items = []
         if ctx.get("include_periodic_report_fulltext_in_synthesis"):
             fulltext_items = self._eligible_periodic_report_fulltext_items(ctx)
             display_items.extend(fulltext_items)
         if ctx.get("include_periodic_narrative_cards_in_synthesis_display"):
             narrative_card_items = self._eligible_periodic_narrative_card_items(ctx)
             display_items.extend(narrative_card_items)
+        if ctx.get("include_broker_research_digest_in_synthesis_display"):
+            broker_digest_items = self._eligible_broker_research_digest_items(ctx)
+            display_items.extend(broker_digest_items)
         if display_items:
             display = self._synthesize(
                 stock_name,
@@ -92,6 +102,8 @@ class SynthesisSkill(BaseSkill):
                 ctx.set("synthesis_text_with_periodic_report_fulltext", display_text)
             if narrative_card_items:
                 ctx.set("synthesis_text_with_periodic_narrative_cards", display_text)
+            if broker_digest_items:
+                ctx.set("synthesis_text_with_broker_research_digest", display_text)
         return ctx
 
     @staticmethod
@@ -132,6 +144,29 @@ class SynthesisSkill(BaseSkill):
                 max_cards=max_cards,
                 use_pack=True,
                 per_type_limit=3,
+            )
+        except Exception:
+            return []
+
+    @staticmethod
+    def _eligible_broker_research_digest_items(ctx: SkillContext) -> list:
+        """Load persisted broker-research digest notes as display-only items."""
+        stock_name = ctx.get("stock_name")
+        if not stock_name:
+            return []
+        base_dir = ctx.get("knowledge_base_dir")
+        if not base_dir:
+            base_dir = Path(__file__).resolve().parents[3] / "knowledge"
+        max_items = ctx.get("broker_research_digest_max_display_items", 5)
+        try:
+            max_items = int(max_items)
+        except (TypeError, ValueError):
+            max_items = 5
+        try:
+            return load_broker_research_digest_synthesis_items(
+                stock_name=stock_name,
+                base_dir=base_dir,
+                max_items=max_items,
             )
         except Exception:
             return []

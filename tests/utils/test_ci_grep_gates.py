@@ -137,6 +137,29 @@ def test_ci_grep_gates_rejects_unsafe_yaml_load(tmp_path: Path) -> None:
     assert "yaml.load" in result.stdout
 
 
+def test_ci_grep_gates_rejects_broker_research_leakage_in_scoring_file(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "reporter" / "scoring_engine.py"
+    target.parent.mkdir(parents=True)
+    target.write_text('value = ctx.get("broker_research_digest_items")\n', encoding="utf-8")
+
+    result = _run_gate(root)
+
+    assert result.returncode != 0
+    assert "broker_research" in result.stdout
+
+
+def test_ci_grep_gates_allows_broker_research_in_synthesis_reader(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "broker_research_digest_synthesis_items.py"
+    target.parent.mkdir(parents=True)
+    target.write_text('source_type = "broker_research"\n', encoding="utf-8")
+
+    result = _run_gate(root)
+
+    assert result.returncode == 0, result.stdout
+
+
 def test_ci_grep_gates_rejects_obvious_secret_literal(tmp_path: Path) -> None:
     root = _copy_gate_fixture(tmp_path)
     target = root / "scripts" / "utils" / "bad_secret.py"

@@ -115,6 +115,12 @@ class PerStockReporter:
             narrative_display_enabled = bool(
                 source_intake_enabled and narrative_display_cfg.get("enabled", False)
             )
+            broker_digest_display_cfg = (
+                si_cfg.get("broker_research_digest_synthesis_display", {}) or {}
+            )
+            broker_digest_display_enabled = bool(
+                source_intake_enabled and broker_digest_display_cfg.get("enabled", False)
+            )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -187,6 +193,13 @@ class PerStockReporter:
                 if narrative_display_cfg.get("max_display_items") is not None:
                     pipeline_input["periodic_narrative_cards_max_display_items"] = (
                         narrative_display_cfg["max_display_items"]
+                    )
+
+            if broker_digest_display_enabled:
+                pipeline_input["include_broker_research_digest_in_synthesis_display"] = True
+                if broker_digest_display_cfg.get("max_display_items") is not None:
+                    pipeline_input["broker_research_digest_max_display_items"] = (
+                        broker_digest_display_cfg["max_display_items"]
                     )
 
             if evidence_notes_enabled:

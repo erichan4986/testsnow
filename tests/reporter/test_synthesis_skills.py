@@ -823,7 +823,7 @@ def _make_fulltext_item():
 
 
 class DualSynthesizer:
-    """Returns enhanced narrative iff annual-report display material is present."""
+    """Returns enhanced narrative iff annual-report or broker-research display material is present."""
 
     def __init__(self):
         self.calls = []
@@ -841,11 +841,17 @@ class DualSynthesizer:
             == "periodic_report_narrative_evidence"
             for i in items
         )
-        if has_fulltext or has_narrative_card:
+        has_broker_digest = any(
+            (getattr(i, "extra", {}) or {}).get("source_type")
+            == "broker_research"
+            for i in items
+        )
+        if has_fulltext or has_narrative_card or has_broker_digest:
             return {
                 "industry_logic": (
                     ("fulltext 降价 毛利率承压 " if has_fulltext else "")
                     + ("narrative cards 客户流失 净流出 " if has_narrative_card else "")
+                    + ("broker digest 券商观点 " if has_broker_digest else "")
                     + "narrative"
                 ),
                 "fundamentals": "enhanced 净流出 路径",
@@ -1134,19 +1140,163 @@ def test_periodic_narrative_cards_and_fulltext_share_one_display_synthesis(tmp_p
     assert "降价" in ctx.get("synthesis_text_with_periodic_report_fulltext")
 
 
+def _write_broker_digest_note(base_dir, stock_name="中简科技"):
+    notes_dir = Path(base_dir) / "10-Stocks" / stock_name / "broker_research_digest"
+    notes_dir.mkdir(parents=True, exist_ok=True)
+    path = notes_dir / "2026-06-01-测试证券-broker_core_view.md"
+    path.write_text(
+        "---\n"
+        f"stock: {stock_name}\n"
+        "code: 300777\n"
+        "source_type: broker_research\n"
+        "card_type: broker_core_view\n"
+        "title: 测试研报\n"
+        "report_title: 测试报告\n"
+        "institution: 测试证券\n"
+        "publish_time: 2026-06-01\n"
+        "source_credit: 72\n"
+        "claim_status: professional_analysis\n"
+        "confirmed_fact: false\n"
+        "scoring_eligible: false\n"
+        "risk_score_eligible: false\n"
+        "display_only: false\n"
+        "viewpoint_cluster: business_driver_product_mix\n"
+        "report_length_class: short\n"
+        "---\n\n"
+        f"# {stock_name} broker research digest\n\n"
+        "## Broker Research Excerpt\n\n"
+        "> 券商研报显示公司新产品放量，盈利预测上调。\n\n"
+        "## Source\n\n"
+        "- institution: 测试证券\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _broker_digest_ctx(tmp_path, switch=True, include_fulltext=False, include_narrative=False):
+    _write_broker_digest_note(tmp_path)
+    ctx_input = {
+        "stock_name": "中简科技",
+        "knowledge_base_dir": str(tmp_path),
+        "include_broker_research_digest_in_synthesis_display": switch,
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    }
+    if include_fulltext:
+        ctx_input["include_periodic_report_fulltext_in_synthesis"] = True
+        ctx_input["periodic_report_fulltext_items"] = [_make_fulltext_item()]
+    if include_narrative:
+        _write_narrative_card_note(tmp_path)
+        ctx_input["include_periodic_narrative_cards_in_synthesis_display"] = True
+    return SkillContext(input=ctx_input)
+
+
+def test_broker_research_digest_synthesis_default_off_excludes_digest(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _broker_digest_ctx(tmp_path, switch=False)
+    skill.run(ctx)
+
+    assert len(fake.calls) == 1
+    assert all(
+        (getattr(i, "extra", {}) or {}).get("source_type") != "broker_research"
+        for i in fake.calls[0]
+    )
+    assert ctx.output.get("synthesis_display") is None
+    assert ctx.get("synthesis")["industry_logic"] == "baseline narrative"
+
+
+def test_broker_research_digest_synthesis_display_keeps_baseline_invariants(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _broker_digest_ctx(tmp_path, switch=True)
+    skill.run(ctx)
+
+    assert ctx.get("synthesis")["industry_logic"] == "baseline narrative"
+    assert ctx.get("core_facts")[0]["fact"] == "baseline fact"
+    assert "券商观点" not in ctx.get("synthesis_text")
+    assert "broker digest" in ctx.get("synthesis_display")["industry_logic"]
+    assert "券商观点" in ctx.get("synthesis_text_with_broker_research_digest")
+
+    knowledge_input = "\n".join(str(v) for v in ctx.get("synthesis").values())
+    assert "broker digest" not in knowledge_input
+    assert "券商观点" not in knowledge_input
+
+
+def test_broker_research_digest_fulltext_and_narrative_share_one_display_synthesis(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = _broker_digest_ctx(tmp_path, switch=True, include_fulltext=True, include_narrative=True)
+    skill.run(ctx)
+
+    assert len(fake.calls) == 2
+    baseline_items = fake.calls[0]
+    display_items = fake.calls[1]
+    assert display_items[: len(baseline_items)] == baseline_items
+    tail_source_types = [
+        (getattr(item, "extra", {}) or {}).get("source_type")
+        for item in display_items[len(baseline_items):]
+    ]
+    assert tail_source_types == [
+        "periodic_report_fulltext_analysis",
+        "periodic_report_narrative_evidence",
+        "broker_research",
+    ]
+    assert "fulltext 降价" in ctx.get("synthesis_display")["industry_logic"]
+    assert "narrative cards 客户流失" in ctx.get("synthesis_display")["industry_logic"]
+    assert "broker digest 券商观点" in ctx.get("synthesis_display")["industry_logic"]
+
+
+def test_broker_research_digest_synthesis_no_eligible_items_skips_display(tmp_path):
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "中简科技",
+        "knowledge_base_dir": str(tmp_path),
+        "include_broker_research_digest_in_synthesis_display": True,
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert len(fake.calls) == 1
+    assert ctx.output.get("synthesis_display") is None
+
+
 def test_fill_citation_metadata_preserves_credit_fields():
     skill = SynthesisSkill()
     items = [
         SynthesisItem(
-            title="公告", content="内容", author="公司",
-            source_platform="公告", url="", publish_time="",
-            extra={"source_credit": 95, "source_type": "announcement", "verification_status": "primary_source"},
+            title="公告",
+            content="内容",
+            author="公司",
+            source_platform="公告",
+            url="",
+            publish_time="",
+            extra={
+                "source_credit": 95,
+                "source_type": "announcement",
+                "verification_status": "primary_source",
+            },
         ),
     ]
     synthesis = {
         "citations": {1: {"_placeholder": True}},
         "core_facts": [],
     }
+
     filled = skill._fill_citation_metadata(synthesis, items)
     meta = filled["citations"][1]
     assert meta["source_credit"] == 95

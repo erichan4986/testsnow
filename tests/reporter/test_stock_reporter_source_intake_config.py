@@ -401,7 +401,29 @@ def test_source_intake_claim_verification_enabled_passes_context():
     assert call_input.get("claim_verification_max_unverified") == 2
 
 
-def test_source_intake_claim_risk_signals_enabled_passes_pipeline_flag():
+def test_broker_research_digest_display_default_off():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={"测试股": {"enabled": True}},
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert "include_broker_research_digest_in_synthesis_display" not in call_input
+    assert "broker_research_digest_max_display_items" not in call_input
+
+
+def test_source_intake_broker_research_digest_display_enabled_passes_context():
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
         stock_codes={"测试股": "000001"},
@@ -409,7 +431,10 @@ def test_source_intake_claim_risk_signals_enabled_passes_pipeline_flag():
         source_intake_configs={
             "测试股": {
                 "enabled": True,
-                "claim_verification": {"enabled": False, "risk_signals": True},
+                "broker_research_digest_synthesis_display": {
+                    "enabled": True,
+                    "max_display_items": 7,
+                },
             },
         },
     )
@@ -426,8 +451,35 @@ def test_source_intake_claim_risk_signals_enabled_passes_pipeline_flag():
     mock_build.assert_called_once_with(
         enable_agent_reach=False,
         enable_evidence_notes=False,
-        enable_claim_risk_signals=True,
+        enable_claim_risk_signals=False,
         enable_source_intake=True,
     )
     call_input = mock_pipeline.run.call_args[0][0]
-    assert call_input.get("enable_claim_risk_signals") is True
+    assert call_input.get("include_broker_research_digest_in_synthesis_display") is True
+    assert call_input.get("broker_research_digest_max_display_items") == 7
+
+
+def test_broker_research_digest_display_requires_source_intake_enabled():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": False,
+                "broker_research_digest_synthesis_display": {"enabled": True},
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert "include_broker_research_digest_in_synthesis_display" not in call_input

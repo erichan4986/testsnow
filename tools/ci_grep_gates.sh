@@ -19,7 +19,7 @@ fail_gate() {
   FAILED=1
 }
 
-echo "[gate a] periodic report fulltext material-layer isolation ..."
+echo "[gate a] periodic report / broker research material-layer isolation ..."
 CORE_LEAK_FILES=(
   "$ROOT/scripts/utils/reporter/scoring_engine.py"
   "$ROOT/scripts/utils/reporter/sections/risk_renderer.py"
@@ -30,11 +30,12 @@ HELPER_LEAK_FILES=(
   "$ROOT/scripts/utils/periodic_report_narrative_evidence_cards.py"
   "$ROOT/scripts/utils/periodic_report_narrative_card_note_writer.py"
   "$ROOT/scripts/utils/periodic_report_narrative_card_synthesis_items.py"
+  "$ROOT/scripts/utils/broker_research_digest_synthesis_items.py"
 )
 LEAK_HITS=""
 for file in "${CORE_LEAK_FILES[@]}"; do
   [ -f "$file" ] || continue
-  hits=$(grep -nE 'periodic_report_fulltext|periodic_report_narrative_evidence|synthesis_display' "$file" 2>/dev/null || true)
+  hits=$(grep -nE 'periodic_report_fulltext|periodic_report_narrative_evidence|synthesis_display|broker_research' "$file" 2>/dev/null || true)
   if [ -n "$hits" ]; then
     rel="${file#$ROOT/}"
     LEAK_HITS="${LEAK_HITS}${LEAK_HITS:+$'\n'}${rel}:$hits"
