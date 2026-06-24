@@ -369,7 +369,7 @@ def test_financial_core_view_does_not_block_generic_driver_fallback() -> None:
     cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text)
 
     assert any(
-        card["card_type"] == "broker_core_view" and card["display_only"] is True
+        card["card_type"] == "broker_core_view" and card["knowledge_eligible"] is True
         for card in cards
     )
     assert any(
@@ -508,7 +508,7 @@ def test_table_only_earnings_forecast_is_dropped() -> None:
     assert build_broker_research_digest_cards(_research_item(), text) == []
 
 
-def test_financial_snapshot_core_view_is_display_only_without_driver_terms() -> None:
+def test_financial_result_commentary_core_view_is_knowledge_eligible() -> None:
     from broker_research_digest import build_broker_research_digest_cards
 
     text = """
@@ -521,9 +521,37 @@ def test_financial_snapshot_core_view_is_display_only_without_driver_terms() -> 
 
     assert len(cards) == 1
     assert cards[0]["card_type"] == "broker_core_view"
-    assert cards[0]["display_only"] is True
-    assert cards[0]["knowledge_eligible"] is False
+    assert cards[0]["display_only"] is False
+    assert cards[0]["knowledge_eligible"] is True
     assert cards[0]["viewpoint_cluster"] == "earnings_growth_snapshot"
+
+
+def test_long_report_keeps_multiple_distinct_generic_driver_blocks() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    摘要
+    本报告围绕公司经营进展展开分析。
+
+    需求端来看，核心下游客户持续扩张基础设施规模，800G产品需求延续高景气，
+    1.6T产品验证进度加快，相关订单有望推动公司高端产品收入占比提升。
+
+    供给端来看，公司通过提前锁定上游资源、扩充产能和优化供应链管理提升交付能力，
+    在旺盛需求下保障重点客户项目交付，库存和预付款安排体现订单确定性。
+
+    技术路线来看，公司持续推进硅光方案和高速产品迭代，围绕下一代互联规格加强研发，
+    产品升级有助于维持客户粘性和份额优势。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=20), text, max_cards=5)
+    driver_cards = [card for card in cards if card["card_type"] == "broker_product_driver"]
+
+    assert len(driver_cards) >= 2
+    clusters = {card["viewpoint_cluster"] for card in driver_cards}
+    assert len(clusters) >= 2
+    excerpts = "\n".join(card["source_excerpt"] for card in driver_cards)
+    assert "高端产品收入占比" in excerpts
+    assert "交付能力" in excerpts
 
 
 def test_deduplicates_same_viewpoint_cluster_but_preserves_distinct_clusters() -> None:

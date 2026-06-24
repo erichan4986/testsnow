@@ -161,6 +161,7 @@ DeepAnalysisRenderer（新增 "4.3 项目动态与产品进展"）
 | `extract_detail_via_cdp.py` | CDP 模式提取详情页 | 直接连接本地 Chrome 提取雪球帖子内容 |
 | `generate_periodic_report.py` | 定期报告生成器 | CLI 包装 `PeriodicReporter`，生成季报/半年报/年报 |
 | `periodic_report_cache.py` | 年报缓存入口 | A 股可通过巨潮发现并下载官方 PDF；港股/美股用官方 PDF URL 或本地 PDF/TXT 注册到 `data/raw/periodic_reports/` |
+| `broker_research_digest_preview.py` | 券商研报 digest 预览入口 | 从 `data/raw/broker_research_reports/<stock>_<code>/_downloads/` 读取 PDF，生成 `/tmp` preview，可选写入 `broker_research_digest` Knowledge notes |
 | `sync_vault_from_raw.py` | 从 raw 数据同步到 Obsidian | 调用 `ObsidianWriter` 将 JSON 数据写入 vault |
 
 ### 年报缓存入口 usage
@@ -321,6 +322,55 @@ CLI 输出 JSON：
 - A 股无 URL 时走巨潮发现+下载。
 - 港股无 URL 时走 HKEX 披露易发现+下载。
 - 无法识别市场且无 URL 时非 0 退出。
+
+### 券商研报 digest usage
+
+券商研报 digest 是 Source Intake 的专业观察层，用来把东财研报 PDF 中较有信息量的段落提炼成可读卡片。它的边界和年报 narrative cards 不一样：
+
+- `source_type`: `broker_research`
+- `source_credit`: 72
+- `claim_status`: `professional_analysis`
+- 只能作为 display-only 材料进入深度分析展示
+- 不进入 `confirmed_fact`、`fact_candidate`、综合评分、风险计分或核心事实基座
+- 不直接读取 raw PDF 进入 synthesis；报告只读取已经人工/规则筛过的 `knowledge/10-Stocks/<stock>/broker_research_digest/*.md`
+
+东财研报 PDF 由 Source Intake 下载并缓存到：
+
+```text
+data/raw/broker_research_reports/<股票名>_<代码>/_downloads/
+```
+
+生成本地 digest preview：
+
+```bash
+python3 scripts/broker_research_digest_preview.py \
+  --stock 圣邦股份 \
+  --code 300661 \
+  --output /tmp/圣邦股份_broker_research_digest_preview.md
+```
+
+人工确认 preview 后，再写入 Knowledge：
+
+```bash
+python3 scripts/broker_research_digest_preview.py \
+  --stock 圣邦股份 \
+  --code 300661 \
+  --write-knowledge \
+  --base-dir knowledge
+```
+
+报告中启用 display-only 读取时，在单股 `source_intake` 配置中加入：
+
+```json
+{
+  "broker_research_digest_synthesis_display": {
+    "enabled": true,
+    "max_display_items": 3
+  }
+}
+```
+
+已验证样例：圣邦股份。当前报告可在 §四深度分析中引用国元证券、东莞证券等券商研报 digest；核心事实、评分、风险仍保持隔离。
 
 ### `scripts/utils/` — 核心工具
 

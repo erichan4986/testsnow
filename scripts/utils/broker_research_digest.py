@@ -171,8 +171,7 @@ def build_broker_research_digest_cards(
             )
 
     if not _has_knowledge_driver_candidate(candidates):
-        driver_excerpt = _generic_driver_block_excerpt(useful_text)
-        if driver_excerpt:
+        for driver_excerpt in _generic_driver_block_excerpts(useful_text):
             candidates.append(
                 _build_card(
                     item=item,
@@ -721,6 +720,11 @@ def _has_knowledge_driver_candidate(candidates: List[Dict[str, Any]]) -> bool:
 
 
 def _generic_driver_block_excerpt(text: str) -> str:
+    excerpts = _generic_driver_block_excerpts(text, max_blocks=1)
+    return excerpts[0] if excerpts else ""
+
+
+def _generic_driver_block_excerpts(text: str, max_blocks: int = 3) -> List[str]:
     scored: List[Tuple[int, int, str]] = []
     for order, block in enumerate(_iter_generic_driver_blocks(text)):
         block = _clean_driver_excerpt(block)
@@ -733,9 +737,19 @@ def _generic_driver_block_excerpt(text: str) -> str:
             continue
         scored.append((score, order, block))
     if not scored:
-        return ""
+        return []
     scored.sort(key=lambda item: (-item[0], item[1]))
-    return scored[0][2]
+    selected: List[str] = []
+    seen_clusters: set[str] = set()
+    for _, _, block in scored:
+        cluster = "business_driver_" + "_".join(_generic_driver_cluster_labels(block)[:2])
+        if cluster in seen_clusters:
+            continue
+        selected.append(block)
+        seen_clusters.add(cluster)
+        if len(selected) >= max_blocks:
+            break
+    return selected
 
 
 def _clean_driver_excerpt(text: str) -> str:
@@ -758,7 +772,7 @@ def _iter_generic_driver_blocks(text: str) -> List[str]:
     blocks: List[str] = []
     for raw in raw_blocks:
         block = re.sub(r"\s+", " ", raw).strip(" 　：:")
-        if len(block) < 80:
+        if len(block) < 50:
             continue
         if any(pattern in block for pattern in _STOP_PATTERNS):
             continue
@@ -890,10 +904,6 @@ def _viewpoint_cluster(card_type: str, excerpt: str) -> str:
 def _is_display_only_card(card_type: str, viewpoint_cluster: str, excerpt: str) -> bool:
     if card_type == "broker_earnings_forecast":
         return True
-    if viewpoint_cluster == "earnings_growth_snapshot":
-        return True
-    if card_type == "broker_core_view" and _looks_like_financial_snapshot_without_driver(excerpt):
-        return True
     if card_type == "broker_core_view" and not any(
         term in excerpt
         for term in (
@@ -910,6 +920,11 @@ def _is_display_only_card(card_type: str, viewpoint_cluster: str, excerpt: str) 
             "份额",
             "交付",
             "技术",
+            "收入",
+            "营收",
+            "利润",
+            "毛利率",
+            "净利率",
         )
     ):
         return True

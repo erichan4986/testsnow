@@ -133,6 +133,56 @@ Current limitation:
 - HK narrative cards are supported, but HK structured facts are not yet supported because HK financial-statement blocks are not reliably extracted by the generic evidence pack. See the HK evidence-pack gap in `docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`.
 <!-- path-check: docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md -->
 
+## Broker Research Digest Current Map
+
+Broker research digest is a Source Intake professional-observation path for Eastmoney broker report PDFs. It is display-only by design.
+
+Current contract:
+
+- source type: `broker_research`
+- credit: 72
+- status: `professional_analysis`
+- cache root: `data/raw/broker_research_reports/<stock>_<code>/`
+- Knowledge notes: `knowledge/10-Stocks/<stock>/broker_research_digest/`
+- may enter display synthesis through `ctx["synthesis_display"]`
+- must not enter core facts, scoring, risk scoring, `confirmed_fact`, or `fact_candidate`
+
+Operator workflow:
+
+1. Let Source Intake download/cache recent Eastmoney broker report PDFs, or manually place high-quality PDFs under `data/raw/broker_research_reports/<stock>_<code>/_downloads/`.
+2. Generate a local preview:
+
+   ```bash
+   python3 scripts/broker_research_digest_preview.py --stock 圣邦股份 --code 300661
+   ```
+
+3. Inspect the `/tmp/*_broker_research_digest_preview.md` output. Only persist useful cards:
+
+   ```bash
+   python3 scripts/broker_research_digest_preview.py --stock 圣邦股份 --code 300661 --write-knowledge
+   ```
+
+4. Enable display in the stock `source_intake` config with `broker_research_digest_synthesis_display.enabled=true`.
+
+Digest helpers:
+
+- PDF preview CLI: `scripts/broker_research_digest_preview.py`
+<!-- path-check: scripts/broker_research_digest_preview.py -->
+- deterministic digest extractor: `scripts/utils/broker_research_digest.py`
+<!-- path-check: scripts/utils/broker_research_digest.py -->
+- Knowledge note writer: `scripts/utils/broker_research_digest_note_writer.py`
+<!-- path-check: scripts/utils/broker_research_digest_note_writer.py -->
+- display-only synthesis reader: `scripts/utils/broker_research_digest_synthesis_items.py`
+<!-- path-check: scripts/utils/broker_research_digest_synthesis_items.py -->
+- synthesis integration: `scripts/utils/report_skills/synthesis_skills.py`
+<!-- path-check: scripts/utils/report_skills/synthesis_skills.py -->
+- stock config passthrough: `scripts/utils/stock_reporter.py`
+<!-- path-check: scripts/utils/stock_reporter.py -->
+
+Verified sample:
+
+- `圣邦股份` has broker digest display enabled and validated through `scripts/run_圣邦股份.py --fast-test`.
+
 Guardrail files:
 
 - material-layer gate: `tools/ci_grep_gates.sh`
