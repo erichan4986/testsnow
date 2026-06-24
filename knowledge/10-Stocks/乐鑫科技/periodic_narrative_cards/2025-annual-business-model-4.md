@@ -1,8 +1,8 @@
 ---
-stock: "圣邦股份"
-code: "300661"
+stock: "乐鑫科技"
+code: "688018"
 source_type: periodic_report_narrative_evidence
-card_id: "periodic:300661:2025:annual:narrative:business_model:2"
+card_id: "periodic:688018:2025:annual:narrative:business_model:4"
 schema_version: "periodic_report_narrative_evidence_card.v1"
 card_type: business_model
 title: "主营业务与产品"
@@ -12,8 +12,8 @@ source_credit: 75
 source_block_id: product_capacity_profile-0
 evidence_refs:
   - product_capacity_profile-0
-source_excerpt_hash: fd8c0f70ae7a3b6f2bf2b878c66697874fd2be0dd98086b345a18aaf45e9c642
-source_block_hash: eeba89cb4b44b901f61afd3ed9613f6350534128dbc0e2f5da62bfaaf5ada7a4
+source_excerpt_hash: fdcce99152dda1ea60bd7f99c26d9f303e50ef31287fee60ac8f8b5f6291c33c
+source_block_hash: "82a7c434189c585ae786930b2dfc57dc7eb2919c7e7d48c38779cba60fdc71df"
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -22,15 +22,15 @@ experimental: true
 collected_at: ""
 ---
 
-# 圣邦股份 2025 annual business_model
+# 乐鑫科技 2025 annual business_model
 
 ## Narrative Evidence
 
-> 公司的模拟芯片产品可广泛应用于工业与能源、汽车、网络与计算和消费电子等领域，以及电动汽车、数据中心、 机器人、可再生能源及新一代消费设备等应用领域。
+> 客户产品进入量产后，通常在市场上持续销售5至10年。在此期间，客户每年持续采购，并 在同一平台架构上进行型号升级与功能增强。随着功能不断扩展、生命周期持续延长，单个项目
 
 ## Source
 
-- card_id: periodic:300661:2025:annual:narrative:business_model:2
+- card_id: periodic:688018:2025:annual:narrative:business_model:4
 - source_block_id: product_capacity_profile-0
 - evidence_refs: product_capacity_profile-0
 - source_credit: 75

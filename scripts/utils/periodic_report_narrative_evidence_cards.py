@@ -374,8 +374,16 @@ _TABLE_STRUCTURE_TOKENS = (
     "适用 □不适用",
 )
 _REPORT_PAGE_MARKER_RE = re.compile(
+    r"(?:"
     r"[\u4e00-\u9fa5A-Za-z0-9（）()·]{2,50}\s+"
     r"\d{4}\s*年\s*年度报告(?:全文)?\s*>\s*\d+\s*/\s*\d+"
+    r"|"
+    r"[\u4e00-\u9fa5A-Za-z（）()·]{2,60}\s+"
+    r"20\d{2}\s*年\s*年度报告(?:全文)?\s*\d{1,4}"
+    r"|"
+    r"(?<!\d)\d{1,3}\s*[\u4e00-\u9fa5A-Za-z（）()·]{2,60}"
+    r"20\d{2}\s*年\s*年度报告(?:全文)?"
+    r")"
 )
 _DANGLING_START_PATTERNS = (
     "优化等举措",

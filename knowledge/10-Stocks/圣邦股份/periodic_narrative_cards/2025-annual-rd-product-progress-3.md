@@ -9,11 +9,11 @@ title: "研发与产品进展"
 report_year: 2025
 report_type: annual
 source_credit: 75
-source_block_id: product_capacity_profile-0
+source_block_id: rd_product_progress-2
 evidence_refs:
-  - product_capacity_profile-0
-source_excerpt_hash: e1afcd626ad5c0de5f8056546b3a545ae87dde4c63a70a63ccae226cc1bed3f7
-source_block_hash: "5b65746de476b6ce17174e103f914b2c1bd9016d40e6f21cfa1f0aa98b7a978a"
+  - rd_product_progress-2
+source_excerpt_hash: a57a584867348df801a8dad8ecbf696edee0b907700375272a6dda13ecbdd811
+source_block_hash: fe5f10e9a4734a0be22e7b490a88ed514b5bf8c7f272cb5a205291efe21ba90a
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -26,13 +26,13 @@ collected_at: ""
 
 ## Narrative Evidence
 
-> 下图展示电子系统内公司产品功能示意，其中蓝色为公司模拟和混合信号产品： 公司研发的高性能模拟集成电路与传感器产品线，具备高灵敏度信号感知、精密信号调理、高速数据转换、精准驱 动及高效电源管理等全链条技术能力，是构建现代电子系统的基石。公司始终致力于技术创新与产品拓展，持续突破电
+> 自主研发多品类的符 完成多品类的车规级 合汽车应用标准的车 系列模拟芯片的研发 部分产品已实现量 公司在快速增长的汽 规级电源管理及信号 和产业化，实现高可 产；部分产品处于小 车芯片市场领域积极 链类模拟芯片，包括 靠性、通过AEC- 批量生产验证及送样 布局，不断扩大产品 车规级模拟芯片 各类驱动芯片、隔离 Q100测试、满足所需 阶段；
 
 ## Source
 
 - card_id: periodic:300661:2025:annual:narrative:rd_product_progress:3
-- source_block_id: product_capacity_profile-0
-- evidence_refs: product_capacity_profile-0
+- source_block_id: rd_product_progress-2
+- evidence_refs: rd_product_progress-2
 - source_credit: 75
 
 ## Guardrails

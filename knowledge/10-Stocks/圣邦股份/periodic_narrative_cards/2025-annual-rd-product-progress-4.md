@@ -9,11 +9,11 @@ title: "研发与产品进展"
 report_year: 2025
 report_type: annual
 source_credit: 75
-source_block_id: rd_investment_table-0
+source_block_id: product_capacity_profile-2
 evidence_refs:
-  - rd_investment_table-0
-source_excerpt_hash: "2d29792600957cf059cb904a8b233e8ba4ec0aaafc076e0a5abf321dfe644b86"
-source_block_hash: "48c6193813ab8c5ba318f62e405ee88e44a081be68ce84ced7177b9a6dae2d61"
+  - product_capacity_profile-2
+source_excerpt_hash: "33de4be293ba60f70a815fd3cd156b66308ce1dbff54d11ab1d94ff43f0950c7"
+source_block_hash: f9959eaec33e715f7d67881a449f268f940fc60247a1f0a1b74ba434dbc3bd03
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -26,13 +26,13 @@ collected_at: ""
 
 ## Narrative Evidence
 
-> 研发人员数量（人） 1,335 1,184 12.75% 研发人员数量占比 72.75% 74.09% -1.34% 研发人员学历 本科 499 452 10.40% 硕士 731 641 14.04% 博士 20 17 17.65% 研发人员年龄构成 30 岁以下 689 661 4.24% 30~40 岁 450 357 26.05% 40 岁以上 196 166 18.07% 近三年公司研发投入金额及占营业收入的比例 圣邦微电子（北京）股份有限公司 2025 年年度报告全文 27 2025 年 2024 年 2023 年 研发投入金额（元） 1,045,194,886.44 870,746,770.34 737,074,050.02 研发投入占营业收入比例 26.81% 26.02% 28.18% 研发支出资本化的金额（元） 0.00 0.00 0.00 资本化研发支出占研发投入的比例 0.00% 0.00% 0.00% 资本化研发支出占当期净利润的比重 0.00% 0.00% 0.00% 公司研发人员构成发生重大变化的原因及影响 研发投入总额占营业收入的比重较上年发生显著变化…
+> （二）公司主要经营模式 （1）盈利模式 公司通过设计、代工制造并销售自主知识产权的模拟集成电路及传感器产品，满足终端电子产品客户对高性能、高 品质模拟集成电路元器件的需求，从而获得收入和利润。公司的产品需要根据市场的需求以及客户的实际应用要求，进 行有针对性的定义及设计开发，并按照公司的技术标准委托代工厂商进行生产制造，经过严格的性能测试后，成为合格 产品。公司所有产品均为自主研发，拥有完全自主知识产权，全部符合REACHSVHC和RoHS2.0绿色环保标准，综合 性能品质达到国际同类产品的先进水平，部分关键技术指标达到国际领先。通过为客户提供优质可靠的产品、贴近的支 持与服务以及良好的性价比赢得了广大客户的信任与青睐，产品销量持续增长、客户群体不断扩大。
 
 ## Source
 
 - card_id: periodic:300661:2025:annual:narrative:rd_product_progress:4
-- source_block_id: rd_investment_table-0
-- evidence_refs: rd_investment_table-0
+- source_block_id: product_capacity_profile-2
+- evidence_refs: product_capacity_profile-2
 - source_credit: 75
 
 ## Guardrails

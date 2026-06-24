@@ -338,6 +338,57 @@ def test_prepare_with_write_knowledge(tmp_path: Path) -> None:
     assert len(notes) == result["knowledge_written_count"]
 
 
+def test_prepare_with_write_knowledge_refreshes_existing_notes(tmp_path: Path) -> None:
+    """--write-knowledge should refresh existing cards after extractor cleanup changes."""
+    sample = _write_sample_report(tmp_path)
+    config = tmp_path / "stocks.json"
+    config.write_text(
+        json.dumps(
+            [
+                {
+                    "name": "测试股份",
+                    "code": "TEST01",
+                    "market": "A",
+                    "annual_report_url": sample.as_uri(),
+                }
+            ]
+        ),
+        encoding="utf-8",
+    )
+    cache_dir = tmp_path / "cache"
+    knowledge_dir = tmp_path / "knowledge"
+    preview_path = tmp_path / "preview.md"
+
+    first = prepare_annual_report_materials(
+        stock="测试股份",
+        year=2025,
+        config_path=config,
+        cache_dir=cache_dir,
+        write_knowledge=True,
+        base_dir=knowledge_dir,
+        preview_output=str(preview_path),
+    )
+    notes = sorted(
+        (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").rglob("*.md")
+    )
+    assert notes
+    stale_note = notes[0]
+    stale_note.write_text(stale_note.read_text(encoding="utf-8") + "\nSTALE BODY\n", encoding="utf-8")
+
+    second = prepare_annual_report_materials(
+        stock="测试股份",
+        year=2025,
+        config_path=config,
+        cache_dir=cache_dir,
+        write_knowledge=True,
+        base_dir=knowledge_dir,
+        preview_output=str(preview_path),
+    )
+
+    assert second["knowledge_written_count"] == first["knowledge_written_count"]
+    assert "STALE BODY" not in stale_note.read_text(encoding="utf-8")
+
+
 def test_prepare_custom_preview_output(tmp_path: Path) -> None:
     """--preview-output should override the default /tmp path."""
     sample = _write_sample_report(tmp_path)

@@ -9,11 +9,11 @@ title: "研发与产品进展"
 report_year: 2025
 report_type: annual
 source_credit: 75
-source_block_id: product_capacity_profile-1
+source_block_id: product_capacity_profile-2
 evidence_refs:
-  - product_capacity_profile-1
-source_excerpt_hash: "224eb94fdb42c977547a903f5ea2198a8805a3a61e04fc45d39beafe3fb40cab"
-source_block_hash: bc6e1465021195a8aa56f041c90fddf1dd97be156b3fef1ff8380bba80f24268
+  - product_capacity_profile-2
+source_excerpt_hash: "1e8086e2536b476ef1181d46b8e8ae15382791d7de756785e3e357756b81eba3"
+source_block_hash: f9959eaec33e715f7d67881a449f268f940fc60247a1f0a1b74ba434dbc3bd03
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -26,13 +26,13 @@ collected_at: ""
 
 ## Narrative Evidence
 
-> 公司作为国内模拟集成电路设计行业的领先企业，拥有较为全面的模拟信号和模数混合集成电路产品矩阵，全面覆 盖信号链、电源管理及传感器等领域，目前拥有 38 大类 6,800 余款可供销售产品。公司自成立以来一直注重研发投入， 研发投入逐年增加，开发并积累了一系列具有国际先进水平的核心技术与产品，如高精度运放、超低噪声运放、高速运 放、超低功耗运放、高精度电流检测放大器、零漂移精密仪表放大器、高速比较器、高速高精度 ADC 、高精度温度传感 器、高灵敏度 AMR 磁传感器、大动态背光 LED 驱动、多通道 AMOLED 显示屏电源芯片、高精度低噪声低压差线性稳 压器、各类高效低功耗电源管理芯片、高效锂电池充电管理及保护芯片、高性能电荷泵充电芯片、电子保险丝、多种类 型的高功率马达驱动芯片、氮化镓（ GaN ）晶体管驱动器、功率 MOSFET 、EEPROM 及 DIMM 周边产品、以及包括高 低边驱动在内的几十个品类的五百余款车规芯片等。公司深耕国内市场，凭借本地优势，紧贴市场需求，快速响应，客 户认可度及品牌影响力不断提升，市场份额不断扩大。
+> 子技术的性能边界。截止目前，公司拥有38大类6,800余款可供销售产品，其中信号链类模拟芯片包括各类运算放大器、 仪表放大器、比较器、SAR模数转换器（SARADC）、Δ-Σ模数转换器（Δ-ΣADC）、Pipeline模数转换器（PipelineADC）、 数模转换器（DAC）、模拟前端（AFE）、音频功率放大器、AudioDAC、视频缓冲器、线路驱动器、模拟开关、电平转 换芯片、接口电路、电压基准芯片、小逻辑芯片、EEPROM以及DIMM周边产品等；电源管理类模拟芯片包括LDO、 系统监测电路、DC/DC降压转换器、DC/DC升压转换器、DC/DC升降压转换器、背光及闪光灯LED驱动器、AMOLED 电源芯片、PMU、负载开关、过压保护、ESD/TVS、电池充放电管理芯片、电池保护芯片、马达驱动芯片、MOSFET驱 动芯片、MOSFET、辅助电源芯片等；传感器包括温度传感器和磁传感器。同时，面向汽车电子领域，公司在信号链、 电源管理、传感器等关键领域不断推出通过车规级认证的新产品，赋能智能汽车产业发展。
 
 ## Source
 
 - card_id: periodic:300661:2025:annual:narrative:rd_product_progress:1
-- source_block_id: product_capacity_profile-1
-- evidence_refs: product_capacity_profile-1
+- source_block_id: product_capacity_profile-2
+- evidence_refs: product_capacity_profile-2
 - source_credit: 75
 
 ## Guardrails

@@ -1,8 +1,8 @@
 ---
-stock: "圣邦股份"
-code: "300661"
+stock: "乐鑫科技"
+code: "688018"
 source_type: periodic_report_narrative_evidence
-card_id: "periodic:300661:2025:annual:narrative:business_model:2"
+card_id: "periodic:688018:2025:annual:narrative:business_model:3"
 schema_version: "periodic_report_narrative_evidence_card.v1"
 card_type: business_model
 title: "主营业务与产品"
@@ -12,8 +12,8 @@ source_credit: 75
 source_block_id: product_capacity_profile-0
 evidence_refs:
   - product_capacity_profile-0
-source_excerpt_hash: fd8c0f70ae7a3b6f2bf2b878c66697874fd2be0dd98086b345a18aaf45e9c642
-source_block_hash: eeba89cb4b44b901f61afd3ed9613f6350534128dbc0e2f5da62bfaaf5ada7a4
+source_excerpt_hash: "941979cb827f3ce49655bd4bca217cd116f0fb7cd40235d20f025df9e66df450"
+source_block_hash: "82a7c434189c585ae786930b2dfc57dc7eb2919c7e7d48c38779cba60fdc71df"
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -22,15 +22,15 @@ experimental: true
 collected_at: ""
 ---
 
-# 圣邦股份 2025 annual business_model
+# 乐鑫科技 2025 annual business_model
 
 ## Narrative Evidence
 
-> 公司的模拟芯片产品可广泛应用于工业与能源、汽车、网络与计算和消费电子等领域，以及电动汽车、数据中心、 机器人、可再生能源及新一代消费设备等应用领域。
+> 17/ 当客户产品从原型阶段进入正式产品定义和量产规划阶段后，平台选择通常随之锁定。在物 联网行业，若更换核心连接与处理架构，往往涉及大量验证、固件迁移和认证工作，转换成本高、 周期长。
 
 ## Source
 
-- card_id: periodic:300661:2025:annual:narrative:business_model:2
+- card_id: periodic:688018:2025:annual:narrative:business_model:3
 - source_block_id: product_capacity_profile-0
 - evidence_refs: product_capacity_profile-0
 - source_credit: 75

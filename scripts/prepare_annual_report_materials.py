@@ -227,8 +227,9 @@ def prepare_annual_report_materials(
             card_pack=cards_pack,
             base_dir=base_dir,
             dry_run=False,
+            refresh_existing=True,
         )
-        knowledge_written_count = len(write_plan.written)
+        knowledge_written_count = len(write_plan.written) + len(write_plan.refreshed)
 
     return {
         "stock_name": stock_name,

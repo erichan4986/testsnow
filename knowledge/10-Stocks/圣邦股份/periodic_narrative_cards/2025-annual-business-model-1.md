@@ -12,8 +12,8 @@ source_credit: 75
 source_block_id: product_capacity_profile-0
 evidence_refs:
   - product_capacity_profile-0
-source_excerpt_hash: d69c9668f6573e32ecbc87b87854b9b261289f680427db2634d1a46efeeb2f10
-source_block_hash: "5b65746de476b6ce17174e103f914b2c1bd9016d40e6f21cfa1f0aa98b7a978a"
+source_excerpt_hash: "60fd47ae08dc71dbb8448ddcd937318de4b4acbc6b69970d75d97243f19adca7"
+source_block_hash: eeba89cb4b44b901f61afd3ed9613f6350534128dbc0e2f5da62bfaaf5ada7a4
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -26,7 +26,7 @@ collected_at: ""
 
 ## Narrative Evidence
 
-> （一）公司的经营范围和主营业务 公司是专注于高性能、高品质模拟集成电路研发与销售的高新技术企业，提供品类广泛、差异化的通用型和特定应 用优化模拟集成电路产品组合，包括模拟信号和混合信号产品，涵盖了信号链、电源管理以及传感器等领域。其中信号 链和电源管理这两大类模拟集成电路产品是公司产品矩阵的双支柱，奠定了公司在综合模拟集成电路行业的领导地位。
+> 求 （一）公司的经营范围和主营业务 公司是专注于高性能、高品质模拟集成电路研发与销售的高新技术企业，提供品类广泛、差异化的通用型和特定应 用优化模拟集成电路产品组合，包括模拟信号和混合信号产品，涵盖了信号链、电源管理以及传感器等领域。其中信号 链和电源管理这两大类模拟集成电路产品是公司产品矩阵的双支柱，奠定了公司在综合模拟集成电路行业的领导地位。
 
 ## Source
 

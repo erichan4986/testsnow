@@ -9,11 +9,11 @@ title: "研发与产品进展"
 report_year: 2025
 report_type: annual
 source_credit: 75
-source_block_id: rd_product_progress-1
+source_block_id: rd_product_progress-2
 evidence_refs:
-  - rd_product_progress-1
-source_excerpt_hash: "733fce665d6d034a22a72191c804bf5da5d14a52ff76b3c9741481c39bbbb79e"
-source_block_hash: fee516edda1ea099454387f44b7bcc872b53ba79eca73dd8fee6a5836b1226c7
+  - rd_product_progress-2
+source_excerpt_hash: b6d4d4ca480caf1afc52f127cbe300bbf3364eef83117e88e859b2348c7a90ec
+source_block_hash: fe5f10e9a4734a0be22e7b490a88ed514b5bf8c7f272cb5a205291efe21ba90a
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -26,13 +26,13 @@ collected_at: ""
 
 ## Narrative Evidence
 
-> 完成霍尔传感器及新 一代角度位置编码 器、线性位置编码 器、磁阻开关传感器 系列产品的研发和产 业化。
+> EEPROM及DIMM EEPROM系列产品及 型、具有不同容量的 等产品已实现量产；
 
 ## Source
 
 - card_id: periodic:300661:2025:annual:narrative:rd_product_progress:6
-- source_block_id: rd_product_progress-1
-- evidence_refs: rd_product_progress-1
+- source_block_id: rd_product_progress-2
+- evidence_refs: rd_product_progress-2
 - source_credit: 75
 
 ## Guardrails

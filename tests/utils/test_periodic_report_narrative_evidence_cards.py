@@ -1517,6 +1517,77 @@ def test_short_report_page_header_boilerplate_is_rejected():
     assert any(d["code"] == "filtered_invalid_excerpt" for d in result["diagnostics"])
 
 
+def test_embedded_a_share_report_page_header_is_stripped_from_excerpt():
+    text = (
+        "据产业在线，2025年中国家用空调总产销19,839.0万台，同比小幅下滑1.2%，"
+        "其中内销10,521.0万台，同比小幅增长0.7%。2025年下半年，国内家电市场在经历国补政策退潮后，"
+        "需求有所回落，市场竞争更趋激烈。"
+        "11 浙江三花智能控制股份有限公司2025年年度报告全文 "
+        "尽管如此，行业通过技术创新和效率提升努力适应新的市场环境。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "market_demand_outlook-0",
+                "usage": "market_demand_outlook",
+                "section": "第三节 管理层讨论与分析",
+                "title": "行业发展情况",
+                "text": text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="002050",
+        stock_name="三花智控",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"]
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert "浙江三花智能控制股份有限公司2025年年度报告全文" not in excerpt
+    assert "市场竞争更趋激烈" in excerpt
+    assert "技术创新和效率提升" in excerpt
+
+
+def test_company_first_report_page_header_is_stripped_from_excerpt():
+    text = (
+        "公司自创立以来一直高度重视自主创新能力的培养和建设。"
+        "圣邦微电子（北京）股份有限公司 2025 年年度报告全文 16 "
+        "研发团队紧跟国际模拟芯片技术领域的最新发展动向，"
+        "同时与市场销售部门密切沟通，把握客户需求和行业发展趋势。"
+    )
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "rd_product_progress-0",
+                "usage": "rd_product_progress",
+                "section": "第三节 管理层讨论与分析",
+                "title": "研发能力",
+                "text": text,
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="300661",
+        stock_name="圣邦股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"]
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert "圣邦微电子（北京）股份有限公司 2025 年年度报告全文 16" not in excerpt
+    assert "高度重视自主创新能力" in excerpt
+    assert "把握客户需求和行业发展趋势" in excerpt
+
+
 def test_default_per_type_limit_allows_more_than_three_clean_cards():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",

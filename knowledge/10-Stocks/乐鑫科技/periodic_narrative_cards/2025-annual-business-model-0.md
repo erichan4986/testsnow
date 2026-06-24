@@ -1,8 +1,8 @@
 ---
-stock: "圣邦股份"
-code: "300661"
+stock: "乐鑫科技"
+code: "688018"
 source_type: periodic_report_narrative_evidence
-card_id: "periodic:300661:2025:annual:narrative:business_model:3"
+card_id: "periodic:688018:2025:annual:narrative:business_model:0"
 schema_version: "periodic_report_narrative_evidence_card.v1"
 card_type: business_model
 title: "主营业务与产品"
@@ -12,8 +12,8 @@ source_credit: 75
 source_block_id: product_capacity_profile-2
 evidence_refs:
   - product_capacity_profile-2
-source_excerpt_hash: "990baa51b6d903f820a6976951982cb853caa5d6b3643d882ab6de81d63426d9"
-source_block_hash: "45b40a69b092ff772dcc4a2889fdf6d273a76900ab9c3a5bcd5b9d4afe2c999f"
+source_excerpt_hash: d82f4fbc1ac74080dddc65fdc15617fbc7edda217bb6541c3b9689937b9ea0a1
+source_block_hash: a73f6faa6f093643a80e25679990e23815fb7c05ca366fd9e64eceba09be203e
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -22,15 +22,15 @@ experimental: true
 collected_at: ""
 ---
 
-# 圣邦股份 2025 annual business_model
+# 乐鑫科技 2025 annual business_model
 
 ## Narrative Evidence
 
-> 圣邦微电子（北京）股份有限公司 2025 年年度报告全文 16 报告期内的公司主营业务未发生重大变化。
+> 公司主要产品是物联网芯片和模组，符合REACH、RoHS、Prop65、HalogenFree、CFSI等 多项认证标准。截止本报告出具之日，公司产品未产生任何安全事故。
 
 ## Source
 
-- card_id: periodic:300661:2025:annual:narrative:business_model:3
+- card_id: periodic:688018:2025:annual:narrative:business_model:0
 - source_block_id: product_capacity_profile-2
 - evidence_refs: product_capacity_profile-2
 - source_credit: 75

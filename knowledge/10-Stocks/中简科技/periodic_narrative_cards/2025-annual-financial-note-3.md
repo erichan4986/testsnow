@@ -1,8 +1,8 @@
 ---
-stock: "圣邦股份"
-code: "300661"
+stock: "中简科技"
+code: "300777"
 source_type: periodic_report_narrative_evidence
-card_id: "periodic:300661:2025:annual:narrative:financial_note:0"
+card_id: "periodic:300777:2025:annual:narrative:financial_note:3"
 schema_version: "periodic_report_narrative_evidence_card.v1"
 card_type: financial_note
 title: "财务备注"
@@ -12,8 +12,8 @@ source_credit: 75
 source_block_id: cash_flow_capex_table-0
 evidence_refs:
   - cash_flow_capex_table-0
-source_excerpt_hash: ddba46cc1bb73fe2c43a86c47cf32c07a66e0fde716cfc0cd4e5d0d29dadd481
-source_block_hash: b5f04e21bfdf532993cf6691eecb954cdf978d6e82ae1760213afef0d0b2403b
+source_excerpt_hash: "77c2a8b57e203950d57d28f8141abd47006867904e4cab91bf69b20209149611"
+source_block_hash: "040a7b87e2bf59b853818e228339d8f56185d4acbb650bd1a101dc3e0a53a390"
 knowledge_fact_status: narrative_evidence
 knowledge_eligible: false
 knowledge_persisted: true
@@ -22,15 +22,15 @@ experimental: true
 collected_at: ""
 ---
 
-# 圣邦股份 2025 annual financial_note
+# 中简科技 2025 annual financial_note
 
 ## Narrative Evidence
 
-> 投资活动现金流出小计本期较上期增加51.86%，主要原因系本报告期购买理财产品增加所致。
+> 5、本报告期现金分红较上年度有所上升，以及股份回购支出较上年增加，致使筹资活动现金流出增加。
 
 ## Source
 
-- card_id: periodic:300661:2025:annual:narrative:financial_note:0
+- card_id: periodic:300777:2025:annual:narrative:financial_note:3
 - source_block_id: cash_flow_capex_table-0
 - evidence_refs: cash_flow_capex_table-0
 - source_credit: 75
