@@ -732,6 +732,8 @@ def _generic_driver_block_excerpts(text: str, max_blocks: int = 3) -> List[str]:
             continue
         if _looks_like_financial_table_fragment(block):
             continue
+        if _looks_like_rating_table_fragment(block):
+            continue
         score = _generic_driver_score(block)
         if score <= 0:
             continue
@@ -777,6 +779,8 @@ def _iter_generic_driver_blocks(text: str) -> List[str]:
         if any(pattern in block for pattern in _STOP_PATTERNS):
             continue
         if _looks_like_financial_table_fragment(block):
+            continue
+        if _looks_like_rating_table_fragment(block):
             continue
         blocks.append(block[:1200])
     return blocks
@@ -849,6 +853,20 @@ def _looks_like_financial_table_fragment(text: str) -> bool:
     year_hits = len(re.findall(r"20\d{2}[AE]?", text))
     number_hits = len(re.findall(r"\d+(?:,\d{3})*(?:\.\d+)?%?", text))
     return term_hits >= 5 or (term_hits >= 3 and year_hits >= 3 and number_hits >= 12)
+
+
+def _looks_like_rating_table_fragment(text: str) -> bool:
+    rating_terms = ("买入", "增持", "中性", "减持")
+    rating_hits = sum(1 for term in rating_terms if term in text)
+    if "投资评级" in text and rating_hits >= 2:
+        return True
+    if "相关报告评级" in text and rating_hits >= 2:
+        return True
+    if "预期未来6" in text and rating_hits >= 2:
+        return True
+    if rating_hits >= 4 and len(re.findall(r"\d+(?:\.\d+)?%?", text)) >= 8:
+        return True
+    return False
 
 
 def _has_specific_risk_signal(text: str) -> bool:

@@ -554,6 +554,27 @@ def test_long_report_keeps_multiple_distinct_generic_driver_blocks() -> None:
     assert "交付能力" in excerpts
 
 
+def test_rating_table_fragment_is_not_selected_as_driver_block() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    市场中相关报告评级比率分析 市场中相关报告 日期 一周内 一月内 二月内 三月内 六月内
+    买入 1 9 12 22 61 增持 0 2 4 8 0 中性 0 0 0 0 0 减持 0 0 0 0 0
+    投资评级的说明：买入：预期未来6－12个月内上涨幅度在15%以上；
+    增持：预期未来6－12个月内上涨幅度在5%－15%；中性：预期未来6－12个月内变动幅度在-5%－5%。
+
+    需求端来看，核心下游客户持续扩张基础设施规模，800G产品需求延续高景气，
+    1.6T产品验证进度加快，相关订单推动高端产品收入占比提升。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    excerpts = "\n".join(card["source_excerpt"] for card in cards)
+
+    assert "投资评级的说明" not in excerpts
+    assert "买入：预期未来" not in excerpts
+    assert "高端产品收入占比" in excerpts
+
+
 def test_deduplicates_same_viewpoint_cluster_but_preserves_distinct_clusters() -> None:
     from broker_research_digest import deduplicate_broker_digest_cards_by_viewpoint
 
