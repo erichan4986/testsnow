@@ -149,6 +149,23 @@ def test_ci_grep_gates_rejects_broker_research_leakage_in_scoring_file(tmp_path:
     assert "broker_research" in result.stdout
 
 
+def test_ci_grep_gates_rejects_wechat_curated_external_leakage_in_scoring_file(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "reporter" / "scoring_engine.py"
+    target.parent.mkdir(parents=True)
+    target.write_text(
+        'value = ctx.get("wechat_product_signal_items")\n'
+        'other = ctx.get("curated_external_analysis_items")\n',
+        encoding="utf-8",
+    )
+
+    result = _run_gate(root)
+
+    assert result.returncode != 0
+    assert "wechat_product_signal" in result.stdout
+    assert "curated_external_analysis" in result.stdout
+
+
 def test_ci_grep_gates_allows_broker_research_in_synthesis_reader(tmp_path: Path) -> None:
     root = _copy_gate_fixture(tmp_path)
     target = root / "scripts" / "utils" / "broker_research_digest_synthesis_items.py"

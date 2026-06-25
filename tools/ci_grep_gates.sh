@@ -35,7 +35,7 @@ HELPER_LEAK_FILES=(
 LEAK_HITS=""
 for file in "${CORE_LEAK_FILES[@]}"; do
   [ -f "$file" ] || continue
-  hits=$(grep -nE 'periodic_report_fulltext|periodic_report_narrative_evidence|synthesis_display|broker_research' "$file" 2>/dev/null || true)
+  hits=$(grep -nE 'periodic_report_fulltext|periodic_report_narrative_evidence|synthesis_display|broker_research|wechat_product_signal|wechat_export|curated_external_analysis' "$file" 2>/dev/null || true)
   if [ -n "$hits" ]; then
     rel="${file#$ROOT/}"
     LEAK_HITS="${LEAK_HITS}${LEAK_HITS:+$'\n'}${rel}:$hits"
