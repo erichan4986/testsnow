@@ -3,35 +3,17 @@
 import re
 from typing import Any, Dict, List, Optional
 
-
-_SOURCE_TYPE_LABELS = {
-    "exchange_announcement": "官方公告",
-    "periodic_report_excerpt": "定期报告摘录",
-    "periodic_report_fulltext_analysis": "定期报告全文摘要",
-    "news": "东方财富新闻",
-    "research_report": "券商研报摘要",
-    "industry_research": "行业研报",
-}
-
-_SOURCE_TYPE_PRIORITY = {
-    "exchange_announcement": 0,
-    "periodic_report_excerpt": 1,
-    "periodic_report_fulltext_analysis": 2,
-    "research_report": 3,
-    "industry_research": 4,
-    "news": 5,
-}
+from .source_intake_source_profiles import (
+    normalize_verification_status,
+    periodic_status_label,
+    source_type_label,
+    source_type_priority,
+    source_type_purpose,
+)
 
 _MAX_REPRESENTATIVE_ROWS = 6
 _MAX_PERIODIC_ROWS = 8
 _MAX_FULLTEXT_PREVIEW_CHARS = 1600
-_PERIODIC_STATUS_LABELS = {
-    "risk_disclosure": "风险披露",
-    "management_view": "管理层观点",
-    "capital_action": "资本事项",
-    "financial_forensics": "财报排雷观察",
-}
-_PERIODIC_ALLOWED_STATUSES = set(_PERIODIC_STATUS_LABELS)
 
 _LOW_INFORMATION_TITLE_PATTERNS = [
     "权益分派",
@@ -363,16 +345,7 @@ class SourceIntakeEvidenceRenderer:
         if not isinstance(extra, dict):
             extra = {}
         status = str(extra.get("verification_status", "")).lower().strip()
-
-        # Normalize medium-credit sources down to professional_observation regardless
-        # of malformed metadata claiming confirmed_fact.
-        if source_type in ("news", "research_report"):
-            return "professional_observation"
-        if source_type == "periodic_report_excerpt":
-            return status if status in _PERIODIC_ALLOWED_STATUSES else "management_view"
-        if source_type == "periodic_report_fulltext_analysis":
-            return "professional_analysis"
-        return status if status else "unknown"
+        return normalize_verification_status(source_type, status)
 
     def _build_summary_rows(self, items: List[Any]) -> List[str]:
         buckets: Dict[str, Dict[str, Any]] = {}
@@ -380,7 +353,7 @@ class SourceIntakeEvidenceRenderer:
             source_type = self._item_source_type(item)
             if source_type not in buckets:
                 buckets[source_type] = {
-                    "label": _SOURCE_TYPE_LABELS.get(source_type, "其他来源"),
+                    "label": source_type_label(source_type),
                     "count": 0,
                     "credits": set(),
                     "status": self._item_verification_status(item),
@@ -394,22 +367,13 @@ class SourceIntakeEvidenceRenderer:
         # Preserve priority order for known types, then append unknowns.
         ordered_types = sorted(
             buckets.keys(),
-            key=lambda t: (_SOURCE_TYPE_PRIORITY.get(t, 99), t),
+            key=lambda t: (source_type_priority(t), t),
         )
         for source_type in ordered_types:
             bucket = buckets[source_type]
             credits = sorted(bucket["credits"])
             credit_text = str(credits[0]) if len(credits) == 1 else f"{credits[0]}-{credits[-1]}" if credits else "—"
-            if source_type == "exchange_announcement":
-                purpose = "可用于事实确认"
-            elif source_type == "periodic_report_excerpt":
-                purpose = "年报/半年报规则摘录"
-            elif source_type == "periodic_report_fulltext_analysis":
-                purpose = "年报/半年报全文材料层"
-            elif source_type == "news":
-                purpose = "背景资讯"
-            else:
-                purpose = "专业观察"
+            purpose = source_type_purpose(source_type)
             rows.append(f"| {bucket['label']} | {bucket['count']} | {credit_text} | {bucket['status']} | {purpose} |")
         return rows
 
@@ -431,7 +395,7 @@ class SourceIntakeEvidenceRenderer:
         for item in ordered[:_MAX_PERIODIC_ROWS]:
             publish_time = self._clean_metadata_text(getattr(item, "publish_time", "") or "—")
             status = self._item_verification_status(item)
-            status_label = _PERIODIC_STATUS_LABELS.get(status, "管理层观点")
+            status_label = periodic_status_label(status)
             title = self._clean_text(getattr(item, "title", "") or "")
             content = self._clean_text(getattr(item, "content", "") or "")
             excerpt = self._make_excerpt(title, content)
@@ -444,7 +408,7 @@ class SourceIntakeEvidenceRenderer:
             [item for item in items if self._is_representative_item(item)],
             key=lambda item: (
                 -self._item_evidence_score(item),
-                _SOURCE_TYPE_PRIORITY.get(self._item_source_type(item), 99),
+                source_type_priority(self._item_source_type(item)),
                 -self._item_credit(item),
             ),
             reverse=False,
@@ -452,7 +416,7 @@ class SourceIntakeEvidenceRenderer:
         rows = []
         for item in ordered[:_MAX_REPRESENTATIVE_ROWS]:
             publish_time = self._clean_metadata_text(getattr(item, "publish_time", "") or "—")
-            source_label = _SOURCE_TYPE_LABELS.get(self._item_source_type(item), "其他来源")
+            source_label = source_type_label(self._item_source_type(item))
             title = self._clean_text(getattr(item, "title", "") or "—")
             content = self._clean_text(getattr(item, "content", "") or "")
             excerpt = self._make_excerpt(title, content)
