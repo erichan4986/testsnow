@@ -1073,7 +1073,7 @@ def test_unsupported_core_facts_fall_back_to_periodic_filing_core_facts():
         "stock_name": "圣邦股份",
         "periodic_report_filing_core_facts": [fallback_fact],
         "stock_raw": {
-            "reports": [],
+            "reports": [{"title": "测试研报", "content": "圣邦股份测试材料", "institution": "测试证券"}],
             "announcements": [],
             "fundflow": [],
             "news": [],
@@ -1084,6 +1084,7 @@ def test_unsupported_core_facts_fall_back_to_periodic_filing_core_facts():
     skill.run(ctx)
 
     assert ctx.get("core_facts") == [fallback_fact]
+    assert ctx.get("synthesis")["core_facts"][0]["provenance_status"] == "missing_ref"
 
 
 def test_periodic_report_fulltext_knowledge_persistence_would_receive_baseline():

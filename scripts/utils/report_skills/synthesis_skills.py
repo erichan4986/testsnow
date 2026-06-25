@@ -64,7 +64,10 @@ class SynthesisSkill(BaseSkill):
 
         baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx)
         ctx.set("synthesis", baseline)
-        core_facts = baseline.get("core_facts", []) or ctx.get("periodic_report_filing_core_facts", []) or []
+        core_facts = self._select_core_facts(
+            baseline.get("core_facts", []),
+            ctx.get("periodic_report_filing_core_facts", []),
+        )
         ctx.set("core_facts", core_facts)
         ctx.set("synthesis_text", self._flatten_synthesis_text(baseline))
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
@@ -106,6 +109,21 @@ class SynthesisSkill(BaseSkill):
             if broker_digest_items:
                 ctx.set("synthesis_text_with_broker_research_digest", display_text)
         return ctx
+
+    @staticmethod
+    def _select_core_facts(baseline_core_facts: list, filing_core_facts: list) -> list:
+        """Prefer baseline core facts only when at least one is renderable."""
+        baseline_core_facts = baseline_core_facts or []
+        filing_core_facts = filing_core_facts or []
+        supportable_statuses = {"supported", "partially_supported"}
+        has_supportable_baseline = any(
+            isinstance(fact, dict)
+            and fact.get("provenance_status", "missing_ref") in supportable_statuses
+            for fact in baseline_core_facts
+        )
+        if has_supportable_baseline or not filing_core_facts:
+            return baseline_core_facts
+        return filing_core_facts
 
     @staticmethod
     def _eligible_periodic_report_fulltext_items(ctx: SkillContext) -> list:
