@@ -141,6 +141,15 @@ def test_source_intake_evidence_renderer_order():
     assert names.index("source_intake_evidence") < names.index("risk")
 
 
+def test_curated_external_analysis_renderer_order():
+    skill = ReportAssemblySkill()
+    names = [name for name, _, _ in skill.RENDERERS]
+    assert "curated_external_analysis" in names
+    assert names.index("source_intake_evidence") < names.index("curated_external_analysis")
+    assert names.index("curated_external_analysis") < names.index("agent_reach_evidence")
+    assert names.index("curated_external_analysis") < names.index("risk")
+
+
 def test_report_renders_when_source_intake_keys_absent(tmp_path):
     skill = ReportAssemblySkill()
     ctx = SkillContext(input={
@@ -168,6 +177,49 @@ def test_report_renders_when_source_intake_keys_absent(tmp_path):
     md_content = Path(md_path).read_text(encoding="utf-8")
     assert "Source Intake" not in md_content
     assert "source_intake_evidence: skipped" not in md_content
+
+
+def test_report_assembly_renders_curated_external_analysis_section(tmp_path):
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7.0, "technical": 6.0, "sentiment": 5.0, "fundamental": 6.0, "fundflow": 5.0},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20.0},
+        "consensus": {},
+        "ind_fwd_pe": 25.0,
+        "synthesis": {
+            "industry_logic": "行业逻辑",
+            "fundamentals": "基本面",
+            "valuation_debate": "估值多空",
+            "funding_sentiment": "资金情绪",
+            "events_catalysts": "事件催化",
+        },
+        "keep_posts": [],
+        "cross_source_summary": "",
+        "curated_external_analysis_items": [
+            {
+                "source_kind": "wechat_product_signal",
+                "source_type": "wechat_product_signal",
+                "title": "圣邦微 SGM25890 新品",
+                "content": "AI 服务器电源方向的 90A Smart Power Stage。",
+                "quality_action": "preview_only",
+                "knowledge_eligible": False,
+                "synthesis_eligible": False,
+                "scoring_eligible": False,
+                "risk_score_eligible": False,
+            }
+        ],
+    })
+
+    result = skill.run(ctx)
+    md_content = Path(result.get("md_path")).read_text(encoding="utf-8")
+
+    assert "## 精选外部观察（Preview）" in md_content
+    assert "### 微信产品信号" in md_content
+    assert "圣邦微 SGM25890 新品" in md_content
 
 
 def test_agent_reach_only_report_does_not_render_source_intake_section(tmp_path):

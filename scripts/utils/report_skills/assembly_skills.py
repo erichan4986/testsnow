@@ -41,6 +41,7 @@ class ReportAssemblySkill(BaseSkill):
         ("price_target", "utils.reporter.sections.price_target_renderer", "PriceTargetRenderer"),
         ("deep_analysis", "utils.reporter.sections.deep_analysis_renderer", "DeepAnalysisRenderer"),
         ("source_intake_evidence", "utils.reporter.sections.source_intake_evidence_renderer", "SourceIntakeEvidenceRenderer"),
+        ("curated_external_analysis", "utils.reporter.sections.curated_external_analysis_renderer", "CuratedExternalAnalysisRenderer"),
         ("agent_reach_evidence", "utils.reporter.sections.agent_reach_evidence_renderer", "AgentReachEvidenceRenderer"),
         ("risk", "utils.reporter.sections.risk_renderer", "RiskRenderer"),
     ]

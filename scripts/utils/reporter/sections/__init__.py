@@ -20,6 +20,7 @@ from .executive_summary_renderer import ExecutiveSummaryRenderer
 from .composite_score_renderer import CompositeScoreRenderer
 from .valuation_renderer import ValuationRenderer
 from .deep_analysis_renderer import DeepAnalysisRenderer
+from .curated_external_analysis_renderer import CuratedExternalAnalysisRenderer
 from .risk_renderer import RiskRenderer
 from .html_dashboard_renderer import HTMLDashboardRenderer
 from .technical_renderer import TechnicalRenderer
@@ -33,6 +34,7 @@ __all__ = [
     "CompositeScoreRenderer",
     "ValuationRenderer",
     "DeepAnalysisRenderer",
+    "CuratedExternalAnalysisRenderer",
     "RiskRenderer",
     "HTMLDashboardRenderer",
     "TechnicalRenderer",
