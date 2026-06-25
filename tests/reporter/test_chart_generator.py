@@ -13,6 +13,34 @@ from chart_generator import (
 )
 
 
+_KALEIDO_BROWSER_AVAILABLE = None
+
+
+def _has_kaleido_browser():
+    global _KALEIDO_BROWSER_AVAILABLE
+    if _KALEIDO_BROWSER_AVAILABLE is not None:
+        return _KALEIDO_BROWSER_AVAILABLE
+
+    try:
+        import plotly.graph_objects as go
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            probe_path = Path(tmpdir) / "kaleido_probe.png"
+            fig = go.Figure(data=[go.Scatter(y=[1, 2, 3])])
+            fig.write_image(str(probe_path), width=240, height=180, scale=1)
+            _KALEIDO_BROWSER_AVAILABLE = probe_path.exists() and probe_path.stat().st_size > 0
+    except Exception:
+        _KALEIDO_BROWSER_AVAILABLE = False
+
+    return _KALEIDO_BROWSER_AVAILABLE
+
+
+@pytest.fixture(autouse=True)
+def require_kaleido_browser():
+    if not _has_kaleido_browser():
+        pytest.skip("Kaleido/Chrome image export is unavailable in this environment")
+
+
 def test_generate_technical_panel_creates_png():
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test_tech.png"

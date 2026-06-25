@@ -59,7 +59,10 @@ def test_build_preview_markdown_can_render_source_intake_section(tmp_path):
     )
 
     assert "## Source Intake 分层证据观察" in markdown
-    assert "### 定期报告全文摘要（实验路径）" in markdown
+    assert "### 来源分层概览" in markdown
+    assert "定期报告全文摘要 | 1 | 75 | professional_analysis" in markdown
+    assert "证据明细、年报全文摘要和券商/行业研报原文保留在材料层" in markdown
+    assert "### 定期报告全文摘要（实验路径）" not in markdown
     assert "professional_analysis" in markdown
     assert "confirmed_fact" not in markdown
     assert "fact_candidate" not in markdown
