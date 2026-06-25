@@ -1345,6 +1345,64 @@ def test_broker_research_digest_fulltext_and_narrative_share_one_display_synthes
     assert "broker digest 券商观点" in ctx.get("synthesis_display")["industry_logic"]
 
 
+def test_display_synthesis_dedupes_duplicate_material_before_synthesizer(tmp_path):
+    duplicate_content = "同一篇光模块深度分析，800G 与 1.6T 是核心方向。"
+    fulltext_item = _make_fulltext_item()
+    fulltext_item.content = duplicate_content
+    broker_item = SynthesisItem(
+        title="测试证券 | 光模块点评",
+        content=duplicate_content,
+        author="测试证券",
+        source_platform="券商研报",
+        url="",
+        publish_time="2026-06-01",
+        extra={
+            "source_type": "broker_research",
+            "source_credit": 72,
+            "verification_status": "professional_observation",
+            "claim_status": "professional_analysis",
+            "knowledge_eligible": False,
+            "report_eligible": False,
+            "synthesis_eligible": False,
+            "synthesis_display_only": True,
+            "confirmed_fact": False,
+            "scoring_eligible": False,
+            "risk_score_eligible": False,
+        },
+    )
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "中简科技",
+        "include_periodic_report_fulltext_in_synthesis": True,
+        "periodic_report_fulltext_items": [fulltext_item],
+        "include_broker_research_digest_in_synthesis_display": True,
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    from unittest.mock import patch
+
+    with patch.object(SynthesisSkill, "_eligible_broker_research_digest_items", return_value=[broker_item]):
+        skill.run(ctx)
+
+    assert len(fake.calls) == 2
+    baseline_items = fake.calls[0]
+    display_items = fake.calls[1]
+    tail_source_types = [
+        (getattr(item, "extra", {}) or {}).get("source_type")
+        for item in display_items[len(baseline_items):]
+    ]
+    assert tail_source_types == ["periodic_report_fulltext_analysis"]
+    assert ctx.get("synthesis_display_deduped_sources")[0]["duplicate"]["source_type"] == "broker_research"
+
+
 def test_broker_research_digest_synthesis_no_eligible_items_skips_display(tmp_path):
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)

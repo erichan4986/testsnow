@@ -20,6 +20,7 @@ if __name__.startswith("utils."):
     from ..broker_research_digest_synthesis_items import (
         load_broker_research_digest_synthesis_items,
     )
+    from ..synthesis_display_deduper import dedupe_synthesis_display_items
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -37,6 +38,7 @@ else:
     from broker_research_digest_synthesis_items import (
         load_broker_research_digest_synthesis_items,
     )
+    from synthesis_display_deduper import dedupe_synthesis_display_items
 
 
 SYNTHESIS_KEYS = [
@@ -215,6 +217,10 @@ class SynthesisSkill(BaseSkill):
             return self._legacy_llm_synthesize(stock_name, stock_raw, keep_posts, cv_context)
 
         items = self._build_synthesis_items(stock_raw, keep_posts, extra_items=extra_items)
+        if extra_items:
+            items, deduped_sources = dedupe_synthesis_display_items(items)
+            if ctx is not None:
+                ctx.set("synthesis_display_deduped_sources", deduped_sources)
         if not items:
             return self._template_synthesize(stock_raw, items_count=0, sources=[])
 
