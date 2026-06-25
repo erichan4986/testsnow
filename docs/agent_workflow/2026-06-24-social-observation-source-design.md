@@ -60,13 +60,63 @@ Do not feed social observations into:
 
 Do not implement a broad Agent-Reach wrapper yet.
 
-If this area is reopened, start with a narrow preview-only helper:
+If this area is reopened, the preferred path is **curated external analysis**, not
+open-ended social crawling.  The useful material is likely to come from a small
+set of high-quality long-form URLs or exported files, not from broad platform
+feeds.
 
-1. Jina Reader public-page preview.
-2. V2EX keyword observation preview.
-3. Optional YouTube subtitle preview when the user supplies a URL.
+Recommended v1 shape:
 
-Keep Reddit, Bilibili active crawling, Twitter/X, Xiaohongshu, Weibo login flows, and Xueqiu detail pages out of v1.
+1. A preview-only helper tentatively named `curated_external_analysis_pack`.
+2. Inputs:
+   - user/Claude-curated public article URLs read through Jina Reader;
+   - Bilibili / YouTube video URLs with subtitles extracted through `yt-dlp`;
+   - local files exported from WeChat article tooling, such as Markdown / HTML /
+     text exports;
+   - local manually collected industry or company analysis files dropped into a
+     per-stock folder.
+3. Output:
+   - `/tmp/...preview.md` first;
+   - optional display-only synthesis items later, after manual review.
+4. Metadata:
+   - `source_type`: `curated_social_analysis` or `external_analysis`;
+   - `source_credit`: 45-65 depending on channel and source quality;
+   - `verification_status`: `professional_analysis`, `secondary_source`, or
+     `market_discussion`;
+   - `knowledge_eligible`: `false` by default;
+   - `scoring_eligible`: `false`;
+   - `risk_score_eligible`: `false`.
+
+Use this source as synthesis/display material only.  Do not promote it to core
+facts or scoring inputs unless an independent high-credit official source later
+confirms the claim.
+
+Concrete source guidance:
+
+- Jina Reader: keep for public industry articles, company专题, 36Kr /
+  Eastmoney / 同花顺 readable pages, and report landing pages.  This is the
+  default low-friction reader.
+- Bilibili / YouTube: keep only for explicitly supplied deep-video URLs.  Do not
+  run broad video search in v1.
+- WeChat articles: evaluate `wechat-article/wechat-article-exporter` as an
+  external acquisition tool.  The report system should read exported local
+  `md` / `html` / `txt` files rather than logging into WeChat or scraping
+  directly.  The exporter appears suitable for stable official-account article
+  collection, but credentials / read-count / comment capture must remain outside
+  the report pipeline.
+- Zhihu: already covered by the existing API path; do not duplicate it here.
+- Xueqiu: already covered by the existing Playwright/list-cache path; any detail
+  fetch remains subject to the existing logged-in CDP and rate-limit rules.
+- Xiaohongshu: potentially valuable for consumer hardware / robotics / channel
+  feedback, but not a v1 pipeline source.  Anti-bot controls, `xsec_token`
+  coupling, image-heavy posts, OCR needs, and comment quality make it a separate
+  smoke-only task.  If tested, use hand-picked note URLs and produce preview-only
+  output.
+- V2EX / Eastmoney guba / general forums: useful only as weak market discussion
+  or claim-risk seed material.  Do not treat them as deep-analysis sources.
+
+Keep Reddit, Bilibili active crawling, Twitter/X, Xiaohongshu, Weibo login
+flows, and Xueqiu detail pages out of the main v1 path.
 
 ## Stop Conditions
 

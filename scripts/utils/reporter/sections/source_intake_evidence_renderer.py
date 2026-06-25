@@ -173,14 +173,14 @@ class SourceIntakeEvidenceRenderer:
         fulltext_summary_row = self._build_fulltext_summary_row(fulltext_items)
         if fulltext_summary_row:
             summary_rows.append(fulltext_summary_row)
-        periodic_rows = self._build_periodic_rows(summary_items)
-        representative_rows = self._build_representative_rows(summary_items)
-
+        render_details = bool(ctx.get("source_intake_render_details", False))
+        periodic_rows = self._build_periodic_rows(summary_items) if render_details else []
+        representative_rows = self._build_representative_rows(summary_items) if render_details else []
         lines = [
             "## Source Intake 分层证据观察",
             "",
-            "> 本节仅展示结构化外部证据来源分层，不参与综合评分、风险评分、技术面判断或最终建议。",
-            "> 官方公告可用于事实确认；新闻与券商研报仅作为专业观察或背景线索，不等同于官方事实。",
+            "> 本节仅概览外部材料来源分层，不展开原始证据正文；相关材料只作为深度分析参考。",
+            "> 官方公告可用于事实确认；新闻、行业研报与券商研报仅作为专业观察或背景线索，不参与评分、风险评分或最终建议。",
             "",
             "### 来源分层概览",
             "",
@@ -189,6 +189,10 @@ class SourceIntakeEvidenceRenderer:
         ]
         lines.extend(summary_rows)
         lines.append("")
+        lines.extend([
+            "> 证据明细、年报全文摘要和券商/行业研报原文保留在材料层；成品报告只在深度分析中引用消化后的观点。",
+            "",
+        ])
 
         if periodic_rows:
             lines.extend([
@@ -210,7 +214,7 @@ class SourceIntakeEvidenceRenderer:
             lines.extend(representative_rows)
             lines.append("")
 
-        fulltext_section = self._build_fulltext_section(fulltext_items)
+        fulltext_section = self._build_fulltext_section(fulltext_items) if render_details else []
         if fulltext_section:
             lines.extend(fulltext_section)
             lines.append("")

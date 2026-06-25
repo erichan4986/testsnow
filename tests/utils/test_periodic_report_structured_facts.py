@@ -9,7 +9,10 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack
 from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
-from periodic_report_structured_facts import build_periodic_report_structured_fact_pack
+from periodic_report_structured_facts import (
+    build_periodic_report_structured_fact_pack,
+    filing_facts_to_core_facts,
+)
 
 
 def _normalized_hash(text: str) -> str:
@@ -80,6 +83,26 @@ def test_builds_phase_a_filing_facts_with_evidence_refs() -> None:
     assert revenue["knowledge_eligible"] is False
     assert revenue["source_block_id"]
     assert revenue["evidence_refs"] == [revenue["source_block_id"]]
+    assert "营业收入" in revenue["source_excerpt"]
+
+
+def test_filing_facts_convert_to_supported_core_facts() -> None:
+    pack = _fact_pack(SIGNED_CASHFLOW_TEXT, stock_code="300001")
+
+    core_facts = filing_facts_to_core_facts(pack["filing_facts"])
+
+    assert [fact["fact"] for fact in core_facts] == [
+        "营业收入",
+        "归母净利润",
+        "经营现金流量净额",
+    ]
+    revenue = core_facts[0]
+    assert revenue["data"] == "100000.00万元"
+    assert revenue["confidence"] == "高"
+    assert revenue["provenance_status"] == "supported"
+    assert revenue["evidence_type"] == "periodic_report_filing_fact"
+    assert revenue["source_labels"] == ["2025年annual"]
+    assert revenue["source_refs"] == []
     assert "营业收入" in revenue["source_excerpt"]
 
 

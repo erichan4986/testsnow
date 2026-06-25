@@ -193,10 +193,12 @@ Social observation is not an active mainline source. The current low-risk smoke 
 Current conclusion:
 
 - do not depend on the `agent-reach` wrapper CLI; local `agent-reach doctor` fails with `ModuleNotFoundError: agent_reach.cli`
+- prefer a curated external-analysis pack over broad social crawling: hand-picked public URLs, Bilibili / YouTube subtitle URLs, and local WeChat article exports
+- Jina Reader is usable for public pages, industry/company articles, and some report landing pages
+- YouTube subtitle access works when captions exist; Bilibili subtitle extraction is only partially validated and should be URL-driven
+- WeChat should be handled through exported local files from external tooling such as `wechat-article/wechat-article-exporter`, not direct in-pipeline login/scraping
+- Xiaohongshu may contain useful product/channel observations, but anti-bot, `xsec_token`, image/OCR, and comment-quality issues make it smoke-only, preview-only
 - V2EX public API is usable but sparse
-- Jina Reader is usable for public pages and some report landing pages
-- YouTube subtitle access works when captions exist
-- Bilibili subtitle extraction is only partially validated
 - Reddit was not tested because `rdt` is not installed
 
 If reopened, keep this path preview/display-only by default. Do not write social observations to Knowledge, scoring, risk scoring, confirmed facts, fact candidates, or final recommendation logic.

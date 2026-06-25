@@ -64,7 +64,8 @@ class SynthesisSkill(BaseSkill):
 
         baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx)
         ctx.set("synthesis", baseline)
-        ctx.set("core_facts", baseline.get("core_facts", []))
+        core_facts = baseline.get("core_facts", []) or ctx.get("periodic_report_filing_core_facts", []) or []
+        ctx.set("core_facts", core_facts)
         ctx.set("synthesis_text", self._flatten_synthesis_text(baseline))
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))

@@ -345,6 +345,42 @@ def test_skill_reads_ctx_overrides(tmp_path):
     assert result.get("periodic_report_fulltext_status") == "ok"
 
 
+def test_skill_builds_filing_core_facts_from_cache(tmp_path):
+    from report_skills.periodic_report_fulltext_intake_skill import periodic_report_fulltext_intake_skill
+    from skill_pipeline import SkillContext
+
+    cache_dir = tmp_path / "custom_cache"
+    cache_dir.mkdir()
+    cache_file = cache_dir / "300661_2025_annual_jina.txt"
+    cache_file.write_text(
+        """
+主要会计数据和财务指标
+营业收入 3,898,054,583.68 3,346,983,120.66 16.46%
+归属于上市公司股东的净利润 547,059,403.97 500,247,943.10 9.36%
+经营活动产生的现金流量净额 466,319,946.20 549,337,594.89 -15.11%
+""",
+        encoding="utf-8",
+    )
+
+    ctx = SkillContext(input={
+        "stock_name": "圣邦股份",
+        "stock_codes": {"圣邦股份": "300661"},
+        "periodic_report_fulltext_cache_dir": str(cache_dir),
+        "periodic_report_fulltext_report_type": "annual_report",
+    })
+    result = periodic_report_fulltext_intake_skill(ctx)
+
+    core_facts = result.get("periodic_report_filing_core_facts")
+    assert [fact["fact"] for fact in core_facts] == [
+        "营业收入",
+        "归母净利润",
+        "经营现金流量净额",
+    ]
+    assert core_facts[0]["data"] == "389805.46万元"
+    assert core_facts[0]["provenance_status"] == "supported"
+    assert core_facts[0]["evidence_type"] == "periodic_report_filing_fact"
+
+
 def test_skill_skips_when_stock_code_missing():
     from report_skills.periodic_report_fulltext_intake_skill import periodic_report_fulltext_intake_skill
     from skill_pipeline import SkillContext

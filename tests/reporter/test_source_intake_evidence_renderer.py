@@ -31,6 +31,7 @@ def _make_ctx(
     keep_items=None,
     demote_items=None,
     fulltext_items=None,
+    render_details=True,
 ) -> SkillContext:
     return SkillContext(input={
         "stock_name": "测试股",
@@ -41,6 +42,7 @@ def _make_ctx(
         "external_evidence_demote_items": demote_items or [],
         "periodic_report_fulltext_items": fulltext_items or [],
         "source_intake_summary": {"status": status, "count": len(items or [])},
+        "source_intake_render_details": render_details,
     })
 
 
@@ -71,9 +73,9 @@ def test_section_title_and_disclaimer_present():
     renderer = SourceIntakeEvidenceRenderer()
     result = renderer.render(ctx)
     assert "## Source Intake 分层证据观察" in result
-    assert "本节仅展示结构化外部证据来源分层" in result
+    assert "本节仅概览外部材料来源分层" in result
     assert "官方公告可用于事实确认" in result
-    assert "新闻与券商研报仅作为专业观察或背景线索" in result
+    assert "新闻、行业研报与券商研报仅作为专业观察或背景线索" in result
 
 
 def test_official_announcement_renders_as_confirmed_fact():
@@ -173,14 +175,14 @@ def test_malformed_periodic_fulltext_analysis_confirmed_fact_is_guarded():
             "claim_status": "confirmed_fact",
         },
     )
-    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    ctx = _make_ctx(items=[item], fulltext_items=[item], render_details=False)
     renderer = SourceIntakeEvidenceRenderer()
     result = renderer.render(ctx)
     assert "confirmed_fact" not in result
     assert "professional_analysis" in result
 
 
-def test_periodic_report_fulltext_items_renders_dedicated_experimental_section():
+def test_source_intake_renders_compact_overview_without_detail_tables():
     item = _make_item(
         title="2025年年度报告 | 定期报告全文摘要（实验路径）",
         content="# 定期报告全文判断摘要\n\n## 必备经营指标摘录\n\n收入情况。",
@@ -193,17 +195,38 @@ def test_periodic_report_fulltext_items_renders_dedicated_experimental_section()
             "experimental": True,
         },
     )
-    ctx = _make_ctx(items=[item], fulltext_items=[item])
+    ctx = _make_ctx(items=[item], fulltext_items=[item], render_details=False)
     renderer = SourceIntakeEvidenceRenderer()
     result = renderer.render(ctx)
-    assert "### 定期报告全文摘要（实验路径）" in result
-    assert "2026-04-15" in result
-    assert "2025年年度报告" in result
-    assert "定期报告全文摘要（实验路径）" in result
-    assert "75" in result
-    assert "professional_analysis" in result
-    assert "experimental" in result.lower() or "实验" in result
     assert "| 定期报告全文摘要 | 1 | 75 | professional_analysis | 年报/半年报全文材料层 |" in result
+    assert "### 代表性证据摘录" not in result
+    assert "### 定期报告全文摘要（实验路径）" not in result
+    assert "## 必备经营指标摘录" not in result
+    assert "收入情况" not in result
+
+
+def test_source_intake_defaults_to_compact_overview():
+    item = _make_item(
+        title="行业研报标题",
+        content="行业研报正文。",
+        publish_time="2026-06-24",
+        extra={
+            "source_type": "industry_research",
+            "source_credit": 70,
+            "verification_status": "professional_observation",
+        },
+    )
+    ctx = SkillContext(input={
+        "source_intake_enabled": True,
+        "source_intake_status": "ok",
+        "source_intake_items": [item],
+        "periodic_report_fulltext_items": [],
+    })
+    renderer = SourceIntakeEvidenceRenderer()
+    result = renderer.render(ctx)
+    assert "| 行业研报 | 1 | 70 | professional_observation | 专业观察 |" in result
+    assert "### 代表性证据摘录" not in result
+    assert "行业研报正文" not in result
 
 
 def test_fulltext_metadata_markdown_is_sanitized_without_double_escaping():

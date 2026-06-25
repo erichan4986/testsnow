@@ -37,6 +37,18 @@ _PHASE_A_METRICS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ),
 )
 
+_CORE_FACT_LABELS = {
+    "revenue": "营业收入",
+    "net_profit": "归母净利润",
+    "operating_cash_flow": "经营现金流量净额",
+}
+
+_CORE_FACT_ORDER = {
+    "revenue": 0,
+    "net_profit": 1,
+    "operating_cash_flow": 2,
+}
+
 
 def build_periodic_report_structured_fact_pack(
     *,
@@ -157,6 +169,56 @@ def _filing_fact(
         "source_credit": 75,
         "knowledge_eligible": False,
     }
+
+
+def filing_facts_to_core_facts(
+    filing_facts: List[Dict[str, Any]],
+    *,
+    max_facts: int = 6,
+) -> List[Dict[str, Any]]:
+    """Convert anchored official filing facts into DeepAnalysis core facts.
+
+    This adapter is intentionally narrow: only evidence-bound
+    ``periodic_report_filing_fact`` rows become supported core facts. It does
+    not consume fulltext summaries, derived facts, risk signals, news, or
+    research reports.
+    """
+    eligible = [
+        fact
+        for fact in filing_facts or []
+        if isinstance(fact, dict)
+        and fact.get("source_type") == "periodic_report_filing_fact"
+        and fact.get("metric_key") in _CORE_FACT_LABELS
+        and fact.get("source_block_id")
+        and fact.get("source_excerpt")
+    ]
+    ordered = sorted(
+        eligible,
+        key=lambda fact: (
+            _CORE_FACT_ORDER.get(str(fact.get("metric_key")), 99),
+            str(fact.get("fact_id") or ""),
+        ),
+    )
+
+    core_facts: List[Dict[str, Any]] = []
+    for index, fact in enumerate(ordered[:max_facts], 1):
+        report_year = fact.get("report_year", "")
+        report_type = str(fact.get("report_type") or "")
+        label = _CORE_FACT_LABELS[str(fact.get("metric_key"))]
+        data = str(fact.get("normalized_value") or fact.get("value") or "")
+        core_facts.append({
+            "fact_id": index,
+            "fact": label,
+            "data": data,
+            "confidence": "高",
+            "source_refs": [],
+            "provenance_status": "supported",
+            "source_labels": [f"{report_year}年{report_type}".strip()],
+            "evidence_type": "periodic_report_filing_fact",
+            "source_excerpt": fact.get("source_excerpt", ""),
+            "filing_fact_id": fact.get("fact_id", ""),
+        })
+    return core_facts
 
 
 def _build_derived_facts(

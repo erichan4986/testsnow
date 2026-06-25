@@ -36,6 +36,10 @@ if __name__.startswith("utils."):
     )
     from ..periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from ..periodic_report_required_metrics import build_required_business_metrics
+    from ..periodic_report_structured_facts import (
+        build_periodic_report_structured_fact_pack,
+        filing_facts_to_core_facts,
+    )
     from ..skill_pipeline import skill, SkillContext
     from ..source_adapter import SynthesisItem
 else:
@@ -50,6 +54,10 @@ else:
     )
     from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from periodic_report_required_metrics import build_required_business_metrics
+    from periodic_report_structured_facts import (
+        build_periodic_report_structured_fact_pack,
+        filing_facts_to_core_facts,
+    )
     from skill_pipeline import skill, SkillContext
     from source_adapter import SynthesisItem
 
@@ -229,9 +237,91 @@ def build_periodic_report_fulltext_intake_items_from_cache(
 
     Missing cache directories return an empty list without raising.
     """
+    latest = _find_latest_periodic_report_cache_file(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    if latest is None:
+        return []
+
+    try:
+        raw_text = latest.read_text(encoding="utf-8")
+    except Exception:
+        return []
+
+    # Use the cache filename stem as a fallback announcement id so the stable id
+    # is still deterministic and distinct from the original cninfo announcement.
+    announcement_id = latest.stem
+
+    item = build_periodic_report_fulltext_intake_item(
+        stock_code=stock_code,
+        raw_text=raw_text,
+        report_type=report_type,
+        announcement_id=announcement_id,
+        source_domain=_infer_source_domain_from_cache_file(latest),
+        enable_llm=enable_llm,
+        llm_client=llm_client,
+    )
+    return [item]
+
+
+def build_periodic_report_filing_core_facts_from_cache(
+    *,
+    stock_code: str,
+    stock_name: str,
+    cache_dir: Union[str, Path],
+    report_type: str = "annual_report",
+) -> List[Dict[str, Any]]:
+    """Build deterministic core facts from the latest local periodic report cache."""
+    latest = _find_latest_periodic_report_cache_file(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    if latest is None:
+        return []
+    try:
+        raw_text = latest.read_text(encoding="utf-8")
+    except Exception:
+        return []
+    if not raw_text.strip():
+        return []
+
+    normalized_report_type = _normalize_report_type(report_type)
+    structured_report_type = _structured_report_type(normalized_report_type)
+    report_year = _infer_report_year_from_cache_file(latest)
+    evidence_pack = build_periodic_report_evidence_pack(
+        raw_text,
+        report_type=structured_report_type,
+    )
+    required_financial_metrics = build_required_financial_risk_metrics(
+        evidence_pack,
+        raw_text=raw_text,
+    )
+    fact_pack = build_periodic_report_structured_fact_pack(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        report_year=report_year,
+        report_type=structured_report_type,
+        evidence_pack=evidence_pack,
+        required_financial_metrics=required_financial_metrics,
+    )
+    return filing_facts_to_core_facts(fact_pack.get("filing_facts") or [])
+
+
+def _find_latest_periodic_report_cache_file(
+    *,
+    stock_code: str,
+    stock_name: str = "",
+    cache_dir: Union[str, Path],
+    report_type: str = "annual_report",
+) -> Optional[Path]:
     cache_path = Path(cache_dir)
     if not cache_path.exists() or not cache_path.is_dir():
-        return []
+        return None
 
     report_type = _normalize_report_type(report_type)
     prefixes = [stock_code]
@@ -274,31 +364,21 @@ def build_periodic_report_fulltext_intake_items_from_cache(
             files.extend(directory.glob(pattern))
 
     if not files:
-        return []
+        return None
+    return sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
 
-    # Most recent first; stable sort keeps deterministic order for equal mtimes.
-    files = sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)
-    latest = files[0]
 
-    try:
-        raw_text = latest.read_text(encoding="utf-8")
-    except Exception:
-        return []
+def _infer_report_year_from_cache_file(cache_file: Path) -> int:
+    match = re.search(r"(20\d{2})", cache_file.stem)
+    return int(match.group(1)) if match else 0
 
-    # Use the cache filename stem as a fallback announcement id so the stable id
-    # is still deterministic and distinct from the original cninfo announcement.
-    announcement_id = latest.stem
 
-    item = build_periodic_report_fulltext_intake_item(
-        stock_code=stock_code,
-        raw_text=raw_text,
-        report_type=report_type,
-        announcement_id=announcement_id,
-        source_domain=_infer_source_domain_from_cache_file(latest),
-        enable_llm=enable_llm,
-        llm_client=llm_client,
-    )
-    return [item]
+def _structured_report_type(report_type: str) -> str:
+    if report_type == "annual_report":
+        return "annual"
+    if report_type == "semiannual_report":
+        return "semiannual"
+    return report_type
 
 
 def _infer_source_domain_from_cache_file(cache_file: Path) -> str:
@@ -335,7 +415,14 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         enable_llm=False,
         llm_client=None,
     )
+    filing_core_facts = build_periodic_report_filing_core_facts_from_cache(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
 
     ctx.set("periodic_report_fulltext_items", items)
+    ctx.set("periodic_report_filing_core_facts", filing_core_facts)
     ctx.set("periodic_report_fulltext_status", "ok" if items else "empty")
     return ctx

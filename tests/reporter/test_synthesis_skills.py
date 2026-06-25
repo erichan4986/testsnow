@@ -876,6 +876,40 @@ class DualSynthesizer:
         }
 
 
+class EmptyCoreFactSynthesizer:
+    def synthesize(self, stock_name, all_data):
+        return {
+            "industry_logic": "baseline narrative",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "core_facts": [],
+            "citations": {},
+        }
+
+
+class UnsupportedCoreFactSynthesizer:
+    def synthesize(self, stock_name, all_data):
+        return {
+            "industry_logic": "baseline narrative",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "core_facts": [
+                {
+                    "fact_id": 1,
+                    "fact": "无引用事实",
+                    "data": "无",
+                    "confidence": "高",
+                    "provenance_status": "missing_ref",
+                }
+            ],
+            "citations": {},
+        }
+
+
 def _fulltext_ctx(switch, fake):
     return SkillContext(input={
         "stock_name": "中简科技",
@@ -993,6 +1027,63 @@ def test_periodic_report_fulltext_synthesis_does_not_change_synthesis_text_or_co
     enhanced_flatten = ctx.get("synthesis_text_with_periodic_report_fulltext")
     assert "降价" in enhanced_flatten
     assert "净流出" in enhanced_flatten
+
+
+def test_empty_core_facts_fall_back_to_periodic_filing_core_facts():
+    skill = SynthesisSkill(synthesizer=EmptyCoreFactSynthesizer())
+    fallback_fact = {
+        "fact_id": 1,
+        "fact": "营业收入",
+        "data": "389805.46万元",
+        "confidence": "高",
+        "provenance_status": "supported",
+        "source_labels": ["2025年annual"],
+        "evidence_type": "periodic_report_filing_fact",
+    }
+    ctx = SkillContext(input={
+        "stock_name": "圣邦股份",
+        "periodic_report_filing_core_facts": [fallback_fact],
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.get("core_facts") == [fallback_fact]
+    assert ctx.get("synthesis")["core_facts"] == []
+
+
+def test_unsupported_core_facts_fall_back_to_periodic_filing_core_facts():
+    skill = SynthesisSkill(synthesizer=UnsupportedCoreFactSynthesizer())
+    fallback_fact = {
+        "fact_id": 1,
+        "fact": "营业收入",
+        "data": "389805.46万元",
+        "confidence": "高",
+        "provenance_status": "supported",
+        "source_labels": ["2025年annual"],
+        "evidence_type": "periodic_report_filing_fact",
+    }
+    ctx = SkillContext(input={
+        "stock_name": "圣邦股份",
+        "periodic_report_filing_core_facts": [fallback_fact],
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.get("core_facts") == [fallback_fact]
 
 
 def test_periodic_report_fulltext_knowledge_persistence_would_receive_baseline():
