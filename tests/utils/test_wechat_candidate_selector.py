@@ -69,6 +69,24 @@ def test_selector_keeps_analysis_marks_theme_product_signal_and_drops_marketing(
     assert summary["counts"] == {"keep": 1, "product_signal": 1, "drop": 2}
 
 
+def test_selector_drops_honor_articles():
+    summary = select_wechat_candidates(
+        [
+            {
+                "title": "双喜临门！圣邦集团荣膺双项行业重磅荣誉，实力铸就标杆！",
+                "account": "圣邦",
+                "digest": "公司荣誉新闻。",
+                "url": "https://mp.weixin.qq.com/s/honor",
+            }
+        ],
+        stock_config={"name": "圣邦股份"},
+    )
+
+    item = summary["items"][0]
+    assert item["action"] == "drop"
+    assert item["category"] == "marketing_or_event"
+
+
 def test_selector_uses_dynamic_theme_terms_for_other_company_without_shengbang_keywords():
     stock_config = {
         "name": "中际旭创",

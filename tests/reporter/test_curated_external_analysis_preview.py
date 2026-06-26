@@ -1,3 +1,4 @@
+import json
 import subprocess
 import sys
 from pathlib import Path
@@ -50,6 +51,74 @@ def test_curated_external_analysis_preview_help_runs() -> None:
     assert "--materials-dir" in result.stdout
     assert "--wechat-export-dir" in result.stdout
     assert "--wechat-max-items" in result.stdout
+    assert "--json-output" in result.stdout
+
+
+def test_curated_external_analysis_preview_cli_writes_markdown_and_json(tmp_path: Path) -> None:
+    materials_dir = tmp_path / "materials"
+    materials_dir.mkdir()
+    (materials_dir / "article.md").write_text("精选长文：模拟芯片和车规产品。", encoding="utf-8")
+    output = tmp_path / "preview.md"
+    json_output = tmp_path / "preview.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--materials-dir",
+            str(materials_dir),
+            "--output",
+            str(output),
+            "--json-output",
+            str(json_output),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert output.exists()
+    assert json_output.exists()
+    payload = json.loads(json_output.read_text(encoding="utf-8"))
+    assert payload["status"] == "ok"
+    assert payload["counts"] == {"local_file": 1}
+    assert len(payload["items"]) == 1
+    assert payload["wrote_knowledge"] is False
+    assert payload["connected_synthesis"] is False
+
+
+def test_curated_external_analysis_preview_json_items_keep_preview_only_isolation(tmp_path: Path) -> None:
+    materials_dir = tmp_path / "materials"
+    materials_dir.mkdir()
+    (materials_dir / "article.md").write_text("精选长文：模拟芯片和车规产品。", encoding="utf-8")
+    json_output = tmp_path / "preview.json"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--materials-dir",
+            str(materials_dir),
+            "--json-output",
+            str(json_output),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(json_output.read_text(encoding="utf-8"))
+    assert len(payload["items"]) == 1
+    item = payload["items"][0]
+    assert item["quality_action"] == "preview_only"
+    assert item["knowledge_eligible"] is False
+    assert item["synthesis_eligible"] is False
+    assert item["scoring_eligible"] is False
+    assert item["risk_score_eligible"] is False
 
 
 def test_curated_external_analysis_preview_cli_wechat_export_dir(tmp_path: Path) -> None:

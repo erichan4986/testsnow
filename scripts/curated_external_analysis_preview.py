@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--wechat-export-dir", default="", help="Directory containing WeChat article exports (.md/.txt/.html).")
     parser.add_argument("--wechat-max-items", type=int, default=0, help="Maximum WeChat articles to include (0 = unlimited).")
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT_PATH), help="Markdown preview output path.")
+    parser.add_argument("--json-output", default="", help="Structured JSON summary output path.")
     parser.add_argument("--max-item-chars", type=int, default=6000, help="Maximum preview characters per item.")
     args = parser.parse_args(argv)
 
@@ -36,12 +37,35 @@ def main(argv: list[str] | None = None) -> int:
         max_item_chars=args.max_item_chars,
     )
 
+    if args.json_output:
+        json_path = Path(args.json_output)
+        json_path.parent.mkdir(parents=True, exist_ok=True)
+        json_path.write_text(
+            json.dumps(
+                {
+                    "status": summary.get("status"),
+                    "counts": summary.get("counts", {}),
+                    "items": summary.get("items", []) or [],
+                    "errors": summary.get("errors", []) or [],
+                    "deduped_sources": summary.get("deduped_sources", []) or [],
+                    "wrote_knowledge": False,
+                    "connected_synthesis": False,
+                },
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            ),
+            encoding="utf-8",
+        )
+
     payload = {
         "status": summary.get("status"),
         "preview_path": summary.get("preview_path"),
+        "json_output_path": str(Path(args.json_output).resolve()) if args.json_output else "",
         "counts": summary.get("counts", {}),
         "errors_count": len(summary.get("errors", []) or []),
         "items_count": len(summary.get("items", []) or []),
+        "deduped_count": len(summary.get("deduped_sources", []) or []),
         "wrote_knowledge": False,
         "connected_synthesis": False,
     }

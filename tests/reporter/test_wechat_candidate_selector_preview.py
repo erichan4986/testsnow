@@ -75,6 +75,44 @@ def test_wechat_candidate_selector_preview_cli_writes_markdown(tmp_path: Path) -
     assert "product_signal" in markdown
 
 
+def test_wechat_candidate_selector_preview_cli_writes_jsonl(tmp_path: Path) -> None:
+    candidates = tmp_path / "candidates.txt"
+    candidates.write_text(
+        "2026-06-09 | 电子工程专辑 | 圣邦微电子推出车规级电子保险丝控制器SGM42148Q | "
+        "https://mp.weixin.qq.com/s/c | 车规级电源保护产品。\n",
+        encoding="utf-8",
+    )
+    output = tmp_path / "preview.md"
+    jsonl_output = tmp_path / "selector.jsonl"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--candidate-file",
+            str(candidates),
+            "--theme-term",
+            "车规",
+            "--output",
+            str(output),
+            "--jsonl-output",
+            str(jsonl_output),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    payload = json.loads(result.stdout)
+    assert payload["jsonl_path"] == str(jsonl_output)
+    rows = [json.loads(line) for line in jsonl_output.read_text(encoding="utf-8").splitlines()]
+    assert rows[0]["action"] == "product_signal"
+    assert rows[0]["synthesis_eligible"] is False
+    assert rows[0]["candidate"]["url"] == "https://mp.weixin.qq.com/s/c"
+
+
 def test_wechat_candidate_selector_preview_help_runs() -> None:
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--help"],
@@ -87,3 +125,4 @@ def test_wechat_candidate_selector_preview_help_runs() -> None:
     assert result.returncode == 0
     assert "--candidate-file" in result.stdout
     assert "--theme-term" in result.stdout
+    assert "--jsonl-output" in result.stdout

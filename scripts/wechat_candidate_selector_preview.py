@@ -24,6 +24,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--config", default=str(PROJECT_ROOT / "config" / "stocks.json"), help="stocks.json path.")
     parser.add_argument("--theme-term", action="append", default=[], help="Extra company/product/industry theme term.")
     parser.add_argument("--output", default=str(DEFAULT_WECHAT_CANDIDATE_PREVIEW_PATH), help="Markdown preview output path.")
+    parser.add_argument("--jsonl-output", default="", help="Optional JSONL output path for structured selector items.")
     args = parser.parse_args(argv)
 
     stock_config = load_stock_config(args.stock, args.config)
@@ -33,9 +34,23 @@ def main(argv: list[str] | None = None) -> int:
         stock_config=stock_config,
         extra_theme_terms=args.theme_term,
     )
+    jsonl_path = ""
+    if args.jsonl_output:
+        jsonl_output = Path(args.jsonl_output)
+        jsonl_output.parent.mkdir(parents=True, exist_ok=True)
+        jsonl_output.write_text(
+            "\n".join(
+                json.dumps(item, ensure_ascii=False, sort_keys=True)
+                for item in summary.get("items", []) or []
+            )
+            + ("\n" if summary.get("items") else ""),
+            encoding="utf-8",
+        )
+        jsonl_path = str(jsonl_output)
     payload = {
         "status": summary.get("status"),
         "preview_path": summary.get("preview_path"),
+        "jsonl_path": jsonl_path,
         "counts": summary.get("counts", {}),
         "items_count": len(summary.get("items", []) or []),
         "theme_terms_count": len(summary.get("theme_terms", []) or []),
