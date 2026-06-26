@@ -26,6 +26,18 @@ DEFAULT_DISCOVERY_PREVIEW_PATH = Path("/tmp/curated_external_candidate_discovery
 DEFAULT_DISCOVERY_JSONL_PATH = Path("/tmp/curated_external_candidate_discovery_candidates.jsonl")
 
 _SAFE_ACTIONS = {"keep", "product_signal"}
+_SAFE_WECHAT_CLASSIFICATIONS = {
+    "high_quality_analysis",
+    "customer_order_or_design_win",
+    "capacity_supply_chain_signal",
+    "industry_cycle_price_signal",
+    "certification_policy_standard",
+    "earnings_financial_context",
+    "product_or_event_signal",
+    "product_signal",
+    "capital_market_context",
+    "analysis",
+}
 _UNSAFE_ELIGIBILITY_FIELDS = (
     "knowledge_eligible",
     "synthesis_eligible",
@@ -214,10 +226,13 @@ def _wechat_selector_candidates(path: str | Path | None, *, max_item_chars: int)
         if not isinstance(raw, dict) or _has_unsafe_eligibility(raw):
             continue
         action = str(raw.get("action") or raw.get("wechat_action") or "")
-        if action not in _SAFE_ACTIONS:
+        classification = _normalize_wechat_classification(raw.get("classification") or raw.get("category") or action)
+        if action not in _SAFE_ACTIONS and classification not in _SAFE_WECHAT_CLASSIFICATIONS:
+            continue
+        if classification not in _SAFE_WECHAT_CLASSIFICATIONS:
             continue
         candidate = raw.get("candidate") if isinstance(raw.get("candidate"), dict) else raw
-        source_kind = "wechat_product_signal" if action == "product_signal" else "wechat_analysis_candidate"
+        source_kind = _wechat_source_kind(classification)
         items.append(
             _build_candidate(
                 source_kind=source_kind,
@@ -228,10 +243,11 @@ def _wechat_selector_candidates(path: str | Path | None, *, max_item_chars: int)
                     max_item_chars,
                 ),
                 account=str(candidate.get("account") or ""),
-                publish_time=str(candidate.get("publish_time") or candidate.get("date") or ""),
+                publish_time=str(candidate.get("publish_time") or candidate.get("publish_date") or candidate.get("date") or ""),
                 matched_terms=list(raw.get("matched_terms") or []),
-                source_type="wechat_product_signal" if source_kind == "wechat_product_signal" else "wechat_analysis_candidate",
-                wechat_action=action,
+                source_type=source_kind,
+                wechat_action=action or classification,
+                wechat_signal_category=classification,
                 quality_score=_as_int(raw.get("quality_score"), 0),
             )
         )
@@ -250,6 +266,7 @@ def _build_candidate(
     matched_terms: Optional[List[str]] = None,
     source_type: str = "",
     wechat_action: str = "",
+    wechat_signal_category: str = "",
     quality_score: int = 0,
 ) -> Dict[str, Any]:
     return {
@@ -263,6 +280,7 @@ def _build_candidate(
         "content_preview": _clean_text(content_preview),
         "matched_terms": matched_terms or [],
         "wechat_action": wechat_action,
+        "wechat_signal_category": wechat_signal_category,
         "quality_score": quality_score,
         "quality_action": "preview_only",
         "knowledge_eligible": False,
@@ -370,7 +388,14 @@ def _candidate_rank(item: Dict[str, Any]) -> tuple[int, List[str]]:
         "local_file": 80,
         "curated_preview": 68,
         "video_subtitle": 64,
+        "wechat_high_quality_analysis": 66,
+        "wechat_customer_order_or_design_win": 65,
+        "wechat_capacity_supply_chain_signal": 64,
+        "wechat_industry_cycle_price_signal": 63,
+        "wechat_earnings_financial_context": 62,
         "wechat_product_signal": 62,
+        "wechat_certification_policy_standard": 62,
+        "wechat_capital_market_context": 55,
         "wechat_analysis_candidate": 60,
         "url_candidate": 25,
     }.get(source_kind, 20)
@@ -380,7 +405,14 @@ def _candidate_rank(item: Dict[str, Any]) -> tuple[int, List[str]]:
             "local_file": "human_curated_local_file",
             "curated_preview": "curated_preview_item",
             "video_subtitle": "explicit_video_subtitle",
+            "wechat_high_quality_analysis": "wechat_high_quality_analysis",
+            "wechat_customer_order_or_design_win": "wechat_commercial_event",
+            "wechat_capacity_supply_chain_signal": "wechat_capacity_supply_chain_signal",
+            "wechat_industry_cycle_price_signal": "wechat_industry_cycle_price_signal",
+            "wechat_earnings_financial_context": "wechat_earnings_financial_context",
             "wechat_product_signal": "wechat_product_signal",
+            "wechat_certification_policy_standard": "wechat_certification_policy_standard",
+            "wechat_capital_market_context": "wechat_capital_market_context",
             "wechat_analysis_candidate": "wechat_analysis_candidate",
             "url_candidate": "explicit_url_candidate",
         }.get(source_kind, "source_kind")
@@ -448,6 +480,8 @@ def _render_candidate_lines(index: int, item: Dict[str, Any]) -> List[str]:
         lines.append(f"- publish_time: `{item.get('publish_time')}`")
     if item.get("matched_terms"):
         lines.append(f"- matched_terms: `{', '.join(item.get('matched_terms') or [])}`")
+    if item.get("wechat_signal_category"):
+        lines.append(f"- wechat_signal_category: `{item.get('wechat_signal_category')}`")
     if item.get("theme_score") is not None:
         lines.append(f"- theme_score: `{item.get('theme_score')}`")
     if item.get("matched_theme_terms"):
@@ -550,6 +584,25 @@ def _looks_like_fetch_error(content: str) -> bool:
         "429: too many requests",
     )
     return any(marker in text for marker in error_markers)
+
+
+def _normalize_wechat_classification(value: Any) -> str:
+    classification = str(value or "").strip()
+    if classification == "analysis":
+        return "high_quality_analysis"
+    if classification == "product_signal":
+        return "product_or_event_signal"
+    if classification == "keep":
+        return "high_quality_analysis"
+    return classification
+
+
+def _wechat_source_kind(classification: str) -> str:
+    if classification == "product_or_event_signal":
+        return "wechat_product_signal"
+    if classification == "high_quality_analysis":
+        return "wechat_high_quality_analysis"
+    return f"wechat_{classification}"
 
 
 def _normalized_url_key(url: str) -> str:

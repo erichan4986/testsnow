@@ -66,6 +66,58 @@ Decision:
   whether to do manual review or local ASR.  Do not silently fall back to logged
   in browser automation, cookies, video download, or comment scraping.
 
+## WeChat Targeted Discovery Follow-up
+
+2026-06-26 WeChat 180-day targeted discovery smokes covered six semiconductor
+stocks:
+
+| Stock | 180-day pattern | Useful WeChat categories |
+| --- | --- | --- |
+| 圣邦股份 | Low analysis density, high product noise | product / event signals; one weak capital-market context item |
+| 黑芝麻智能 | Event-driven with some analysis | high-quality analysis; commercialization / certification / cooperation signals |
+| 英集芯 | Low analysis density, product and price-cycle signal | product / event signals; industry cycle / price signal |
+| 中际旭创 | High analysis density and supply-chain depth | high-quality analysis; customer/order; capacity/supply chain; earnings context; capital-market context |
+| 寒武纪 | High attention, earnings and capital-market driven | earnings context; capital-market context; weak capacity/supply-chain mention |
+| 普冉股份 | Cycle and product mixed | industry cycle / price signal; one product-depth article |
+
+Design decision:
+
+- Do not model WeChat as only `wechat_product_signal`.
+- Preserve the source as preview-only material, but classify it into typed
+  groups:
+  - `high_quality_analysis`
+  - `customer_order_or_design_win`
+  - `capacity_supply_chain_signal`
+  - `industry_cycle_price_signal`
+  - `earnings_financial_context`
+  - `certification_policy_standard`
+  - `product_or_event_signal`
+  - `capital_market_context`
+- Do not set a fixed display cap for `high_quality_analysis` or
+  `customer_order_or_design_win`.  These are rare and high-value enough that
+  quality filtering and dedupe should be the limiting mechanisms.
+- Keep display caps for lower-priority categories such as product releases,
+  generic event signals, financial headlines, price-cycle notes, and
+  capital-market context.
+- Keep all WeChat items preview-only:
+  - `quality_action`: `preview_only`
+  - `knowledge_eligible`: `false`
+  - `synthesis_eligible`: `false`
+  - `scoring_eligible`: `false`
+  - `risk_score_eligible`: `false`
+
+Failure modes and tests:
+
+- Targeted smoke JSONL may use `classification` rather than the older
+  `action=keep/product_signal` format.  Candidate discovery must preserve the
+  classification as `wechat_signal_category`.
+- A renderer-level display cap must not hide high-quality analysis or
+  commercialization events.  Focused renderer tests should verify that these
+  groups remain fully visible while lower-priority product/event items are
+  capped.
+- The report must continue to avoid Knowledge, scoring, risk, and canonical
+  synthesis paths for all WeChat-derived materials.
+
 ## Boundary
 
 Social observation v1 is not a Knowledge source.

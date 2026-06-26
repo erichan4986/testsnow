@@ -218,7 +218,8 @@ def test_report_assembly_renders_curated_external_analysis_section(tmp_path):
     md_content = Path(result.get("md_path")).read_text(encoding="utf-8")
 
     assert "## 精选外部观察（Preview）" in md_content
-    assert "### 微信产品信号" in md_content
+    assert "### 微信精选观察" in md_content
+    assert "#### 产品/事件信号" in md_content
     assert "圣邦微 SGM25890 新品" in md_content
 
 

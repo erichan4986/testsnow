@@ -68,11 +68,66 @@ def test_curated_external_analysis_renderer_groups_wechat_product_signals():
 
     assert "### 精选长内容" in result
     assert "光模块深度文章" in result
-    assert "### 微信产品信号" in result
-    assert "只作为产品路线与新品密度观察" in result
+    assert "### 微信精选观察" in result
+    assert "#### 产品/事件信号" in result
+    assert "按材料类型分组展示" in result
     assert "圣邦微 SGM25890 新品" in result
     assert "account: 圣邦微电子" in result
     assert "publish_time: 2026-06-20" in result
+
+
+def test_curated_external_analysis_renderer_keeps_all_analysis_and_commercial_events_when_limited():
+    items = [
+        _item(
+            source_kind="wechat_high_quality_analysis",
+            source_type="wechat_high_quality_analysis",
+            wechat_signal_category="high_quality_analysis",
+            title=f"深度分析{i}",
+            content="AI 光互联龙头深度分析。",
+        )
+        for i in range(3)
+    ]
+    items.extend(
+        [
+            _item(
+                source_kind="wechat_customer_order_or_design_win",
+                source_type="wechat_customer_order_or_design_win",
+                wechat_signal_category="customer_order_or_design_win",
+                title=f"商业化事件{i}",
+                content="客户定点、订单、量产或供应链进入信号。",
+            )
+            for i in range(2)
+        ]
+    )
+    items.extend(
+        [
+            _item(
+                source_kind="wechat_product_signal",
+                source_type="wechat_product_signal",
+                wechat_signal_category="product_or_event_signal",
+                title=f"普通产品信号{i}",
+                content="产品发布。",
+            )
+            for i in range(4)
+        ]
+    )
+
+    result = CuratedExternalAnalysisRenderer().render(
+        _ctx(items, curated_external_analysis_max_display_items=2)
+    )
+
+    assert "### 微信精选观察" in result
+    assert "#### 深度分析" in result
+    assert "深度分析0" in result
+    assert "深度分析1" in result
+    assert "深度分析2" in result
+    assert "#### 商业化事件" in result
+    assert "商业化事件0" in result
+    assert "商业化事件1" in result
+    assert "#### 产品/事件信号" in result
+    assert "普通产品信号0" in result
+    assert "普通产品信号1" in result
+    assert "普通产品信号2" not in result
 
 
 def test_curated_external_analysis_renderer_filters_unsafe_items():
@@ -131,7 +186,8 @@ def test_curated_external_analysis_renderer_balances_long_content_and_wechat_whe
 
     assert "### 精选长内容" in result
     assert "36氪产业长文" in result
-    assert "### 微信产品信号" in result
+    assert "### 微信精选观察" in result
+    assert "#### 产品/事件信号" in result
     assert "微信产品0" in result
     assert "微信产品1" in result
     assert "微信产品2" in result

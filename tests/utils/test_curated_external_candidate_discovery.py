@@ -357,6 +357,75 @@ def test_discovery_preserves_video_subtitle_source_kind_from_curated_preview(tmp
     assert summary["items"][0]["source_kind"] == "video_subtitle"
 
 
+def test_discovery_accepts_targeted_wechat_classification_items(tmp_path: Path) -> None:
+    selector_file = tmp_path / "targeted_wechat.jsonl"
+    selector_file.write_text(
+        "\n".join(
+            [
+                json.dumps(
+                    {
+                        "title": "中际旭创：全球AI光互联龙头",
+                        "url": "https://mp.weixin.qq.com/s/analysis",
+                        "publish_date": "2026-05-24",
+                        "account": "海陆清风",
+                        "digest": "深度受益 AI 算力全球扩容，1.6T 引领新周期。",
+                        "classification": "high_quality_analysis",
+                        "quality_action": "preview_only",
+                        "knowledge_eligible": False,
+                        "synthesis_eligible": False,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                    },
+                    ensure_ascii=False,
+                ),
+                json.dumps(
+                    {
+                        "title": "开盘暴涨800%！中际旭创设备供应商登陆科创板",
+                        "url": "https://mp.weixin.qq.com/s/order",
+                        "publish_date": "2026-04-24",
+                        "account": "半导体产业纵横",
+                        "digest": "设备供应商推出 1.6T 光模块核心测试仪器。",
+                        "classification": "customer_order_or_design_win",
+                        "quality_action": "preview_only",
+                        "knowledge_eligible": False,
+                        "synthesis_eligible": False,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                    },
+                    ensure_ascii=False,
+                ),
+                json.dumps(
+                    {
+                        "title": "招聘启事",
+                        "url": "https://mp.weixin.qq.com/s/drop",
+                        "publish_date": "2026-06-01",
+                        "classification": "drop",
+                        "quality_action": "preview_only",
+                    },
+                    ensure_ascii=False,
+                ),
+            ]
+        ),
+        encoding="utf-8",
+    )
+
+    summary = build_curated_external_candidate_discovery(wechat_selector_file=selector_file)
+
+    assert summary["counts"] == {
+        "wechat_customer_order_or_design_win": 1,
+        "wechat_high_quality_analysis": 1,
+    }
+    items_by_title = {item["title"]: item for item in summary["items"]}
+    analysis = items_by_title["中际旭创：全球AI光互联龙头"]
+    assert analysis["wechat_signal_category"] == "high_quality_analysis"
+    assert analysis["source_type"] == "wechat_high_quality_analysis"
+    assert analysis["publish_time"] == "2026-05-24"
+    assert analysis["quality_action"] == "preview_only"
+    assert analysis["knowledge_eligible"] is False
+    assert analysis["synthesis_eligible"] is False
+    assert "招聘启事" not in items_by_title
+
+
 def test_discovery_markdown_records_preview_only_items_and_dedupes() -> None:
     summary = {
         "status": "ok",
