@@ -110,6 +110,34 @@ def test_curated_external_analysis_renderer_accepts_summary_items_and_limits_cou
     assert "材料2" not in result
 
 
+def test_curated_external_analysis_renderer_balances_long_content_and_wechat_when_limited():
+    wechat_items = [
+        _item(
+            source_kind="wechat_product_signal",
+            source_type="wechat_product_signal",
+            title=f"微信产品{i}",
+            content=f"产品信号{i}",
+        )
+        for i in range(5)
+    ]
+    long_item = _item(source_kind="curated_preview", title="36氪产业长文", content="光芯片与模拟芯片产业链长文。")
+
+    result = CuratedExternalAnalysisRenderer().render(
+        _ctx(
+            [*wechat_items, long_item],
+            curated_external_analysis_max_display_items=4,
+        )
+    )
+
+    assert "### 精选长内容" in result
+    assert "36氪产业长文" in result
+    assert "### 微信产品信号" in result
+    assert "微信产品0" in result
+    assert "微信产品1" in result
+    assert "微信产品2" in result
+    assert "微信产品3" not in result
+
+
 def test_curated_external_analysis_renderer_quotes_external_excerpt_headings():
     result = CuratedExternalAnalysisRenderer().render(
         _ctx([

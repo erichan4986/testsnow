@@ -180,13 +180,16 @@ def _curated_preview_candidates(path: str | Path | None, *, max_item_chars: int)
             continue
         raw_source_kind = str(raw.get("source_kind") or "")
         source_kind = raw_source_kind if raw_source_kind in _PRESERVED_CURATED_SOURCE_KINDS else "curated_preview"
+        content_preview = _truncate(str(raw.get("content") or raw.get("content_preview") or ""), max_item_chars)
+        if _looks_like_fetch_error(content_preview):
+            continue
         items.append(
             _build_candidate(
                 source_kind=source_kind,
                 title=str(raw.get("title") or raw.get("url") or raw.get("path") or "curated-preview"),
                 url=str(raw.get("url") or ""),
                 path=str(raw.get("path") or ""),
-                content_preview=_truncate(str(raw.get("content") or raw.get("content_preview") or ""), max_item_chars),
+                content_preview=content_preview,
                 source_type=str(raw.get("source_type") or raw.get("source_kind") or ""),
             )
         )
@@ -449,6 +452,21 @@ def _read_json_or_jsonl(path: str | Path) -> Any:
 
 def _has_unsafe_eligibility(item: Dict[str, Any]) -> bool:
     return any(bool(item.get(field)) for field in _UNSAFE_ELIGIBILITY_FIELDS)
+
+
+def _looks_like_fetch_error(content: str) -> bool:
+    text = _clean_text(content).lower()
+    if not text:
+        return False
+    error_markers = (
+        "warning: target url returned error",
+        "404: not found",
+        "403: forbidden",
+        "502: bad gateway",
+        "503: service unavailable",
+        "429: too many requests",
+    )
+    return any(marker in text for marker in error_markers)
 
 
 def _normalized_url_key(url: str) -> str:

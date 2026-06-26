@@ -122,6 +122,47 @@ def test_discovery_dedupes_content_fingerprint_with_local_material_preferred(tmp
     }
 
 
+def test_discovery_filters_curated_preview_error_pages(tmp_path: Path) -> None:
+    curated_summary = tmp_path / "curated_summary.json"
+    curated_summary.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "source_kind": "jina_url",
+                        "title": "坏链接",
+                        "url": "https://www.36kr.com/p/missing",
+                        "content": "Title: 36氪_让一部分人先看到未来 Published Time: 2026 Warning: Target URL returned error 404: Not Found",
+                        "quality_action": "preview_only",
+                        "knowledge_eligible": False,
+                        "synthesis_eligible": False,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                    },
+                    {
+                        "source_kind": "jina_url",
+                        "title": "光模块，一路狂飙",
+                        "url": "https://www.36kr.com/p/good",
+                        "content": "光模块是 AI 算力基础设施的重要环节，800G 与 1.6T 需求增长。",
+                        "quality_action": "preview_only",
+                        "knowledge_eligible": False,
+                        "synthesis_eligible": False,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                    },
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    summary = build_curated_external_candidate_discovery(curated_preview_file=curated_summary)
+
+    assert summary["counts"] == {"curated_preview": 1}
+    assert [item["title"] for item in summary["items"]] == ["光模块，一路狂飙"]
+
+
 def test_discovery_filters_candidates_older_than_since_date(tmp_path: Path) -> None:
     selector_file = tmp_path / "selector.jsonl"
     selector_file.write_text(

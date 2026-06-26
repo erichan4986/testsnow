@@ -23,12 +23,9 @@ class CuratedExternalAnalysisRenderer:
             return ""
 
         max_items = self._as_int(ctx.get("curated_external_analysis_max_display_items"), DEFAULT_MAX_DISPLAY_ITEMS)
-        items = items[: max(0, max_items)]
-        if not items:
+        curated_items, wechat_items = self._split_display_items(items, max(0, max_items))
+        if not curated_items and not wechat_items:
             return ""
-
-        curated_items = [item for item in items if item.get("source_kind") != "wechat_product_signal"]
-        wechat_items = [item for item in items if item.get("source_kind") == "wechat_product_signal"]
 
         lines = [
             "## 精选外部观察（Preview）",
@@ -66,6 +63,33 @@ class CuratedExternalAnalysisRenderer:
 
         items = [dict(item) for item in raw_items if isinstance(item, dict)]
         return [item for item in items if self._is_preview_safe(item)]
+
+    @staticmethod
+    def _split_display_items(items: List[Dict[str, Any]], max_items: int) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        if max_items <= 0:
+            return [], []
+
+        curated_all = [item for item in items if item.get("source_kind") != "wechat_product_signal"]
+        wechat_all = [item for item in items if item.get("source_kind") == "wechat_product_signal"]
+        if not curated_all:
+            return [], wechat_all[:max_items]
+        if not wechat_all:
+            return curated_all[:max_items], []
+
+        curated_limit = max(1, max_items // 2)
+        wechat_limit = max_items - curated_limit
+        curated_items = curated_all[:curated_limit]
+        wechat_items = wechat_all[:wechat_limit]
+
+        leftover = max_items - len(curated_items) - len(wechat_items)
+        if leftover > 0 and len(curated_all) > len(curated_items):
+            extra = curated_all[len(curated_items) : len(curated_items) + leftover]
+            curated_items.extend(extra)
+            leftover -= len(extra)
+        if leftover > 0 and len(wechat_all) > len(wechat_items):
+            wechat_items.extend(wechat_all[len(wechat_items) : len(wechat_items) + leftover])
+
+        return curated_items, wechat_items
 
     @staticmethod
     def _is_preview_safe(item: Dict[str, Any]) -> bool:
