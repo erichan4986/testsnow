@@ -119,6 +119,63 @@ def test_curated_external_candidate_discovery_preview_cli_filters_since_date(tmp
     assert "过旧分析" not in output.read_text(encoding="utf-8")
 
 
+def test_curated_external_candidate_discovery_preview_cli_filters_theme_keywords(tmp_path: Path) -> None:
+    curated = tmp_path / "curated.json"
+    curated.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "source_kind": "jina_url",
+                        "title": "光模块长文",
+                        "url": "https://example.com/optical",
+                        "content": "光模块和 CPO 产业链。",
+                        "quality_action": "preview_only",
+                    },
+                    {
+                        "source_kind": "jina_url",
+                        "title": "模拟芯片长文",
+                        "url": "https://example.com/analog",
+                        "content": "圣邦股份、模拟芯片、信号链、电源管理与车规产品线。",
+                        "quality_action": "preview_only",
+                    },
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    output = tmp_path / "preview.md"
+    jsonl_output = tmp_path / "candidates.jsonl"
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(SCRIPT),
+            "--curated-preview-file",
+            str(curated),
+            "--theme-keywords",
+            "圣邦,模拟芯片,信号链,电源管理,车规",
+            "--min-theme-score",
+            "1",
+            "--output",
+            str(output),
+            "--jsonl-output",
+            str(jsonl_output),
+        ],
+        cwd=REPO_ROOT,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    rows = [json.loads(line) for line in jsonl_output.read_text(encoding="utf-8").splitlines()]
+    assert [row["title"] for row in rows] == ["模拟芯片长文"]
+    assert rows[0]["theme_score"] > 0
+    assert "光模块长文" not in output.read_text(encoding="utf-8")
+
+
 def test_curated_external_candidate_discovery_preview_help_runs() -> None:
     result = subprocess.run(
         [sys.executable, str(SCRIPT), "--help"],
@@ -134,3 +191,5 @@ def test_curated_external_candidate_discovery_preview_help_runs() -> None:
     assert "--wechat-selector-file" in result.stdout
     assert "--curated-preview-file" in result.stdout
     assert "--since-date" in result.stdout
+    assert "--theme-keywords" in result.stdout
+    assert "--min-theme-score" in result.stdout

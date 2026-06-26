@@ -163,6 +163,47 @@ def test_discovery_filters_curated_preview_error_pages(tmp_path: Path) -> None:
     assert [item["title"] for item in summary["items"]] == ["光模块，一路狂飙"]
 
 
+def test_discovery_filters_and_scores_candidates_by_theme_keywords(tmp_path: Path) -> None:
+    curated_summary = tmp_path / "curated_summary.json"
+    curated_summary.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "source_kind": "jina_url",
+                        "title": "光模块，一路狂飙",
+                        "url": "https://www.36kr.com/p/optical",
+                        "content": "光模块和 CPO 受益于 AI 算力需求。",
+                        "quality_action": "preview_only",
+                    },
+                    {
+                        "source_kind": "jina_url",
+                        "title": "模拟芯片国产替代进入深水区",
+                        "url": "https://example.com/analog",
+                        "content": "圣邦股份覆盖模拟芯片、信号链、电源管理、车规、ADC 和 LDO 产品方向。",
+                        "quality_action": "preview_only",
+                    },
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    summary = build_curated_external_candidate_discovery(
+        curated_preview_file=curated_summary,
+        theme_keywords="圣邦,模拟芯片,信号链,电源管理,车规,ADC,LDO",
+        min_theme_score=1,
+    )
+
+    assert summary["counts"] == {"curated_preview": 1}
+    item = summary["items"][0]
+    assert item["title"] == "模拟芯片国产替代进入深水区"
+    assert item["theme_score"] > 0
+    assert set(item["matched_theme_terms"]) >= {"圣邦", "模拟芯片", "信号链", "电源管理"}
+    assert "theme_match" in item["ranking_reasons"]
+
+
 def test_discovery_filters_candidates_older_than_since_date(tmp_path: Path) -> None:
     selector_file = tmp_path / "selector.jsonl"
     selector_file.write_text(

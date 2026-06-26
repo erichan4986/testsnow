@@ -14,7 +14,7 @@ import re
 import urllib.parse
 from collections import Counter
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Iterable, List, Optional
 
 if __name__.startswith("utils."):
     from .curated_external_analysis_pack import DEFAULT_MAX_ITEM_CHARS, load_url_list, read_local_materials
@@ -42,6 +42,8 @@ def build_curated_external_candidate_discovery(
     wechat_selector_file: str | Path | None = None,
     curated_preview_file: str | Path | None = None,
     since_date: str | None = None,
+    theme_keywords: str | Iterable[str] | None = None,
+    min_theme_score: int = 0,
     max_item_chars: int = DEFAULT_MAX_ITEM_CHARS,
 ) -> Dict[str, Any]:
     """Build a local preview-only candidate pool from existing inputs."""
@@ -52,8 +54,10 @@ def build_curated_external_candidate_discovery(
     candidates.extend(_local_material_candidates(materials_dir, max_item_chars=max_item_chars))
     candidates.extend(_wechat_selector_candidates(wechat_selector_file, max_item_chars=max_item_chars))
 
+    theme_terms = _normalize_theme_keywords(theme_keywords)
     candidates = _filter_since_date(candidates, since_date)
-    candidates = [_annotate_candidate_rank(item) for item in candidates]
+    candidates = [_annotate_candidate_rank(item, theme_keywords=theme_terms) for item in candidates]
+    candidates = _filter_theme_score(candidates, min_theme_score)
     items, deduped_sources = _dedupe_candidates(candidates)
     items = sorted(items, key=_candidate_sort_key, reverse=True)
     counts = dict(Counter(item.get("source_kind", "") for item in items))
@@ -112,6 +116,8 @@ def write_curated_external_candidate_discovery_preview(
     wechat_selector_file: str | Path | None = None,
     curated_preview_file: str | Path | None = None,
     since_date: str | None = None,
+    theme_keywords: str | Iterable[str] | None = None,
+    min_theme_score: int = 0,
     output_path: str | Path = DEFAULT_DISCOVERY_PREVIEW_PATH,
     jsonl_output_path: str | Path = DEFAULT_DISCOVERY_JSONL_PATH,
     max_item_chars: int = DEFAULT_MAX_ITEM_CHARS,
@@ -123,6 +129,8 @@ def write_curated_external_candidate_discovery_preview(
         wechat_selector_file=wechat_selector_file,
         curated_preview_file=curated_preview_file,
         since_date=since_date,
+        theme_keywords=theme_keywords,
+        min_theme_score=min_theme_score,
         max_item_chars=max_item_chars,
     )
     markdown_path = Path(output_path)
@@ -342,8 +350,11 @@ def _candidate_sort_key(item: Dict[str, Any]) -> tuple[int, str, int]:
     return _candidate_priority(item)
 
 
-def _annotate_candidate_rank(item: Dict[str, Any]) -> Dict[str, Any]:
+def _annotate_candidate_rank(item: Dict[str, Any], *, theme_keywords: List[str]) -> Dict[str, Any]:
     ranked = dict(item)
+    theme_score, matched_theme_terms = _candidate_theme_match(ranked, theme_keywords)
+    ranked["theme_score"] = theme_score
+    ranked["matched_theme_terms"] = matched_theme_terms
     score, reasons = _candidate_rank(ranked)
     ranked["discovery_score"] = score
     ranked["ranking_reasons"] = reasons
@@ -384,6 +395,11 @@ def _candidate_rank(item: Dict[str, Any]) -> tuple[int, List[str]]:
     if matched_terms:
         score += min(len(matched_terms), 5) * 2
         reasons.append("matched_terms")
+
+    theme_score = _as_int(item.get("theme_score"), 0)
+    if theme_score:
+        score += min(theme_score * 4, 40)
+        reasons.append("theme_match")
 
     if _date_key(str(item.get("publish_time") or "")):
         score += 5
@@ -432,6 +448,10 @@ def _render_candidate_lines(index: int, item: Dict[str, Any]) -> List[str]:
         lines.append(f"- publish_time: `{item.get('publish_time')}`")
     if item.get("matched_terms"):
         lines.append(f"- matched_terms: `{', '.join(item.get('matched_terms') or [])}`")
+    if item.get("theme_score") is not None:
+        lines.append(f"- theme_score: `{item.get('theme_score')}`")
+    if item.get("matched_theme_terms"):
+        lines.append(f"- matched_theme_terms: `{', '.join(item.get('matched_theme_terms') or [])}`")
     if item.get("content_preview"):
         lines.extend(["", str(item.get("content_preview") or ""), ""])
     else:
@@ -452,6 +472,69 @@ def _read_json_or_jsonl(path: str | Path) -> Any:
 
 def _has_unsafe_eligibility(item: Dict[str, Any]) -> bool:
     return any(bool(item.get(field)) for field in _UNSAFE_ELIGIBILITY_FIELDS)
+
+
+def _filter_theme_score(items: List[Dict[str, Any]], min_theme_score: int) -> List[Dict[str, Any]]:
+    if min_theme_score <= 0:
+        return items
+    return [item for item in items if _as_int(item.get("theme_score"), 0) >= min_theme_score]
+
+
+def _normalize_theme_keywords(value: str | Iterable[str] | None) -> List[str]:
+    if value is None:
+        return []
+
+    raw_terms: List[str] = []
+    if isinstance(value, str):
+        raw_terms.extend(re.split(r"[,，;；\n]+", value))
+    else:
+        for item in value:
+            raw_terms.extend(re.split(r"[,，;；\n]+", str(item or "")))
+
+    terms: List[str] = []
+    seen = set()
+    for raw in raw_terms:
+        term = _clean_text(raw)
+        if not term:
+            continue
+        key = term.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        terms.append(term)
+    return terms
+
+
+def _candidate_theme_match(item: Dict[str, Any], keywords: List[str]) -> tuple[int, List[str]]:
+    if not keywords:
+        return 0, []
+
+    title_text = str(item.get("title") or "").lower()
+    body_text = " ".join(
+        [
+            str(item.get("content_preview") or ""),
+            str(item.get("account") or ""),
+            str(item.get("source_type") or ""),
+            " ".join(str(term) for term in item.get("matched_terms") or []),
+        ]
+    ).lower()
+
+    score = 0
+    matched: List[str] = []
+    for term in keywords:
+        key = term.lower()
+        if not key:
+            continue
+        title_hit = key in title_text
+        body_hit = key in body_text
+        if not title_hit and not body_hit:
+            continue
+        matched.append(term)
+        if title_hit:
+            score += 3
+        if body_hit:
+            score += 2
+    return score, matched
 
 
 def _looks_like_fetch_error(content: str) -> bool:
