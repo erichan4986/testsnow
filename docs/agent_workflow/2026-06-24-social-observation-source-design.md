@@ -150,6 +150,103 @@ Product decision:
   context.  It must not silently promote to Knowledge, canonical synthesis,
   scoring, risk, or final recommendation logic.
 
+## Longer-Term Synthesis Quality Plan
+
+The current report synthesis path can continue to work, but adding more
+external sources directly to a `source -> prompt -> article` flow will make the
+system harder to audit.  The preferred long-term direction is:
+
+`source -> evidence cards + excerpt packs -> topic buckets -> claim candidates -> cited narrative`
+
+Rationale:
+
+- Keep the research process separate from the writing process.
+- Prevent low-credit sources such as WeChat, forums, market commentary, or
+  syndicated media from being written as confirmed facts.
+- Preserve traceability from each written claim back to `source_ref` / URL /
+  file path.
+- Deduplicate syndicated articles and repeated claims before the LLM sees them,
+  so repeated reposts are not mistaken for independent confirmation.
+- Preserve conflicts and uncertainty as explicit multi-source disagreement
+  rather than smoothing them into vague prose.
+
+Important constraint:
+
+- Evidence cards must not replace the underlying material.  Each useful card
+  should keep an attached excerpt pack with enough source detail for the LLM to
+  write a non-generic paragraph.  A card is the index and control layer; the
+  excerpt pack is the material layer.
+
+Phase 1 / Phase 2 hard gates from the read-only review:
+
+- **Schema boundary**: evidence cards should reuse the existing
+  `periodic_report_narrative_evidence_card.v1` shape where practical:
+  `card_id`, `evidence_refs`, `source_excerpt_hash`, `source_credit`,
+  `verification_status`, `synthesis_display_only`, and source metadata.  For
+  external sources, `source_ref` must be a stable canonical URL or local file
+  path plus hash, not a vague source kind.
+- **Excerpt fidelity**: card generation must not use an LLM to rewrite source
+  excerpts.  `source_excerpt` should be deterministic source slices.  A
+  fidelity check should verify that each normalized excerpt is a substring of
+  the normalized source content.
+- **Excerpt budget**: excerpt packs need explicit length and count limits so
+  the preview can reveal when a topic would exceed a practical prompt budget.
+- **Cross-platform dedupe before claims**: run canonical URL normalization and
+  content fingerprinting before topic bucketing and claim extraction.  Reposts
+  should merge into one claim candidate while preserving multiple
+  `source_files` / `source_platforms`.
+- **Display-only isolation**: any item with `synthesis_display_only=true` must
+  also keep `knowledge_eligible=false`, `scoring_eligible=false`, and
+  `risk_score_eligible=false`.  Add tests or CI gates so display-only sources
+  cannot enter scoring, risk, or final recommendation paths.
+- **Citation resolvability**: every generated narrative paragraph in Phase 2
+  must bind to at least one resolvable evidence reference.  Renderers should
+  surface unresolved references visibly instead of silently dropping them.
+- **Observation wording guard**: prompts and post-processing should prevent
+  low-credit `professional_observation` / `market_observation` material from
+  being written as confirmed facts.  Add a lint pass for overclaiming terms such
+  as "确认", "确定", "已经证实", or "必将" when they rely only on
+  display-only evidence.
+
+Suggested phased rollout:
+
+1. **Phase 1: preview only**
+   - Build `curated_external_to_evidence_cards_preview`.
+   - Input: curated external synthesis display items.
+   - Output: JSON / Markdown with short evidence cards plus attached excerpts.
+   - Do not connect to report generation, Knowledge, scoring, risk, or final
+     recommendation.
+   - Goal: verify that the cards preserve enough detail and do not over-compress
+     the source.
+
+2. **Phase 2: display-only deep-analysis input**
+   - Allow evidence cards / excerpts to contribute to `## 四、深度分析`.
+   - Keep `knowledge_eligible=false`, `synthesis_display_only=true`,
+     `scoring_eligible=false`, and `risk_score_eligible=false`.
+   - Require paragraph-level citations to card IDs / source refs.
+   - Do not allow these materials into the core fact base, scoring, risk, or
+     final recommendation.
+
+3. **Phase 3: migrate existing non-official sources gradually**
+   - Move Zhihu, broker research, iwencai industry research, and curated external
+     materials toward the same card / excerpt interface.
+   - Keep official announcements and periodic reports as the only default
+     confirmed-fact sources.
+   - Use card grouping to improve dedupe and contradiction handling.
+
+4. **Phase 4: claim-level fact upgrades**
+   - Only promote a claim toward core facts when an official / high-credit source
+     independently verifies it.
+   - Display-only cards may seed claims, but cannot confirm claims by themselves.
+
+Expected impact:
+
+- High impact on source boundary quality, citation traceability, and prevention
+  of overclaiming.
+- Medium impact on depth of analysis, depending on source quality and excerpt
+  richness.
+- No direct short-term impact on scoring or risk, by design.
+
 ## Boundary
 
 Social observation v1 is not a Knowledge source.
