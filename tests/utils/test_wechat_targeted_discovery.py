@@ -114,6 +114,15 @@ class TestClassify:
         cat, _ = classify("圣邦股份市值突破千亿", "", "资本号", "300661")
         assert cat == "capital_market_context"
 
+    def test_capital_market_terms_beat_industry_price_terms(self):
+        cat, _ = classify(
+            "华为苹果也要涨价！国内又一MCU公司涨价！港交所圣邦微等6家同日招股,\"03661.HK\"拟本月上市",
+            "",
+            "集微网",
+            "300661",
+        )
+        assert cat == "capital_market_context"
+
     def test_drop_recruiting(self):
         cat, _ = classify("圣邦股份2026届校园招聘启动", "", "HR", "300661")
         assert cat == "drop"

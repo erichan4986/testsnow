@@ -493,6 +493,9 @@ def classify(
     if any(t in title for t in _CAPACITY_SUPPLY_CHAIN_TERMS):
         return "capacity_supply_chain_signal", "标题含扩产/产能/良率/交付/上游/材料/封测/设备/供应链等"
 
+    if is_capital_short:
+        return "capital_market_context", "涉及IPO/上市/招股/募资/股价/市值/再融资等资本市场信息"
+
     if any(t in title for t in _INDUSTRY_CYCLE_PRICE_TERMS):
         if "股价" not in title and "市值" not in title:
             return "industry_cycle_price_signal", "标题含涨价/供需/库存周期/行业景气/复苏/价格战/存储周期等"
@@ -502,9 +505,6 @@ def classify(
 
     if any(t in title for t in _EARNINGS_TERMS):
         return "earnings_financial_context", "标题含财报/业绩/营收/利润/亏损/盈利/毛利率等"
-
-    if is_capital_short:
-        return "capital_market_context", "涉及IPO/上市/招股/募资/股价/市值/再融资等资本市场信息"
 
     if any(t in text for t in _PRODUCT_EVENT_TERMS):
         return "product_or_event_signal", "新品/方案/产品/参数/应用场景/展会/论坛/技术路线/AI芯片/存储等"
