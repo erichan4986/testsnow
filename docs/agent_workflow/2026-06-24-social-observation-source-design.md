@@ -33,6 +33,39 @@ Current dirty files were pre-existing work from Source Intake news changes:
 | YouTube subtitles | Usable when captions exist | `yt-dlp` can list automatic captions for the tested YouTube video. |
 | Bilibili subtitles | Partially usable | `yt-dlp` can parse the page, but the tested video did not expose a usable subtitle list. |
 
+## Video Source Follow-up
+
+2026-06-26 Bilibili / YouTube video smoke:
+
+- `yt-dlp` subtitle extraction failed in the current environment:
+  - Bilibili: 5 / 5 tested videos returned HTTP 412.
+  - YouTube fallback: 3 / 3 tested videos returned HTTP 429.
+- Bilibili candidate discovery was possible after installing the PyPI package
+  `bilibili-cli==0.6.2` locally for smoke only.  The command is `bili`; the
+  npm package name `bili-cli` was not available.
+- The low-risk Bilibili discovery result produced 82 raw candidates for
+  Shengbang / analog-chip queries.  A stricter second pass kept only:
+  - 3 `transcript_candidate` items;
+  - 1 `watchlist` item;
+  - 12 `evergreen_background` items;
+  - 66 `drop` items.
+- Only 2 of the 3 transcript candidates were within the last 180 days.  The
+  strongest candidate was a single Shengbang-specific video from 2026-05-17.
+
+Decision:
+
+- Do not make Bilibili an automatic source.
+- Do not add broad video search to the report pipeline.
+- Do not depend on `bilibili-cli` as a project dependency.
+- Keep the generic explicit-URL `curated_external_video_subtitle_preview.py`
+  helper as a preview-only utility for hand-picked videos.
+- Treat Bilibili videos as opportunistic material only: a user or reviewer may
+  provide a small URL list, then the preview tool may attempt subtitle extraction
+  without writing Knowledge, synthesis, scoring, risk, or report inputs.
+- If a high-value video lacks usable subtitles, decide in a separate task
+  whether to do manual review or local ASR.  Do not silently fall back to logged
+  in browser automation, cookies, video download, or comment scraping.
+
 ## Boundary
 
 Social observation v1 is not a Knowledge source.
