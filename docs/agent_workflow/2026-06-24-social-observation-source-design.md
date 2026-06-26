@@ -118,6 +118,38 @@ Failure modes and tests:
 - The report must continue to avoid Knowledge, scoring, risk, and canonical
   synthesis paths for all WeChat-derived materials.
 
+2026-06-26 implementation close-out:
+
+- `scripts/wechat_targeted_discovery_preview.py` is the stable preview-only
+  WeChat targeted discovery entrypoint.  It writes Markdown / JSONL to `/tmp`
+  by default, can optionally download a small number of bodies, and keeps all
+  retained items at preview-only eligibility.
+- `scripts/curated_external_section_preview.py` renders a candidate JSONL into
+  the same `精选外部观察（Preview）` section shape used by the report renderer.
+  This replaces one-off `/tmp/write_curated_section.py` smoke helpers.
+- Latest Shengbang smoke with the committed classifier fix changed the
+  "涨价 + 招股 / 上市" headline from `industry_cycle_price_signal` to
+  `capital_market_context`, which better reflects its content.
+- Black Sesame and Shengbang section previews render successfully from candidate
+  JSONL without writing Knowledge, reports, raw data, synthesis, scoring, or
+  risk inputs.
+
+Product decision:
+
+- Keep WeChat targeted discovery as a **manual / optional external materials
+  pack**.  Do not enable it as a default report section for every stock.
+- Reasons:
+  - Shengbang-style names can be dominated by product releases and product
+    compilations, which dilute the core report if shown by default.
+  - Event-driven names such as Black Sesame can produce useful commercial or
+    certification signals, but those still require human review before they
+    should influence any analysis.
+  - The source remains high-duplication and preview-only by design.
+- A reviewer may generate the pack before a report run, inspect the section
+  preview, and then decide manually whether to include the materials as display
+  context.  It must not silently promote to Knowledge, canonical synthesis,
+  scoring, risk, or final recommendation logic.
+
 ## Boundary
 
 Social observation v1 is not a Knowledge source.
