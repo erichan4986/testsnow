@@ -247,6 +247,21 @@ Expected impact:
   richness.
 - No direct short-term impact on scoring or risk, by design.
 
+2026-06-26 Phase 1 preview implementation note:
+
+- `scripts/curated_external_evidence_cards_preview.py` and
+  `scripts/utils/curated_external_evidence_cards.py` implement the preview-only
+  card / excerpt step for curated external synthesis display items.
+- The tool writes Markdown / JSON to `/tmp` by default and does not connect to
+  report generation, Knowledge, canonical synthesis, scoring, risk, or final
+  recommendation.
+- The preview enforces deterministic source excerpts, normalized-substring
+  fidelity checks, canonical URL / content-fingerprint dedupe, and display-only
+  isolation fields.
+- Smoke outputs for Black Sesame and Shengbang confirmed card generation and
+  excerpt fidelity; Shengbang still has thin excerpts because the upstream
+  WeChat candidate content is mostly product-signal summaries.
+
 ## Boundary
 
 Social observation v1 is not a Knowledge source.
