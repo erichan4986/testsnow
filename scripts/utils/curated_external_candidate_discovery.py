@@ -32,6 +32,7 @@ _UNSAFE_ELIGIBILITY_FIELDS = (
     "scoring_eligible",
     "risk_score_eligible",
 )
+_PRESERVED_CURATED_SOURCE_KINDS = {"video_subtitle"}
 
 
 def build_curated_external_candidate_discovery(
@@ -175,9 +176,11 @@ def _curated_preview_candidates(path: str | Path | None, *, max_item_chars: int)
         quality_action = str(raw.get("quality_action") or "preview_only")
         if quality_action != "preview_only":
             continue
+        raw_source_kind = str(raw.get("source_kind") or "")
+        source_kind = raw_source_kind if raw_source_kind in _PRESERVED_CURATED_SOURCE_KINDS else "curated_preview"
         items.append(
             _build_candidate(
-                source_kind="curated_preview",
+                source_kind=source_kind,
                 title=str(raw.get("title") or raw.get("url") or raw.get("path") or "curated-preview"),
                 url=str(raw.get("url") or ""),
                 path=str(raw.get("path") or ""),

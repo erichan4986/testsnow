@@ -162,6 +162,36 @@ def test_discovery_filters_candidates_older_than_since_date(tmp_path: Path) -> N
     assert [item["title"] for item in summary["items"]] == ["近期新品"]
 
 
+def test_discovery_preserves_video_subtitle_source_kind_from_curated_preview(tmp_path: Path) -> None:
+    video_preview = tmp_path / "video_preview.json"
+    video_preview.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "source_kind": "video_subtitle",
+                        "title": "AI 电源访谈",
+                        "url": "https://www.youtube.com/watch?v=abc123",
+                        "content": "AI 电源和车规模拟芯片讨论。",
+                        "quality_action": "preview_only",
+                        "knowledge_eligible": False,
+                        "synthesis_eligible": False,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    summary = build_curated_external_candidate_discovery(curated_preview_file=video_preview)
+
+    assert summary["counts"] == {"video_subtitle": 1}
+    assert summary["items"][0]["source_kind"] == "video_subtitle"
+
+
 def test_discovery_markdown_records_preview_only_items_and_dedupes() -> None:
     summary = {
         "status": "ok",
