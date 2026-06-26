@@ -53,7 +53,9 @@ def build_curated_external_candidate_discovery(
     candidates.extend(_wechat_selector_candidates(wechat_selector_file, max_item_chars=max_item_chars))
 
     candidates = _filter_since_date(candidates, since_date)
+    candidates = [_annotate_candidate_rank(item) for item in candidates]
     items, deduped_sources = _dedupe_candidates(candidates)
+    items = sorted(items, key=_candidate_sort_key, reverse=True)
     counts = dict(Counter(item.get("source_kind", "") for item in items))
     return {
         "status": "ok" if items else "empty",
@@ -266,15 +268,16 @@ def _dedupe_candidates(items: List[Dict[str, Any]]) -> tuple[List[Dict[str, Any]
 
     for item in items:
         keys = _candidate_dedupe_keys(item)
-        duplicate_index = next((seen[key] for key in keys if key in seen), None)
-        if duplicate_index is None:
+        duplicate_key = next((key for key in keys if key in seen), "")
+        if not duplicate_key:
             kept_items.append(item)
             for key in keys:
                 seen[key] = len(kept_items) - 1
             continue
 
+        duplicate_index = seen[duplicate_key]
         kept = kept_items[duplicate_index]
-        reason = _dedupe_reason(kept, item)
+        reason = _dedupe_reason(duplicate_key)
         if _candidate_priority(item) > _candidate_priority(kept):
             kept_items[duplicate_index] = item
             for key in _candidate_dedupe_keys(kept):
@@ -310,25 +313,95 @@ def _candidate_dedupe_keys(item: Dict[str, Any]) -> List[str]:
     fingerprint = _content_fingerprint(str(item.get("content_preview") or ""))
     if fingerprint:
         keys.append(f"content:{fingerprint}")
+    title_fingerprint = _title_fingerprint(str(item.get("title") or ""))
+    if title_fingerprint:
+        keys.append(f"title:{title_fingerprint}")
     return keys
 
 
-def _dedupe_reason(kept: Dict[str, Any], duplicate: Dict[str, Any]) -> str:
-    kept_url = _normalized_url_key(str(kept.get("url") or ""))
-    duplicate_url = _normalized_url_key(str(duplicate.get("url") or ""))
-    if kept_url and kept_url == duplicate_url:
+def _dedupe_reason(duplicate_key: str) -> str:
+    if duplicate_key.startswith("url:"):
         return "normalized_url"
+    if duplicate_key.startswith("title:"):
+        return "title_fingerprint"
     return "content_fingerprint"
 
 
-def _candidate_priority(item: Dict[str, Any]) -> int:
-    return {
-        "local_file": 50,
-        "wechat_product_signal": 40,
-        "wechat_analysis_candidate": 38,
-        "curated_preview": 30,
-        "url_candidate": 20,
-    }.get(str(item.get("source_kind") or ""), 0)
+def _candidate_priority(item: Dict[str, Any]) -> tuple[int, str, int]:
+    return (
+        _as_int(item.get("discovery_score"), 0),
+        _date_key(str(item.get("publish_time") or "")),
+        len(str(item.get("content_preview") or "")),
+    )
+
+
+def _candidate_sort_key(item: Dict[str, Any]) -> tuple[int, str, int]:
+    return _candidate_priority(item)
+
+
+def _annotate_candidate_rank(item: Dict[str, Any]) -> Dict[str, Any]:
+    ranked = dict(item)
+    score, reasons = _candidate_rank(ranked)
+    ranked["discovery_score"] = score
+    ranked["ranking_reasons"] = reasons
+    return ranked
+
+
+def _candidate_rank(item: Dict[str, Any]) -> tuple[int, List[str]]:
+    score = 0
+    reasons: List[str] = []
+    source_kind = str(item.get("source_kind") or "")
+
+    source_score = {
+        "local_file": 80,
+        "curated_preview": 68,
+        "video_subtitle": 64,
+        "wechat_product_signal": 62,
+        "wechat_analysis_candidate": 60,
+        "url_candidate": 25,
+    }.get(source_kind, 20)
+    score += source_score
+    reasons.append(
+        {
+            "local_file": "human_curated_local_file",
+            "curated_preview": "curated_preview_item",
+            "video_subtitle": "explicit_video_subtitle",
+            "wechat_product_signal": "wechat_product_signal",
+            "wechat_analysis_candidate": "wechat_analysis_candidate",
+            "url_candidate": "explicit_url_candidate",
+        }.get(source_kind, "source_kind")
+    )
+
+    quality_score = max(0, min(_as_int(item.get("quality_score"), 0), 100))
+    if quality_score:
+        score += quality_score // 5
+        reasons.append("selector_quality_score")
+
+    matched_terms = item.get("matched_terms") or []
+    if matched_terms:
+        score += min(len(matched_terms), 5) * 2
+        reasons.append("matched_terms")
+
+    if _date_key(str(item.get("publish_time") or "")):
+        score += 5
+        reasons.append("dated_candidate")
+
+    content_length = len(str(item.get("content_preview") or ""))
+    if content_length >= 1200:
+        score += 8
+        reasons.append("substantive_content")
+    elif content_length >= 240:
+        score += 4
+        reasons.append("content_preview")
+
+    if item.get("url"):
+        score += 2
+        reasons.append("traceable_url")
+    if item.get("path"):
+        score += 2
+        reasons.append("traceable_local_path")
+
+    return score, reasons
 
 
 def _render_candidate_lines(index: int, item: Dict[str, Any]) -> List[str]:
@@ -342,6 +415,10 @@ def _render_candidate_lines(index: int, item: Dict[str, Any]) -> List[str]:
         f"- scoring_eligible: `{str(bool(item.get('scoring_eligible'))).lower()}`",
         f"- risk_score_eligible: `{str(bool(item.get('risk_score_eligible'))).lower()}`",
     ]
+    if item.get("discovery_score") is not None:
+        lines.append(f"- discovery_score: `{item.get('discovery_score')}`")
+    if item.get("ranking_reasons"):
+        lines.append(f"- ranking_reasons: `{', '.join(item.get('ranking_reasons') or [])}`")
     if item.get("url"):
         lines.append(f"- url: {item.get('url')}")
     if item.get("path"):
@@ -402,12 +479,21 @@ def _content_fingerprint(content: str) -> str:
     return hashlib.sha1(normalized.encode("utf-8")).hexdigest()
 
 
+def _title_fingerprint(title: str) -> str:
+    normalized = re.sub(r"\.(?:md|txt|html?|jsonl?|json)$", "", title or "", flags=re.IGNORECASE)
+    normalized = re.sub(r"[`*_#>\-|:：，,。.!！?？、；;（）()\[\]{}\"'“”‘’\s]", "", normalized).lower()
+    if len(normalized) < 14:
+        return ""
+    return hashlib.sha1(normalized.encode("utf-8")).hexdigest()
+
+
 def _source_ref(item: Dict[str, Any]) -> Dict[str, str]:
     return {
         "source_kind": str(item.get("source_kind") or ""),
         "title": str(item.get("title") or ""),
         "url": str(item.get("url") or ""),
         "path": str(item.get("path") or ""),
+        "discovery_score": str(item.get("discovery_score") or ""),
     }
 
 

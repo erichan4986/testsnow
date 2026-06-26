@@ -162,6 +162,89 @@ def test_discovery_filters_candidates_older_than_since_date(tmp_path: Path) -> N
     assert [item["title"] for item in summary["items"]] == ["近期新品"]
 
 
+def test_discovery_dedupes_same_title_and_keeps_higher_ranked_candidate(tmp_path: Path) -> None:
+    curated_summary = tmp_path / "curated_summary.json"
+    curated_summary.write_text(
+        json.dumps(
+            {
+                "items": [
+                    {
+                        "source_kind": "jina_url",
+                        "title": "光芯片：AI算力时代的光子革命",
+                        "url": "https://36kr.com/p/repost",
+                        "content": "较短转载摘要。",
+                        "quality_action": "preview_only",
+                        "knowledge_eligible": False,
+                        "synthesis_eligible": False,
+                        "scoring_eligible": False,
+                        "risk_score_eligible": False,
+                    }
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    materials_dir = tmp_path / "materials"
+    materials_dir.mkdir()
+    (materials_dir / "光芯片：AI算力时代的光子革命.md").write_text(
+        "光芯片：AI算力时代的光子革命\n\n" + "硅光、薄膜铌酸锂、CPO、800G、1.6T 与 AI 算力互联。" * 20,
+        encoding="utf-8",
+    )
+
+    summary = build_curated_external_candidate_discovery(
+        curated_preview_file=curated_summary,
+        materials_dir=materials_dir,
+    )
+
+    assert summary["counts"] == {"local_file": 1}
+    assert summary["items"][0]["source_kind"] == "local_file"
+    assert summary["items"][0]["discovery_score"] > 0
+    assert "human_curated_local_file" in summary["items"][0]["ranking_reasons"]
+    assert summary["deduped_sources"][0]["reason"] == "title_fingerprint"
+    assert summary["deduped_sources"][0]["kept"]["source_kind"] == "local_file"
+    assert summary["deduped_sources"][0]["duplicate"]["source_kind"] == "curated_preview"
+
+
+def test_discovery_sorts_candidates_by_quality_rank(tmp_path: Path) -> None:
+    url_list = tmp_path / "urls.txt"
+    url_list.write_text("泛链接 | https://example.com/weak\n", encoding="utf-8")
+    selector_file = tmp_path / "wechat_selector.jsonl"
+    selector_file.write_text(
+        json.dumps(
+            {
+                "action": "product_signal",
+                "quality_score": 85,
+                "matched_terms": ["AI 电源", "车规"],
+                "candidate": {
+                    "title": "圣邦微电子推出90A Smart Power Stage SGM25890",
+                    "url": "https://mp.weixin.qq.com/s/power",
+                    "publish_time": "2026-06-01",
+                    "digest": "面向 AI 服务器电源的 90A Smart Power Stage，包含电流检测与高频电源场景。",
+                },
+            },
+            ensure_ascii=False,
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+
+    summary = build_curated_external_candidate_discovery(
+        url_list_path=url_list,
+        wechat_selector_file=selector_file,
+    )
+
+    assert [item["source_kind"] for item in summary["items"]] == [
+        "wechat_product_signal",
+        "url_candidate",
+    ]
+    top = summary["items"][0]
+    assert top["discovery_score"] > summary["items"][1]["discovery_score"]
+    assert "selector_quality_score" in top["ranking_reasons"]
+    assert "matched_terms" in top["ranking_reasons"]
+    assert "dated_candidate" in top["ranking_reasons"]
+
+
 def test_discovery_preserves_video_subtitle_source_kind_from_curated_preview(tmp_path: Path) -> None:
     video_preview = tmp_path / "video_preview.json"
     video_preview.write_text(
