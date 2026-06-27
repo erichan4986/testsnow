@@ -267,6 +267,8 @@ class SynthesisSkill(BaseSkill):
             extra_items=curated_items,
             deduped_sources_key="deep_analysis_display_deduped_sources",
         )
+        if self._is_template_fallback_synthesis(display):
+            display = self._deterministic_curated_external_display(stock_name, curated_items)
         lint = lint_curated_external_display_text(display)
         ctx.set("curated_external_evidence_cards_lint", lint)
         if not lint.get("ok"):
@@ -278,6 +280,81 @@ class SynthesisSkill(BaseSkill):
         ctx.set("deep_analysis_display_sources", display.get("_sources", []))
         ctx.set("synthesis_text_with_curated_external_evidence_cards", display_text)
         ctx.set("curated_external_evidence_cards_status", "ok")
+
+    @staticmethod
+    def _is_template_fallback_synthesis(synthesis: dict) -> bool:
+        """Detect the generic non-LLM template so curated cards can still render."""
+        if not isinstance(synthesis, dict):
+            return True
+        if synthesis.get("citations"):
+            return False
+        text = "\n".join(str(synthesis.get(key, "")) for key in SYNTHESIS_KEYS)
+        return "LLM 合成未启用或未产生有效输出" in text
+
+    def _deterministic_curated_external_display(self, stock_name: str, items: list) -> dict:
+        """Build a cited, display-only deep-analysis fallback without calling an LLM."""
+        grouped = {
+            "industry_logic": [],
+            "fundamentals": [],
+            "valuation_debate": [],
+            "funding_sentiment": [],
+            "events_catalysts": [],
+        }
+        citations = {}
+
+        for ref_id, item in enumerate(items, start=1):
+            topic = (item.extra or {}).get("topic") or ""
+            line = self._format_curated_external_observation(item, ref_id)
+            if topic == "industry_logic":
+                grouped["industry_logic"].append(line)
+            elif topic in ("earnings_context", "cycle_price", "capital_market_context"):
+                grouped["fundamentals"].append(line)
+            elif topic in ("commercialization", "certification_policy"):
+                grouped["events_catalysts"].append(line)
+            else:
+                grouped["events_catalysts"].append(line)
+            citations[ref_id] = {"_placeholder": True}
+
+        fallback = {
+            "industry_logic": self._join_curated_external_observations(
+                stock_name,
+                "产业逻辑相关线索",
+                grouped["industry_logic"],
+            ),
+            "fundamentals": self._join_curated_external_observations(
+                stock_name,
+                "业绩、周期或资本市场相关线索",
+                grouped["fundamentals"],
+            ),
+            "valuation_debate": "精选外部材料仅作为专业观察，不直接形成估值结论；估值仍应回到官方财务、市场价格和评分模型。",
+            "funding_sentiment": "精选外部材料不直接生成资金面判断，资金面仍以交易数据、资金流和市场指标为准。",
+            "events_catalysts": self._join_curated_external_observations(
+                stock_name,
+                "商业化、认证、政策或事件跟踪线索",
+                grouped["events_catalysts"],
+            ),
+            "core_facts": [],
+            "citations": citations,
+            "_items_count": len(items),
+            "_sources": self._source_list(items),
+        }
+        return self._fill_citation_metadata(fallback, items)
+
+    @staticmethod
+    def _format_curated_external_observation(item, ref_id: int) -> str:
+        title = " ".join(str(item.title or "未命名材料").split())[:80]
+        content = str(item.content or "")
+        excerpt = content.split("\n\n", 1)[-1] if "\n\n" in content else content
+        excerpt = " ".join(excerpt.split())[:220]
+        if excerpt:
+            return f"《{title}》观察到：{excerpt}[^{ref_id}]"
+        return f"《{title}》提供了一条外部观察线索[^{ref_id}]"
+
+    @staticmethod
+    def _join_curated_external_observations(stock_name: str, label: str, lines: list) -> str:
+        if not lines:
+            return ""
+        return f"精选外部材料仅作为专业观察，提示 {stock_name} 的{label}包括：" + "；".join(lines)
 
     def _synthesize(
         self,

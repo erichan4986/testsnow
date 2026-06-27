@@ -863,6 +863,55 @@ def test_curated_external_enabled_sets_deep_analysis_display(tmp_path):
     assert result.get("deep_analysis_display_deduped_sources") == []
 
 
+def test_curated_external_uses_deterministic_fallback_when_synthesizer_returns_empty(tmp_path):
+    cards = [
+        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+        _make_curated_card("c2", "commercialization", _long_chinese_excerpt(500)),
+        _make_curated_card("c3", "earnings_context", _long_chinese_excerpt(500)),
+    ]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    class EmptySynthesizer:
+        def synthesize(self, stock_name, all_data):
+            return {
+                "industry_logic": "",
+                "fundamentals": "",
+                "valuation_debate": "",
+                "funding_sentiment": "",
+                "events_catalysts": "",
+                "core_facts": [],
+                "citations": {},
+            }
+
+    skill = SynthesisSkill(synthesizer=EmptySynthesizer())
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_evidence_cards_in_synthesis_display": True,
+        "curated_external_evidence_cards_json": str(path),
+        "curated_external_evidence_cards_min_cards": 3,
+        "curated_external_evidence_cards_min_total_excerpt_chars": 1000,
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    display = ctx.output.get("deep_analysis_display") or {}
+    assert ctx.output.get("curated_external_evidence_cards_status") == "ok"
+    assert "基本面 LLM 合成未启用" not in display.get("fundamentals", "")
+    assert "card c1" in display.get("industry_logic", "")
+    assert "card c2" in display.get("events_catalysts", "")
+    assert "card c3" in display.get("fundamentals", "")
+    citations = display.get("citations") or {}
+    assert (citations.get(1) or citations.get("1") or {}).get("card_id") == "c1"
+    assert ctx.output.get("synthesis_display") is None
+
+
 def test_curated_external_one_card_does_not_set_deep_analysis_display(tmp_path):
     cards = [_make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500))]
     path = _write_curated_cards_json(tmp_path, cards)
