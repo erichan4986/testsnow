@@ -243,6 +243,31 @@ Add a default-off switch:
 include_curated_external_evidence_cards_in_synthesis_display
 ```
 
+`build_stock_report_pipeline()` must expose explicit default-off parameters
+instead of relying on unstructured `**kwargs`:
+
+```python
+def build_stock_report_pipeline(
+    llm_client=None,
+    enable_agent_reach: bool = False,
+    enable_evidence_notes: bool = False,
+    enable_claim_risk_signals: bool = False,
+    enable_source_intake: bool = False,
+    enable_periodic_report_fulltext_intake: bool = False,
+    include_curated_external_evidence_cards_in_synthesis_display: bool = False,
+    curated_external_evidence_cards_json: str = "",
+    curated_external_evidence_cards_max_display_items: int = 8,
+    curated_external_evidence_cards_min_cards: int = 3,
+    curated_external_evidence_cards_min_total_excerpt_chars: int = 1200,
+) -> SkillPipeline:
+    ...
+```
+
+The pipeline should instantiate `SynthesisSkill` with these values or otherwise
+make them available to the skill in a typed, testable way.  Runtime
+`pipeline_input` may still override paths / gates, but the report entrypoint
+must not depend on arbitrary, undocumented kwargs.
+
 Suggested context keys:
 
 ```text
@@ -289,6 +314,36 @@ curated_external_evidence_cards_synthesis_display:
   min_total_excerpt_chars: 1200
 ```
 
+Suggested mapping behavior in `stock_reporter.py`:
+
+```python
+curated_external_cards_cfg = (
+    si_cfg.get("curated_external_evidence_cards_synthesis_display", {}) or {}
+)
+curated_external_cards_enabled = bool(
+    source_intake_enabled and curated_external_cards_cfg.get("enabled", False)
+)
+
+if curated_external_cards_enabled:
+    pipeline_kwargs["include_curated_external_evidence_cards_in_synthesis_display"] = True
+    pipeline_kwargs["curated_external_evidence_cards_json"] = (
+        curated_external_cards_cfg.get("cards_json", "")
+    )
+    pipeline_kwargs["curated_external_evidence_cards_max_display_items"] = (
+        curated_external_cards_cfg.get("max_display_items", 8)
+    )
+    pipeline_kwargs["curated_external_evidence_cards_min_cards"] = (
+        curated_external_cards_cfg.get("min_cards", 3)
+    )
+    pipeline_kwargs["curated_external_evidence_cards_min_total_excerpt_chars"] = (
+        curated_external_cards_cfg.get("min_total_excerpt_chars", 1200)
+    )
+```
+
+The same values should be copied into `pipeline_input` if `SynthesisSkill`
+reads gates from context.  Tests should lock whichever implementation path is
+chosen.
+
 ## 9. Citation Requirements
 
 Each display paragraph that uses curated external evidence must contain numeric
@@ -323,6 +378,9 @@ The lint must be citation-aware:
 - split display text into sentences;
 - extract numeric citations from each sentence;
 - classify each citation by citation metadata;
+- classify a citation as curated external only when
+  `source_type == "curated_external_analysis_evidence"` and
+  `source_credit <= 65`;
 - flag a sentence only when it contains strong-confirmation terms and all
   citations in that sentence are curated-external display-only sources;
 - allow strong-confirmation terms when the sentence cites at least one
@@ -473,6 +531,19 @@ Do not modify:
 - technical analysis modules
 - report entry scripts
 - external scraping / WeChat exporter / Xueqiu / Playwright code
+
+CI gate expectations:
+
+- Add `scripts/utils/curated_external_evidence_card_synthesis_items.py` and
+  `scripts/utils/curated_external_display_lint.py` to helper leak checks.
+- Add a curated-external leak pattern over core files:
+  `curated_external_analysis_evidence`,
+  `deep_analysis_display_sources`, and
+  `synthesis_text_with_curated_external_evidence_cards` must not appear in:
+  - `scripts/utils/reporter/scoring_engine.py`
+  - `scripts/utils/reporter/sections/risk_renderer.py`
+  - `scripts/utils/report_skills/knowledge_skills.py`
+  - `scripts/utils/knowledge_synthesizer.py`
 
 ## 14. Pilot Plan
 
@@ -734,3 +805,173 @@ Reason:
 - `scripts/utils/reporter/sections/risk_renderer.py`
 - technical analysis / EV / target price modules
 - external scraping / WeChat exporter / Xueqiu / Playwright code
+
+## Round 2 Feedback
+
+**Status:** Ready to implement (with required deltas to be locked in PR)
+**R3 Needed:** No
+
+### Findings
+
+#### Blocker
+
+None. Round 1 blocker has been resolved at the design level.
+
+#### Must-fix
+
+1. **Config wiring needs concrete signature in `build_stock_report_pipeline`.**
+   The design now correctly puts `report_skills/__init__.py` and
+   `stock_reporter.py` in the allowed scope, but still describes the wiring
+   narratively. Before implementation, add explicit parameters to
+   `build_stock_report_pipeline`, for example:
+   ```python
+   include_curated_external_evidence_cards_in_synthesis_display: bool = False,
+   curated_external_evidence_cards_json: str = "",
+   curated_external_evidence_cards_max_display_items: int = 8,
+   curated_external_evidence_cards_min_cards: int = 3,
+   curated_external_evidence_cards_min_total_excerpt_chars: int = 1200,
+   ```
+   And map them from `source_intake_configs.<stock>.curated_external_evidence_cards_synthesis_display`
+   in `stock_reporter.py` exactly like the existing periodic-narrative and
+   broker-digest branches. Without this, the feature remains unreachable.
+
+2. **`_fill_citation_metadata()` must forward card traceability fields.**
+   The design requires `card_id`, `source_ref`, `source_excerpt_hash`,
+   `source_block_hash`, and `topic` in citation metadata, but the current
+   `_fill_citation_metadata()` only copies a fixed whitelist. Implementation
+   must extend that method (or add a post-fill step) so the rendered reference
+   list is traceable back to the card JSON. This is a hard requirement, not a
+   nice-to-have.
+
+3. **Overclaim lint must classify curated-external citations by `source_type`,
+   not only by `source_platform`.**
+   A citation should be considered curated-external display-only when
+   `source_type == "curated_external_analysis_evidence"` **and**
+   `source_credit <= 65` (or equivalent metadata flag). Relying solely on
+   `source_platform == "微信公众号精选观察"` is brittle and could misclassify
+   future WeChat-derived sources. This keeps the lint deterministic and
+   independent of rendering labels.
+
+4. **`SynthesisSkill.run()` must not write curated external items into
+   `ctx["synthesis_display"]`.**
+   The narrower `deep_analysis_display` key is the right boundary, but the
+   implementation must guarantee that the existing `synthesis_display` branch
+   (consumed by `ExecutiveSummaryRenderer` and `HTMLDashboardRenderer`) is
+   built from the same baseline + periodic/broker extras as before. Any
+   accidental append would reintroduce the Round 1 leak.
+
+5. **`tools/ci_grep_gates.sh` needs a concrete curated-external leak gate.**
+   The design says update CI gates but does not specify the check. Add:
+   - the two new helper files to `HELPER_LEAK_FILES`;
+   - a dedicated gate that greps `scoring_engine.py`, `risk_renderer.py`,
+     `knowledge_skills.py`, and `knowledge_synthesizer.py` for
+     `curated_external_analysis_evidence`, `deep_analysis_display_sources`,
+     and `synthesis_text_with_curated_external_evidence_cards`.
+
+#### Nice-to-have
+
+6. **Update `credit_usage_rules_text()` to name `curated_external_analysis_evidence`.**
+   The existing rules already cover “微信公众号” as medium-credit
+   observation-only, so this is not required. Adding the explicit source type
+   makes the prompt unambiguous and is low risk.
+
+7. **Consider a more surgical lint fallback later.**
+   For Phase 2, falling back to baseline `deep_analysis_display` when lint
+   fails is acceptable because the key is display-only and separate from
+   `synthesis_display`. A future improvement could drop only curated external
+   items and re-synthesize the remaining display extras, but that is not a
+   Phase 2 blocker.
+
+8. **Add `deep_analysis_display_sources` to the report header only if desired.**
+   Currently `_data_sources()` reads `synthesis_sources` (baseline). Leaving
+   the new source out of the header keeps the report surface unchanged, which
+   is safer for the pilot.
+
+### Required design deltas
+
+- Add the exact `build_stock_report_pipeline` signature and
+  `stock_reporter.py` mapping snippet to section 8 (or to the implementation
+  PR description).
+- In section 7 / 9, explicitly state that `_fill_citation_metadata()` will
+  be extended to forward `card_id`, `source_ref`, `source_excerpt_hash`,
+  `source_block_hash`, and `topic` into each citation entry.
+- In section 10, define curated-external citation classification as
+  `source_type == "curated_external_analysis_evidence"` plus
+  `source_credit <= 65`.
+- In section 13, list `tools/ci_grep_gates.sh` helper-file additions and the
+  new curated-external leak pattern.
+
+### Missing tests
+
+- **Config wiring:** `stock_reporter.py` correctly sets the new pipeline
+  kwargs from `source_intake_configs` only when `source_intake_enabled` and
+  the subsection `enabled` are true.
+- **Helper unit tests:** `curated_external_evidence_card_synthesis_items.py`
+  gates (topic, substance filter, Chinese density, source_credit cap,
+  deterministic ordering).
+- **Lint unit tests:** `curated_external_display_lint.py` sentence splitting,
+  citation classification, strong-term detection, mixed-citation pass,
+  curated-only fail.
+- **Isolation tests:** canonical keys `synthesis`, `core_facts`,
+  `synthesis_text`, `synthesis_sources`, and `synthesis_display` stay
+  byte-for-byte / structurally unchanged when curated external is enabled.
+- **Renderer test:** `DeepAnalysisRenderer` prefers `deep_analysis_display`
+  over `synthesis_display` and over `synthesis`.
+- **End-to-end smoke:** 中际旭创 enriched cards render curated material in
+  `## 四、深度分析`; 圣邦股份 one-card sample stays baseline.
+- **Executive/HTML leak test:** with `deep_analysis_display` set and
+  `synthesis_display` unchanged, bullish/bearish extraction in
+  `ExecutiveSummaryRenderer` and `HTMLDashboardRenderer` does not produce
+  points solely attributable to curated external citations.
+
+### Implementation task recommendations
+
+- Use TDD for the two new helpers and the lint function; write failing tests
+  first, then the minimal code to pass.
+- Keep the feature default-off and gated by `source_intake_enabled`.
+- Reuse `dedupe_synthesis_display_items()` for the new branch, but verify
+  that deduplication does not drop traceability fields needed for citation
+  metadata.
+- In `_fill_citation_metadata()`, place card traceability fields at the
+  citation entry top level (not nested under `extra`) so
+  `DeepAnalysisRenderer` and the lint pass can access them directly.
+- Run `node tests/run-all.js` and `npx markdownlint-cli '**/*.md' --ignore
+  node_modules` before committing.
+
+## Design Delta After Round 2
+
+Accepted:
+
+- Locked the `build_stock_report_pipeline()` signature with explicit
+  default-off curated external parameters.
+- Added a concrete `stock_reporter.py` mapping sketch for
+  `source_intake_configs.<stock>.curated_external_evidence_cards_synthesis_display`.
+- Defined curated-external citation classification for lint as
+  `source_type == "curated_external_analysis_evidence"` plus
+  `source_credit <= 65`.
+- Added concrete CI leak patterns and helper files for
+  `tools/ci_grep_gates.sh`.
+- Kept `KnowledgeSynthesizer` prompt unchanged for Phase 2.
+
+Rejected:
+
+- No Round 2 finding was rejected.
+- The generic suggestion to run `node tests/run-all.js` and markdownlint is not
+  adopted for this Python report repository.  Phase 2 verification should use
+  focused `pytest`, `compileall`, `tools/ci_grep_gates.sh`, and
+  `git diff --check`.
+
+Deferred:
+
+- More surgical lint fallback that re-synthesizes after dropping only curated
+  external items is deferred.  Phase 2 will use the simpler safe behavior:
+  leave `deep_analysis_display` unset on lint failure.
+- Adding `deep_analysis_display_sources` to the report header is deferred to
+  avoid expanding the visible report surface during the pilot.
+
+R3 required: no.
+
+Reason:
+
+- Round 2 found no design blocker.  Remaining requirements are implementation
+  details now locked by this delta and should be enforced through tests.
