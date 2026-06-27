@@ -483,3 +483,98 @@ def test_broker_research_digest_display_requires_source_intake_enabled():
 
     call_input = mock_pipeline.run.call_args[0][0]
     assert "include_broker_research_digest_in_synthesis_display" not in call_input
+
+
+def test_source_intake_curated_external_display_default_off():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={"测试股": {"enabled": True}},
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert "include_curated_external_evidence_cards_in_synthesis_display" not in call_input
+    assert "curated_external_evidence_cards_json" not in call_input
+
+
+def test_source_intake_curated_external_display_enabled_passes_context():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "curated_external_evidence_cards_synthesis_display": {
+                    "enabled": True,
+                    "cards_json": "/tmp/cards.json",
+                    "max_display_items": 6,
+                    "min_cards": 2,
+                    "min_total_excerpt_chars": 900,
+                },
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+        include_curated_external_evidence_cards_in_synthesis_display=True,
+        curated_external_evidence_cards_json="/tmp/cards.json",
+        curated_external_evidence_cards_max_display_items=6,
+        curated_external_evidence_cards_min_cards=2,
+        curated_external_evidence_cards_min_total_excerpt_chars=900,
+    )
+
+
+def test_curated_external_display_requires_source_intake_enabled():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": False,
+                "curated_external_evidence_cards_synthesis_display": {"enabled": True},
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert "include_curated_external_evidence_cards_in_synthesis_display" not in call_input

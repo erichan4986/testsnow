@@ -21,6 +21,10 @@ if __name__.startswith("utils."):
         load_broker_research_digest_synthesis_items,
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
+    from ..curated_external_evidence_card_synthesis_items import (
+        load_curated_external_evidence_card_synthesis_items,
+    )
+    from ..curated_external_display_lint import lint_curated_external_display_text
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -39,6 +43,10 @@ else:
         load_broker_research_digest_synthesis_items,
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
+    from curated_external_evidence_card_synthesis_items import (
+        load_curated_external_evidence_card_synthesis_items,
+    )
+    from curated_external_display_lint import lint_curated_external_display_text
 
 
 SYNTHESIS_KEYS = [
@@ -110,6 +118,11 @@ class SynthesisSkill(BaseSkill):
                 ctx.set("synthesis_text_with_periodic_narrative_cards", display_text)
             if broker_digest_items:
                 ctx.set("synthesis_text_with_broker_research_digest", display_text)
+
+        # Curated external evidence cards: separate deep-analysis-only display path.
+        # This branch intentionally does not reuse ctx["synthesis_display"].
+        self._build_deep_analysis_display(ctx)
+
         return ctx
 
     @staticmethod
@@ -192,7 +205,89 @@ class SynthesisSkill(BaseSkill):
         except Exception:
             return []
 
-    def _synthesize(self, stock_name: str, stock_raw: dict, keep_posts: list, ctx: SkillContext = None, extra_items: list = None) -> dict:
+    def _build_deep_analysis_display(self, ctx: SkillContext) -> None:
+        """Build a deep-analysis-only display synthesis from curated external cards.
+
+        On success this writes ctx["deep_analysis_display"] (and related keys).
+        On failure or insufficient material it writes status/stats explaining why
+        and leaves canonical synthesis keys unchanged.
+        """
+        enabled = bool(
+            ctx.get("include_curated_external_evidence_cards_in_synthesis_display")
+            or getattr(self, "include_curated_external_evidence_cards_in_synthesis_display", False)
+        )
+        if not enabled:
+            return
+
+        cards_json = ctx.get("curated_external_evidence_cards_json") or getattr(
+            self, "curated_external_evidence_cards_json", ""
+        )
+        if not cards_json:
+            ctx.set("curated_external_evidence_cards_status", "missing_config")
+            ctx.set("curated_external_evidence_cards_stats", {"rejection_reasons": ["curated_external_evidence_cards_json not set"]})
+            return
+
+        max_items = ctx.get("curated_external_evidence_cards_max_display_items")
+        if max_items is None:
+            max_items = getattr(self, "curated_external_evidence_cards_max_display_items", 8)
+        min_cards = ctx.get("curated_external_evidence_cards_min_cards")
+        if min_cards is None:
+            min_cards = getattr(self, "curated_external_evidence_cards_min_cards", 3)
+        min_total = ctx.get("curated_external_evidence_cards_min_total_excerpt_chars")
+        if min_total is None:
+            min_total = getattr(self, "curated_external_evidence_cards_min_total_excerpt_chars", 1200)
+
+        try:
+            curated_items, stats = load_curated_external_evidence_card_synthesis_items(
+                cards_json,
+                max_items=int(max_items),
+                min_cards=int(min_cards),
+                min_total_excerpt_chars=int(min_total),
+            )
+        except Exception as exc:
+            ctx.set("curated_external_evidence_cards_status", "reader_error")
+            ctx.set("curated_external_evidence_cards_stats", {"rejection_reasons": [str(exc)]})
+            return
+
+        ctx.set("curated_external_evidence_cards_status", stats.get("status"))
+        ctx.set("curated_external_evidence_cards_stats", stats)
+
+        if not curated_items:
+            return
+
+        stock_name = ctx.get("stock_name")
+        stock_raw = ctx.get("stock_raw", {})
+        keep_posts = ctx.get("keep_posts", [])
+
+        display = self._synthesize(
+            stock_name,
+            stock_raw,
+            keep_posts,
+            ctx,
+            extra_items=curated_items,
+            deduped_sources_key="deep_analysis_display_deduped_sources",
+        )
+        lint = lint_curated_external_display_text(display)
+        ctx.set("curated_external_evidence_cards_lint", lint)
+        if not lint.get("ok"):
+            ctx.set("curated_external_evidence_cards_status", "lint_failed")
+            return
+
+        display_text = self._flatten_synthesis_text(display)
+        ctx.set("deep_analysis_display", display)
+        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
+        ctx.set("synthesis_text_with_curated_external_evidence_cards", display_text)
+        ctx.set("curated_external_evidence_cards_status", "ok")
+
+    def _synthesize(
+        self,
+        stock_name: str,
+        stock_raw: dict,
+        keep_posts: list,
+        ctx: SkillContext = None,
+        extra_items: list = None,
+        deduped_sources_key: str = "synthesis_display_deduped_sources",
+    ) -> dict:
         """调用 KnowledgeSynthesizer 或降级模板生成综合叙事。"""
         enable_cv = bool(ctx.get("enable_claim_verification_context")) if ctx else False
         cv_context = None
@@ -220,7 +315,7 @@ class SynthesisSkill(BaseSkill):
         if extra_items:
             items, deduped_sources = dedupe_synthesis_display_items(items)
             if ctx is not None:
-                ctx.set("synthesis_display_deduped_sources", deduped_sources)
+                ctx.set(deduped_sources_key, deduped_sources)
         if not items:
             return self._template_synthesize(stock_raw, items_count=0, sources=[])
 
@@ -341,6 +436,20 @@ class SynthesisSkill(BaseSkill):
                 "source_type": extra.get("source_type"),
                 "verification_status": extra.get("verification_status"),
             }
+            # Forward curated external traceability fields when present.
+            for trace_key in (
+                "card_id",
+                "source_ref",
+                "source_excerpt_hash",
+                "source_block_hash",
+                "topic",
+                "synthesis_display_only",
+                "quality_action",
+                "scoring_eligible",
+                "risk_score_eligible",
+            ):
+                if trace_key in extra:
+                    filled[ref_id][trace_key] = extra[trace_key]
         synthesis["citations"] = filled
         return synthesis
 

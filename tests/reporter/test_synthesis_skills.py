@@ -728,6 +728,246 @@ def test_enrich_provenance_mixed_announcement_and_report_is_partially_supported(
     assert fact["source_labels"] == ["公告"]
     assert fact["provenance_status"] == "partially_supported"
 
+# --- curated external evidence card Phase 2 tests ---
+
+import json as _json
+
+
+def _make_curated_card(card_id, topic, source_excerpt, source_credit=55):
+    return {
+        "schema_version": "periodic_report_narrative_evidence_card.v1",
+        "card_id": card_id,
+        "topic": topic,
+        "source_type": "curated_external_analysis_evidence",
+        "source_kind": "wechat_high_quality_analysis",
+        "title": f"card {card_id}",
+        "source_excerpt": source_excerpt,
+        "source_excerpt_hash": f"seh_{card_id}",
+        "source_block_hash": f"sbh_{card_id}",
+        "source_ref": f"https://example.com/{card_id}",
+        "source_credit": source_credit,
+        "quality_action": "preview_only",
+        "knowledge_eligible": False,
+        "synthesis_eligible": True,
+        "synthesis_display_only": True,
+        "scoring_eligible": False,
+        "risk_score_eligible": False,
+        "verification_status": "professional_observation",
+        "normalized_substring_verified": True,
+    }
+
+
+def _write_curated_cards_json(tmp_path, cards):
+    excerpt_packs = [
+        {
+            "card_id": card["card_id"],
+            "excerpts": [
+                {
+                    "source_excerpt_hash": card["source_excerpt_hash"],
+                    "normalized_substring_verified": True,
+                }
+            ],
+        }
+        for card in cards
+    ]
+    path = tmp_path / "curated_cards.json"
+    path.write_text(
+        _json.dumps(
+            {
+                "schema_version": "curated_external_evidence_cards.v1",
+                "wrote_knowledge": False,
+                "connected_synthesis": False,
+                "cards": cards,
+                "excerpt_packs": excerpt_packs,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _long_chinese_excerpt(length=500):
+    return "公司持续加大研发投入，拓展高端客户，产品竞争力提升。" * (length // 30)
+
+
+def test_curated_external_default_off_excludes_cards(tmp_path):
+    cards = [
+        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+        _make_curated_card("c2", "commercialization", _long_chinese_excerpt(500)),
+        _make_curated_card("c3", "earnings_context", _long_chinese_excerpt(500)),
+    ]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display") is None
+    assert ctx.output.get("curated_external_evidence_cards_status") is None
+
+
+def test_curated_external_enabled_sets_deep_analysis_display(tmp_path):
+    cards = [
+        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+        _make_curated_card("c2", "commercialization", _long_chinese_excerpt(500)),
+        _make_curated_card("c3", "earnings_context", _long_chinese_excerpt(500)),
+    ]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_evidence_cards_in_synthesis_display": True,
+        "curated_external_evidence_cards_json": str(path),
+        "curated_external_evidence_cards_max_display_items": 8,
+        "curated_external_evidence_cards_min_cards": 3,
+        "curated_external_evidence_cards_min_total_excerpt_chars": 1000,
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    result = skill.run(ctx)
+
+    assert result.get("deep_analysis_display") is not None
+    assert result.get("deep_analysis_display_sources") is not None
+    assert result.get("synthesis_text_with_curated_external_evidence_cards") is not None
+    assert result.get("curated_external_evidence_cards_status") == "ok"
+    stats = result.get("curated_external_evidence_cards_stats") or {}
+    assert stats.get("cards_eligible") == 3
+    # canonical keys remain baseline
+    assert result.get("synthesis") is not None
+    assert result.get("core_facts") is not None
+    assert result.get("synthesis_text") is not None
+    assert result.get("synthesis_sources") is not None
+    # synthesis_display is not affected by curated external branch
+    assert result.get("synthesis_display") is None
+    assert result.get("synthesis_display_deduped_sources") is None
+    assert result.get("deep_analysis_display_deduped_sources") == []
+
+
+def test_curated_external_one_card_does_not_set_deep_analysis_display(tmp_path):
+    cards = [_make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500))]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_evidence_cards_in_synthesis_display": True,
+        "curated_external_evidence_cards_json": str(path),
+        "curated_external_evidence_cards_min_cards": 3,
+        "curated_external_evidence_cards_min_total_excerpt_chars": 1200,
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display") is None
+    assert ctx.output.get("curated_external_evidence_cards_status") != "ok"
+
+
+def test_curated_external_citation_metadata_includes_traceability_fields(tmp_path):
+    cards = [
+        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+    ]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_evidence_cards_in_synthesis_display": True,
+        "curated_external_evidence_cards_json": str(path),
+        "curated_external_evidence_cards_min_cards": 1,
+        "curated_external_evidence_cards_min_total_excerpt_chars": 1,
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    deep_display = ctx.output.get("deep_analysis_display") or {}
+    citations = deep_display.get("citations") or {}
+    meta = citations.get(1) or citations.get("1")
+    assert meta is not None
+    assert meta.get("card_id") == "c1"
+    assert meta.get("source_ref") == "https://example.com/c1"
+    assert meta.get("source_excerpt_hash") == "seh_c1"
+    assert meta.get("source_block_hash") == "sbh_c1"
+    assert meta.get("topic") == "industry_logic"
+
+
+def test_curated_external_overclaim_lint_avoids_display(tmp_path):
+    cards = [
+        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+    ]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    class OverclaimSynthesizer:
+        def synthesize(self, stock_name, all_data):
+            return {
+                "industry_logic": "微信公众号文章确认订单已经落地[^1]。",
+                "fundamentals": "",
+                "valuation_debate": "",
+                "funding_sentiment": "",
+                "events_catalysts": "",
+                "core_facts": [],
+                "citations": {1: {"_placeholder": True}},
+            }
+
+    skill = SynthesisSkill(synthesizer=OverclaimSynthesizer())
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_evidence_cards_in_synthesis_display": True,
+        "curated_external_evidence_cards_json": str(path),
+        "curated_external_evidence_cards_min_cards": 1,
+        "curated_external_evidence_cards_min_total_excerpt_chars": 1,
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display") is None
+    assert ctx.output.get("curated_external_evidence_cards_status") == "lint_failed"
+    lint = ctx.output.get("curated_external_evidence_cards_lint") or {}
+    assert lint.get("ok") is False
+    assert lint.get("violations")
+
 
 def test_invalid_ref_core_fact_does_not_affect_output():
     skill = SynthesisSkill()

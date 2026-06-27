@@ -539,3 +539,46 @@ def test_render_falls_back_to_synthesis_when_no_display():
     }
     result = renderer.render(ctx)
     assert "baseline 行业逻辑" in result
+
+
+def test_render_prefers_deep_analysis_display():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "baseline 行业逻辑。",
+            "citations": {},
+        },
+        "synthesis_display": {
+            "industry_logic": "synthesis_display 行业逻辑。",
+            "citations": {},
+        },
+        "deep_analysis_display": {
+            "industry_logic": "deep_analysis_display 行业逻辑。",
+            "citations": {},
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "deep_analysis_display 行业逻辑" in result
+    assert "synthesis_display 行业逻辑" not in result
+    assert "baseline 行业逻辑" not in result
+
+
+def test_render_uses_synthesis_display_when_no_deep_analysis():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "baseline 行业逻辑。",
+            "citations": {},
+        },
+        "synthesis_display": {
+            "industry_logic": "synthesis_display 行业逻辑。",
+            "citations": {},
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "synthesis_display 行业逻辑" in result
+    assert "baseline 行业逻辑" not in result

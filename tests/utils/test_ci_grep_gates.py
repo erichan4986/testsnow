@@ -187,3 +187,63 @@ def test_ci_grep_gates_rejects_obvious_secret_literal(tmp_path: Path) -> None:
 
     assert result.returncode != 0
     assert "secret" in result.stdout.lower()
+
+
+def test_ci_grep_gates_rejects_curated_external_leakage_in_scoring_file(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "reporter" / "scoring_engine.py"
+    target.parent.mkdir(parents=True)
+    target.write_text(
+        'value = ctx.get("deep_analysis_display_sources")\n'
+        'other = ctx.get("synthesis_text_with_curated_external_evidence_cards")\n',
+        encoding="utf-8",
+    )
+
+    result = _run_gate(root)
+
+    assert result.returncode != 0
+    assert "deep_analysis_display_sources" in result.stdout
+    assert "synthesis_text_with_curated_external_evidence_cards" in result.stdout
+
+
+def test_ci_grep_gates_rejects_curated_external_leakage_in_knowledge_synthesizer(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "knowledge_synthesizer.py"
+    target.parent.mkdir(parents=True)
+    target.write_text(
+        'source_type = "curated_external_analysis_evidence"\n',
+        encoding="utf-8",
+    )
+
+    result = _run_gate(root)
+
+    assert result.returncode != 0
+    assert "curated_external_analysis_evidence" in result.stdout
+
+
+def test_ci_grep_gates_allows_curated_external_helpers(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "curated_external_evidence_card_synthesis_items.py"
+    target.parent.mkdir(parents=True)
+    target.write_text(
+        'source_type = "curated_external_analysis_evidence"\n',
+        encoding="utf-8",
+    )
+
+    result = _run_gate(root)
+
+    assert result.returncode == 0, result.stdout
+
+
+def test_ci_grep_gates_allows_deep_analysis_display_in_renderer(tmp_path: Path) -> None:
+    root = _copy_gate_fixture(tmp_path)
+    target = root / "scripts" / "utils" / "reporter" / "sections" / "deep_analysis_renderer.py"
+    target.parent.mkdir(parents=True)
+    target.write_text(
+        'synthesis = ctx.get("deep_analysis_display") or ctx.get("synthesis_display") or ctx.get("synthesis")\n',
+        encoding="utf-8",
+    )
+
+    result = _run_gate(root)
+
+    assert result.returncode == 0, result.stdout

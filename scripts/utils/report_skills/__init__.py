@@ -56,6 +56,11 @@ def build_stock_report_pipeline(
     enable_claim_risk_signals: bool = False,
     enable_source_intake: bool = False,
     enable_periodic_report_fulltext_intake: bool = False,
+    include_curated_external_evidence_cards_in_synthesis_display: bool = False,
+    curated_external_evidence_cards_json: str = "",
+    curated_external_evidence_cards_max_display_items: int = 8,
+    curated_external_evidence_cards_min_cards: int = 3,
+    curated_external_evidence_cards_min_total_excerpt_chars: int = 1200,
 ) -> SkillPipeline:
     """构建股票报告生成 Pipeline。"""
     skills = [
@@ -88,7 +93,14 @@ def build_stock_report_pipeline(
         competitor_fetching_skill,
         technical_fetching_skill,
         TechnicalAnalysisSkill(),
-        SynthesisSkill(llm_client=llm_client),
+        SynthesisSkill(
+            llm_client=llm_client,
+            include_curated_external_evidence_cards_in_synthesis_display=include_curated_external_evidence_cards_in_synthesis_display,
+            curated_external_evidence_cards_json=curated_external_evidence_cards_json,
+            curated_external_evidence_cards_max_display_items=curated_external_evidence_cards_max_display_items,
+            curated_external_evidence_cards_min_cards=curated_external_evidence_cards_min_cards,
+            curated_external_evidence_cards_min_total_excerpt_chars=curated_external_evidence_cards_min_total_excerpt_chars,
+        ),
     ])
 
     if enable_claim_risk_signals:

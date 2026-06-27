@@ -121,6 +121,12 @@ class PerStockReporter:
             broker_digest_display_enabled = bool(
                 source_intake_enabled and broker_digest_display_cfg.get("enabled", False)
             )
+            curated_external_cfg = (
+                si_cfg.get("curated_external_evidence_cards_synthesis_display", {}) or {}
+            )
+            curated_external_enabled = bool(
+                source_intake_enabled and curated_external_cfg.get("enabled", False)
+            )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -138,6 +144,15 @@ class PerStockReporter:
             }
             if periodic_fulltext_enabled:
                 pipeline_kwargs["enable_periodic_report_fulltext_intake"] = True
+            if curated_external_enabled:
+                pipeline_kwargs["include_curated_external_evidence_cards_in_synthesis_display"] = True
+                pipeline_kwargs["curated_external_evidence_cards_json"] = curated_external_cfg.get("cards_json", "")
+                if curated_external_cfg.get("max_display_items") is not None:
+                    pipeline_kwargs["curated_external_evidence_cards_max_display_items"] = curated_external_cfg["max_display_items"]
+                if curated_external_cfg.get("min_cards") is not None:
+                    pipeline_kwargs["curated_external_evidence_cards_min_cards"] = curated_external_cfg["min_cards"]
+                if curated_external_cfg.get("min_total_excerpt_chars") is not None:
+                    pipeline_kwargs["curated_external_evidence_cards_min_total_excerpt_chars"] = curated_external_cfg["min_total_excerpt_chars"]
             pipeline = build_stock_report_pipeline(**pipeline_kwargs)
 
             pipeline_input = {
@@ -201,6 +216,16 @@ class PerStockReporter:
                     pipeline_input["broker_research_digest_max_display_items"] = (
                         broker_digest_display_cfg["max_display_items"]
                     )
+
+            if curated_external_enabled:
+                pipeline_input["include_curated_external_evidence_cards_in_synthesis_display"] = True
+                pipeline_input["curated_external_evidence_cards_json"] = curated_external_cfg.get("cards_json", "")
+                if curated_external_cfg.get("max_display_items") is not None:
+                    pipeline_input["curated_external_evidence_cards_max_display_items"] = curated_external_cfg["max_display_items"]
+                if curated_external_cfg.get("min_cards") is not None:
+                    pipeline_input["curated_external_evidence_cards_min_cards"] = curated_external_cfg["min_cards"]
+                if curated_external_cfg.get("min_total_excerpt_chars") is not None:
+                    pipeline_input["curated_external_evidence_cards_min_total_excerpt_chars"] = curated_external_cfg["min_total_excerpt_chars"]
 
             if evidence_notes_enabled:
                 pipeline_input["enable_evidence_notes"] = True

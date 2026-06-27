@@ -31,6 +31,8 @@ HELPER_LEAK_FILES=(
   "$ROOT/scripts/utils/periodic_report_narrative_card_note_writer.py"
   "$ROOT/scripts/utils/periodic_report_narrative_card_synthesis_items.py"
   "$ROOT/scripts/utils/broker_research_digest_synthesis_items.py"
+  "$ROOT/scripts/utils/curated_external_evidence_card_synthesis_items.py"
+  "$ROOT/scripts/utils/curated_external_display_lint.py"
 )
 LEAK_HITS=""
 for file in "${CORE_LEAK_FILES[@]}"; do
@@ -52,6 +54,29 @@ done
 if [ -n "$LEAK_HITS" ]; then
   fail_gate "fulltext/display material leaked into scoring/risk/Knowledge files"
   printf '%s\n' "$LEAK_HITS"
+else
+  green "ok"
+fi
+
+echo "[gate c] curated external display-only isolation ..."
+CORE_CURATED_FILES=(
+  "$ROOT/scripts/utils/reporter/scoring_engine.py"
+  "$ROOT/scripts/utils/reporter/sections/risk_renderer.py"
+  "$ROOT/scripts/utils/report_skills/knowledge_skills.py"
+  "$ROOT/scripts/utils/knowledge_synthesizer.py"
+)
+CURATED_LEAK_HITS=""
+for file in "${CORE_CURATED_FILES[@]}"; do
+  [ -f "$file" ] || continue
+  hits=$(grep -nE 'curated_external_analysis_evidence|deep_analysis_display_sources|synthesis_text_with_curated_external_evidence_cards' "$file" 2>/dev/null || true)
+  if [ -n "$hits" ]; then
+    rel="${file#$ROOT/}"
+    CURATED_LEAK_HITS="${CURATED_LEAK_HITS}${CURATED_LEAK_HITS:+$'\n'}${rel}:$hits"
+  fi
+done
+if [ -n "$CURATED_LEAK_HITS" ]; then
+  fail_gate "curated external display-only material leaked into core files"
+  printf '%s\n' "$CURATED_LEAK_HITS"
 else
   green "ok"
 fi
