@@ -24,6 +24,38 @@ _EXCERPT_JOINER = "\n...\n"
 _MIN_SNIPPET_CHARS = 24
 _MAX_SNIPPETS_PER_CARD = 5
 
+_REPORT_METADATA_TERMS = (
+    "文中报告节选",
+    "证券研究报告",
+    "报告发布机构",
+    "本报告分析师",
+    "执业证书编号",
+)
+
+_BODY_SIGNAL_TERMS = (
+    "800G",
+    "1.6T",
+    "AI算力",
+    "CapEx",
+    "硅光",
+    "投资要点",
+    "核心观点",
+    "业绩",
+    "毛利率",
+    "客户订单",
+    "产能扩张",
+    "规模交付",
+    "需求共振",
+    "盈利能力",
+)
+
+_AGGREGATOR_TABLE_MARKERS = (
+    "日期 机构 研报标题 核心观点",
+    "以下是中际旭创（300308）近期的主要市场文章和研报汇总",
+    "分析师评级与目标价",
+    "机构 评级 目标价 日期",
+)
+
 _EXCERPT_SELECTION_RULES: Dict[str, Any] = {
     "common_signal_terms": (
         "营收",
@@ -94,6 +126,7 @@ _EXCERPT_SELECTION_RULES: Dict[str, Any] = {
         "阅读原文",
         "_**END**_",
         "**END**",
+        "免责声明",
     ),
     "title_ignore_terms": {"深度分析", "财报", "观察", "文章", "报告", "公司", "股份", "智能", "电子"},
 }
@@ -387,8 +420,6 @@ def _deterministic_excerpts(
     source = _clean_text(text)
     if max_excerpt_chars <= 0:
         return []
-    if len(source) <= max_excerpt_chars:
-        return [source]
 
     scored: List[Tuple[int, int, str]] = []
     for position, snippet in enumerate(_split_snippets(source)):
@@ -429,7 +460,7 @@ def _deterministic_excerpts(
 
 def _split_snippets(text: str) -> List[str]:
     normalized = _clean_text(text)
-    pieces = re.split(r"(?<=[。！？；;])", normalized)
+    pieces = re.split(r"(?<=[。！？；;])\s*|\n+", normalized)
     snippets = [piece.strip(" 　：:，,") for piece in pieces if len(piece.strip()) >= _MIN_SNIPPET_CHARS]
     if snippets:
         return snippets
@@ -450,6 +481,7 @@ def _score_excerpt_snippet(snippet: str, *, item: Dict[str, Any], stock_name: st
     topic_terms = _EXCERPT_SELECTION_RULES["topic_signal_terms"].get(topic, ())
     score += sum(4 for term in topic_terms if term in snippet)
     score += sum(2 for term in _EXCERPT_SELECTION_RULES["common_signal_terms"] if term in snippet)
+    score += sum(5 for term in _BODY_SIGNAL_TERMS if term in snippet)
     if re.search(r"\d+(?:\.\d+)?\s*(?:亿元|万元|%|TOPS|G|T|万片|颗|倍)", snippet):
         score += 7
     elif re.search(r"\d+(?:\.\d+)?", snippet):
@@ -458,6 +490,13 @@ def _score_excerpt_snippet(snippet: str, *, item: Dict[str, Any], stock_name: st
         score -= 8
     if _looks_like_navigation_or_disclaimer(snippet):
         score -= 12
+
+    metadata_hits = sum(1 for term in _REPORT_METADATA_TERMS if term in snippet)
+    if metadata_hits >= 2:
+        score -= 100
+    if any(marker in snippet for marker in _AGGREGATOR_TABLE_MARKERS):
+        score -= 100
+
     return score
 
 

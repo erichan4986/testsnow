@@ -91,11 +91,11 @@ def test_builds_cards_and_excerpt_packs_with_existing_schema_fields(tmp_path: Pa
     assert pack["card_id"] == card["card_id"]
     assert pack["source_ref"] == card["source_ref"]
     assert pack["source_content_hash"] == card["source_block_hash"]
-    assert len(pack["excerpts"]) == 1
-    excerpt = pack["excerpts"][0]
-    assert excerpt["source_excerpt_hash"] == card["source_excerpt_hash"]
-    assert excerpt["normalized_substring_verified"] is True
-    assert _normalize(excerpt["text"]) in _normalize(_item()["content"])
+    assert pack["combined_source_excerpt_hash"] == card["source_excerpt_hash"]
+    assert len(pack["excerpts"]) >= 1
+    for excerpt in pack["excerpts"]:
+        assert excerpt["normalized_substring_verified"] is True
+        assert _normalize(excerpt["text"]) in _normalize(_item()["content"])
 
 
 def test_filters_non_display_only_or_unsafe_items(tmp_path: Path):
@@ -295,3 +295,44 @@ def test_normalized_hash_matches_sha256():
     text = "A  B\nC"
     expected = hashlib.sha256("A B C".encode("utf-8")).hexdigest()
     assert normalized_hash(text) == expected
+
+
+def test_excerpt_selects_body_view_not_report_metadata(tmp_path: Path):
+    """Metadata-only snippets must lose to substantive body-view paragraphs."""
+    metadata = (
+        "文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。"
+        "证券研究报告：《中际旭创：全球AI光互联龙头》对外发布时间：2026年05月23日。"
+        "报告发布机构：天风证券股份有限公司。"
+        "本报告分析师：王奕红 SAC 执业证书编号：S1110517090004。"
+    ) * 4
+    body = (
+        "投资要点：公司800G产品持续放量，1.6T产品进入规模交付阶段，AI算力CapEx持续加码，"
+        "硅光与高速光模块需求共振，客户订单、产能扩张与毛利率改善推动盈利能力上行。"
+        "2026年一季度营业收入同比增长192%，归母净利润同比增长262%，毛利率提升至46%。"
+        "产业链调研显示，云厂商资本开支保持高景气，中际旭创在核心客户份额有望继续提升。"
+    )
+    path = _write_jsonl(
+        tmp_path / "items.jsonl",
+        [
+            _item(
+                title="天风·通信 | 中际旭创：800G/1.6T放量驱动业绩高增",
+                content=metadata + body,
+                topic="industry_logic",
+                source_kind="wechat_high_quality_analysis",
+            )
+        ],
+    )
+
+    result = build_curated_external_evidence_cards(
+        path, stock_name="中际旭创", max_excerpt_chars=400
+    )
+
+    card = result["cards"][0]
+    excerpt = card["source_excerpt"]
+    assert "800G" in excerpt
+    assert "1.6T" in excerpt
+    assert "AI算力" in excerpt
+    assert "毛利率" in excerpt
+    assert "文中报告节选" not in excerpt
+    assert "执业证书编号" not in excerpt
+    assert "报告发布机构" not in excerpt
