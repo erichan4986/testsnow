@@ -212,6 +212,76 @@ def test_accepts_capital_market_with_substance(tmp_path):
     assert stats["status"] == "ok"
 
 
+def test_rejects_aggregated_market_article_title(tmp_path):
+    cards = [
+        _make_card(
+            card_id="c1",
+            topic="industry_logic",
+            title="中际旭创（300308）近期的主要市场文章和研报汇总",
+            source_excerpt=_long_chinese_excerpt(500),
+        )
+    ]
+    path = _write_summary(tmp_path, cards)
+    items, stats = load_curated_external_evidence_card_synthesis_items(str(path))
+    assert len(items) == 0
+    assert any("title quality" in r.lower() for r in stats["rejection_reasons"])
+
+
+def test_rejects_sentiment_event_title(tmp_path):
+    cards = [
+        _make_card(
+            card_id="c1",
+            topic="commercialization",
+            title="开盘暴涨800%！中际旭创设备供应商登陆科创板",
+            source_excerpt=_long_chinese_excerpt(500),
+        )
+    ]
+    path = _write_summary(tmp_path, cards)
+    items, stats = load_curated_external_evidence_card_synthesis_items(str(path))
+    assert len(items) == 0
+    assert any("title quality" in r.lower() for r in stats["rejection_reasons"])
+
+
+def test_rejects_numbered_news_digest_excerpt(tmp_path):
+    excerpt = (
+        "1.美国发起调查，商务部回应；2.寒武纪营收增长；3.从索尼主导到国产突围；"
+        "4.全球模块出货增长；5.中东冲突危机扩散。"
+        + _long_chinese_excerpt(500)
+    )
+    cards = [
+        _make_card(
+            card_id="c1",
+            topic="commercialization",
+            title="全球五成芯片产能面临风险！中东冲突危机扩散；寒武纪2025年度营收暴涨453%",
+            source_excerpt=excerpt,
+        )
+    ]
+    path = _write_summary(tmp_path, cards)
+    items, stats = load_curated_external_evidence_card_synthesis_items(str(path))
+    assert len(items) == 0
+    assert any("news digest" in r.lower() for r in stats["rejection_reasons"])
+
+
+def test_rejects_report_metadata_without_substantive_view(tmp_path):
+    excerpt = (
+        "文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。"
+        "证券研究报告：《全球光模块龙头》 对外发布时间：2026年05月23日。"
+        "报告发布机构：天风证券股份有限公司。本报告分析师：王某 SAC 执业证书编号。"
+    ) * 4
+    cards = [
+        _make_card(
+            card_id="c1",
+            topic="industry_logic",
+            title="天风·通信【深度】| 中际旭创：全球AI光互联龙头",
+            source_excerpt=excerpt,
+        )
+    ]
+    path = _write_summary(tmp_path, cards)
+    items, stats = load_curated_external_evidence_card_synthesis_items(str(path))
+    assert len(items) == 0
+    assert any("report metadata" in r.lower() for r in stats["rejection_reasons"])
+
+
 def test_rejects_source_credit_too_high(tmp_path):
     cards = [
         _make_card(card_id="c1", topic="industry_logic", source_excerpt=_long_chinese_excerpt(400), source_credit=80)

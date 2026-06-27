@@ -52,6 +52,46 @@ _SUBSTANCE_TERMS = [
     "量产",
 ]
 
+_NOISY_TITLE_TERMS = [
+    "近期的主要市场文章",
+    "研报汇总",
+    "文章和研报汇总",
+    "一周热点",
+    "开盘暴涨",
+    "盘中暴涨",
+    "涨停",
+]
+
+_REPORT_METADATA_TERMS = [
+    "文中报告节选",
+    "具体报告内容及相关风险提示",
+    "证券研究报告",
+    "报告发布机构",
+    "本报告分析师",
+    "执业证书编号",
+]
+
+_SUBSTANTIVE_VIEW_TERMS = [
+    "核心观点",
+    "投资要点",
+    "预计",
+    "同比",
+    "收入",
+    "营收",
+    "利润",
+    "毛利",
+    "订单",
+    "客户",
+    "产能",
+    "需求",
+    "价格",
+    "量产",
+    "认证",
+    "份额",
+    "盈利",
+    "现金流",
+]
+
 _MIN_EXCERPT_LEN = 300
 _MIN_CHINESE_CHARS = 80
 _MIN_CHINESE_DENSITY = 0.05
@@ -207,6 +247,8 @@ def _validate_card(card: Dict[str, Any], excerpt_packs_by_card_id: Dict[str, Lis
     if topic == "capital_market_context" and not _has_capital_market_substance(card, excerpt):
         errors.append("capital_market_context lacks substance")
 
+    errors.extend(_validate_content_quality(card, excerpt))
+
     return errors
 
 
@@ -333,6 +375,31 @@ def _has_capital_market_substance(card: Dict[str, Any], excerpt: str) -> bool:
     title = str(card.get("title") or "")
     combined = title + " " + excerpt
     return any(term in combined for term in _SUBSTANCE_TERMS)
+
+
+def _validate_content_quality(card: Dict[str, Any], excerpt: str) -> List[str]:
+    errors: List[str] = []
+    title = str(card.get("title") or "")
+    if any(term in title for term in _NOISY_TITLE_TERMS):
+        errors.append("title quality: aggregate or sentiment-driven title")
+
+    if _looks_like_numbered_news_digest(excerpt):
+        errors.append("news digest excerpt lacks single-company focus")
+
+    metadata_hits = sum(1 for term in _REPORT_METADATA_TERMS if term in excerpt)
+    if metadata_hits >= 3 and not _has_substantive_view(excerpt):
+        errors.append("report metadata excerpt lacks substantive view")
+
+    return errors
+
+
+def _looks_like_numbered_news_digest(excerpt: str) -> bool:
+    head = excerpt[:260]
+    return len(re.findall(r"(?:^|[；;。\s])\d{1,2}[\.．、]", head)) >= 3
+
+
+def _has_substantive_view(excerpt: str) -> bool:
+    return any(term in excerpt for term in _SUBSTANTIVE_VIEW_TERMS)
 
 
 def _safe_int(value: Any, default: int = 0) -> int:
