@@ -5,7 +5,9 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "utils"))
 
+import hashlib
 import json
+import re
 
 import pytest
 
@@ -17,6 +19,11 @@ from curated_external_evidence_card_synthesis_items import (
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
+
+
+def _normalized_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def _make_card(
@@ -36,10 +43,16 @@ def _make_card(
     risk_score_eligible=False,
     verification_status="professional_observation",
     normalized_substring_verified=True,
-    source_excerpt_hash="h1",
+    source_excerpt_hash=None,
     source_block_hash="bh1",
 ):
-    """Build a minimal valid enriched evidence card."""
+    """Build a minimal valid enriched evidence card.
+
+    By default source_excerpt_hash is derived from source_excerpt so that
+    hash-fidelity validation passes for honest cards.
+    """
+    if source_excerpt_hash is None:
+        source_excerpt_hash = _normalized_hash(source_excerpt)
     return {
         "schema_version": "periodic_report_narrative_evidence_card.v1",
         "card_id": card_id,
@@ -146,12 +159,13 @@ def test_accepts_multi_excerpt_pack_with_combined_hash(tmp_path):
     excerpt_a = "黑芝麻智能与客户合作推进量产定点，2026年有望进入商业化验证阶段。" * 5
     excerpt_b = "公司研发投入保持高位，费用结构仍对利润形成压力，需要继续观察收入放量节奏。" * 5
     combined = excerpt_a + "\n...\n" + excerpt_b
+    combined_hash = _normalized_hash(combined)
     card = _make_card(
         card_id="c1",
         topic="commercialization",
         source_excerpt=combined,
         normalized_substring_verified=False,
-        source_excerpt_hash="combined-hash",
+        source_excerpt_hash=combined_hash,
     )
     card.pop("normalized_substring_verified")
     cards = [
@@ -162,7 +176,7 @@ def test_accepts_multi_excerpt_pack_with_combined_hash(tmp_path):
     summary = _make_summary(cards)
     summary["excerpt_packs"][0] = {
         "card_id": "c1",
-        "combined_source_excerpt_hash": "combined-hash",
+        "combined_source_excerpt_hash": combined_hash,
         "excerpts": [
             {"source_excerpt_hash": "a", "normalized_substring_verified": True},
             {"source_excerpt_hash": "b", "normalized_substring_verified": True},
@@ -373,12 +387,12 @@ def test_sorts_deterministically(tmp_path):
 
 
 def test_emits_traceability_fields(tmp_path):
+    excerpt = _long_chinese_excerpt(400)
     cards = [
         _make_card(
             card_id="c1",
             topic="industry_logic",
-            source_excerpt=_long_chinese_excerpt(400),
-            source_excerpt_hash="seh1",
+            source_excerpt=excerpt,
             source_block_hash="sbh1",
             source_ref="https://example.com/x",
         )
@@ -387,7 +401,7 @@ def test_emits_traceability_fields(tmp_path):
     items, _ = load_curated_external_evidence_card_synthesis_items(str(path), min_cards=1, min_total_excerpt_chars=1)
     item = items[0]
     assert item.extra["card_id"] == "c1"
-    assert item.extra["source_excerpt_hash"] == "seh1"
+    assert item.extra["source_excerpt_hash"] == _normalized_hash(excerpt)
     assert item.extra["source_block_hash"] == "sbh1"
     assert item.extra["source_ref"] == "https://example.com/x"
     assert item.extra["topic"] == "industry_logic"
@@ -399,3 +413,40 @@ def test_rejects_wrote_knowledge_or_connected_synthesis(tmp_path):
     items, stats = load_curated_external_evidence_card_synthesis_items(str(path), min_cards=1, min_total_excerpt_chars=1)
     assert len(items) == 0
     assert any("wrote_knowledge" in r.lower() for r in stats["rejection_reasons"])
+
+
+def test_rejects_source_excerpt_hash_mismatch(tmp_path):
+    """A card whose source_excerpt has been rewritten while hash remains old must be rejected."""
+    original_excerpt = _long_chinese_excerpt(400)
+    card = _make_card(
+        card_id="c1",
+        topic="industry_logic",
+        source_excerpt=original_excerpt,
+    )
+    # Tamper with the excerpt without updating the hash.
+    card["source_excerpt"] = "核心观点：" + original_excerpt
+    cards = [
+        card,
+        _make_card(card_id="c2", topic="commercialization", source_excerpt=_long_chinese_excerpt(500)),
+        _make_card(card_id="c3", topic="earnings_context", source_excerpt=_long_chinese_excerpt(500)),
+    ]
+    path = _write_summary(tmp_path, cards)
+    items, stats = load_curated_external_evidence_card_synthesis_items(
+        str(path), min_cards=3, min_total_excerpt_chars=1000
+    )
+    assert len(items) == 0
+    assert stats["cards_rejected"] >= 1
+    assert any("hash mismatch" in r.lower() for r in stats["rejection_reasons"])
+
+
+def test_zhongjixuchuang_cards_source_excerpt_hash_matches_content():
+    """Committed 中际旭创 evidence cards must have source_excerpt/hash fidelity."""
+    cards_path = REPO_ROOT / "data" / "curated_external" / "evidence_cards" / "zhongjixuchuang_20260627.json"
+    assert cards_path.exists()
+    payload = json.loads(cards_path.read_text(encoding="utf-8"))
+    cards = payload.get("cards") or []
+    assert len(cards) >= 3
+    for card in cards:
+        expected = card.get("source_excerpt_hash")
+        actual = _normalized_hash(card.get("source_excerpt", ""))
+        assert expected == actual, f"{card.get('card_id')}: source_excerpt/hash mismatch"

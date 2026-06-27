@@ -1,3 +1,5 @@
+import hashlib
+import re
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
@@ -733,6 +735,11 @@ def test_enrich_provenance_mixed_announcement_and_report_is_partially_supported(
 import json as _json
 
 
+def _normalized_hash(text: str) -> str:
+    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
+    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+
+
 def _make_curated_card(card_id, topic, source_excerpt, source_credit=55):
     return {
         "schema_version": "periodic_report_narrative_evidence_card.v1",
@@ -742,7 +749,7 @@ def _make_curated_card(card_id, topic, source_excerpt, source_credit=55):
         "source_kind": "wechat_high_quality_analysis",
         "title": f"card {card_id}",
         "source_excerpt": source_excerpt,
-        "source_excerpt_hash": f"seh_{card_id}",
+        "source_excerpt_hash": _normalized_hash(source_excerpt),
         "source_block_hash": f"sbh_{card_id}",
         "source_ref": f"https://example.com/{card_id}",
         "source_credit": source_credit,
@@ -912,6 +919,44 @@ def test_curated_external_uses_deterministic_fallback_when_synthesizer_returns_e
     assert ctx.output.get("synthesis_display") is None
 
 
+def test_curated_external_default_skill_uses_deterministic_fallback(tmp_path):
+    """When no custom synthesizer/llm_client is supplied, curated external cards
+    render via the deterministic display-only fallback (no LLM rewrite)."""
+    cards = [
+        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+        _make_curated_card("c2", "commercialization", _long_chinese_excerpt(500)),
+        _make_curated_card("c3", "earnings_context", _long_chinese_excerpt(500)),
+    ]
+    path = _write_curated_cards_json(tmp_path, cards)
+
+    skill = SynthesisSkill()  # no llm_client, no synthesizer
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_evidence_cards_in_synthesis_display": True,
+        "curated_external_evidence_cards_json": str(path),
+        "curated_external_evidence_cards_min_cards": 3,
+        "curated_external_evidence_cards_min_total_excerpt_chars": 1000,
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("curated_external_evidence_cards_status") == "ok"
+    display = ctx.output.get("deep_analysis_display") or {}
+    text = ctx.output.get("synthesis_text_with_curated_external_evidence_cards", "")
+    assert "精选外部材料仅作为专业观察" in text
+    assert "card c1" in display.get("industry_logic", "")
+    assert "card c2" in display.get("events_catalysts", "")
+    assert "card c3" in display.get("fundamentals", "")
+    assert ctx.output.get("synthesis_display") is None
+
+
 def test_curated_external_one_card_does_not_set_deep_analysis_display(tmp_path):
     cards = [_make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500))]
     path = _write_curated_cards_json(tmp_path, cards)
@@ -940,8 +985,9 @@ def test_curated_external_one_card_does_not_set_deep_analysis_display(tmp_path):
 
 
 def test_curated_external_citation_metadata_includes_traceability_fields(tmp_path):
+    excerpt = _long_chinese_excerpt(500)
     cards = [
-        _make_curated_card("c1", "industry_logic", _long_chinese_excerpt(500)),
+        _make_curated_card("c1", "industry_logic", excerpt),
     ]
     path = _write_curated_cards_json(tmp_path, cards)
 
@@ -970,7 +1016,7 @@ def test_curated_external_citation_metadata_includes_traceability_fields(tmp_pat
     assert meta is not None
     assert meta.get("card_id") == "c1"
     assert meta.get("source_ref") == "https://example.com/c1"
-    assert meta.get("source_excerpt_hash") == "seh_c1"
+    assert meta.get("source_excerpt_hash") == _normalized_hash(excerpt)
     assert meta.get("source_block_hash") == "sbh_c1"
     assert meta.get("topic") == "industry_logic"
 

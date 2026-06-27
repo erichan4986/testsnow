@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import hashlib
 import json
 import re
 from pathlib import Path
@@ -226,6 +227,9 @@ def _validate_card(card: Dict[str, Any], excerpt_packs_by_card_id: Dict[str, Lis
     if not _normalized_substring_verified(card, excerpt_packs_by_card_id):
         errors.append("normalized_substring_verified is not true")
 
+    if not _source_excerpt_hash_matches(card):
+        errors.append("source_excerpt_hash mismatch")
+
     topic = str(card.get("topic") or "")
     if topic not in ELIGIBLE_TOPICS:
         if topic == "product_roadmap":
@@ -250,6 +254,23 @@ def _validate_card(card: Dict[str, Any], excerpt_packs_by_card_id: Dict[str, Lis
     errors.extend(_validate_content_quality(card, excerpt))
 
     return errors
+
+
+def _source_excerpt_hash_matches(card: Dict[str, Any]) -> bool:
+    """Return True iff source_excerpt_hash matches the normalized source_excerpt.
+
+    This guards against post-hoc rewriting of the excerpt while leaving the
+    original hash in place.
+    """
+    expected = str(card.get("source_excerpt_hash") or "")
+    if not expected:
+        return False
+    actual = _normalized_hash(str(card.get("source_excerpt") or ""))
+    return actual == expected
+
+
+def _normalized_hash(text: str) -> str:
+    return hashlib.sha256(_normalize_text(text).encode("utf-8")).hexdigest()
 
 
 def _excerpt_packs_by_card_id(excerpt_packs: List[Any]) -> Dict[str, List[Dict[str, Any]]]:

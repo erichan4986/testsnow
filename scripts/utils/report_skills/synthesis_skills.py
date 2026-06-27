@@ -259,16 +259,24 @@ class SynthesisSkill(BaseSkill):
         stock_raw = ctx.get("stock_raw", {})
         keep_posts = ctx.get("keep_posts", [])
 
-        display = self._synthesize(
-            stock_name,
-            stock_raw,
-            keep_posts,
-            ctx,
-            extra_items=curated_items,
-            deduped_sources_key="deep_analysis_display_deduped_sources",
-        )
-        if self._is_template_fallback_synthesis(display):
+        # Curated external display is intentionally display-only.  When no custom
+        # synthesizer or LLM client is supplied, skip the LLM entirely and render
+        # a deterministic, citation-aware observation block.  This avoids curated
+        # external materials being rewritten into strong claims that would fail
+        # the display lint.
+        if self.llm_client is None and self.synthesizer is None:
             display = self._deterministic_curated_external_display(stock_name, curated_items)
+        else:
+            display = self._synthesize(
+                stock_name,
+                stock_raw,
+                keep_posts,
+                ctx,
+                extra_items=curated_items,
+                deduped_sources_key="deep_analysis_display_deduped_sources",
+            )
+            if self._is_template_fallback_synthesis(display):
+                display = self._deterministic_curated_external_display(stock_name, curated_items)
         lint = lint_curated_external_display_text(display)
         ctx.set("curated_external_evidence_cards_lint", lint)
         if not lint.get("ok"):

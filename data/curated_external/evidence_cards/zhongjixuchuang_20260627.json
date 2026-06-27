@@ -1,0 +1,287 @@
+{
+  "cards": [
+    {
+      "card_id": "curated:industry_logic:a385d38c8b4d4898:0",
+      "card_type": "industry_logic",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ"
+      ],
+      "keywords": [
+        "industry_logic",
+        "wechat_high_quality_analysis",
+        "海陆清风"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
+      "source_credit": 55,
+      "source_excerpt": "* * * 作者 | 王奕红 余芳沁 唐海清 ▼ 图片 报告信息 ▼ 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 中际旭创：全球光模块龙头，AI算力驱动业绩高增 》 对外发布时间：2026年05月23日 报告发布机构：天风证券股份有限公司（已获证监会许可的证券投资咨询业务资格） 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 唐海清 SAC 执业证书编号：S1110517030002 余芳沁 SAC 执业证书编号：S1110521080006",
+      "source_excerpt_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
+      "source_kind": "wechat_high_quality_analysis",
+      "source_ref": "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "天风·通信【深度】| 中际旭创：全球AI光互联龙头，新技术迭代+需求共振打开长期高增空间",
+      "topic": "industry_logic",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:industry_logic:a1693355367baff2:1",
+      "card_type": "industry_logic",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g"
+      ],
+      "keywords": [
+        "industry_logic",
+        "wechat_high_quality_analysis",
+        "中际旭创300308站在光里"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "76af0a19f0982c13c8fdd00e7c83bfd1280da25efc6cebb60fb83b86944a4e73",
+      "source_credit": 55,
+      "source_excerpt": "以下是中际旭创（300308）近期的主要市场文章和研报汇总： 最新研报（2026年4-5月） 日期 机构 研报标题 核心观点 2026-05-08 西南证券 800G放量驱动业绩兑现，1.6T... 800G产品放量驱动业绩 2026-04-30 西部证券 26Q1业绩点评：800G/1.6T... 一季度业绩点评 2026-04-29 天风证券 业绩创历史新高，高端光模块放量... 业绩创新高，高端产品放量 2026-04-27 中信建投 业绩表现强劲，积极布局SCALE UP光互连领域 布局光互连新领域 2026-04-24 群益证券 1.6T推动一季度盈利高速增长 1.6T产品推动增长 2026-04-24 国联民生 一季度业绩超预期 业绩超预期 2026-04-22 长江证券 营收利润环比高增，备料扩产交付优异 营收利润双增长 2026-04-21 招商证券 26Q1业绩环比高增，光互联龙头竞争力突出 龙头竞争力强 2026-04-20 中国银河 1Q26业绩点评：业绩大超预期 业绩大超预期 2026-04-19 中金公司 AI需求高景气持续，SCALE-UP光连接注入增量 AI需求+新技术增量 2026-04-17 开源证券 业绩兑现高增验证产业景气 验证行业高景气 2026-04-17 国盛证券 Q1业绩全面爆发超预期 业绩全面爆发 2026-04-17 国金证券 高速光模块放量增收增利，NPO等新技术核心卡位 新技术卡位 2026-04-13 天风证券 深度受益AI算力全球扩容 受益AI算力扩容 分析师评级与目标价 截至2026年5月15日，中际旭创股价为 1,049.00元 。 机构 评级 目标价 日期 高盛 买入 1,187元 2026-04-17 野村/Instinet 买入 1,015元 2026-04-17 CLSA 买入 1,010元 2026-0",
+      "source_excerpt_hash": "6e81aed0f956a4c882bbcaea76f159530e14ec7a86d39ad3bde5b9cf67430ba7",
+      "source_kind": "wechat_high_quality_analysis",
+      "source_ref": "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "中际旭创（300308）近期的主要市场文章和研报汇总",
+      "topic": "industry_logic",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:industry_logic:c9c4bc581617515d:2",
+      "card_type": "industry_logic",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw"
+      ],
+      "keywords": [
+        "industry_logic",
+        "wechat_high_quality_analysis",
+        "海陆清风"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
+      "source_credit": 55,
+      "source_excerpt": "**年报点评** **报告信息** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 深度受益AI算力全球扩容，光模块龙头业绩加速兑现，1.6T引领新周期 》 对外发布时间：2026年4月13日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002",
+      "source_excerpt_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
+      "source_kind": "wechat_high_quality_analysis",
+      "source_ref": "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "天风·通信 | 中际旭创：深度受益AI算力全球扩容，光模块龙头业绩加速兑现，1.6T引领新周期",
+      "topic": "industry_logic",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:industry_logic:b2c064515a1f4c59:3",
+      "card_type": "industry_logic",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ"
+      ],
+      "keywords": [
+        "industry_logic",
+        "wechat_high_quality_analysis",
+        "海陆清风"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
+      "source_credit": 55,
+      "source_excerpt": "**公司点评** **备注** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《算力CapEx持续加码，硅光与1.6T双轮驱动，公司盈利能力进入上行通道》 对外发布时间：2026年02月02日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002 修改于",
+      "source_excerpt_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
+      "source_kind": "wechat_high_quality_analysis",
+      "source_ref": "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "天风·通信 | 中际旭创：算力CapEx持续加码，硅光与1.6T双轮驱动，公司盈利能力进入上行通道",
+      "topic": "industry_logic",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:commercialization:91f57a47205bd8d2:4",
+      "card_type": "commercialization",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg"
+      ],
+      "keywords": [
+        "commercialization",
+        "wechat_customer_order_or_design_win",
+        "半导体产业纵横"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "0818a0874257365c39b048fd89e5cb40e2ae18428a4ad7f6650d8d1854099686",
+      "source_credit": 55,
+      "source_excerpt": "公众号记得加星标⭐️，第一时间推送不会错过。 图片 联讯仪器是全球第二家推出1.6T光模块全部核心测试仪器的厂商。 图片 刚刚，苏州联讯仪器股份有限公司（联讯仪器，股票代码688808）正式登陆科创板。此次IPO发行价81.88元/股，开盘暴涨800%，总市值约800亿元。 **联讯仪器是国产光通信测试仪器龙头，公司是目前全球少数、国内极少数量产供货400G、800G、1.6T高速光模块核心测试仪器的厂商，**同时也是全球第二家推出1.6T光模块全部核心测试仪器的厂商。公司与中际旭创、新易盛、光迅科技、Lumentum、Coherent、环球广电、日本住友等国内外主流光通信企业达成合作关系。 本次IPO募集资金将投资于下一代光通信测试设备研发及产业化建设项目、车规芯片测试设备研发及产业化建设项目、存储测试设备研发及产业化建设项目、数字测试仪器研发及产业化建设项目和下一代测试仪表设备研发中心建设项目。 图片****中国光通信测试仪器市场前三，中际旭创、新易盛是其客户**** ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 联讯仪器成立于2017年3月15日，总部位于苏州高新区，由胡海洋、杨建共同创立，专注于电子测量仪器和半导体测试设备的研发、制造、销售及服务。 在光通信领域，联讯仪器已推出满足目前业内最高水平1.6T光模块测试需求的65GHz采样示波器、120GBaud时钟恢复单元、1.6Tbps误码",
+      "source_excerpt_hash": "997c98254a93915f2a5a878423f15b36fa75a92194b4a752688b726b4860049f",
+      "source_kind": "wechat_customer_order_or_design_win",
+      "source_ref": "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "开盘暴涨800%！中际旭创设备供应商登陆科创板",
+      "topic": "commercialization",
+      "verification_status": "professional_observation"
+    }
+  ],
+  "connected_synthesis": false,
+  "counts": {
+    "commercialization": 1,
+    "industry_logic": 4
+  },
+  "deduped_sources": [],
+  "excerpt_budget": {
+    "cards_count": 5,
+    "excerpt_packs_count": 5,
+    "max_excerpt_chars": 800,
+    "total_excerpt_chars": 2362
+  },
+  "excerpt_packs": [
+    {
+      "card_id": "curated:industry_logic:a385d38c8b4d4898:0",
+      "excerpts": [
+        {
+          "char_count": 271,
+          "excerpt_id": "curated:industry_logic:a385d38c8b4d4898:0:excerpt:0",
+          "normalized_substring_verified": true,
+          "source_excerpt_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
+          "text": "* * * 作者 | 王奕红 余芳沁 唐海清 ▼ 图片 报告信息 ▼ 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 中际旭创：全球光模块龙头，AI算力驱动业绩高增 》 对外发布时间：2026年05月23日 报告发布机构：天风证券股份有限公司（已获证监会许可的证券投资咨询业务资格） 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 唐海清 SAC 执业证书编号：S1110517030002 余芳沁 SAC 执业证书编号：S1110521080006"
+        }
+      ],
+      "pack_id": "curated:industry_logic:a385d38c8b4d4898:0:pack",
+      "source_content_chars": 271,
+      "source_content_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
+      "source_ref": "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ"
+      ]
+    },
+    {
+      "card_id": "curated:industry_logic:a1693355367baff2:1",
+      "excerpts": [
+        {
+          "char_count": 800,
+          "excerpt_id": "curated:industry_logic:a1693355367baff2:1:excerpt:0",
+          "normalized_substring_verified": true,
+          "source_excerpt_hash": "6e81aed0f956a4c882bbcaea76f159530e14ec7a86d39ad3bde5b9cf67430ba7",
+          "text": "以下是中际旭创（300308）近期的主要市场文章和研报汇总： 最新研报（2026年4-5月） 日期 机构 研报标题 核心观点 2026-05-08 西南证券 800G放量驱动业绩兑现，1.6T... 800G产品放量驱动业绩 2026-04-30 西部证券 26Q1业绩点评：800G/1.6T... 一季度业绩点评 2026-04-29 天风证券 业绩创历史新高，高端光模块放量... 业绩创新高，高端产品放量 2026-04-27 中信建投 业绩表现强劲，积极布局SCALE UP光互连领域 布局光互连新领域 2026-04-24 群益证券 1.6T推动一季度盈利高速增长 1.6T产品推动增长 2026-04-24 国联民生 一季度业绩超预期 业绩超预期 2026-04-22 长江证券 营收利润环比高增，备料扩产交付优异 营收利润双增长 2026-04-21 招商证券 26Q1业绩环比高增，光互联龙头竞争力突出 龙头竞争力强 2026-04-20 中国银河 1Q26业绩点评：业绩大超预期 业绩大超预期 2026-04-19 中金公司 AI需求高景气持续，SCALE-UP光连接注入增量 AI需求+新技术增量 2026-04-17 开源证券 业绩兑现高增验证产业景气 验证行业高景气 2026-04-17 国盛证券 Q1业绩全面爆发超预期 业绩全面爆发 2026-04-17 国金证券 高速光模块放量增收增利，NPO等新技术核心卡位 新技术卡位 2026-04-13 天风证券 深度受益AI算力全球扩容 受益AI算力扩容 分析师评级与目标价 截至2026年5月15日，中际旭创股价为 1,049.00元 。 机构 评级 目标价 日期 高盛 买入 1,187元 2026-04-17 野村/Instinet 买入 1,015元 2026-04-17 CLSA 买入 1,010元 2026-0"
+        }
+      ],
+      "pack_id": "curated:industry_logic:a1693355367baff2:1:pack",
+      "source_content_chars": 1073,
+      "source_content_hash": "76af0a19f0982c13c8fdd00e7c83bfd1280da25efc6cebb60fb83b86944a4e73",
+      "source_ref": "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g"
+      ]
+    },
+    {
+      "card_id": "curated:industry_logic:c9c4bc581617515d:2",
+      "excerpts": [
+        {
+          "char_count": 244,
+          "excerpt_id": "curated:industry_logic:c9c4bc581617515d:2:excerpt:0",
+          "normalized_substring_verified": true,
+          "source_excerpt_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
+          "text": "**年报点评** **报告信息** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 深度受益AI算力全球扩容，光模块龙头业绩加速兑现，1.6T引领新周期 》 对外发布时间：2026年4月13日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002"
+        }
+      ],
+      "pack_id": "curated:industry_logic:c9c4bc581617515d:2:pack",
+      "source_content_chars": 244,
+      "source_content_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
+      "source_ref": "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw"
+      ]
+    },
+    {
+      "card_id": "curated:industry_logic:b2c064515a1f4c59:3",
+      "excerpts": [
+        {
+          "char_count": 247,
+          "excerpt_id": "curated:industry_logic:b2c064515a1f4c59:3:excerpt:0",
+          "normalized_substring_verified": true,
+          "source_excerpt_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
+          "text": "**公司点评** **备注** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《算力CapEx持续加码，硅光与1.6T双轮驱动，公司盈利能力进入上行通道》 对外发布时间：2026年02月02日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002 修改于"
+        }
+      ],
+      "pack_id": "curated:industry_logic:b2c064515a1f4c59:3:pack",
+      "source_content_chars": 247,
+      "source_content_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
+      "source_ref": "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ"
+      ]
+    },
+    {
+      "card_id": "curated:commercialization:91f57a47205bd8d2:4",
+      "excerpts": [
+        {
+          "char_count": 800,
+          "excerpt_id": "curated:commercialization:91f57a47205bd8d2:4:excerpt:0",
+          "normalized_substring_verified": true,
+          "source_excerpt_hash": "997c98254a93915f2a5a878423f15b36fa75a92194b4a752688b726b4860049f",
+          "text": "公众号记得加星标⭐️，第一时间推送不会错过。 图片 联讯仪器是全球第二家推出1.6T光模块全部核心测试仪器的厂商。 图片 刚刚，苏州联讯仪器股份有限公司（联讯仪器，股票代码688808）正式登陆科创板。此次IPO发行价81.88元/股，开盘暴涨800%，总市值约800亿元。 **联讯仪器是国产光通信测试仪器龙头，公司是目前全球少数、国内极少数量产供货400G、800G、1.6T高速光模块核心测试仪器的厂商，**同时也是全球第二家推出1.6T光模块全部核心测试仪器的厂商。公司与中际旭创、新易盛、光迅科技、Lumentum、Coherent、环球广电、日本住友等国内外主流光通信企业达成合作关系。 本次IPO募集资金将投资于下一代光通信测试设备研发及产业化建设项目、车规芯片测试设备研发及产业化建设项目、存储测试设备研发及产业化建设项目、数字测试仪器研发及产业化建设项目和下一代测试仪表设备研发中心建设项目。 图片****中国光通信测试仪器市场前三，中际旭创、新易盛是其客户**** ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 联讯仪器成立于2017年3月15日，总部位于苏州高新区，由胡海洋、杨建共同创立，专注于电子测量仪器和半导体测试设备的研发、制造、销售及服务。 在光通信领域，联讯仪器已推出满足目前业内最高水平1.6T光模块测试需求的65GHz采样示波器、120GBaud时钟恢复单元、1.6Tbps误码"
+        }
+      ],
+      "pack_id": "curated:commercialization:91f57a47205bd8d2:4:pack",
+      "source_content_chars": 1200,
+      "source_content_hash": "0818a0874257365c39b048fd89e5cb40e2ae18428a4ad7f6650d8d1854099686",
+      "source_ref": "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg"
+      ]
+    }
+  ],
+  "schema_version": "curated_external_evidence_cards.v1",
+  "status": "ok",
+  "stock_name": "中际旭创",
+  "wrote_knowledge": false
+}

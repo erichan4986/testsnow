@@ -229,5 +229,21 @@
     "code": "688018",
     "xueqiu_code": "SH688018",
     "gid": "688188"
+  },
+  {
+    "name": "中际旭创",
+    "code": "300308",
+    "xueqiu_code": "SZ300308",
+    "gid": "300308",
+    "source_intake": {
+      "enabled": true,
+      "curated_external_evidence_cards_synthesis_display": {
+        "enabled": false,
+        "cards_json": "data/curated_external/evidence_cards/zhongjixuchuang_20260627.json",
+        "max_display_items": 8,
+        "min_cards": 3,
+        "min_total_excerpt_chars": 1200
+      }
+    }
   }
 ]
