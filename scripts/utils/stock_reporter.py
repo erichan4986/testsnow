@@ -127,6 +127,9 @@ class PerStockReporter:
             curated_external_enabled = bool(
                 source_intake_enabled and curated_external_cfg.get("enabled", False)
             )
+            curated_external_cards_json = self._resolve_repo_relative_path(
+                curated_external_cfg.get("cards_json", "")
+            )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -146,7 +149,7 @@ class PerStockReporter:
                 pipeline_kwargs["enable_periodic_report_fulltext_intake"] = True
             if curated_external_enabled:
                 pipeline_kwargs["include_curated_external_evidence_cards_in_synthesis_display"] = True
-                pipeline_kwargs["curated_external_evidence_cards_json"] = curated_external_cfg.get("cards_json", "")
+                pipeline_kwargs["curated_external_evidence_cards_json"] = curated_external_cards_json
                 if curated_external_cfg.get("max_display_items") is not None:
                     pipeline_kwargs["curated_external_evidence_cards_max_display_items"] = curated_external_cfg["max_display_items"]
                 if curated_external_cfg.get("min_cards") is not None:
@@ -219,7 +222,7 @@ class PerStockReporter:
 
             if curated_external_enabled:
                 pipeline_input["include_curated_external_evidence_cards_in_synthesis_display"] = True
-                pipeline_input["curated_external_evidence_cards_json"] = curated_external_cfg.get("cards_json", "")
+                pipeline_input["curated_external_evidence_cards_json"] = curated_external_cards_json
                 if curated_external_cfg.get("max_display_items") is not None:
                     pipeline_input["curated_external_evidence_cards_max_display_items"] = curated_external_cfg["max_display_items"]
                 if curated_external_cfg.get("min_cards") is not None:
@@ -245,6 +248,17 @@ class PerStockReporter:
         except Exception as e:
             logger.error(f"[{stock_name}] Pipeline 执行失败: {e}")
             return "", ""
+
+    @staticmethod
+    def _resolve_repo_relative_path(path_value: str) -> str:
+        """Resolve config file paths relative to the repository root."""
+        if not path_value:
+            return ""
+        path = Path(path_value)
+        if path.is_absolute():
+            return str(path)
+        repo_root = Path(__file__).resolve().parents[2]
+        return str(repo_root / path)
 
     def _generate_summary_report(self, output_dir: str) -> str:
         """生成汇总简报"""

@@ -554,6 +554,41 @@ def test_source_intake_curated_external_display_enabled_passes_context():
     )
 
 
+def test_source_intake_curated_external_cards_json_resolves_from_repo_root():
+    relative_cards = "data/curated_external/evidence_cards/heizhima_20260627.json"
+    expected_path = str(Path(__file__).resolve().parents[2] / relative_cards)
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "curated_external_evidence_cards_synthesis_display": {
+                    "enabled": True,
+                    "cards_json": relative_cards,
+                    "max_display_items": 6,
+                    "min_cards": 2,
+                    "min_total_excerpt_chars": 900,
+                },
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    assert mock_build.call_args.kwargs["curated_external_evidence_cards_json"] == expected_path
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input["curated_external_evidence_cards_json"] == expected_path
+
+
 def test_curated_external_display_requires_source_intake_enabled():
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
