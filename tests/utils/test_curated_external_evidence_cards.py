@@ -238,6 +238,59 @@ def test_long_high_signal_intro_cannot_consume_entire_excerpt_budget(tmp_path: P
     assert len(result["excerpt_packs"][0]["excerpts"]) >= 2
 
 
+def test_excerpts_record_matched_terms_and_selection_reason(tmp_path: Path):
+    content = (
+        "财报显示，2025年研发开支为14.17亿元，三费合计18.03亿元，为营收的2.19倍。"
+        "公司产品价格上调，产能供给持续紧张。"
+    )
+    path = _write_jsonl(
+        tmp_path / "items.jsonl",
+        [
+            _item(
+                title="财报与价格周期深度分析",
+                content=content,
+                topic="earnings_context",
+                source_kind="wechat_high_quality_analysis",
+            )
+        ],
+    )
+
+    result = build_curated_external_evidence_cards(path, stock_name="黑芝麻智能")
+
+    excerpt = result["excerpt_packs"][0]["excerpts"][0]
+    assert "matched_terms" in excerpt
+    assert "研发" in excerpt["matched_terms"]
+    assert "三费" in excerpt["matched_terms"]
+    assert excerpt["selection_reason"].startswith("matched_terms:")
+
+
+def test_operational_tail_is_cleaned_before_excerpt_selection(tmp_path: Path):
+    content = (
+        "财报显示，公司2025年营业收入8.22亿元，同比增长73.42%。"
+        "往期热文推荐 1 客户订单爆发，2 研发费用高增，3 价格周期上行。"
+        "联系我们，报告询价、商务合作、进群交流请联系小编。阅读原文"
+    )
+    path = _write_jsonl(
+        tmp_path / "items.jsonl",
+        [
+            _item(
+                title="财报分析",
+                content=content,
+                topic="earnings_context",
+                source_kind="wechat_high_quality_analysis",
+            )
+        ],
+    )
+
+    result = build_curated_external_evidence_cards(path, stock_name="黑芝麻智能")
+
+    card = result["cards"][0]
+    assert "营业收入8.22亿元" in card["source_excerpt"]
+    assert "往期热文推荐" not in card["source_excerpt"]
+    assert "联系我们" not in card["source_excerpt"]
+    assert "阅读原文" not in card["source_excerpt"]
+
+
 def test_normalized_hash_matches_sha256():
     text = "A  B\nC"
     expected = hashlib.sha256("A B C".encode("utf-8")).hexdigest()

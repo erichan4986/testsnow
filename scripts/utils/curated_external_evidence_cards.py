@@ -24,54 +24,78 @@ _EXCERPT_JOINER = "\n...\n"
 _MIN_SNIPPET_CHARS = 24
 _MAX_SNIPPETS_PER_CARD = 5
 
-_HIGH_SIGNAL_TERMS = (
-    "营收",
-    "收入",
-    "净利润",
-    "亏损",
-    "毛利",
-    "毛利率",
-    "现金流",
-    "研发",
-    "费用",
-    "三费",
-    "占营收",
-    "同比",
-    "环比",
-    "订单",
-    "客户",
-    "定点",
-    "量产",
-    "交付",
-    "商业化",
-    "合作",
-    "认证",
-    "审查",
-    "产能",
-    "供给",
-    "涨价",
-    "价格",
-    "上调",
-    "周期",
-    "景气",
-    "募资",
-    "招股",
-    "上市",
-    "递表",
-    "资本开支",
-    "市占率",
-    "份额",
-    "国产替代",
-    "供应链",
-)
-
-_TOPIC_SIGNAL_TERMS: Dict[str, Tuple[str, ...]] = {
-    "commercialization": ("订单", "客户", "定点", "量产", "交付", "商业化", "合作", "导入", "车型"),
-    "earnings_context": ("财报", "业绩", "营收", "收入", "净利润", "亏损", "毛利", "费用", "现金流", "同比"),
-    "cycle_price": ("涨价", "价格", "上调", "周期", "景气", "库存", "供给", "产能", "需求"),
-    "industry_logic": ("行业", "竞争", "格局", "国产替代", "市场", "份额", "产业链", "供应链"),
-    "certification_policy": ("认证", "审查", "标准", "政策", "ASIL", "ISO", "通过"),
-    "capital_market_context": ("募资", "招股", "上市", "递表", "发行", "聆讯", "港交所"),
+_EXCERPT_SELECTION_RULES: Dict[str, Any] = {
+    "common_signal_terms": (
+        "营收",
+        "收入",
+        "净利润",
+        "亏损",
+        "毛利",
+        "毛利率",
+        "现金流",
+        "研发",
+        "费用",
+        "三费",
+        "占营收",
+        "同比",
+        "环比",
+        "订单",
+        "客户",
+        "定点",
+        "量产",
+        "交付",
+        "商业化",
+        "合作",
+        "认证",
+        "审查",
+        "产能",
+        "供给",
+        "涨价",
+        "价格",
+        "上调",
+        "周期",
+        "景气",
+        "募资",
+        "招股",
+        "上市",
+        "递表",
+        "资本开支",
+        "市占率",
+        "份额",
+        "国产替代",
+        "供应链",
+    ),
+    "topic_signal_terms": {
+        "commercialization": ("订单", "客户", "定点", "量产", "交付", "商业化", "合作", "导入", "车型"),
+        "earnings_context": ("财报", "业绩", "营收", "收入", "净利润", "亏损", "毛利", "费用", "现金流", "同比"),
+        "cycle_price": ("涨价", "价格", "上调", "周期", "景气", "库存", "供给", "产能", "需求"),
+        "industry_logic": ("行业", "竞争", "格局", "国产替代", "市场", "份额", "产业链", "供应链"),
+        "certification_policy": ("认证", "审查", "标准", "政策", "ASIL", "ISO", "通过"),
+        "capital_market_context": ("募资", "招股", "上市", "递表", "发行", "聆讯", "港交所"),
+    },
+    "noise_terms": (
+        "免责声明",
+        "风险提示",
+        "点击上方",
+        "关注公众号",
+        "设为星标",
+        "扫码",
+        "原文链接",
+        "阅读原文",
+        "广告",
+    ),
+    "tail_markers": (
+        "往期热文推荐",
+        "相关推荐",
+        "联系我们",
+        "报告询价",
+        "商务合作",
+        "进群交流",
+        "阅读原文",
+        "_**END**_",
+        "**END**",
+    ),
+    "title_ignore_terms": {"深度分析", "财报", "观察", "文章", "报告", "公司", "股份", "智能", "电子"},
 }
 
 
@@ -171,7 +195,7 @@ def _build_card_and_pack(
     title = _clean_text(item.get("title") or item.get("source_ref") or "curated external material")
     source_ref = _canonical_source_ref(item)
     source_refs = _sorted_unique([source_ref, *[str(ref) for ref in item.get("source_refs", []) if ref]])
-    source_content = _clean_text(item.get("content") or title)
+    source_content = _clean_source_content(item.get("content") or title)
     selected_excerpts = _deterministic_excerpts(
         source_content,
         item=item,
@@ -211,13 +235,14 @@ def _build_card_and_pack(
         "quality_action": "preview_only",
     }
     excerpts = [
-        {
-            "excerpt_id": f"{card_id}:excerpt:{excerpt_index}",
-            "text": excerpt,
-            "source_excerpt_hash": normalized_hash(excerpt),
-            "char_count": len(excerpt),
-            "normalized_substring_verified": _normalize_text(excerpt) in _normalize_text(source_content),
-        }
+        _excerpt_record(
+            card_id=card_id,
+            excerpt_index=excerpt_index,
+            excerpt=excerpt,
+            source_content=source_content,
+            item=item,
+            stock_name=stock_name,
+        )
         for excerpt_index, excerpt in enumerate(selected_excerpts)
     ]
     pack = {
@@ -231,6 +256,27 @@ def _build_card_and_pack(
         "excerpts": excerpts,
     }
     return card, pack
+
+
+def _excerpt_record(
+    *,
+    card_id: str,
+    excerpt_index: int,
+    excerpt: str,
+    source_content: str,
+    item: Dict[str, Any],
+    stock_name: str,
+) -> Dict[str, Any]:
+    matched_terms = _matched_selection_terms(excerpt, item=item, stock_name=stock_name)
+    return {
+            "excerpt_id": f"{card_id}:excerpt:{excerpt_index}",
+            "text": excerpt,
+            "source_excerpt_hash": normalized_hash(excerpt),
+            "char_count": len(excerpt),
+            "normalized_substring_verified": _normalize_text(excerpt) in _normalize_text(source_content),
+            "matched_terms": matched_terms,
+            "selection_reason": _selection_reason(excerpt, matched_terms),
+    }
 
 
 def _is_safe_display_item(item: Any) -> bool:
@@ -401,8 +447,9 @@ def _score_excerpt_snippet(snippet: str, *, item: Dict[str, Any], stock_name: st
     for term in _title_terms(title):
         if term and term in snippet:
             score += 3
-    score += sum(4 for term in _TOPIC_SIGNAL_TERMS.get(topic, ()) if term in snippet)
-    score += sum(2 for term in _HIGH_SIGNAL_TERMS if term in snippet)
+    topic_terms = _EXCERPT_SELECTION_RULES["topic_signal_terms"].get(topic, ())
+    score += sum(4 for term in topic_terms if term in snippet)
+    score += sum(2 for term in _EXCERPT_SELECTION_RULES["common_signal_terms"] if term in snippet)
     if re.search(r"\d+(?:\.\d+)?\s*(?:亿元|万元|%|TOPS|G|T|万片|颗|倍)", snippet):
         score += 7
     elif re.search(r"\d+(?:\.\d+)?", snippet):
@@ -416,23 +463,34 @@ def _score_excerpt_snippet(snippet: str, *, item: Dict[str, Any], stock_name: st
 
 def _title_terms(title: str) -> List[str]:
     raw_terms = re.findall(r"[A-Za-z0-9][A-Za-z0-9\.\-]{1,}|[\u4e00-\u9fff]{2,}", title)
-    ignored = {"深度分析", "财报", "观察", "文章", "报告", "公司", "股份", "智能", "电子"}
+    ignored = _EXCERPT_SELECTION_RULES["title_ignore_terms"]
     return [term for term in raw_terms if term not in ignored and len(term) <= 20][:8]
 
 
 def _looks_like_navigation_or_disclaimer(snippet: str) -> bool:
-    terms = (
-        "免责声明",
-        "风险提示",
-        "点击上方",
-        "关注公众号",
-        "设为星标",
-        "扫码",
-        "原文链接",
-        "阅读原文",
-        "广告",
-    )
-    return any(term in snippet for term in terms)
+    return any(term in snippet for term in _EXCERPT_SELECTION_RULES["noise_terms"])
+
+
+def _matched_selection_terms(snippet: str, *, item: Dict[str, Any], stock_name: str) -> List[str]:
+    topic = str(item.get("topic") or "")
+    title = str(item.get("title") or "")
+    terms: List[str] = []
+    if stock_name and stock_name in snippet:
+        terms.append(stock_name)
+    terms.extend(term for term in _title_terms(title) if term in snippet)
+    terms.extend(term for term in _EXCERPT_SELECTION_RULES["topic_signal_terms"].get(topic, ()) if term in snippet)
+    terms.extend(term for term in _EXCERPT_SELECTION_RULES["common_signal_terms"] if term in snippet)
+    if re.search(r"\d+(?:\.\d+)?\s*(?:亿元|万元|%|TOPS|G|T|万片|颗|倍)", snippet):
+        terms.append("numeric_metric")
+    return _dedupe_preserve_order(terms)
+
+
+def _selection_reason(snippet: str, matched_terms: List[str]) -> str:
+    if matched_terms:
+        return "matched_terms:" + ",".join(matched_terms[:8])
+    if re.search(r"\d+(?:\.\d+)?", snippet):
+        return "numeric_signal"
+    return "fallback_context"
 
 
 def _truncate_snippet(snippet: str, max_chars: int) -> str:
@@ -518,5 +576,29 @@ def _clean_text(text: Any) -> str:
     return _normalize_text(str(text or ""))
 
 
+def _clean_source_content(text: Any) -> str:
+    source = _clean_text(text)
+    cut_positions = [
+        source.find(marker)
+        for marker in _EXCERPT_SELECTION_RULES["tail_markers"]
+        if source.find(marker) > 0
+    ]
+    if cut_positions:
+        source = source[: min(cut_positions)]
+    return _clean_text(source)
+
+
 def _sorted_unique(values: List[str]) -> List[str]:
     return sorted({str(value).strip() for value in values if str(value).strip()})
+
+
+def _dedupe_preserve_order(values: List[str]) -> List[str]:
+    seen = set()
+    result: List[str] = []
+    for value in values:
+        cleaned = str(value or "").strip()
+        if not cleaned or cleaned in seen:
+            continue
+        seen.add(cleaned)
+        result.append(cleaned)
+    return result
