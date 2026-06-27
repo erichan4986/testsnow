@@ -565,6 +565,34 @@ def test_render_prefers_deep_analysis_display():
     assert "baseline 行业逻辑" not in result
 
 
+def test_render_deep_analysis_display_with_curated_external_sources_adds_preview_notice():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "baseline 行业逻辑。",
+            "citations": {},
+        },
+        "deep_analysis_display": {
+            "industry_logic": "微信观察内容[^1]。",
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "source_type": "curated_external_analysis_evidence",
+                    "title": "测试微信文章",
+                },
+            },
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+
+    assert "精选外部材料仅作为专业观察" in result
+    assert "不参与评分、风险评分或最终建议" in result
+    assert result.index("精选外部材料仅作为专业观察") < result.index("### 4.1 产业逻辑与竞争格局")
+
+
 def test_render_uses_synthesis_display_when_no_deep_analysis():
     renderer = DeepAnalysisRenderer()
     ctx = {

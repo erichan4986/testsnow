@@ -44,7 +44,15 @@ class DeepAnalysisRenderer:
             lines.append(core_facts_md)
 
         # 深度分析
-        deep_md = self._deep_analysis(stock_name, synthesis, ctx.get("claim_verification_summary"))
+        deep_md = self._deep_analysis(
+            stock_name,
+            synthesis,
+            ctx.get("claim_verification_summary"),
+            uses_curated_external_display=(
+                ctx.get("deep_analysis_display") is synthesis
+                and self._has_curated_external_citation(synthesis)
+            ),
+        )
         if deep_md:
             lines.append(deep_md)
 
@@ -121,6 +129,7 @@ class DeepAnalysisRenderer:
         stock_name: str,
         synthesis: Dict[str, str],
         claim_verification_summary: Any = None,
+        uses_curated_external_display: bool = False,
     ) -> str:
         """
         深度分析板块：合并原5个合成板块为3个子板块。
@@ -130,6 +139,11 @@ class DeepAnalysisRenderer:
         """
         citations = synthesis.get("citations", {})
         lines = ["## 四、深度分析", ""]
+        if uses_curated_external_display:
+            lines.extend([
+                "> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
+                "",
+            ])
 
         verified_summary = self._verified_claim_summary_section(claim_verification_summary)
         if verified_summary:
@@ -228,6 +242,16 @@ class DeepAnalysisRenderer:
                 lines.append("")
 
         return "\n".join(lines)
+
+    @staticmethod
+    def _has_curated_external_citation(synthesis: Dict[str, Any]) -> bool:
+        citations = synthesis.get("citations", {}) or {}
+        for meta in citations.values():
+            if not isinstance(meta, dict):
+                continue
+            if meta.get("source_type") == "curated_external_analysis_evidence":
+                return True
+        return False
 
     def _verified_claim_summary_section(self, summary: Any) -> str:
         """Render verified/supported claim verification rows as read-only facts."""
