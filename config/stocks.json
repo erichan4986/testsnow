@@ -23,6 +23,13 @@
       "periodic_narrative_cards_synthesis_display": {
         "enabled": true,
         "max_display_items": 8
+      },
+      "curated_external_evidence_cards_synthesis_display": {
+        "enabled": true,
+        "cards_json": "data/curated_external/evidence_cards/heizhima_20260627.json",
+        "max_display_items": 8,
+        "min_cards": 2,
+        "min_total_excerpt_chars": 600
       }
     }
   },
