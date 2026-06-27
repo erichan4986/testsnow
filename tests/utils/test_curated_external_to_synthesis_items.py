@@ -130,6 +130,27 @@ def test_source_ref_uses_url_for_traceability(tmp_path: Path):
     assert result["items"][0]["source_ref"] == "https://mp.weixin.qq.com/s/design-win"
 
 
+def test_prefers_enriched_full_content_over_preview(tmp_path: Path):
+    input_path = tmp_path / "candidates.jsonl"
+    _write_jsonl(
+        input_path,
+        [
+            _candidate(
+                title="财报分析",
+                content_preview="短摘要只包含文章开头。",
+                extra={
+                    "content": "短摘要只包含文章开头。后文披露研发开支为14.17亿元，三费合计18.03亿元。",
+                    "body_enriched": True,
+                },
+            )
+        ],
+    )
+
+    result = build_curated_external_synthesis_items(input_path)
+
+    assert "研发开支为14.17亿元" in result["items"][0]["content"]
+
+
 def test_sort_prefers_newer_items_with_same_topic_and_score(tmp_path: Path):
     input_path = tmp_path / "candidates.jsonl"
     _write_jsonl(

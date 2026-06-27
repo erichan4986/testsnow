@@ -142,7 +142,7 @@ def _to_display_item(raw: Dict[str, Any]) -> Optional[Dict[str, Any]]:
 
     topic = map_source_kind_to_topic(source_kind, raw)
     title = _clean_text(str(raw.get("title") or raw.get("url") or "curated-external"))
-    content = _clean_text(str(raw.get("content_preview") or raw.get("content") or ""))
+    content = _clean_text(str(raw.get("content") or raw.get("content_preview") or ""))
     url = str(raw.get("url") or "").strip()
     account = _clean_text(str(raw.get("account") or ""))
     publish_time = str(raw.get("publish_time") or "").strip()

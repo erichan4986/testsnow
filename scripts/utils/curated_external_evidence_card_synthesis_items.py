@@ -277,6 +277,14 @@ def _normalized_substring_verified(
         excerpts = pack.get("excerpts") or []
         if not isinstance(excerpts, list):
             continue
+        if expected_hash and str(pack.get("combined_source_excerpt_hash") or "") == expected_hash:
+            verified_excerpts = [
+                excerpt
+                for excerpt in excerpts
+                if isinstance(excerpt, dict) and excerpt.get("normalized_substring_verified") is True
+            ]
+            if verified_excerpts and len(verified_excerpts) == len(excerpts):
+                return True
         for excerpt in excerpts:
             if not isinstance(excerpt, dict):
                 continue

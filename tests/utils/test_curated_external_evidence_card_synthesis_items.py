@@ -142,6 +142,43 @@ def test_accepts_real_phase1_schema_with_fidelity_in_excerpt_pack(tmp_path):
     assert stats["status"] == "ok"
 
 
+def test_accepts_multi_excerpt_pack_with_combined_hash(tmp_path):
+    excerpt_a = "黑芝麻智能与客户合作推进量产定点，2026年有望进入商业化验证阶段。" * 5
+    excerpt_b = "公司研发投入保持高位，费用结构仍对利润形成压力，需要继续观察收入放量节奏。" * 5
+    combined = excerpt_a + "\n...\n" + excerpt_b
+    card = _make_card(
+        card_id="c1",
+        topic="commercialization",
+        source_excerpt=combined,
+        normalized_substring_verified=False,
+        source_excerpt_hash="combined-hash",
+    )
+    card.pop("normalized_substring_verified")
+    cards = [
+        card,
+        _make_card(card_id="c2", topic="industry_logic", source_excerpt=_long_chinese_excerpt(500)),
+        _make_card(card_id="c3", topic="earnings_context", source_excerpt=_long_chinese_excerpt(500)),
+    ]
+    summary = _make_summary(cards)
+    summary["excerpt_packs"][0] = {
+        "card_id": "c1",
+        "combined_source_excerpt_hash": "combined-hash",
+        "excerpts": [
+            {"source_excerpt_hash": "a", "normalized_substring_verified": True},
+            {"source_excerpt_hash": "b", "normalized_substring_verified": True},
+        ],
+    }
+    path = tmp_path / "cards.json"
+    path.write_text(json.dumps(summary, ensure_ascii=False), encoding="utf-8")
+
+    items, stats = load_curated_external_evidence_card_synthesis_items(
+        str(path), min_cards=3, min_total_excerpt_chars=1000
+    )
+
+    assert len(items) == 3
+    assert stats["status"] == "ok"
+
+
 def test_rejects_excerpt_too_short(tmp_path):
     cards = [_make_card(card_id="c1", topic="industry_logic", source_excerpt="太短")]
     path = _write_summary(tmp_path, cards)

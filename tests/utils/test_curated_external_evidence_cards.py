@@ -173,6 +173,71 @@ def test_excerpt_budget_limits_excerpt_length_and_reports_budget(tmp_path: Path)
     assert result["excerpt_budget"]["total_excerpt_chars"] <= 120
 
 
+def test_long_form_excerpt_selects_later_high_signal_sentences(tmp_path: Path):
+    generic_intro = "公司持续关注行业发展，保持稳健经营，并围绕客户需求推进相关业务。" * 22
+    rd_sentence = "2025年研发开支为14.17亿元，研发开支占营收比例高达173.38%，三费合计18.03亿元。"
+    price_sentence = "公司部分存储芯片产品价格有合理范围上调，上游供应商价格持续上调，产能供给紧张。"
+    content = generic_intro + rd_sentence + "同时，公司继续推进日常运营。" + price_sentence
+    path = _write_jsonl(
+        tmp_path / "items.jsonl",
+        [
+            _item(
+                title="财报与价格周期深度分析",
+                content=content,
+                topic="earnings_context",
+                source_kind="wechat_high_quality_analysis",
+            )
+        ],
+    )
+
+    result = build_curated_external_evidence_cards(path, stock_name="黑芝麻智能", max_excerpt_chars=260)
+
+    card = result["cards"][0]
+    assert "研发开支为14.17亿元" in card["source_excerpt"]
+    assert "上游供应商价格持续上调" in card["source_excerpt"]
+    assert len(card["source_excerpt"]) <= 260
+
+    pack = result["excerpt_packs"][0]
+    assert pack["combined_source_excerpt_hash"] == card["source_excerpt_hash"]
+    assert len(pack["excerpts"]) >= 2
+    for excerpt in pack["excerpts"]:
+        assert excerpt["normalized_substring_verified"] is True
+        assert _normalize(excerpt["text"]) in _normalize(content)
+
+
+def test_long_high_signal_intro_cannot_consume_entire_excerpt_budget(tmp_path: Path):
+    long_intro = (
+        (
+            "黑芝麻智能财报显示，公司营收收入同比增长，净利润亏损，毛利率保持稳定，"
+            "研发费用、客户订单、量产商业化、国产替代、行业景气与资本开支均是本文关注重点，"
+            "但这一段只是概览铺垫并没有给出具体拆分，"
+        )
+        * 8
+        + "因此需要继续往后阅读。"
+    )
+    rd_sentence = "财报显示，2025年研发开支为14.17亿元，三费合计18.03亿元，为营收的2.19倍。"
+    price_sentence = "普冉股份表示，上游供应商价格持续上调，封测原材料持续上涨且产能供给持续紧张。"
+    path = _write_jsonl(
+        tmp_path / "items.jsonl",
+        [
+            _item(
+                title="财报与价格周期深度分析",
+                content=long_intro + rd_sentence + price_sentence,
+                topic="earnings_context",
+                source_kind="wechat_high_quality_analysis",
+            )
+        ],
+    )
+
+    result = build_curated_external_evidence_cards(path, stock_name="黑芝麻智能", max_excerpt_chars=500)
+
+    card = result["cards"][0]
+    assert "研发开支为14.17亿元" in card["source_excerpt"]
+    assert "上游供应商价格持续上调" in card["source_excerpt"]
+    assert len(card["source_excerpt"]) <= 500
+    assert len(result["excerpt_packs"][0]["excerpts"]) >= 2
+
+
 def test_normalized_hash_matches_sha256():
     text = "A  B\nC"
     expected = hashlib.sha256("A B C".encode("utf-8")).hexdigest()
