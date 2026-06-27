@@ -18,6 +18,7 @@ from wechat_targeted_discovery import (
     discover_articles,
     load_auth_key,
     load_stock_config,
+    select_download_targets,
     ts_to_date,
 )
 
@@ -242,3 +243,39 @@ def test_categories_include_required_set():
     assert set(CATEGORIES) == required
     assert PRIORITY["high_quality_analysis"] < PRIORITY["product_or_event_signal"]
     assert PRIORITY["drop"] == max(PRIORITY.values())
+
+
+def test_select_download_targets_uses_stratified_categories_before_filling():
+    candidates = [
+        {
+            "title": f"业绩元数据 {idx}",
+            "url": f"https://mp.weixin.qq.com/s/e{idx}",
+            "classification": "earnings_financial_context",
+            "publish_date": f"2026-05-0{idx}",
+        }
+        for idx in range(1, 6)
+    ]
+    candidates.extend(
+        [
+            {
+                "title": "客户订单与800G交付进展",
+                "url": "https://mp.weixin.qq.com/s/commercial",
+                "classification": "customer_order_or_design_win",
+                "publish_date": "2026-04-20",
+            },
+            {
+                "title": "产能扩张与上游材料预付款变化",
+                "url": "https://mp.weixin.qq.com/s/capacity",
+                "classification": "capacity_supply_chain_signal",
+                "publish_date": "2026-04-18",
+            },
+        ]
+    )
+
+    targets = select_download_targets(candidates, 3)
+    classifications = [item["classification"] for item in targets]
+
+    assert len(targets) == 3
+    assert len(set(classifications)) >= 3
+    assert "customer_order_or_design_win" in classifications
+    assert "capacity_supply_chain_signal" in classifications

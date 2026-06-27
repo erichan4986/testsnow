@@ -778,6 +778,67 @@ def _slug_from_url(url: str) -> str:
     return f"{path}_{h}"
 
 
+def _download_sort_key(candidate: Dict[str, Any]) -> Tuple[int, str]:
+    classification = str(candidate.get("classification") or "")
+    # Newer material is preferable within the same class; invert ISO date by
+    # sorting with reverse=True at the caller where needed would make category
+    # priority awkward, so use a simple negative ordinal string fallback.
+    publish_date = str(candidate.get("publish_date") or "")
+    return (PRIORITY.get(classification, 99), _reverse_iso_date(publish_date))
+
+
+def _reverse_iso_date(value: str) -> str:
+    try:
+        parsed = date.fromisoformat(value[:10])
+    except ValueError:
+        return "99999999"
+    return f"{99999999 - parsed.toordinal():08d}"
+
+
+def select_download_targets(
+    candidates: Sequence[Dict[str, Any]],
+    download_top: int,
+) -> List[Dict[str, Any]]:
+    """Choose download targets with category breadth before filling by rank.
+
+    A pure top-N often over-selects one noisy class (for example metadata-heavy
+    earnings snippets).  Taking one item from each high-value class first keeps
+    body enrichment broad enough to find substantive material when it exists.
+    """
+    if download_top <= 0:
+        return []
+
+    safe_candidates = [c for c in candidates if c.get("classification") != "drop"]
+    buckets: Dict[str, List[Dict[str, Any]]] = {}
+    for cand in safe_candidates:
+        buckets.setdefault(str(cand.get("classification") or ""), []).append(cand)
+    for bucket in buckets.values():
+        bucket.sort(key=_download_sort_key)
+
+    selected: List[Dict[str, Any]] = []
+    selected_ids: set[int] = set()
+    for category in CATEGORIES:
+        if category in {"duplicate", "drop"}:
+            continue
+        bucket = buckets.get(category) or []
+        if not bucket:
+            continue
+        candidate = bucket[0]
+        selected.append(candidate)
+        selected_ids.add(id(candidate))
+        if len(selected) >= download_top:
+            return selected
+
+    for candidate in sorted(safe_candidates, key=_download_sort_key):
+        if id(candidate) in selected_ids:
+            continue
+        selected.append(candidate)
+        selected_ids.add(id(candidate))
+        if len(selected) >= download_top:
+            break
+    return selected
+
+
 def download_articles(
     client: Any,
     candidates: Sequence[Dict[str, Any]],
@@ -792,11 +853,7 @@ def download_articles(
     if download_top <= 0:
         return []
 
-    sorted_candidates = sorted(
-        candidates,
-        key=lambda x: (PRIORITY.get(x.get("classification"), 99), x.get("publish_date") or ""),
-    )
-    targets = [c for c in sorted_candidates if c.get("classification") != "drop"][:download_top]
+    targets = select_download_targets(candidates, download_top)
     if not targets:
         return []
 
