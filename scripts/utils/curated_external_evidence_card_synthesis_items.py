@@ -332,10 +332,11 @@ def _card_to_synthesis_item(card: Dict[str, Any]) -> SynthesisItem:
     topic = str(card.get("topic") or "")
     source_kind = str(card.get("source_kind") or "")
     title = str(card.get("title") or "")
-    excerpt = _normalize_text(str(card.get("source_excerpt") or ""))
+    source_excerpt = _normalize_text(str(card.get("source_excerpt") or ""))
+    display_excerpt = _clean_display_excerpt(source_excerpt, title=title)
     source_ref = str(card.get("source_ref") or "")
 
-    content = f"【{topic} | {source_kind}】{title}\n\n{excerpt}"
+    content = f"【{topic} | {source_kind}】{title}\n\n{display_excerpt}"
 
     url = source_ref if _is_url(source_ref) else ""
     author = str(card.get("account") or "")
@@ -362,10 +363,42 @@ def _card_to_synthesis_item(card: Dict[str, Any]) -> SynthesisItem:
             "card_id": str(card.get("card_id") or ""),
             "source_ref": source_ref,
             "source_excerpt_hash": str(card.get("source_excerpt_hash") or ""),
+            "display_excerpt_hash": _normalized_hash(display_excerpt),
             "source_block_hash": str(card.get("source_block_hash") or ""),
             "topic": topic,
         },
     )
+
+
+def _clean_display_excerpt(excerpt: str, *, title: str = "") -> str:
+    """Clean reader/navigation noise for report display only.
+
+    The raw `source_excerpt` and its hash remain untouched for fidelity checks;
+    this cleaned string is only what the report reader sees.
+    """
+    text = str(excerpt or "")
+    text = re.sub(r"= {0,1}={2,}|={5,}", " ", text)
+    for phrase in (
+        "在小说阅读器读本章",
+        "在小说阅读器中沉浸阅读",
+        "去阅读",
+    ):
+        text = text.replace(phrase, " ")
+    for media in (
+        "ICC讯石融媒体",
+        "水易",
+    ):
+        text = re.sub(rf"(?:{re.escape(media)}\s*){{2,}};?", " ", text)
+    text = re.sub(r"(?<![A-Za-z])ICC讯(?![A-Za-z])", " ", text)
+    text = re.sub(r"(?:\.\.\.|…)+", " ", text)
+    text = re.sub(r"\s+[;；]\s+", " ", text)
+    text = re.sub(r"(^|\s)[})）]+\s*", " ", text)
+
+    clean_title = _normalize_text(title)
+    if clean_title:
+        text = re.sub(rf"^\s*{re.escape(clean_title)}\s*", "", text)
+
+    return _normalize_text(text)
 
 
 def _sort_items(items: List[SynthesisItem]) -> None:

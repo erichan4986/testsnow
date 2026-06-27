@@ -353,10 +353,22 @@ class SynthesisSkill(BaseSkill):
         title = " ".join(str(item.title or "未命名材料").split())[:80]
         content = str(item.content or "")
         excerpt = content.split("\n\n", 1)[-1] if "\n\n" in content else content
-        excerpt = " ".join(excerpt.split())[:220]
+        excerpt = SynthesisSkill._truncate_observation_excerpt(" ".join(excerpt.split()), 220)
         if excerpt:
             return f"《{title}》观察到：{excerpt}[^{ref_id}]"
         return f"《{title}》提供了一条外部观察线索[^{ref_id}]"
+
+    @staticmethod
+    def _truncate_observation_excerpt(text: str, max_chars: int) -> str:
+        text = str(text or "").strip()
+        if len(text) <= max_chars:
+            return text
+        window = text[:max_chars]
+        for marker in ("。", "；", ";", "，", ","):
+            pos = window.rfind(marker)
+            if pos >= 80:
+                return window[: pos + 1].rstrip()
+        return window.rstrip() + "..."
 
     @staticmethod
     def _join_curated_external_observations(stock_name: str, label: str, lines: list) -> str:

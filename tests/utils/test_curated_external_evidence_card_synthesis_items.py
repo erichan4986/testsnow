@@ -137,6 +137,37 @@ def test_accepts_valid_enriched_cards(tmp_path):
     assert item.extra["synthesis_display_only"] is True
 
 
+def test_display_content_strips_reader_noise_without_rewriting_source_hash(tmp_path):
+    noisy_excerpt = (
+        "} 净利润大增262.28% 中际旭创一季度营收达194.96亿元 "
+        "=============================== ICC讯石融媒体 ICC讯石融媒体 ; "
+        ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 "
+        "中际旭创2026年第一季度营收194.96亿元，同比增长192.12%，净利润57.35亿元，同比增长262.28%。"
+        "公司持续加大高端产品交付能力，800G和1.6T需求增长，客户资本开支保持较高强度。"
+    )
+    noisy_excerpt = noisy_excerpt * 3
+    cards = [
+        _make_card(card_id="c1", topic="earnings_context", source_excerpt=noisy_excerpt),
+        _make_card(card_id="c2", topic="commercialization", source_excerpt=_long_chinese_excerpt(500)),
+        _make_card(card_id="c3", topic="industry_logic", source_excerpt=_long_chinese_excerpt(500)),
+    ]
+    path = _write_summary(tmp_path, cards)
+
+    items, stats = load_curated_external_evidence_card_synthesis_items(
+        str(path), min_cards=3, min_total_excerpt_chars=1000
+    )
+
+    assert stats["status"] == "ok"
+    noisy_item = next(item for item in items if item.extra["card_id"] == "c1")
+    assert "在小说阅读器" not in noisy_item.content
+    assert "去阅读" not in noisy_item.content
+    assert "ICC讯石融媒体 ICC讯石融媒体" not in noisy_item.content
+    assert "ICC讯" not in noisy_item.content
+    assert "====" not in noisy_item.content
+    assert noisy_item.extra["source_excerpt_hash"] == _normalized_hash(noisy_excerpt)
+    assert noisy_item.extra["display_excerpt_hash"] != noisy_item.extra["source_excerpt_hash"]
+
+
 def test_accepts_real_phase1_schema_with_fidelity_in_excerpt_pack(tmp_path):
     cards = [
         _make_card(card_id="c1", topic="industry_logic", source_excerpt=_long_chinese_excerpt(500)),

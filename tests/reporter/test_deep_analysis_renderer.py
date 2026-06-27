@@ -35,6 +35,46 @@ def test_render_basic():
     assert "4.1 产业逻辑与竞争格局" in result
 
 
+def test_curated_external_display_is_addendum_not_replacement():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "fundamentals": "baseline 业绩路径",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "雪球", "title": "baseline title"}},
+        },
+        "deep_analysis_display": {
+            "industry_logic": "精选外部材料仅作为专业观察，提示中际旭创产业线索：800G需求增长[^1]",
+            "fundamentals": "",
+            "valuation_debate": "精选外部材料仅作为专业观察，不直接形成估值结论；估值仍应回到官方财务、市场价格和评分模型。",
+            "funding_sentiment": "精选外部材料不直接生成资金面判断，资金面仍以交易数据、资金流和市场指标为准。",
+            "events_catalysts": "",
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "title": "中际旭创外部观察标题",
+                    "source_type": "curated_external_analysis_evidence",
+                }
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.1 产业逻辑与竞争格局" in result
+    assert "baseline 产业逻辑[^1]" in result
+    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "800G需求增长[^2]" in result
+    assert result.index("baseline 产业逻辑") < result.index("### 4.4 精选外部观察（Preview）")
+    assert "不直接形成估值结论" not in result
+    assert "- [^1] 雪球" in result
+    assert "- [^2] 微信公众号精选观察" in result
+
+
 def test_render_with_core_facts():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -590,7 +630,9 @@ def test_render_deep_analysis_display_with_curated_external_sources_adds_preview
 
     assert "精选外部材料仅作为专业观察" in result
     assert "不参与评分、风险评分或最终建议" in result
-    assert result.index("精选外部材料仅作为专业观察") < result.index("### 4.1 产业逻辑与竞争格局")
+    assert "baseline 行业逻辑" in result
+    assert "### 4.4 精选外部观察（Preview）" in result
+    assert result.index("### 4.1 产业逻辑与竞争格局") < result.index("### 4.4 精选外部观察（Preview）")
 
 
 def test_render_uses_synthesis_display_when_no_deep_analysis():

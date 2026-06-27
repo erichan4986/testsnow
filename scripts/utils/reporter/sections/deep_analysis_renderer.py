@@ -13,6 +13,11 @@ except ImportError:
 
 
 MAX_VERIFIED_CLAIM_SUMMARY_ROWS = 6
+CURATED_EXTERNAL_ADDENDUM_KEYS = [
+    "industry_logic",
+    "fundamentals",
+    "events_catalysts",
+]
 
 _CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
     "1225145344": "2026年第一季度报告",
@@ -31,7 +36,14 @@ class DeepAnalysisRenderer:
 
     def render(self, ctx: Dict[str, Any]) -> str:
         stock_name = ctx.get("stock_name", "")
-        synthesis = ctx.get("deep_analysis_display") or ctx.get("synthesis_display") or ctx.get("synthesis") or {}
+        deep_analysis_display = ctx.get("deep_analysis_display") or {}
+        uses_curated_external_display = self._has_curated_external_citation(deep_analysis_display)
+        if deep_analysis_display and not uses_curated_external_display:
+            synthesis = deep_analysis_display
+            curated_display = {}
+        else:
+            synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
+            curated_display = deep_analysis_display
         if not stock_name or not synthesis:
             return ""
 
@@ -48,16 +60,17 @@ class DeepAnalysisRenderer:
             stock_name,
             synthesis,
             ctx.get("claim_verification_summary"),
-            uses_curated_external_display=(
-                ctx.get("deep_analysis_display") is synthesis
-                and self._has_curated_external_citation(synthesis)
-            ),
+            curated_external_display=curated_display if uses_curated_external_display else None,
+            curated_citation_offset=self._max_citation_id(synthesis.get("citations", {}) or {}),
         )
         if deep_md:
             lines.append(deep_md)
 
         # 全局引用
-        citations = synthesis.get("citations", {})
+        citations = self._merged_citations(
+            synthesis.get("citations", {}) or {},
+            curated_display.get("citations", {}) if uses_curated_external_display else {},
+        )
         if citations:
             lines.append(self._citations_section("引用来源", citations))
 
@@ -129,7 +142,8 @@ class DeepAnalysisRenderer:
         stock_name: str,
         synthesis: Dict[str, str],
         claim_verification_summary: Any = None,
-        uses_curated_external_display: bool = False,
+        curated_external_display: Dict[str, Any] | None = None,
+        curated_citation_offset: int = 0,
     ) -> str:
         """
         深度分析板块：合并原5个合成板块为3个子板块。
@@ -139,11 +153,6 @@ class DeepAnalysisRenderer:
         """
         citations = synthesis.get("citations", {})
         lines = ["## 四、深度分析", ""]
-        if uses_curated_external_display:
-            lines.extend([
-                "> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
-                "",
-            ])
 
         verified_summary = self._verified_claim_summary_section(claim_verification_summary)
         if verified_summary:
@@ -171,7 +180,7 @@ class DeepAnalysisRenderer:
                     if author:
                         line += f" | 作者: {author}"
                     if title_text:
-                        line += f" | 《{title_text[:40]}》"
+                        line += f" | 《{self._truncate_title(title_text, 40)}》"
                     lines.append(line)
                 lines.append("")
 
@@ -204,7 +213,7 @@ class DeepAnalysisRenderer:
                     if author:
                         line += f" | 作者: {author}"
                     if title_text:
-                        line += f" | 《{title_text[:40]}》"
+                        line += f" | 《{self._truncate_title(title_text, 40)}》"
                     lines.append(line)
                 lines.append("")
 
@@ -237,11 +246,110 @@ class DeepAnalysisRenderer:
                     if author:
                         line += f" | 作者: {author}"
                     if title_text:
-                        line += f" | 《{title_text[:40]}》"
+                        line += f" | 《{self._truncate_title(title_text, 40)}》"
                     lines.append(line)
                 lines.append("")
 
+        curated_md = self._curated_external_addendum(curated_external_display, curated_citation_offset)
+        if curated_md:
+            lines.append(curated_md)
+            lines.append("")
+
         return "\n".join(lines)
+
+    def _curated_external_addendum(
+        self,
+        curated_display: Dict[str, Any] | None,
+        citation_offset: int = 0,
+    ) -> str:
+        if not curated_display or not self._has_curated_external_citation(curated_display):
+            return ""
+
+        citations = curated_display.get("citations", {}) or {}
+        lines = [
+            "### 4.4 精选外部观察（Preview）",
+            "",
+            "> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
+            "",
+        ]
+        bullets: List[str] = []
+        for key in CURATED_EXTERNAL_ADDENDUM_KEYS:
+            text = str(curated_display.get(key) or "").strip()
+            if not text:
+                continue
+            text = self._offset_citation_markers(text, citation_offset)
+            for piece in self._split_curated_observations(text):
+                if piece:
+                    bullets.append(piece)
+
+        for bullet in bullets:
+            lines.append(f"- {bullet}")
+        lines.append("")
+
+        used_refs = set()
+        for bullet in bullets:
+            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", bullet))
+        if used_refs:
+            shifted_citations = self._offset_citations(citations, citation_offset)
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = shifted_citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                line = f"- [^{ref_id}] {source}"
+                if author:
+                    line += f" | 作者: {author}"
+                if title_text:
+                    line += f" | 《{self._truncate_title(title_text, 40)}》"
+                lines.append(line)
+        return "\n".join(lines)
+
+    @staticmethod
+    def _split_curated_observations(text: str) -> List[str]:
+        text = re.sub(r"^精选外部材料仅作为专业观察，提示[^：:]+[：:]", "", text).strip()
+        parts = re.split(r"；(?=《)", text)
+        return [part.strip(" ；。") for part in parts if part.strip(" ；。")]
+
+    @staticmethod
+    def _offset_citation_markers(text: str, offset: int) -> str:
+        if offset <= 0:
+            return text
+        return re.sub(r"\[\^(\d+)\]", lambda m: f"[^{int(m.group(1)) + offset}]", text)
+
+    @staticmethod
+    def _max_citation_id(citations: Dict) -> int:
+        refs = []
+        for key in citations.keys():
+            try:
+                refs.append(int(key))
+            except (TypeError, ValueError):
+                continue
+        return max(refs) if refs else 0
+
+    def _merged_citations(self, baseline: Dict, curated: Dict) -> Dict:
+        merged = {self._citation_key(key): value for key, value in (baseline or {}).items()}
+        offset = self._max_citation_id(merged)
+        merged.update(self._offset_citations(curated or {}, offset))
+        return merged
+
+    @staticmethod
+    def _offset_citations(citations: Dict, offset: int) -> Dict:
+        shifted = {}
+        for key, value in (citations or {}).items():
+            try:
+                ref_id = int(key)
+            except (TypeError, ValueError):
+                continue
+            shifted[ref_id + offset] = value
+        return shifted
+
+    @staticmethod
+    def _citation_key(key: Any) -> Any:
+        try:
+            return int(key)
+        except (TypeError, ValueError):
+            return key
 
     @staticmethod
     def _has_curated_external_citation(synthesis: Dict[str, Any]) -> bool:
@@ -252,6 +360,13 @@ class DeepAnalysisRenderer:
             if meta.get("source_type") == "curated_external_analysis_evidence":
                 return True
         return False
+
+    @staticmethod
+    def _truncate_title(title: Any, max_chars: int) -> str:
+        text = str(title or "")
+        if len(text) <= max_chars:
+            return text
+        return text[: max_chars - 3].rstrip() + "..."
 
     def _verified_claim_summary_section(self, summary: Any) -> str:
         """Render verified/supported claim verification rows as read-only facts."""
