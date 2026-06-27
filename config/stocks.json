@@ -238,7 +238,7 @@
     "source_intake": {
       "enabled": true,
       "curated_external_evidence_cards_synthesis_display": {
-        "enabled": false,
+        "enabled": true,
         "cards_json": "data/curated_external/evidence_cards/zhongjixuchuang_20260627.json",
         "max_display_items": 8,
         "min_cards": 3,

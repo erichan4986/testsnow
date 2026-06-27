@@ -1,151 +1,117 @@
 {
   "cards": [
     {
-      "card_id": "curated:industry_logic:a385d38c8b4d4898:0",
-      "card_type": "industry_logic",
+      "card_id": "curated:earnings_context:1b047af05998a7e7:0",
+      "card_type": "earnings_context",
       "confidence": 65,
       "evidence_refs": [
-        "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ"
+        "https://mp.weixin.qq.com/s/iI6EDhXQTrTnaD0ggqt23g"
       ],
       "keywords": [
-        "industry_logic",
-        "wechat_high_quality_analysis",
-        "海陆清风"
+        "earnings_context",
+        "wechat_earnings_financial_context",
+        "讯石光通讯"
       ],
       "knowledge_eligible": false,
       "quality_action": "preview_only",
       "risk_score_eligible": false,
       "schema_version": "periodic_report_narrative_evidence_card.v1",
       "scoring_eligible": false,
-      "source_block_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
+      "source_block_hash": "031f21d1f4afcb48877be1f0972f2b79029fad625cef32f49b1fa99e3e34bf4a",
       "source_credit": 55,
-      "source_excerpt": "* * * 作者 | 王奕红 余芳沁 唐海清 ▼ 图片 报告信息 ▼ 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 中际旭创：全球光模块龙头，AI算力驱动业绩高增 》 对外发布时间：2026年05月23日 报告发布机构：天风证券股份有限公司（已获证监会许可的证券投资咨询业务资格） 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 唐海清 SAC 执业证书编号：S1110517030002 余芳沁 SAC 执业证书编号：S1110521080006",
-      "source_excerpt_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
-      "source_kind": "wechat_high_quality_analysis",
-      "source_ref": "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ",
+      "source_excerpt": "} 净利润大增262.28% 中际旭创一季度营收达194.96亿元 =============================== ICC讯石融媒体 ICC讯石融媒体 ;\n...\n) 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 中际旭创2026年第一季度营收194.96亿元，同比增长192.12%，净利润57.35亿元，同比增长262.28%。\n...\nICC讯 4月16日，高速光模块全球领导者中际旭创发布2026年一季报，一季度营业总收入194.96亿元，同比增长192.12%；\n...\n在早前公布的2025年报中，中际旭创2025年实现营业收入382.40亿元，同比增长60.25%;\n...\n公司2025年报透露，2026年将继续加大 1.6T、800G 等高端产品的交付能力和出货量，进一步巩固提升公司在海外市场的先发优势、营业收入和市场份额。",
+      "source_excerpt_hash": "d01cd6793d4971a0b163b537e54b718fe838cb41c5b6eec3421a67a2000605a5",
+      "source_kind": "wechat_earnings_financial_context",
+      "source_ref": "https://mp.weixin.qq.com/s/iI6EDhXQTrTnaD0ggqt23g",
       "source_refs": [
-        "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ"
+        "https://mp.weixin.qq.com/s/iI6EDhXQTrTnaD0ggqt23g"
       ],
       "source_type": "curated_external_analysis_evidence",
       "stock_name": "中际旭创",
       "synthesis_display_only": true,
       "synthesis_eligible": true,
-      "title": "天风·通信【深度】| 中际旭创：全球AI光互联龙头，新技术迭代+需求共振打开长期高增空间",
-      "topic": "industry_logic",
+      "title": "净利润大增262.28% 中际旭创一季度营收达194.96亿元",
+      "topic": "earnings_context",
       "verification_status": "professional_observation"
     },
     {
-      "card_id": "curated:industry_logic:a1693355367baff2:1",
-      "card_type": "industry_logic",
+      "card_id": "curated:earnings_context:e6da883f48aff364:1",
+      "card_type": "earnings_context",
       "confidence": 65,
       "evidence_refs": [
-        "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g"
+        "https://mp.weixin.qq.com/s/AUgPI9isajaNnEzNhp0gGg"
       ],
       "keywords": [
-        "industry_logic",
-        "wechat_high_quality_analysis",
-        "中际旭创300308站在光里"
+        "earnings_context",
+        "wechat_earnings_financial_context",
+        "光通信PRO"
       ],
       "knowledge_eligible": false,
       "quality_action": "preview_only",
       "risk_score_eligible": false,
       "schema_version": "periodic_report_narrative_evidence_card.v1",
       "scoring_eligible": false,
-      "source_block_hash": "702267bc8aa54bb8c9030a7e4955437f3c5277be9049d7e26be91cecb9928156",
+      "source_block_hash": "6a81db2af499012113b6a80fd41724ff6d015ad7b98416f894d706afd58c6a7e",
       "source_credit": 55,
-      "source_excerpt": "核心看点 1\\. 业绩爆发：2026年一季度业绩全面超预期，营收利润环比高增 2\\. 产品升级：800G持续放量，1.6T产品快速起量，推动盈利高速增长 3\\. AI驱动：深度受益全球AI算力扩容，光模块需求高景气持续 4\\. 技术布局：积极布局SCALE-UP光互连、NPO/CPO等下一代技术 5\\. 产能扩张：备料扩产交付优异，龙头地位巩固",
-      "source_excerpt_hash": "4cd0e6c23144c1fb7616c9813772625d052c1fe9288d3637126b417cbf98dc28",
-      "source_kind": "wechat_high_quality_analysis",
-      "source_ref": "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g",
+      "source_excerpt": "} 中际旭创2026年Q1营收194.96亿元，同比增长192.12% ================================= 水易 水易 ;\n...\n报告期内，中际旭创实现营收194.96亿元，同比增长192.12%；\n...\n归属于上市公司股东的净利润为57.35亿元，同比增长262.28%；\n...\n另外，2026年Q1，中际旭创研发费用6.45亿元，同比增长122.05%。\n...\n据了解，中际旭创2025年的营业收入为382.40亿元，同比增长60.25%；",
+      "source_excerpt_hash": "a6b7cd5e2fca36bf3d77c23c01a70248eca183e3725609606be96d7ca4e1f47b",
+      "source_kind": "wechat_earnings_financial_context",
+      "source_ref": "https://mp.weixin.qq.com/s/AUgPI9isajaNnEzNhp0gGg",
       "source_refs": [
-        "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g"
+        "https://mp.weixin.qq.com/s/AUgPI9isajaNnEzNhp0gGg"
       ],
       "source_type": "curated_external_analysis_evidence",
       "stock_name": "中际旭创",
       "synthesis_display_only": true,
       "synthesis_eligible": true,
-      "title": "中际旭创（300308）近期的主要市场文章和研报汇总",
-      "topic": "industry_logic",
+      "title": "中际旭创2026年Q1营收194.96亿元，同比增长192.12%",
+      "topic": "earnings_context",
       "verification_status": "professional_observation"
     },
     {
-      "card_id": "curated:industry_logic:c9c4bc581617515d:2",
-      "card_type": "industry_logic",
-      "confidence": 65,
-      "evidence_refs": [
-        "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw"
-      ],
-      "keywords": [
-        "industry_logic",
-        "wechat_high_quality_analysis",
-        "海陆清风"
-      ],
-      "knowledge_eligible": false,
-      "quality_action": "preview_only",
-      "risk_score_eligible": false,
-      "schema_version": "periodic_report_narrative_evidence_card.v1",
-      "scoring_eligible": false,
-      "source_block_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
-      "source_credit": 55,
-      "source_excerpt": "**年报点评** **报告信息** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 深度受益AI算力全球扩容，光模块龙头业绩加速兑现，1.6T引领新周期 》 对外发布时间：2026年4月13日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002",
-      "source_excerpt_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
-      "source_kind": "wechat_high_quality_analysis",
-      "source_ref": "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw",
-      "source_refs": [
-        "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw"
-      ],
-      "source_type": "curated_external_analysis_evidence",
-      "stock_name": "中际旭创",
-      "synthesis_display_only": true,
-      "synthesis_eligible": true,
-      "title": "天风·通信 | 中际旭创：深度受益AI算力全球扩容，光模块龙头业绩加速兑现，1.6T引领新周期",
-      "topic": "industry_logic",
-      "verification_status": "professional_observation"
-    },
-    {
-      "card_id": "curated:industry_logic:b2c064515a1f4c59:3",
-      "card_type": "industry_logic",
-      "confidence": 65,
-      "evidence_refs": [
-        "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ"
-      ],
-      "keywords": [
-        "industry_logic",
-        "wechat_high_quality_analysis",
-        "海陆清风"
-      ],
-      "knowledge_eligible": false,
-      "quality_action": "preview_only",
-      "risk_score_eligible": false,
-      "schema_version": "periodic_report_narrative_evidence_card.v1",
-      "scoring_eligible": false,
-      "source_block_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
-      "source_credit": 55,
-      "source_excerpt": "**公司点评** **备注** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《算力CapEx持续加码，硅光与1.6T双轮驱动，公司盈利能力进入上行通道》 对外发布时间：2026年02月02日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002 修改于",
-      "source_excerpt_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
-      "source_kind": "wechat_high_quality_analysis",
-      "source_ref": "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ",
-      "source_refs": [
-        "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ"
-      ],
-      "source_type": "curated_external_analysis_evidence",
-      "stock_name": "中际旭创",
-      "synthesis_display_only": true,
-      "synthesis_eligible": true,
-      "title": "天风·通信 | 中际旭创：算力CapEx持续加码，硅光与1.6T双轮驱动，公司盈利能力进入上行通道",
-      "topic": "industry_logic",
-      "verification_status": "professional_observation"
-    },
-    {
-      "card_id": "curated:commercialization:91f57a47205bd8d2:4",
+      "card_id": "curated:commercialization:f4a096e8db150599:2",
       "card_type": "commercialization",
       "confidence": 65,
       "evidence_refs": [
-        "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg"
+        "https://mp.weixin.qq.com/s/1YMGHKAicNESaQgkeD8PFQ"
       ],
       "keywords": [
         "commercialization",
-        "wechat_customer_order_or_design_win",
+        "wechat_capacity_supply_chain_signal",
+        "讯石光通讯"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "1e46f68334309c98fa022c841f5813082a37fc46bdad43e288159e7286ea8d2b",
+      "source_credit": 55,
+      "source_excerpt": "} 中际旭创：2025年净利润同比增长109% 继续加大高端产品交付能力 ================================== ICC讯石融媒体 ICC讯石融媒体 ;\n...\n) 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 中际旭创发布2025年年度报告， 报告期内，公司实现营业收入 382.40 亿元，同比增长 60.25%;\n...\n归属于上市公司股东的净利润 107.97 亿元，同比增加 108.78% ICC讯 中际旭创发布2025年年度报告， 报告期内，公司实现营业收入 382.40 亿元，同比增长 60.25%;\n...\n中际旭创集高端光通信收发模块的研发、设计、封装、测试和销售于一体，为云数据中心客户提供400G、800G 和 1.6T 等高速光模块。\n...\n**2026 年度中际旭创工作计划** 1、继续加大 1.6T、800G 等高端产品的交付能力和出货量，进一步巩固提升公司在海外市场的先发优势、营业收入和市场份额。",
+      "source_excerpt_hash": "5e278227304d9c27633efb34884389bc75b333e3f6b8fcc80e46d4f1b8d7fce2",
+      "source_kind": "wechat_capacity_supply_chain_signal",
+      "source_ref": "https://mp.weixin.qq.com/s/1YMGHKAicNESaQgkeD8PFQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/1YMGHKAicNESaQgkeD8PFQ"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "中际旭创：2025年净利润同比增长109% 继续加大高端产品交付能力",
+      "topic": "commercialization",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:commercialization:c0b105a181c4eadf:3",
+      "card_type": "commercialization",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/T6svzlpbFj7JyxR1X9xTiQ"
+      ],
+      "keywords": [
+        "commercialization",
+        "wechat_capacity_supply_chain_signal",
         "半导体产业纵横"
       ],
       "knowledge_eligible": false,
@@ -153,228 +119,774 @@
       "risk_score_eligible": false,
       "schema_version": "periodic_report_narrative_evidence_card.v1",
       "scoring_eligible": false,
-      "source_block_hash": "0818a0874257365c39b048fd89e5cb40e2ae18428a4ad7f6650d8d1854099686",
+      "source_block_hash": "a281662931f2eeb50589a0fedb5668bf86947add389f3f531e56036251c9c1a8",
       "source_credit": 55,
-      "source_excerpt": "**联讯仪器是国产光通信测试仪器龙头，公司是目前全球少数、国内极少数量产供货400G、800G、1.6T高速光模块核心测试仪器的厂商，**同时也是全球第二家推出1.6T光模块全部核心测试仪器的厂商。\n...\n公司与中际旭创、新易盛、光迅科技、Lumentum、Coherent、环球广电、日本住友等国内外主流光通信企业达成合作关系。\n...\n图片****中国光通信测试仪器市场前三，中际旭创、新易盛是其客户**** ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 联讯仪器成立于2017年3月15日，总部位于苏州高新区，由胡海洋、杨建共同创立，专注于电子测量仪器和半导体测试设备的研发、制造、销售及服务。\n...\n在光通信领域，联讯仪器已推出满足目前业内最高水平1.6T光模块测试需求的65GHz采样示波器、120GBaud时钟恢复单元、1.6Tbps误码分析仪，是全球第二家推出1.6T光模块全部核心测试仪器的厂商，三款产品均已实现量产供货。\n...\n根据Frost&Sullivan数据，2024年公司在中国光电子器件测试设备市场份额中排名第一，覆盖中际旭创、新易盛、光迅科技、海信集团、华工正源、赛丽科技、Lumentum、 Coherent、Broadcom、环球广电、日本住友、日本古河等国内外主流光通信产业链客户。",
-      "source_excerpt_hash": "7b91f20876708ccdc4fe6f56c0b794113c29d5357ce67fc36dab9d1e6e1ba87b",
-      "source_kind": "wechat_customer_order_or_design_win",
-      "source_ref": "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg",
+      "source_excerpt": "中际旭创Q1营收194.96亿元 ============================= ;\n...\n4月16日，中际旭创公告称，2026年第一季度实现营业收入194.96亿元，同比增长192.12%；\n...\n4月12日，有投资者在互动平台向中际旭创询问一则市场传言，该传言称中际旭创由于光芯片的短缺，800G的交付计划从1500万降到了1200万只。\n...\n中际旭创2025年营收、净利润均大幅刷新公司历史最高纪录，同比增速则是近六年第二好成绩，不过依然逊色于爆发初期在2024年创下的122.64%营收同比增幅和137.93%净利润同比增幅。\n...\n市场普遍认为，中际旭创的领先优势集中在800G、1.6T高速光模块的量产能力和在硅光子（SiPh）技术上的深度布局，该公司也凭此持续获得包括谷歌等全球顶级云厂商的订单，同时也在英伟达供应链中占据主要份额。",
+      "source_excerpt_hash": "08f4b8ab29277a9e875cc2f450da967a0c1500c58b4bf1fc787db10d7ae5640f",
+      "source_kind": "wechat_capacity_supply_chain_signal",
+      "source_ref": "https://mp.weixin.qq.com/s/T6svzlpbFj7JyxR1X9xTiQ",
       "source_refs": [
-        "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg"
+        "https://mp.weixin.qq.com/s/T6svzlpbFj7JyxR1X9xTiQ"
       ],
       "source_type": "curated_external_analysis_evidence",
       "stock_name": "中际旭创",
       "synthesis_display_only": true,
       "synthesis_eligible": true,
-      "title": "开盘暴涨800%！中际旭创设备供应商登陆科创板",
+      "title": "上游材料预付款暴涨10倍！中际旭创Q1营收194.96亿元",
       "topic": "commercialization",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:commercialization:71635e770b66d150:4",
+      "card_type": "commercialization",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/gUhhLq3vGK9JBVhcszHKDQ"
+      ],
+      "keywords": [
+        "commercialization",
+        "wechat_capacity_supply_chain_signal",
+        "光通信PRO"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "8b451e708c66eae7cdb97ddb34506fd607419459ba3910eb6826a63bc50a0273",
+      "source_credit": 55,
+      "source_excerpt": "} 中际旭创：光模块行业延续高景气度，原材料仍处于紧张状态 =========================== 水易 水易 ;\n...\n报告期内，中际旭创实现营收194.96亿元，同比增长192.12%；\n...\n2026年一季度800G和1.6T都在持续上量，预计全年的需求都将有较大增长，公司将持续扩大产能。\n...\n中际旭创表示，这背后的主要原因是AI算力需求仍在迅速增长，一些AI应用甚至已形成闭环，因此重点客户有信心进一步加大资本开支投入。\n...\n**持续投入研发费用** 2026年Q1，中际旭创研发费用6.45亿元，同比增长122.05%。",
+      "source_excerpt_hash": "44e701a0d1ec1b311e491f924ae9d3c290f6b6689cbe96d176b081e473f55a31",
+      "source_kind": "wechat_capacity_supply_chain_signal",
+      "source_ref": "https://mp.weixin.qq.com/s/gUhhLq3vGK9JBVhcszHKDQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/gUhhLq3vGK9JBVhcszHKDQ"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "中际旭创：光模块行业延续高景气度，原材料仍处于紧张状态",
+      "topic": "commercialization",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:capital_market_context:b483e0ec36daacba:5",
+      "card_type": "capital_market_context",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/22_43muo642hUkAbVq4s4A"
+      ],
+      "keywords": [
+        "capital_market_context",
+        "wechat_capital_market_context",
+        "投资ZIA"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "fc9aac8e9866486e8a6e0d689975d091d3762ae0b2721302431705d58903e5cf",
+      "source_credit": 55,
+      "source_excerpt": ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 **ZIA研究** 在人工智能浪潮席卷全球的当下，中际旭创（300308.SZ）作为全球光模块领域的领军企业，凭借深厚的技术积累、强大的量产能力和深度绑定的北美头部客户，成功卡位AI算力基础设施的核心环节。\n...\n图表2：Scale Out与Scale Up网络架构示意图 资料来源：SENKO，QSFPTEK **公司 | 中际旭创：** **全球光模块龙头，技术·客户·产能护城河** **发展历程：从跟随者到引领者** 中际旭创的发展历程清晰地展示了其从技术跟随到全球引领的进阶之路： **2011年：**40G光模块进入谷歌供应链，开启与北美头部客户的长期合作 **A100时代：**200G/400G光模块进入英伟达供应链，卡位AI算力核心环节 **2020年：**推出业内首批800G光模块，确立技术领先地位 **2023年：**发布1.6T光模块，并于2025年二季度率先进入规模出货阶段，领先行业半年以上 **全面布局：**硅光、NPO、CPO等多技术路径同步推进，打造全场景光互连能力 **竞争地位：全球龙一，壁垒深厚** **市场份额：**全球光模块龙一，2024年份额超20%。\n...\n图表3：产能准备充足，抢占市场份额 图表4：2024Q3-2025Q3 中际旭创在建工程、其他应付款（亿元） 图表5：2024Q3-2025Q3 中际旭创存货情况（亿元） 资料来源：公司公告 **公司 | 财务表现：** **营收利润双高增，盈利能力持续修复** **收入与行业景气度共振** 从历史数据看，公司收入增速与北美云厂商资本开支周期高度相关。\n...\n图表6：海外四大云商年度Capex/营收、净利润、自由现金流 资料来源：WIND，Capex数据均采用PPE采购口径 图表7：中际旭创营业收入及环比增速变化 资料来源：WIND，Capex数据均采用PPE采购口径 **2025年业绩预测** 2025年预计全年实现归母净利润98亿元至118亿元，同比增长89.50%至128.17%，800G/1.6T光模块放量成为核心驱动力。\n...\n** 图表14：研发费用率 图表15：毛利率对比 资料来源：公司公告 **观点 | 未来展望：** **从龙头向平台型光互连巨头跃升** **三大发展阶段** • **短期（1-2年）：**800G贡献现金流，1.6T放量贡献利润。",
+      "source_excerpt_hash": "54d4badc3ef044530bd68c6d07df37560aeed860279a1ce56e3682e41dacf048",
+      "source_kind": "wechat_capital_market_context",
+      "source_ref": "https://mp.weixin.qq.com/s/22_43muo642hUkAbVq4s4A",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/22_43muo642hUkAbVq4s4A"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "ZIA Insight | 中际旭创(300308.SZ): 从光模块龙头向全场景光互连平台转变",
+      "topic": "capital_market_context",
+      "verification_status": "professional_observation"
+    },
+    {
+      "card_id": "curated:capital_market_context:07eb2e581e226470:6",
+      "card_type": "capital_market_context",
+      "confidence": 65,
+      "evidence_refs": [
+        "https://mp.weixin.qq.com/s/KLHN1o7jIvcMi8cu6e7oRw"
+      ],
+      "keywords": [
+        "capital_market_context",
+        "wechat_capital_market_context",
+        "讯石光通讯"
+      ],
+      "knowledge_eligible": false,
+      "quality_action": "preview_only",
+      "risk_score_eligible": false,
+      "schema_version": "periodic_report_narrative_evidence_card.v1",
+      "scoring_eligible": false,
+      "source_block_hash": "fd41b6c1baa7fc3a85e8212040ea260b0d068097c689cff4944f3dfed905bec2",
+      "source_credit": 55,
+      "source_excerpt": "中际旭创回应美国“1260H清单” 不符合事实 ======================================== ICC讯石融媒体 ICC讯石融媒体 ;\n...\n) 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 **NEWS** **新 闻 导 读** 要点1：国内头部光企动态频发：新易盛筹划H股港交所主板上市，加码全球化布局；\n...\n中际旭创否认美方1260H清单认定依据，称无军工相关属性，目前公司经营未受实质影响。\n...\n原文 http://www.iccsz.com/site/cn/News/2026/06/11/20260611011046127802.htm **中际旭创回应被列入美国“1260H清单” 不符合客观事实** 中际旭创表示，美国国防部将中际旭创列入“1260H 清单”的认定和依据均是不符合客观事实的，公司既非中国军工企业，也不是军民融合企业，将以充分的事实进行有效沟通并采取合适的措施以维护公司利益。\n...\n· 多款自研测试方案亮相：发布 FITS、高速线缆、高频 PCB、1.6T 光模块全套国产化测试方案。",
+      "source_excerpt_hash": "f9c070c377851649277e68b89c9e498970a565dfc2d3374faae39946772e6af4",
+      "source_kind": "wechat_capital_market_context",
+      "source_ref": "https://mp.weixin.qq.com/s/KLHN1o7jIvcMi8cu6e7oRw",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/KLHN1o7jIvcMi8cu6e7oRw"
+      ],
+      "source_type": "curated_external_analysis_evidence",
+      "stock_name": "中际旭创",
+      "synthesis_display_only": true,
+      "synthesis_eligible": true,
+      "title": "新闻速递 | 新易盛筹划境外上市；中际旭创回应美国“1260H清单” 不符合事实",
+      "topic": "capital_market_context",
       "verification_status": "professional_observation"
     }
   ],
   "connected_synthesis": false,
   "counts": {
-    "commercialization": 1,
-    "industry_logic": 4
+    "capital_market_context": 2,
+    "commercialization": 3,
+    "earnings_context": 2
   },
   "deduped_sources": [],
   "excerpt_budget": {
-    "cards_count": 5,
-    "excerpt_packs_count": 5,
+    "cards_count": 7,
+    "excerpt_packs_count": 7,
     "max_excerpt_chars": 1200,
-    "total_excerpt_chars": 1669
+    "total_excerpt_chars": 3097
   },
   "excerpt_packs": [
     {
-      "card_id": "curated:industry_logic:a385d38c8b4d4898:0",
-      "combined_source_excerpt_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
+      "card_id": "curated:earnings_context:1b047af05998a7e7:0",
+      "combined_source_excerpt_hash": "d01cd6793d4971a0b163b537e54b718fe838cb41c5b6eec3421a67a2000605a5",
       "excerpts": [
         {
-          "char_count": 271,
-          "excerpt_id": "curated:industry_logic:a385d38c8b4d4898:0:excerpt:0",
+          "char_count": 85,
+          "excerpt_id": "curated:earnings_context:1b047af05998a7e7:0:excerpt:0",
           "matched_terms": [
             "中际旭创",
-            "天风",
-            "全球",
-            "AI"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:中际旭创,天风,全球,AI",
-          "source_excerpt_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
-          "text": "* * * 作者 | 王奕红 余芳沁 唐海清 ▼ 图片 报告信息 ▼ 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 中际旭创：全球光模块龙头，AI算力驱动业绩高增 》 对外发布时间：2026年05月23日 报告发布机构：天风证券股份有限公司（已获证监会许可的证券投资咨询业务资格） 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 唐海清 SAC 执业证书编号：S1110517030002 余芳沁 SAC 执业证书编号：S1110521080006"
-        }
-      ],
-      "pack_id": "curated:industry_logic:a385d38c8b4d4898:0:pack",
-      "source_content_chars": 271,
-      "source_content_hash": "54cde799b088f52a55bd36eb721a40aa2957455703a0b0c1f910327739de1a6f",
-      "source_ref": "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ",
-      "source_refs": [
-        "https://mp.weixin.qq.com/s/vMsMFHyF6Tt6k2fsaSt6PQ"
-      ]
-    },
-    {
-      "card_id": "curated:industry_logic:a1693355367baff2:1",
-      "combined_source_excerpt_hash": "4cd0e6c23144c1fb7616c9813772625d052c1fe9288d3637126b417cbf98dc28",
-      "excerpts": [
-        {
-          "char_count": 173,
-          "excerpt_id": "curated:industry_logic:a1693355367baff2:1:excerpt:0",
-          "matched_terms": [
+            "净利润大增",
+            "262.28",
+            "中际旭创一季度营收达",
+            "194.96",
+            "亿元",
             "营收",
-            "环比",
+            "净利润",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,净利润大增,262.28,中际旭创一季度营收达,194.96,亿元,营收,净利润",
+          "source_excerpt_hash": "f0e9f464873186991337dd897c94837c72c51202dc0bd0a19e516f4ca694fa81",
+          "text": "} 净利润大增262.28% 中际旭创一季度营收达194.96亿元 =============================== ICC讯石融媒体 ICC讯石融媒体 ;"
+        },
+        {
+          "char_count": 87,
+          "excerpt_id": "curated:earnings_context:1b047af05998a7e7:0:excerpt:1",
+          "matched_terms": [
+            "中际旭创",
+            "262.28",
+            "194.96",
+            "亿元",
+            "营收",
+            "净利润",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,262.28,194.96,亿元,营收,净利润,同比,numeric_metric",
+          "source_excerpt_hash": "d1f82090d3ba54ffe1ddb1d8abcf24eb3c264780f7f738cdd9df4cdc9728c4ac",
+          "text": ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 中际旭创2026年第一季度营收194.96亿元，同比增长192.12%，净利润57.35亿元，同比增长262.28%。"
+        },
+        {
+          "char_count": 65,
+          "excerpt_id": "curated:earnings_context:1b047af05998a7e7:0:excerpt:2",
+          "matched_terms": [
+            "中际旭创",
+            "194.96",
+            "亿元",
+            "收入",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,194.96,亿元,收入,同比,numeric_metric",
+          "source_excerpt_hash": "5cb323e65535e1d99ff30023a609432b41fcd2bf37b010e782c1c089aead51d9",
+          "text": "ICC讯 4月16日，高速光模块全球领导者中际旭创发布2026年一季报，一季度营业总收入194.96亿元，同比增长192.12%；"
+        },
+        {
+          "char_count": 49,
+          "excerpt_id": "curated:earnings_context:1b047af05998a7e7:0:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "亿元",
+            "收入",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,亿元,收入,同比,numeric_metric",
+          "source_excerpt_hash": "1a0370276071292a287d148974950a33c1c5f37686df8e2d9d99889bb7257852",
+          "text": "在早前公布的2025年报中，中际旭创2025年实现营业收入382.40亿元，同比增长60.25%;"
+        },
+        {
+          "char_count": 77,
+          "excerpt_id": "curated:earnings_context:1b047af05998a7e7:0:excerpt:4",
+          "matched_terms": [
+            "收入",
             "交付",
+            "份额",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:收入,交付,份额,numeric_metric",
+          "source_excerpt_hash": "7dd33151a8bd03c9b01528f33782e0739ae8f62126e8313be8a45522a47bb55d",
+          "text": "公司2025年报透露，2026年将继续加大 1.6T、800G 等高端产品的交付能力和出货量，进一步巩固提升公司在海外市场的先发优势、营业收入和市场份额。"
+        }
+      ],
+      "pack_id": "curated:earnings_context:1b047af05998a7e7:0:pack",
+      "source_content_chars": 1780,
+      "source_content_hash": "031f21d1f4afcb48877be1f0972f2b79029fad625cef32f49b1fa99e3e34bf4a",
+      "source_ref": "https://mp.weixin.qq.com/s/iI6EDhXQTrTnaD0ggqt23g",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/iI6EDhXQTrTnaD0ggqt23g"
+      ]
+    },
+    {
+      "card_id": "curated:earnings_context:e6da883f48aff364:1",
+      "combined_source_excerpt_hash": "a6b7cd5e2fca36bf3d77c23c01a70248eca183e3725609606be96d7ca4e1f47b",
+      "excerpts": [
+        {
+          "char_count": 77,
+          "excerpt_id": "curated:earnings_context:e6da883f48aff364:1:excerpt:0",
+          "matched_terms": [
+            "中际旭创",
+            "2026",
+            "Q1",
+            "营收",
+            "194.96",
+            "亿元",
+            "同比增长",
+            "192.12",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,2026,Q1,营收,194.96,亿元,同比增长,192.12",
+          "source_excerpt_hash": "70f306f06629421a49093698de811bce16a6f20357e413cb480ecce7a86f9eb1",
+          "text": "} 中际旭创2026年Q1营收194.96亿元，同比增长192.12% ================================= 水易 水易 ;"
+        },
+        {
+          "char_count": 34,
+          "excerpt_id": "curated:earnings_context:e6da883f48aff364:1:excerpt:1",
+          "matched_terms": [
+            "中际旭创",
+            "营收",
+            "194.96",
+            "亿元",
+            "同比增长",
+            "192.12",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,营收,194.96,亿元,同比增长,192.12,同比,numeric_metric",
+          "source_excerpt_hash": "7c435094be8295359b2ae5f70227a767a1793ca51a3e17e90e88b43b8c8a23b5",
+          "text": "报告期内，中际旭创实现营收194.96亿元，同比增长192.12%；"
+        },
+        {
+          "char_count": 34,
+          "excerpt_id": "curated:earnings_context:e6da883f48aff364:1:excerpt:2",
+          "matched_terms": [
+            "亿元",
+            "同比增长",
+            "净利润",
+            "同比",
+            "上市",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:亿元,同比增长,净利润,同比,上市,numeric_metric",
+          "source_excerpt_hash": "e01381058ac1cb533332b18fd394e44ce72a95469ad2a178165f4e099286b1e5",
+          "text": "归属于上市公司股东的净利润为57.35亿元，同比增长262.28%；"
+        },
+        {
+          "char_count": 38,
+          "excerpt_id": "curated:earnings_context:e6da883f48aff364:1:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "2026",
+            "Q1",
+            "亿元",
+            "同比增长",
+            "费用",
+            "同比",
+            "研发",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,2026,Q1,亿元,同比增长,费用,同比,研发",
+          "source_excerpt_hash": "1bf7116fc1d6d707cc85718f3680fd0cb67b541223ac46c6bb38356203dec680",
+          "text": "另外，2026年Q1，中际旭创研发费用6.45亿元，同比增长122.05%。"
+        },
+        {
+          "char_count": 39,
+          "excerpt_id": "curated:earnings_context:e6da883f48aff364:1:excerpt:4",
+          "matched_terms": [
+            "中际旭创",
+            "亿元",
+            "同比增长",
+            "收入",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,亿元,同比增长,收入,同比,numeric_metric",
+          "source_excerpt_hash": "3d9e26041eaece7639a056bd21ba714eb7881b72fdf1fd84125e4fd356881e3d",
+          "text": "据了解，中际旭创2025年的营业收入为382.40亿元，同比增长60.25%；"
+        }
+      ],
+      "pack_id": "curated:earnings_context:e6da883f48aff364:1:pack",
+      "source_content_chars": 1007,
+      "source_content_hash": "6a81db2af499012113b6a80fd41724ff6d015ad7b98416f894d706afd58c6a7e",
+      "source_ref": "https://mp.weixin.qq.com/s/AUgPI9isajaNnEzNhp0gGg",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/AUgPI9isajaNnEzNhp0gGg"
+      ]
+    },
+    {
+      "card_id": "curated:commercialization:f4a096e8db150599:2",
+      "combined_source_excerpt_hash": "5e278227304d9c27633efb34884389bc75b333e3f6b8fcc80e46d4f1b8d7fce2",
+      "excerpts": [
+        {
+          "char_count": 91,
+          "excerpt_id": "curated:commercialization:f4a096e8db150599:2:excerpt:0",
+          "matched_terms": [
+            "中际旭创",
+            "2025",
+            "年净利润同比增长",
+            "109",
+            "继续加大高端产品交付能力",
+            "交付",
+            "净利润",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,2025,年净利润同比增长,109,继续加大高端产品交付能力,交付,净利润,同比",
+          "source_excerpt_hash": "66a6f7db33f66c8a825633e5d98db58909f96a905bec43ffb0d251fd4c4d2856",
+          "text": "} 中际旭创：2025年净利润同比增长109% 继续加大高端产品交付能力 ================================== ICC讯石融媒体 ICC讯石融媒体 ;"
+        },
+        {
+          "char_count": 81,
+          "excerpt_id": "curated:commercialization:f4a096e8db150599:2:excerpt:1",
+          "matched_terms": [
+            "中际旭创",
+            "2025",
+            "收入",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,2025,收入,同比,numeric_metric",
+          "source_excerpt_hash": "fc435ca6016e4a39eeabde0e5c8d3a48e345a199e90ad7bd538ce28c247692ed",
+          "text": ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 中际旭创发布2025年年度报告， 报告期内，公司实现营业收入 382.40 亿元，同比增长 60.25%;"
+        },
+        {
+          "char_count": 95,
+          "excerpt_id": "curated:commercialization:f4a096e8db150599:2:excerpt:2",
+          "matched_terms": [
+            "中际旭创",
+            "2025",
+            "收入",
+            "净利润",
+            "同比",
+            "上市",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,2025,收入,净利润,同比,上市,numeric_metric",
+          "source_excerpt_hash": "645b3cfa4807a810106d83cad31033b2273a9174eee3c771da5eeea90f3f6035",
+          "text": "归属于上市公司股东的净利润 107.97 亿元，同比增加 108.78% ICC讯 中际旭创发布2025年年度报告， 报告期内，公司实现营业收入 382.40 亿元，同比增长 60.25%;"
+        },
+        {
+          "char_count": 67,
+          "excerpt_id": "curated:commercialization:f4a096e8db150599:2:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "客户",
+            "研发",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,客户,研发,numeric_metric",
+          "source_excerpt_hash": "ddd8d9a7f13a7f16d60956b394a603d7526b978c91cee1ed10aa65e9a2dde612",
+          "text": "中际旭创集高端光通信收发模块的研发、设计、封装、测试和销售于一体，为云数据中心客户提供400G、800G 和 1.6T 等高速光模块。"
+        },
+        {
+          "char_count": 82,
+          "excerpt_id": "curated:commercialization:f4a096e8db150599:2:excerpt:4",
+          "matched_terms": [
+            "中际旭创",
+            "交付",
+            "收入",
+            "份额",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,交付,收入,份额,numeric_metric",
+          "source_excerpt_hash": "efbd5d8209c17a90215371ccd4fd5adab6a0ad9c7978e67ef2c70792cd6d81a4",
+          "text": "**2026 年度中际旭创工作计划** 1、继续加大 1.6T、800G 等高端产品的交付能力和出货量，进一步巩固提升公司在海外市场的先发优势、营业收入和市场份额。"
+        }
+      ],
+      "pack_id": "curated:commercialization:f4a096e8db150599:2:pack",
+      "source_content_chars": 1958,
+      "source_content_hash": "1e46f68334309c98fa022c841f5813082a37fc46bdad43e288159e7286ea8d2b",
+      "source_ref": "https://mp.weixin.qq.com/s/1YMGHKAicNESaQgkeD8PFQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/1YMGHKAicNESaQgkeD8PFQ"
+      ]
+    },
+    {
+      "card_id": "curated:commercialization:c0b105a181c4eadf:3",
+      "combined_source_excerpt_hash": "08f4b8ab29277a9e875cc2f450da967a0c1500c58b4bf1fc787db10d7ae5640f",
+      "excerpts": [
+        {
+          "char_count": 48,
+          "excerpt_id": "curated:commercialization:c0b105a181c4eadf:3:excerpt:0",
+          "matched_terms": [
+            "中际旭创",
+            "Q1",
+            "营收",
+            "194.96",
+            "亿元",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,Q1,营收,194.96,亿元,numeric_metric",
+          "source_excerpt_hash": "1d6cff666a28eed8e6515fd06bcd6ae0c0a0771b8c85756be2193114bbea209a",
+          "text": "中际旭创Q1营收194.96亿元 ============================= ;"
+        },
+        {
+          "char_count": 50,
+          "excerpt_id": "curated:commercialization:c0b105a181c4eadf:3:excerpt:1",
+          "matched_terms": [
+            "中际旭创",
+            "194.96",
+            "亿元",
+            "收入",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,194.96,亿元,收入,同比,numeric_metric",
+          "source_excerpt_hash": "f245df30082e0f2ae8c3d6273cace581ec4c24bbf1cf0c48a12ca26bbdd1c185",
+          "text": "4月16日，中际旭创公告称，2026年第一季度实现营业收入194.96亿元，同比增长192.12%；"
+        },
+        {
+          "char_count": 71,
+          "excerpt_id": "curated:commercialization:c0b105a181c4eadf:3:excerpt:2",
+          "matched_terms": [
+            "中际旭创",
+            "交付",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,交付,numeric_metric",
+          "source_excerpt_hash": "bad8d496cb05b3435b3471a6b4e2c801618b1fb1bf5282d3f7403098c26ceab1",
+          "text": "4月12日，有投资者在互动平台向中际旭创询问一则市场传言，该传言称中际旭创由于光芯片的短缺，800G的交付计划从1500万降到了1200万只。"
+        },
+        {
+          "char_count": 93,
+          "excerpt_id": "curated:commercialization:c0b105a181c4eadf:3:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "营收",
+            "净利润",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,营收,净利润,同比,numeric_metric",
+          "source_excerpt_hash": "ea961f73f1ae14069a27e243fbae35b074c06842ac6bb983980b9d1add05b092",
+          "text": "中际旭创2025年营收、净利润均大幅刷新公司历史最高纪录，同比增速则是近六年第二好成绩，不过依然逊色于爆发初期在2024年创下的122.64%营收同比增幅和137.93%净利润同比增幅。"
+        },
+        {
+          "char_count": 102,
+          "excerpt_id": "curated:commercialization:c0b105a181c4eadf:3:excerpt:4",
+          "matched_terms": [
+            "中际旭创",
+            "订单",
+            "量产",
             "产能",
-            "景气",
+            "份额",
+            "供应链",
             "numeric_metric"
           ],
           "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:营收,环比,交付,产能,景气,numeric_metric",
-          "source_excerpt_hash": "4cd0e6c23144c1fb7616c9813772625d052c1fe9288d3637126b417cbf98dc28",
-          "text": "核心看点 1\\. 业绩爆发：2026年一季度业绩全面超预期，营收利润环比高增 2\\. 产品升级：800G持续放量，1.6T产品快速起量，推动盈利高速增长 3\\. AI驱动：深度受益全球AI算力扩容，光模块需求高景气持续 4\\. 技术布局：积极布局SCALE-UP光互连、NPO/CPO等下一代技术 5\\. 产能扩张：备料扩产交付优异，龙头地位巩固"
+          "selection_reason": "matched_terms:中际旭创,订单,量产,产能,份额,供应链,numeric_metric",
+          "source_excerpt_hash": "6714c136601d1d81ec3e3ca9b52714629ec9082775e937af71cc76eb1602d4bb",
+          "text": "市场普遍认为，中际旭创的领先优势集中在800G、1.6T高速光模块的量产能力和在硅光子（SiPh）技术上的深度布局，该公司也凭此持续获得包括谷歌等全球顶级云厂商的订单，同时也在英伟达供应链中占据主要份额。"
         }
       ],
-      "pack_id": "curated:industry_logic:a1693355367baff2:1:pack",
-      "source_content_chars": 1024,
-      "source_content_hash": "702267bc8aa54bb8c9030a7e4955437f3c5277be9049d7e26be91cecb9928156",
-      "source_ref": "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g",
+      "pack_id": "curated:commercialization:c0b105a181c4eadf:3:pack",
+      "source_content_chars": 2069,
+      "source_content_hash": "a281662931f2eeb50589a0fedb5668bf86947add389f3f531e56036251c9c1a8",
+      "source_ref": "https://mp.weixin.qq.com/s/T6svzlpbFj7JyxR1X9xTiQ",
       "source_refs": [
-        "https://mp.weixin.qq.com/s/7N22rJ_7FIr1ubNZGmEz7g"
+        "https://mp.weixin.qq.com/s/T6svzlpbFj7JyxR1X9xTiQ"
       ]
     },
     {
-      "card_id": "curated:industry_logic:c9c4bc581617515d:2",
-      "combined_source_excerpt_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
+      "card_id": "curated:commercialization:71635e770b66d150:4",
+      "combined_source_excerpt_hash": "44e701a0d1ec1b311e491f924ae9d3c290f6b6689cbe96d176b081e473f55a31",
       "excerpts": [
         {
-          "char_count": 244,
-          "excerpt_id": "curated:industry_logic:c9c4bc581617515d:2:excerpt:0",
+          "char_count": 65,
+          "excerpt_id": "curated:commercialization:71635e770b66d150:4:excerpt:0",
           "matched_terms": [
-            "天风",
-            "深度受益",
-            "AI",
-            "算力全球扩容",
-            "光模块龙头业绩加速兑现",
-            "1.6T",
+            "中际旭创",
+            "光模块行业延续高景气度",
+            "原材料仍处于紧张状态",
+            "景气"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,光模块行业延续高景气度,原材料仍处于紧张状态,景气",
+          "source_excerpt_hash": "3bef9d7e1e37d651774592ddd4b940816d0b3677fd861b345c52fdb46ff09b9a",
+          "text": "} 中际旭创：光模块行业延续高景气度，原材料仍处于紧张状态 =========================== 水易 水易 ;"
+        },
+        {
+          "char_count": 34,
+          "excerpt_id": "curated:commercialization:71635e770b66d150:4:excerpt:1",
+          "matched_terms": [
+            "中际旭创",
+            "营收",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,营收,同比,numeric_metric",
+          "source_excerpt_hash": "7c435094be8295359b2ae5f70227a767a1793ca51a3e17e90e88b43b8c8a23b5",
+          "text": "报告期内，中际旭创实现营收194.96亿元，同比增长192.12%；"
+        },
+        {
+          "char_count": 49,
+          "excerpt_id": "curated:commercialization:71635e770b66d150:4:excerpt:2",
+          "matched_terms": [
+            "产能",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:产能,numeric_metric",
+          "source_excerpt_hash": "3028672a5c390891fe0b133156a1a3a9af3a8b528fdd761d74e36724fad5c2e4",
+          "text": "2026年一季度800G和1.6T都在持续上量，预计全年的需求都将有较大增长，公司将持续扩大产能。"
+        },
+        {
+          "char_count": 64,
+          "excerpt_id": "curated:commercialization:71635e770b66d150:4:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "客户",
+            "资本开支"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,客户,资本开支",
+          "source_excerpt_hash": "c88c6ce18fe629016f6df452afc6e6726f220582b324316cea268dfa742c3133",
+          "text": "中际旭创表示，这背后的主要原因是AI算力需求仍在迅速增长，一些AI应用甚至已形成闭环，因此重点客户有信心进一步加大资本开支投入。"
+        },
+        {
+          "char_count": 48,
+          "excerpt_id": "curated:commercialization:71635e770b66d150:4:excerpt:4",
+          "matched_terms": [
+            "中际旭创",
+            "研发",
+            "费用",
+            "同比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,研发,费用,同比,numeric_metric",
+          "source_excerpt_hash": "c313125ea231d4d455977942a7a7126f98e4ba10e5950092a0f6ad24bc17b476",
+          "text": "**持续投入研发费用** 2026年Q1，中际旭创研发费用6.45亿元，同比增长122.05%。"
+        }
+      ],
+      "pack_id": "curated:commercialization:71635e770b66d150:4:pack",
+      "source_content_chars": 1602,
+      "source_content_hash": "8b451e708c66eae7cdb97ddb34506fd607419459ba3910eb6826a63bc50a0273",
+      "source_ref": "https://mp.weixin.qq.com/s/gUhhLq3vGK9JBVhcszHKDQ",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/gUhhLq3vGK9JBVhcszHKDQ"
+      ]
+    },
+    {
+      "card_id": "curated:capital_market_context:b483e0ec36daacba:5",
+      "combined_source_excerpt_hash": "54d4badc3ef044530bd68c6d07df37560aeed860279a1ce56e3682e41dacf048",
+      "excerpts": [
+        {
+          "char_count": 131,
+          "excerpt_id": "curated:capital_market_context:b483e0ec36daacba:5:excerpt:0",
+          "matched_terms": [
+            "中际旭创",
+            "ZIA",
+            "300308.SZ",
+            "客户",
+            "量产",
+            "产能"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,ZIA,300308.SZ,客户,量产,产能",
+          "source_excerpt_hash": "23b60842e2fc789d9a4cd5df5a4026977cb10e35b719249caf39f6795ed1540e",
+          "text": ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 **ZIA研究** 在人工智能浪潮席卷全球的当下，中际旭创（300308.SZ）作为全球光模块领域的领军企业，凭借深厚的技术积累、强大的量产能力和深度绑定的北美头部客户，成功卡位AI算力基础设施的核心环节。"
+        },
+        {
+          "char_count": 393,
+          "excerpt_id": "curated:capital_market_context:b483e0ec36daacba:5:excerpt:1",
+          "matched_terms": [
+            "中际旭创",
+            "客户",
+            "合作",
+            "产能",
+            "份额",
+            "供应链",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,客户,合作,产能,份额,供应链,numeric_metric",
+          "source_excerpt_hash": "14e8ddd596e9bf3d081a7e63d6abfe92da69957a5024538da32ecf6233a4676b",
+          "text": "图表2：Scale Out与Scale Up网络架构示意图 资料来源：SENKO，QSFPTEK **公司 | 中际旭创：** **全球光模块龙头，技术·客户·产能护城河** **发展历程：从跟随者到引领者** 中际旭创的发展历程清晰地展示了其从技术跟随到全球引领的进阶之路： **2011年：**40G光模块进入谷歌供应链，开启与北美头部客户的长期合作 **A100时代：**200G/400G光模块进入英伟达供应链，卡位AI算力核心环节 **2020年：**推出业内首批800G光模块，确立技术领先地位 **2023年：**发布1.6T光模块，并于2025年二季度率先进入规模出货阶段，领先行业半年以上 **全面布局：**硅光、NPO、CPO等多技术路径同步推进，打造全场景光互连能力 **竞争地位：全球龙一，壁垒深厚** **市场份额：**全球光模块龙一，2024年份额超20%。"
+        },
+        {
+          "char_count": 177,
+          "excerpt_id": "curated:capital_market_context:b483e0ec36daacba:5:excerpt:2",
+          "matched_terms": [
+            "中际旭创",
+            "营收",
+            "收入",
+            "产能",
             "周期",
-            "numeric_metric"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:天风,深度受益,AI,算力全球扩容,光模块龙头业绩加速兑现,1.6T,周期,numeric_metric",
-          "source_excerpt_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
-          "text": "**年报点评** **报告信息** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《 深度受益AI算力全球扩容，光模块龙头业绩加速兑现，1.6T引领新周期 》 对外发布时间：2026年4月13日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002"
-        }
-      ],
-      "pack_id": "curated:industry_logic:c9c4bc581617515d:2:pack",
-      "source_content_chars": 244,
-      "source_content_hash": "562e3545d5f7ef7d4d290d6fa7a42a210a1c10e820998d743bdab5ef53b2230a",
-      "source_ref": "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw",
-      "source_refs": [
-        "https://mp.weixin.qq.com/s/49LJzpBQJ29ErOXK3fQxXw"
-      ]
-    },
-    {
-      "card_id": "curated:industry_logic:b2c064515a1f4c59:3",
-      "combined_source_excerpt_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
-      "excerpts": [
-        {
-          "char_count": 247,
-          "excerpt_id": "curated:industry_logic:b2c064515a1f4c59:3:excerpt:0",
-          "matched_terms": [
-            "天风",
-            "算力",
-            "CapEx",
-            "持续加码",
-            "硅光与",
-            "1.6T",
-            "numeric_metric"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:天风,算力,CapEx,持续加码,硅光与,1.6T,numeric_metric",
-          "source_excerpt_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
-          "text": "**公司点评** **备注** 文中报告节选自天风证券研究所已公开发布研究报告，具体报告内容及相关风险提示等详见完整版报告。 证券研究报告：《算力CapEx持续加码，硅光与1.6T双轮驱动，公司盈利能力进入上行通道》 对外发布时间：2026年02月02日 报告发布机构：天风证券股份有限公司 本报告分析师： 王奕红 SAC 执业证书编号：S1110517090004 余芳沁 SAC 执业证书编号：S1110521080006 唐海清 SAC 执业证书编号：S1110517030002 修改于"
-        }
-      ],
-      "pack_id": "curated:industry_logic:b2c064515a1f4c59:3:pack",
-      "source_content_chars": 247,
-      "source_content_hash": "267c493652f8e6173893ae7ded7417f660757dac753453f86c7472458d810265",
-      "source_ref": "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ",
-      "source_refs": [
-        "https://mp.weixin.qq.com/s/rrHCeF98QEl8KDneDal_mQ"
-      ]
-    },
-    {
-      "card_id": "curated:commercialization:91f57a47205bd8d2:4",
-      "combined_source_excerpt_hash": "7b91f20876708ccdc4fe6f56c0b794113c29d5357ce67fc36dab9d1e6e1ba87b",
-      "excerpts": [
-        {
-          "char_count": 99,
-          "excerpt_id": "curated:commercialization:91f57a47205bd8d2:4:excerpt:0",
-          "matched_terms": [
-            "800",
-            "量产",
-            "numeric_metric"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:800,量产,numeric_metric",
-          "source_excerpt_hash": "a00bc6b4ffc1eda2e18e80d3ce6a60874832fc6e898715deef48129831835d32",
-          "text": "**联讯仪器是国产光通信测试仪器龙头，公司是目前全球少数、国内极少数量产供货400G、800G、1.6T高速光模块核心测试仪器的厂商，**同时也是全球第二家推出1.6T光模块全部核心测试仪器的厂商。"
-        },
-        {
-          "char_count": 62,
-          "excerpt_id": "curated:commercialization:91f57a47205bd8d2:4:excerpt:1",
-          "matched_terms": [
-            "中际旭创",
-            "合作"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:中际旭创,合作",
-          "source_excerpt_hash": "173f53b57e64e494a90875c788e3b1a193435b02de3801e5cc54b3eb2760999b",
-          "text": "公司与中际旭创、新易盛、光迅科技、Lumentum、Coherent、环球广电、日本住友等国内外主流光通信企业达成合作关系。"
-        },
-        {
-          "char_count": 322,
-          "excerpt_id": "curated:commercialization:91f57a47205bd8d2:4:excerpt:2",
-          "matched_terms": [
-            "中际旭创",
-            "客户",
-            "研发"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:中际旭创,客户,研发",
-          "source_excerpt_hash": "54ef4db8e02000fd285e34868a9ca8bc3f1e66edf105dfe6e608b8e807ccd0ca",
-          "text": "图片****中国光通信测试仪器市场前三，中际旭创、新易盛是其客户**** ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- 联讯仪器成立于2017年3月15日，总部位于苏州高新区，由胡海洋、杨建共同创立，专注于电子测量仪器和半导体测试设备的研发、制造、销售及服务。"
-        },
-        {
-          "char_count": 115,
-          "excerpt_id": "curated:commercialization:91f57a47205bd8d2:4:excerpt:3",
-          "matched_terms": [
-            "量产",
-            "numeric_metric"
-          ],
-          "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:量产,numeric_metric",
-          "source_excerpt_hash": "4bb6e286063e64648114d338988b92700d057dbb1828a00c1437845e0b59af6b",
-          "text": "在光通信领域，联讯仪器已推出满足目前业内最高水平1.6T光模块测试需求的65GHz采样示波器、120GBaud时钟恢复单元、1.6Tbps误码分析仪，是全球第二家推出1.6T光模块全部核心测试仪器的厂商，三款产品均已实现量产供货。"
-        },
-        {
-          "char_count": 136,
-          "excerpt_id": "curated:commercialization:91f57a47205bd8d2:4:excerpt:4",
-          "matched_terms": [
-            "中际旭创",
-            "客户",
+            "景气",
+            "资本开支",
             "份额"
           ],
           "normalized_substring_verified": true,
-          "selection_reason": "matched_terms:中际旭创,客户,份额",
-          "source_excerpt_hash": "e825f2e0d0425baacda4a1fc5842b513634c8ce36947fc594b25e41493363ffe",
-          "text": "根据Frost&Sullivan数据，2024年公司在中国光电子器件测试设备市场份额中排名第一，覆盖中际旭创、新易盛、光迅科技、海信集团、华工正源、赛丽科技、Lumentum、 Coherent、Broadcom、环球广电、日本住友、日本古河等国内外主流光通信产业链客户。"
+          "selection_reason": "matched_terms:中际旭创,营收,收入,产能,周期,景气,资本开支,份额",
+          "source_excerpt_hash": "c6528eba5c6f66509a9af96f20d3f7d293103c0216f764379dba62165f4a5487",
+          "text": "图表3：产能准备充足，抢占市场份额 图表4：2024Q3-2025Q3 中际旭创在建工程、其他应付款（亿元） 图表5：2024Q3-2025Q3 中际旭创存货情况（亿元） 资料来源：公司公告 **公司 | 财务表现：** **营收利润双高增，盈利能力持续修复** **收入与行业景气度共振** 从历史数据看，公司收入增速与北美云厂商资本开支周期高度相关。"
+        },
+        {
+          "char_count": 189,
+          "excerpt_id": "curated:capital_market_context:b483e0ec36daacba:5:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "营收",
+            "收入",
+            "净利润",
+            "现金流",
+            "同比",
+            "环比",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,营收,收入,净利润,现金流,同比,环比,numeric_metric",
+          "source_excerpt_hash": "052f9c320d9d09df920ef7d13062262d50c2271db95909dba0c1cebecfc01172",
+          "text": "图表6：海外四大云商年度Capex/营收、净利润、自由现金流 资料来源：WIND，Capex数据均采用PPE采购口径 图表7：中际旭创营业收入及环比增速变化 资料来源：WIND，Capex数据均采用PPE采购口径 **2025年业绩预测** 2025年预计全年实现归母净利润98亿元至118亿元，同比增长89.50%至128.17%，800G/1.6T光模块放量成为核心驱动力。"
+        },
+        {
+          "char_count": 116,
+          "excerpt_id": "curated:capital_market_context:b483e0ec36daacba:5:excerpt:4",
+          "matched_terms": [
+            "毛利",
+            "毛利率",
+            "现金流",
+            "研发",
+            "费用",
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:毛利,毛利率,现金流,研发,费用,numeric_metric",
+          "source_excerpt_hash": "c62b7ff85daf3a320fb7f63a34927a4dccfe9e255778dcf0bc124d1f1ec76d2c",
+          "text": "** 图表14：研发费用率 图表15：毛利率对比 资料来源：公司公告 **观点 | 未来展望：** **从龙头向平台型光互连巨头跃升** **三大发展阶段** • **短期（1-2年）：**800G贡献现金流，1.6T放量贡献利润。"
         }
       ],
-      "pack_id": "curated:commercialization:91f57a47205bd8d2:4:pack",
-      "source_content_chars": 1200,
-      "source_content_hash": "0818a0874257365c39b048fd89e5cb40e2ae18428a4ad7f6650d8d1854099686",
-      "source_ref": "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg",
+      "pack_id": "curated:capital_market_context:b483e0ec36daacba:5:pack",
+      "source_content_chars": 7920,
+      "source_content_hash": "fc9aac8e9866486e8a6e0d689975d091d3762ae0b2721302431705d58903e5cf",
+      "source_ref": "https://mp.weixin.qq.com/s/22_43muo642hUkAbVq4s4A",
       "source_refs": [
-        "https://mp.weixin.qq.com/s/TM-RiEikSrf_RvIiJH_lTg"
+        "https://mp.weixin.qq.com/s/22_43muo642hUkAbVq4s4A"
+      ]
+    },
+    {
+      "card_id": "curated:capital_market_context:07eb2e581e226470:6",
+      "combined_source_excerpt_hash": "f9c070c377851649277e68b89c9e498970a565dfc2d3374faae39946772e6af4",
+      "excerpts": [
+        {
+          "char_count": 84,
+          "excerpt_id": "curated:capital_market_context:07eb2e581e226470:6:excerpt:0",
+          "matched_terms": [
+            "中际旭创",
+            "中际旭创回应美国",
+            "1260H",
+            "清单",
+            "不符合事实"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,中际旭创回应美国,1260H,清单,不符合事实",
+          "source_excerpt_hash": "38ae09ca29340d305854978e6899dbbfb1f3814573c30d55dcc7ea8a98ccb14e",
+          "text": "中际旭创回应美国“1260H清单” 不符合事实 ======================================== ICC讯石融媒体 ICC讯石融媒体 ;"
+        },
+        {
+          "char_count": 87,
+          "excerpt_id": "curated:capital_market_context:07eb2e581e226470:6:excerpt:1",
+          "matched_terms": [
+            "上市",
+            "港交所"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:上市,港交所",
+          "source_excerpt_hash": "2960479b00173a2bff11e675ac289f371901ad3178ba6b859013c9845d4197df",
+          "text": ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 **NEWS** **新 闻 导 读** 要点1：国内头部光企动态频发：新易盛筹划H股港交所主板上市，加码全球化布局；"
+        },
+        {
+          "char_count": 42,
+          "excerpt_id": "curated:capital_market_context:07eb2e581e226470:6:excerpt:2",
+          "matched_terms": [
+            "中际旭创",
+            "1260H",
+            "清单"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,1260H,清单",
+          "source_excerpt_hash": "c620cf23d220cff76dbba9b2750738237dc4a9d135f016e272087a8e43526fff",
+          "text": "中际旭创否认美方1260H清单认定依据，称无军工相关属性，目前公司经营未受实质影响。"
+        },
+        {
+          "char_count": 202,
+          "excerpt_id": "curated:capital_market_context:07eb2e581e226470:6:excerpt:3",
+          "matched_terms": [
+            "中际旭创",
+            "1260H",
+            "清单"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:中际旭创,1260H,清单",
+          "source_excerpt_hash": "365b1bf45f206dba1e4862aa188531296eab1671b532b2f2ca76fa439b70283c",
+          "text": "原文 http://www.iccsz.com/site/cn/News/2026/06/11/20260611011046127802.htm **中际旭创回应被列入美国“1260H清单” 不符合客观事实** 中际旭创表示，美国国防部将中际旭创列入“1260H 清单”的认定和依据均是不符合客观事实的，公司既非中国军工企业，也不是军民融合企业，将以充分的事实进行有效沟通并采取合适的措施以维护公司利益。"
+        },
+        {
+          "char_count": 51,
+          "excerpt_id": "curated:capital_market_context:07eb2e581e226470:6:excerpt:4",
+          "matched_terms": [
+            "numeric_metric"
+          ],
+          "normalized_substring_verified": true,
+          "selection_reason": "matched_terms:numeric_metric",
+          "source_excerpt_hash": "168e4b0ea7a10e606f696aee210c1aca1b61b908ad1dc2dc5d12035aabbfe438",
+          "text": "· 多款自研测试方案亮相：发布 FITS、高速线缆、高频 PCB、1.6T 光模块全套国产化测试方案。"
+        }
+      ],
+      "pack_id": "curated:capital_market_context:07eb2e581e226470:6:pack",
+      "source_content_chars": 2612,
+      "source_content_hash": "fd41b6c1baa7fc3a85e8212040ea260b0d068097c689cff4944f3dfed905bec2",
+      "source_ref": "https://mp.weixin.qq.com/s/KLHN1o7jIvcMi8cu6e7oRw",
+      "source_refs": [
+        "https://mp.weixin.qq.com/s/KLHN1o7jIvcMi8cu6e7oRw"
       ]
     }
   ],

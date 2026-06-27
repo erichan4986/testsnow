@@ -624,7 +624,28 @@ def _clean_source_content(text: Any) -> str:
     ]
     if cut_positions:
         source = source[: min(cut_positions)]
+    source = _strip_markdown_noise(source)
     return _clean_text(source)
+
+
+def _strip_markdown_noise(text: str) -> str:
+    """Remove markdown images/links and stray HTML/JS fragments from WeChat exports.
+
+    Keeps the underlying text; the cleaned result is what excerpt selection runs
+    against, so source_excerpt remains a deterministic substring of the cleaned
+    source content and hash fidelity still holds.
+    """
+    source = str(text or "")
+    # Markdown images: ![alt](url)
+    source = re.sub(r"!\[[^\]]*\]\([^)]*\)", " ", source)
+    # Markdown links: [text](url), including javascript:void(...) navigation
+    source = re.sub(r"\[[^\]]*\]\([^)]*\)", " ", source)
+    # HTML image tags and other raw tags
+    source = re.sub(r"<img[^>]*>", " ", source, flags=re.IGNORECASE)
+    source = re.sub(r"<[^>]+>", " ", source)
+    # Stray leading punctuation left by removed markup
+    source = re.sub(r"^[}\]\)\>\|]+\s*", "", source)
+    return _normalize_text(source)
 
 
 def _sorted_unique(values: List[str]) -> List[str]:

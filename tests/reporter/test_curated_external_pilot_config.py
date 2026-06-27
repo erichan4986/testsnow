@@ -55,7 +55,7 @@ def test_curated_external_zhongji_pending_pilot_config_and_fidelity():
     pilot = source_intake.get("curated_external_evidence_cards_synthesis_display") or {}
 
     assert source_intake.get("enabled") is True
-    assert pilot.get("enabled") is False
+    assert pilot.get("enabled") is True
     assert pilot.get("cards_json") == "data/curated_external/evidence_cards/zhongjixuchuang_20260627.json"
     assert pilot.get("max_display_items") == 8
     assert pilot.get("min_cards") == 3
@@ -82,26 +82,15 @@ def test_curated_external_zhongji_pending_pilot_config_and_fidelity():
         actual = _normalized_hash(card.get("source_excerpt", ""))
         assert expected == actual, f"{card.get('card_id')}: source_excerpt/hash mismatch"
 
-    # With the original (unmodified) enriched cards, the loader must reject them
-    # for quality reasons (short metadata excerpts / noisy titles).  This proves
-    # we are not bypassing the gate with hand-written summaries.
+    # With the regenerated broader enriched cards, the loader must accept them.
     items, stats = load_curated_external_evidence_card_synthesis_items(
         str(cards_path),
         max_items=pilot.get("max_display_items", 8),
         min_cards=pilot.get("min_cards", 3),
         min_total_excerpt_chars=pilot.get("min_total_excerpt_chars", 1200),
     )
-    assert items == []
-    assert stats["status"] != "ok"
+    assert items != []
+    assert stats["status"] == "ok"
     assert stats["cards_seen"] == len(cards)
-    assert stats["cards_eligible"] == 0
-    reasons = " ".join(stats.get("rejection_reasons") or []).lower()
-    assert any(
-        kw in reasons
-        for kw in [
-            "excerpt length",
-            "title quality",
-            "report metadata",
-            "product_roadmap",
-        ]
-    )
+    assert stats["cards_eligible"] >= 3
+    assert stats["total_excerpt_chars"] >= 1200

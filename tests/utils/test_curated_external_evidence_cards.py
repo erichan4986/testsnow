@@ -336,3 +336,34 @@ def test_excerpt_selects_body_view_not_report_metadata(tmp_path: Path):
     assert "文中报告节选" not in excerpt
     assert "执业证书编号" not in excerpt
     assert "报告发布机构" not in excerpt
+
+
+def test_excerpt_strips_markdown_image_and_link_noise(tmp_path: Path):
+    noisy = (
+        "![cover_image](https://example.com/cover.jpg) "
+        "[讯石光通讯](javascript:void(0)) "
+        "中际旭创2026年第一季度营收194.96亿元，同比增长192.12%，"
+        "净利润57.35亿元，同比增长262.28%。"
+    )
+    path = _write_jsonl(
+        tmp_path / "items.jsonl",
+        [
+            _item(
+                title="净利润大增262% 中际旭创一季度营收达194.96亿元",
+                content=noisy,
+                topic="earnings_context",
+                source_kind="wechat_earnings_financial_context",
+            )
+        ],
+    )
+
+    result = build_curated_external_evidence_cards(
+        path, stock_name="中际旭创", max_excerpt_chars=400
+    )
+
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert "194.96亿元" in excerpt
+    assert "![" not in excerpt
+    assert "javascript:void" not in excerpt
+    assert "https://example.com/cover.jpg" not in excerpt
+    assert result["excerpt_packs"][0]["excerpts"][0]["normalized_substring_verified"] is True
