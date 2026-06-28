@@ -163,7 +163,7 @@ def load_curated_external_evidence_card_synthesis_items(
         stats["rejection_reasons"].append(f"truncated {dropped} items by max_items={max_items}")
 
     stats["cards_eligible"] = len(eligible_items)
-    stats["total_excerpt_chars"] = sum(len(item.content) for item in eligible_items)
+    stats["total_excerpt_chars"] = _total_source_excerpt_chars(eligible_items)
 
     # Stock-level gate
     stock_errors = _validate_stock_level(eligible_items, min_cards, min_total_excerpt_chars)
@@ -322,10 +322,21 @@ def _validate_stock_level(
     errors: List[str] = []
     if len(items) < min_cards:
         errors.append(f"eligible cards {len(items)} < min_cards {min_cards}")
-    total = sum(len(item.content) for item in items)
+    total = _total_source_excerpt_chars(items)
     if total < min_total_excerpt_chars:
         errors.append(f"total excerpt chars {total} < min_total_excerpt_chars {min_total_excerpt_chars}")
     return errors
+
+
+def _total_source_excerpt_chars(items: List[SynthesisItem]) -> int:
+    total = 0
+    for item in items:
+        extra = item.extra or {}
+        try:
+            total += int(extra.get("source_excerpt_chars") or 0)
+        except (TypeError, ValueError):
+            total += 0
+    return total
 
 
 def _card_to_synthesis_item(card: Dict[str, Any]) -> SynthesisItem:
@@ -363,7 +374,9 @@ def _card_to_synthesis_item(card: Dict[str, Any]) -> SynthesisItem:
             "card_id": str(card.get("card_id") or ""),
             "source_ref": source_ref,
             "source_excerpt_hash": str(card.get("source_excerpt_hash") or ""),
+            "source_excerpt_chars": len(source_excerpt),
             "display_excerpt_hash": _normalized_hash(display_excerpt),
+            "display_excerpt_chars": len(display_excerpt),
             "source_block_hash": str(card.get("source_block_hash") or ""),
             "topic": topic,
         },
@@ -384,11 +397,14 @@ def _clean_display_excerpt(excerpt: str, *, title: str = "") -> str:
         "去阅读",
     ):
         text = text.replace(phrase, " ")
+    text = re.sub(r"[*_`]+", "", text)
     for media in (
         "ICC讯石融媒体",
+        "ZIA研究",
         "水易",
     ):
         text = re.sub(rf"(?:{re.escape(media)}\s*){{2,}};?", " ", text)
+        text = text.replace(media, " ")
     text = re.sub(r"(?<![A-Za-z])ICC讯(?![A-Za-z])", " ", text)
     text = re.sub(r"(?:\.\.\.|…)+", " ", text)
     text = re.sub(r"\s+[;；]\s+", " ", text)
@@ -398,7 +414,27 @@ def _clean_display_excerpt(excerpt: str, *, title: str = "") -> str:
     if clean_title:
         text = re.sub(rf"^\s*{re.escape(clean_title)}\s*", "", text)
 
-    return _normalize_text(text)
+    return _dedupe_display_sentences(_normalize_text(text))
+
+
+def _dedupe_display_sentences(text: str) -> str:
+    sentences = re.split(r"(?:(?<=[。！？；;])\s*|(?<=%)\s+(?=[一-龥]))", str(text or ""))
+    if len(sentences) <= 1:
+        return _normalize_text(text)
+
+    seen: set[str] = set()
+    kept: List[str] = []
+    for sentence in sentences:
+        sentence = _normalize_text(sentence)
+        if not sentence:
+            continue
+        fingerprint = re.sub(r"[^一-龥A-Za-z0-9%\.]+", "", sentence).lower()
+        if len(fingerprint) >= 16 and fingerprint in seen:
+            continue
+        if len(fingerprint) >= 16:
+            seen.add(fingerprint)
+        kept.append(sentence)
+    return _normalize_text(" ".join(kept))
 
 
 def _sort_items(items: List[SynthesisItem]) -> None:
@@ -407,7 +443,12 @@ def _sort_items(items: List[SynthesisItem]) -> None:
     items.sort(
         key=lambda x: (bool(x.publish_time), x.publish_time or ""), reverse=True
     )
-    items.sort(key=lambda x: len(x.content), reverse=True)
+    items.sort(
+        key=lambda x: _safe_int(
+            (x.extra or {}).get("source_excerpt_chars"), default=len(x.content)
+        ),
+        reverse=True,
+    )
     items.sort(key=lambda x: TOPIC_PRIORITY.get(x.extra.get("topic") or "", 99))
 
 

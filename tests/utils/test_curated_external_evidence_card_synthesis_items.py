@@ -168,6 +168,35 @@ def test_display_content_strips_reader_noise_without_rewriting_source_hash(tmp_p
     assert noisy_item.extra["display_excerpt_hash"] != noisy_item.extra["source_excerpt_hash"]
 
 
+def test_display_content_deduplicates_repeated_sentences_and_markdown_noise(tmp_path):
+    repeated_sentence = "中际旭创发布2025年年度报告，报告期内公司实现营业收入382.40亿元，同比增长60.25%。"
+    source_excerpt = (
+        "**ZIA研究** "
+        f"{repeated_sentence} "
+        f"{repeated_sentence} "
+        "归属于上市公司股东的净利润107.97亿元，同比增加108.78% "
+        f"{repeated_sentence} "
+        "公司为云数据中心客户提供400G、800G和1.6T等高速光模块。"
+    ) * 3
+    cards = [
+        _make_card(card_id="c1", topic="earnings_context", source_excerpt=source_excerpt),
+        _make_card(card_id="c2", topic="commercialization", source_excerpt=_long_chinese_excerpt(500)),
+        _make_card(card_id="c3", topic="industry_logic", source_excerpt=_long_chinese_excerpt(500)),
+    ]
+    path = _write_summary(tmp_path, cards)
+
+    items, stats = load_curated_external_evidence_card_synthesis_items(
+        str(path), min_cards=3, min_total_excerpt_chars=1000
+    )
+
+    assert stats["status"] == "ok"
+    item = next(item for item in items if item.extra["card_id"] == "c1")
+    assert "**" not in item.content
+    assert item.content.count(repeated_sentence) == 1
+    assert "净利润107.97亿元" in item.content
+    assert item.extra["source_excerpt_hash"] == _normalized_hash(source_excerpt)
+
+
 def test_accepts_real_phase1_schema_with_fidelity_in_excerpt_pack(tmp_path):
     cards = [
         _make_card(card_id="c1", topic="industry_logic", source_excerpt=_long_chinese_excerpt(500)),
@@ -284,7 +313,7 @@ def test_accepts_capital_market_with_substance(tmp_path):
             card_id="c1",
             topic="capital_market_context",
             title="公司发布财报",
-            source_excerpt=_long_chinese_excerpt(400) + "毛利率提升",
+            source_excerpt=_long_chinese_excerpt(500) + "毛利率提升",
         )
         for _ in range(3)
     ]
