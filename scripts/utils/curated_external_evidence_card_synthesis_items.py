@@ -391,6 +391,8 @@ def _clean_display_excerpt(excerpt: str, *, title: str = "") -> str:
     """
     text = str(excerpt or "")
     text = re.sub(r"= {0,1}={2,}|={5,}", " ", text)
+    text = re.sub(r"!?\[\]\([^)]*\)", " ", text)
+    text = re.sub(r"!?\[\]\(", " ", text)
     for phrase in (
         "在小说阅读器读本章",
         "在小说阅读器中沉浸阅读",

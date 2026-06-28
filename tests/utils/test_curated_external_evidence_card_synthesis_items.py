@@ -139,6 +139,7 @@ def test_accepts_valid_enriched_cards(tmp_path):
 
 def test_display_content_strips_reader_noise_without_rewriting_source_hash(tmp_path):
     noisy_excerpt = (
+        "[]( "
         "} 净利润大增262.28% 中际旭创一季度营收达194.96亿元 "
         "=============================== ICC讯石融媒体 ICC讯石融媒体 ; "
         ") 在小说阅读器读本章 去阅读 在小说阅读器中沉浸阅读 "
@@ -163,6 +164,7 @@ def test_display_content_strips_reader_noise_without_rewriting_source_hash(tmp_p
     assert "去阅读" not in noisy_item.content
     assert "ICC讯石融媒体 ICC讯石融媒体" not in noisy_item.content
     assert "ICC讯" not in noisy_item.content
+    assert "[](" not in noisy_item.content
     assert "====" not in noisy_item.content
     assert noisy_item.extra["source_excerpt_hash"] == _normalized_hash(noisy_excerpt)
     assert noisy_item.extra["display_excerpt_hash"] != noisy_item.extra["source_excerpt_hash"]
