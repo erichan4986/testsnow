@@ -60,7 +60,92 @@ _CLAIM_TYPE_LABELS = {
     "watch_variable": "待验证变量",
     "novel_mechanism": "增量机制",
     "context_extension": "产业链/竞争格局补充",
+    "business_quality_signal": "经营质量信号",
+    "interpretive_frame": "解释框架",
+    "strategic_tradeoff": "战略取舍",
 }
+
+_INTERPRETIVE_CLAIM_TYPES = {
+    "dissent",
+    "watch_variable",
+    "novel_mechanism",
+    "business_quality_signal",
+    "interpretive_frame",
+    "strategic_tradeoff",
+}
+
+_INTERPRETIVE_TERMS = [
+    "含义",
+    "解释",
+    "机制",
+    "分歧",
+    "变量",
+    "节奏",
+    "策略",
+    "取舍",
+    "经营质量",
+    "费用",
+    "投入",
+    "现金流",
+    "商业化",
+    "竞争力",
+    "资源分散",
+    "窗口期",
+    "验证",
+    "待跟踪",
+]
+
+_NEAR_DUPLICATE_BUCKETS: List[Tuple[str, List[List[str]]]] = [
+    (
+        "expense_contraction_quality",
+        [
+            ["费用", "开支", "节衣缩食", "销售", "行政", "研发"],
+            ["收缩", "减少", "压缩", "下降", "高投入", "现金流", "竞争力", "投入"],
+        ],
+    ),
+    (
+        "benchmark_model_conversion",
+        [
+            ["爆款", "标杆", "月销", "小众车型", "定点", "车型"],
+            ["出货", "销量", "转化", "飞跃", "客户拓展", "复购"],
+        ],
+    ),
+    (
+        "a2000_market_window",
+        [
+            ["A2000", "华山A2000", "高阶智驾", "高阶芯片"],
+            ["量产", "窗口", "滞后", "错失", "竞品", "Orin", "征程"],
+        ],
+    ),
+    (
+        "a2000_review_control",
+        [
+            ["A2000", "华山A2000", "美国", "商务部", "国防部"],
+            ["审查", "获准", "全球销售", "出口管制", "审核"],
+        ],
+    ),
+    (
+        "embodied_ai_commercialization_timeline",
+        [
+            ["具身智能", "机器人"],
+            ["商业化", "3-5年", "三到五年", "退回", "贡献营收", "成本"],
+        ],
+    ),
+    (
+        "embodied_ai_competition_resources",
+        [
+            ["具身智能", "机器人"],
+            ["英伟达", "地平线", "竞争", "资源分散", "双线作战", "无法兼顾"],
+        ],
+    ),
+    (
+        "fundraising_industry_chain",
+        [
+            ["募资", "配售", "5.68亿", "5.689亿", "90%"],
+            ["并购", "投资", "AI芯片", "机器人", "半导体产业链", "产业整合"],
+        ],
+    ),
+]
 
 DEFAULT_MULTIPASS_SPECS = [
     {
@@ -408,6 +493,35 @@ def _contains_baseline_fact(text: str, fingerprint: Set[str]) -> Tuple[bool, str
         if phrase and phrase in normalized:
             return True, phrase
     return False, ""
+
+
+def _is_interpretive_incremental_claim(claim: Dict[str, Any]) -> bool:
+    """Return whether a claim adds interpretation rather than only a repeated fact.
+
+    LLM source quotes often include the original financial number plus the
+    author's interpretation in the same sentence.  The repeated number should
+    not poison the whole claim when the claim text/why_incremental make a
+    clear business-quality, mechanism, dissent, or watch-variable point.
+    """
+    overlap = str(claim.get("baseline_overlap") or "").strip().lower()
+    if overlap == "duplicate":
+        return False
+
+    claim_type = str(claim.get("claim_type") or "").strip()
+    text = _normalize_text(
+        " ".join(
+            [
+                str(claim.get("claim") or ""),
+                str(claim.get("why_incremental") or ""),
+                str(claim.get("topic") or ""),
+            ]
+        )
+    )
+
+    if claim_type in _INTERPRETIVE_CLAIM_TYPES and any(term in text for term in _INTERPRETIVE_TERMS):
+        return True
+
+    return "baseline" in text and any(term in text for term in _INTERPRETIVE_TERMS)
 
 
 def _longest_common_substring_positions(a: str, b: str) -> List[Tuple[int, int, int]]:
@@ -1031,8 +1145,12 @@ def validate_claim(
     if str(claim.get("baseline_overlap") or "") == "duplicate":
         return False, "deterministic novelty guard: duplicate baseline fact", meta
 
-    duplicate, phrase = _contains_baseline_fact(claim_text + " " + source_quote, baseline_fingerprint)
+    duplicate, phrase = _contains_baseline_fact(claim_text, baseline_fingerprint)
     if duplicate:
+        return False, f"deterministic novelty guard: duplicate baseline fact ({phrase})", meta
+
+    quote_duplicate, phrase = _contains_baseline_fact(source_quote, baseline_fingerprint)
+    if quote_duplicate and not _is_interpretive_incremental_claim(claim):
         return False, f"deterministic novelty guard: duplicate baseline fact ({phrase})", meta
 
     return True, "ok", meta
@@ -1174,9 +1292,30 @@ def _near_duplicate_key(claim: Dict[str, Any]) -> str:
         "",
         claim_text,
     )
+    semantic_bucket = _near_duplicate_semantic_bucket(claim)
+    if semantic_bucket:
+        source_id = str(claim.get("source_id") or "")
+        return normalized_hash(f"semantic:{source_id}:{semantic_bucket}")
+
     topic = _normalize_text(claim.get("topic", ""))
     claim_type = str(claim.get("claim_type", ""))
     return normalized_hash(f"{claim_type}:{topic}:{claim_text}")
+
+
+def _near_duplicate_semantic_bucket(claim: Dict[str, Any]) -> str:
+    text = _normalize_text(
+        " ".join(
+            [
+                str(claim.get("claim") or ""),
+                str(claim.get("why_incremental") or ""),
+                str(claim.get("topic") or ""),
+            ]
+        )
+    )
+    for bucket, keyword_groups in _NEAR_DUPLICATE_BUCKETS:
+        if all(any(keyword in text for keyword in group) for group in keyword_groups):
+            return bucket
+    return ""
 
 
 def _claim_informativeness(claim: Dict[str, Any]) -> int:

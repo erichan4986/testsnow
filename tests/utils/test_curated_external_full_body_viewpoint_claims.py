@@ -297,6 +297,40 @@ class TestValidateClaim:
         assert ok is False
         assert "duplicate" in reason.lower()
 
+    def test_interpretive_claim_with_baseline_fact_is_retained(self):
+        baseline = "公司2025年营收8.22亿元，净亏损14.25亿元。"
+        content = (
+            "财报显示，公司2025年营收8.22亿元。"
+            "但外部文章认为，在营收高速增长期销售、行政及研发开支同步收缩，"
+            "可能反映现金流压力或管理层对未来投入节奏更谨慎。"
+        )
+        packet = _source_packet(content=content)
+        quote = content
+        claim = {
+            "schema_version": "curated_external_viewpoint_claim.v1",
+            "claim_type": "business_quality_signal",
+            "topic": "earnings_quality",
+            "claim": "外部文章认为营收高增长期的费用同步收缩，提示现金流压力或投入节奏更谨慎。",
+            "source_quote": quote,
+            "source_quote_hash": normalized_hash(quote),
+            "why_incremental": "baseline提到营收和亏损数字，但未讨论费用收缩背后的经营质量含义。",
+            "baseline_overlap": "partial",
+            "source_id": packet["source_id"],
+            "evidence_refs": [packet["source_id"]],
+            "evidence_hashes": _evidence_hashes(packet, quote),
+            "quality_action": "preview_only",
+            "knowledge_eligible": False,
+            "synthesis_display_only": True,
+            "scoring_eligible": False,
+            "risk_score_eligible": False,
+        }
+        from curated_external_full_body_viewpoint_claims import baseline_fact_fingerprint
+
+        fp = baseline_fact_fingerprint(baseline)
+        ok, reason, _ = validate_claim(claim, {packet["source_id"]: packet}, baseline_fingerprint=fp)
+        assert ok is True
+        assert reason == "ok"
+
     def test_explicit_duplicate_baseline_overlap_rejected(self):
         packet = _source_packet(content="外部文章提示，市场传言交付计划可能调整。")
         claim = {
@@ -856,6 +890,102 @@ class TestBuildViewpointDigest:
         assert digest["stats"]["display_claims"] == 8
         assert digest["stats"]["merge_duplicate_dropped_count"] == 1
         assert digest["preview_markdown"].count("- **增量机制**") == 8
+
+    def test_digest_merges_same_source_semantic_near_duplicates(self):
+        content = (
+            "外部文章认为公司销售、行政及研发费用同步收缩，可能反映现金流压力。"
+            "外部文章指出公司节衣缩食与同业高投入形成反差，可能影响长期竞争力。"
+            "外部文章还提示公司募资90%用于并购AI芯片和机器人产业链公司。"
+        )
+        source = _source_packet(content=content)
+
+        def extractor(source_packets, baseline, fingerprint):
+            return [
+                {
+                    **_claim_contract(),
+                    "claim_type": "business_quality_signal",
+                    "topic": "earnings_quality",
+                    "claim": "外部文章认为公司销售、行政及研发费用同步收缩，可能反映现金流压力。",
+                    "source_quote": "外部文章认为公司销售、行政及研发费用同步收缩，可能反映现金流压力。",
+                    "why_incremental": "baseline未讨论费用收缩背后的经营质量含义。",
+                    "baseline_overlap": "partial",
+                    "source_id": source_packets[0]["source_id"],
+                },
+                {
+                    **_claim_contract(),
+                    "claim_type": "dissent",
+                    "topic": "business_quality",
+                    "claim": "外部文章指出公司节衣缩食与同业高投入形成反差，可能影响长期竞争力。",
+                    "source_quote": "外部文章指出公司节衣缩食与同业高投入形成反差，可能影响长期竞争力。",
+                    "why_incremental": "baseline未讨论费用策略与竞争投入之间的分歧。",
+                    "baseline_overlap": "partial",
+                    "source_id": source_packets[0]["source_id"],
+                },
+                {
+                    **_claim_contract(),
+                    "claim_type": "novel_mechanism",
+                    "topic": "capital_allocation",
+                    "claim": "外部文章提示公司募资90%用于并购AI芯片和机器人产业链公司。",
+                    "source_quote": "外部文章还提示公司募资90%用于并购AI芯片和机器人产业链公司。",
+                    "why_incremental": "baseline未讨论募资用途背后的产业链扩张逻辑。",
+                    "baseline_overlap": "none",
+                    "source_id": source_packets[0]["source_id"],
+                },
+            ]
+
+        digest = build_viewpoint_digest(
+            [source],
+            "baseline text",
+            extractor=extractor,
+            min_display_claims=1,
+            stock_name="TestCo",
+        )
+        assert digest["status"] == "ok"
+        assert digest["claims_count"] == 2
+        assert digest["stats"]["near_duplicate_dropped_count"] == 1
+        assert "募资90%" in digest["preview_markdown"]
+
+    def test_digest_keeps_distinct_subthemes_within_same_broad_theme(self):
+        content = (
+            "外部文章认为具身智能商业化落地仍需三到五年，短期贡献营收仍待验证。"
+            "外部文章指出英伟达、地平线也在布局具身智能，公司双线作战可能导致资源分散。"
+        )
+        source = _source_packet(content=content)
+
+        def extractor(source_packets, baseline, fingerprint):
+            return [
+                {
+                    **_claim_contract(),
+                    "claim_type": "watch_variable",
+                    "topic": "embodied_ai_timeline",
+                    "claim": "外部文章认为具身智能商业化落地仍需三到五年，短期贡献营收仍待验证。",
+                    "source_quote": "外部文章认为具身智能商业化落地仍需三到五年，短期贡献营收仍待验证。",
+                    "why_incremental": "baseline未讨论具身智能商业化周期。",
+                    "baseline_overlap": "partial",
+                    "source_id": source_packets[0]["source_id"],
+                },
+                {
+                    **_claim_contract(),
+                    "claim_type": "strategic_tradeoff",
+                    "topic": "embodied_ai_competition",
+                    "claim": "外部文章指出英伟达、地平线也在布局具身智能，公司双线作战可能导致资源分散。",
+                    "source_quote": "外部文章指出英伟达、地平线也在布局具身智能，公司双线作战可能导致资源分散。",
+                    "why_incremental": "baseline未讨论具身智能竞争格局与双线作战取舍。",
+                    "baseline_overlap": "partial",
+                    "source_id": source_packets[0]["source_id"],
+                },
+            ]
+
+        digest = build_viewpoint_digest(
+            [source],
+            "baseline text",
+            extractor=extractor,
+            min_display_claims=1,
+            stock_name="TestCo",
+        )
+        assert digest["status"] == "ok"
+        assert digest["claims_count"] == 2
+        assert digest["stats"]["near_duplicate_dropped_count"] == 0
 
     def test_digest_drops_only_claims_that_fail_final_render_lint(self):
         sources = [

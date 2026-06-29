@@ -30,6 +30,10 @@
         "max_display_items": 8,
         "min_cards": 2,
         "min_total_excerpt_chars": 600
+      },
+      "curated_external_viewpoint_narrative_synthesis_display": {
+        "enabled": true,
+        "narrative_json": "data/curated_external/viewpoint_narratives/heizhima_20260629.json"
       }
     }
   },

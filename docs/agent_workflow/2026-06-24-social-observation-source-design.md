@@ -243,6 +243,15 @@ Expected impact:
 
 - High impact on source boundary quality, citation traceability, and prevention
   of overclaiming.
+
+2026-06-29 design delta:
+
+- Curated external longform sources now use the full-body viewpoint digest path
+  as the preferred primary material layer.  Evidence cards remain useful as
+  preview/audit/fallback material, but WeChat longform quality improved only
+  after moving to source packets, LLM multipass claim extraction, quote/hash
+  validation, semantic dedupe, and a cited narrative composer.  See
+  `2026-06-29-curated-external-full-body-viewpoint-design-delta.md`.
 - Medium impact on depth of analysis, depending on source quality and excerpt
   richness.
 - No direct short-term impact on scoring or risk, by design.

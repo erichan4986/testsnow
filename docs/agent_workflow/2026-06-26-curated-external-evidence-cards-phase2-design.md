@@ -41,6 +41,13 @@ Key lessons:
 - Phase 2 should be tested first on 中际旭创 and 寒武纪; 圣邦股份 should not
   be used as the main quality sample.
 
+2026-06-29 update: later validation moved the preferred curated-external
+longform path from evidence-card excerpts to full-body source packets,
+viewpoint claims, semantic dedupe, and narrative composition.  This document
+remains the safety-boundary record for display-only curated external material;
+the implementation delta is documented in
+`2026-06-29-curated-external-full-body-viewpoint-design-delta.md`.
+
 ## 3. Non-Goals
 
 - Do not connect raw WeChat discovery or candidate JSONL directly to report
