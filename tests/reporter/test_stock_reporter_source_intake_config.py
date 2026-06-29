@@ -1,9 +1,11 @@
 """Tests for PerStockReporter Source Intake config wiring."""
 
 import sys
+import types
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from utils.stock_reporter import PerStockReporter
@@ -61,6 +63,34 @@ def test_source_intake_enabled_passes_flag():
     call_input = mock_pipeline.run.call_args[0][0]
     assert call_input.get("source_intake_enabled") is True
     assert call_input.get("source_intake_config") == {"enabled": True}
+
+
+def test_source_intake_enabled_allows_empty_community_posts(monkeypatch):
+    reporter = PerStockReporter(
+        stocks_data={"测试股": []},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {"enabled": True, "a_stock": {"eastmoney_research_reports": {"enabled": True}}},
+        },
+    )
+
+    mock_build = MagicMock()
+    mock_pipeline = MagicMock()
+    mock_ctx = MagicMock()
+    mock_ctx.output.get.return_value = ""
+    mock_pipeline.run.return_value = mock_ctx
+    mock_build.return_value = mock_pipeline
+    fake_report_skills = types.ModuleType("utils.report_skills")
+    fake_report_skills.build_stock_report_pipeline = mock_build
+    monkeypatch.setitem(sys.modules, "utils.report_skills", fake_report_skills)
+
+    reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once()
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input["stocks_data"] == {"测试股": []}
+    assert call_input["source_intake_enabled"] is True
 
 
 def test_source_intake_periodic_fulltext_enabled_passes_pipeline_flag(tmp_path):

@@ -90,17 +90,17 @@ class PerStockReporter:
         生成单只股票的深度报告（Pipeline 入口，接口不变）。
         """
         all_posts = self.stocks_data.get(stock_name, [])
-        if not all_posts:
+        ar_cfg = self.agent_reach_configs.get(stock_name, {})
+        si_cfg = self.source_intake_configs.get(stock_name, {})
+        agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
+        source_intake_enabled = bool(si_cfg.get("enabled", False))
+        if not all_posts and not agent_reach_enabled and not source_intake_enabled:
             logger.warning(f"[{stock_name}] 无数据，跳过")
             return "", ""
 
         try:
             from .report_skills import build_stock_report_pipeline
 
-            ar_cfg = self.agent_reach_configs.get(stock_name, {})
-            si_cfg = self.source_intake_configs.get(stock_name, {})
-            agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
-            source_intake_enabled = bool(si_cfg.get("enabled", False))
             periodic_fulltext_cfg = si_cfg.get("periodic_report_fulltext", {}) or {}
             if "enabled" in periodic_fulltext_cfg:
                 periodic_fulltext_requested = bool(periodic_fulltext_cfg.get("enabled", False))

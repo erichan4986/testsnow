@@ -183,6 +183,45 @@ def test_periodic_report_excerpt_does_not_enter_synthesis_items():
     assert all(item.source_platform != "定期报告摘录" for item in all_data["items"])
 
 
+def test_source_intake_keep_items_enter_baseline_synthesis_items():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    source_intake_item = SynthesisItem(
+        title="中际旭创深度研报",
+        content="光模块需求延续高景气，800G 与 1.6T 产品交付节奏是业绩弹性的核心变量。",
+        author="测试证券",
+        source_platform="研报",
+        url="https://example.com/report",
+        publish_time="2026-06-01",
+        extra={
+            "source_type": "broker_research",
+            "source_credit": 80,
+            "verification_status": "professional_analysis",
+            "knowledge_eligible": True,
+            "report_eligible": True,
+        },
+    )
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "source_intake_enabled": True,
+        "external_evidence_keep_items": [source_intake_item],
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert fake.calls
+    _, all_data = fake.calls[0]
+    assert [item.title for item in all_data["items"]] == ["中际旭创深度研报"]
+
+
 def test_periodic_report_fulltext_items_do_not_enter_synthesis_items():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)

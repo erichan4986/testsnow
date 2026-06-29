@@ -146,6 +146,12 @@ def test_bootstrap_preview_writes_tmp_config_without_mutating_config(tmp_path):
     assert preview["xueqiu_code"] == "SZ300999"
     assert preview["keywords"] == ["新股票", "先进封装"]
     assert preview["source_intake"]["enabled"] is True
+    assert preview["source_intake"]["a_stock"]["enabled"] is True
+    assert preview["source_intake"]["a_stock"]["cninfo_announcements"]["enabled"] is True
+    assert preview["source_intake"]["a_stock"]["eastmoney_research_reports"]["enabled"] is True
+    assert preview["source_intake"]["a_stock"]["eastmoney_global_news"]["enabled"] is True
+    assert preview["source_intake"]["a_stock"]["iwencai_industry_research"]["enabled"] is True
+    assert "先进封装" in preview["source_intake"]["a_stock"]["eastmoney_global_news"]["keywords"]
 
 
 def test_bootstrap_write_config_requires_code(tmp_path, capsys):
@@ -188,6 +194,27 @@ def test_bootstrap_write_config_appends_reviewed_stock(tmp_path):
     assert [stock["name"] for stock in stocks] == ["已有", "新股票"]
     assert stocks[-1]["gid"] == "300999"
     assert stocks[-1]["source_intake"]["enabled"] is True
+    assert stocks[-1]["source_intake"]["a_stock"]["eastmoney_research_reports"]["enabled"] is True
+
+
+def test_zhongjixuchuang_config_has_canonical_a_stock_source_intake():
+    mod = _load_entry_module()
+    repo_root = Path(__file__).resolve().parents[2]
+    stocks = mod._load_stocks_config(repo_root / "config" / "stocks.json")
+
+    stock = mod._find_stock(stocks, "中际旭创")
+
+    assert stock is not None
+    source_intake = stock.get("source_intake", {})
+    a_stock = source_intake.get("a_stock", {})
+    assert source_intake.get("enabled") is True
+    assert a_stock.get("enabled") is True
+    assert a_stock.get("cninfo_announcements", {}).get("enabled") is True
+    assert a_stock.get("eastmoney_research_reports", {}).get("enabled") is True
+    assert a_stock.get("eastmoney_global_news", {}).get("enabled") is True
+    assert a_stock.get("iwencai_industry_research", {}).get("enabled") is True
+    keywords = a_stock.get("eastmoney_global_news", {}).get("keywords", [])
+    assert {"光模块", "800G", "1.6T", "CPO", "AI算力"}.issubset(set(keywords))
 
 
 def test_offline_smoke_implies_fast_test_no_pdf_and_installs_patches(tmp_path, monkeypatch):

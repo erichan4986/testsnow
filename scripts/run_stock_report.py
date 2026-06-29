@@ -277,6 +277,90 @@ def _default_bootstrap_output(stock_name: str) -> Path:
     return Path("/tmp") / f"{stock_name}_stock_config_preview.json"
 
 
+def _build_default_a_stock_source_intake(keywords: list[str]) -> dict[str, Any]:
+    theme_keywords = _dedupe_keep_order([
+        *keywords,
+        "半导体",
+        "AI算力",
+        "机器人",
+        "汽车芯片",
+        "光通信",
+    ])
+    research_queries = [f"{keyword} 行业研究报告" for keyword in keywords[1:] or keywords[:1]]
+    research_queries.extend([
+        "产业链 深度报告",
+        "行业 中期策略",
+        "国产替代 研究报告",
+    ])
+    return {
+        "enabled": True,
+        "a_stock": {
+            "enabled": True,
+            "cninfo_announcements": {
+                "enabled": True,
+                "lookback_days": 365,
+                "max_items": 12,
+                "categories": [
+                    "年度报告",
+                    "季度报告",
+                    "业绩预告",
+                    "权益分派",
+                    "投资者关系活动",
+                    "风险提示",
+                ],
+                "read_detail_content": True,
+                "detail_content_categories": [
+                    "业绩预告",
+                    "季度报告",
+                    "一季度报告",
+                    "三季度报告",
+                    "风险提示",
+                ],
+                "max_detail_items": 3,
+                "detail_max_chars": 6000,
+            },
+            "eastmoney_stock_news": {
+                "enabled": False,
+                "max_items": 10,
+                "lookback_days": 30,
+            },
+            "eastmoney_research_reports": {
+                "enabled": True,
+                "max_items": 8,
+            },
+            "eastmoney_global_news": {
+                "enabled": True,
+                "max_items": 5,
+                "lookback_days": 30,
+                "keywords": theme_keywords,
+            },
+            "iwencai_industry_research": {
+                "enabled": True,
+                "max_items": 8,
+                "max_items_per_query": 3,
+                "recent_days": 90,
+                "fallback_days": 180,
+                "queries": _dedupe_keep_order(research_queries),
+            },
+        },
+        "evidence_notes": {
+            "enabled": True,
+            "dry_run": False,
+        },
+        "periodic_report_fulltext": {
+            "enabled": True,
+            "report_type": "annual_report",
+        },
+        "claim_verification": {
+            "enabled": True,
+            "risk_signals": True,
+            "max_verified": 6,
+            "max_supported": 4,
+            "max_unverified": 6,
+        },
+    }
+
+
 def _build_bootstrap_stock(args: argparse.Namespace) -> dict[str, Any]:
     keywords = _dedupe_keep_order([args.stock, *args.keyword])
     return {
@@ -285,9 +369,7 @@ def _build_bootstrap_stock(args: argparse.Namespace) -> dict[str, Any]:
         "xueqiu_code": args.xueqiu_code,
         "gid": args.gid or args.code,
         "keywords": keywords,
-        "source_intake": {
-            "enabled": True,
-        },
+        "source_intake": _build_default_a_stock_source_intake(keywords),
         "needs_review": True,
     }
 

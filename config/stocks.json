@@ -257,6 +257,90 @@
     ],
     "source_intake": {
       "enabled": true,
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告",
+            "风险提示"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": false,
+          "max_items": 10,
+          "lookback_days": 30
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": true,
+          "max_items": 5,
+          "lookback_days": 30,
+          "keywords": [
+            "光模块",
+            "800G",
+            "1.6T",
+            "CPO",
+            "LPO",
+            "NPO",
+            "XPO",
+            "硅光",
+            "AI算力",
+            "数据中心",
+            "光通信"
+          ]
+        },
+        "iwencai_industry_research": {
+          "enabled": true,
+          "max_items": 8,
+          "max_items_per_query": 3,
+          "recent_days": 90,
+          "fallback_days": 180,
+          "queries": [
+            "光模块 行业研究报告",
+            "光通信 产业链 深度报告",
+            "800G 光模块 行业研究报告",
+            "1.6T 光模块 产业链 深度报告",
+            "CPO LPO NPO 光模块 行业研究报告",
+            "AI算力 数据中心 光模块 需求 研究报告",
+            "硅光 光模块 产业链 深度报告"
+          ]
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      },
       "curated_external_viewpoint_digest_synthesis_display": {
         "enabled": true,
         "digest_json": "data/curated_external/viewpoint_digests/zhongjixuchuang_20260629.json"
