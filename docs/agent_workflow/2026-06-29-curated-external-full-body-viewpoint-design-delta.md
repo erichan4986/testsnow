@@ -139,8 +139,8 @@ Open work:
   same article supports multiple claims;
 - define a follow-up plan for whether Zhihu / broker research should migrate to
   the same source-packet -> digest -> narrative interface;
-- decide whether 4.4 should remain per-stock opt-in or gain a quality-gated
-  automatic enablement path.
+- evaluate whether 4.4 should eventually gain a quality-gated automatic
+  enablement path after more stocks pass the same acceptance checks.
 
 ## 7. Implementation Boundary Going Forward
 
@@ -157,3 +157,30 @@ Future changes should keep the layers separate:
 Do not put raw WeChat text directly into the report renderer or canonical
 synthesis prompt.  Do not let display-only materials bypass the digest and
 narrative gates.
+
+## 8. Launch Acceptance Decision
+
+On 2026-06-29, a read-only launch acceptance smoke was run for 中际旭创,
+黑芝麻智能, and 圣邦股份.  The detailed temporary report was written to
+`/tmp/curated_external_4_4_launch_acceptance.md`.
+
+Acceptance result:
+
+- 中际旭创: report generation passed; 4.4 rendered as a three-paragraph
+  external-observation narrative with citations and display-only isolation.
+- 黑芝麻智能: report generation passed; 4.4 rendered as a three-paragraph
+  external-observation narrative with citations and display-only isolation.
+- 圣邦股份: report generation passed; 4.4 did not render, which is the expected
+  behavior because no high-quality narrative JSON is configured.
+
+Rollout decision:
+
+- 4.4 curated external narrative is accepted for guarded launch as
+  **per-stock opt-in only**.
+- The initial enabled stocks are 中际旭创 and 黑芝麻智能.
+- Stocks without validated digest/narrative JSON must not auto-render 4.4.
+- The report runtime should continue to consume cached digest/narrative JSON;
+  it should not run full-body external viewpoint LLM extraction during ordinary
+  report generation.
+- The section remains display-only and must not affect Knowledge, scoring,
+  risk, target price, or final recommendation.
