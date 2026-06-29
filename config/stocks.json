@@ -4,6 +4,14 @@
     "code": "02533",
     "xueqiu_code": "HK02533",
     "gid": "hk02533",
+    "keywords": [
+      "智能驾驶芯片",
+      "自动驾驶",
+      "华山芯片",
+      "黑芝麻",
+      "地平线",
+      "Mobileye"
+    ],
     "agent_reach": {
       "enabled": true,
       "web_urls": [
@@ -124,6 +132,13 @@
     "code": "300661",
     "xueqiu_code": "SZ300661",
     "gid": "300661",
+    "keywords": [
+      "圣邦股份",
+      "模拟芯片",
+      "电源管理芯片",
+      "半导体",
+      "PMIC"
+    ],
     "source_intake": {
       "enabled": true,
       "a_stock": {
@@ -232,6 +247,14 @@
     "code": "300308",
     "xueqiu_code": "SZ300308",
     "gid": "300308",
+    "keywords": [
+      "中际旭创",
+      "光模块",
+      "800G",
+      "1.6T",
+      "AI算力",
+      "硅光"
+    ],
     "source_intake": {
       "enabled": true,
       "curated_external_viewpoint_digest_synthesis_display": {
