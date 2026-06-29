@@ -121,15 +121,6 @@ class PerStockReporter:
             broker_digest_display_enabled = bool(
                 source_intake_enabled and broker_digest_display_cfg.get("enabled", False)
             )
-            curated_external_cfg = (
-                si_cfg.get("curated_external_evidence_cards_synthesis_display", {}) or {}
-            )
-            curated_external_enabled = bool(
-                source_intake_enabled and curated_external_cfg.get("enabled", False)
-            )
-            curated_external_cards_json = self._resolve_repo_relative_path(
-                curated_external_cfg.get("cards_json", "")
-            )
             viewpoint_narrative_cfg = (
                 si_cfg.get("curated_external_viewpoint_narrative_synthesis_display", {}) or {}
             )
@@ -165,15 +156,6 @@ class PerStockReporter:
             }
             if periodic_fulltext_enabled:
                 pipeline_kwargs["enable_periodic_report_fulltext_intake"] = True
-            if curated_external_enabled:
-                pipeline_kwargs["include_curated_external_evidence_cards_in_synthesis_display"] = True
-                pipeline_kwargs["curated_external_evidence_cards_json"] = curated_external_cards_json
-                if curated_external_cfg.get("max_display_items") is not None:
-                    pipeline_kwargs["curated_external_evidence_cards_max_display_items"] = curated_external_cfg["max_display_items"]
-                if curated_external_cfg.get("min_cards") is not None:
-                    pipeline_kwargs["curated_external_evidence_cards_min_cards"] = curated_external_cfg["min_cards"]
-                if curated_external_cfg.get("min_total_excerpt_chars") is not None:
-                    pipeline_kwargs["curated_external_evidence_cards_min_total_excerpt_chars"] = curated_external_cfg["min_total_excerpt_chars"]
             if viewpoint_digest_enabled:
                 pipeline_kwargs["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True
                 pipeline_kwargs["curated_external_viewpoint_digest_json"] = viewpoint_digest_json
@@ -243,16 +225,6 @@ class PerStockReporter:
                     pipeline_input["broker_research_digest_max_display_items"] = (
                         broker_digest_display_cfg["max_display_items"]
                     )
-
-            if curated_external_enabled:
-                pipeline_input["include_curated_external_evidence_cards_in_synthesis_display"] = True
-                pipeline_input["curated_external_evidence_cards_json"] = curated_external_cards_json
-                if curated_external_cfg.get("max_display_items") is not None:
-                    pipeline_input["curated_external_evidence_cards_max_display_items"] = curated_external_cfg["max_display_items"]
-                if curated_external_cfg.get("min_cards") is not None:
-                    pipeline_input["curated_external_evidence_cards_min_cards"] = curated_external_cfg["min_cards"]
-                if curated_external_cfg.get("min_total_excerpt_chars") is not None:
-                    pipeline_input["curated_external_evidence_cards_min_total_excerpt_chars"] = curated_external_cfg["min_total_excerpt_chars"]
 
             if viewpoint_digest_enabled:
                 pipeline_input["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True

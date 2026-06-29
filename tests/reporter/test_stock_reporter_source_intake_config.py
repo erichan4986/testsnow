@@ -513,7 +513,7 @@ def test_source_intake_curated_external_display_default_off():
     assert "curated_external_evidence_cards_json" not in call_input
 
 
-def test_source_intake_curated_external_display_enabled_passes_context():
+def test_source_intake_legacy_curated_external_cards_config_is_ignored():
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
         stock_codes={"测试股": "000001"},
@@ -546,47 +546,10 @@ def test_source_intake_curated_external_display_enabled_passes_context():
         enable_evidence_notes=False,
         enable_claim_risk_signals=False,
         enable_source_intake=True,
-        include_curated_external_evidence_cards_in_synthesis_display=True,
-        curated_external_evidence_cards_json="/tmp/cards.json",
-        curated_external_evidence_cards_max_display_items=6,
-        curated_external_evidence_cards_min_cards=2,
-        curated_external_evidence_cards_min_total_excerpt_chars=900,
     )
-
-
-def test_source_intake_curated_external_cards_json_resolves_from_repo_root():
-    relative_cards = "data/curated_external/evidence_cards/heizhima_20260627.json"
-    expected_path = str(Path(__file__).resolve().parents[2] / relative_cards)
-    reporter = PerStockReporter(
-        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
-        stock_codes={"测试股": "000001"},
-        raw_data={"测试股": {}},
-        source_intake_configs={
-            "测试股": {
-                "enabled": True,
-                "curated_external_evidence_cards_synthesis_display": {
-                    "enabled": True,
-                    "cards_json": relative_cards,
-                    "max_display_items": 6,
-                    "min_cards": 2,
-                    "min_total_excerpt_chars": 900,
-                },
-            },
-        },
-    )
-
-    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
-        mock_pipeline = MagicMock()
-        mock_ctx = MagicMock()
-        mock_ctx.output.get.return_value = ""
-        mock_pipeline.run.return_value = mock_ctx
-        mock_build.return_value = mock_pipeline
-
-        reporter.generate_stock_report("测试股", "/tmp/out")
-
-    assert mock_build.call_args.kwargs["curated_external_evidence_cards_json"] == expected_path
     call_input = mock_pipeline.run.call_args[0][0]
-    assert call_input["curated_external_evidence_cards_json"] == expected_path
+    assert "include_curated_external_evidence_cards_in_synthesis_display" not in call_input
+    assert "curated_external_evidence_cards_json" not in call_input
 
 
 def test_source_intake_curated_external_viewpoint_digest_enabled_passes_context():
@@ -665,7 +628,7 @@ def test_source_intake_curated_external_viewpoint_narrative_enabled_passes_conte
     assert call_input["curated_external_viewpoint_narrative_json"] == "/tmp/viewpoint_narrative.json"
 
 
-def test_curated_external_display_requires_source_intake_enabled():
+def test_curated_external_viewpoint_display_requires_source_intake_enabled():
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
         stock_codes={"测试股": "000001"},
@@ -673,7 +636,14 @@ def test_curated_external_display_requires_source_intake_enabled():
         source_intake_configs={
             "测试股": {
                 "enabled": False,
-                "curated_external_evidence_cards_synthesis_display": {"enabled": True},
+                "curated_external_viewpoint_narrative_synthesis_display": {
+                    "enabled": True,
+                    "narrative_json": "/tmp/viewpoint_narrative.json",
+                },
+                "curated_external_viewpoint_digest_synthesis_display": {
+                    "enabled": True,
+                    "digest_json": "/tmp/viewpoint_digest.json",
+                },
             },
         },
     )
@@ -688,4 +658,5 @@ def test_curated_external_display_requires_source_intake_enabled():
         reporter.generate_stock_report("测试股", "/tmp/out")
 
     call_input = mock_pipeline.run.call_args[0][0]
-    assert "include_curated_external_evidence_cards_in_synthesis_display" not in call_input
+    assert "include_curated_external_viewpoint_narrative_in_deep_analysis_display" not in call_input
+    assert "include_curated_external_viewpoint_digest_in_deep_analysis_display" not in call_input

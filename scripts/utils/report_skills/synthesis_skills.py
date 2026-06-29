@@ -22,9 +22,6 @@ if __name__.startswith("utils."):
         load_broker_research_digest_synthesis_items,
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
-    from ..curated_external_evidence_card_synthesis_items import (
-        load_curated_external_evidence_card_synthesis_items,
-    )
     from ..curated_external_display_lint import lint_curated_external_display_text
 else:
     from skill_pipeline import BaseSkill, SkillContext
@@ -44,9 +41,6 @@ else:
         load_broker_research_digest_synthesis_items,
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
-    from curated_external_evidence_card_synthesis_items import (
-        load_curated_external_evidence_card_synthesis_items,
-    )
     from curated_external_display_lint import lint_curated_external_display_text
 
 
@@ -125,8 +119,6 @@ class SynthesisSkill(BaseSkill):
         self._build_viewpoint_narrative_deep_analysis_display(ctx)
         if not ctx.get("deep_analysis_display"):
             self._build_viewpoint_digest_deep_analysis_display(ctx)
-        if not ctx.get("deep_analysis_display"):
-            self._build_deep_analysis_display(ctx)
 
         return ctx
 
@@ -209,90 +201,6 @@ class SynthesisSkill(BaseSkill):
             )
         except Exception:
             return []
-
-    def _build_deep_analysis_display(self, ctx: SkillContext) -> None:
-        """Build a deep-analysis-only display synthesis from curated external cards.
-
-        On success this writes ctx["deep_analysis_display"] (and related keys).
-        On failure or insufficient material it writes status/stats explaining why
-        and leaves canonical synthesis keys unchanged.
-        """
-        enabled = bool(
-            ctx.get("include_curated_external_evidence_cards_in_synthesis_display")
-            or getattr(self, "include_curated_external_evidence_cards_in_synthesis_display", False)
-        )
-        if not enabled:
-            return
-
-        cards_json = ctx.get("curated_external_evidence_cards_json") or getattr(
-            self, "curated_external_evidence_cards_json", ""
-        )
-        if not cards_json:
-            ctx.set("curated_external_evidence_cards_status", "missing_config")
-            ctx.set("curated_external_evidence_cards_stats", {"rejection_reasons": ["curated_external_evidence_cards_json not set"]})
-            return
-
-        max_items = ctx.get("curated_external_evidence_cards_max_display_items")
-        if max_items is None:
-            max_items = getattr(self, "curated_external_evidence_cards_max_display_items", 8)
-        min_cards = ctx.get("curated_external_evidence_cards_min_cards")
-        if min_cards is None:
-            min_cards = getattr(self, "curated_external_evidence_cards_min_cards", 3)
-        min_total = ctx.get("curated_external_evidence_cards_min_total_excerpt_chars")
-        if min_total is None:
-            min_total = getattr(self, "curated_external_evidence_cards_min_total_excerpt_chars", 1200)
-
-        try:
-            curated_items, stats = load_curated_external_evidence_card_synthesis_items(
-                cards_json,
-                max_items=int(max_items),
-                min_cards=int(min_cards),
-                min_total_excerpt_chars=int(min_total),
-            )
-        except Exception as exc:
-            ctx.set("curated_external_evidence_cards_status", "reader_error")
-            ctx.set("curated_external_evidence_cards_stats", {"rejection_reasons": [str(exc)]})
-            return
-
-        ctx.set("curated_external_evidence_cards_status", stats.get("status"))
-        ctx.set("curated_external_evidence_cards_stats", stats)
-
-        if not curated_items:
-            return
-
-        stock_name = ctx.get("stock_name")
-        stock_raw = ctx.get("stock_raw", {})
-        keep_posts = ctx.get("keep_posts", [])
-
-        # Curated external display is intentionally display-only.  When no custom
-        # synthesizer or LLM client is supplied, skip the LLM entirely and render
-        # a deterministic, citation-aware observation block.  This avoids curated
-        # external materials being rewritten into strong claims that would fail
-        # the display lint.
-        if self.llm_client is None and self.synthesizer is None:
-            display = self._deterministic_curated_external_display(stock_name, curated_items)
-        else:
-            display = self._synthesize(
-                stock_name,
-                stock_raw,
-                keep_posts,
-                ctx,
-                extra_items=curated_items,
-                deduped_sources_key="deep_analysis_display_deduped_sources",
-            )
-            if self._is_template_fallback_synthesis(display):
-                display = self._deterministic_curated_external_display(stock_name, curated_items)
-        lint = lint_curated_external_display_text(display)
-        ctx.set("curated_external_evidence_cards_lint", lint)
-        if not lint.get("ok"):
-            ctx.set("curated_external_evidence_cards_status", "lint_failed")
-            return
-
-        display_text = self._flatten_synthesis_text(display)
-        ctx.set("deep_analysis_display", display)
-        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
-        ctx.set("synthesis_text_with_curated_external_evidence_cards", display_text)
-        ctx.set("curated_external_evidence_cards_status", "ok")
 
     def _build_viewpoint_narrative_deep_analysis_display(self, ctx: SkillContext) -> None:
         """Build deep-analysis-only display from cached full-body narrative JSON."""
@@ -583,77 +491,6 @@ class SynthesisSkill(BaseSkill):
             return False
         text = "\n".join(str(synthesis.get(key, "")) for key in SYNTHESIS_KEYS)
         return "LLM 合成未启用或未产生有效输出" in text
-
-    def _deterministic_curated_external_display(self, stock_name: str, items: list) -> dict:
-        """Build a cited, display-only deep-analysis fallback without calling an LLM."""
-        grouped = {
-            "industry_logic": [],
-            "fundamentals": [],
-            "valuation_debate": [],
-            "funding_sentiment": [],
-            "events_catalysts": [],
-        }
-        citations = {}
-
-        for ref_id, item in enumerate(items, start=1):
-            topic = (item.extra or {}).get("topic") or ""
-            line = self._format_curated_external_observation(item, ref_id)
-            if topic == "industry_logic":
-                grouped["industry_logic"].append(line)
-            elif topic in ("earnings_context", "cycle_price", "capital_market_context"):
-                grouped["fundamentals"].append(line)
-            elif topic in ("commercialization", "certification_policy"):
-                grouped["events_catalysts"].append(line)
-            else:
-                grouped["events_catalysts"].append(line)
-            citations[ref_id] = {"_placeholder": True}
-
-        fallback = {
-            "industry_logic": self._join_curated_external_observations(
-                stock_name,
-                "产业逻辑相关线索",
-                grouped["industry_logic"],
-            ),
-            "fundamentals": self._join_curated_external_observations(
-                stock_name,
-                "业绩、周期或资本市场相关线索",
-                grouped["fundamentals"],
-            ),
-            "valuation_debate": "精选外部材料仅作为专业观察，不直接形成估值结论；估值仍应回到官方财务、市场价格和评分模型。",
-            "funding_sentiment": "精选外部材料不直接生成资金面判断，资金面仍以交易数据、资金流和市场指标为准。",
-            "events_catalysts": self._join_curated_external_observations(
-                stock_name,
-                "商业化、认证、政策或事件跟踪线索",
-                grouped["events_catalysts"],
-            ),
-            "core_facts": [],
-            "citations": citations,
-            "_items_count": len(items),
-            "_sources": self._source_list(items),
-        }
-        return self._fill_citation_metadata(fallback, items)
-
-    @staticmethod
-    def _format_curated_external_observation(item, ref_id: int) -> str:
-        title = " ".join(str(item.title or "未命名材料").split())[:80]
-        content = str(item.content or "")
-        excerpt = content.split("\n\n", 1)[-1] if "\n\n" in content else content
-        excerpt = SynthesisSkill._truncate_observation_excerpt(" ".join(excerpt.split()), 220)
-        if excerpt:
-            return f"《{title}》观察到：{excerpt}[^{ref_id}]"
-        return f"《{title}》提供了一条外部观察线索[^{ref_id}]"
-
-    @staticmethod
-    def _truncate_observation_excerpt(text: str, max_chars: int) -> str:
-        text = str(text or "").strip()
-        if len(text) <= max_chars:
-            return text
-        window = text[:max_chars]
-        for marker in ("。", "；", ";", "，", ","):
-            pos = window.rfind(marker)
-            if pos >= 80:
-                return window[: pos + 1].rstrip()
-        return window.rstrip() + "..."
 
     @staticmethod
     def _join_curated_external_observations(stock_name: str, label: str, lines: list) -> str:

@@ -223,7 +223,7 @@ def test_ci_grep_gates_rejects_curated_external_leakage_in_knowledge_synthesizer
 
 def test_ci_grep_gates_allows_curated_external_helpers(tmp_path: Path) -> None:
     root = _copy_gate_fixture(tmp_path)
-    target = root / "scripts" / "utils" / "curated_external_evidence_card_synthesis_items.py"
+    target = root / "scripts" / "utils" / "curated_external_display_lint.py"
     target.parent.mkdir(parents=True)
     target.write_text(
         'source_type = "curated_external_analysis_evidence"\n',

@@ -24,13 +24,6 @@
         "enabled": true,
         "max_display_items": 8
       },
-      "curated_external_evidence_cards_synthesis_display": {
-        "enabled": true,
-        "cards_json": "data/curated_external/evidence_cards/heizhima_20260627.json",
-        "max_display_items": 8,
-        "min_cards": 2,
-        "min_total_excerpt_chars": 600
-      },
       "curated_external_viewpoint_narrative_synthesis_display": {
         "enabled": true,
         "narrative_json": "data/curated_external/viewpoint_narratives/heizhima_20260629.json"
@@ -241,13 +234,6 @@
     "gid": "300308",
     "source_intake": {
       "enabled": true,
-      "curated_external_evidence_cards_synthesis_display": {
-        "enabled": true,
-        "cards_json": "data/curated_external/evidence_cards/zhongjixuchuang_20260627.json",
-        "max_display_items": 8,
-        "min_cards": 3,
-        "min_total_excerpt_chars": 1200
-      },
       "curated_external_viewpoint_digest_synthesis_display": {
         "enabled": true,
         "digest_json": "data/curated_external/viewpoint_digests/zhongjixuchuang_20260629.json"

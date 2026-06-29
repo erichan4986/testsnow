@@ -31,7 +31,6 @@ HELPER_LEAK_FILES=(
   "$ROOT/scripts/utils/periodic_report_narrative_card_note_writer.py"
   "$ROOT/scripts/utils/periodic_report_narrative_card_synthesis_items.py"
   "$ROOT/scripts/utils/broker_research_digest_synthesis_items.py"
-  "$ROOT/scripts/utils/curated_external_evidence_card_synthesis_items.py"
   "$ROOT/scripts/utils/curated_external_display_lint.py"
 )
 LEAK_HITS=""
