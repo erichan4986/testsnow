@@ -11,8 +11,10 @@ Engineering usage:
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import logging
+import os
 import re
 import sys
 from datetime import datetime
@@ -23,6 +25,7 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
+UTILS_DIR = SCRIPTS_DIR / "utils"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -47,15 +50,22 @@ _CITATION_RE = re.compile(r"\[\^?\d+\]")
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="生成任意已配置股票的单股深度报告")
+    default_raw_dir = str(REPO_ROOT / "data" / "raw")
+    default_report_dir = str(REPO_ROOT / "reports")
     parser.add_argument("--stock", required=True, help="股票名称、代码或雪球代码，例如 中际旭创 / 300308 / SZ300308")
     parser.add_argument("--config", default=str(REPO_ROOT / "config" / "stocks.json"), help="股票配置 JSON 路径")
-    parser.add_argument("--raw-dir", default=str(REPO_ROOT / "data" / "raw"), help="原始输入/缓存目录")
-    parser.add_argument("--report-dir", default=str(REPO_ROOT / "reports"), help="报告输出目录")
+    parser.add_argument("--raw-dir", default=default_raw_dir, help="原始输入/缓存目录")
+    parser.add_argument("--report-dir", default=default_report_dir, help="报告输出目录")
     parser.add_argument("--date", default=None, help="固定日期 YYYYMMDD，默认今天")
     parser.add_argument(
         "--fast-test",
         action="store_true",
         help="工程验证模式：跳过知乎采集和 LLM curator，只复用本地缓存/knowledge posts。",
+    )
+    parser.add_argument(
+        "--offline-smoke",
+        action="store_true",
+        help="真正离线的入口 smoke：隐含 --fast-test/--no-pdf，并禁用 LLM、行情 API、技术采集和图表生成。",
     )
     parser.add_argument("--no-pdf", action="store_true", help="跳过 PDF 导出")
 
@@ -74,7 +84,151 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default="",
         help="bootstrap 预览输出路径，默认 /tmp/<stock>_stock_config_preview.json",
     )
-    return parser.parse_args([] if argv is None else argv)
+    args = parser.parse_args([] if argv is None else argv)
+    args._default_raw_dir = default_raw_dir
+    args._default_report_dir = default_report_dir
+    return args
+
+
+def _apply_offline_smoke_mode(args: argparse.Namespace) -> None:
+    args.fast_test = True
+    args.no_pdf = True
+    if args.raw_dir == getattr(args, "_default_raw_dir", ""):
+        args.raw_dir = "/tmp/testsnow_offline_smoke/raw"
+    if args.report_dir == getattr(args, "_default_report_dir", ""):
+        args.report_dir = "/tmp/testsnow_offline_smoke/reports"
+    _install_offline_smoke_patches()
+
+
+def _install_offline_smoke_patches() -> None:
+    """Disable network/browser-heavy report steps for entry smoke tests.
+
+    This is intentionally scoped to the current process and only used by
+    run_stock_report.py --offline-smoke. Production report generation is
+    unchanged.
+    """
+    for key in (
+        "DEEPSEEK_API_KEY",
+        "MOONSHOT_API_KEY",
+        "OPENAI_API_KEY",
+        "OPENAI_BASE_URL",
+    ):
+        os.environ.pop(key, None)
+
+    if str(UTILS_DIR) not in sys.path:
+        sys.path.insert(0, str(UTILS_DIR))
+
+    try:
+        content_quality_gate = importlib.import_module("content_quality_gate")
+
+        def _offline_init_client(self):
+            self.client = None
+            self.model = ""
+
+        def _offline_assess_batch(self, items):
+            return [self._rule_based_assess(item) for item in items]
+
+        content_quality_gate.LLMQualityAssessor._init_client = _offline_init_client
+        content_quality_gate.LLMQualityAssessor.assess_batch = _offline_assess_batch
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用质量门 LLM 失败: %s", exc)
+
+    # content_quality_gate auto-loads .env at import time, so remove keys again
+    # before modules that initialize their own LLM clients are imported later.
+    for key in (
+        "DEEPSEEK_API_KEY",
+        "MOONSHOT_API_KEY",
+        "OPENAI_API_KEY",
+        "OPENAI_BASE_URL",
+    ):
+        os.environ.pop(key, None)
+
+    try:
+        content_consolidator = importlib.import_module("content_consolidator")
+
+        def _offline_init_consolidator_llm(self):
+            self._client = None
+
+        content_consolidator.ContentConsolidator._init_llm = _offline_init_consolidator_llm
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用跨源归纳 LLM 失败: %s", exc)
+
+    try:
+        knowledge_synthesizer = importlib.import_module("knowledge_synthesizer")
+
+        def _offline_init_synthesizer_client(self):
+            self.client = None
+
+        knowledge_synthesizer.KnowledgeSynthesizer._init_client = _offline_init_synthesizer_client
+    except Exception:
+        # The report skill may import KnowledgeSynthesizer via the package
+        # path later; environment keys were already removed, so that path will
+        # still remain offline. Avoid noisy warnings for this optional patch.
+        pass
+
+    try:
+        data_fetcher = importlib.import_module("reporter.data_fetcher")
+        _patch_data_fetcher_module(data_fetcher)
+        try:
+            utils_data_fetcher = importlib.import_module("utils.reporter.data_fetcher")
+            _patch_data_fetcher_module(utils_data_fetcher)
+        except Exception:
+            pass
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用 renderer lazy 数据抓取失败: %s", exc)
+
+    try:
+        executive_summary = importlib.import_module(
+            "utils.reporter.sections.executive_summary_renderer"
+        )
+        executive_summary._llm_extract_thesis = lambda text: {
+            "bullish": [],
+            "bearish": [],
+            "conclusion": "",
+        }
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用执行摘要 LLM 失败: %s", exc)
+
+    try:
+        from utils.report_skills import data_skills
+
+        data_skills.fetch_tencent_quote = lambda code: None
+        data_skills.fetch_consensus_eps = lambda code: None
+        data_skills.industry_fwd_pe = lambda stock_name: None
+        data_skills.fetch_ps = lambda code, quote: None
+        data_skills.fetch_competitor_metrics = lambda stock_name, stock_codes: None
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用行情/同业数据失败: %s", exc)
+
+    try:
+        from utils.report_skills import technical_skills
+
+        class _OfflineTechnicalCollector:
+            def collect(self, *args, **kwargs):
+                return None
+
+        technical_skills.load_wind_package = lambda *args, **kwargs: {}
+        technical_skills.TechnicalCollector = _OfflineTechnicalCollector
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用技术采集失败: %s", exc)
+
+    try:
+        from utils.report_skills import chart_skills
+
+        chart_skills.generate_technical_panel = lambda *args, **kwargs: None
+        chart_skills.generate_radar_chart = lambda *args, **kwargs: None
+        chart_skills.generate_bull_bear_chart = lambda *args, **kwargs: None
+        chart_skills.generate_valuation_comparison = lambda *args, **kwargs: None
+    except Exception as exc:
+        logger.warning("离线 smoke 禁用图表生成失败: %s", exc)
+
+
+def _patch_data_fetcher_module(module) -> None:
+    module.fetch_tencent_quote = lambda code: None
+    module.fetch_consensus_eps = lambda code: None
+    module.industry_fwd_pe = lambda stock_name: None
+    module.fetch_ps = lambda code, quote: None
+    module.fetch_competitor_metrics = lambda stock_name, stock_codes: None
 
 
 def _load_stocks_config(config_path: Path) -> list[dict[str, Any]]:
@@ -421,6 +575,9 @@ def _run_report(args: argparse.Namespace, stock: dict[str, Any]) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     args = _parse_args(argv)
+    if args.offline_smoke:
+        _apply_offline_smoke_mode(args)
+
     config_path = Path(args.config)
     try:
         stocks = _load_stocks_config(config_path)

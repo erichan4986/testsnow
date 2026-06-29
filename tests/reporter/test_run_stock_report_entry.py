@@ -188,3 +188,103 @@ def test_bootstrap_write_config_appends_reviewed_stock(tmp_path):
     assert [stock["name"] for stock in stocks] == ["已有", "新股票"]
     assert stocks[-1]["gid"] == "300999"
     assert stocks[-1]["source_intake"]["enabled"] is True
+
+
+def test_offline_smoke_implies_fast_test_no_pdf_and_installs_patches(tmp_path, monkeypatch):
+    mod = _load_entry_module()
+    config_path = tmp_path / "stocks.json"
+    raw_dir = tmp_path / "raw"
+    report_dir = tmp_path / "reports"
+    _write_config(
+        config_path,
+        [
+            {
+                "name": "测试股",
+                "code": "300001",
+                "xueqiu_code": "SZ300001",
+                "gid": "300001",
+            }
+        ],
+    )
+    raw_dir.mkdir(parents=True, exist_ok=True)
+    installed = []
+
+    monkeypatch.setattr(mod, "_install_offline_smoke_patches", lambda: installed.append(True))
+    monkeypatch.setattr(mod, "ZhihuCollector", _FailingZhihuCollector)
+    monkeypatch.setattr(mod, "PerStockReporter", _FakeReporter)
+    monkeypatch.setattr(mod, "export_pdf", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no pdf")))
+    monkeypatch.setattr(mod, "fetch_all_stocks", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no fetch")))
+    _FakeReporter.instances = []
+
+    exit_code = mod.main(
+        [
+            "--stock",
+            "测试股",
+            "--config",
+            str(config_path),
+            "--raw-dir",
+            str(raw_dir),
+            "--report-dir",
+            str(report_dir),
+            "--date",
+            "20260629",
+            "--offline-smoke",
+        ]
+    )
+
+    assert exit_code == 0
+    assert installed == [True]
+    assert _FakeReporter.instances[0].kwargs["stocks_data"] == {"测试股": []}
+
+
+def test_offline_smoke_defaults_outputs_to_tmp(monkeypatch):
+    mod = _load_entry_module()
+    monkeypatch.setattr(mod, "_install_offline_smoke_patches", lambda: None)
+
+    args = mod._parse_args(["--stock", "测试股", "--offline-smoke"])
+    mod._apply_offline_smoke_mode(args)
+
+    assert args.fast_test is True
+    assert args.no_pdf is True
+    assert args.raw_dir.startswith("/tmp/")
+    assert args.report_dir.startswith("/tmp/")
+    assert "offline_smoke" in args.raw_dir
+    assert "offline_smoke" in args.report_dir
+
+
+def test_offline_smoke_patches_quality_gate_to_rule_based(monkeypatch):
+    mod = _load_entry_module()
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy-key")
+
+    mod._install_offline_smoke_patches()
+
+    import content_quality_gate
+
+    assessor = content_quality_gate.LLMQualityAssessor()
+    assert assessor.client is None
+
+
+def test_offline_smoke_patches_consolidator_and_synthesizer_llm(monkeypatch):
+    mod = _load_entry_module()
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy-key")
+
+    mod._install_offline_smoke_patches()
+
+    import content_consolidator
+    import knowledge_synthesizer
+
+    consolidator = content_consolidator.ContentConsolidator()
+    synthesizer = knowledge_synthesizer.KnowledgeSynthesizer()
+    assert consolidator._client is None
+    assert synthesizer.client is None
+
+
+def test_offline_smoke_patches_data_fetcher_lazy_fetches():
+    mod = _load_entry_module()
+
+    mod._install_offline_smoke_patches()
+
+    import reporter.data_fetcher as data_fetcher
+
+    assert data_fetcher.fetch_tencent_quote("02533") is None
+    assert data_fetcher.fetch_consensus_eps("02533") is None
