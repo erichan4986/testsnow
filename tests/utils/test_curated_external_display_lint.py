@@ -84,6 +84,38 @@ def test_cautious_wording_passes():
     assert not result["violations"]
 
 
+def test_neutral_confirmation_substrings_pass():
+    synthesis = _make_synthesis(
+        "外部文章讨论交付确定性、未确认客户占比和不锁定单一芯片厂商的采购策略[^1]。",
+        {
+            1: {
+                "source": "微信公众号精选观察",
+                "source_type": "curated_external_analysis_evidence",
+                "source_credit": 55,
+            }
+        },
+    )
+    result = lint_curated_external_display_text(synthesis)
+    assert result["ok"] is True
+    assert not result["violations"]
+
+
+def test_assertive_confirmation_terms_still_fail():
+    synthesis = _make_synthesis(
+        "微信公众号文章认为公司确定获得订单，并已锁定核心客户[^1]。",
+        {
+            1: {
+                "source": "微信公众号精选观察",
+                "source_type": "curated_external_analysis_evidence",
+                "source_credit": 55,
+            }
+        },
+    )
+    result = lint_curated_external_display_text(synthesis)
+    assert result["ok"] is False
+    assert result["violations"]
+
+
 def test_strong_term_without_citation_does_not_fail():
     synthesis = _make_synthesis(
         "公司订单已经落地。",

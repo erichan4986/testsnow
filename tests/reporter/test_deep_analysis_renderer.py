@@ -652,3 +652,84 @@ def test_render_uses_synthesis_display_when_no_deep_analysis():
     result = renderer.render(ctx)
     assert "synthesis_display 行业逻辑" in result
     assert "baseline 行业逻辑" not in result
+
+
+def test_curated_external_addendum_includes_citation_url():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑。",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "deep_analysis_display": {
+            "industry_logic": "精选外部材料仅作为专业观察，提示中际旭创产业线索：《外部标题》观察到内容[^1]",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "author": "测试账号",
+                    "title": "外部标题",
+                    "url": "https://mp.weixin.qq.com/s/example",
+                    "source_type": "curated_external_analysis_evidence",
+                }
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "https://mp.weixin.qq.com/s/example" in result
+    assert "[^1]" in result
+
+
+def test_curated_external_narrative_addendum_renders_paragraphs_not_bullets():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑。",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "供应链瓶颈与交付疑虑并存",
+                    "text": "外部材料提示供应链约束会影响交付弹性，需要和订单转化一起跟踪。",
+                    "citation_refs": [1],
+                }
+            ],
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "author": "测试账号",
+                    "title": "外部深度文章",
+                    "url": "https://mp.weixin.qq.com/s/viewpoint",
+                    "source_type": "curated_external_analysis_evidence",
+                    "source_credit": 55,
+                }
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "**供应链瓶颈与交付疑虑并存**" in result
+    assert "外部材料提示供应链约束会影响交付弹性" in result
+    assert "- **供应链瓶颈与交付疑虑并存**" not in result
+    assert "[^1]" in result
+    assert "https://mp.weixin.qq.com/s/viewpoint" in result

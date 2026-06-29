@@ -272,6 +272,13 @@ class DeepAnalysisRenderer:
             "> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
             "",
         ]
+        if curated_display.get("_curated_external_narrative"):
+            return self._curated_external_narrative_addendum(
+                curated_display,
+                citation_offset,
+                lines,
+            )
+
         bullets: List[str] = []
         for key in CURATED_EXTERNAL_ADDENDUM_KEYS:
             text = str(curated_display.get(key) or "").strip()
@@ -297,13 +304,77 @@ class DeepAnalysisRenderer:
                 source = meta.get("source", "未知")
                 author = meta.get("author", "")
                 title_text = meta.get("title", "")
+                url = meta.get("url", "")
                 line = f"- [^{ref_id}] {source}"
                 if author:
                     line += f" | 作者: {author}"
                 if title_text:
                     line += f" | 《{self._truncate_title(title_text, 40)}》"
+                if url:
+                    line += f" | {url}"
                 lines.append(line)
         return "\n".join(lines)
+
+    def _curated_external_narrative_addendum(
+        self,
+        curated_display: Dict[str, Any],
+        citation_offset: int,
+        lines: List[str],
+    ) -> str:
+        paragraphs = curated_display.get("_curated_external_narrative_paragraphs") or []
+        for paragraph in paragraphs:
+            if not isinstance(paragraph, dict):
+                continue
+            heading = str(paragraph.get("heading") or "").strip()
+            text = str(paragraph.get("text") or "").strip()
+            citation_refs = paragraph.get("citation_refs") or []
+            rendered = self._attach_refs_to_sentence(text, citation_refs)
+            rendered = self._offset_citation_markers(rendered, citation_offset)
+            if heading:
+                lines.append(f"**{heading}**")
+                lines.append("")
+            if rendered:
+                lines.append(rendered)
+                lines.append("")
+
+        used_refs = set()
+        for paragraph in paragraphs:
+            if not isinstance(paragraph, dict):
+                continue
+            refs = paragraph.get("citation_refs") or []
+            for ref in refs:
+                try:
+                    used_refs.add(int(ref) + citation_offset)
+                except (TypeError, ValueError):
+                    continue
+        if used_refs:
+            shifted_citations = self._offset_citations(curated_display.get("citations", {}) or {}, citation_offset)
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = shifted_citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                url = meta.get("url", "")
+                line = f"- [^{ref_id}] {source}"
+                if author:
+                    line += f" | 作者: {author}"
+                if title_text:
+                    line += f" | 《{self._truncate_title(title_text, 40)}》"
+                if url:
+                    line += f" | {url}"
+                lines.append(line)
+        return "\n".join(lines)
+
+    @staticmethod
+    def _attach_refs_to_sentence(text: str, refs: list) -> str:
+        ref_text = "".join(f"[^{int(ref)}]" for ref in refs if str(ref).isdigit())
+        stripped = str(text or "").strip()
+        if not ref_text:
+            return stripped
+        if stripped.endswith(("。", "；", ";", "！", "？")):
+            return f"{stripped[:-1]}{ref_text}{stripped[-1]}"
+        return f"{stripped}{ref_text}"
 
     @staticmethod
     def _split_curated_observations(text: str) -> List[str]:

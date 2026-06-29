@@ -61,6 +61,10 @@ def build_stock_report_pipeline(
     curated_external_evidence_cards_max_display_items: int = 8,
     curated_external_evidence_cards_min_cards: int = 3,
     curated_external_evidence_cards_min_total_excerpt_chars: int = 1200,
+    include_curated_external_viewpoint_narrative_in_deep_analysis_display: bool = False,
+    curated_external_viewpoint_narrative_json: str = "",
+    include_curated_external_viewpoint_digest_in_deep_analysis_display: bool = False,
+    curated_external_viewpoint_digest_json: str = "",
 ) -> SkillPipeline:
     """构建股票报告生成 Pipeline。"""
     skills = [
@@ -100,6 +104,10 @@ def build_stock_report_pipeline(
             curated_external_evidence_cards_max_display_items=curated_external_evidence_cards_max_display_items,
             curated_external_evidence_cards_min_cards=curated_external_evidence_cards_min_cards,
             curated_external_evidence_cards_min_total_excerpt_chars=curated_external_evidence_cards_min_total_excerpt_chars,
+            include_curated_external_viewpoint_narrative_in_deep_analysis_display=include_curated_external_viewpoint_narrative_in_deep_analysis_display,
+            curated_external_viewpoint_narrative_json=curated_external_viewpoint_narrative_json,
+            include_curated_external_viewpoint_digest_in_deep_analysis_display=include_curated_external_viewpoint_digest_in_deep_analysis_display,
+            curated_external_viewpoint_digest_json=curated_external_viewpoint_digest_json,
         ),
     ])
 

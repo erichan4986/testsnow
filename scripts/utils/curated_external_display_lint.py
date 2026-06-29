@@ -149,6 +149,29 @@ def _is_curated_external_citation(
 
 def _find_strong_confirmation_term(sentence: str) -> str:
     for term in _STRONG_CONFIRMATION_TERMS:
-        if term in sentence:
+        if _contains_assertive_confirmation_term(sentence, term):
             return term
     return ""
+
+
+def _contains_assertive_confirmation_term(sentence: str, term: str) -> bool:
+    start = 0
+    while True:
+        idx = sentence.find(term, start)
+        if idx == -1:
+            return False
+        if not _is_neutral_confirmation_context(sentence, term, idx):
+            return True
+        start = idx + len(term)
+
+
+def _is_neutral_confirmation_context(sentence: str, term: str, idx: int) -> bool:
+    prefix = sentence[max(0, idx - 3) : idx]
+    suffix = sentence[idx + len(term) : idx + len(term) + 3]
+    if term == "确定":
+        return suffix.startswith("性") or prefix.endswith(("不", "未", "难以"))
+    if term == "确认":
+        return prefix.endswith(("未", "非", "尚未", "未经", "待"))
+    if term == "锁定":
+        return prefix.endswith(("不", "未", "难以", "不会"))
+    return False

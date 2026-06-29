@@ -1,7 +1,8 @@
 """LLM synthesis skill."""
 
+import json
 from pathlib import Path
-from typing import Dict, List
+from typing import Any, Dict, List
 
 if __name__.startswith("utils."):
     from ..skill_pipeline import BaseSkill, SkillContext
@@ -119,9 +120,13 @@ class SynthesisSkill(BaseSkill):
             if broker_digest_items:
                 ctx.set("synthesis_text_with_broker_research_digest", display_text)
 
-        # Curated external evidence cards: separate deep-analysis-only display path.
-        # This branch intentionally does not reuse ctx["synthesis_display"].
-        self._build_deep_analysis_display(ctx)
+        # Curated external materials: separate deep-analysis-only display paths.
+        # These branches intentionally do not reuse ctx["synthesis_display"].
+        self._build_viewpoint_narrative_deep_analysis_display(ctx)
+        if not ctx.get("deep_analysis_display"):
+            self._build_viewpoint_digest_deep_analysis_display(ctx)
+        if not ctx.get("deep_analysis_display"):
+            self._build_deep_analysis_display(ctx)
 
         return ctx
 
@@ -288,6 +293,286 @@ class SynthesisSkill(BaseSkill):
         ctx.set("deep_analysis_display_sources", display.get("_sources", []))
         ctx.set("synthesis_text_with_curated_external_evidence_cards", display_text)
         ctx.set("curated_external_evidence_cards_status", "ok")
+
+    def _build_viewpoint_narrative_deep_analysis_display(self, ctx: SkillContext) -> None:
+        """Build deep-analysis-only display from cached full-body narrative JSON."""
+        enabled = bool(
+            ctx.get("include_curated_external_viewpoint_narrative_in_deep_analysis_display")
+            or getattr(self, "include_curated_external_viewpoint_narrative_in_deep_analysis_display", False)
+        )
+        if not enabled:
+            return
+
+        narrative_json = ctx.get("curated_external_viewpoint_narrative_json") or getattr(
+            self, "curated_external_viewpoint_narrative_json", ""
+        )
+        if not narrative_json:
+            ctx.set("curated_external_viewpoint_narrative_status", "missing_config")
+            ctx.set(
+                "curated_external_viewpoint_narrative_stats",
+                {"rejection_reasons": ["curated_external_viewpoint_narrative_json not set"]},
+            )
+            return
+
+        try:
+            narrative = json.loads(Path(narrative_json).read_text(encoding="utf-8"))
+        except Exception as exc:
+            ctx.set("curated_external_viewpoint_narrative_status", "reader_error")
+            ctx.set("curated_external_viewpoint_narrative_stats", {"rejection_reasons": [str(exc)]})
+            return
+
+        status = str(narrative.get("status") or "")
+        ctx.set("curated_external_viewpoint_narrative_status", status)
+        ctx.set("curated_external_viewpoint_narrative_stats", narrative.get("stats") or {})
+        if status != "ok":
+            return
+
+        paragraphs = [p for p in narrative.get("paragraphs") or [] if isinstance(p, dict)]
+        citations = self._normalize_viewpoint_narrative_citations(narrative.get("citations") or {})
+        if not paragraphs or not citations:
+            ctx.set("curated_external_viewpoint_narrative_status", "empty")
+            return
+
+        display = {
+            "industry_logic": self._flatten_viewpoint_narrative_paragraphs(paragraphs),
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "core_facts": [],
+            "citations": citations,
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": paragraphs,
+            "_items_count": len(paragraphs),
+            "_sources": list(citations.values()),
+        }
+        lint = lint_curated_external_display_text(display)
+        ctx.set("curated_external_viewpoint_narrative_lint", lint)
+        if not lint.get("ok"):
+            ctx.set("curated_external_viewpoint_narrative_status", "lint_failed")
+            return
+
+        ctx.set("deep_analysis_display", display)
+        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
+        ctx.set("synthesis_text_with_curated_external_viewpoint_narrative", self._flatten_synthesis_text(display))
+        ctx.set("curated_external_viewpoint_narrative_status", "ok")
+
+    @staticmethod
+    def _normalize_viewpoint_narrative_citations(citations: Dict[Any, Any]) -> Dict[int, dict]:
+        normalized = {}
+        for key, value in (citations or {}).items():
+            try:
+                ref_id = int(key)
+            except (TypeError, ValueError):
+                continue
+            if not isinstance(value, dict):
+                continue
+            if (
+                value.get("source_type") == "curated_external_analysis_evidence"
+                and value.get("verification_status") == "professional_observation"
+            ):
+                normalized[ref_id] = value
+        return normalized
+
+    @classmethod
+    def _flatten_viewpoint_narrative_paragraphs(cls, paragraphs: list) -> str:
+        parts = []
+        for paragraph in paragraphs:
+            heading = str(paragraph.get("heading") or "").strip()
+            text = str(paragraph.get("text") or "").strip()
+            refs = paragraph.get("citation_refs") or []
+            rendered = cls._attach_refs_to_sentence(text, refs)
+            if heading:
+                parts.append(f"{heading}：{rendered}")
+            elif rendered:
+                parts.append(rendered)
+        return "\n\n".join(parts)
+
+    @staticmethod
+    def _attach_refs_to_sentence(text: str, refs: list) -> str:
+        ref_text = "".join(f"[^{int(ref)}]" for ref in refs if str(ref).isdigit())
+        stripped = str(text or "").strip()
+        if not ref_text:
+            return stripped
+        if stripped.endswith(("。", "；", ";", "！", "？")):
+            return f"{stripped[:-1]}{ref_text}{stripped[-1]}"
+        return f"{stripped}{ref_text}"
+
+    def _build_viewpoint_digest_deep_analysis_display(self, ctx: SkillContext) -> None:
+        """Build deep-analysis-only display from cached full-body viewpoint digest."""
+        enabled = bool(
+            ctx.get("include_curated_external_viewpoint_digest_in_deep_analysis_display")
+            or getattr(self, "include_curated_external_viewpoint_digest_in_deep_analysis_display", False)
+        )
+        if not enabled:
+            return
+
+        digest_json = ctx.get("curated_external_viewpoint_digest_json") or getattr(
+            self, "curated_external_viewpoint_digest_json", ""
+        )
+        if not digest_json:
+            ctx.set("curated_external_viewpoint_digest_status", "missing_config")
+            ctx.set("curated_external_viewpoint_digest_stats", {"rejection_reasons": ["curated_external_viewpoint_digest_json not set"]})
+            return
+
+        try:
+            digest = json.loads(Path(digest_json).read_text(encoding="utf-8"))
+        except Exception as exc:
+            ctx.set("curated_external_viewpoint_digest_status", "reader_error")
+            ctx.set("curated_external_viewpoint_digest_stats", {"rejection_reasons": [str(exc)]})
+            return
+
+        status = str(digest.get("status") or "")
+        ctx.set("curated_external_viewpoint_digest_status", status)
+        ctx.set("curated_external_viewpoint_digest_stats", digest.get("stats") or {})
+        if status != "ok":
+            return
+
+        claims = [
+            claim for claim in (digest.get("claims") or [])
+            if self._is_safe_curated_external_viewpoint_claim(claim)
+        ]
+        if not claims:
+            ctx.set("curated_external_viewpoint_digest_status", "empty")
+            return
+
+        claims = self._dedupe_viewpoint_digest_claims_for_display(claims)
+        display = self._deterministic_viewpoint_digest_display(ctx.get("stock_name"), claims)
+        lint = lint_curated_external_display_text(display)
+        ctx.set("curated_external_viewpoint_digest_lint", lint)
+        if not lint.get("ok"):
+            ctx.set("curated_external_viewpoint_digest_status", "lint_failed")
+            return
+
+        ctx.set("deep_analysis_display", display)
+        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
+        ctx.set("synthesis_text_with_curated_external_viewpoint_digest", self._flatten_synthesis_text(display))
+        ctx.set("curated_external_viewpoint_digest_status", "ok")
+
+    @staticmethod
+    def _is_safe_curated_external_viewpoint_claim(claim: Dict[str, Any]) -> bool:
+        if not isinstance(claim, dict):
+            return False
+        return (
+            claim.get("schema_version") == "curated_external_viewpoint_claim.v1"
+            and claim.get("quality_action") == "preview_only"
+            and claim.get("knowledge_eligible") is False
+            and claim.get("synthesis_display_only") is True
+            and claim.get("scoring_eligible") is False
+            and claim.get("risk_score_eligible") is False
+            and claim.get("verification_status") == "professional_observation"
+            and str(claim.get("source_quote") or "").strip()
+            and str(claim.get("source_quote_hash") or "").strip()
+        )
+
+    def _deterministic_viewpoint_digest_display(self, stock_name: str, claims: list) -> dict:
+        grouped = {
+            "industry_logic": [],
+            "fundamentals": [],
+            "valuation_debate": [],
+            "funding_sentiment": [],
+            "events_catalysts": [],
+        }
+        citations = {}
+
+        for ref_id, claim in enumerate(claims, start=1):
+            line = self._format_viewpoint_digest_observation(claim, ref_id)
+            bucket = self._viewpoint_digest_bucket(claim)
+            grouped[bucket].append(line)
+            citations[ref_id] = self._viewpoint_digest_citation(claim)
+
+        return {
+            "industry_logic": self._join_curated_external_observations(
+                stock_name,
+                "产业链、竞争格局或技术路径增量观点",
+                grouped["industry_logic"],
+            ),
+            "fundamentals": self._join_curated_external_observations(
+                stock_name,
+                "业绩质量、周期或供需变量",
+                grouped["fundamentals"],
+            ),
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": self._join_curated_external_observations(
+                stock_name,
+                "事件、政策或待验证变量",
+                grouped["events_catalysts"],
+            ),
+            "core_facts": [],
+            "citations": citations,
+            "_items_count": len(claims),
+            "_sources": list(citations.values()),
+        }
+
+    @classmethod
+    def _dedupe_viewpoint_digest_claims_for_display(cls, claims: list) -> list:
+        """Collapse obvious same-theme repeats while keeping the full digest auditable."""
+        deduped = []
+        seen = set()
+        for claim in claims:
+            key = cls._viewpoint_digest_semantic_key(claim)
+            if key in seen:
+                continue
+            seen.add(key)
+            deduped.append(claim)
+        return deduped
+
+    @staticmethod
+    def _viewpoint_digest_semantic_key(claim: Dict[str, Any]) -> str:
+        text = " ".join(
+            str(claim.get(field) or "")
+            for field in ("topic", "claim", "source_quote", "why_incremental")
+        )
+        lower_text = text.lower()
+
+        if "800g" in lower_text and any(token in text for token in ("1500万", "1200万", "交付计划", "交付下调", "传言")):
+            return "800g_delivery_rumor"
+        if any(token in text for token in ("预付款", "物料", "原材料", "磷化铟", "光芯片", "供应链")):
+            return "material_supply_tightness"
+        if "cpo" in lower_text and any(token in text for token in ("可插拔", "Scale Out", "scale out", "替代")):
+            return "cpo_vs_pluggable"
+        if any(token in text for token in ("NPO", "XPO", "Scale Up", "scale up", "光进铜退")):
+            return "npo_xpo_timeline"
+        if any(token in text for token in ("2026", "2027", "2028")) and any(
+            token in text for token in ("需求指引", "客户需求", "资本开支", "capex", "CapEx")
+        ):
+            return "customer_demand_capex_guide"
+
+        fingerprint_source = str(claim.get("source_quote_hash") or claim.get("claim_id") or claim.get("claim") or "")
+        return f"claim:{fingerprint_source[:32]}"
+
+    @staticmethod
+    def _viewpoint_digest_bucket(claim: Dict[str, Any]) -> str:
+        topic = str(claim.get("topic") or "")
+        claim_type = str(claim.get("claim_type") or "")
+        if any(token in topic for token in ("earnings", "fundamentals", "supply", "capacity", "prepayment")):
+            return "fundamentals"
+        if claim_type in ("dissent", "watch_variable"):
+            return "events_catalysts"
+        return "industry_logic"
+
+    @staticmethod
+    def _format_viewpoint_digest_observation(claim: Dict[str, Any], ref_id: int) -> str:
+        title = " ".join(str(claim.get("source_title") or claim.get("title") or "外部观点").split())[:80]
+        claim_text = str(claim.get("claim") or "").strip().rstrip("。")
+        why = str(claim.get("why_incremental") or "").strip().rstrip("。")
+        suffix = f"（{why}）" if why else ""
+        return f"《{title}》观察到：{claim_text}{suffix}[^{ref_id}]"
+
+    @staticmethod
+    def _viewpoint_digest_citation(claim: Dict[str, Any]) -> dict:
+        return {
+            "source": "微信公众号精选观察",
+            "author": claim.get("source_account") or claim.get("account") or "",
+            "title": claim.get("source_title") or claim.get("title") or "外部观点",
+            "url": claim.get("source_ref") or claim.get("url") or "",
+            "source_type": "curated_external_analysis_evidence",
+            "source_credit": claim.get("source_credit", 55),
+            "verification_status": claim.get("verification_status", "professional_observation"),
+            "claim_id": claim.get("claim_id", ""),
+            "source_quote_hash": claim.get("source_quote_hash", ""),
+        }
 
     @staticmethod
     def _is_template_fallback_synthesis(synthesis: dict) -> bool:

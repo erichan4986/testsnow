@@ -794,6 +794,137 @@ def _write_curated_cards_json(tmp_path, cards):
     return path
 
 
+def _write_viewpoint_digest_json(tmp_path, claims, status="ok"):
+    path = tmp_path / "viewpoint_digest.json"
+    path.write_text(
+        _json.dumps(
+            {
+                "schema_version": "curated_external_viewpoint_digest.v1",
+                "status": status,
+                "stock_name": "测试股",
+                "claims": claims,
+                "claims_count": len(claims),
+                "stats": {
+                    "theme_coverage_count": 1,
+                    "theme_coverage_total": 7,
+                    "theme_coverage_ratio": 1 / 7,
+                    "covered_themes": ["800G_rumor"],
+                    "missing_themes": [],
+                },
+                "wrote_knowledge": False,
+                "connected_synthesis": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _write_viewpoint_narrative_json(tmp_path, paragraphs, citations, status="ok"):
+    path = tmp_path / "viewpoint_narrative.json"
+    path.write_text(
+        _json.dumps(
+            {
+                "schema_version": "curated_external_viewpoint_narrative.v1",
+                "status": status,
+                "stock_name": "测试股",
+                "paragraphs": paragraphs,
+                "paragraphs_count": len(paragraphs),
+                "citations": citations,
+                "stats": {"lint": {"ok": True, "violations": []}},
+                "wrote_knowledge": False,
+                "connected_synthesis": False,
+                "connected_scoring": False,
+                "connected_risk": False,
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    return path
+
+
+def _make_viewpoint_narrative_paragraphs():
+    return [
+        {
+            "heading": "供应链瓶颈与交付疑虑并存",
+            "text": "外部材料提示供应链约束会影响交付弹性，需要和订单转化一起跟踪。",
+            "claim_refs": ["vc1"],
+            "citation_refs": [1],
+        }
+    ]
+
+
+def _make_viewpoint_narrative_citations():
+    return {
+        "1": {
+            "source": "微信公众号精选观察",
+            "author": "测试账号",
+            "title": "外部深度文章",
+            "url": "https://mp.weixin.qq.com/s/viewpoint",
+            "source_type": "curated_external_analysis_evidence",
+            "source_credit": 55,
+            "verification_status": "professional_observation",
+            "claim_id": "vc1",
+            "source_quote_hash": "hash",
+        }
+    }
+
+
+def _make_viewpoint_claim(claim_id="vc1", claim_type="watch_variable", topic="supply_delivery_capacity"):
+    quote = "外部文章提示800G交付计划下调传言仍需跟踪，公司曾否认相关情况。"
+    return {
+        "schema_version": "curated_external_viewpoint_claim.v1",
+        "claim_id": claim_id,
+        "stock_name": "测试股",
+        "claim_type": claim_type,
+        "topic": topic,
+        "claim": "外部文章提示800G交付计划下调传言仍需跟踪。",
+        "source_quote": quote,
+        "source_quote_hash": _normalized_hash(quote),
+        "why_incremental": "baseline未覆盖该交付传言变量。",
+        "baseline_overlap": "none",
+        "source_id": "curated-source:test:1",
+        "source_ref": "https://example.com/viewpoint",
+        "source_title": "中际旭创外部深度观点",
+        "source_account": "测试公众号",
+        "evidence_refs": ["curated-source:test:1"],
+        "evidence_hashes": [
+            {
+                "source_id": "curated-source:test:1",
+                "source_block_hash": "block-hash",
+                "source_quote_hash": _normalized_hash(quote),
+            }
+        ],
+        "verification_status": "professional_observation",
+        "source_credit": 55,
+        "claim_source_credit": 55,
+        "quality_action": "preview_only",
+        "knowledge_eligible": False,
+        "synthesis_display_only": True,
+        "scoring_eligible": False,
+        "risk_score_eligible": False,
+    }
+
+
+def _make_viewpoint_claim_with_text(
+    claim_id,
+    claim,
+    *,
+    topic="supply_delivery_capacity",
+    claim_type="watch_variable",
+    title="外部深度观点",
+):
+    item = _make_viewpoint_claim(claim_id=claim_id, claim_type=claim_type, topic=topic)
+    item["claim"] = claim
+    item["source_quote"] = claim
+    item["source_quote_hash"] = _normalized_hash(claim)
+    item["source_title"] = title
+    item["evidence_hashes"][0]["source_quote_hash"] = _normalized_hash(claim)
+    return item
+
+
 def _long_chinese_excerpt(length=500):
     return "公司持续加大研发投入，拓展高端客户，产品竞争力提升。" * (length // 30)
 
@@ -823,6 +954,206 @@ def test_curated_external_default_off_excludes_cards(tmp_path):
 
     assert ctx.output.get("deep_analysis_display") is None
     assert ctx.output.get("curated_external_evidence_cards_status") is None
+
+
+def test_curated_external_viewpoint_digest_enabled_sets_deep_analysis_display(tmp_path):
+    digest_path = _write_viewpoint_digest_json(tmp_path, [_make_viewpoint_claim()])
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    display = ctx.output.get("deep_analysis_display")
+    assert display
+    assert ctx.output.get("curated_external_viewpoint_digest_status") == "ok"
+    display_text = "\n".join(str(display.get(key, "")) for key in ("industry_logic", "fundamentals", "events_catalysts"))
+    assert "800G交付计划下调传言" in display_text
+    assert display["citations"][1]["source_type"] == "curated_external_analysis_evidence"
+    assert display["citations"][1]["source"] == "微信公众号精选观察"
+    assert ctx.output.get("synthesis_display") is None
+    assert "800G交付计划下调传言" not in ctx.output.get("synthesis_text", "")
+    assert ctx.output.get("wrote_knowledge") is None
+
+
+def test_curated_external_viewpoint_narrative_enabled_sets_deep_analysis_display(tmp_path):
+    narrative_path = _write_viewpoint_narrative_json(
+        tmp_path,
+        _make_viewpoint_narrative_paragraphs(),
+        _make_viewpoint_narrative_citations(),
+    )
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
+        "curated_external_viewpoint_narrative_json": str(narrative_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    display = ctx.output.get("deep_analysis_display")
+    assert display
+    assert display["_curated_external_narrative"] is True
+    assert display["_curated_external_narrative_paragraphs"][0]["heading"] == "供应链瓶颈与交付疑虑并存"
+    assert display["citations"][1]["url"] == "https://mp.weixin.qq.com/s/viewpoint"
+    assert ctx.output.get("curated_external_viewpoint_narrative_status") == "ok"
+    assert ctx.output.get("synthesis_display") is None
+    assert "供应链约束" not in ctx.output.get("synthesis_text", "")
+
+
+def test_curated_external_viewpoint_narrative_has_priority_over_digest(tmp_path):
+    narrative_path = _write_viewpoint_narrative_json(
+        tmp_path,
+        _make_viewpoint_narrative_paragraphs(),
+        _make_viewpoint_narrative_citations(),
+    )
+    digest_path = _write_viewpoint_digest_json(tmp_path, [_make_viewpoint_claim()])
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
+        "curated_external_viewpoint_narrative_json": str(narrative_path),
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display", {}).get("_curated_external_narrative") is True
+    assert ctx.output.get("curated_external_viewpoint_narrative_status") == "ok"
+
+
+def test_curated_external_viewpoint_narrative_rejects_non_ok_status(tmp_path):
+    narrative_path = _write_viewpoint_narrative_json(
+        tmp_path,
+        _make_viewpoint_narrative_paragraphs(),
+        _make_viewpoint_narrative_citations(),
+        status="lint_failed",
+    )
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
+        "curated_external_viewpoint_narrative_json": str(narrative_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display") is None
+    assert ctx.output.get("curated_external_viewpoint_narrative_status") == "lint_failed"
+
+
+def test_curated_external_viewpoint_digest_rejects_non_ok_status(tmp_path):
+    digest_path = _write_viewpoint_digest_json(tmp_path, [_make_viewpoint_claim()], status="theme_coverage_failed")
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display") is None
+    assert ctx.output.get("curated_external_viewpoint_digest_status") == "theme_coverage_failed"
+
+
+def test_curated_external_viewpoint_digest_deduplicates_semantic_clusters(tmp_path):
+    claims = [
+        _make_viewpoint_claim_with_text(
+            "vc1",
+            "市场传言中际旭创因光芯片短缺将800G交付计划从1500万只下调至1200万只，公司虽已否认。",
+            topic="800G交付计划下调传言",
+            title="上游材料预付款暴涨10倍",
+        ),
+        _make_viewpoint_claim_with_text(
+            "vc2",
+            "市场传言光芯片短缺可能导致公司800G交付计划下调，公司否认但仍需跟踪。",
+            topic="供应链风险",
+            title="上游材料预付款暴涨10倍",
+        ),
+        _make_viewpoint_claim_with_text(
+            "vc3",
+            "外部文章指出中际旭创NPO方案预计2027年量产，XPO也有望同步量产。",
+            topic="NPO/XPO新技术进展",
+            claim_type="novel_mechanism",
+            title="光模块行业延续高景气度",
+        ),
+        _make_viewpoint_claim_with_text(
+            "vc4",
+            "Scale Up场景中NPO方案因性能接近CPO且可维护性更好，有望成为主流。",
+            topic="新增长逻辑",
+            claim_type="novel_mechanism",
+            title="ZIA Insight",
+        ),
+    ]
+    digest_path = _write_viewpoint_digest_json(tmp_path, claims)
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    display = ctx.output.get("deep_analysis_display")
+    display_text = "\n".join(str(display.get(key, "")) for key in ("industry_logic", "fundamentals", "events_catalysts"))
+    assert display_text.count("800G") == 1
+    assert display_text.count("NPO") == 1
+    assert display["_items_count"] == 2
+    assert len(display["citations"]) == 2
 
 
 def test_curated_external_enabled_sets_deep_analysis_display(tmp_path):

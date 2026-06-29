@@ -130,6 +130,24 @@ class PerStockReporter:
             curated_external_cards_json = self._resolve_repo_relative_path(
                 curated_external_cfg.get("cards_json", "")
             )
+            viewpoint_narrative_cfg = (
+                si_cfg.get("curated_external_viewpoint_narrative_synthesis_display", {}) or {}
+            )
+            viewpoint_narrative_enabled = bool(
+                source_intake_enabled and viewpoint_narrative_cfg.get("enabled", False)
+            )
+            viewpoint_narrative_json = self._resolve_repo_relative_path(
+                viewpoint_narrative_cfg.get("narrative_json", "")
+            )
+            viewpoint_digest_cfg = (
+                si_cfg.get("curated_external_viewpoint_digest_synthesis_display", {}) or {}
+            )
+            viewpoint_digest_enabled = bool(
+                source_intake_enabled and viewpoint_digest_cfg.get("enabled", False)
+            )
+            viewpoint_digest_json = self._resolve_repo_relative_path(
+                viewpoint_digest_cfg.get("digest_json", "")
+            )
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -156,6 +174,12 @@ class PerStockReporter:
                     pipeline_kwargs["curated_external_evidence_cards_min_cards"] = curated_external_cfg["min_cards"]
                 if curated_external_cfg.get("min_total_excerpt_chars") is not None:
                     pipeline_kwargs["curated_external_evidence_cards_min_total_excerpt_chars"] = curated_external_cfg["min_total_excerpt_chars"]
+            if viewpoint_digest_enabled:
+                pipeline_kwargs["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True
+                pipeline_kwargs["curated_external_viewpoint_digest_json"] = viewpoint_digest_json
+            if viewpoint_narrative_enabled:
+                pipeline_kwargs["include_curated_external_viewpoint_narrative_in_deep_analysis_display"] = True
+                pipeline_kwargs["curated_external_viewpoint_narrative_json"] = viewpoint_narrative_json
             pipeline = build_stock_report_pipeline(**pipeline_kwargs)
 
             pipeline_input = {
@@ -229,6 +253,14 @@ class PerStockReporter:
                     pipeline_input["curated_external_evidence_cards_min_cards"] = curated_external_cfg["min_cards"]
                 if curated_external_cfg.get("min_total_excerpt_chars") is not None:
                     pipeline_input["curated_external_evidence_cards_min_total_excerpt_chars"] = curated_external_cfg["min_total_excerpt_chars"]
+
+            if viewpoint_digest_enabled:
+                pipeline_input["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True
+                pipeline_input["curated_external_viewpoint_digest_json"] = viewpoint_digest_json
+
+            if viewpoint_narrative_enabled:
+                pipeline_input["include_curated_external_viewpoint_narrative_in_deep_analysis_display"] = True
+                pipeline_input["curated_external_viewpoint_narrative_json"] = viewpoint_narrative_json
 
             if evidence_notes_enabled:
                 pipeline_input["enable_evidence_notes"] = True
