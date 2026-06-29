@@ -56,15 +56,8 @@ SLOW_FILES = {
     "test_prepare_annual_report_materials.py",
 }
 
-LEGACY_PREFIXES = (
-    "test_phase3_",
-)
-
-LEGACY_FILES = {
-    "test_advanced_technical_e2e.py",
-    "test_lanqi_phase3_report.py",
-    "test_lexin_phase3_report.py",
-}
+LEGACY_PREFIXES = ()
+LEGACY_FILES = set()
 
 
 def markers_for_path(path: str | Path) -> Set[str]:

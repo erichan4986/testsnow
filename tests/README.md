@@ -38,7 +38,7 @@ Broader non-slow regression:
 python3 -m pytest tests -m "not slow and not legacy" -q
 ```
 
-Full regression, including slow and legacy tests:
+Full regression, including slow tests and any future legacy tests:
 
 ```bash
 python3 -m pytest
@@ -50,6 +50,7 @@ python3 -m pytest
 - `external_material`: Agent-Reach, WeChat, broker, periodic, or curated external material flows.
 - `integration`: entrypoint, pipeline, chart, PDF, or cross-module integration tests.
 - `slow`: expensive rendering, large fixtures, or broader integration paths.
-- `legacy`: historical report / technical phase tests kept for regression reference.
+- `legacy`: historical tests kept for regression reference when they are still
+  present in the active tree.
 
 Markers are assigned centrally in `tests/conftest.py` based on test file names.

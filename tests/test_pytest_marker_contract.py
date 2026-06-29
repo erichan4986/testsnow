@@ -19,8 +19,8 @@ def test_reporter_path_marker_routing_contract():
 
     assert markers_for_path("tests/reporter/test_synthesis_skills.py") == {"report_core"}
     assert markers_for_path("tests/reporter/test_deep_analysis_renderer.py") == {"report_core"}
-    assert markers_for_path("tests/reporter/test_phase3_integration.py") == {"legacy"}
-    assert markers_for_path("tests/reporter/test_lanqi_phase3_report.py") == {"legacy"}
+    assert markers_for_path("tests/reporter/test_phase3_integration.py") == set()
+    assert markers_for_path("tests/reporter/test_lanqi_phase3_report.py") == set()
     assert markers_for_path("tests/reporter/test_run_black_sesame_entry.py") == {"integration"}
     assert markers_for_path("tests/reporter/test_chart_generator.py") == {"integration", "slow"}
     assert markers_for_path("tests/reporter/test_agent_reach_skills.py") == {"external_material"}
