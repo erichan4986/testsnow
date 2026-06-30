@@ -1,6 +1,6 @@
 # Agent Workflow Context Index
 
-Date: 2026-06-20
+Date: 2026-06-30
 
 Purpose: give Codex, Claude Code, and future agents a short map of the current testsnow workflow. This file is an index, not a design document. Keep it current and compact.
 
@@ -118,8 +118,8 @@ Cross-cutting and adjacent helpers:
 
 Active unification design:
 
-- `docs/agent_workflow/2026-06-22-periodic-report-intake-unification-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-22-periodic-report-intake-unification-design.md -->
+- `docs/agent_workflow/archive/2026-06/2026-06-22-periodic-report-intake-unification-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-22-periodic-report-intake-unification-design.md -->
 
 Current limitation:
 
@@ -130,8 +130,8 @@ Current limitation:
 - Ground Truth numeric blocks constrain fulltext LLM financial numbers; they are not a separate Knowledge source.
 - Filing facts have a writer-only structured finance path, but they are not the current priority for annual-report knowledge enrichment.
 - A-share structured filing facts have a helper-only Phase A path.
-- HK narrative cards are supported, but HK structured facts are not yet supported because HK financial-statement blocks are not reliably extracted by the generic evidence pack. See the HK evidence-pack gap in `docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`.
-<!-- path-check: docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md -->
+- HK narrative cards are supported, but HK structured facts are not yet supported because HK financial-statement blocks are not reliably extracted by the generic evidence pack. See the HK evidence-pack gap in `docs/agent_workflow/archive/2026-06/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`.
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md -->
 
 ## Broker Research Digest Current Map
 
@@ -187,8 +187,8 @@ Verified sample:
 
 Social observation is not an active mainline source. The current low-risk smoke is recorded in:
 
-- `docs/agent_workflow/2026-06-24-social-observation-source-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-24-social-observation-source-design.md -->
+- `docs/agent_workflow/archive/2026-06/2026-06-24-social-observation-source-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-24-social-observation-source-design.md -->
 
 Current conclusion:
 
@@ -235,32 +235,32 @@ Changes involving LLM prompts, synthesis/citation logic, scoring, technical anal
 
 - workflow README: `docs/agent_workflow/README.md`
 <!-- path-check: docs/agent_workflow/README.md -->
-- periodic report source-intake design: `docs/agent_workflow/2026-06-17-periodic-report-source-intake-integration-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-17-periodic-report-source-intake-integration-design.md -->
-- fulltext synthesis material design: `docs/agent_workflow/2026-06-19-periodic-report-fulltext-synthesis-material-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-19-periodic-report-fulltext-synthesis-material-design.md -->
-- safety and periodic-report roadmap: `docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md -->
-- periodic report structured facts design: `docs/agent_workflow/2026-06-20-periodic-report-structured-facts-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-structured-facts-design.md -->
-- periodic report structured facts Round 1 review prompt: `docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round1.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round1.md -->
-- periodic report structured facts Round 2 review prompt: `docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round2.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-structured-facts-claude-review-round2.md -->
-- HK periodic report evidence-pack design: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-design.md -->
-- HK periodic report evidence-pack Round 1 review prompt: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md -->
-- HK periodic report evidence-pack Round 2 review prompt: `docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md -->
-- periodic report filing facts Knowledge design: `docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-design.md -->
-- periodic report filing facts Knowledge Round 1 review prompt: `docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-claude-review-round1.md`
-<!-- path-check: docs/agent_workflow/2026-06-20-periodic-report-filing-facts-knowledge-claude-review-round1.md -->
-- periodic report narrative evidence cards design: `docs/agent_workflow/2026-06-21-periodic-report-narrative-evidence-cards-design.md`
-<!-- path-check: docs/agent_workflow/2026-06-21-periodic-report-narrative-evidence-cards-design.md -->
-- Vibe-Trading walkthrough notes: `docs/agent_workflow/2026-06-21-vibe-trading-walkthrough-notes.md`
-<!-- path-check: docs/agent_workflow/2026-06-21-vibe-trading-walkthrough-notes.md -->
+- periodic report source-intake design: `docs/agent_workflow/archive/2026-06/2026-06-17-periodic-report-source-intake-integration-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-17-periodic-report-source-intake-integration-design.md -->
+- fulltext synthesis material design: `docs/agent_workflow/archive/2026-06/2026-06-19-periodic-report-fulltext-synthesis-material-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-19-periodic-report-fulltext-synthesis-material-design.md -->
+- safety and periodic-report roadmap: `docs/agent_workflow/archive/2026-06/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-vibe-trading-inspired-safety-and-periodic-report-roadmap.md -->
+- periodic report structured facts design: `docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-structured-facts-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-structured-facts-design.md -->
+- periodic report structured facts Round 1 review prompt: `docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-structured-facts-claude-review-round1.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-structured-facts-claude-review-round1.md -->
+- periodic report structured facts Round 2 review prompt: `docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-structured-facts-claude-review-round2.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-structured-facts-claude-review-round2.md -->
+- HK periodic report evidence-pack design: `docs/agent_workflow/archive/2026-06/2026-06-20-hk-periodic-report-evidence-pack-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-hk-periodic-report-evidence-pack-design.md -->
+- HK periodic report evidence-pack Round 1 review prompt: `docs/agent_workflow/archive/2026-06/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round1.md -->
+- HK periodic report evidence-pack Round 2 review prompt: `docs/agent_workflow/archive/2026-06/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-hk-periodic-report-evidence-pack-claude-review-round2.md -->
+- periodic report filing facts Knowledge design: `docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-filing-facts-knowledge-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-filing-facts-knowledge-design.md -->
+- periodic report filing facts Knowledge Round 1 review prompt: `docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-filing-facts-knowledge-claude-review-round1.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-20-periodic-report-filing-facts-knowledge-claude-review-round1.md -->
+- periodic report narrative evidence cards design: `docs/agent_workflow/archive/2026-06/2026-06-21-periodic-report-narrative-evidence-cards-design.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-21-periodic-report-narrative-evidence-cards-design.md -->
+- Vibe-Trading walkthrough notes: `docs/agent_workflow/archive/2026-06/2026-06-21-vibe-trading-walkthrough-notes.md`
+<!-- path-check: docs/agent_workflow/archive/2026-06/2026-06-21-vibe-trading-walkthrough-notes.md -->
 
 ## Runbooks
 

@@ -148,6 +148,12 @@ docs/agent_workflow/
 
 Keep all agent-to-agent communication in these files. Do not paste full chat transcripts back into Codex unless there is a specific issue to inspect.
 
+Top-level `docs/agent_workflow/` should stay small:
+
+- Keep current active design/review/status docs in the top-level directory.
+- Move closed historical workflow files into `docs/agent_workflow/archive/<year-month>/`.
+- Keep `context_index.md` updated when an archived file is still an active reference.
+
 ---
 
 ## 8. Level 0 Direct Prompt Handoff
