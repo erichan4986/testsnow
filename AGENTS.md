@@ -153,6 +153,29 @@ git clone --depth=1 https://gitclone.com/github.com/OWNER/REPO.git /tmp/REPO
 
 Codex may use repository skills under `.agents/skills` when relevant.
 
+### grill-me 自动触发规则
+
+当用户提出尚未成形的方案、路线、架构或下一步选择，并且任务可能影响报告结构、pipeline、数据源、LLM 合成、质量门、采集策略或多文件实现时，Codex 应自动使用 `.agents/skills/grill-me` 做设计拷问，而不需要用户显式输入“grill-me”。
+
+典型触发语义：
+
+- “下一步做什么 / 要不要做 X / 重新设计 / 开新主题 / 这个方案靠谱不”
+- “做一套流程 / 接入新 source / 改 synthesis / 改报告结构 / 改 pipeline”
+- 用户表达不确定、权衡、担心信息质量或风险边界时
+
+不自动触发：
+
+- 用户给出明确小修、小测试、只读复验或报告试跑任务
+- 紧急 bugfix、已锁定实现边界的 Level 0/1 小任务
+- 用户明确要求“直接做 / 不要追问 / 给 prompt”
+
+触发后行为：
+
+1. 先读相关代码/配置；能从仓库回答的问题不要问用户。
+2. 一次只问一个关键问题，并给出推荐答案。
+3. 覆盖 failure modes、边界、测试门和停止条件。
+4. 在用户确认“按这个做/推进”前，不进入实现；若确认后按最轻足够安全的 Level 继续。
+
 ---
 
 ## 9. Codex 编排、本地 Claude Code 执行协作规则
