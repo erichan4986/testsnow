@@ -20,6 +20,7 @@ ACTIVE_PREVIEWS = [
     "broker_research_digest_preview.py",
     "curated_external_full_body_viewpoint_preview.py",
     "curated_external_viewpoint_narrative_preview.py",
+    "formal_first_source_policy_preview.py",
     "iwencai_industry_research_preview.py",
     "periodic_report_fulltext_preview.py",
     "periodic_report_narrative_cards_acceptance.py",
