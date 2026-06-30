@@ -33,6 +33,7 @@ EXTERNAL_MATERIAL_PREFIXES = (
     "test_periodic_report_",
     "test_prepare_annual_",
     "test_source_intake_",
+    "test_social_",
     "test_wechat_",
 )
 
@@ -51,12 +52,18 @@ INTEGRATION_FILES = {
 
 SLOW_FILES = {
     "test_chart_generator.py",
+    "test_data_collector.py",
     "test_pipeline_integration.py",
     "test_prepare_annual_report_materials.py",
 }
 
 LEGACY_PREFIXES = ()
-LEGACY_FILES = set()
+LEGACY_FILES = {
+    "test_cached_community_claim_smoke_script.py",
+    "test_claim_intake_audit_flow_script.py",
+    "test_claim_verification_audit_script.py",
+    "test_fresh_social_claim_smoke_script.py",
+}
 
 
 def markers_for_path(path: str | Path) -> Set[str]:

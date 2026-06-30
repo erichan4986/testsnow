@@ -39,8 +39,12 @@ cache/
 
 # Data and reports (keep directory structure but ignore content)
 /data/raw/*.json
+/data/raw/*.csv
+/data/raw/*.xlsx
+/data/raw/2025*/
 /data/raw/2026*/
 /data/raw/broker_research_reports/
+/data/raw/debug/
 /data/raw/periodic_reports/
 /data/processed/
 /reports/*.md
@@ -52,6 +56,7 @@ cache/
 /reports/*_technical.png
 /reports/*_radar.png
 /reports/*_valuation.png
+/reports/e2e_test/
 
 # Generated source-intake evidence notes
 /knowledge/10-Stocks/**/evidence/

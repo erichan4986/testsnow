@@ -31,3 +31,23 @@ def test_reporter_path_marker_routing_contract():
         "external_material",
         "report_core",
     }
+    assert markers_for_path("tests/reporter/test_social_viewpoint_digest_preview.py") == {
+        "external_material"
+    }
+    assert markers_for_path("tests/test_data_collector.py") == {"slow"}
+    assert markers_for_path("tests/reporter/test_cached_community_claim_smoke_script.py") == {
+        "external_material",
+        "legacy",
+    }
+    assert markers_for_path("tests/reporter/test_claim_intake_audit_flow_script.py") == {
+        "external_material",
+        "legacy",
+    }
+    assert markers_for_path("tests/reporter/test_claim_verification_audit_script.py") == {
+        "external_material",
+        "legacy",
+    }
+    assert markers_for_path("tests/reporter/test_fresh_social_claim_smoke_script.py") == {
+        "external_material",
+        "legacy",
+    }
