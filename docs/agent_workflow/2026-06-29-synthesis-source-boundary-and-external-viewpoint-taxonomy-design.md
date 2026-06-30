@@ -196,6 +196,33 @@ Additional safety gates:
 - Overclaim lint runs per paragraph; unsafe paragraphs are dropped while safe
   paragraphs remain.  If all paragraphs are dropped, `4.4` does not render.
 
+## 6.1 Formal Display Supplement Decision
+
+`formal_first` is not a strict baseline-only rendering mode.
+
+Final boundary:
+
+- `4.1-4.3` may use formal / professional display supplements when their
+  citations are annual reports, periodic-report narrative cards, broker digest
+  notes, formal industry research, mainstream news, announcements, or other
+  medium-high-credit professional materials.
+- `4.1-4.3` must not use Xueqiu / Zhihu / WeChat / curated external / social
+  viewpoint citations as main-analysis material.
+- `4.4` remains the home for curated external and social viewpoints.
+
+Rationale:
+
+- The goal is to remove low-credit social material from canonical main
+  analysis, not to make the main analysis artificially thin.
+- 圣邦股份 validation showed that annual-report narrative cards can enrich
+  `4.1-4.3` without violating the social-source boundary.
+
+Implementation guardrail:
+
+- If `synthesis_display` contains social or curated external citations, the
+  renderer falls back to baseline `synthesis` for `4.1-4.3`.
+- Validated curated external narrative still renders separately as flat `4.4`.
+
 ## 7. Runtime Data Flow
 
 Preferred longform path:

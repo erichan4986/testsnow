@@ -156,8 +156,28 @@ an opt-in source policy:
 
 Do not make it the default yet.
 
-Before default rollout, decide whether renderer fallback to
-`synthesis_display` is acceptable for `4.1-4.3`, or whether `formal_first`
-should force `4.1-4.3` to render from baseline canonical synthesis only while
-keeping annual-report / broker digest display material in a separate display
-section.
+Renderer boundary decision: choose **formal display supplement**.
+
+Meaning:
+
+- `formal_first` forbids Xueqiu / Zhihu / WeChat / curated external / social
+  viewpoint materials from becoming `4.1-4.3` main analysis.
+- `formal_first` still allows formal / professional display supplements such
+  as annual-report narrative cards, broker digest notes, formal industry
+  research, and mainstream-news source-intake items to enrich `4.1-4.3`.
+- Curated external and social viewpoint materials remain in `4.4` only, and
+  must stay display-only.
+
+Rationale:
+
+- 圣邦股份 showed that annual-report narrative cards can make `4.1-4.3` richer
+  without introducing social-source pollution.
+- The real boundary is not "baseline-only"; it is "formal/professional source
+  families in 4.1-4.3, social/external viewpoints in 4.4".
+
+Renderer guardrail:
+
+- `DeepAnalysisRenderer` may use `synthesis_display` for `4.1-4.3` only when
+  its citations are not social / curated external citations.
+- If `synthesis_display` cites Xueqiu / Zhihu / WeChat / curated external
+  evidence, the renderer falls back to baseline `synthesis` for `4.1-4.3`.

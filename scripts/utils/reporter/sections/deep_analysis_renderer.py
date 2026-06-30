@@ -65,11 +65,19 @@ class DeepAnalysisRenderer:
         stock_name = ctx.get("stock_name", "")
         deep_analysis_display = ctx.get("deep_analysis_display") or {}
         uses_curated_external_display = self._has_curated_external_citation(deep_analysis_display)
-        if deep_analysis_display and not uses_curated_external_display:
+        if (
+            deep_analysis_display
+            and not uses_curated_external_display
+            and self._is_main_analysis_display_allowed(deep_analysis_display)
+        ):
             synthesis = deep_analysis_display
             curated_display = {}
         else:
-            synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
+            synthesis_display = ctx.get("synthesis_display") or {}
+            if synthesis_display and self._is_main_analysis_display_allowed(synthesis_display):
+                synthesis = synthesis_display
+            else:
+                synthesis = ctx.get("synthesis") or {}
             curated_display = deep_analysis_display
         if not stock_name or not synthesis:
             return ""
@@ -570,6 +578,38 @@ class DeepAnalysisRenderer:
             if meta.get("source_type") == "curated_external_analysis_evidence":
                 return True
         return False
+
+    @classmethod
+    def _is_main_analysis_display_allowed(cls, synthesis: Dict[str, Any]) -> bool:
+        """Allow formal/professional display supplements, but not social/curated viewpoints."""
+        citations = synthesis.get("citations", {}) or {}
+        for meta in citations.values():
+            if cls._is_social_or_curated_citation(meta):
+                return False
+        return True
+
+    @staticmethod
+    def _is_social_or_curated_citation(meta: Any) -> bool:
+        if not isinstance(meta, dict):
+            return False
+        source_type = str(meta.get("source_type") or "").strip()
+        if source_type in {
+            "curated_external_analysis_evidence",
+            "social_viewpoint_analysis_evidence",
+        }:
+            return True
+        source = str(meta.get("source") or "").strip()
+        return any(
+            token in source
+            for token in (
+                "雪球",
+                "知乎",
+                "微信公众号",
+                "微信精选",
+                "精选外部",
+                "东方财富精选观察",
+            )
+        )
 
     @staticmethod
     def _truncate_title(title: Any, max_chars: int) -> str:

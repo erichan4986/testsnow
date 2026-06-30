@@ -694,14 +694,55 @@ def test_render_prefers_synthesis_display():
             "citations": {},
         },
         "synthesis_display": {
-            "industry_logic": "enhanced 年报全文 行业逻辑。",
-            "citations": {},
+            "industry_logic": "enhanced 年报全文 行业逻辑[^1]。",
+            "citations": {
+                1: {
+                    "source": "定期报告叙事卡片",
+                    "title": "2025年年度报告",
+                    "source_type": "periodic_report_narrative_card",
+                }
+            },
         },
         "core_facts": [],
     }
     result = renderer.render(ctx)
     assert "enhanced 年报全文 行业逻辑" in result
     assert "baseline 行业逻辑" not in result
+    assert "定期报告叙事卡片" in result
+
+
+def test_render_does_not_use_social_synthesis_display_for_main_analysis():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "baseline 正式源行业逻辑。",
+            "citations": {
+                1: {
+                    "source": "研报",
+                    "title": "正式研报",
+                    "source_type": "broker_research",
+                }
+            },
+        },
+        "synthesis_display": {
+            "industry_logic": "雪球/知乎 display 行业逻辑[^1]。",
+            "citations": {
+                1: {
+                    "source": "知乎精选观察",
+                    "title": "知乎观点",
+                    "source_type": "social_viewpoint_analysis_evidence",
+                }
+            },
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+
+    assert "baseline 正式源行业逻辑" in result
+    assert "雪球/知乎 display 行业逻辑" not in result
+    assert "知乎精选观察" not in result
 
 
 def test_render_falls_back_to_synthesis_when_no_display():
