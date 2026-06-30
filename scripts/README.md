@@ -32,6 +32,10 @@ be used as production report entrypoints.
 Future cleanup can move these into `scripts/previews/` after tests and docs no
 longer import or invoke them by their top-level paths.
 
+Older curated-external preview experiments that are no longer current live in
+`scripts/archive/old_previews/`. They are retained for reference only; do not
+add new callers to archived script paths.
+
 ## Smoke scripts
 
 Smoke scripts live in `scripts/smoke/` and are focused integration checks. Keep
