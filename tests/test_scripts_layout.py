@@ -3,6 +3,7 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
+HIGH_RISK_DIR = SCRIPTS_DIR / "high_risk"
 OLD_PREVIEWS_ARCHIVE = SCRIPTS_DIR / "archive" / "old_previews"
 LEGACY_MAINTENANCE_ARCHIVE = SCRIPTS_DIR / "archive" / "legacy_maintenance"
 ACTIVE_PREVIEWS_DIR = SCRIPTS_DIR / "previews"
@@ -32,6 +33,15 @@ ARCHIVED_LEGACY_MAINTENANCE = [
     "sync_vault_from_raw.py",
 ]
 
+HIGH_RISK_SCRIPTS = [
+    "batch_fetch_quality_posts.py",
+    "extract_detail.py",
+    "extract_detail_via_cdp.py",
+    "fetch_xueqiu.py",
+    "start_chrome_cdp.command",
+    "start_chrome_cdp.sh",
+]
+
 
 def test_old_curated_external_preview_scripts_are_deleted():
     for filename in DELETED_OLD_PREVIEWS:
@@ -51,3 +61,9 @@ def test_legacy_maintenance_scripts_are_archived():
         assert (LEGACY_MAINTENANCE_ARCHIVE / filename).exists(), (
             f"{filename} should live in scripts/archive/legacy_maintenance/"
         )
+
+
+def test_high_risk_collection_scripts_live_in_high_risk_dir():
+    for filename in HIGH_RISK_SCRIPTS:
+        assert not (SCRIPTS_DIR / filename).exists(), f"{filename} should not remain in scripts/"
+        assert (HIGH_RISK_DIR / filename).exists(), f"{filename} should live in scripts/high_risk/"

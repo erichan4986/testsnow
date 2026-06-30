@@ -1,8 +1,7 @@
 #!/bin/bash
 # 启动 Chrome 并开启远程调试端口（CDP 模式）
-# macOS 双击运行
+# 用法: ./scripts/high_risk/start_chrome_cdp.sh
 
-cd "$(dirname "$0")/.."
 CHROME_APP="/Applications/Google Chrome.app/Contents/MacOS/Google Chrome"
 USER_DATA_DIR="$HOME/Library/Application Support/Google/Chrome"
 CDP_PORT=9222
@@ -28,7 +27,7 @@ echo ""
 
 cp -r "$USER_DATA_DIR"/* "$TMP_PROFILE/" 2>/dev/null || true
 
-# 移除锁文件
+# 移除锁文件，避免"profile 正在使用"错误
 rm -f "$TMP_PROFILE/SingletonLock" "$TMP_PROFILE/SingletonSocket" "$TMP_PROFILE/SingletonCookie" 2>/dev/null
 
 echo "正在启动 Chrome（CDP端口: $CDP_PORT）..."
@@ -36,11 +35,9 @@ echo ""
 echo "启动后请："
 echo "  1. 在 Chrome 中访问 https://xueqiu.com"
 echo "  2. 登录雪球账号（如果未自动登录）"
-echo "  3. 登录完成后，在终端运行: python3 scripts/batch_fetch_quality_posts.py"
+echo "  3. 登录完成后，在另一个终端运行抓取脚本"
 echo ""
 echo "=========================================="
-echo ""
-read -p "按回车键启动 Chrome..."
 
 # 启动 Chrome
 "$CHROME_APP" \

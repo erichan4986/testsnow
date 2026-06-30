@@ -18,14 +18,14 @@ def run_script(*args):
 
 
 def test_extract_detail_help_does_not_start_browser():
-    result = run_script("scripts/extract_detail.py", "--help")
+    result = run_script("scripts/high_risk/extract_detail.py", "--help")
 
     assert result.returncode == 0
     assert "雪球帖子详情页批量提取" in result.stdout
 
 
 def test_deprecated_cdp_script_help_works():
-    result = run_script("scripts/extract_detail_via_cdp.py", "--help")
+    result = run_script("scripts/high_risk/extract_detail_via_cdp.py", "--help")
 
     assert result.returncode == 0
     assert "Deprecated" in result.stdout or "deprecated" in result.stdout
@@ -33,7 +33,7 @@ def test_deprecated_cdp_script_help_works():
 
 
 def test_deprecated_cdp_script_exits_nonzero_with_guidance():
-    result = run_script("scripts/extract_detail_via_cdp.py")
+    result = run_script("scripts/high_risk/extract_detail_via_cdp.py")
 
     assert result.returncode == 1
     assert "extract_detail.py" in result.stdout

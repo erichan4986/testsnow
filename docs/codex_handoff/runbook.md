@@ -137,12 +137,11 @@ bash scripts/smoke/smoke_test.sh
 然后运行提取脚本：
 
 ```bash
-cd scripts
-python extract_detail.py --stock 黑芝麻智能 --date YYYYMMDD --cdp-port 9222
-python extract_detail.py --all --date YYYYMMDD --cdp-port 9222
+python scripts/high_risk/extract_detail.py --stock 黑芝麻智能 --date YYYYMMDD --cdp-port 9222
+python scripts/high_risk/extract_detail.py --all --date YYYYMMDD --cdp-port 9222
 ```
 
-> `extract_detail_via_cdp.py` 已弃用，保留仅作为兼容性 shim。请使用 `extract_detail.py`。
+> `scripts/high_risk/extract_detail_via_cdp.py` 已弃用，保留仅作为兼容性 shim。请使用 `scripts/high_risk/extract_detail.py`。
 
 ---
 

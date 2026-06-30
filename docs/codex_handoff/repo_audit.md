@@ -281,7 +281,7 @@ ctx.output["chart_paths"]          # 图表路径字典
 
 | 文件 | 状态 | 说明 |
 |------|------|------|
-| `scripts/extract_detail_via_cdp.py` | 孤儿 | 未任何代码 import，`extract_detail.py` 已覆盖同样功能。顶部有 deprecation note。保留作为独立 CLI 工具。 |
+| `scripts/high_risk/extract_detail_via_cdp.py` | 孤儿 | 未任何代码 import，`scripts/high_risk/extract_detail.py` 已覆盖同样功能。顶部有 deprecation note。保留作为独立 CLI 工具。 |
 
 ---
 

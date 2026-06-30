@@ -2,8 +2,8 @@
 """雪球帖子详情页批量提取脚本
 
 用法:
-    python scripts/extract_detail.py --stock 黑芝麻智能
-    python scripts/extract_detail.py --all
+    python scripts/high_risk/extract_detail.py --stock 黑芝麻智能
+    python scripts/high_risk/extract_detail.py --all
 
 读取 data/raw/xueqiu_data_{date}_{stock}.json 中的帖子 URL，
 使用 DetailPageFetcher 进入详情页提取完整正文，写入 knowledge/10-Stocks/{stock}/posts/。
@@ -16,7 +16,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = SCRIPTS_DIR.parent
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 from utils.detail_page_fetcher import DetailPageFetcher
 
@@ -41,7 +43,7 @@ STOCKS = [
 
 def load_stock_posts(stock_name: str, date_str: str) -> list:
     """加载已抓取的列表页数据。"""
-    raw_dir = Path(__file__).parent.parent / "data" / "raw"
+    raw_dir = REPO_ROOT / "data" / "raw"
     candidate = raw_dir / f"xueqiu_data_{date_str}_{stock_name}.json"
     if not candidate.exists():
         logger.warning(f"未找到列表页数据: {candidate}")
@@ -70,7 +72,7 @@ def main(argv=None):
         parser.print_help()
         sys.exit(1)
 
-    vault_base = Path(__file__).parent.parent / "knowledge" / "10-Stocks"
+    vault_base = REPO_ROOT / "knowledge" / "10-Stocks"
 
     # 初始化成熟的 DetailPageFetcher
     fetcher = DetailPageFetcher(

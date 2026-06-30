@@ -8,9 +8,9 @@
 - 同一作者相似内容去重
 
 使用方法：
-1. 先运行启动器: ./scripts/start_chrome_cdp.sh
+1. 先运行启动器: ./scripts/high_risk/start_chrome_cdp.sh
 2. 在 Chrome 中登录雪球网
-3. 运行本脚本: python3 scripts/batch_fetch_quality_posts.py
+3. 运行本脚本: python3 scripts/high_risk/batch_fetch_quality_posts.py
 4. 抓取结果写入 knowledge/10-Stocks/<股票>/posts/
 """
 
@@ -19,7 +19,8 @@ import sys
 import time
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent / "utils"))
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(SCRIPTS_DIR / "utils"))
 
 from detail_page_fetcher import DetailPageFetcher
 
@@ -111,7 +112,7 @@ def main():
     )
 
     print("正在连接 Chrome CDP (http://127.0.0.1:9222)...")
-    print("如果连接失败，请先运行: ./scripts/start_chrome_cdp.sh")
+    print("如果连接失败，请先运行: ./scripts/high_risk/start_chrome_cdp.sh")
     print()
 
     # 逐只股票抓取

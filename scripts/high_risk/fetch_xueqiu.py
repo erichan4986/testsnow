@@ -2,8 +2,8 @@
 """雪球网帖子独立抓取脚本（交互式CDP模式）
 
 用法:
-    python scripts/fetch_xueqiu.py --stock 黑芝麻智能
-    python scripts/fetch_xueqiu.py --all
+    python scripts/high_risk/fetch_xueqiu.py --stock 黑芝麻智能
+    python scripts/high_risk/fetch_xueqiu.py --all
 """
 
 import argparse
@@ -17,7 +17,9 @@ import time
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+SCRIPTS_DIR = Path(__file__).resolve().parents[1]
+REPO_ROOT = SCRIPTS_DIR.parent
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 from utils.fetcher import XueqiuFetcher
 
@@ -157,7 +159,7 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    raw_dir = Path(__file__).parent.parent / "data" / "raw"
+    raw_dir = REPO_ROOT / "data" / "raw"
     raw_dir.mkdir(parents=True, exist_ok=True)
 
     # 启动 Chrome CDP

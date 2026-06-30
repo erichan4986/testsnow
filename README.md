@@ -155,10 +155,10 @@ DeepAnalysisRenderer（新增 "4.3 项目动态与产品进展"）
 | `run_圣邦股份.py` | 圣邦股份 (300661) 完整报告入口 | 调用 `data_collector` + `financial_agent` + `stock_reporter` |
 | `demo_shengbang.py` | 圣邦股份演示脚本 | 演示全流程：采集→LLM分析→Obsidian写入→PDF生成 |
 | `xueqiu_monitor_v2.py` | **雪球情绪监控主程序** | 每周手动运行，采集6只持仓股的社区情绪，调用 Kimi API 生成分析报告 |
-| `fetch_xueqiu.py` | 雪球列表页采集脚本 | CLI 工具，启动 Chrome 登录雪球后批量采集帖子 |
-| `batch_fetch_quality_posts.py` | 批量提取高质量帖子详情页 | 过滤互动数>=15的帖子，用 `DetailPageFetcher` 提取完整正文 |
-| `extract_detail.py` | 帖子详情页提取脚本 | 读取 raw JSON，提取 URL，调用 `DetailPageFetcher` 写入 knowledge |
-| `extract_detail_via_cdp.py` | CDP 模式提取详情页 | 直接连接本地 Chrome 提取雪球帖子内容 |
+| `high_risk/fetch_xueqiu.py` | 雪球列表页采集脚本 | 高风险 CLI，启动 Chrome 登录雪球后批量采集帖子 |
+| `high_risk/batch_fetch_quality_posts.py` | 批量提取高质量帖子详情页 | 高风险入口，过滤互动数>=15的帖子，用 `DetailPageFetcher` 提取完整正文 |
+| `high_risk/extract_detail.py` | 帖子详情页提取脚本 | 高风险入口，读取 raw JSON，提取 URL，调用 `DetailPageFetcher` 写入 knowledge |
+| `high_risk/extract_detail_via_cdp.py` | CDP 模式提取详情页 | 已废弃 shim，保留安全提示 |
 | `archive/legacy_maintenance/generate_periodic_report.py` | 旧定期报告生成器 | CLI 包装 `PeriodicReporter`，已归档；新流程优先使用年报缓存与 Source Intake |
 | `periodic_report_cache.py` | 年报缓存入口 | A 股可通过巨潮发现并下载官方 PDF；港股/美股用官方 PDF URL 或本地 PDF/TXT 注册到 `data/raw/periodic_reports/` |
 | `previews/broker_research_digest_preview.py` | 券商研报 digest 预览入口 | 从 `data/raw/broker_research_reports/<stock>_<code>/_downloads/` 读取 PDF，生成 `/tmp` preview，可选写入 `broker_research_digest` Knowledge notes |

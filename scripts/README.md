@@ -47,9 +47,12 @@ browser, CDP, or login state, document that explicitly in the script header.
 Scripts that touch Xueqiu details, browser automation, CDP, or logged-in
 sessions require explicit user authorization before use. This includes:
 
-- `extract_detail_via_cdp.py`
-- `start_chrome_cdp.sh`
-- `start_chrome_cdp.command`
+- `scripts/high_risk/extract_detail.py`
+- `scripts/high_risk/extract_detail_via_cdp.py`
+- `scripts/high_risk/fetch_xueqiu.py`
+- `scripts/high_risk/batch_fetch_quality_posts.py`
+- `scripts/high_risk/start_chrome_cdp.sh`
+- `scripts/high_risk/start_chrome_cdp.command`
 - any future script that controls Chrome, Playwright, or a logged-in session
 
 Prefer cached/list-page data and official or lower-risk APIs for routine report

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Deprecated compatibility shim for Xueqiu detail extraction.
 
-This script is no longer maintained. Use scripts/extract_detail.py instead.
+This script is no longer maintained. Use scripts/high_risk/extract_detail.py instead.
 """
 
 import argparse
@@ -12,9 +12,8 @@ MESSAGE = """\
 
 Please use the canonical extraction command instead:
 
-    cd scripts
-    python extract_detail.py --stock 黑芝麻智能 --date YYYYMMDD --cdp-port 9222
-    python extract_detail.py --all --date YYYYMMDD --cdp-port 9222
+    python scripts/high_risk/extract_detail.py --stock 黑芝麻智能 --date YYYYMMDD --cdp-port 9222
+    python scripts/high_risk/extract_detail.py --all --date YYYYMMDD --cdp-port 9222
 
 The new command reads featured posts from data/raw/ and extracts detail pages
 via Chrome CDP with proper delays and Vault output.
