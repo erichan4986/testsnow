@@ -68,20 +68,20 @@ python xueqiu_monitor_v2.py --xueqiu
 
 ## 3. 纯技术形态分析（独立流程，不走主 pipeline）
 
-**入口**：`scripts/run_technical_analysis.py`
+**入口**：当前为股票专用脚本，仓库内没有统一的 `run_technical_analysis.py` 通用 CLI。
 
 ```bash
 cd scripts
-python run_technical_analysis.py <股票名称> <代码> <市场(0=深圳/1=上海)>
+python run_澜起科技技术分析_真实数据.py
 ```
 
 示例：
 
 ```bash
-python run_technical_analysis.py 测试股 000001 0
+python run_中简科技技术分析_真实数据.py
 ```
 
-- 不依赖雪球数据，直接从 API 拉取 K 线
+- 不走主报告 pipeline
 - 输出 Markdown 技术报告到 `reports/`
 
 ---

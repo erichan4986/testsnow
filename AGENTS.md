@@ -30,8 +30,8 @@ cd scripts && python xueqiu_monitor_v2.py
 # 带雪球社区采集（高风险；需 Chrome 已登录并开启 CDP 远程调试）
 cd scripts && python xueqiu_monitor_v2.py --xueqiu
 
-# 纯技术形态分析（独立流程，不走主 pipeline）
-cd scripts && python run_technical_analysis.py <股票名称> <代码> <市场(0=深圳/1=上海)>
+# 纯技术形态分析（独立流程，不走主 pipeline；当前为股票专用入口）
+cd scripts && python run_澜起科技技术分析_真实数据.py
 
 # 测试
 pytest
@@ -47,7 +47,7 @@ pytest tests/reporter/test_technical_*.py -v
 scripts/
   run_*.py                      # 单股深度报告入口；测试/试跑优先使用，黑芝麻智能为默认样例
   xueqiu_monitor_v2.py          # 批量轻量报告/采集调度入口；不作为默认测试入口
-  run_technical_analysis.py     # 纯技术分析入口
+  run_*技术分析_真实数据.py      # 纯技术分析股票专用入口；当前无统一通用 CLI
   utils/
     skill_pipeline.py           # Pipeline 框架（SkillContext + BaseSkill）
     stock_reporter.py           # PerStockReporter 外观类
@@ -84,7 +84,7 @@ reports/                        # Markdown/HTML/PDF 报告输出
 - **不要重写整个仓库**：当前代码已运行稳定，修改应聚焦在特定 skill 或 renderer 上。
 - **不要随意更换数据源**：行情用腾讯财经、财务用 akshare/东财、研报用东财 reportapi。更换数据源需充分验证字段兼容性。
 - **不要引入大型框架**：当前依赖仅 11 个（requests/python-dotenv/openai/playwright/mardown/mootdx/stockstats/akshare/plotly/kaleido）。不要引入 Django/FastAPI/Flask 等 Web 框架。
-- **不要删除现有入口**：`xueqiu_monitor_v2.py`、`run_*.py`、`run_technical_analysis.py` 是用户的使用入口，不能删除或改名。
+- **不要删除现有入口**：`xueqiu_monitor_v2.py`、`run_*.py`、`run_*技术分析_真实数据.py` 是用户的使用入口，不能删除或改名。
 - **不要修改核心业务代码 unless 明确 requested**：如 scoring_engine.py 的阈值、technical_*.py 的算法，修改前需写测试验证。
 - **不要把 `xueqiu_monitor_v2.py` 当默认验证入口**：报告试跑、runtime validation、样例报告验收应优先使用 `scripts/run_黑芝麻智能.py --fast-test` 或对应单股 `run_*.py` 的快速验证模式。只有验证批量调度/采集本身时才运行 `xueqiu_monitor_v2.py`。
 - **不要在普通工程验证中消耗知乎/LLM token**：`run_黑芝麻智能.py --fast-test` 会跳过知乎采集和 ZhihuCurator，优先复用本地 `data/raw/report_input_*_黑芝麻智能.json` 中的知乎数据；只有任务明确要求刷新知乎内容质量或正式生成最新基本面材料时，才运行不带 `--fast-test` 的完整入口。

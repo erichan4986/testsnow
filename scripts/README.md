@@ -20,8 +20,8 @@ script supports it.
 - `xueqiu_monitor_v2.py` is the legacy batch/light monitor path. Do not add new
   deep-report business logic here.
 - `run_*技术分析_真实数据.py` scripts are standalone technical-analysis paths.
-- `run_technical_analysis.py` may exist in older checkouts as the pure technical
-  analysis entrypoint.
+- There is currently no generic `run_technical_analysis.py` CLI in this
+  checkout; use the stock-specific technical-analysis scripts instead.
 
 ## Preview and experiment scripts
 

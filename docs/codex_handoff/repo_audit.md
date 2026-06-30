@@ -43,7 +43,7 @@ python run_黑芝麻智能.py      # 或其他 run_*.py 文件
 **单股技术形态分析（独立流程，不走主 pipeline）**：
 ```bash
 cd scripts
-python run_technical_analysis.py <股票名称> <代码> <市场(0/1)>
+python run_澜起科技技术分析_真实数据.py
 ```
 
 ### 1.3 测试命令
@@ -67,7 +67,7 @@ pytest tests/reporter/test_technical_*.py -v
 |----------|------|----------|
 | `scripts/xueqiu_monitor_v2.py` | **主入口**，每周运行一次 | 采集 → 分析 → 生成报告 → PDF导出 |
 | `scripts/run_*.py`（6个文件） | 单股快速运行入口 | 直接构造 `PerStockReporter` 并生成报告 |
-| `scripts/run_technical_analysis.py` | 纯技术形态分析（独立流程） | 不依赖主 pipeline，直接读取 data/raw/ 中的 JSON |
+| `scripts/run_*技术分析_真实数据.py` | 纯技术形态分析股票专用入口（独立流程） | 不依赖主 pipeline；当前无统一通用 CLI |
 
 **主流程调用链**（`xueqiu_monitor_v2.py`）：
 ```
@@ -291,7 +291,7 @@ ctx.output["chart_paths"]          # 图表路径字典
 scripts/
   xueqiu_monitor_v2.py          # 主入口
   run_*.py                      # 单股入口（6个）
-  run_technical_analysis.py     # 纯技术分析入口
+  run_*技术分析_真实数据.py      # 纯技术分析股票专用入口
   utils/
     skill_pipeline.py           # Pipeline 框架
     stock_reporter.py           # PerStockReporter 外观

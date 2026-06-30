@@ -116,7 +116,7 @@ pytest tests/reporter/test_technical_*.py -v
 |------|---------|
 | `scripts/xueqiu_monitor_v2.py` | Main entry: collect → analyze → report → PDF (all 6 stocks) |
 | `scripts/run_*.py` | Single-stock quick entry points |
-| `scripts/run_technical_analysis.py` | Pure technical analysis (no pipeline, direct K-line fetch) |
+| `scripts/run_*技术分析_真实数据.py` | Stock-specific pure technical analysis entrypoints (no main pipeline) |
 
 ### Core Framework
 | File | Purpose | Lines |
@@ -225,7 +225,7 @@ When starting work on this codebase, follow this order:
 **Strict prohibition**: The codebase is stable and running in production. Changes must be:
 - **Focused**: Target one skill, one renderer, or one collector at a time.
 - **Tested**: Every change must pass `pytest` and generate at least one sample report (`python run_黑芝麻智能.py`).
-- **Incremental**: Preserve existing entry points (`xueqiu_monitor_v2.py`, `run_*.py`, `run_technical_analysis.py`). Do not rename or delete them.
+- **Incremental**: Preserve existing entry points (`xueqiu_monitor_v2.py`, `run_*.py`, `run_*技术分析_真实数据.py`). Do not rename or delete them.
 - **Validated**: For LLM prompt changes, show sample output to user for approval before committing.
 
 **Never**:
