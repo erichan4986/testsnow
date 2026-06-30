@@ -29,9 +29,8 @@ Files ending in `_preview.py`, plus source-material exploration scripts such as
 `wechat_*_preview.py`, live in `scripts/previews/`. They are prototype or manual
 validation tools and should not be used as production report entrypoints.
 
-Older curated-external preview experiments that are no longer current live in
-`scripts/archive/old_previews/`. They are retained for reference only; do not
-add new callers to archived script paths.
+Older curated-external preview experiments that are no longer current were
+deleted after the active preview CLIs moved to `scripts/previews/`.
 
 Older maintenance helpers that are not part of the current report path live in
 `scripts/archive/legacy_maintenance/`. Keep them callable for manual recovery,

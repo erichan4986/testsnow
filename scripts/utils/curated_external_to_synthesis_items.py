@@ -1,8 +1,8 @@
 """Preview adapter: curated external candidates → synthesis display-only items.
 
-Reads the JSONL/JSON output from `curated_external_candidate_discovery_preview.py`,
-keeps only preview-safe candidates, and emits display-only synthesis items that
-are explicitly **not** fed into canonical Knowledge / scoring / risk paths.
+Reads curated external candidate JSONL/JSON exports, keeps only preview-safe
+candidates, and emits display-only synthesis items that are explicitly **not**
+fed into canonical Knowledge / scoring / risk paths.
 """
 
 from __future__ import annotations

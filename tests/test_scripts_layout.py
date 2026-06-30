@@ -7,7 +7,7 @@ OLD_PREVIEWS_ARCHIVE = SCRIPTS_DIR / "archive" / "old_previews"
 LEGACY_MAINTENANCE_ARCHIVE = SCRIPTS_DIR / "archive" / "legacy_maintenance"
 ACTIVE_PREVIEWS_DIR = SCRIPTS_DIR / "previews"
 
-ARCHIVED_OLD_PREVIEWS = [
+DELETED_OLD_PREVIEWS = [
     "curated_external_analysis_preview.py",
     "curated_external_candidate_discovery_preview.py",
     "curated_external_section_preview.py",
@@ -33,10 +33,10 @@ ARCHIVED_LEGACY_MAINTENANCE = [
 ]
 
 
-def test_old_curated_external_preview_scripts_are_archived():
-    for filename in ARCHIVED_OLD_PREVIEWS:
+def test_old_curated_external_preview_scripts_are_deleted():
+    for filename in DELETED_OLD_PREVIEWS:
         assert not (SCRIPTS_DIR / filename).exists(), f"{filename} should not remain in scripts/"
-        assert (OLD_PREVIEWS_ARCHIVE / filename).exists(), f"{filename} should live in old preview archive"
+        assert not (OLD_PREVIEWS_ARCHIVE / filename).exists(), f"{filename} should be deleted from old preview archive"
 
 
 def test_active_preview_scripts_live_in_previews_dir():
