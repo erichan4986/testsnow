@@ -159,10 +159,10 @@ DeepAnalysisRenderer（新增 "4.3 项目动态与产品进展"）
 | `batch_fetch_quality_posts.py` | 批量提取高质量帖子详情页 | 过滤互动数>=15的帖子，用 `DetailPageFetcher` 提取完整正文 |
 | `extract_detail.py` | 帖子详情页提取脚本 | 读取 raw JSON，提取 URL，调用 `DetailPageFetcher` 写入 knowledge |
 | `extract_detail_via_cdp.py` | CDP 模式提取详情页 | 直接连接本地 Chrome 提取雪球帖子内容 |
-| `generate_periodic_report.py` | 定期报告生成器 | CLI 包装 `PeriodicReporter`，生成季报/半年报/年报 |
+| `archive/legacy_maintenance/generate_periodic_report.py` | 旧定期报告生成器 | CLI 包装 `PeriodicReporter`，已归档；新流程优先使用年报缓存与 Source Intake |
 | `periodic_report_cache.py` | 年报缓存入口 | A 股可通过巨潮发现并下载官方 PDF；港股/美股用官方 PDF URL 或本地 PDF/TXT 注册到 `data/raw/periodic_reports/` |
-| `broker_research_digest_preview.py` | 券商研报 digest 预览入口 | 从 `data/raw/broker_research_reports/<stock>_<code>/_downloads/` 读取 PDF，生成 `/tmp` preview，可选写入 `broker_research_digest` Knowledge notes |
-| `sync_vault_from_raw.py` | 从 raw 数据同步到 Obsidian | 调用 `ObsidianWriter` 将 JSON 数据写入 vault |
+| `previews/broker_research_digest_preview.py` | 券商研报 digest 预览入口 | 从 `data/raw/broker_research_reports/<stock>_<code>/_downloads/` 读取 PDF，生成 `/tmp` preview，可选写入 `broker_research_digest` Knowledge notes |
+| `archive/legacy_maintenance/sync_vault_from_raw.py` | 旧 raw 到 Obsidian 同步器 | 归档维护脚本；不作为当前报告主流程入口 |
 
 ### 年报缓存入口 usage
 

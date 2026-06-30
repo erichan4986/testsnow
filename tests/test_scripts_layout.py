@@ -4,6 +4,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 OLD_PREVIEWS_ARCHIVE = SCRIPTS_DIR / "archive" / "old_previews"
+LEGACY_MAINTENANCE_ARCHIVE = SCRIPTS_DIR / "archive" / "legacy_maintenance"
 ACTIVE_PREVIEWS_DIR = SCRIPTS_DIR / "previews"
 
 ARCHIVED_OLD_PREVIEWS = [
@@ -26,6 +27,11 @@ ACTIVE_PREVIEWS = [
     "wechat_targeted_discovery_preview.py",
 ]
 
+ARCHIVED_LEGACY_MAINTENANCE = [
+    "generate_periodic_report.py",
+    "sync_vault_from_raw.py",
+]
+
 
 def test_old_curated_external_preview_scripts_are_archived():
     for filename in ARCHIVED_OLD_PREVIEWS:
@@ -37,3 +43,11 @@ def test_active_preview_scripts_live_in_previews_dir():
     for filename in ACTIVE_PREVIEWS:
         assert not (SCRIPTS_DIR / filename).exists(), f"{filename} should not remain in scripts/"
         assert (ACTIVE_PREVIEWS_DIR / filename).exists(), f"{filename} should live in scripts/previews/"
+
+
+def test_legacy_maintenance_scripts_are_archived():
+    for filename in ARCHIVED_LEGACY_MAINTENANCE:
+        assert not (SCRIPTS_DIR / filename).exists(), f"{filename} should not remain in scripts/"
+        assert (LEGACY_MAINTENANCE_ARCHIVE / filename).exists(), (
+            f"{filename} should live in scripts/archive/legacy_maintenance/"
+        )

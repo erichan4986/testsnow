@@ -2,8 +2,8 @@
 """从 data/raw JSON 直接同步 featured 帖子内容到 Vault。
 
 用法:
-    python scripts/sync_vault_from_raw.py --date 20260602 --stock 黑芝麻智能
-    python scripts/sync_vault_from_raw.py --date 20260602 --all
+    python scripts/archive/legacy_maintenance/sync_vault_from_raw.py --date 20260602 --stock 黑芝麻智能
+    python scripts/archive/legacy_maintenance/sync_vault_from_raw.py --date 20260602 --all
 
 不需要启动 Chrome，直接从已抓取的 JSON 中读取完整正文写入 Vault。
 """
@@ -15,7 +15,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+SCRIPTS_DIR = Path(__file__).resolve().parents[2]
+REPO_ROOT = SCRIPTS_DIR.parent
+sys.path.insert(0, str(SCRIPTS_DIR))
 
 logging.basicConfig(
     level=logging.INFO,
@@ -115,8 +117,8 @@ def main():
         parser.print_help()
         sys.exit(1)
 
-    raw_dir = Path(__file__).parent.parent / "data" / "raw"
-    vault_base = Path(__file__).parent.parent / "knowledge" / "10-Stocks"
+    raw_dir = REPO_ROOT / "data" / "raw"
+    vault_base = REPO_ROOT / "knowledge" / "10-Stocks"
 
     total = 0
     for stock_name in stocks_to_process:

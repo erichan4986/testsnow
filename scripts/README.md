@@ -33,6 +33,10 @@ Older curated-external preview experiments that are no longer current live in
 `scripts/archive/old_previews/`. They are retained for reference only; do not
 add new callers to archived script paths.
 
+Older maintenance helpers that are not part of the current report path live in
+`scripts/archive/legacy_maintenance/`. Keep them callable for manual recovery,
+but do not document them as primary entrypoints.
+
 ## Smoke scripts
 
 Smoke scripts live in `scripts/smoke/` and are focused integration checks. Keep

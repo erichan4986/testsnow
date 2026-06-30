@@ -2,16 +2,17 @@
 """
 周期性报告生成器
 用法:
-    python generate_periodic_report.py --type quarterly --year 2025 --quarter 2 --stock 300661
-    python generate_periodic_report.py --type semiannual --year 2025 --half 1 --stock 300661
-    python generate_periodic_report.py --type annual --year 2025 --stock 300661
+    python scripts/archive/legacy_maintenance/generate_periodic_report.py --type quarterly --year 2025 --quarter 2 --stock 300661
+    python scripts/archive/legacy_maintenance/generate_periodic_report.py --type semiannual --year 2025 --half 1 --stock 300661
+    python scripts/archive/legacy_maintenance/generate_periodic_report.py --type annual --year 2025 --stock 300661
 """
 
 import argparse
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent / "utils"))
+SCRIPTS_DIR = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(SCRIPTS_DIR / "utils"))
 
 from periodic_reporter import PeriodicReporter
 
