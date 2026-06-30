@@ -577,6 +577,7 @@ class SynthesisSkill(BaseSkill):
         deduped_sources_key: str = "synthesis_display_deduped_sources",
     ) -> dict:
         """调用 KnowledgeSynthesizer 或降级模板生成综合叙事。"""
+        source_policy = self._canonical_synthesis_source_policy(ctx)
         enable_cv = bool(ctx.get("enable_claim_verification_context")) if ctx else False
         cv_context = None
         cv_status = None
@@ -605,7 +606,14 @@ class SynthesisSkill(BaseSkill):
             if ctx is not None:
                 ctx.set(deduped_sources_key, deduped_sources)
         if not items:
-            return self._template_synthesize(stock_raw, items_count=0, sources=[])
+            if ctx is not None and source_policy == "formal_first":
+                ctx.set("formal_first_sources_insufficient", True)
+            return self._template_synthesize(
+                stock_raw,
+                items_count=0,
+                sources=[],
+                source_policy=source_policy,
+            )
 
         synthesizer = self.synthesizer or KnowledgeSynthesizer(client=self.llm_client)
         all_data = {"items": items}
@@ -620,6 +628,7 @@ class SynthesisSkill(BaseSkill):
                 stock_raw,
                 items_count=len(items),
                 sources=self._source_list(items),
+                source_policy=source_policy,
             )
 
         result["_items_count"] = len(items)
@@ -942,7 +951,13 @@ class SynthesisSkill(BaseSkill):
         """Render guarded non-citable appendix for legacy prompt."""
         return format_claim_verification_appendix(context, is_legacy=True)
 
-    def _template_synthesize(self, stock_raw: dict, items_count: int = 0, sources: List[str] = None) -> dict:
+    def _template_synthesize(
+        self,
+        stock_raw: dict,
+        items_count: int = 0,
+        sources: List[str] = None,
+        source_policy: str = "legacy_mixed",
+    ) -> dict:
         """无 LLM 时的降级模板，只描述可验证状态，不生成伪基本面结论。"""
         tech = stock_raw.get("technical", {})
         indicators = tech.get("indicators", {})
@@ -950,6 +965,7 @@ class SynthesisSkill(BaseSkill):
         score = resonance.get("composite_score", 5)
         sources = sources or []
         source_text = "、".join(sources) if sources else "无可用多源内容"
+        formal_sources_insufficient = source_policy == "formal_first" and items_count == 0
 
         if score >= 7:
             trend = "整体偏多"
@@ -957,6 +973,27 @@ class SynthesisSkill(BaseSkill):
             trend = "整体偏空"
         else:
             trend = "震荡整理"
+
+        if formal_sources_insufficient:
+            return {
+                "industry_logic": (
+                    f"formal_first 模式下正式材料不足：当前可用于 4.1-4.3 的公告、研报、年报或"
+                    f"主流新闻不足；仅保留技术面降级摘要，技术面综合评分 {score}，{trend}。"
+                ),
+                "fundamentals": (
+                    "formal_first 已排除雪球/知乎/微信等社媒材料；在正式来源补足前，"
+                    "不生成完整基本面叙事。"
+                ),
+                "valuation_debate": "估值多空分歧需等待可引用的正式材料补足后再展开。",
+                "funding_sentiment": "资金面与情绪仅保留原始数据，未生成推断性叙事。",
+                "events_catalysts": "事件催化仅保留原始公告/新闻线索，未生成推断性叙事。",
+                "core_facts": [],
+                "citations": {},
+                "_items_count": items_count,
+                "_sources": sources,
+                "_source_policy": source_policy,
+                "_formal_first_sources_insufficient": True,
+            }
 
         return {
             "industry_logic": f"当前仅完成技术面降级摘要：技术面综合评分 {score}，{trend}。",
@@ -968,4 +1005,5 @@ class SynthesisSkill(BaseSkill):
             "citations": {},
             "_items_count": items_count,
             "_sources": sources,
+            "_source_policy": source_policy,
         }

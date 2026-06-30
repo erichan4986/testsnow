@@ -276,6 +276,76 @@ def test_formal_first_source_policy_excludes_social_from_canonical_synthesis():
     assert "正式外部研报" in titles
 
 
+def test_formal_first_with_only_social_sources_marks_formal_sources_insufficient():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake, canonical_synthesis_source_policy="formal_first")
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {
+                "report_items": [
+                    {
+                        "title": "知乎深度帖",
+                        "content": "知乎观点内容",
+                        "author_name": "知乎作者",
+                        "url": "https://zhihu.com/question/1",
+                    }
+                ]
+            },
+        },
+        "keep_posts": [{"title": "雪球帖", "content": "雪球观点内容", "source": "雪球"}],
+    })
+
+    skill.run(ctx)
+
+    assert not fake.calls
+    synthesis = ctx.output["synthesis"]
+    text = "\n".join(str(synthesis.get(key, "")) for key in (
+        "industry_logic",
+        "fundamentals",
+        "valuation_debate",
+    ))
+    assert synthesis["_source_policy"] == "formal_first"
+    assert synthesis["_formal_first_sources_insufficient"] is True
+    assert "正式材料不足" in text
+    assert "雪球/知乎/微信" in text
+
+
+def test_empty_synthesizer_result_falls_back_to_template_without_crashing():
+    class EmptySynthesizer:
+        def __init__(self):
+            self.calls = []
+
+        def synthesize(self, stock_name, all_data):
+            self.calls.append((stock_name, all_data))
+            return {}
+
+    fake = EmptySynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_raw": {
+            "reports": [{"title": "券商研报", "content": "正式研报内容", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert fake.calls
+    synthesis = ctx.output["synthesis"]
+    assert synthesis["_items_count"] == 1
+    assert "基本面 LLM 合成未启用或未产生有效输出" in synthesis["fundamentals"]
+
+
 def test_legacy_mixed_source_policy_keeps_social_sources_by_default():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
