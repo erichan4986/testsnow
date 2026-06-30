@@ -89,3 +89,75 @@ Recommended next validation:
 Only after 中际旭创 passes should 圣邦股份 be used as the no-4.4 A-share
 control.  黑芝麻智能 should remain later because HK formal-source coverage may
 need a separate source-intake path or graceful degradation thresholds.
+
+## 5. Formal Entry Validation Results
+
+### 中际旭创
+
+Validation record:
+
+```text
+/tmp/formal_first_zhongji_validation.md
+```
+
+Result: pass.
+
+- `run_stock_report.py --stock 中际旭创 --no-pdf` succeeded.
+- `source_intake`: `status=ok items=32`; merge `keep=25 demote=0 discard=0`.
+- `4.1-4.3` had substantive content and no fallback / degradation template.
+- `4.1-4.3` citations were limited to announcements, research reports,
+  industry research, and industry news.
+- Xueqiu / Zhihu / WeChat / curated external content did not enter
+  `4.1-4.3`.
+- `4.4` remained a flat display-only curated external narrative.
+- `check_report_quality.py` passed with the known unrelated
+  `contradiction_blocked_entry_strong_recommendation` warning.
+- `tools/ci_grep_gates.sh` passed.
+- Config was restored and git status was clean after validation.
+
+### 圣邦股份
+
+Validation record:
+
+```text
+/tmp/formal_first_shengbang_validation.md
+```
+
+Result: pass.
+
+- `run_stock_report.py --stock 圣邦股份 --no-pdf` succeeded.
+- `source_intake`: `status=ok items=23`; merge `keep=21 demote=0 discard=0`.
+- `4.1-4.3` had substantive content and no fallback / degradation template.
+- Xueqiu / Zhihu / WeChat / curated external content did not enter
+  `4.1-4.3`.
+- `4.4` did not render, as expected for a stock without curated external
+  narrative configuration.
+- `check_report_quality.py` passed with no warning.
+- `tools/ci_grep_gates.sh` passed.
+- Config was restored and git status was clean after validation.
+
+Important observation:
+
+圣邦股份 has `periodic_narrative_cards_synthesis_display` and
+`broker_research_digest_synthesis_display` enabled.  When no curated external
+display is present, `DeepAnalysisRenderer` may render `4.1-4.3` from
+`synthesis_display`, so annual-report narrative cards can appear in `4.1-4.3`
+as display-layer supporting material.  These are not social sources, but this
+means `formal_first` currently guarantees social-source exclusion from
+canonical synthesis, not a strict "baseline-only renderer" contract.
+
+## 6. Updated Decision
+
+For A-share pilots with live source-intake enabled, `formal_first` is viable as
+an opt-in source policy:
+
+- 中际旭创 validates the "with curated external 4.4" path.
+- 圣邦股份 validates the "without 4.4" path.
+
+Do not make it the default yet.
+
+Before default rollout, decide whether renderer fallback to
+`synthesis_display` is acceptable for `4.1-4.3`, or whether `formal_first`
+should force `4.1-4.3` to render from baseline canonical synthesis only while
+keeping annual-report / broker digest display material in a separate display
+section.
