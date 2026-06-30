@@ -52,6 +52,26 @@ SYNTHESIS_KEYS = [
     "events_catalysts",
 ]
 
+CURATED_EXTERNAL_TOPIC_ALIASES = {
+    "supply_delivery_capacity": "order_capacity_delivery",
+    "order_capacity": "order_capacity_delivery",
+    "delivery_capacity": "order_capacity_delivery",
+    "supply_chain": "order_capacity_delivery",
+    "technology_route": "technology_route",
+    "tech_route": "technology_route",
+    "industry_logic": "technology_route",
+    "financial_quality": "financial_quality",
+    "fundamentals": "financial_quality",
+    "earnings_quality": "financial_quality",
+    "competition_commercialization": "competition_commercialization",
+    "commercialization": "competition_commercialization",
+    "market_expectation": "market_expectation",
+    "capital_market": "market_expectation",
+    "risk_rumor_rebuttal": "risk_rumor_rebuttal",
+    "watch_variable": "risk_rumor_rebuttal",
+    "dissent": "risk_rumor_rebuttal",
+}
+
 
 class SynthesisSkill(BaseSkill):
     """LLM 综合叙事生成。"""
@@ -251,6 +271,7 @@ class SynthesisSkill(BaseSkill):
             "citations": citations,
             "_curated_external_narrative": True,
             "_curated_external_narrative_paragraphs": paragraphs,
+            "_curated_external_taxonomy_version": "external_viewpoint.v1",
             "_items_count": len(paragraphs),
             "_sources": list(citations.values()),
         }
@@ -381,12 +402,17 @@ class SynthesisSkill(BaseSkill):
             "funding_sentiment": [],
             "events_catalysts": [],
         }
+        topic_groups = {}
         citations = {}
 
         for ref_id, claim in enumerate(claims, start=1):
             line = self._format_viewpoint_digest_observation(claim, ref_id)
             bucket = self._viewpoint_digest_bucket(claim)
             grouped[bucket].append(line)
+            topic_key = self._external_viewpoint_topic_key(claim)
+            topic_groups.setdefault(topic_key, []).append(
+                self._viewpoint_digest_topic_row(claim, ref_id)
+            )
             citations[ref_id] = self._viewpoint_digest_citation(claim)
 
         return {
@@ -409,6 +435,8 @@ class SynthesisSkill(BaseSkill):
             ),
             "core_facts": [],
             "citations": citations,
+            "_curated_external_topic_groups": topic_groups,
+            "_curated_external_taxonomy_version": "external_viewpoint.v1",
             "_items_count": len(claims),
             "_sources": list(citations.values()),
         }
@@ -452,13 +480,54 @@ class SynthesisSkill(BaseSkill):
 
     @staticmethod
     def _viewpoint_digest_bucket(claim: Dict[str, Any]) -> str:
-        topic = str(claim.get("topic") or "")
+        topic_key = SynthesisSkill._external_viewpoint_topic_key(claim)
         claim_type = str(claim.get("claim_type") or "")
-        if any(token in topic for token in ("earnings", "fundamentals", "supply", "capacity", "prepayment")):
+        if topic_key in ("financial_quality", "order_capacity_delivery"):
             return "fundamentals"
-        if claim_type in ("dissent", "watch_variable"):
+        if topic_key in ("risk_rumor_rebuttal", "market_expectation") or claim_type in ("dissent", "watch_variable"):
             return "events_catalysts"
         return "industry_logic"
+
+    @classmethod
+    def _external_viewpoint_topic_key(cls, claim: Dict[str, Any]) -> str:
+        raw_topic = str(claim.get("topic") or claim.get("primary_topic") or "").strip()
+        if raw_topic in CURATED_EXTERNAL_TOPIC_ALIASES:
+            return CURATED_EXTERNAL_TOPIC_ALIASES[raw_topic]
+
+        text = " ".join(
+            str(claim.get(field) or "")
+            for field in ("topic", "claim", "source_quote", "why_incremental", "claim_type")
+        )
+        lower_text = text.lower()
+        if any(token in text for token in ("传言", "否认", "制裁", "清单", "反证", "回应", "1260H")):
+            return "risk_rumor_rebuttal"
+        if any(token in text for token in ("预付款", "交付", "产能", "订单", "供应链", "物料", "客户需求", "需求指引")):
+            return "order_capacity_delivery"
+        if any(token in text for token in ("NPO", "XPO", "CPO", "LPO", "硅光", "可插拔", "光进铜退", "技术路线")):
+            return "technology_route"
+        if any(token in text for token in ("营收", "利润", "毛利率", "费用", "现金流", "亏损", "研发开支")):
+            return "financial_quality"
+        if any(token in text for token in ("竞争", "商业化", "定点", "标杆车型", "市场份额", "客户拓展")):
+            return "competition_commercialization"
+        if any(token in text for token in ("估值", "股价", "市值", "资金", "情绪", "预期差", "机构持仓", "IPO")):
+            return "market_expectation"
+        if any(token in lower_text for token in ("capex", "800g", "1.6t", "scale up", "scale out")):
+            return "technology_route"
+        return "other"
+
+    @classmethod
+    def _viewpoint_digest_topic_row(cls, claim: Dict[str, Any], ref_id: int) -> dict:
+        title = " ".join(str(claim.get("source_title") or claim.get("title") or "外部观点").split())[:80]
+        claim_text = str(claim.get("claim") or "").strip().rstrip("。")
+        why = str(claim.get("why_incremental") or "").strip().rstrip("。")
+        suffix = f"（{why}）" if why else ""
+        return {
+            "heading": title,
+            "text": f"{claim_text}{suffix}。",
+            "citation_refs": [ref_id],
+            "claim_id": claim.get("claim_id", ""),
+            "topic": cls._external_viewpoint_topic_key(claim),
+        }
 
     @staticmethod
     def _format_viewpoint_digest_observation(claim: Dict[str, Any], ref_id: int) -> str:
@@ -638,9 +707,11 @@ class SynthesisSkill(BaseSkill):
 
     def _build_synthesis_items(self, stock_raw: dict, keep_posts: list, ctx: SkillContext = None, extra_items: list = None):
         zhihu = stock_raw.get("zhihu", {})
+        source_policy = self._canonical_synthesis_source_policy(ctx)
+        include_social_sources = source_policy != "formal_first"
         items = adapt_all(
-            xueqiu_items=keep_posts,
-            zhihu_items=zhihu.get("report_items", []),
+            xueqiu_items=keep_posts if include_social_sources else [],
+            zhihu_items=zhihu.get("report_items", []) if include_social_sources else [],
             reports=stock_raw.get("reports", []),
             announcements=stock_raw.get("announcements", []),
             fundflow=stock_raw.get("fundflow", []),
@@ -654,6 +725,17 @@ class SynthesisSkill(BaseSkill):
         if extra_items:
             items = list(items) + list(extra_items)
         return items
+
+    def _canonical_synthesis_source_policy(self, ctx: SkillContext = None) -> str:
+        raw_policy = None
+        if ctx is not None:
+            raw_policy = ctx.get("canonical_synthesis_source_policy")
+        if not raw_policy:
+            raw_policy = getattr(self, "canonical_synthesis_source_policy", "legacy_mixed")
+        policy = str(raw_policy or "legacy_mixed").strip()
+        if policy == "formal_first":
+            return "formal_first"
+        return "legacy_mixed"
 
     def _fill_citation_metadata(self, synthesis: dict, items: list) -> dict:
         citations = synthesis.get("citations", {}) or {}

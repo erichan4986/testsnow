@@ -18,6 +18,33 @@ CURATED_EXTERNAL_ADDENDUM_KEYS = [
     "fundamentals",
     "events_catalysts",
 ]
+CURATED_EXTERNAL_TOPIC_LABELS = [
+    ("order_capacity_delivery", "订单、产能与交付节奏"),
+    ("technology_route", "产业链与技术路线分歧"),
+    ("financial_quality", "业绩质量与财务可持续性争议"),
+    ("competition_commercialization", "竞争格局与商业化窗口"),
+    ("market_expectation", "资本市场预期与情绪温度"),
+    ("risk_rumor_rebuttal", "风险传言与反证线索"),
+    ("other", "其他待验证观察"),
+]
+CURATED_EXTERNAL_TOPIC_ALIASES = {
+    "supply_delivery_capacity": "order_capacity_delivery",
+    "order_capacity": "order_capacity_delivery",
+    "delivery_capacity": "order_capacity_delivery",
+    "technology_route": "technology_route",
+    "tech_route": "technology_route",
+    "industry_logic": "technology_route",
+    "financial_quality": "financial_quality",
+    "fundamentals": "financial_quality",
+    "earnings_quality": "financial_quality",
+    "competition_commercialization": "competition_commercialization",
+    "commercialization": "competition_commercialization",
+    "market_expectation": "market_expectation",
+    "capital_market": "market_expectation",
+    "risk_rumor_rebuttal": "risk_rumor_rebuttal",
+    "watch_variable": "risk_rumor_rebuttal",
+    "dissent": "risk_rumor_rebuttal",
+}
 
 _CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
     "1225145344": "2026年第一季度报告",
@@ -266,15 +293,29 @@ class DeepAnalysisRenderer:
             return ""
 
         citations = curated_display.get("citations", {}) or {}
+        is_narrative = bool(curated_display.get("_curated_external_narrative"))
         lines = [
-            "### 4.4 精选外部观察（Preview）",
+            (
+                "### 4.4 精选外部观察（Preview）"
+                if is_narrative
+                else "### 4.4 外部观点与待验证变量（Preview）"
+            ),
             "",
             "> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
             "",
         ]
-        if curated_display.get("_curated_external_narrative"):
+        if is_narrative:
             return self._curated_external_narrative_addendum(
                 curated_display,
+                citation_offset,
+                lines,
+            )
+
+        topic_groups = curated_display.get("_curated_external_topic_groups") or {}
+        if topic_groups:
+            return self._curated_external_grouped_addendum(
+                topic_groups,
+                curated_display.get("citations", {}) or {},
                 citation_offset,
                 lines,
             )
@@ -365,6 +406,104 @@ class DeepAnalysisRenderer:
                     line += f" | {url}"
                 lines.append(line)
         return "\n".join(lines)
+
+    def _curated_external_grouped_addendum(
+        self,
+        topic_groups: Dict[str, Any],
+        citations: Dict[str, Any],
+        citation_offset: int,
+        lines: List[str],
+    ) -> str:
+        used_refs = set()
+        group_index = 1
+        for topic_key, label in CURATED_EXTERNAL_TOPIC_LABELS:
+            rows = topic_groups.get(topic_key) or []
+            rows = [row for row in rows if isinstance(row, dict)]
+            if not rows:
+                continue
+            lines.extend([
+                f"#### 4.4.{group_index} {label}",
+                "",
+            ])
+            group_index += 1
+            for row in rows:
+                heading = str(row.get("heading") or "").strip()
+                text = str(row.get("text") or "").strip()
+                citation_refs = row.get("citation_refs") or []
+                rendered = self._attach_refs_to_sentence(text, citation_refs)
+                rendered = self._offset_citation_markers(rendered, citation_offset)
+                if heading:
+                    lines.append(f"**{heading}**")
+                    lines.append("")
+                if rendered:
+                    lines.append(rendered)
+                    lines.append("")
+                for ref in citation_refs:
+                    try:
+                        used_refs.add(int(ref) + citation_offset)
+                    except (TypeError, ValueError):
+                        continue
+
+        if used_refs:
+            shifted_citations = self._offset_citations(citations, citation_offset)
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = shifted_citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                url = meta.get("url", "")
+                line = f"- [^{ref_id}] {source}"
+                if author:
+                    line += f" | 作者: {author}"
+                if title_text:
+                    line += f" | 《{self._truncate_title(title_text, 40)}》"
+                if url:
+                    line += f" | {url}"
+                lines.append(line)
+        return "\n".join(lines)
+
+    def _topic_groups_from_paragraphs(self, paragraphs: List[Any]) -> Dict[str, List[dict]]:
+        groups = {key: [] for key, _ in CURATED_EXTERNAL_TOPIC_LABELS}
+        for paragraph in paragraphs:
+            if not isinstance(paragraph, dict):
+                continue
+            topic_key = self._curated_external_topic_key(paragraph)
+            if not topic_key:
+                topic_key = "other"
+            groups.setdefault(topic_key, []).append(paragraph)
+        return {key: rows for key, rows in groups.items() if rows}
+
+    @classmethod
+    def _curated_external_topic_key(cls, row: Dict[str, Any]) -> str:
+        raw_topic = str(row.get("topic") or row.get("primary_topic") or "").strip()
+        if raw_topic:
+            alias = CURATED_EXTERNAL_TOPIC_ALIASES.get(raw_topic)
+            if alias:
+                return alias
+            if raw_topic.lower() in {"misc", "other", "unknown", "uncategorized"}:
+                return "other"
+
+        text = " ".join(
+            str(row.get(field) or "")
+            for field in ("topic", "primary_topic", "heading", "text", "claim", "why_incremental")
+        )
+        lower_text = text.lower()
+        if any(token in text for token in ("传言", "否认", "制裁", "清单", "反证", "回应", "1260H")):
+            return "risk_rumor_rebuttal"
+        if any(token in text for token in ("预付款", "交付", "产能", "订单", "供应链", "物料", "客户需求", "需求指引")):
+            return "order_capacity_delivery"
+        if any(token in text for token in ("NPO", "XPO", "CPO", "LPO", "硅光", "可插拔", "光进铜退", "技术路线")):
+            return "technology_route"
+        if any(token in text for token in ("营收", "利润", "毛利率", "费用", "现金流", "亏损", "研发开支")):
+            return "financial_quality"
+        if any(token in text for token in ("竞争", "商业化", "定点", "标杆车型", "市场份额", "客户拓展")):
+            return "competition_commercialization"
+        if any(token in text for token in ("估值", "股价", "市值", "资金", "情绪", "预期差", "机构持仓", "IPO")):
+            return "market_expectation"
+        if any(token in lower_text for token in ("capex", "800g", "1.6t", "scale up", "scale out")):
+            return "technology_route"
+        return "other"
 
     @staticmethod
     def _attach_refs_to_sentence(text: str, refs: list) -> str:

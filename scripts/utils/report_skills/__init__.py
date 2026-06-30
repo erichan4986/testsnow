@@ -60,6 +60,7 @@ def build_stock_report_pipeline(
     curated_external_viewpoint_narrative_json: str = "",
     include_curated_external_viewpoint_digest_in_deep_analysis_display: bool = False,
     curated_external_viewpoint_digest_json: str = "",
+    canonical_synthesis_source_policy: str = "legacy_mixed",
 ) -> SkillPipeline:
     """构建股票报告生成 Pipeline。"""
     skills = [
@@ -98,6 +99,7 @@ def build_stock_report_pipeline(
             curated_external_viewpoint_narrative_json=curated_external_viewpoint_narrative_json,
             include_curated_external_viewpoint_digest_in_deep_analysis_display=include_curated_external_viewpoint_digest_in_deep_analysis_display,
             curated_external_viewpoint_digest_json=curated_external_viewpoint_digest_json,
+            canonical_synthesis_source_policy=canonical_synthesis_source_policy,
         ),
     ])
 

@@ -67,12 +67,149 @@ def test_curated_external_display_is_addendum_not_replacement():
 
     assert "### 4.1 产业逻辑与竞争格局" in result
     assert "baseline 产业逻辑[^1]" in result
-    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "### 4.4 外部观点与待验证变量（Preview）" in result
     assert "800G需求增长[^2]" in result
-    assert result.index("baseline 产业逻辑") < result.index("### 4.4 精选外部观察（Preview）")
+    assert result.index("baseline 产业逻辑") < result.index("### 4.4 外部观点与待验证变量（Preview）")
     assert "不直接形成估值结论" not in result
     assert "- [^1] 雪球" in result
     assert "- [^2] 微信公众号精选观察" in result
+
+
+def test_curated_external_narrative_renders_flat_planned_paragraphs():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "fundamentals": "",
+            "citations": {1: {"source": "研报", "title": "baseline title"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "topic": "supply_delivery_capacity",
+                    "heading": "预付款与物料瓶颈",
+                    "text": "外部材料提示上游材料预付款激增，可能反映磷化铟衬底与光芯片供应紧张。",
+                    "citation_refs": [1],
+                },
+                {
+                    "topic": "technology_route",
+                    "heading": "NPO/XPO 技术路线",
+                    "text": "外部材料提示 NPO/XPO 在 Scale-up 场景可能成为下一代互连增量。",
+                    "citation_refs": [2],
+                },
+            ],
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "title": "上游材料预付款观察",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+                2: {
+                    "source": "微信公众号精选观察",
+                    "title": "NPO/XPO 外部分析",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "#### 4.4.1" not in result
+    assert "#### 4.4.2" not in result
+    assert "**预付款与物料瓶颈**" in result
+    assert "磷化铟衬底与光芯片供应紧张[^2]" in result
+    assert "**NPO/XPO 技术路线**" in result
+    assert "下一代互连增量[^3]" in result
+    assert result.index("预付款与物料瓶颈") < result.index("NPO/XPO 技术路线")
+    assert "- [^2] 微信公众号精选观察" in result
+    assert "- [^3] 微信公众号精选观察" in result
+
+
+def test_curated_external_topic_groups_keep_taxonomy_fallback():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "citations": {1: {"source": "研报", "title": "baseline title"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_topic_groups": {
+                "order_capacity_delivery": [
+                    {
+                        "heading": "交付变量",
+                        "text": "外部材料提示交付节奏仍需跟踪。",
+                        "citation_refs": [1],
+                    }
+                ],
+                "technology_route": [
+                    {
+                        "heading": "技术路线",
+                        "text": "外部材料提示技术路线仍有分歧。",
+                        "citation_refs": [2],
+                    }
+                ],
+            },
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "title": "交付观察",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+                2: {
+                    "source": "微信公众号精选观察",
+                    "title": "技术观察",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.4 外部观点与待验证变量（Preview）" in result
+    assert "#### 4.4.1 订单、产能与交付节奏" in result
+    assert "#### 4.4.2 产业链与技术路线分歧" in result
+    assert "交付变量" in result
+    assert "技术路线" in result
+
+
+def test_curated_external_unknown_topic_does_not_fall_into_market_expectation():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "synthesis": {"industry_logic": "baseline", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "topic": "misc",
+                    "heading": "泛泛观察",
+                    "text": "外部材料只是描述行业背景，没有估值、股价、资金或情绪线索。",
+                    "citation_refs": [1],
+                }
+            ],
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "title": "泛泛观察",
+                    "source_type": "curated_external_analysis_evidence",
+                }
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "#### 4.4.1 其他待验证观察" not in result
+    assert "#### 4.4.1" not in result
+    assert "资本市场预期与情绪温度" not in result
+    assert "泛泛观察" in result
 
 
 def test_render_with_core_facts():
@@ -631,8 +768,8 @@ def test_render_deep_analysis_display_with_curated_external_sources_adds_preview
     assert "精选外部材料仅作为专业观察" in result
     assert "不参与评分、风险评分或最终建议" in result
     assert "baseline 行业逻辑" in result
-    assert "### 4.4 精选外部观察（Preview）" in result
-    assert result.index("### 4.1 产业逻辑与竞争格局") < result.index("### 4.4 精选外部观察（Preview）")
+    assert "### 4.4 外部观点与待验证变量（Preview）" in result
+    assert result.index("### 4.1 产业逻辑与竞争格局") < result.index("### 4.4 外部观点与待验证变量（Preview）")
 
 
 def test_render_uses_synthesis_display_when_no_deep_analysis():
@@ -686,7 +823,7 @@ def test_curated_external_addendum_includes_citation_url():
 
     result = renderer.render(ctx)
 
-    assert "### 4.4 精选外部观察（Preview）" in result
+    assert "### 4.4 外部观点与待验证变量（Preview）" in result
     assert "https://mp.weixin.qq.com/s/example" in result
     assert "[^1]" in result
 
@@ -728,6 +865,7 @@ def test_curated_external_narrative_addendum_renders_paragraphs_not_bullets():
     result = renderer.render(ctx)
 
     assert "### 4.4 精选外部观察（Preview）" in result
+    assert "#### 4.4.1" not in result
     assert "**供应链瓶颈与交付疑虑并存**" in result
     assert "外部材料提示供应链约束会影响交付弹性" in result
     assert "- **供应链瓶颈与交付疑虑并存**" not in result

@@ -167,11 +167,26 @@ def _contains_assertive_confirmation_term(sentence: str, term: str) -> bool:
 
 def _is_neutral_confirmation_context(sentence: str, term: str, idx: int) -> bool:
     prefix = sentence[max(0, idx - 3) : idx]
+    wider_prefix = sentence[max(0, idx - 12) : idx]
     suffix = sentence[idx + len(term) : idx + len(term) + 3]
     if term == "确定":
         return suffix.startswith("性") or prefix.endswith(("不", "未", "难以"))
     if term == "确认":
-        return prefix.endswith(("未", "非", "尚未", "未经", "待"))
+        if prefix.endswith(("未", "非", "尚未", "未经", "待")):
+            return True
+        return any(
+            marker in wider_prefix
+            for marker in (
+                "尚未得到官方",
+                "尚未获得官方",
+                "未得到官方",
+                "未获得官方",
+                "未获官方",
+                "未经官方",
+                "尚无官方",
+                "等待官方",
+            )
+        )
     if term == "锁定":
         return prefix.endswith(("不", "未", "难以", "不会"))
     return False

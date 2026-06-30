@@ -139,6 +139,11 @@ class PerStockReporter:
             viewpoint_digest_json = self._resolve_repo_relative_path(
                 viewpoint_digest_cfg.get("digest_json", "")
             )
+            synthesis_source_policy = str(
+                si_cfg.get("canonical_synthesis_source_policy", "")
+            ).strip()
+            if synthesis_source_policy != "formal_first":
+                synthesis_source_policy = ""
             ar_evidence_cfg = ar_cfg.get("evidence_notes", {}) or {}
             si_evidence_cfg = si_cfg.get("evidence_notes", {}) or {}
             evidence_notes_enabled = bool(
@@ -156,6 +161,8 @@ class PerStockReporter:
             }
             if periodic_fulltext_enabled:
                 pipeline_kwargs["enable_periodic_report_fulltext_intake"] = True
+            if source_intake_enabled and synthesis_source_policy:
+                pipeline_kwargs["canonical_synthesis_source_policy"] = synthesis_source_policy
             if viewpoint_digest_enabled:
                 pipeline_kwargs["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True
                 pipeline_kwargs["curated_external_viewpoint_digest_json"] = viewpoint_digest_json
@@ -205,6 +212,8 @@ class PerStockReporter:
             if source_intake_enabled:
                 pipeline_input["source_intake_enabled"] = True
                 pipeline_input["source_intake_config"] = si_cfg
+                if synthesis_source_policy:
+                    pipeline_input["canonical_synthesis_source_policy"] = synthesis_source_policy
 
             if periodic_fulltext_enabled:
                 if periodic_fulltext_cfg.get("cache_dir"):

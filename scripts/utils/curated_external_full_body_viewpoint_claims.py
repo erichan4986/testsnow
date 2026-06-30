@@ -956,6 +956,10 @@ def _normalize_claim(
         "source_id": source_id,
         "source_title": str(source.get("title") or ""),
         "source_account": str(source.get("account") or ""),
+        "source_kind": str(source.get("source_kind") or ""),
+        "source_platform": str(source.get("source_platform") or ""),
+        "source_detail_type": str(source.get("source_detail_type") or ""),
+        "source_label": str(source.get("source_label") or ""),
         "source_ref": str(source.get("source_ref") or ""),
         "source_url": str(source.get("source_url") or source.get("source_ref") or ""),
         "publish_time": str(source.get("publish_time") or ""),
@@ -968,8 +972,8 @@ def _normalize_claim(
             }
         ],
         "verification_status": "professional_observation",
-        "source_credit": DEFAULT_SOURCE_CREDIT,
-        "claim_source_credit": DEFAULT_SOURCE_CREDIT,
+        "source_credit": _source_credit(source),
+        "claim_source_credit": _source_credit(source),
         "quality_action": "preview_only",
         "knowledge_eligible": False,
         "synthesis_display_only": True,
@@ -978,6 +982,13 @@ def _normalize_claim(
         "_repair_status": repair_status,
     }
     return claim
+
+
+def _source_credit(source: Dict[str, Any]) -> int:
+    try:
+        return int(source.get("source_credit", DEFAULT_SOURCE_CREDIT))
+    except (TypeError, ValueError):
+        return DEFAULT_SOURCE_CREDIT
 
 
 def heuristic_extractor(
@@ -1027,6 +1038,10 @@ def heuristic_extractor(
                 "source_id": source["source_id"],
                 "source_title": str(source.get("title") or ""),
                 "source_account": str(source.get("account") or ""),
+                "source_kind": str(source.get("source_kind") or ""),
+                "source_platform": str(source.get("source_platform") or ""),
+                "source_detail_type": str(source.get("source_detail_type") or ""),
+                "source_label": str(source.get("source_label") or ""),
                 "source_ref": str(source.get("source_ref") or ""),
                 "source_url": str(source.get("source_url") or source.get("source_ref") or ""),
                 "publish_time": str(source.get("publish_time") or ""),
@@ -1039,8 +1054,8 @@ def heuristic_extractor(
                     }
                 ],
                 "verification_status": "professional_observation",
-                "source_credit": DEFAULT_SOURCE_CREDIT,
-                "claim_source_credit": DEFAULT_SOURCE_CREDIT,
+                "source_credit": _source_credit(source),
+                "claim_source_credit": _source_credit(source),
                 "quality_action": "preview_only",
                 "knowledge_eligible": False,
                 "synthesis_display_only": True,

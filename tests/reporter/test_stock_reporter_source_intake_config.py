@@ -65,6 +65,39 @@ def test_source_intake_enabled_passes_flag():
     assert call_input.get("source_intake_config") == {"enabled": True}
 
 
+def test_source_intake_formal_first_policy_passes_context_and_pipeline_kwarg():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"测试股": "000001"},
+        raw_data={"测试股": {}},
+        source_intake_configs={
+            "测试股": {
+                "enabled": True,
+                "canonical_synthesis_source_policy": "formal_first",
+            },
+        },
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    mock_build.assert_called_once_with(
+        enable_agent_reach=False,
+        enable_evidence_notes=False,
+        enable_claim_risk_signals=False,
+        enable_source_intake=True,
+        canonical_synthesis_source_policy="formal_first",
+    )
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input["canonical_synthesis_source_policy"] == "formal_first"
+
+
 def test_source_intake_enabled_allows_empty_community_posts(monkeypatch):
     reporter = PerStockReporter(
         stocks_data={"测试股": []},

@@ -100,6 +100,22 @@ def test_neutral_confirmation_substrings_pass():
     assert not result["violations"]
 
 
+def test_negated_official_confirmation_context_passes():
+    synthesis = _make_synthesis(
+        "外部材料提示该合作尚未得到官方确认，具体落地时间仍需跟踪[^1]。",
+        {
+            1: {
+                "source": "雪球专栏观察",
+                "source_type": "curated_external_analysis_evidence",
+                "source_credit": 55,
+            }
+        },
+    )
+    result = lint_curated_external_display_text(synthesis)
+    assert result["ok"] is True
+    assert not result["violations"]
+
+
 def test_assertive_confirmation_terms_still_fail():
     synthesis = _make_synthesis(
         "微信公众号文章认为公司确定获得订单，并已锁定核心客户[^1]。",

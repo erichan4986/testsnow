@@ -222,6 +222,92 @@ def test_source_intake_keep_items_enter_baseline_synthesis_items():
     assert [item.title for item in all_data["items"]] == ["中际旭创深度研报"]
 
 
+def test_formal_first_source_policy_excludes_social_from_canonical_synthesis():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake, canonical_synthesis_source_policy="formal_first")
+    source_intake_item = SynthesisItem(
+        title="正式外部研报",
+        content="800G 和 1.6T 交付节奏来自正式研报。",
+        author="测试证券",
+        source_platform="研报",
+        url="https://example.com/report",
+        publish_time="2026-06-01",
+        extra={
+            "source_type": "broker_research",
+            "source_credit": 80,
+            "verification_status": "professional_analysis",
+            "knowledge_eligible": True,
+            "report_eligible": True,
+        },
+    )
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "external_evidence_keep_items": [source_intake_item],
+        "stock_raw": {
+            "reports": [{"title": "券商研报", "content": "正式研报内容", "institution": "测试证券"}],
+            "announcements": [{"title": "公司公告", "content": "正式公告内容", "date": "2026-06-01"}],
+            "fundflow": [],
+            "news": [{"title": "主流新闻", "content": "新闻内容", "date": "2026-06-01", "source": "财联社"}],
+            "zhihu": {
+                "report_items": [
+                    {
+                        "title": "知乎深度帖",
+                        "content": "知乎观点内容",
+                        "author_name": "知乎作者",
+                        "url": "https://zhihu.com/question/1",
+                    }
+                ]
+            },
+        },
+        "keep_posts": [{"title": "雪球帖", "content": "雪球观点内容", "source": "雪球"}],
+    })
+
+    skill.run(ctx)
+
+    assert fake.calls
+    _, all_data = fake.calls[0]
+    platforms = [item.source_platform for item in all_data["items"]]
+    titles = [item.title for item in all_data["items"]]
+    assert "雪球" not in platforms
+    assert "知乎" not in platforms
+    assert "券商研报" in titles
+    assert "公司公告" in titles
+    assert "主流新闻" in titles
+    assert "正式外部研报" in titles
+
+
+def test_legacy_mixed_source_policy_keeps_social_sources_by_default():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {
+                "report_items": [
+                    {
+                        "title": "知乎深度帖",
+                        "content": "知乎观点内容",
+                        "author_name": "知乎作者",
+                        "url": "https://zhihu.com/question/1",
+                    }
+                ]
+            },
+        },
+        "keep_posts": [{"title": "雪球帖", "content": "雪球观点内容", "source": "雪球"}],
+    })
+
+    skill.run(ctx)
+
+    _, all_data = fake.calls[0]
+    platforms = [item.source_platform for item in all_data["items"]]
+    assert "雪球" in platforms
+    assert "知乎" in platforms
+
+
 def test_periodic_report_fulltext_items_do_not_enter_synthesis_items():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
@@ -958,6 +1044,8 @@ def test_curated_external_viewpoint_digest_enabled_sets_deep_analysis_display(tm
     assert "800G交付计划下调传言" in display_text
     assert display["citations"][1]["source_type"] == "curated_external_analysis_evidence"
     assert display["citations"][1]["source"] == "微信公众号精选观察"
+    assert display["_curated_external_taxonomy_version"] == "external_viewpoint.v1"
+    assert "order_capacity_delivery" in display["_curated_external_topic_groups"]
     assert ctx.output.get("synthesis_display") is None
     assert "800G交付计划下调传言" not in ctx.output.get("synthesis_text", "")
     assert ctx.output.get("wrote_knowledge") is None
