@@ -180,3 +180,31 @@ Post-action checks:
 - Broad non-slow collect-only passed:
   - `python3 -m pytest --collect-only tests -m "not slow and not legacy" -q`
   - Result: `1890/1975 tests collected (85 deselected)`.
+
+## 9. PR3 legacy community-claim route removal
+
+2026-06-30 legacy route deletion pass:
+
+- Removed the retired community-claim smoke/audit script layer:
+  - `scripts/smoke_cached_community_claims.py`
+  - `scripts/smoke_claim_intake_audit_flow.py`
+  - `scripts/smoke_claim_verification_audit.py`
+  - `scripts/smoke_fresh_social_claims.py`
+- Removed their direct reporter tests:
+  - `tests/reporter/test_cached_community_claim_smoke_script.py`
+  - `tests/reporter/test_claim_intake_audit_flow_script.py`
+  - `tests/reporter/test_claim_verification_audit_script.py`
+  - `tests/reporter/test_fresh_social_claim_smoke_script.py`
+- Removed the helper modules used only by the retired smoke scripts:
+  - `scripts/utils/community_claim_note_writer.py`
+  - `scripts/utils/fresh_social_claim_intake.py`
+- Removed their direct utility tests:
+  - `tests/utils/test_community_claim_note_writer.py`
+  - `tests/utils/test_fresh_social_claim_intake.py`
+- Updated `docs/codex_handoff/runbook.md` so it no longer advertises the retired cached-community smoke route.
+
+Rationale:
+
+- Current 4.4 social/community content now flows through source packets, viewpoint digest, and narrative rendering.
+- The deleted scripts were historical June 2026 audit/smoke routes and were not part of the current report pipeline.
+- `claim_verification.py` and risk-bridge tests remain in place because they still support active risk observation behavior.

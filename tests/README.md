@@ -32,12 +32,6 @@ External-material subsystem tests:
 python3 -m pytest tests/reporter -m "external_material and not slow and not legacy" -q
 ```
 
-Historical external claim/audit smoke tests:
-
-```bash
-python3 -m pytest tests/reporter -m "external_material and legacy" -q
-```
-
 Broader non-slow regression:
 
 ```bash
@@ -65,5 +59,6 @@ Current notes:
 
 - `tests/test_data_collector.py` is marked `slow` because it exercises live
   collector paths such as K-line, reports, announcements, fund flow, and news.
-- Older community-claim smoke/audit scripts are marked `legacy` while the
-  curated external and social viewpoint 4.4 paths remain active tests.
+- Older community-claim smoke/audit scripts were removed after the 4.4
+  social viewpoint path replaced them; curated external and social viewpoint
+  4.4 paths remain active tests.

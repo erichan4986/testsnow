@@ -22,12 +22,8 @@ REPORT_CORE_FILES = {
 EXTERNAL_MATERIAL_PREFIXES = (
     "test_agent_reach_",
     "test_broker_research_",
-    "test_cached_community_",
-    "test_claim_intake_",
-    "test_claim_verification_",
     "test_curated_external_",
     "test_deploy_wechat_",
-    "test_fresh_social_",
     "test_fulltext_material_",
     "test_iwencai_",
     "test_periodic_report_",
@@ -58,12 +54,7 @@ SLOW_FILES = {
 }
 
 LEGACY_PREFIXES = ()
-LEGACY_FILES = {
-    "test_cached_community_claim_smoke_script.py",
-    "test_claim_intake_audit_flow_script.py",
-    "test_claim_verification_audit_script.py",
-    "test_fresh_social_claim_smoke_script.py",
-}
+LEGACY_FILES = set()
 
 
 def markers_for_path(path: str | Path) -> Set[str]:
