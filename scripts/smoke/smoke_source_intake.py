@@ -12,8 +12,8 @@ import sys
 from datetime import date
 from pathlib import Path
 
-project_root = Path(__file__).parent.parent
-scripts_dir = project_root / "scripts"
+scripts_dir = Path(__file__).resolve().parent.parent
+project_root = scripts_dir.parent
 sys.path.insert(0, str(scripts_dir))
 
 from utils.a_stock_source_intake import collect_a_stock_source_items  # noqa: E402

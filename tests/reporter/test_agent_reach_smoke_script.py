@@ -1,4 +1,4 @@
-"""Tests for scripts/smoke_agent_reach.py.
+"""Tests for scripts/smoke/smoke_agent_reach.py.
 
 These tests prove that the smoke script:
 - Only runs Agent-Reach query/fetch/quality skills.
@@ -18,7 +18,7 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 
-SMOKE_SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "smoke_agent_reach.py"
+SMOKE_SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "smoke" / "smoke_agent_reach.py"
 
 
 def _load_smoke_module():
@@ -63,7 +63,7 @@ def test_smoke_script_does_not_import_forbidden_modules():
                 if alias.name in forbidden:
                     found.add(alias.name)
 
-    assert not found, f"smoke_agent_reach.py imports forbidden names: {found}"
+    assert not found, f"scripts/smoke/smoke_agent_reach.py imports forbidden names: {found}"
 
 
 def test_smoke_script_has_main_and_run_smoke_functions():

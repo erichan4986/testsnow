@@ -16,10 +16,10 @@ Does NOT run:
 - Xueqiu / CDP / Playwright detail pages
 
 Usage:
-    python3 scripts/smoke_agent_reach.py --stock 黑芝麻智能
-    python3 scripts/smoke_agent_reach.py --stock 黑芝麻智能 --write-audit
-    python3 scripts/smoke_agent_reach.py --stock 黑芝麻智能 --json
-    python3 scripts/smoke_agent_reach.py --stock 黑芝麻智能 --dry-run
+    python3 scripts/smoke/smoke_agent_reach.py --stock 黑芝麻智能
+    python3 scripts/smoke/smoke_agent_reach.py --stock 黑芝麻智能 --write-audit
+    python3 scripts/smoke/smoke_agent_reach.py --stock 黑芝麻智能 --json
+    python3 scripts/smoke/smoke_agent_reach.py --stock 黑芝麻智能 --dry-run
 """
 
 import argparse
@@ -32,7 +32,10 @@ from pathlib import Path
 # Import only Agent-Reach skills and the pipeline context.
 # Intentionally avoid PerStockReporter, ZhihuCollector, KnowledgeSynthesizer,
 # PDF export, and report assembly to keep this a lightweight smoke test.
-sys.path.insert(0, str(Path(__file__).parent))
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_SCRIPTS_DIR = _SCRIPT_DIR.parent
+_PROJECT_ROOT = _SCRIPTS_DIR.parent
+sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from utils.skill_pipeline import SkillContext
 from utils.report_skills.agent_reach_query_skill import agent_reach_query_skill
@@ -47,7 +50,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-_CONFIG_PATH = Path(__file__).parent.parent / "config" / "stocks.json"
+_CONFIG_PATH = _PROJECT_ROOT / "config" / "stocks.json"
 
 
 def load_stock_config(stock_name: str) -> dict:

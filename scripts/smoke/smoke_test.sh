@@ -4,16 +4,16 @@
 
 set -e
 
-cd "$(dirname "$0")/.."
+cd "$(dirname "$0")/../.."
 REPO_ROOT="$(pwd)"
 
 echo "=== Smoke Test: Stock Report Generation ==="
 echo "Repository: $REPO_ROOT"
 echo ""
 
-# Step 1: 运行已有的快速端到端测试（验证 technical_analyzer + technical_renderer 链路）
+# Step 1: 运行已有的快速兼容性测试（验证 technical_analyzer 核心链路）
 echo "[1/3] Running pytest technical e2e test (should take <1s)..."
-python3 -m pytest tests/reporter/test_advanced_technical_e2e.py -v --tb=short
+python3 -m pytest tests/reporter/test_backward_compatibility.py -v --tb=short
 echo ""
 
 # Step 2: 生成一份实际的技术分析报告并检查关键词

@@ -20,7 +20,10 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent))
+_SCRIPT_DIR = Path(__file__).resolve().parent
+_SCRIPTS_DIR = _SCRIPT_DIR.parent
+_PROJECT_ROOT = _SCRIPTS_DIR.parent
+sys.path.insert(0, str(_SCRIPTS_DIR))
 
 from utils.claim_risk_signals import derive_structured_risk_signals_from_plan
 from utils.claim_verification import build_claim_verification_plan
@@ -41,7 +44,7 @@ logger = logging.getLogger(__name__)
 
 def load_stock_config(stock_name: str) -> dict:
     """Load a stock record and its Agent-Reach config from config/stocks.json."""
-    config_path = Path(__file__).parent.parent / "config" / "stocks.json"
+    config_path = _PROJECT_ROOT / "config" / "stocks.json"
     try:
         stocks = json.loads(config_path.read_text(encoding="utf-8"))
     except Exception as exc:

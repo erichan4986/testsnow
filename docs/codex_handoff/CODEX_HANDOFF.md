@@ -89,8 +89,7 @@ python xueqiu_monitor_v2.py --xueqiu
 
 ### Smoke test (fast, no network, ~1-2s)
 ```bash
-cd scripts
-bash smoke_test.sh
+bash scripts/smoke/smoke_test.sh
 # Validates technical analysis end-to-end with synthetic data
 ```
 

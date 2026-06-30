@@ -34,11 +34,9 @@ longer import or invoke them by their top-level paths.
 
 ## Smoke scripts
 
-Files named `smoke_*.py` or `smoke_*.sh` are focused integration checks. Keep
+Smoke scripts live in `scripts/smoke/` and are focused integration checks. Keep
 them small and deterministic. If a smoke script depends on live network,
 browser, CDP, or login state, document that explicitly in the script header.
-
-Future cleanup can move these into `scripts/smoke/` after callers are migrated.
 
 ## High-risk collection scripts
 

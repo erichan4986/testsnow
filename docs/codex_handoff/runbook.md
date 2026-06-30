@@ -33,7 +33,7 @@ python run_黑芝麻智能.py --fast-test
 轻量检查入口：
 
 ```bash
-python scripts/smoke_agent_reach_claim_bridge.py --stock 黑芝麻智能 --json
+python scripts/smoke/smoke_agent_reach_claim_bridge.py --stock 黑芝麻智能 --json
 ```
 
 该 smoke 脚本用于调试 Agent-Reach 风险桥，不替代最终报告验收。正式验收仍使用 `cd scripts && python run_黑芝麻智能.py --fast-test`。
@@ -115,8 +115,7 @@ pytest tests/reporter/test_technical_*.py -v
 ## 6. Smoke Test（快速验证链路）
 
 ```bash
-cd scripts
-bash smoke_test.sh
+bash scripts/smoke/smoke_test.sh
 ```
 
 - 约 1–2 秒完成

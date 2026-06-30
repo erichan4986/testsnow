@@ -1,4 +1,4 @@
-"""Tests for scripts/smoke_source_intake.py.
+"""Tests for scripts/smoke/smoke_source_intake.py.
 
 These tests verify that the smoke script can be imported and does not pull in
 forbidden dependencies like PerStockReporter, KnowledgeSynthesizer, Playwright,
@@ -11,7 +11,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
-SMOKE_PATH = Path(__file__).parent.parent.parent / "scripts" / "smoke_source_intake.py"
+SMOKE_PATH = Path(__file__).parent.parent.parent / "scripts" / "smoke" / "smoke_source_intake.py"
 
 
 def test_smoke_script_exists():

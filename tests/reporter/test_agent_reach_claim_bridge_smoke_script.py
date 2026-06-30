@@ -1,4 +1,4 @@
-"""Tests for scripts/smoke_agent_reach_claim_bridge.py."""
+"""Tests for scripts/smoke/smoke_agent_reach_claim_bridge.py."""
 
 import ast
 import importlib.util
@@ -9,7 +9,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 
-SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "smoke_agent_reach_claim_bridge.py"
+SCRIPT_PATH = Path(__file__).parent.parent.parent / "scripts" / "smoke" / "smoke_agent_reach_claim_bridge.py"
 
 
 def _load_module():
