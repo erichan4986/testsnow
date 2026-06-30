@@ -343,7 +343,7 @@ data/raw/broker_research_reports/<股票名>_<代码>/_downloads/
 生成本地 digest preview：
 
 ```bash
-python3 scripts/broker_research_digest_preview.py \
+python3 scripts/previews/broker_research_digest_preview.py \
   --stock 圣邦股份 \
   --code 300661 \
   --output /tmp/圣邦股份_broker_research_digest_preview.md
@@ -352,7 +352,7 @@ python3 scripts/broker_research_digest_preview.py \
 人工确认 preview 后，再写入 Knowledge：
 
 ```bash
-python3 scripts/broker_research_digest_preview.py \
+python3 scripts/previews/broker_research_digest_preview.py \
   --stock 圣邦股份 \
   --code 300661 \
   --write-knowledge \

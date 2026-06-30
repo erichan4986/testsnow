@@ -26,11 +26,8 @@ script supports it.
 ## Preview and experiment scripts
 
 Files ending in `_preview.py`, plus source-material exploration scripts such as
-`wechat_*_preview.py`, are prototype or manual validation tools. They should not
-be used as production report entrypoints.
-
-Future cleanup can move these into `scripts/previews/` after tests and docs no
-longer import or invoke them by their top-level paths.
+`wechat_*_preview.py`, live in `scripts/previews/`. They are prototype or manual
+validation tools and should not be used as production report entrypoints.
 
 Older curated-external preview experiments that are no longer current live in
 `scripts/archive/old_previews/`. They are retained for reference only; do not

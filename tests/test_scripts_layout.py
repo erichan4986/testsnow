@@ -4,6 +4,7 @@ from pathlib import Path
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
 OLD_PREVIEWS_ARCHIVE = SCRIPTS_DIR / "archive" / "old_previews"
+ACTIVE_PREVIEWS_DIR = SCRIPTS_DIR / "previews"
 
 ARCHIVED_OLD_PREVIEWS = [
     "curated_external_analysis_preview.py",
@@ -13,8 +14,26 @@ ARCHIVED_OLD_PREVIEWS = [
     "curated_external_video_subtitle_preview.py",
 ]
 
+ACTIVE_PREVIEWS = [
+    "broker_research_digest_preview.py",
+    "curated_external_full_body_viewpoint_preview.py",
+    "curated_external_viewpoint_narrative_preview.py",
+    "iwencai_industry_research_preview.py",
+    "periodic_report_fulltext_preview.py",
+    "periodic_report_narrative_cards_acceptance.py",
+    "periodic_report_narrative_cards_preview.py",
+    "wechat_candidate_selector_preview.py",
+    "wechat_targeted_discovery_preview.py",
+]
+
 
 def test_old_curated_external_preview_scripts_are_archived():
     for filename in ARCHIVED_OLD_PREVIEWS:
         assert not (SCRIPTS_DIR / filename).exists(), f"{filename} should not remain in scripts/"
         assert (OLD_PREVIEWS_ARCHIVE / filename).exists(), f"{filename} should live in old preview archive"
+
+
+def test_active_preview_scripts_live_in_previews_dir():
+    for filename in ACTIVE_PREVIEWS:
+        assert not (SCRIPTS_DIR / filename).exists(), f"{filename} should not remain in scripts/"
+        assert (ACTIVE_PREVIEWS_DIR / filename).exists(), f"{filename} should live in scripts/previews/"

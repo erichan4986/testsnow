@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
-SCRIPT = REPO_ROOT / "scripts" / "wechat_candidate_selector_preview.py"
+SCRIPT = REPO_ROOT / "scripts" / "previews" / "wechat_candidate_selector_preview.py"
 
 
 def test_wechat_candidate_selector_preview_cli_writes_markdown(tmp_path: Path) -> None:

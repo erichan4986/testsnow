@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "previews"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 import curated_external_full_body_viewpoint_preview as _preview_module

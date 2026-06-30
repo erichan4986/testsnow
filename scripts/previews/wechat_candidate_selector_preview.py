@@ -7,8 +7,8 @@ import json
 import sys
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(Path(__file__).parent / "utils"))
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(PROJECT_ROOT / "scripts" / "utils"))
 
 from wechat_candidate_selector import (  # noqa: E402
     DEFAULT_WECHAT_CANDIDATE_PREVIEW_PATH,

@@ -5,6 +5,7 @@ import sys
 import uuid
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "previews"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 import curated_external_viewpoint_narrative_preview as _preview_module

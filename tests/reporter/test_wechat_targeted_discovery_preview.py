@@ -3,6 +3,7 @@ import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "previews"))
 
 import pytest
 

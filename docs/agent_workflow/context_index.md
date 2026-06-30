@@ -104,10 +104,10 @@ Knowledge writers:
 
 Preview and acceptance helpers:
 
-- narrative cards single-stock preview: `scripts/periodic_report_narrative_cards_preview.py`
-<!-- path-check: scripts/periodic_report_narrative_cards_preview.py -->
-- narrative cards multi-stock acceptance: `scripts/periodic_report_narrative_cards_acceptance.py`
-<!-- path-check: scripts/periodic_report_narrative_cards_acceptance.py -->
+- narrative cards single-stock preview: `scripts/previews/periodic_report_narrative_cards_preview.py`
+<!-- path-check: scripts/previews/periodic_report_narrative_cards_preview.py -->
+- narrative cards multi-stock acceptance: `scripts/previews/periodic_report_narrative_cards_acceptance.py`
+<!-- path-check: scripts/previews/periodic_report_narrative_cards_acceptance.py -->
 
 Cross-cutting and adjacent helpers:
 
@@ -153,21 +153,21 @@ Operator workflow:
 2. Generate a local preview:
 
    ```bash
-   python3 scripts/broker_research_digest_preview.py --stock 圣邦股份 --code 300661
+   python3 scripts/previews/broker_research_digest_preview.py --stock 圣邦股份 --code 300661
    ```
 
 3. Inspect the `/tmp/*_broker_research_digest_preview.md` output. Only persist useful cards:
 
    ```bash
-   python3 scripts/broker_research_digest_preview.py --stock 圣邦股份 --code 300661 --write-knowledge
+   python3 scripts/previews/broker_research_digest_preview.py --stock 圣邦股份 --code 300661 --write-knowledge
    ```
 
 4. Enable display in the stock `source_intake` config with `broker_research_digest_synthesis_display.enabled=true`.
 
 Digest helpers:
 
-- PDF preview CLI: `scripts/broker_research_digest_preview.py`
-<!-- path-check: scripts/broker_research_digest_preview.py -->
+- PDF preview CLI: `scripts/previews/broker_research_digest_preview.py`
+<!-- path-check: scripts/previews/broker_research_digest_preview.py -->
 - deterministic digest extractor: `scripts/utils/broker_research_digest.py`
 <!-- path-check: scripts/utils/broker_research_digest.py -->
 - Knowledge note writer: `scripts/utils/broker_research_digest_note_writer.py`

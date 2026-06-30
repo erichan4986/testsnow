@@ -15,7 +15,7 @@ import sys
 from datetime import date, timedelta
 from pathlib import Path
 
-PROJECT_ROOT = Path(__file__).resolve().parents[1]
+PROJECT_ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(PROJECT_ROOT / "scripts" / "utils"))
 
 from wechat_exporter_client import WechatExporterClient

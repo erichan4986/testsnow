@@ -6,6 +6,8 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).parent.parent.parent
+PREVIEWS_DIR = REPO_ROOT / "scripts" / "previews"
+sys.path.insert(0, str(PREVIEWS_DIR))
 sys.path.insert(0, str(REPO_ROOT / "scripts"))
 sys.path.insert(0, str(REPO_ROOT / "scripts" / "utils"))
 
@@ -208,7 +210,7 @@ def test_preview_does_not_dedupe_same_viewpoint_across_different_inferred_stocks
 
 def test_cli_can_start_as_script() -> None:
     result = subprocess.run(
-        [sys.executable, str(REPO_ROOT / "scripts" / "broker_research_digest_preview.py"), "--help"],
+        [sys.executable, str(PREVIEWS_DIR / "broker_research_digest_preview.py"), "--help"],
         check=False,
         capture_output=True,
         text=True,

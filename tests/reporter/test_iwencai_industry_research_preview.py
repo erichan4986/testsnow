@@ -7,6 +7,8 @@ from pathlib import Path
 
 REPO_ROOT = Path(__file__).parent.parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
+PREVIEWS_DIR = SCRIPTS_DIR / "previews"
+sys.path.insert(0, str(PREVIEWS_DIR))
 sys.path.insert(0, str(SCRIPTS_DIR))
 
 
@@ -62,7 +64,7 @@ def test_write_iwencai_preview_writes_markdown_without_knowledge(tmp_path: Path)
 
 
 def test_iwencai_preview_help_runs() -> None:
-    script = SCRIPTS_DIR / "iwencai_industry_research_preview.py"
+    script = PREVIEWS_DIR / "iwencai_industry_research_preview.py"
     result = subprocess.run([sys.executable, str(script), "--help"], capture_output=True, text=True, check=False)
 
     assert result.returncode == 0

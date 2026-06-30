@@ -18,9 +18,10 @@ from typing import Any
 
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-REPO_ROOT = SCRIPT_DIR.parent
+SCRIPTS_DIR = SCRIPT_DIR.parent
+REPO_ROOT = SCRIPTS_DIR.parent
 sys.path.insert(0, str(REPO_ROOT))
-sys.path.insert(0, str(SCRIPT_DIR / "utils"))
+sys.path.insert(0, str(SCRIPTS_DIR / "utils"))
 
 from curated_external_full_body_viewpoint_claims import (  # noqa: E402
     THEME_PROFILES,

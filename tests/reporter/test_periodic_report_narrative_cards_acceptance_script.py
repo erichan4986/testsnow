@@ -2,6 +2,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "previews"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from periodic_report_narrative_cards_acceptance import (  # noqa: E402
@@ -118,7 +119,12 @@ def test_cli_writes_acceptance_markdown_without_touching_knowledge(tmp_path):
     (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
     output = tmp_path / "acceptance.md"
     knowledge_dir = tmp_path / "knowledge"
-    script = Path(__file__).parent.parent.parent / "scripts" / "periodic_report_narrative_cards_acceptance.py"
+    script = (
+        Path(__file__).parent.parent.parent
+        / "scripts"
+        / "previews"
+        / "periodic_report_narrative_cards_acceptance.py"
+    )
 
     result = subprocess.run(
         [
