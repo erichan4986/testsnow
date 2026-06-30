@@ -315,6 +315,47 @@ def test_formal_first_with_only_social_sources_marks_formal_sources_insufficient
     assert "雪球/知乎/微信" in text
 
 
+def test_formal_first_extra_items_keep_formal_display_and_reject_social_display():
+    skill = SynthesisSkill(canonical_synthesis_source_policy="formal_first")
+    ctx = SkillContext(input={"canonical_synthesis_source_policy": "formal_first"})
+    formal_display = SynthesisItem(
+        title="年报叙事卡片",
+        content="年报管理层讨论摘要。",
+        author="公司年报",
+        source_platform="定期报告叙事卡片",
+        url="",
+        publish_time="2026",
+        extra={
+            "source_type": "periodic_report_narrative_evidence",
+            "synthesis_display_only": True,
+            "verification_status": "professional_analysis",
+        },
+    )
+    social_display = SynthesisItem(
+        title="知乎精选观察",
+        content="知乎观点原文。",
+        author="知乎作者",
+        source_platform="知乎精选观察",
+        url="https://zhihu.com/question/1",
+        publish_time="2026-06-30",
+        extra={
+            "source_type": "social_viewpoint_analysis_evidence",
+            "synthesis_display_only": True,
+            "verification_status": "professional_observation",
+        },
+    )
+
+    items = skill._build_synthesis_items(
+        {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        [],
+        ctx=ctx,
+        extra_items=[formal_display, social_display],
+    )
+
+    assert formal_display in items
+    assert social_display not in items
+
+
 def test_empty_synthesizer_result_falls_back_to_template_without_crashing():
     class EmptySynthesizer:
         def __init__(self):

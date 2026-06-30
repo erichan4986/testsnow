@@ -5,11 +5,14 @@ from typing import Any, Dict, List
 
 try:
     from ...synthesis_credit import sanitize_citation_markers
+    from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
 except ImportError:
     try:
         from scripts.utils.synthesis_credit import sanitize_citation_markers
+        from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
     except ImportError:
         from utils.synthesis_credit import sanitize_citation_markers
+        from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
 
 
 MAX_VERIFIED_CLAIM_SUMMARY_ROWS = 6
@@ -371,6 +374,10 @@ class DeepAnalysisRenderer:
         lines: List[str],
     ) -> str:
         paragraphs = curated_display.get("_curated_external_narrative_paragraphs") or []
+        used_refs = self._curated_external_used_refs_from_rows(paragraphs, citation_offset)
+        shifted_citations = self._offset_citations(curated_display.get("citations", {}) or {}, citation_offset)
+        ref_map, display_refs = self._curated_external_display_ref_map(shifted_citations, used_refs)
+
         for paragraph in paragraphs:
             if not isinstance(paragraph, dict):
                 continue
@@ -379,6 +386,7 @@ class DeepAnalysisRenderer:
             citation_refs = paragraph.get("citation_refs") or []
             rendered = self._attach_refs_to_sentence(text, citation_refs)
             rendered = self._offset_citation_markers(rendered, citation_offset)
+            rendered = self._remap_citation_markers(rendered, ref_map)
             if heading:
                 lines.append(f"**{heading}**")
                 lines.append("")
@@ -386,20 +394,9 @@ class DeepAnalysisRenderer:
                 lines.append(rendered)
                 lines.append("")
 
-        used_refs = set()
-        for paragraph in paragraphs:
-            if not isinstance(paragraph, dict):
-                continue
-            refs = paragraph.get("citation_refs") or []
-            for ref in refs:
-                try:
-                    used_refs.add(int(ref) + citation_offset)
-                except (TypeError, ValueError):
-                    continue
-        if used_refs:
-            shifted_citations = self._offset_citations(curated_display.get("citations", {}) or {}, citation_offset)
+        if display_refs:
             lines.append("**本节引用来源：**")
-            for ref_id in sorted(used_refs):
+            for ref_id in sorted(display_refs):
                 meta = shifted_citations.get(ref_id, {})
                 source = meta.get("source", "未知")
                 author = meta.get("author", "")
@@ -422,7 +419,10 @@ class DeepAnalysisRenderer:
         citation_offset: int,
         lines: List[str],
     ) -> str:
-        used_refs = set()
+        used_refs = self._curated_external_used_refs_from_grouped_rows(topic_groups, citation_offset)
+        shifted_citations = self._offset_citations(citations, citation_offset)
+        ref_map, display_refs = self._curated_external_display_ref_map(shifted_citations, used_refs)
+
         group_index = 1
         for topic_key, label in CURATED_EXTERNAL_TOPIC_LABELS:
             rows = topic_groups.get(topic_key) or []
@@ -440,22 +440,17 @@ class DeepAnalysisRenderer:
                 citation_refs = row.get("citation_refs") or []
                 rendered = self._attach_refs_to_sentence(text, citation_refs)
                 rendered = self._offset_citation_markers(rendered, citation_offset)
+                rendered = self._remap_citation_markers(rendered, ref_map)
                 if heading:
                     lines.append(f"**{heading}**")
                     lines.append("")
                 if rendered:
                     lines.append(rendered)
                     lines.append("")
-                for ref in citation_refs:
-                    try:
-                        used_refs.add(int(ref) + citation_offset)
-                    except (TypeError, ValueError):
-                        continue
 
-        if used_refs:
-            shifted_citations = self._offset_citations(citations, citation_offset)
+        if display_refs:
             lines.append("**本节引用来源：**")
-            for ref_id in sorted(used_refs):
+            for ref_id in sorted(display_refs):
                 meta = shifted_citations.get(ref_id, {})
                 source = meta.get("source", "未知")
                 author = meta.get("author", "")
@@ -470,6 +465,91 @@ class DeepAnalysisRenderer:
                     line += f" | {url}"
                 lines.append(line)
         return "\n".join(lines)
+
+    @staticmethod
+    def _curated_external_used_refs_from_rows(rows: List[Any], citation_offset: int) -> set:
+        used_refs = set()
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            for ref in row.get("citation_refs") or []:
+                try:
+                    used_refs.add(int(ref) + citation_offset)
+                except (TypeError, ValueError):
+                    continue
+        return used_refs
+
+    def _curated_external_used_refs_from_grouped_rows(
+        self,
+        topic_groups: Dict[str, Any],
+        citation_offset: int,
+    ) -> set:
+        rows = []
+        for value in (topic_groups or {}).values():
+            if isinstance(value, list):
+                rows.extend(value)
+        return self._curated_external_used_refs_from_rows(rows, citation_offset)
+
+    def _curated_external_display_ref_map(self, shifted_citations: Dict[int, Any], used_refs: set) -> tuple[dict, set]:
+        canonical_by_key = {}
+        ref_map = {}
+        display_refs = set()
+        for ref_id in sorted(used_refs):
+            meta = shifted_citations.get(ref_id, {})
+            key = self._curated_external_citation_identity(meta)
+            if not key:
+                canonical = ref_id
+            elif key in canonical_by_key:
+                canonical = canonical_by_key[key]
+            else:
+                canonical_by_key[key] = ref_id
+                canonical = ref_id
+            ref_map[ref_id] = canonical
+            display_refs.add(canonical)
+        return ref_map, display_refs
+
+    @staticmethod
+    def _curated_external_citation_identity(meta: Any) -> tuple:
+        if not isinstance(meta, dict):
+            return ()
+        url = str(meta.get("url") or "").strip()
+        source = str(meta.get("source") or "").strip()
+        author = str(meta.get("author") or "").strip()
+        title = str(meta.get("title") or "").strip()
+        if url:
+            return ("url", url)
+        if source and (author or title):
+            return ("fallback", source, author, title)
+        return ()
+
+    @staticmethod
+    def _remap_citation_markers(text: str, ref_map: dict) -> str:
+        if not ref_map:
+            return DeepAnalysisRenderer._dedupe_citation_marker_clusters(text)
+        remapped = re.sub(
+            r"\[\^(\d+)\]",
+            lambda match: f"[^{ref_map.get(int(match.group(1)), int(match.group(1)))}]",
+            text,
+        )
+        return DeepAnalysisRenderer._dedupe_citation_marker_clusters(remapped)
+
+    @staticmethod
+    def _dedupe_citation_marker_clusters(text: str) -> str:
+        """Collapse repeated adjacent footnotes after source de-duplication."""
+        if not text:
+            return text
+
+        def replace_cluster(match: re.Match) -> str:
+            seen = set()
+            refs = []
+            for ref in re.findall(r"\[\^(\d+)\]", match.group(0)):
+                if ref in seen:
+                    continue
+                seen.add(ref)
+                refs.append(ref)
+            return "".join(f"[^{ref}]" for ref in refs)
+
+        return re.sub(r"(?:\[\^\d+\]){2,}", replace_cluster, text)
 
     def _topic_groups_from_paragraphs(self, paragraphs: List[Any]) -> Dict[str, List[dict]]:
         groups = {key: [] for key, _ in CURATED_EXTERNAL_TOPIC_LABELS}
@@ -515,7 +595,17 @@ class DeepAnalysisRenderer:
 
     @staticmethod
     def _attach_refs_to_sentence(text: str, refs: list) -> str:
-        ref_text = "".join(f"[^{int(ref)}]" for ref in refs if str(ref).isdigit())
+        unique_refs = []
+        seen = set()
+        for ref in refs:
+            if not str(ref).isdigit():
+                continue
+            ref_id = int(ref)
+            if ref_id in seen:
+                continue
+            seen.add(ref_id)
+            unique_refs.append(ref_id)
+        ref_text = "".join(f"[^{ref_id}]" for ref_id in unique_refs)
         stripped = str(text or "").strip()
         if not ref_text:
             return stripped
@@ -584,32 +674,11 @@ class DeepAnalysisRenderer:
         """Allow formal/professional display supplements, but not social/curated viewpoints."""
         citations = synthesis.get("citations", {}) or {}
         for meta in citations.values():
-            if cls._is_social_or_curated_citation(meta):
+            if is_external_viewpoint_source(meta):
+                return False
+            if not is_formal_display_source(meta):
                 return False
         return True
-
-    @staticmethod
-    def _is_social_or_curated_citation(meta: Any) -> bool:
-        if not isinstance(meta, dict):
-            return False
-        source_type = str(meta.get("source_type") or "").strip()
-        if source_type in {
-            "curated_external_analysis_evidence",
-            "social_viewpoint_analysis_evidence",
-        }:
-            return True
-        source = str(meta.get("source") or "").strip()
-        return any(
-            token in source
-            for token in (
-                "雪球",
-                "知乎",
-                "微信公众号",
-                "微信精选",
-                "精选外部",
-                "东方财富精选观察",
-            )
-        )
 
     @staticmethod
     def _truncate_title(title: Any, max_chars: int) -> str:

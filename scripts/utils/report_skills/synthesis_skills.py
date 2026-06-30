@@ -15,6 +15,10 @@ if __name__.startswith("utils."):
         is_core_fact_supporting_source,
         format_claim_verification_appendix,
     )
+    from ..synthesis_source_policy import (
+        is_canonical_synthesis_source,
+        is_formal_display_source,
+    )
     from ..periodic_report_narrative_card_synthesis_items import (
         load_periodic_narrative_card_synthesis_items,
     )
@@ -33,6 +37,10 @@ else:
         format_synthesis_source_line,
         is_core_fact_supporting_source,
         format_claim_verification_appendix,
+    )
+    from synthesis_source_policy import (
+        is_canonical_synthesis_source,
+        is_formal_display_source,
     )
     from periodic_report_narrative_card_synthesis_items import (
         load_periodic_narrative_card_synthesis_items,
@@ -696,18 +704,12 @@ class SynthesisSkill(BaseSkill):
         """Return canonical external evidence items allowed into baseline synthesis."""
         if ctx is None:
             return []
-        allowed_source_types = {
-            "exchange_announcement",
-            "broker_research",
-            "mainstream_media",
-            "industry_research",
-        }
         eligible = []
         for item in ctx.get("external_evidence_keep_items", []) or []:
             extra = getattr(item, "extra", {}) or {}
             if extra.get("synthesis_display_only") is True:
                 continue
-            if str(extra.get("source_type", "")).strip() not in allowed_source_types:
+            if not is_canonical_synthesis_source(item):
                 continue
             if not (extra.get("knowledge_eligible") or extra.get("report_eligible")):
                 continue
@@ -717,22 +719,26 @@ class SynthesisSkill(BaseSkill):
     def _build_synthesis_items(self, stock_raw: dict, keep_posts: list, ctx: SkillContext = None, extra_items: list = None):
         zhihu = stock_raw.get("zhihu", {})
         source_policy = self._canonical_synthesis_source_policy(ctx)
-        include_social_sources = source_policy != "formal_first"
         items = adapt_all(
-            xueqiu_items=keep_posts if include_social_sources else [],
-            zhihu_items=zhihu.get("report_items", []) if include_social_sources else [],
+            xueqiu_items=keep_posts,
+            zhihu_items=zhihu.get("report_items", []),
             reports=stock_raw.get("reports", []),
             announcements=stock_raw.get("announcements", []),
             fundflow=stock_raw.get("fundflow", []),
             news=stock_raw.get("news", []),
         )
+        if source_policy == "formal_first":
+            items = [item for item in items if is_canonical_synthesis_source(item)]
         baseline_external_items = self._eligible_external_baseline_items(ctx)
         if baseline_external_items:
             items = list(items) + baseline_external_items
         # Extra material-layer items (e.g. periodic-report full text) are
         # appended LAST so ordinary source numbering stays stable.
         if extra_items:
-            items = list(items) + list(extra_items)
+            extras = list(extra_items)
+            if source_policy == "formal_first":
+                extras = [item for item in extras if is_formal_display_source(item)]
+            items = list(items) + extras
         return items
 
     def _canonical_synthesis_source_policy(self, ctx: SkillContext = None) -> str:

@@ -2,6 +2,7 @@
 
 import sys
 import types
+import json
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 
@@ -96,6 +97,17 @@ def test_source_intake_formal_first_policy_passes_context_and_pipeline_kwarg():
     )
     call_input = mock_pipeline.run.call_args[0][0]
     assert call_input["canonical_synthesis_source_policy"] == "formal_first"
+
+
+def test_pilot_stocks_enable_formal_first_source_policy_in_config():
+    config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
+    stocks = json.loads(config_path.read_text(encoding="utf-8"))
+    by_name = {stock.get("name"): stock for stock in stocks}
+
+    for stock_name in ("中际旭创", "圣邦股份", "黑芝麻智能"):
+        source_intake = by_name[stock_name]["source_intake"]
+        assert source_intake["enabled"] is True
+        assert source_intake["canonical_synthesis_source_policy"] == "formal_first"
 
 
 def test_source_intake_enabled_allows_empty_community_posts(monkeypatch):

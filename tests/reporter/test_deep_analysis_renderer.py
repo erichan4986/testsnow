@@ -129,6 +129,102 @@ def test_curated_external_narrative_renders_flat_planned_paragraphs():
     assert "- [^3] 微信公众号精选观察" in result
 
 
+def test_curated_external_narrative_merges_duplicate_display_citations():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "citations": {1: {"source": "研报", "title": "baseline title"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "交付变量",
+                    "text": "第一段引用同一篇外部文章。",
+                    "citation_refs": [1],
+                },
+                {
+                    "heading": "供应链变量",
+                    "text": "第二段也引用同一篇外部文章。",
+                    "citation_refs": [2],
+                },
+            ],
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "author": "作者A",
+                    "title": "同一篇文章",
+                    "url": "https://example.com/same",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+                2: {
+                    "source": "微信公众号精选观察",
+                    "author": "作者A",
+                    "title": "同一篇文章",
+                    "url": "https://example.com/same",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "第一段引用同一篇外部文章[^2]" in result
+    assert "第二段也引用同一篇外部文章[^2]" in result
+    assert "第二段也引用同一篇外部文章[^3]" not in result
+    assert local_sources.count("https://example.com/same") == 1
+    assert "- [^2] 微信公众号精选观察" in local_sources
+    assert "- [^3] 微信公众号精选观察" not in local_sources
+
+
+def test_curated_external_narrative_dedupes_repeated_body_footnotes_after_merge():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "citations": {1: {"source": "研报", "title": "baseline title"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "供应链变量",
+                    "text": "外部材料提示同一来源不应重复刷脚注。",
+                    "citation_refs": [1, 1, 3, 1],
+                },
+            ],
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "author": "作者A",
+                    "title": "同一篇文章",
+                    "url": "https://example.com/same",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+                3: {
+                    "source": "微信公众号精选观察",
+                    "author": "作者A",
+                    "title": "同一篇文章",
+                    "url": "https://example.com/same",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "外部材料提示同一来源不应重复刷脚注[^2]。" in result
+    assert "[^2][^2]" not in result
+    assert local_sources.count("https://example.com/same") == 1
+
+
 def test_curated_external_topic_groups_keep_taxonomy_fallback():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -176,6 +272,57 @@ def test_curated_external_topic_groups_keep_taxonomy_fallback():
     assert "#### 4.4.2 产业链与技术路线分歧" in result
     assert "交付变量" in result
     assert "技术路线" in result
+
+
+def test_curated_external_grouped_addendum_merges_duplicate_display_citations():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "citations": {1: {"source": "研报", "title": "baseline title"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_topic_groups": {
+                "order_capacity_delivery": [
+                    {
+                        "heading": "交付变量",
+                        "text": "第一条引用同一来源。",
+                        "citation_refs": [1],
+                    },
+                    {
+                        "heading": "供应链变量",
+                        "text": "第二条也引用同一来源。",
+                        "citation_refs": [2],
+                    },
+                ],
+            },
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "author": "作者A",
+                    "title": "同一篇文章",
+                    "url": "https://example.com/same",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+                2: {
+                    "source": "微信公众号精选观察",
+                    "author": "作者A",
+                    "title": "同一篇文章",
+                    "url": "https://example.com/same",
+                    "source_type": "curated_external_analysis_evidence",
+                },
+            },
+        },
+    }
+
+    result = renderer.render(ctx)
+    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "第一条引用同一来源[^2]" in result
+    assert "第二条也引用同一来源[^2]" in result
+    assert "第二条也引用同一来源[^3]" not in result
+    assert local_sources.count("https://example.com/same") == 1
 
 
 def test_curated_external_unknown_topic_does_not_fall_into_market_expectation():

@@ -38,60 +38,65 @@ THEMES = {
     "events_catalysts": ("关键事件与催化剂", 3),
 }
 
+MAX_SYNTHESIS_PARAGRAPH_CHARS = 260
+
+COMMON_PROSE_CONTRACT = (
+    "通用行文结构约束：\n"
+    "- 不要写成一整段长文；每段不超过260个中文字符，尽量每句不超过110字。\n"
+    "- 优先使用 Markdown 表格承载变量、证据、推导和验证点；表格单元格里的关键事实也必须带 [^n] 引用。\n"
+    "- 引用格式必须写成 [^1]、[^2]，不要写成 [1]、[2]。\n"
+    "- 避免模板化连接词，如“综合来看”“展望未来”“与此同时”“结构性繁荣”；直接写变量、证据和推导。\n"
+    "- 直接输出正文，不要写“好的，作为资深分析师”“以下是分析”等角色扮演套话。\n"
+    "- 避免强确认词和强垄断表述；除非来源为公告/官方确认，否则使用“外部材料显示/研报认为/仍需跟踪”等审慎措辞。\n"
+    "- 每个关键数字和事实后面标注 [^n] 引用；不要编造数据，只能基于以下信息。\n"
+)
+
 # 每个主题的 prompt 前缀
 THEME_PROMPT_PREFIX = {
     "industry_logic": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的产业逻辑与竞争格局进行综合解读。\n\n"
         "要求：\n"
-        "1. 写一段 400-600 字的连贯分析，不要分点罗列\n"
-        "2. 每个关键数字和事实后面标注 [^n] 引用\n"
-        "3. 必须覆盖：\n"
-        "   - 行业供需格局与涨价/降价周期判断\n"
-        "   - 主要竞争对手动态：横向对比{stock_name}与竞争对手（思瑞浦、杰华特、纳芯微、艾为电子）在产品料号数、车规级布局、研发费用、毛利率、核心客户等维度的差异\n"
-        "   - 国产替代进展与市场份额变化\n"
-        "4. 最后给出该赛道未来 6-12 个月的关键趋势判断\n"
-        "5. 不要编造数据，只能基于以下信息\n"
-        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
+        "1. 只写产业需求、技术路线、供应链位置、竞争格局与直接竞争对手。\n"
+        "2. 如有3个以上比较维度，优先使用 Markdown 表格：| 维度 | 公司位置 | 对手/行业状态 | 判断 | 来源 |。\n"
+        "3. 不要重复展开4.2应写的季度营收、利润、毛利率、订单兑现；不要写4.3应写的资金面、融资盘、催化剂时间线。\n"
+        "4. 对未来趋势只写产业层面的1-2个验证变量，不写交易结论。\n"
+        f"{COMMON_PROSE_CONTRACT}"
     ),
     "fundamentals": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的业绩基本面进行追踪分析。\n\n"
         "要求：\n"
-        "1. 写一段 300-500 字的连贯分析，不要分点罗列\n"
-        "2. 每个关键数字和事实后面标注 [^n] 引用\n"
-        "3. 必须覆盖：最新季度营收/利润变化、毛利率走势、订单/客户动态、管理层指引\n"
-        "4. 最后给出业绩预期修正方向（上调/下调/维持）\n"
-        "5. 不要编造数据，只能基于以下信息\n"
-        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
+        "1. 只写营收/利润/毛利率/费用率/订单客户/管理层指引如何影响业绩路径。\n"
+        "2. 优先使用 Markdown 表格：| 变量 | 当前证据 | 对业绩路径的含义 | 需跟踪 | 来源 |。\n"
+        "3. 不要重复展开4.1的行业背景、技术路线和竞争格局；不要写4.3的资金面、融资余额、催化剂时间线。\n"
+        "4. 结论只能写业绩预期修正方向（上调/下调/维持）及条件，不写投资建议。\n"
+        f"{COMMON_PROSE_CONTRACT}"
     ),
     "valuation_debate": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的估值争议进行综合解读。\n\n"
         "要求：\n"
-        "1. 写一段 300-500 字的连贯分析，不要分点罗列\n"
-        "2. 每个关键数字和事实后面标注 [^n] 引用\n"
-        "3. 必须覆盖：看多方的核心论据、看空方的核心论据、双方分歧的关键变量\n"
-        "4. 最后给出一个中性的综合判断\n"
-        "5. 不要编造数据，只能基于以下信息\n"
-        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
+        "1. 只写估值多空分歧、关键验证变量和情景分歧，不写交易建议。\n"
+        "2. 优先使用 Markdown 表格：| 多方观点 | 依据 | 反方约束 | 关键验证点 | 来源 |。\n"
+        "3. 不要重复展开4.1的产业技术背景；不要重复4.2的财务数字，只在支撑估值分歧时一句话引用。\n"
+        "4. 最后给出中性判断：当前估值依赖哪些变量兑现。\n"
+        f"{COMMON_PROSE_CONTRACT}"
     ),
     "funding_sentiment": (
         "你是资深半导体行业分析师。请基于以下多源信息，对{stock_name}的资金面与情绪进行跟踪分析。\n\n"
         "要求：\n"
-        "1. 写一段 250-400 字的连贯分析，不要分点罗列\n"
-        "2. 每个关键数字和事实后面标注 [^n] 引用\n"
-        "3. 必须覆盖：主力资金动向、散户情绪指标、北向资金/机构持仓变化、融资余额变化\n"
-        "4. 最后给出资金面对股价的短期影响判断\n"
-        "5. 不要编造数据，只能基于以下信息\n"
-        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
+        "1. 只写主力资金、机构/北向、融资余额、市场情绪或持仓结构变化。\n"
+        "2. 如有3个以上资金变量，优先使用 Markdown 表格：| 资金变量 | 当前证据 | 对短期交易结构的含义 | 需跟踪 | 来源 |。\n"
+        "3. 不要重复展开4.1的技术路线和产业背景；不要重复4.2的业绩路径，除非一句话解释资金反应的原因。\n"
+        "4. 最后只写资金面对短期波动的影响判断，不写买卖建议。\n"
+        f"{COMMON_PROSE_CONTRACT}"
     ),
     "events_catalysts": (
         "你是资深半导体行业分析师。请基于以下多源信息，梳理{stock_name}近期的关键事件与催化剂。\n\n"
         "要求：\n"
-        "1. 写一段 250-400 字的连贯分析，不要分点罗列\n"
-        "2. 每个关键数字和事实后面标注 [^n] 引用\n"
-        "3. 必须覆盖：已落地的利好/利空、即将发生的事件、政策/行业催化\n"
-        "4. 最后给出下一个值得关注的催化剂时间点\n"
-        "5. 不要编造数据，只能基于以下信息\n"
-        "6. 不要在正文中重复展开具体财务数字（如营收、毛利率等），仅在需要支撑论点时用一句话引用，并标注 [^n]。\n"
+        "1. 只写已发生事件、后续时间点、政策/行业催化和验证指标。\n"
+        "2. 优先使用 Markdown 表格：| 时间点 | 催化剂/事件 | 当前状态 | 验证指标 | 来源 |。\n"
+        "3. 不要重复展开4.1的产业技术背景；不要重复4.2的完整业绩路径；不要把社媒传闻写成已确认事件。\n"
+        "4. 最后给出下一个值得关注的催化剂时间点及其验证指标。\n"
+        f"{COMMON_PROSE_CONTRACT}"
     ),
 }
 
@@ -313,6 +318,8 @@ class KnowledgeSynthesizer:
         # Strip non-numeric markers such as [^supported] / [^needs_review]
         # before extracting numbered citations.
         text = sanitize_citation_markers(text)
+        text = self._normalize_plain_numeric_citations(text)
+        text = self._sanitize_theme_narrative(text)
 
         # 提取所有 [^n] 引用
         refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", text))
@@ -321,6 +328,84 @@ class KnowledgeSynthesizer:
             # 占位：caller 负责回填真实元数据
             citations[ref_id] = {"_placeholder": True, "ref_id": ref_id}
         return text, citations
+
+    @staticmethod
+    def _normalize_plain_numeric_citations(text: str) -> str:
+        """Convert LLM-emitted [n] source refs into the renderer's [^n] form."""
+        if not isinstance(text, str):
+            return text
+        return re.sub(r"(?<!\^)\[(\d+)\]", r"[^\1]", text)
+
+    def _sanitize_theme_narrative(self, text: str) -> str:
+        """Deterministically normalize LLM theme output without changing facts.
+
+        The sanitizer is intentionally conservative: it preserves Markdown
+        tables/lists/headings verbatim, and only splits overlong prose
+        paragraphs at sentence boundaries so citation markers stay attached to
+        their original sentence.
+        """
+        text = self._strip_llm_role_preface(str(text or "").strip())
+        blocks = re.split(r"\n\s*\n", text)
+        sanitized_blocks = []
+        for block in blocks:
+            cleaned = block.strip()
+            if not cleaned:
+                continue
+            if self._is_structured_markdown_block(cleaned):
+                sanitized_blocks.append(cleaned)
+                continue
+            sanitized_blocks.extend(self._split_overlong_prose_block(cleaned))
+        return "\n\n".join(sanitized_blocks).strip()
+
+    @staticmethod
+    def _strip_llm_role_preface(text: str) -> str:
+        """Remove common assistant role prefaces without touching analysis text."""
+        if not text:
+            return ""
+        patterns = [
+            r"^\s*(?:好的，)?作为[^。！？\n]{0,80}(?:分析师|研究员)[^。！？\n]{0,160}[。！？]\s*",
+            r"^\s*(?:以下是|下面是)[^。！？\n]{0,120}(?:分析|解读)[^。！？\n]{0,80}[。！？]\s*",
+        ]
+        cleaned = text
+        for pattern in patterns:
+            cleaned = re.sub(pattern, "", cleaned, count=1)
+        return cleaned.strip()
+
+    @staticmethod
+    def _is_structured_markdown_block(block: str) -> bool:
+        lines = [line.strip() for line in block.splitlines() if line.strip()]
+        if not lines:
+            return False
+        return all(
+            line.startswith("|")
+            or line.startswith("- ")
+            or line.startswith("* ")
+            or re.match(r"^\d+[.)、]\s+", line)
+            or line.startswith("#")
+            for line in lines
+        )
+
+    def _split_overlong_prose_block(self, block: str) -> List[str]:
+        compact = re.sub(r"\s+", "", block)
+        if len(compact) <= MAX_SYNTHESIS_PARAGRAPH_CHARS:
+            return [block]
+
+        sentences = [piece.strip() for piece in re.split(r"(?<=[。！？；])", block) if piece.strip()]
+        if len(sentences) <= 1:
+            return [block]
+
+        paragraphs = []
+        current = ""
+        for sentence in sentences:
+            candidate = f"{current}{sentence}" if current else sentence
+            if current and len(re.sub(r"\s+", "", candidate)) > MAX_SYNTHESIS_PARAGRAPH_CHARS:
+                paragraphs.append(current)
+                current = sentence
+            else:
+                current = candidate
+        if current:
+            paragraphs.append(current)
+        return paragraphs or [block]
 
     def extract_core_facts(
         self,

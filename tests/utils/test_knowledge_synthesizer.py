@@ -44,6 +44,64 @@ def test_build_prompt_includes_credit_usage_rules_before_sources():
     assert "Phase 1 不使用 corroborated schema" in prompt
 
 
+def test_build_prompt_uses_prose_structure_contract_not_legacy_long_prose():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="中际旭创深度研报",
+            content="800G 与 1.6T 光模块需求高景气，毛利率和订单兑现仍需跟踪。",
+            author="券商",
+            source_platform="研报",
+            url="http://report",
+            publish_time="2026-06-01",
+        )
+    ]
+
+    prompt = synth._build_prompt("中际旭创", "fundamentals", items)
+
+    assert "不要写成一整段长文" in prompt
+    assert "每段不超过260个中文字符" in prompt
+    assert "优先使用 Markdown 表格" in prompt
+    assert "不要重复展开4.1" in prompt
+    assert "400-600 字" not in prompt
+    assert "不要分点罗列" not in prompt
+
+
+def test_parse_with_citations_splits_long_prose_paragraph_but_preserves_refs():
+    synth = KnowledgeSynthesizer(client=None)
+    sentence_a = "第一句说明行业需求来自正式研报并保留引用，且补充客户资本开支、产品迭代、交付节奏、供给瓶颈、价格弹性、海外云厂商扩张、国内算力集群建设和供应链国产化八个变量[^1]"
+    sentence_b = "第二句说明订单兑现需要跟踪并保留引用，且补充毛利率、费用率、产能扩张节奏、客户集中度、产品结构、存货变化、预付款变化和产线利用率八个变量[^2]"
+    sentence_c = "第三句说明毛利率变化需要验证并保留引用，且补充价格竞争、产品结构、供应链瓶颈、技术迭代、库存周期、客户认证节奏、良率变化和资本开支八个变量[^3]"
+    sentence_d = "第四句说明若上述变量无法兑现，估值分歧会重新放大，但该判断仍必须保留来源引用并等待后续报告验证[^4]"
+    text = f"{sentence_a}。{sentence_b}。{sentence_c}。{sentence_d}。"
+
+    parsed, cites = synth._parse_with_citations(text)
+
+    assert "\n\n" in parsed
+    assert "[^1]" in parsed
+    assert "[^2]" in parsed
+    assert "[^3]" in parsed
+    assert "[^4]" in parsed
+    assert set(cites) == {1, 2, 3, 4}
+
+
+def test_parse_with_citations_preserves_markdown_tables_with_citations():
+    synth = KnowledgeSynthesizer(client=None)
+    table = """
+| 变量 | 当前证据 | 含义 |
+|------|----------|------|
+| 订单 | 800G 放量[^1] | 支撑营收 |
+| 毛利率 | 产品结构改善[^2] | 支撑盈利 |
+"""
+
+    parsed, cites = synth._parse_with_citations(table)
+
+    assert "| 订单 | 800G 放量[^1] | 支撑营收 |" in parsed
+    assert "| 毛利率 | 产品结构改善[^2] | 支撑盈利 |" in parsed
+    assert "\n\n| 订单" not in parsed
+    assert set(cites) == {1, 2}
+
+
 def test_build_prompt_source_line_includes_credit_label():
     synth = KnowledgeSynthesizer(client=None)
     items = [
@@ -127,6 +185,41 @@ def test_parse_citations_sanitizes_non_numeric_markers():
     assert "[^1]" in parsed
     assert 1 in cites
     assert len(cites) == 1
+
+
+def test_parse_citations_normalizes_plain_numeric_markers():
+    synth = KnowledgeSynthesizer(client=None)
+    text = (
+        "| 变量 | 证据 | 来源 |\n"
+        "|------|------|------|\n"
+        "| 订单 | 800G 放量 | [1][23] |\n\n"
+        "毛利率仍需跟踪[4]。"
+    )
+
+    parsed, cites = synth._parse_with_citations(text)
+
+    assert "[1]" not in parsed
+    assert "[23]" not in parsed
+    assert "[4]" not in parsed
+    assert "[^1][^23]" in parsed
+    assert "跟踪[^4]" in parsed
+    assert set(cites) == {1, 4, 23}
+
+
+def test_parse_citations_removes_llm_role_preface():
+    synth = KnowledgeSynthesizer(client=None)
+    text = (
+        "好的，作为资深半导体行业分析师，现基于您提供的多源信息，"
+        "对中际旭创的产业逻辑进行综合解读。\n\n"
+        "800G 光模块需求仍需跟踪[^1]。"
+    )
+
+    parsed, cites = synth._parse_with_citations(text)
+
+    assert "好的，作为资深" not in parsed
+    assert "现基于您提供的多源信息" not in parsed
+    assert parsed.startswith("800G 光模块需求")
+    assert set(cites) == {1}
 
 
 def test_extract_core_facts_sanitizes_non_numeric_markers():

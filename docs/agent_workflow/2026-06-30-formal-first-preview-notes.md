@@ -181,3 +181,111 @@ Renderer guardrail:
   its citations are not social / curated external citations.
 - If `synthesis_display` cites Xueqiu / Zhihu / WeChat / curated external
   evidence, the renderer falls back to baseline `synthesis` for `4.1-4.3`.
+
+## 7. Source Policy Layer Closeout
+
+Status: centralized policy implemented.
+
+The boundary is now represented by a deterministic helper:
+
+```text
+scripts/utils/synthesis_source_policy.py
+```
+
+The policy answers four questions for a source item or citation metadata:
+
+- may it enter canonical `4.1-4.3` synthesis;
+- may it enrich formal / professional `synthesis_display`;
+- must it stay as `4.4` external viewpoint material;
+- is it only a verified / supported social bridge summary.
+
+Current source-boundary semantics:
+
+- Canonical `4.1-4.3` sources: company announcements, official / exchange
+  sources, broker research, industry research, mainstream news, fund-flow /
+  quantitative observations, and eligible non-display external evidence.
+- Formal display supplements: annual-report narrative cards, periodic-report
+  full-text analysis, broker-research digest notes, and other professional
+  formal display-only materials.
+- External viewpoint only: Xueqiu, Zhihu, WeChat / WeChat official-account
+  viewpoint material, curated external evidence, social viewpoint evidence,
+  and similar source labels.
+- Bridge summary only: verified / supported social bridge summaries. These may
+  tell the LLM that a market discussion was cross-checked, but raw social text
+  must not be passed into canonical `4.1-4.3` synthesis.
+
+Implementation effects:
+
+- `SynthesisSkill` filters ordinary canonical items through
+  `is_canonical_synthesis_source(...)` under `formal_first`.
+- `SynthesisSkill` filters display extra items through
+  `is_formal_display_source(...)` under `formal_first`.
+- `DeepAnalysisRenderer` uses the same policy to decide whether
+  `synthesis_display` is safe to render as `4.1-4.3`, instead of maintaining a
+  separate social-token list.
+
+Focused validation:
+
+```text
+python3 -m pytest \
+  tests/utils/test_synthesis_source_policy.py \
+  tests/utils/test_synthesis_credit.py \
+  tests/reporter/test_synthesis_skills.py \
+  tests/reporter/test_deep_analysis_renderer.py \
+  tests/reporter/test_formal_first_source_policy_preview.py \
+  tests/reporter/test_stock_reporter_source_intake_config.py -q
+```
+
+Result: `166 passed`.
+
+## 8. E2E Rerun Finding And Config Fix
+
+Validation record:
+
+```text
+/tmp/formal_first_source_policy_e2e_validation.md
+```
+
+Initial rerun verdict: `needs_fix`.
+
+Root cause:
+
+- The centralized policy existed, but the three pilot stock configs had not
+  opted into `canonical_synthesis_source_policy=formal_first`, so the ordinary
+  report entry still ran in `legacy_mixed` mode.
+- In `legacy_mixed`, cached Xueqiu / Zhihu materials can still enter
+  `4.1-4.3`; the validation observed social citations in the main analysis.
+- The cached-input preview still reports zero formal items for old
+  `report_input_*.json` files.  This is expected because those caches do not
+  include live `source_intake` announcement / research / news items.  It is not
+  sufficient evidence that the live formal entry will have zero formal sources.
+
+Fix:
+
+- `config/stocks.json` now explicitly enables
+  `canonical_synthesis_source_policy: formal_first` for:
+  - 中际旭创
+  - 圣邦股份
+  - 黑芝麻智能
+- `tests/reporter/test_stock_reporter_source_intake_config.py` now asserts the
+  three pilot stocks keep that opt-in config.
+
+Focused validation after config fix:
+
+```text
+python3 -m pytest \
+  tests/utils/test_synthesis_source_policy.py \
+  tests/utils/test_synthesis_credit.py \
+  tests/reporter/test_synthesis_skills.py \
+  tests/reporter/test_deep_analysis_renderer.py \
+  tests/reporter/test_formal_first_source_policy_preview.py \
+  tests/reporter/test_stock_reporter_source_intake_config.py \
+  tests/reporter/test_report_prose_quality.py \
+  tests/utils/test_knowledge_synthesizer.py -q
+```
+
+Result: `198 passed`.
+
+Next validation must rerun the ordinary report entry again.  It should judge
+the live report output, not cached-input preview alone, because live
+`source_intake` is the path that supplies formal materials for A-share pilots.

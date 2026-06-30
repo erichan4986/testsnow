@@ -28,6 +28,7 @@
     },
     "source_intake": {
       "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
       "periodic_narrative_cards_synthesis_display": {
         "enabled": true,
         "max_display_items": 8
@@ -141,6 +142,7 @@
     ],
     "source_intake": {
       "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
       "a_stock": {
         "enabled": true,
         "cninfo_announcements": {
@@ -257,6 +259,7 @@
     ],
     "source_intake": {
       "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
       "a_stock": {
         "enabled": true,
         "cninfo_announcements": {
