@@ -13,9 +13,15 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, List
 
+try:
+    from .deep_analysis_topic_ownership import TOPIC_FAMILIES
+except ImportError:
+    from deep_analysis_topic_ownership import TOPIC_FAMILIES
+
 
 LONG_PARAGRAPH_CHARS = 260
 LONG_SENTENCE_CHARS = 110
+BORROWED_THEME_SENTENCE_CHARS = 110
 
 THEME_TERMS = [
     "AI算力",
@@ -102,8 +108,10 @@ def check_report_prose_text(text: str, path: str = "<memory>") -> ProseQualityRe
     issues: List[ProseIssue] = []
 
     main_sections = {key: value for key, value in sections.items() if key in {"4.1", "4.2", "4.3"}}
+    issues.extend(_check_nested_headings(main_sections))
     issues.extend(_check_long_paragraphs_and_sentences(main_sections))
     issues.extend(_check_repeated_themes(main_sections))
+    issues.extend(_check_theme_reexpanded_outside_owner(main_sections))
     issues.extend(_check_aiish_transitions(main_sections))
     issues.extend(_check_strong_assertions(main_sections))
     if "4.4" in sections:
@@ -135,11 +143,29 @@ def _extract_deep_analysis_sections(text: str) -> dict[str, str]:
         key = match.group(1)
         start = match.end()
         end = matches[index + 1].start() if index + 1 < len(matches) else len(text)
-        next_major = re.search(r"^##\s+", text[start:end], flags=re.MULTILINE)
+        next_major = re.search(
+            r"^##\s+(?:[一二三四五六七八九十]+[、.．]|综合风险评分|风险提示|引用来源)",
+            text[start:end],
+            flags=re.MULTILINE,
+        )
         if next_major:
             end = start + next_major.start()
         sections[key] = text[start:end].strip()
     return sections
+
+
+def _check_nested_headings(sections: dict[str, str]) -> Iterable[ProseIssue]:
+    for section, body in sections.items():
+        for line in body.splitlines():
+            stripped = line.strip()
+            if re.match(r"^##+\s+", stripped):
+                yield ProseIssue(
+                    code="nested_heading_in_deep_analysis",
+                    severity="warning",
+                    section=section,
+                    message="4.1-4.3 正文中出现 Markdown 子标题，建议改成加粗行内标签，避免破坏章节层级。",
+                    evidence=stripped,
+                )
 
 
 def _check_long_paragraphs_and_sentences(sections: dict[str, str]) -> Iterable[ProseIssue]:
@@ -180,6 +206,74 @@ def _check_repeated_themes(sections: dict[str, str]) -> Iterable[ProseIssue]:
             message="4.1/4.2/4.3 出现跨章节主题重复，建议把产业、业绩、资金面的信息边界拆开。",
             evidence="; ".join(repeated[:12]),
         )
+
+
+def _check_theme_reexpanded_outside_owner(sections: dict[str, str]) -> Iterable[ProseIssue]:
+    for family in TOPIC_FAMILIES:
+        owner_section = family.get("owner_section", "")
+        terms = family.get("terms", [])
+        for section, body in sections.items():
+            if section == owner_section:
+                continue
+            prose_hits = _borrowed_theme_prose_hits(body, terms)
+            table_hits = _borrowed_theme_table_hits(body, terms)
+            if not _is_reexpanded(prose_hits, table_hits):
+                continue
+            matched_terms = sorted({term for hit in prose_hits + table_hits for term in hit["terms"]})
+            evidence = {
+                "term_family": family.get("family", ""),
+                "terms": matched_terms,
+                "owner_section": owner_section,
+                "offending_section": section,
+                "prose_paragraph_count": len(prose_hits),
+                "table_row_count": len(table_hits),
+                "sample": _preview((prose_hits or table_hits)[0]["text"], limit=90),
+            }
+            yield ProseIssue(
+                code="theme_reexpanded_outside_owner",
+                severity="warning",
+                section=section,
+                message="非本节拥有的主题被重复展开，建议改成一句上下文或绑定到本节变量的单行表格。",
+                evidence=json.dumps(evidence, ensure_ascii=False),
+            )
+
+
+def _borrowed_theme_prose_hits(body: str, terms: list[str]) -> list[dict]:
+    hits = []
+    for paragraph in _iter_prose_paragraphs(body):
+        matched_terms = _matched_terms(paragraph, terms)
+        if matched_terms:
+            hits.append({
+                "text": paragraph,
+                "terms": matched_terms,
+                "chars": len(_strip_markdown(paragraph)),
+            })
+    return hits
+
+
+def _borrowed_theme_table_hits(body: str, terms: list[str]) -> list[dict]:
+    hits = []
+    for row in _iter_table_rows(body):
+        matched_terms = _matched_terms(row, terms)
+        if matched_terms:
+            hits.append({"text": row, "terms": matched_terms})
+    return hits
+
+
+def _is_reexpanded(prose_hits: list[dict], table_hits: list[dict]) -> bool:
+    if len(prose_hits) > 1:
+        return True
+    if len(table_hits) > 1:
+        return True
+    if prose_hits and table_hits:
+        return True
+    if prose_hits and prose_hits[0].get("chars", 0) > BORROWED_THEME_SENTENCE_CHARS:
+        return True
+    return False
+
+
+def _matched_terms(text: str, terms: list[str]) -> list[str]:
+    return [term for term in terms if re.search(re.escape(term), text, flags=re.IGNORECASE)]
 
 
 def _check_aiish_transitions(sections: dict[str, str]) -> Iterable[ProseIssue]:
@@ -274,9 +368,20 @@ def _is_non_prose_line(line: str) -> bool:
         line.startswith("|")
         or line.startswith("- ")
         or line.startswith("> ")
+        or line.startswith("#")
         or line.startswith("**本节引用来源")
         or re.match(r"^\[\^\d+\]:", line) is not None
     )
+
+
+def _iter_table_rows(body: str) -> Iterable[str]:
+    for line in body.splitlines():
+        stripped = line.strip()
+        if not stripped.startswith("|"):
+            continue
+        if re.fullmatch(r"\|?\s*:?-{2,}:?\s*(\|\s*:?-{2,}:?\s*)+\|?", stripped):
+            continue
+        yield stripped
 
 
 def _split_sentences(text: str) -> list[str]:

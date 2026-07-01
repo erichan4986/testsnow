@@ -11,6 +11,10 @@ import re
 from typing import Any, Dict, List, Optional, Tuple
 
 try:
+    from .deep_analysis_topic_ownership import (
+        format_previous_topic_ledger,
+        format_topic_ownership_contract,
+    )
     from .source_adapter import SynthesisItem
     from .synthesis_credit import (
         credit_usage_rules_text,
@@ -19,6 +23,10 @@ try:
         sanitize_citation_markers,
     )
 except ImportError:
+    from deep_analysis_topic_ownership import (
+        format_previous_topic_ledger,
+        format_topic_ownership_contract,
+    )
     from source_adapter import SynthesisItem
     from synthesis_credit import (
         credit_usage_rules_text,
@@ -255,7 +263,12 @@ class KnowledgeSynthesizer:
             source_lines.append(format_synthesis_source_line(i + 1, item))
 
         rules = credit_usage_rules_text()
-        prompt = prefix + "\n\n" + rules + "\n\n信息来源：\n" + "\n".join(source_lines)
+        ownership_contract = format_topic_ownership_contract(theme_key)
+        prompt_parts = [prefix]
+        if ownership_contract:
+            prompt_parts.append(ownership_contract)
+        prompt_parts.extend([rules, "信息来源：\n" + "\n".join(source_lines)])
+        prompt = "\n\n".join(prompt_parts)
 
         # Append optional claim verification context after numbered sources.
         if claim_verification_context:
@@ -265,14 +278,10 @@ class KnowledgeSynthesizer:
 
         # 追加前置板块上下文，避免跨板块重复展开
         if previous_narratives:
-            prompt += "\n\n---\n\n注意：以下内容是本报告已生成的其他板块分析。"
-            prompt += "请确保本板块不重复展开已在其他板块中详细讨论过的事实（如季度收入、毛利率、具体订单数字等）。"
-            prompt += "仅在需要支撑本板块论点时，用一句话简要引用，并继续标注 [^n] 引用。\n\n"
-            for prev_key, prev_text in previous_narratives.items():
-                prev_title = THEMES.get(prev_key, (prev_key, 0))[0]
-                # 截取前 300 字作为上下文，控制 prompt 长度
-                truncated = prev_text[:300] + "..." if len(prev_text) > 300 else prev_text
-                prompt += f"【{prev_title}】\n{truncated}\n\n"
+            theme_titles = {key: value[0] for key, value in THEMES.items()}
+            ledger = format_previous_topic_ledger(previous_narratives, theme_titles)
+            if ledger:
+                prompt += "\n\n---\n\n" + ledger + "\n"
 
         return prompt
 

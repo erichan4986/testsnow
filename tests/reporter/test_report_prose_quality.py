@@ -150,6 +150,113 @@ AI算力、800G、1.6T 是产业需求和技术路线的主线。
     assert "repeated_theme_across_sections" not in _codes(result)
 
 
+def test_flags_theme_reexpanded_outside_owner_in_multiple_paragraphs():
+    text = """
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+800G 是技术路线和产业需求的主线。
+
+### 4.2 业绩路径与多空分歧
+
+800G 放量带动营收增长，但还要看订单兑现。
+
+800G 产品价格变化还会影响毛利率和利润弹性。
+
+### 4.3 资金面与催化剂时间线
+
+资金面等待半年报验证。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" in _codes(result)
+    issue = next(i for i in result.issues if i.code == "theme_reexpanded_outside_owner")
+    assert issue.section == "4.2"
+    assert "高速光互连技术路线" in issue.evidence
+    assert '"offending_section": "4.2"' in issue.evidence
+
+
+def test_allows_single_borrowed_theme_table_row_without_reexpanded_warning():
+    text = """
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+800G 是技术路线和产业需求的主线。
+
+### 4.2 业绩路径与多空分歧
+
+| 变量 | 当前证据 | 对业绩路径的含义 | 来源 |
+|------|----------|------------------|------|
+| 订单 | 800G 放量 | 支撑营收 | [^1] |
+
+### 4.3 资金面与催化剂时间线
+
+资金面等待半年报验证。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" not in _codes(result)
+
+
+def test_flags_borrowed_theme_repeated_across_multiple_table_rows():
+    text = """
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+800G 和 1.6T 是技术路线和产业需求的主线。
+
+### 4.2 业绩路径与多空分歧
+
+| 变量 | 当前证据 | 对业绩路径的含义 | 来源 |
+|------|----------|------------------|------|
+| 订单 | 800G 放量 | 支撑营收 | [^1] |
+| 利润 | 1.6T 放量 | 支撑毛利率 | [^2] |
+
+### 4.3 资金面与催化剂时间线
+
+资金面等待半年报验证。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" in _codes(result)
+    issue = next(i for i in result.issues if i.code == "theme_reexpanded_outside_owner")
+    assert issue.section == "4.2"
+    assert '"table_row_count": 2' in issue.evidence
+
+
+def test_flags_nested_heading_inside_deep_analysis_section():
+    text = """
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+## 产业需求与市场驱动
+
+公司处于高速成长行业。
+
+### 4.2 业绩路径与多空分歧
+
+业绩路径需要看毛利率。
+
+### 4.3 资金面与催化剂时间线
+
+催化剂需要落到半年报。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "nested_heading_in_deep_analysis" in _codes(result)
+    issue = next(i for i in result.issues if i.code == "nested_heading_in_deep_analysis")
+    assert issue.section == "4.1"
+    assert "## 产业需求与市场驱动" in issue.evidence
+
+
 def test_duplicate_4_4_citations_fall_back_to_source_author_title_when_url_missing():
     text = """
 ## 四、深度分析

@@ -67,6 +67,59 @@ def test_build_prompt_uses_prose_structure_contract_not_legacy_long_prose():
     assert "不要分点罗列" not in prompt
 
 
+def test_build_prompt_includes_topic_ownership_contract_for_final_section():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="业绩路径",
+            content="800G 放量带动营收增长，毛利率仍需跟踪。",
+            author="券商",
+            source_platform="研报",
+            url="http://report",
+            publish_time="2026-06-01",
+        )
+    ]
+
+    prompt = synth._build_prompt("中际旭创", "fundamentals", items)
+
+    assert "最终报告章节: 4.2" in prompt
+    assert "同属最终章节的内部主题: fundamentals, valuation_debate" in prompt
+    assert "本主题拥有: 营收、利润、毛利率、费用率、订单兑现、客户结构、业绩指引" in prompt
+    assert "禁止重复展开: 完整产业背景、资金流、融资余额、交易情绪" in prompt
+    assert "借用主题预算" in prompt
+    assert "不超过110个中文字符" in prompt
+    assert "不要输出 ## 或 ### 子标题" in prompt
+
+
+def test_build_prompt_uses_previous_topic_ledger_instead_of_raw_previous_prose():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="业绩路径",
+            content="营收增长需要看订单兑现。",
+            author="券商",
+            source_platform="研报",
+            url="http://report",
+            publish_time="2026-06-01",
+        )
+    ]
+    previous = {
+        "industry_logic": (
+            "AI算力、800G、1.6T、硅光和CPO是产业技术路线。"
+            "这一整句原文不应该被完整塞进后续 prompt。"
+        )
+    }
+
+    prompt = synth._build_prompt("中际旭创", "fundamentals", items, previous_narratives=previous)
+
+    assert "已展开主题" in prompt
+    assert "4.1 产业逻辑与竞争格局" in prompt
+    assert "高速光互连技术路线" in prompt
+    assert "800G / 1.6T / 硅光 / CPO" in prompt
+    assert "只能用一句话说明与本节变量的关系" in prompt
+    assert "这一整句原文不应该被完整塞进后续 prompt" not in prompt
+
+
 def test_parse_with_citations_splits_long_prose_paragraph_but_preserves_refs():
     synth = KnowledgeSynthesizer(client=None)
     sentence_a = "第一句说明行业需求来自正式研报并保留引用，且补充客户资本开支、产品迭代、交付节奏、供给瓶颈、价格弹性、海外云厂商扩张、国内算力集群建设和供应链国产化八个变量[^1]"
@@ -282,11 +335,11 @@ def test_build_prompt_order_sources_context_narratives():
         "supported_claims": [],
         "unverified_claims": [{"claim_text": "社区讨论", "action": "unverified", "reason": "no match"}],
     }
-    previous = {"industry_logic": "行业叙事。"}
+    previous = {"industry_logic": "AI算力、800G 和 CPO 是行业技术路线。"}
     prompt = synth._build_prompt("圣邦股份", "fundamentals", items, previous_narratives=previous, claim_verification_context=context)
     sources_pos = prompt.find("信息来源：")
     context_pos = prompt.find("Claim Verification Context")
-    narratives_pos = prompt.find("已生成的其他板块分析")
+    narratives_pos = prompt.find("已展开主题")
     assert sources_pos != -1
     assert context_pos != -1
     assert narratives_pos != -1
