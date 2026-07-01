@@ -309,26 +309,83 @@ def composite_score_section(
     consensus: Optional[Dict],
     industry_fwd_pe: Optional[float],
     pillar: Optional[Dict] = None,
+    recommendation_decision: Optional["RecommendationDecision"] = None,
 ) -> str:
     """
     G = B + M 综合评分（0-10） + EV Expectation Model + 目标价区间 + AI 推荐。
     如果传入 pillar 则直接使用，否则基于 posts 重新计算。
+    如果传入 recommendation_decision，header 和推荐标签直接采用该决策，避免与摘要不一致。
     """
-    if pillar is None:
-        ps = quote.get("ps") if quote else None
-        pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
-    if pillar is None:
-        return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
-    ev = ev_expectation(pillar, consensus)
+    if recommendation_decision is not None:
+        header_line = recommendation_decision.render_header()
+        display_rec_cn = recommendation_decision.display_recommendation
+        recommendation_sentence = recommendation_decision.recommendation_sentence
+        # For table bodies, still compute a local pillar if not already provided.
+        if pillar is None:
+            ps = quote.get("ps") if quote else None
+            pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
+        if pillar is None:
+            return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
+    else:
+        if pillar is None:
+            ps = quote.get("ps") if quote else None
+            pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
+        if pillar is None:
+            return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
+        ev = ev_expectation(pillar, consensus)
+        total_score = round(
+            pillar["valuation"] * 0.30 +
+            pillar["technical"] * 0.25 +
+            pillar["sentiment"] * 0.20 +
+            pillar["fundamental"] * 0.15 +
+            pillar["fundflow"] * 0.10,
+            1,
+        )
+        rec_cn = ev.get("recommendation_cn", "N/A")
+        display_rec_cn = rec_cn
+        entry_guardrail = _entry_quality_guardrail(stock_raw)
+        entry_composite_note = ""
+        if entry_guardrail and entry_guardrail.get("level") == "entry_blocked" and rec_cn in ("强烈看多", "看多"):
+            display_rec_cn = entry_guardrail["composite_label"]
+            entry_composite_note = entry_guardrail["composite_note"]
+        ev_pct = ev.get('ev_pct')
+        ev_str = f"{ev_pct:+.2f}%" if ev_pct is not None else 'N/A'
+        header_line = f"### 综合评分: {total_score}/10 | EV: {ev_str}（{display_rec_cn}）"
 
-    total_score = round(
-        pillar["valuation"] * 0.30 +
-        pillar["technical"] * 0.25 +
-        pillar["sentiment"] * 0.20 +
-        pillar["fundamental"] * 0.15 +
-        pillar["fundflow"] * 0.10,
-        1,
-    )
+        reasons = []
+        if pillar["valuation"] >= 7:
+            reasons.append("估值健康度良好")
+        elif pillar["valuation"] <= 3:
+            reasons.append("估值偏高需警惕")
+
+        if pillar["technical"] >= 7:
+            reasons.append("技术面偏强")
+        elif pillar["technical"] <= 3:
+            reasons.append("技术面偏弱")
+
+        if pillar["fundamental"] >= 7:
+            reasons.append("基本面趋势向上")
+        elif pillar["fundamental"] <= 3:
+            reasons.append("基本面承压")
+
+        bullish_pct = pillar.get("bullish_pct", 0) or 0
+        if bullish_pct > 60:
+            reasons.append(f"社区情绪偏乐观（看多 {bullish_pct:.0f}%）")
+        elif bullish_pct < 30:
+            reasons.append(f"社区情绪偏谨慎（看多 {bullish_pct:.0f}%）")
+
+        recommendation_sentence = (
+            f"**{display_rec_cn}** — 加权 EV {ev.get('ev_pct', 'N/A'):+.2f}%。"
+            f"{'；'.join(reasons)}。"
+            f"{entry_composite_note}"
+            f"当前风险评分请参考「综合风险评分」板块。"
+        ) if ev.get("ev_pct") is not None else (
+            f"**{display_rec_cn}** — {'；'.join(reasons)}。"
+            f"{entry_composite_note}"
+            f"数据不足，无法计算 EV。"
+        )
+
+    ev = ev_expectation(pillar, consensus)
 
     price_lines = []
     targets = ev.get("targets", {})
@@ -357,46 +414,6 @@ def composite_score_section(
             f"*Upside Range: {ev_details.get('upside_range', 0):.1f}% / Downside Range: {ev_details.get('downside_range', 0):.1f}%*",
         ]
 
-    rec_cn = ev.get("recommendation_cn", "N/A")
-    display_rec_cn = rec_cn
-    entry_guardrail = _entry_quality_guardrail(stock_raw)
-    entry_composite_note = ""
-    if entry_guardrail and entry_guardrail.get("level") == "entry_blocked" and rec_cn in ("强烈看多", "看多"):
-        display_rec_cn = entry_guardrail["composite_label"]
-        entry_composite_note = entry_guardrail["composite_note"]
-    reasons = []
-    if pillar["valuation"] >= 7:
-        reasons.append("估值健康度良好")
-    elif pillar["valuation"] <= 3:
-        reasons.append("估值偏高需警惕")
-
-    if pillar["technical"] >= 7:
-        reasons.append("技术面偏强")
-    elif pillar["technical"] <= 3:
-        reasons.append("技术面偏弱")
-
-    if pillar["fundamental"] >= 7:
-        reasons.append("基本面趋势向上")
-    elif pillar["fundamental"] <= 3:
-        reasons.append("基本面承压")
-
-    bullish_pct = pillar.get("bullish_pct", 0) or 0
-    if bullish_pct > 60:
-        reasons.append(f"社区情绪偏乐观（看多 {bullish_pct:.0f}%）")
-    elif bullish_pct < 30:
-        reasons.append(f"社区情绪偏谨慎（看多 {bullish_pct:.0f}%）")
-
-    recommendation = (
-        f"**{display_rec_cn}** — 加权 EV {ev.get('ev_pct', 'N/A'):+.2f}%。"
-        f"{'；'.join(reasons)}。"
-        f"{entry_composite_note}"
-        f"当前风险评分请参考「综合风险评分」板块。"
-    ) if ev.get("ev_pct") is not None else (
-        f"**{display_rec_cn}** — {'；'.join(reasons)}。"
-        f"{entry_composite_note}"
-        f"数据不足，无法计算 EV。"
-    )
-
     fwd_pe_str = f"{pillar['fwd_pe']:.1f}" if pillar.get('fwd_pe') else 'N/A'
     ind_pe_str = f"{pillar['industry_fwd_pe']:.1f}" if pillar.get('industry_fwd_pe') else 'N/A'
     eps_str = f"{pillar['eps_growth']:.1f}" if pillar.get('eps_growth') else 'N/A'
@@ -423,9 +440,6 @@ def composite_score_section(
         if parts:
             tech_desc = "，".join(parts)
 
-    ev_pct = ev.get('ev_pct')
-    ev_str = f"{ev_pct:+.2f}" if ev_pct is not None else 'N/A'
-
     # 亏损股：用 PS 替代 PE 显示
     if pillar.get("uses_ps"):
         ps_str = f"{pillar.get('ps', 'N/A')}" if pillar.get('ps') is not None else 'N/A'
@@ -436,7 +450,7 @@ def composite_score_section(
     lines = [
         "## 一、综合评分与推荐",
         "",
-        f"### 综合评分: {total_score}/10 | EV: {ev_str}%（{display_rec_cn}）",
+        header_line,
         "",
         "| 维度 | 权重 | 得分(0-10) | 说明 |",
         "|------|------|------------|------|",
@@ -446,7 +460,7 @@ def composite_score_section(
         f"| 基本面趋势(B) | 15% | {pillar['fundamental']} | 预期 EPS 增速 {eps_str}% |",
         f"| 资金关注度(M) | 10% | {pillar['fundflow']} | 近5日主力净流入 {'有' if pillar.get('has_fund') else '无数据'} |",
         "",
-        f"> **AI 综合推荐**：{recommendation}",
+        f"> **AI 综合推荐**：{recommendation_sentence}",
     ]
 
     if price_lines:
@@ -554,30 +568,59 @@ def _entry_quality_guardrail(stock_raw: Dict) -> Optional[Dict]:
     return None
 
 
-def risk_score_section(
+# Qualitative risk definitions used by risk scoring and structured signal paths.
+_QUALITATIVE_SIGNAL_DEFS = {
+    "业绩预期下调": ("业绩预期下调", ["下调", "不及预期", "miss", "净利润为负", "亏损加剧"], 1.5),
+    "竞争格局恶化": ("竞争格局恶化", ["竞争格局恶化", "价格战", "降价", "挤压", "洗牌"], 1.5),
+    "盈利压力": ("盈利压力", ["盈利压力", "毛利率承压", "费用扩张", "利润侵蚀"], 1.0),
+    "资金流出": ("资金流出", ["净流出", "减持", "做空", "流出压力", "退通"], 1.0),
+    "技术路线风险": ("技术路线风险", ["技术路线", "架构迭代", "不确定性", "替代"], 1.0),
+}
+
+
+def build_risk_assessment(
     stock_name: str,
     posts: List[Dict],
     stock_raw: Dict,
     quote: Optional[Dict],
     consensus: Optional[Dict],
     industry_fwd_pe: Optional[float],
-    watch_points_md: str = "",
     synthesis_text: str = "",
     structured_risk_signals: Optional[List[Dict]] = None,
     score_llm_keyword_risks: bool = False,
-) -> str:
+    entry_constraint: Optional[object] = None,
+    display_only_external_risks: Optional[List[object]] = None,
+) -> "RiskAssessment":
+    """Construct a structured risk assessment.
+
+    Mirrors the additive math historically used by `risk_score_section`, but
+    routes entry/technical guardrails through the shared `EntryConstraint` so
+    the risk section's position advice cannot drift from the recommendation
+    label.
     """
-    综合风险评分 0-10（加法模型）。
-    watch_points_md: 可选的关注要点 Markdown（由调用方提供）。
-    synthesis_text: LLM 合成叙事文本，用于提取定性风险信号。
-    structured_risk_signals: 结构化定性风险信号，按规则影响评分。
-    score_llm_keyword_risks: 是否允许 LLM 关键词命中直接加分（旧行为兼容开关，默认关闭）。
-    """
-    tech = stock_raw.get("technical", {})
+    from .recommendation_decision import (
+        DisplayOnlyExternalRiskSignal,
+        EntryConstraint,
+        RiskAssessment,
+    )
+
+    if entry_constraint is None:
+        entry_constraint = EntryConstraint(
+            state="ok",
+            label_suffix="",
+            display_note="",
+            position_cap_note="",
+            source="none",
+            raw_reason="",
+        )
+    if display_only_external_risks is None:
+        display_only_external_risks = []
+
+    tech = stock_raw.get("technical", {}) if isinstance(stock_raw, dict) else {}
     indicators = tech.get("indicators", {}) if isinstance(tech, dict) else {}
     sentiment = sentiment_ratio(posts)
 
-    price = quote.get("price", 0) if quote else 0
+    price = quote.get("price", 0) if isinstance(quote, dict) else 0
     fwd_pe = None
     peg = None
     if consensus and consensus.get("eps_current") and price:
@@ -591,44 +634,39 @@ def risk_score_section(
     close = indicators.get("close")
     ma20 = indicators.get("ma_20")
 
-    risk_factors = []
+    factors: List[Dict[str, Any]] = []
     total_risk = 0.0
 
     if fwd_pe and industry_fwd_pe and fwd_pe > industry_fwd_pe * 2:
-        risk_factors.append(("估值过高", f"Forward PE {fwd_pe:.1f} > 行业均值 {industry_fwd_pe:.1f} 的 2 倍", 2.0))
+        factors.append({
+            "name": "估值过高",
+            "status": f"Forward PE {fwd_pe:.1f} > 行业均值 {industry_fwd_pe:.1f} 的 2 倍",
+            "score": 2.0,
+        })
         total_risk += 2.0
     elif peg and peg > 2:
-        risk_factors.append(("估值过高", f"PEG {peg:.2f} > 2", 2.0))
+        factors.append({"name": "估值过高", "status": f"PEG {peg:.2f} > 2", "score": 2.0})
         total_risk += 2.0
 
     if monthly_return is not None and monthly_return > 30:
-        risk_factors.append(("涨幅过大", f"近一月涨幅 {monthly_return:.1f}% > 30%", 2.0))
+        factors.append({"name": "涨幅过大", "status": f"近一月涨幅 {monthly_return:.1f}% > 30%", "score": 2.0})
         total_risk += 2.0
 
     bullish_pct = sentiment.get("bullish", 0)
     if bullish_pct > 80:
-        risk_factors.append(("情绪过热", f"雪球看多占比 {bullish_pct:.0f}% > 80%", 1.5))
+        factors.append({"name": "情绪过热", "status": f"雪球看多占比 {bullish_pct:.0f}% > 80%", "score": 1.5})
         total_risk += 1.5
 
     if close and ma20 and close < ma20:
-        risk_factors.append(("技术破位", f"当前价 {close:.2f} < MA20 {ma20:.2f}", 1.0))
+        factors.append({"name": "技术破位", "status": f"当前价 {close:.2f} < MA20 {ma20:.2f}", "score": 1.0})
         total_risk += 1.0
 
     if avg_amount is not None and avg_amount < 5:
-        risk_factors.append(("流动性差", f"近20日日均成交 {avg_amount:.2f} 亿 < 5 亿", 1.0))
+        factors.append({"name": "流动性差", "status": f"近20日日均成交 {avg_amount:.2f} 亿 < 5 亿", "score": 1.0})
         total_risk += 1.0
 
-    # Qualitative risk definitions
-    _QUALITATIVE_SIGNAL_DEFS = {
-        "业绩预期下调": ("业绩预期下调", ["下调", "不及预期", "miss", "净利润为负", "亏损加剧"], 1.5),
-        "竞争格局恶化": ("竞争格局恶化", ["竞争格局恶化", "价格战", "降价", "挤压", "洗牌"], 1.5),
-        "盈利压力": ("盈利压力", ["盈利压力", "毛利率承压", "费用扩张", "利润侵蚀"], 1.0),
-        "资金流出": ("资金流出", ["净流出", "减持", "做空", "流出压力", "退通"], 1.0),
-        "技术路线风险": ("技术路线风险", ["技术路线", "架构迭代", "不确定性", "替代"], 1.0),
-    }
-
     # Collect free-text keyword observations regardless of scoring mode
-    keyword_observations = []
+    keyword_observations: List[tuple] = []
     if synthesis_text:
         text_lower = synthesis_text.lower()
         for signal_name, keywords, score in _QUALITATIVE_SIGNAL_DEFS.values():
@@ -638,14 +676,18 @@ def risk_score_section(
 
     if score_llm_keyword_risks:
         for signal_name, matched, score in keyword_observations:
-            if not any(f[0] == signal_name for f in risk_factors):
-                risk_factors.append((signal_name, f"LLM关键词命中: {matched[0]}", score))
+            if not any(f["name"] == signal_name for f in factors):
+                factors.append({
+                    "name": signal_name,
+                    "status": f"LLM关键词命中: {matched[0]}",
+                    "score": score,
+                })
                 total_risk += score
 
     # Process structured risk signals
     structured_signals = structured_risk_signals or []
-    structured_scored = {}
-    structured_observations_dict = {}
+    structured_scored: Dict[str, Dict[str, Any]] = {}
+    structured_observations_dict: Dict[str, Dict[str, Any]] = {}
     for signal in structured_signals:
         if not isinstance(signal, dict):
             continue
@@ -683,7 +725,6 @@ def risk_score_section(
                 effective_score = min(float(signal_score) * 0.5, max_score)
                 effective_score = round(effective_score * 2) / 2
 
-        # Track highest-scored signal per name
         current_best = structured_scored.get(name)
         if current_best is None or effective_score > current_best["effective_score"]:
             structured_scored[name] = {
@@ -698,7 +739,6 @@ def risk_score_section(
                 "max_score": max_score,
             }
 
-        # Track best observation per name (highest confidence, then highest raw score)
         current_obs = structured_observations_dict.get(name)
         if current_obs is None:
             structured_observations_dict[name] = {
@@ -709,6 +749,7 @@ def risk_score_section(
                 "evidence_text": evidence_text,
                 "matched_terms": sanitized_terms,
                 "signal_score": signal_score,
+                "effective_score": effective_score,
             }
         else:
             if (confidence > current_obs["confidence"] or
@@ -721,15 +762,18 @@ def risk_score_section(
                     "evidence_text": evidence_text,
                     "matched_terms": sanitized_terms,
                     "signal_score": signal_score,
+                    "effective_score": effective_score,
                 }
 
-    # Add structured scores to total
     for info in structured_scored.values():
         if info["effective_score"] > 0:
             display_status = info["status"]
             evidence = info["evidence_text"] or "外部来源"
-            status_line = f"{display_status} / {info['source']} / {evidence}"
-            risk_factors.append((info["name"], status_line, info["effective_score"]))
+            factors.append({
+                "name": info["name"],
+                "status": f"{display_status} / {info['source']} / {evidence}",
+                "score": info["effective_score"],
+            })
             total_risk += info["effective_score"]
 
     total_risk = min(10.0, round(total_risk, 1))
@@ -747,71 +791,105 @@ def risk_score_section(
         risk_level = "极高风险"
         position_advice = "建议减仓或不买入"
 
-    guardrail = _technical_position_guardrail(stock_raw)
+    # Apply shared entry constraint to position advice
     guardrail_note = ""
-    entry_guardrail = _entry_quality_guardrail(stock_raw)
-    entry_guardrail_note = ""
-    if guardrail:
-        if guardrail["level"] == "severe":
-            if position_advice != "建议减仓或不买入":
-                position_advice = guardrail["advice"]
-                guardrail_note = guardrail["note"]
-        elif guardrail["level"] == "moderate":
-            if position_advice in ("积极配置，最大仓位 20%", "谨慎持有，仓位 10-15%"):
-                position_advice = guardrail["advice"]
-                guardrail_note = guardrail["note"]
-    if not guardrail_note and entry_guardrail and position_advice == "积极配置，最大仓位 20%":
-        if entry_guardrail["level"] in ("entry_blocked", "overheated_entry"):
-            position_advice = entry_guardrail["advice"]
-            entry_guardrail_note = entry_guardrail["note"]
+    if entry_constraint.state == "severe_technical":
+        if position_advice != "建议减仓或不买入":
+            position_advice = entry_constraint.position_cap_note
+            guardrail_note = entry_constraint.display_note
+    elif entry_constraint.state == "weak_trend":
+        if position_advice in ("积极配置，最大仓位 20%", "谨慎持有，仓位 10-15%"):
+            position_advice = entry_constraint.position_cap_note
+            guardrail_note = entry_constraint.display_note
+    elif entry_constraint.state in ("wait_for_entry", "overheated"):
+        if position_advice == "积极配置，最大仓位 20%":
+            position_advice = entry_constraint.position_cap_note
+            guardrail_note = entry_constraint.display_note
 
+    formal_notes: List[str] = []
+    if guardrail_note:
+        formal_notes.append(guardrail_note)
+
+    display_only_notes: List[str] = []
+    validated_risks = [
+        r for r in display_only_external_risks
+        if isinstance(r, DisplayOnlyExternalRiskSignal) and getattr(r, "name", None)
+    ]
+    if validated_risks:
+        names = "、".join(r.name for r in validated_risks)
+        display_only_notes.append(
+            "4.4 外部观察为 display-only，不计入综合风险评分；"
+            f"相关变量（{names}）仅作为人工跟踪项。"
+        )
+
+    return RiskAssessment(
+        score=total_risk,
+        level=risk_level,
+        position_advice=position_advice,
+        factors=factors,
+        formal_notes=formal_notes,
+        display_only_notes=display_only_notes,
+        special_risk_notes=[],
+        keyword_observations=keyword_observations if not score_llm_keyword_risks else [],
+        structured_observations=list(structured_observations_dict.values()),
+    )
+
+
+def render_risk_assessment(
+    assessment: "RiskAssessment",
+    watch_points_md: str = "",
+    keyword_observations: Optional[List[tuple]] = None,
+    structured_observations: Optional[List[Dict[str, Any]]] = None,
+) -> str:
+    """Render a RiskAssessment to the legacy Markdown format."""
+    keyword_observations = keyword_observations if keyword_observations is not None else assessment.keyword_observations
+    structured_observations = structured_observations if structured_observations is not None else assessment.structured_observations
+    score = assessment.score if assessment.score is not None else 0.0
     lines = [
         "## 综合风险评分",
         "",
-        f"### 风险等级: {total_risk}/10（{risk_level}）",
+        f"### 风险等级: {score:.1f}/10（{assessment.level}）",
         "",
-        f"> **仓位建议**: {position_advice}",
+        f"> **仓位建议**: {assessment.position_advice}",
     ]
-    if guardrail_note:
-        lines.append(f"> **仓位约束**: {guardrail_note}")
-    if entry_guardrail_note:
-        lines.append(f"> **入场约束**: {entry_guardrail_note}")
+    for note in assessment.formal_notes:
+        prefix = "> **仓位约束**: " if "趋势" in note or "技术状态" in note or "技术健康度" in note else "> **入场约束**: "
+        lines.append(f"{prefix}{note}")
     lines.append("")
 
-    if risk_factors:
+    factors = assessment.factors
+    if factors:
         lines.extend([
             "| 风险因子 | 状态 | 加分 |",
             "|----------|------|------|",
         ])
-        for name, status, score in risk_factors:
-            lines.append(f"| {name} | {status} | +{score} |")
+        for factor in factors:
+            lines.append(f"| {factor['name']} | {factor['status']} | +{factor['score']} |")
         lines.append("")
     else:
         lines.append("当前未触发主要风险因子，整体风险可控。")
         lines.append("")
 
-    # Render structured risk observations (including unscored/unverified/unknown)
-    structured_obs_list = list(structured_observations_dict.values())
-    if structured_obs_list:
-        structured_observation_title = "结构化风险观察"
-        if not any(info["effective_score"] > 0 for info in structured_scored.values()):
-            structured_observation_title = "结构化风险观察（不计分）"
+    if structured_observations:
+        any_scored = any(obs.get("effective_score", 0) > 0 for obs in structured_observations)
+        title = "结构化风险观察"
+        if not any_scored:
+            title = "结构化风险观察（不计分）"
         lines.extend([
-            f"### {structured_observation_title}",
+            f"### {title}",
             "",
             "| 风险信号 | 来源 | 状态 | 置信度 | 证据 |",
             "|----------|------|------|--------|------|",
         ])
-        for obs in structured_obs_list:
-            terms = ", ".join(obs["matched_terms"]) if obs["matched_terms"] else "—"
-            evidence = obs["evidence_text"] or "—"
+        for obs in structured_observations:
+            terms = ", ".join(obs.get("matched_terms", [])) if obs.get("matched_terms") else "—"
+            evidence = obs.get("evidence_text") or "—"
             lines.append(
                 f"| {obs['name']} | {obs['source']} | {obs['status']} | {obs['confidence']} | {evidence} / {terms} |"
             )
         lines.append("")
 
-    # Render free-text LLM keyword observations when not scoring them
-    if keyword_observations and not score_llm_keyword_risks:
+    if keyword_observations:
         lines.extend([
             "### LLM文本风险观察（不计分）",
             "",
@@ -823,16 +901,17 @@ def risk_score_section(
             lines.append(f"| {signal_name} | {terms} | 自由文本命中，仅提示人工复核 |")
         lines.append("")
 
+    if assessment.display_only_notes:
+        for note in assessment.display_only_notes:
+            lines.extend(["> **外部观察说明**: " + note, ""])
+
     if watch_points_md:
         if "### 关注要点" in watch_points_md:
             watch_section = watch_points_md.split("### 关注要点")[-1]
         elif "- " in watch_points_md:
             lines_in = watch_points_md.split("\n")
             watch_lines = [l for l in lines_in if l.strip().startswith("-") or l.strip().startswith("*")]
-            if watch_lines:
-                watch_section = "\n".join(watch_lines)
-            else:
-                watch_section = ""
+            watch_section = "\n".join(watch_lines) if watch_lines else ""
         else:
             watch_section = ""
         if watch_section:
@@ -841,6 +920,51 @@ def risk_score_section(
             lines.append("")
 
     return "\n".join(lines)
+
+
+def risk_score_section(
+    stock_name: str,
+    posts: List[Dict],
+    stock_raw: Dict,
+    quote: Optional[Dict],
+    consensus: Optional[Dict],
+    industry_fwd_pe: Optional[float],
+    watch_points_md: str = "",
+    synthesis_text: str = "",
+    structured_risk_signals: Optional[List[Dict]] = None,
+    score_llm_keyword_risks: bool = False,
+) -> str:
+    """
+    综合风险评分 0-10（加法模型）。
+    watch_points_md: 可选的关注要点 Markdown（由调用方提供）。
+    synthesis_text: LLM 合成叙事文本，用于提取定性风险信号。
+    structured_risk_signals: 结构化定性风险信号，按规则影响评分。
+    score_llm_keyword_risks: 是否允许 LLM 关键词命中直接加分（旧行为兼容开关，默认关闭）。
+
+    兼容性包装：内部使用 build_risk_assessment + render_risk_assessment，但输出格式
+    与历史版本保持一致。
+    """
+    from .recommendation_decision import EntryConstraint, _classify_entry_constraint
+
+    entry_constraint = _classify_entry_constraint(stock_raw)
+
+    assessment = build_risk_assessment(
+        stock_name=stock_name,
+        posts=posts,
+        stock_raw=stock_raw,
+        quote=quote,
+        consensus=consensus,
+        industry_fwd_pe=industry_fwd_pe,
+        synthesis_text=synthesis_text,
+        structured_risk_signals=structured_risk_signals,
+        score_llm_keyword_risks=score_llm_keyword_risks,
+        entry_constraint=entry_constraint,
+    )
+
+    return render_risk_assessment(
+        assessment,
+        watch_points_md=watch_points_md,
+    )
 
 
 def _sanitize_citation_markers(text: str) -> str:

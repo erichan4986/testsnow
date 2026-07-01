@@ -249,21 +249,24 @@ class ExecutiveSummaryRenderer:
         pillar = ctx.get("pillar")
         consensus = ctx.get("consensus")
 
-        try:
-            from ..scoring_engine import ev_expectation
-        except ImportError:
+        decision = ctx.get("recommendation_decision")
+        if decision is not None:
+            score_line = decision.render_header()
+        elif pillar is not None:
+            # Fallback for callers that have not migrated to RecommendationDecision.
             try:
-                import sys
-                from pathlib import Path
-                utils_dir = Path(__file__).parent.parent.parent
-                if str(utils_dir) not in sys.path:
-                    sys.path.insert(0, str(utils_dir))
-                from reporter.scoring_engine import ev_expectation
-            except Exception:
-                ev_expectation = lambda p, c: {"ev_pct": None, "signal": "N/A"}
-
-        ev = ev_expectation(pillar or {}, consensus)
-        if pillar is not None:
+                from ..scoring_engine import ev_expectation
+            except ImportError:
+                try:
+                    import sys
+                    from pathlib import Path
+                    utils_dir = Path(__file__).parent.parent.parent
+                    if str(utils_dir) not in sys.path:
+                        sys.path.insert(0, str(utils_dir))
+                    from reporter.scoring_engine import ev_expectation
+                except Exception:
+                    ev_expectation = lambda p, c: {"ev_pct": None, "recommendation_cn": "N/A"}
+            ev = ev_expectation(pillar or {}, consensus)
             total_score = round(
                 pillar["valuation"] * 0.30 +
                 pillar["technical"] * 0.25 +
@@ -273,9 +276,9 @@ class ExecutiveSummaryRenderer:
                 1,
             )
             ev_pct = ev.get("ev_pct")
-            ev_signal = ev.get("signal") or "N/A"
-            ev_pct_str = f"{ev_pct:+.2f}" if ev_pct is not None else "N/A"
-            score_line = f"### 综合评分: {total_score}/10 | EV: {ev_pct_str}%（{ev_signal}）"
+            ev_signal = ev.get("recommendation_cn") or "N/A"
+            ev_pct_str = f"{ev_pct:+.2f}%" if ev_pct is not None else "N/A"
+            score_line = f"### 综合评分: {total_score}/10 | EV: {ev_pct_str}（{ev_signal}）"
         else:
             score_line = "### 综合评分: 数据不足 | EV: N/A"
 

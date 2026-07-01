@@ -35,6 +35,8 @@ class CompositeScoreRenderer:
             except Exception:
                 return ""
 
+        recommendation_decision = ctx.get("recommendation_decision")
+
         md = composite_score_section(
             stock_name=stock_name,
             posts=posts,
@@ -43,6 +45,7 @@ class CompositeScoreRenderer:
             consensus=consensus,
             industry_fwd_pe=ind_fwd_pe,
             pillar=pillar,
+            recommendation_decision=recommendation_decision,
         )
 
         chart_paths = ctx.get("chart_paths", ctx.get("_chart_paths", {}))

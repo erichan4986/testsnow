@@ -86,6 +86,32 @@ BLOCKED_ENTRY_PATTERNS = [
     r"BIAS[^。\n]*严重正偏离",
 ]
 
+# Risk-like terms that may appear in 4.4 display-only external observations.
+_DISPLAY_ONLY_RISK_TERMS = [
+    r"退通",
+    r"解禁",
+    r"减持",
+    r"自研替代",
+    r"价格战",
+    r"毛利率承压",
+    r"估值偏高",
+    r"做空",
+]
+
+
+def _extract_header(text: str, section_prefix: str) -> str:
+    """Extract the `### 综合评分: ... | EV: ...（...）` line under a section."""
+    normalized_text = _normalize(text)
+    normalized_prefix = _normalize(section_prefix)
+    parts = normalized_text.split(normalized_prefix)
+    if len(parts) < 2:
+        return ""
+    section = parts[1].split("\n## ")[0]
+    for line in section.splitlines():
+        if line.strip().startswith("###综合评分:"):
+            return line.strip()
+    return ""
+
 
 def check_report_file(path: str | Path) -> QualityResult:
     """Check a Markdown report file."""
@@ -136,6 +162,28 @@ def _check_required_signals(text: str) -> Iterable[QualityIssue]:
 
 
 def _check_contradictions(text: str) -> Iterable[QualityIssue]:
+    normalized = _normalize(text)
+
+    # EV: N/A% formatting
+    if re.search(r"EV:\s*N/A%", normalized):
+        yield QualityIssue(
+            code="ev_na_percent",
+            severity="error",
+            message="EV 显示为 N/A%，格式错误；缺失 EV 应显示为 N/A（无百分号）。",
+        )
+
+    # Summary / section 1 consistency
+    summary_header = _extract_header(text, "## 执行摘要")
+    section1_header = _extract_header(text, "## 一、综合评分与推荐")
+    if summary_header and section1_header and summary_header != section1_header:
+        yield QualityIssue(
+            code="summary_score_label_mismatch",
+            severity="error",
+            message="执行摘要与一、综合评分与推荐的评分/EV/推荐标签不一致。",
+            evidence=f"summary={summary_header}; section1={section1_header}",
+        )
+
+    # Blocked entry + strong recommendation
     blocked_entry = any(re.search(p, text, flags=re.IGNORECASE) for p in BLOCKED_ENTRY_PATTERNS)
     strong_recommendation = any(re.search(p, text) for p in STRONG_RECOMMENDATION_PATTERNS)
     blocked_entry_strong_recommendation = any(
@@ -147,6 +195,37 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
             severity="warning",
             message="报告出现入场质量不足/追高风险信号，同时包含偏积极建议，需人工复核。",
         )
+
+    # Risk position label mismatch: if label is constrained, risk advice should not be aggressive
+    if re.search(r"（看多但等待入场|看多但避免追高|风险控制优先）", normalized):
+        if ">**仓位建议**:积极配置，最大仓位20%" in normalized:
+            yield QualityIssue(
+                code="risk_position_label_mismatch",
+                severity="error",
+                message="推荐标签已受入场约束降级，但风险仓位建议仍为积极配置 20%，存在不一致。",
+            )
+
+    # Display-only 4.4 risk observations should have explanation when formal risk score is low
+    section44 = ""
+    section44_match = re.search(
+        r"(?ms)^#{2,4}\s*(?:4\.4\s*)?(?:精选外部观察|外部观点与待验证变量)（Preview）\s*$"
+        r"(.*?)(?=^##\s|\Z)",
+        text,
+    )
+    if section44_match:
+        section44 = _normalize(section44_match.group(1))
+    if section44 and any(re.search(term, section44) for term in _DISPLAY_ONLY_RISK_TERMS):
+        risk_score = _extract_score(normalized, [r"风险等级[:：]?(\d+(?:\.\d+)?)/10"])
+        if risk_score is not None and risk_score <= 2.0:
+            risk_section = ""
+            if "##综合风险评分" in normalized:
+                risk_section = normalized.split("##综合风险评分")[1].split("\n## ")[0]
+            if not re.search(r"display-only|不计入综合风险评分|外部观察说明", risk_section):
+                yield QualityIssue(
+                    code="display_only_risk_without_explanation",
+                    severity="warning",
+                    message="4.4 display-only 外部观察包含风险线索，但风险板块未解释其不计入综合风险评分。",
+                )
 
     weak = any(re.search(p, text, flags=re.IGNORECASE) for p in WEAK_TREND_PATTERNS)
     if not weak:

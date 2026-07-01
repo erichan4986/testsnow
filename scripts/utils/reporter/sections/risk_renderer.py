@@ -40,34 +40,52 @@ class RiskRenderer:
 
         specific_risk = industry_specific_risk_table(stock_name)
 
-        # 综合风险评分
-        try:
-            from ..scoring_engine import risk_score_section
-        except ImportError:
+        # 综合风险评分：优先使用中央决策对象，保证与推荐标签一致
+        decision = ctx.get("recommendation_decision")
+        if decision is not None:
             try:
-                import sys
-                from pathlib import Path
-                utils_dir = Path(__file__).parent.parent.parent
-                if str(utils_dir) not in sys.path:
-                    sys.path.insert(0, str(utils_dir))
-                from reporter.scoring_engine import risk_score_section
-            except Exception:
-                risk_score_section = None
+                from ..scoring_engine import render_risk_assessment
+            except ImportError:
+                try:
+                    import sys
+                    from pathlib import Path
+                    utils_dir = Path(__file__).parent.parent.parent
+                    if str(utils_dir) not in sys.path:
+                        sys.path.insert(0, str(utils_dir))
+                    from reporter.scoring_engine import render_risk_assessment
+                except Exception:
+                    render_risk_assessment = None
 
-        watch_points_md = ""
-        if risk_score_section:
-            watch_points_md = risk_score_section(
-                stock_name=stock_name,
-                posts=all_posts,
-                stock_raw=stock_raw,
-                quote=quote,
-                consensus=consensus,
-                industry_fwd_pe=ind_fwd_pe,
-                watch_points_md="",
-                synthesis_text=synthesis_text,
-                structured_risk_signals=structured_risk_signals,
-                score_llm_keyword_risks=score_llm_keyword_risks,
-            )
+            watch_points_md = render_risk_assessment(decision.risk) if render_risk_assessment else ""
+        else:
+            # 兼容路径：旧调用方未提供 RecommendationDecision
+            try:
+                from ..scoring_engine import risk_score_section
+            except ImportError:
+                try:
+                    import sys
+                    from pathlib import Path
+                    utils_dir = Path(__file__).parent.parent.parent
+                    if str(utils_dir) not in sys.path:
+                        sys.path.insert(0, str(utils_dir))
+                    from reporter.scoring_engine import risk_score_section
+                except Exception:
+                    risk_score_section = None
+
+            watch_points_md = ""
+            if risk_score_section:
+                watch_points_md = risk_score_section(
+                    stock_name=stock_name,
+                    posts=all_posts,
+                    stock_raw=stock_raw,
+                    quote=quote,
+                    consensus=consensus,
+                    industry_fwd_pe=ind_fwd_pe,
+                    watch_points_md="",
+                    synthesis_text=synthesis_text,
+                    structured_risk_signals=structured_risk_signals,
+                    score_llm_keyword_risks=score_llm_keyword_risks,
+                )
 
         # 预定义的风险提示与关注要点
         risk_analyses = self._risks_and_watch(stock_name, all_posts)

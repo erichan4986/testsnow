@@ -2,6 +2,12 @@
 
 import pytest
 from scripts.utils.reporter.sections import RiskRenderer
+from scripts.utils.reporter.recommendation_decision import (
+    EntryConstraint,
+    EvDecision,
+    RecommendationDecision,
+    RiskAssessment,
+)
 
 
 def test_required_keys():
@@ -122,3 +128,42 @@ def test_renderer_end_to_end_severe_guardrail_note():
     assert "趋势破坏期，以观望或防守仓位为主，建议 0-5%" in result
     assert "仓位约束" in result
     assert "技术状态为 下降趋势 / 破坏期" in result
+
+
+def test_renderer_with_decision_does_not_duplicate_static_watch_points():
+    renderer = RiskRenderer()
+    decision = RecommendationDecision(
+        stock_name="黑芝麻智能",
+        total_score=4.1,
+        total_score_display="4.1",
+        ev=EvDecision(
+            ev_pct=None,
+            ev_display="N/A",
+            raw_label="N/A",
+            raw_code="N_A",
+        ),
+        raw_recommendation="N/A",
+        display_recommendation="N/A",
+        recommendation_sentence="",
+        entry_constraint=EntryConstraint(
+            state="ok",
+            label_suffix="",
+            display_note="",
+            position_cap_note="",
+            source="none",
+            raw_reason="",
+        ),
+        risk=RiskAssessment(
+            score=2.0,
+            level="低风险",
+            position_advice="谨慎持有，仓位 10-15%",
+        ),
+    )
+    result = renderer.render(
+        {
+            "stock_name": "黑芝麻智能",
+            "all_posts": [],
+            "recommendation_decision": decision,
+        }
+    )
+    assert result.count("股价是否守住15港币关键支撑位") == 1

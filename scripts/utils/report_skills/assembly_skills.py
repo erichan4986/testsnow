@@ -168,6 +168,79 @@ class ReportAssemblySkill(BaseSkill):
             return f"<!-- {name}: rendering failed ({e}) -->"
 
     def _assemble_markdown(self, ctx: SkillContext) -> str:
+        # Build central recommendation decision before any renderer runs so that
+        # summary, section 1, and risk section all read the same source of truth.
+        try:
+            from utils.reporter.recommendation_decision import (
+                DisplayOnlyExternalRiskSignal,
+                build_recommendation_decision,
+            )
+        except ImportError:
+            try:
+                from reporter.recommendation_decision import (
+                    DisplayOnlyExternalRiskSignal,
+                    build_recommendation_decision,
+                )
+            except Exception as e:
+                logger.warning(f"无法导入 recommendation_decision: {e}")
+                DisplayOnlyExternalRiskSignal = None
+                build_recommendation_decision = None
+
+        if build_recommendation_decision is not None:
+            display_only_risks = []
+            raw_risks = ctx.get("display_only_external_risks") or []
+            if isinstance(raw_risks, list):
+                for r in raw_risks:
+                    if isinstance(r, DisplayOnlyExternalRiskSignal):
+                        display_only_risks.append(r)
+                    elif isinstance(r, dict):
+                        name = r.get("name") or r.get("title") or ""
+                        if name:
+                            display_only_risks.append(
+                                DisplayOnlyExternalRiskSignal(
+                                    name=str(name),
+                                    source_kind=str(r.get("source_kind", "")),
+                                    evidence_text=str(r.get("evidence_text", "") or r.get("content", "")),
+                                )
+                            )
+
+            # Curated external items may also carry a structured risk-observation flag.
+            for item in (ctx.get("curated_external_analysis_items") or []):
+                if not isinstance(item, dict):
+                    continue
+                if not bool(item.get("display_only_risk_signal") or item.get("risk_observation")):
+                    continue
+                name = item.get("title") or item.get("name") or ""
+                if name:
+                    display_only_risks.append(
+                        DisplayOnlyExternalRiskSignal(
+                            name=str(name),
+                            source_kind=str(item.get("source_kind", "")),
+                            evidence_text=str(item.get("content", "")),
+                        )
+                    )
+
+            pillar = ctx.get("pillar")
+            if pillar is None:
+                pillar = ctx.get("pillar_scores")
+            try:
+                decision = build_recommendation_decision(
+                    stock_name=ctx.get("stock_name", ""),
+                    posts=ctx.get("keep_posts") or ctx.get("posts") or [],
+                    stock_raw=ctx.get("stock_raw", {}),
+                    quote=ctx.get("quote"),
+                    consensus=ctx.get("consensus"),
+                    industry_fwd_pe=ctx.get("industry_fwd_pe"),
+                    pillar=pillar,
+                    synthesis_text=ctx.get("synthesis_text", ""),
+                    structured_risk_signals=ctx.get("structured_risk_signals", []) or [],
+                    score_llm_keyword_risks=bool(ctx.get("score_llm_keyword_risks", False)),
+                    display_only_external_risks=display_only_risks,
+                )
+                ctx.set("recommendation_decision", decision)
+            except Exception as e:
+                logger.warning(f"构建 RecommendationDecision 失败: {e}")
+
         sections = [self._header(ctx)]
 
         for name, module_path, class_name in self.RENDERERS:

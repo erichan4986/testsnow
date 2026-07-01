@@ -144,3 +144,126 @@ def test_tempered_entry_guardrail_report_has_no_blocked_entry_warning():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "contradiction_blocked_entry_strong_recommendation" not in codes
+
+
+# ---------------------------------------------------------------------------
+# Recommendation / EV / entry / risk consistency gates
+# ---------------------------------------------------------------------------
+
+
+def test_ev_na_percent_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 4.1/10 | EV: N/A%（N/A）
+
+## 一、综合评分与推荐
+
+### 综合评分: 4.1/10 | EV: N/A%（N/A）
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "ev_na_percent" in codes
+
+
+def test_summary_section1_mismatch_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.2/10 | EV: +49.83%（N/A）
+
+## 一、综合评分与推荐
+
+### 综合评分: 6.2/10 | EV: +49.83%（强烈看多）
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "summary_score_label_mismatch" in codes
+
+
+def test_summary_section1_match_passes():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.2/10 | EV: +49.83%（看多但等待入场）
+
+## 一、综合评分与推荐
+
+### 综合评分: 6.2/10 | EV: +49.83%（看多但等待入场）
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 当前入场质量不足，建议等待回调或盈亏比改善，仓位 5-10%
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "summary_score_label_mismatch" not in codes
+    assert "risk_position_label_mismatch" not in codes
+
+
+def test_wait_entry_with_aggressive_risk_advice_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.2/10 | EV: +49.83%（看多但等待入场）
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 积极配置，最大仓位 20%
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "risk_position_label_mismatch" in codes
+
+
+def test_display_only_risk_without_explanation_warns():
+    text = """
+# 测试股 舆情深度报告
+
+### 4.4 精选外部观察（Preview）
+
+> 本节为 display-only。
+
+- 硅料涨价带来上游成本压力，存在毛利率承压风险。
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 积极配置，最大仓位 20%
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "display_only_risk_without_explanation" in codes
+
+
+def test_display_only_risk_with_explanation_passes():
+    text = """
+# 测试股 舆情深度报告
+
+### 4.4 精选外部观察（Preview）
+
+> 本节为 display-only。
+
+- 硅料涨价带来上游成本压力，存在毛利率承压风险。
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 积极配置，最大仓位 20%
+> **外部观察说明**: 4.4 外部观察为 display-only，不计入综合风险评分；相关变量仅作为人工跟踪项。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "display_only_risk_without_explanation" not in codes
