@@ -4,6 +4,7 @@ These tests drive the unification of score, EV display, recommendation label,
 entry constraint, and risk position advice.
 """
 
+import sys
 import pytest
 from pathlib import Path
 
@@ -547,3 +548,74 @@ def test_composite_score_legacy_fallback_does_not_render_na_percent():
     )
     assert "EV: N/A（N/A）" in result
     assert "EV: N/A%" not in result
+
+
+def _assembly_ctx_with_curated_paragraph(paragraph):
+    scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+    utils_dir = scripts_dir / "utils"
+    for path in (scripts_dir, utils_dir):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+    from utils.skill_pipeline import SkillContext
+
+    return SkillContext(
+        input={
+            "stock_name": "黑芝麻智能",
+            "date_str": "20260701",
+            "all_posts": [],
+            "keep_posts": [],
+            "stock_raw": {},
+            "quote": {"price": 10.0},
+            "consensus": None,
+            "industry_fwd_pe": None,
+            "pillar_scores": _pillar(),
+            "synthesis": {"valuation_debate": "", "fundamentals": ""},
+            "deep_analysis_display": {
+                "_curated_external_narrative": True,
+                "_curated_external_narrative_paragraphs": [paragraph],
+                "citations": {},
+            },
+        }
+    )
+
+
+def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_note():
+    scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+    utils_dir = scripts_dir / "utils"
+    for path in (scripts_dir, utils_dir):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+    from utils.report_skills.assembly_skills import ReportAssemblySkill
+
+    ctx = _assembly_ctx_with_curated_paragraph(
+        {
+            "heading": "财务质量信号：研发费用收缩值得警惕",
+            "text": "这段正文本身不会作为正式风险评分输入。",
+            "citation_refs": [1],
+        }
+    )
+    markdown = ReportAssemblySkill()._assemble_markdown(ctx)
+
+    assert "外部观察说明" in markdown
+    assert "不计入综合风险评分" in markdown
+
+
+def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_text():
+    scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+    utils_dir = scripts_dir / "utils"
+    for path in (scripts_dir, utils_dir):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+    from utils.report_skills.assembly_skills import ReportAssemblySkill
+
+    ctx = _assembly_ctx_with_curated_paragraph(
+        {
+            "heading": "产品进展：车型拓展线索",
+            "text": "正文里出现毛利率承压风险等词，但没有结构化风险主题。",
+            "citation_refs": [1],
+        }
+    )
+    markdown = ReportAssemblySkill()._assemble_markdown(ctx)
+
+    assert "外部观察说明" not in markdown
+    assert "不计入综合风险评分" not in markdown

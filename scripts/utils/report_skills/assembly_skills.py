@@ -187,38 +187,9 @@ class ReportAssemblySkill(BaseSkill):
                 build_recommendation_decision = None
 
         if build_recommendation_decision is not None:
-            display_only_risks = []
-            raw_risks = ctx.get("display_only_external_risks") or []
-            if isinstance(raw_risks, list):
-                for r in raw_risks:
-                    if isinstance(r, DisplayOnlyExternalRiskSignal):
-                        display_only_risks.append(r)
-                    elif isinstance(r, dict):
-                        name = r.get("name") or r.get("title") or ""
-                        if name:
-                            display_only_risks.append(
-                                DisplayOnlyExternalRiskSignal(
-                                    name=str(name),
-                                    source_kind=str(r.get("source_kind", "")),
-                                    evidence_text=str(r.get("evidence_text", "") or r.get("content", "")),
-                                )
-                            )
-
-            # Curated external items may also carry a structured risk-observation flag.
-            for item in (ctx.get("curated_external_analysis_items") or []):
-                if not isinstance(item, dict):
-                    continue
-                if not bool(item.get("display_only_risk_signal") or item.get("risk_observation")):
-                    continue
-                name = item.get("title") or item.get("name") or ""
-                if name:
-                    display_only_risks.append(
-                        DisplayOnlyExternalRiskSignal(
-                            name=str(name),
-                            source_kind=str(item.get("source_kind", "")),
-                            evidence_text=str(item.get("content", "")),
-                        )
-                    )
+            display_only_risks = self._collect_display_only_external_risks(
+                ctx, DisplayOnlyExternalRiskSignal
+            )
 
             pillar = ctx.get("pillar")
             if pillar is None:
@@ -249,6 +220,122 @@ class ReportAssemblySkill(BaseSkill):
         sections.append(self._footer(ctx))
 
         return "\n\n".join(s for s in sections if s)
+
+    @classmethod
+    def _collect_display_only_external_risks(cls, ctx: SkillContext, signal_cls) -> list:
+        """Collect structured display-only risk metadata without scanning rendered Markdown."""
+        risks = []
+        seen = set()
+
+        def append_signal(name: str, source_kind: str = "", evidence_text: str = "") -> None:
+            name = " ".join(str(name or "").split())[:80]
+            if not name:
+                return
+            key = (name, source_kind)
+            if key in seen:
+                return
+            seen.add(key)
+            risks.append(
+                signal_cls(
+                    name=name,
+                    source_kind=str(source_kind or ""),
+                    evidence_text=str(evidence_text or ""),
+                )
+            )
+
+        raw_risks = ctx.get("display_only_external_risks") or []
+        if isinstance(raw_risks, list):
+            for risk in raw_risks:
+                if isinstance(risk, signal_cls):
+                    append_signal(risk.name, risk.source_kind, risk.evidence_text)
+                elif isinstance(risk, dict):
+                    append_signal(
+                        risk.get("name") or risk.get("title") or "",
+                        risk.get("source_kind", ""),
+                        risk.get("evidence_text", "") or risk.get("content", ""),
+                    )
+
+        for item in (ctx.get("curated_external_analysis_items") or []):
+            if not isinstance(item, dict):
+                continue
+            if bool(item.get("display_only_risk_signal") or item.get("risk_observation")):
+                append_signal(
+                    item.get("title") or item.get("name") or "",
+                    item.get("source_kind", ""),
+                    item.get("content", ""),
+                )
+
+        for display_key in ("deep_analysis_display", "synthesis_display"):
+            display = ctx.get(display_key) or {}
+            if not isinstance(display, dict):
+                continue
+
+            if display.get("_curated_external_narrative"):
+                for paragraph in display.get("_curated_external_narrative_paragraphs") or []:
+                    if cls._is_structured_external_risk_row(paragraph):
+                        append_signal(
+                            paragraph.get("heading") or paragraph.get("topic") or "",
+                            "curated_external_viewpoint_narrative",
+                            paragraph.get("heading") or "",
+                        )
+
+            topic_groups = display.get("_curated_external_topic_groups") or {}
+            if isinstance(topic_groups, dict):
+                for topic_key, rows in topic_groups.items():
+                    if not isinstance(rows, list):
+                        continue
+                    for row in rows:
+                        if not isinstance(row, dict):
+                            continue
+                        row_with_topic = dict(row)
+                        row_with_topic.setdefault("topic", topic_key)
+                        if cls._is_structured_external_risk_row(row_with_topic):
+                            append_signal(
+                                row.get("heading") or row.get("topic") or topic_key,
+                                "curated_external_viewpoint_digest",
+                                row.get("heading") or "",
+                            )
+
+        return risks
+
+    @staticmethod
+    def _is_structured_external_risk_row(row: object) -> bool:
+        """Classify structured curated-external rows without reading final Markdown text."""
+        if not isinstance(row, dict):
+            return False
+        if bool(row.get("display_only_risk_signal") or row.get("risk_observation")):
+            return True
+
+        topic = str(row.get("topic") or row.get("primary_topic") or "").strip()
+        claim_type = str(row.get("claim_type") or "").strip()
+        risk_topics = {"risk_rumor_rebuttal", "financial_quality"}
+        risk_claim_types = {"dissent"}
+        if topic in risk_topics or claim_type in risk_claim_types:
+            return True
+
+        # Use structured labels only (heading/topic/title), never rendered 4.4 prose.
+        label_text = " ".join(
+            str(row.get(field) or "")
+            for field in ("heading", "topic", "primary_topic", "title")
+        )
+        risk_terms = (
+            "风险",
+            "传闻",
+            "疑虑",
+            "预警",
+            "警惕",
+            "承压",
+            "收缩",
+            "约束",
+            "限制",
+            "挑战",
+            "分歧",
+            "不确定",
+            "缺乏",
+            "下调",
+            "压力",
+        )
+        return any(term in label_text for term in risk_terms)
 
     def _assemble_html(self, ctx: SkillContext) -> str:
         try:
