@@ -261,9 +261,9 @@ def _borrowed_theme_table_hits(body: str, terms: list[str]) -> list[dict]:
 
 
 def _is_reexpanded(prose_hits: list[dict], table_hits: list[dict]) -> bool:
+    if not prose_hits:
+        return False
     if len(prose_hits) > 1:
-        return True
-    if len(table_hits) > 1:
         return True
     if prose_hits and table_hits:
         return True

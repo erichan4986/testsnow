@@ -202,7 +202,7 @@ def test_allows_single_borrowed_theme_table_row_without_reexpanded_warning():
     assert "theme_reexpanded_outside_owner" not in _codes(result)
 
 
-def test_flags_borrowed_theme_repeated_across_multiple_table_rows():
+def test_allows_borrowed_theme_repeated_across_multiple_table_rows_without_reexpanded_warning():
     text = """
 ## 四、深度分析
 
@@ -224,10 +224,7 @@ def test_flags_borrowed_theme_repeated_across_multiple_table_rows():
 
     result = check_report_prose_text(text)
 
-    assert "theme_reexpanded_outside_owner" in _codes(result)
-    issue = next(i for i in result.issues if i.code == "theme_reexpanded_outside_owner")
-    assert issue.section == "4.2"
-    assert '"table_row_count": 2' in issue.evidence
+    assert "theme_reexpanded_outside_owner" not in _codes(result)
 
 
 def test_flags_nested_heading_inside_deep_analysis_section():
