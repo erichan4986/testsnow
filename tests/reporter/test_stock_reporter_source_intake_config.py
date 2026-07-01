@@ -110,6 +110,30 @@ def test_pilot_stocks_enable_formal_first_source_policy_in_config():
         assert source_intake["canonical_synthesis_source_policy"] == "formal_first"
 
 
+def test_fudan_microelectronics_config_present_and_wired():
+    config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
+    stocks = json.loads(config_path.read_text(encoding="utf-8"))
+    by_name = {stock.get("name"): stock for stock in stocks}
+
+    stock = by_name["复旦微电"]
+    assert stock["code"] == "688385"
+    assert stock["xueqiu_code"] == "SH688385"
+    assert stock["gid"] == "688385"
+
+    source_intake = stock["source_intake"]
+    assert source_intake["enabled"] is True
+    assert source_intake["canonical_synthesis_source_policy"] == "formal_first"
+
+    a_stock = source_intake["a_stock"]
+    assert a_stock["enabled"] is True
+    assert a_stock["iwencai_industry_research"]["enabled"] is True
+
+    assert source_intake["periodic_report_fulltext"]["enabled"] is True
+
+    # 4.4 narrative not yet generated -> curated external viewpoint narrative display must stay off
+    assert "curated_external_viewpoint_narrative_synthesis_display" not in source_intake
+
+
 def test_source_intake_enabled_allows_empty_community_posts(monkeypatch):
     reporter = PerStockReporter(
         stocks_data={"测试股": []},

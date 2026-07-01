@@ -353,5 +353,109 @@
         "narrative_json": "data/curated_external/viewpoint_narratives/zhongjixuchuang_20260629.json"
       }
     }
+  },
+  {
+    "name": "复旦微电",
+    "code": "688385",
+    "xueqiu_code": "SH688385",
+    "gid": "688385",
+    "keywords": [
+      "复旦微电",
+      "FPGA",
+      "MCU",
+      "安全与识别芯片",
+      "非易失存储",
+      "EEPROM",
+      "智能电表",
+      "汽车电子",
+      "集成电路设计"
+    ],
+    "source_intake": {
+      "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告",
+            "风险提示"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": false,
+          "max_items": 10,
+          "lookback_days": 30
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": true,
+          "max_items": 5,
+          "lookback_days": 30,
+          "keywords": [
+            "FPGA",
+            "MCU",
+            "存储芯片",
+            "EEPROM",
+            "安全芯片",
+            "智能电表",
+            "汽车电子",
+            "集成电路",
+            "半导体",
+            "国产替代"
+          ]
+        },
+        "iwencai_industry_research": {
+          "enabled": true,
+          "max_items": 8,
+          "max_items_per_query": 3,
+          "recent_days": 90,
+          "fallback_days": 180,
+          "queries": [
+            "FPGA 行业研究报告",
+            "MCU 行业研究报告",
+            "存储芯片 行业研究报告",
+            "EEPROM 行业研究报告",
+            "安全芯片 行业研究报告",
+            "集成电路设计 行业研究报告",
+            "半导体国产替代 深度报告"
+          ]
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      }
+    }
   }
 ]
