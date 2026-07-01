@@ -4,7 +4,11 @@ import re
 
 import pytest
 from scripts.utils.report_quality import STRONG_RECOMMENDATION_PATTERNS
-from scripts.utils.reporter.scoring_engine import _entry_quality_guardrail, risk_score_section
+from scripts.utils.reporter.scoring_engine import (
+    _entry_quality_guardrail,
+    industry_specific_risk_table,
+    risk_score_section,
+)
 
 
 MINIMAL_STOCK_RAW = {"technical": {"indicators": {}}}
@@ -44,6 +48,35 @@ def test_quantitative_risks_still_score():
     assert "技术破位" in result
     assert "流动性差" in result
     assert "2.0" in result
+
+
+def test_risk_section_explains_current_scoring_scope():
+    result = _base_call()
+    assert "口径说明" in result
+    assert "本期模型已计分的交易/风控风险因子" in result
+    assert "低综合风险不等于买入安全" in result
+
+
+def test_technical_data_unavailable_renders_unassessable_risk_and_defensive_position():
+    result = risk_score_section(
+        stock_name="测试股",
+        posts=[],
+        stock_raw={"technical_unavailable_reason": "technical_data_unavailable"},
+        quote=None,
+        consensus=None,
+        industry_fwd_pe=None,
+    )
+    assert "风险等级: 数据不足（无法评估）" in result
+    assert "积极配置，最大仓位 20%" not in result
+    assert "观望或防守仓位" in result
+    assert "技术行情数据缺失" in result
+    assert "当前未触发主要风险因子，整体风险可控" not in result
+
+
+def test_industry_specific_risk_table_uses_long_term_structural_label():
+    result = industry_specific_risk_table("黑芝麻智能")
+    assert "长期结构性专项风险评分: 7.2/10" in result
+    assert "综合特有风险评分" not in result
 
 
 def test_keyword_match_does_not_score_by_default():
@@ -419,7 +452,7 @@ def test_entry_quality_guardrail_missing_fields_returns_none():
     assert _entry_quality_guardrail({"technical": {"indicators": {}}}) is None
 
 
-def test_entry_blocked_caps_aggressive_position_without_changing_risk_score():
+def test_entry_blocked_adds_current_trading_risk_and_caps_aggressive_position():
     stock_raw = _make_entry_quality_stock_raw(
         price_target={"error": "关注/不操作", "reason": "形态存在但盈亏比不足（1.06:1）"}
     )
@@ -433,13 +466,15 @@ def test_entry_blocked_caps_aggressive_position_without_changing_risk_score():
         industry_fwd_pe=None,
     )
 
-    assert "风险等级: 0.0/10" in result
+    assert "风险等级: 1.5/10（低风险）" in result
+    assert "入场质量不足" in result
+    assert "+1.5" in result
     assert _advice_from(result) == "当前入场质量不足，建议等待回调或盈亏比改善，仓位 5-10%"
     assert "技术面提示关注/不操作或追高风险" in result
     assert not _matches_strong_recommendation(result)
 
 
-def test_overheated_entry_caps_aggressive_position_without_forcing_sell_advice():
+def test_overheated_entry_adds_current_trading_risk_without_forcing_sell_advice():
     stock_raw = _make_entry_quality_stock_raw(bias_10_extreme_high=True)
 
     result = risk_score_section(
@@ -451,7 +486,8 @@ def test_overheated_entry_caps_aggressive_position_without_forcing_sell_advice()
         industry_fwd_pe=None,
     )
 
-    assert "风险等级: 0.0/10" in result
+    assert "风险等级: 2.0/10（低风险）" in result
+    assert "追高风险" in result
     assert _advice_from(result) == "BIAS严重正偏离，追高风险较大，仓位 5-10%"
     assert "建议减仓或不买入" not in _advice_from(result)
     assert not _matches_strong_recommendation(result)
@@ -479,7 +515,7 @@ def test_entry_quality_guardrail_does_not_override_already_conservative_advice()
         score_llm_keyword_risks=True,
     )
 
-    assert "风险等级: 7.5/10" in result
+    assert "风险等级: 9.0/10（高风险）" in result
     assert _advice_from(result) == "建议减仓或不买入"
 
 
@@ -523,7 +559,9 @@ def test_severe_guardrail_overrides_aggressive_advice():
         consensus=None,
         industry_fwd_pe=None,
     )
-    assert "风险等级: 2.0/10" in result
+    assert "风险等级: 6.0/10（偏高风险）" in result
+    assert "趋势失效/破坏期" in result
+    assert "+4.0" in result
     assert _advice_from(result) == "趋势破坏期，以观望或防守仓位为主，建议 0-5%"
     assert "技术状态为 下降趋势 / 破坏期" in _constraint_from(result)
 
@@ -612,7 +650,7 @@ def test_high_risk_plus_severe_weak_trend_keeps_conservative_advice():
         industry_fwd_pe=None,
         structured_risk_signals=signals,
     )
-    assert "风险等级: 8.0/10" in result
+    assert "风险等级: 10.0/10（极高风险）" in result
     assert _advice_from(result) == "建议减仓或不买入"
 
 
@@ -634,7 +672,8 @@ def test_moderate_guardrail_caps_aggressive_advice():
         consensus=None,
         industry_fwd_pe=None,
     )
-    assert "风险等级: 0.0/10" in result
+    assert "风险等级: 2.0/10（低风险）" in result
+    assert "趋势转弱" in result
     assert _advice_from(result) == "趋势转弱，控制仓位，建议 5-10%"
     assert "技术健康度偏弱" in _constraint_from(result)
 
@@ -665,7 +704,7 @@ def test_moderate_guardrail_preserves_conservative_advice():
         industry_fwd_pe=None,
         structured_risk_signals=signals,
     )
-    assert "风险等级: 8.0/10" in result
+    assert "风险等级: 10.0/10（极高风险）" in result
     assert _advice_from(result) == "建议减仓或不买入"
 
 

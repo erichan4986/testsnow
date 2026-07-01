@@ -616,6 +616,21 @@ def build_risk_assessment(
     if display_only_external_risks is None:
         display_only_external_risks = []
 
+    technical_unavailable_reason = _technical_unavailable_reason(stock_raw)
+    if technical_unavailable_reason:
+        display_only_notes = _display_only_risk_notes(display_only_external_risks)
+        return RiskAssessment(
+            score=None,
+            level="无法评估",
+            position_advice="技术行情数据缺失，暂不输出积极配置建议；建议观望或防守仓位 0-5%",
+            factors=[],
+            formal_notes=[f"技术行情数据缺失：{technical_unavailable_reason}"],
+            display_only_notes=display_only_notes,
+            special_risk_notes=[],
+            keyword_observations=[],
+            structured_observations=[],
+        )
+
     tech = stock_raw.get("technical", {}) if isinstance(stock_raw, dict) else {}
     indicators = tech.get("indicators", {}) if isinstance(tech, dict) else {}
     sentiment = sentiment_ratio(posts)
@@ -664,6 +679,11 @@ def build_risk_assessment(
     if avg_amount is not None and avg_amount < 5:
         factors.append({"name": "流动性差", "status": f"近20日日均成交 {avg_amount:.2f} 亿 < 5 亿", "score": 1.0})
         total_risk += 1.0
+
+    entry_risk_factor = _entry_constraint_current_risk_factor(entry_constraint)
+    if entry_risk_factor:
+        factors.append(entry_risk_factor)
+        total_risk += entry_risk_factor["score"]
 
     # Collect free-text keyword observations regardless of scoring mode
     keyword_observations: List[tuple] = []
@@ -778,15 +798,18 @@ def build_risk_assessment(
 
     total_risk = min(10.0, round(total_risk, 1))
 
-    if total_risk <= 2:
+    if total_risk <= 2.5:
         risk_level = "低风险"
         position_advice = "积极配置，最大仓位 20%"
     elif total_risk <= 5:
         risk_level = "中等风险"
         position_advice = "谨慎持有，仓位 10-15%"
-    elif total_risk <= 7:
-        risk_level = "高风险"
+    elif total_risk <= 7.5:
+        risk_level = "偏高风险"
         position_advice = "控制仓位，5-10%"
+    elif total_risk <= 9:
+        risk_level = "高风险"
+        position_advice = "建议减仓或不买入"
     else:
         risk_level = "极高风险"
         position_advice = "建议减仓或不买入"
@@ -810,17 +833,7 @@ def build_risk_assessment(
     if guardrail_note:
         formal_notes.append(guardrail_note)
 
-    display_only_notes: List[str] = []
-    validated_risks = [
-        r for r in display_only_external_risks
-        if isinstance(r, DisplayOnlyExternalRiskSignal) and getattr(r, "name", None)
-    ]
-    if validated_risks:
-        names = "、".join(r.name for r in validated_risks)
-        display_only_notes.append(
-            "4.4 外部观察为 display-only，不计入综合风险评分；"
-            f"相关变量（{names}）仅作为人工跟踪项。"
-        )
+    display_only_notes = _display_only_risk_notes(display_only_external_risks)
 
     return RiskAssessment(
         score=total_risk,
@@ -835,6 +848,65 @@ def build_risk_assessment(
     )
 
 
+def _entry_constraint_current_risk_factor(entry_constraint: object) -> Optional[Dict[str, Any]]:
+    """Translate entry/technical constraints into current trading risk points."""
+    state = getattr(entry_constraint, "state", "")
+    raw_reason = str(getattr(entry_constraint, "raw_reason", "") or "")
+    if state == "severe_technical":
+        return {
+            "name": "趋势失效/破坏期",
+            "status": raw_reason or "技术状态为下降趋势、破坏期或趋势失效",
+            "score": 4.0,
+        }
+    if state == "weak_trend":
+        return {
+            "name": "趋势转弱",
+            "status": raw_reason or "技术健康度偏弱",
+            "score": 2.0,
+        }
+    if state == "wait_for_entry":
+        return {
+            "name": "入场质量不足",
+            "status": raw_reason or "价格目标提示关注/不操作",
+            "score": 1.5,
+        }
+    if state == "overheated":
+        return {
+            "name": "追高风险",
+            "status": raw_reason or "BIAS 处于极端高位",
+            "score": 2.0,
+        }
+    return None
+
+
+def _technical_unavailable_reason(stock_raw: object) -> str:
+    if not isinstance(stock_raw, dict):
+        return ""
+    reason = str(stock_raw.get("technical_unavailable_reason") or "").strip()
+    if reason:
+        return reason
+    technical = stock_raw.get("technical")
+    if isinstance(technical, dict):
+        return str(technical.get("unavailable_reason") or "").strip()
+    return ""
+
+
+def _display_only_risk_notes(display_only_external_risks: List[object]) -> List[str]:
+    from .recommendation_decision import DisplayOnlyExternalRiskSignal
+
+    validated_risks = [
+        r for r in display_only_external_risks
+        if isinstance(r, DisplayOnlyExternalRiskSignal) and getattr(r, "name", None)
+    ]
+    if not validated_risks:
+        return []
+    names = "、".join(r.name for r in validated_risks)
+    return [
+        "4.4 外部观察为 display-only，不计入综合风险评分；"
+        f"相关变量（{names}）仅作为人工跟踪项。"
+    ]
+
+
 def render_risk_assessment(
     assessment: "RiskAssessment",
     watch_points_md: str = "",
@@ -844,16 +916,25 @@ def render_risk_assessment(
     """Render a RiskAssessment to the legacy Markdown format."""
     keyword_observations = keyword_observations if keyword_observations is not None else assessment.keyword_observations
     structured_observations = structured_observations if structured_observations is not None else assessment.structured_observations
-    score = assessment.score if assessment.score is not None else 0.0
+    if assessment.score is None:
+        score_line = "### 风险等级: 数据不足（无法评估）"
+    else:
+        score_line = f"### 风险等级: {assessment.score:.1f}/10（{assessment.level}）"
     lines = [
         "## 综合风险评分",
         "",
-        f"### 风险等级: {score:.1f}/10（{assessment.level}）",
+        score_line,
+        "",
+        "> **口径说明**: 综合风险评分衡量本期模型已计分的交易/风控风险因子；"
+        "低综合风险不等于买入安全，仍需结合 EV、趋势状态、入场质量与专项风险。",
         "",
         f"> **仓位建议**: {assessment.position_advice}",
     ]
     for note in assessment.formal_notes:
-        prefix = "> **仓位约束**: " if "趋势" in note or "技术状态" in note or "技术健康度" in note else "> **入场约束**: "
+        if "技术行情数据缺失" in note:
+            prefix = "> **数据缺口**: "
+        else:
+            prefix = "> **仓位约束**: " if "趋势" in note or "技术状态" in note or "技术健康度" in note else "> **入场约束**: "
         lines.append(f"{prefix}{note}")
     lines.append("")
 
@@ -865,6 +946,9 @@ def render_risk_assessment(
         ])
         for factor in factors:
             lines.append(f"| {factor['name']} | {factor['status']} | +{factor['score']} |")
+        lines.append("")
+    elif assessment.score is None:
+        lines.append("当前技术行情数据缺失，综合风险评分暂无法评估；不得据此判断为低风险。")
         lines.append("")
     else:
         lines.append("当前未触发主要风险因子，整体风险可控。")
@@ -1040,7 +1124,7 @@ def _build_chip_risk_table(stock_name: str, category: str, factors: List[tuple])
 
     lines.extend([
         "",
-        f"**综合特有风险评分: {avg_score}/10**",
+        f"**长期结构性专项风险评分: {avg_score}/10**",
         "",
         "> 评分说明：10分为极其严重影响，0分为无影响。上述评分与传统加法风险模型形成互补参考，",
         "> 反映的是亏损芯片企业在财务替代指标、竞争格局、客户结构和资本市场层面的结构性风险。",

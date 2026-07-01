@@ -1,6 +1,7 @@
 """Technical data collection skill — wraps TechnicalCollector for pipeline use."""
 
 import sys
+from datetime import date, datetime
 from pathlib import Path
 
 if __name__.startswith("utils."):
@@ -24,6 +25,37 @@ except ImportError:
     if str(utils_dir) not in sys.path:
         sys.path.insert(0, str(utils_dir))
     from wind_kline_loader import load_wind_package
+
+
+MAX_LOCAL_WIND_STALENESS_DAYS = 7
+
+
+def _coerce_date(value):
+    if value is None:
+        return None
+    if hasattr(value, "date"):
+        return value.date()
+    if isinstance(value, date):
+        return value
+    if isinstance(value, str):
+        try:
+            return datetime.fromisoformat(value[:10]).date()
+        except ValueError:
+            return None
+    return None
+
+
+def _wind_daily_stale_reason(df_daily, today: date | None = None) -> str:
+    if df_daily is None or len(df_daily) == 0 or "date" not in df_daily:
+        return "wind_excel_missing_latest_date"
+    today = today or date.today()
+    latest = _coerce_date(df_daily["date"].iloc[-1])
+    if latest is None:
+        return "wind_excel_missing_latest_date"
+    age_days = (today - latest).days
+    if age_days > MAX_LOCAL_WIND_STALENESS_DAYS:
+        return f"wind_excel_stale:{latest.isoformat()}:{age_days}d"
+    return ""
 
 
 @skill(name="technical_fetching")
@@ -104,29 +136,33 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
         wind_pkg = {}
 
     if wind_pkg and wind_pkg.get("daily") is not None and len(wind_pkg["daily"]) > 0:
-        df_daily = wind_pkg["daily"]
-        tech_collector = TechnicalCollector()
-        indicators = tech_collector.compute_indicators(df_daily, code=code)
+        stale_reason = _wind_daily_stale_reason(wind_pkg["daily"])
+        if stale_reason:
+            ctx.set("technical_local_data_stale_reason", stale_reason)
+        else:
+            df_daily = wind_pkg["daily"]
+            tech_collector = TechnicalCollector()
+            indicators = tech_collector.compute_indicators(df_daily, code=code)
 
-        daily_data = _df_to_daily_data(df_daily)
+            daily_data = _df_to_daily_data(df_daily)
 
-        benchmark_data = {}
-        for name, df_bench in wind_pkg.get("benchmarks", {}).items():
-            if df_bench is not None and len(df_bench) > 0:
-                benchmark_data[name] = _df_to_daily_data(df_bench)
+            benchmark_data = {}
+            for name, df_bench in wind_pkg.get("benchmarks", {}).items():
+                if df_bench is not None and len(df_bench) > 0:
+                    benchmark_data[name] = _df_to_daily_data(df_bench)
 
-        tech_data = {
-            "indicators": indicators,
-            "daily_data": daily_data,
-            "benchmark_data": benchmark_data,
-            "data_source": "wind_excel",
-            "adjustment": "raw",
-            "code": code,
-            "market": market,
-            "price_target": None,
-        }
-        _set_technical_outputs(tech_data)
-        return ctx
+            tech_data = {
+                "indicators": indicators,
+                "daily_data": daily_data,
+                "benchmark_data": benchmark_data,
+                "data_source": "wind_excel",
+                "adjustment": "raw",
+                "code": code,
+                "market": market,
+                "price_target": None,
+            }
+            _set_technical_outputs(tech_data)
+            return ctx
 
     # 回退到网络采集
     tech_collector = TechnicalCollector()

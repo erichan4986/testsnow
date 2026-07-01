@@ -25,7 +25,7 @@ def test_load_wind_ohlcv_normalizes_and_drops_incomplete_rows():
     assert list(df.columns) == ["date", "open", "high", "low", "close", "volume", "amount"]
     assert len(df) <= 120
     assert df[["open", "high", "low", "close", "volume"]].isna().sum().sum() == 0
-    assert str(df["date"].iloc[-1].date()) == "2026-06-09"
+    assert str(df["date"].iloc[-1].date()) == "2026-06-30"
     assert df.attrs["data_source"] == "wind_excel"
     assert df.attrs["adjustment"] == "raw"
     assert df.attrs["wind_sheet"] == "黑芝麻智能"
