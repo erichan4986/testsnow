@@ -144,3 +144,37 @@ def test_build_social_source_packets_layers_xueqiu_column_and_reply_credit(tmp_p
     assert [packet["source_detail_type"] for packet in packets] == ["xueqiu_column", "xueqiu_reply"]
     assert [packet["source_label"] for packet in packets] == ["雪球专栏观察", "雪球评论观察"]
     assert packets[0]["source_credit"] > packets[1]["source_credit"]
+
+
+def test_build_social_source_packets_accepts_refill_stocks_data_shape(tmp_path: Path):
+    long_content = "复旦微电估值分歧集中在PE、PS和港股折价。" + "紫光国微可比公司锚和前瞻净利假设需要交叉验证。" * 20
+    report_input = _write_report_input(
+        tmp_path,
+        {
+            "stocks_data": {
+                "复旦微电": [
+                    {
+                        "title": "复旦微电估值长文",
+                        "content": long_content,
+                        "url": "https://xueqiu.com/1606930351/392467740",
+                        "author": "锲而不舍",
+                        "time": "06-03",
+                        "source": "xueqiu",
+                        "_track": "featured",
+                        "source_detail_type": "xueqiu_column",
+                        "selection_audit": {"batch": "refill", "topics": ["valuation"]},
+                    }
+                ]
+            },
+            "raw_data": {"复旦微电": {"zhihu": {"report_items": []}}},
+        },
+    )
+
+    packets = build_social_source_packets(report_input, stock_name="复旦微电", min_content_chars=120)
+
+    assert len(packets) == 1
+    assert packets[0]["source_ref"] == "https://xueqiu.com/1606930351/392467740"
+    assert packets[0]["source_detail_type"] == "xueqiu_column"
+    assert packets[0]["source_label"] == "雪球专栏观察"
+    assert packets[0]["synthesis_display_only"] is True
+    assert packets[0]["scoring_eligible"] is False

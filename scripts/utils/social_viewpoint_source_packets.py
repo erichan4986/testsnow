@@ -111,6 +111,7 @@ def _xueqiu_like_candidates(payload: Dict[str, Any], stock_name: str) -> List[Di
                 "publish_time": post.get("time") or post.get("publish_time") or "",
                 "source_kind": source_kind,
                 "source_platform": source or "xueqiu",
+                "source_detail_type": post.get("source_detail_type") or "",
             }
         )
     return candidates
@@ -169,6 +170,19 @@ def _social_source_profile(item: Dict[str, Any], source_kind: str) -> Dict[str, 
     content = _normalize_text(item.get("content"))
     marker = f"{source_kind} {title} {content}".lower()
     if "social_xueqiu" in marker or "xueqiu" in marker:
+        explicit_detail_type = _normalize_text(item.get("source_detail_type"))
+        if explicit_detail_type == "xueqiu_column":
+            return {
+                "source_detail_type": "xueqiu_column",
+                "source_label": "雪球专栏观察",
+                "source_credit": 55,
+            }
+        if explicit_detail_type == "xueqiu_reply":
+            return {
+                "source_detail_type": "xueqiu_reply",
+                "source_label": "雪球评论观察",
+                "source_credit": 45,
+            }
         if "回复@" in marker or "回复 @" in marker:
             return {
                 "source_detail_type": "xueqiu_reply",

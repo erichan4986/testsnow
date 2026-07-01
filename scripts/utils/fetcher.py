@@ -355,29 +355,54 @@ class XueqiuFetcher:
                 f"sentiment={len(sentiment_posts)}"
             )
 
-            # 6. 对 featured 候选按内容质量分排序，Top N 进入详情页
-            from .content_quality import content_score
-            featured_candidates.sort(
-                key=lambda x: content_score(x),
-                reverse=True,
+            # 6. 对 featured 候选做详情页抓取计划。第一批后若有效内容不足，
+            # 只允许一次补录，并始终受 max_detail_posts 总上限约束。
+            from .xueqiu_detail_selection import (
+                build_detail_plan,
+                build_refill_plan,
+                evaluate_detail_attempts,
             )
 
+            detail_plan = build_detail_plan(
+                featured_candidates,
+                {
+                    "first_batch_size": min(max_detail_posts, 15),
+                    "refill_batch_size": min(max(0, max_detail_posts - min(max_detail_posts, 15)), 8),
+                    "max_detail_pages_total": max_detail_posts,
+                    "enabled_extension_buckets": ["semiconductor_product", "aerospace"],
+                },
+            )
             featured_posts = []
-            for post in featured_candidates[:max_detail_posts]:
-                if post.get("url"):
+            detail_attempts = []
+
+            def attempt_detail_batch(batch, batch_name: str):
+                for post in batch:
+                    if not post.get("url"):
+                        continue
+                    attempt = {
+                        "url": post.get("url", ""),
+                        "title": post.get("title", ""),
+                        "author": post.get("author", ""),
+                        "publish_time": post.get("time", ""),
+                        "topics": post.get("detail_topic_buckets", []),
+                        "attempt_batch": batch_name,
+                    }
                     try:
                         detail = self._fetch_post_detail(page, post["url"])
                         if detail:
                             post["content"] = detail.get("content", "")
                             post["comments"] = detail.get("comments", [])
+                            attempt["content"] = post.get("content", "")
                             # 二次过滤: 详情页正文 < 60 字降级为 sentiment
                             if len(post.get("content", "")) < 60:
+                                attempt["drop_reason"] = "too_short"
                                 logger.info(
                                     f"[雪球] [{stock_name}] 详情页正文过短，降级: "
                                     f"{post.get('title', '')[:20]}..."
                                 )
                                 sentiment_posts.append(post)
                             else:
+                                attempt["status"] = "usable"
                                 featured_posts.append(post)
                                 logger.info(
                                     f"[雪球] [{stock_name}] 详情页提取: "
@@ -385,22 +410,60 @@ class XueqiuFetcher:
                                     f"正文 {len(post['content'])} 字"
                                 )
                         else:
-                            # 详情页提取失败，降级到 sentiment
+                            attempt["drop_reason"] = "fetch_failed"
                             sentiment_posts.append(post)
+                        detail_attempts.append(attempt)
                         time.sleep(random.uniform(2, 4))
                     except Exception as e:
                         logger.warning(f"[雪球] 详情页提取失败: {e}")
+                        attempt["drop_reason"] = "fetch_failed"
+                        detail_attempts.append(attempt)
                         sentiment_posts.append(post)
 
+            attempt_detail_batch(detail_plan["first_batch"], "first")
+            evaluation = evaluate_detail_attempts(
+                detail_attempts,
+                {
+                    "populated_non_sentiment_candidate_buckets": detail_plan["audit"].get("populated_topic_buckets", []),
+                    "max_detail_pages_total": max_detail_posts,
+                },
+            )
+            refill_plan = build_refill_plan(
+                detail_plan["candidates"],
+                detail_attempts,
+                evaluation,
+                {
+                    "refill_batch_size": min(max(0, max_detail_posts - len(detail_attempts)), 8),
+                    "max_detail_pages_total": max_detail_posts,
+                },
+            )
+            if refill_plan.get("should_refill"):
+                logger.info(
+                    f"[雪球] [{stock_name}] 详情页有效内容不足，补录 "
+                    f"{len(refill_plan.get('refill_batch', []))} 条"
+                )
+                attempt_detail_batch(refill_plan.get("refill_batch", []), "refill")
+
             # 剩余未进详情页的 featured 候选降级到 sentiment
-            for post in featured_candidates[max_detail_posts:]:
-                sentiment_posts.append(post)
+            attempted_urls = {attempt.get("url") for attempt in detail_attempts}
+            for post in detail_plan["candidates"]:
+                if post.get("url") not in attempted_urls:
+                    sentiment_posts.append(post)
 
             page.close()
 
             return {
                 "featured": featured_posts,
                 "sentiment": sentiment_posts,
+                "_selection_audit": {
+                    "first_batch_urls": [post.get("url") for post in detail_plan["first_batch"]],
+                    "refill_batch_urls": [post.get("url") for post in refill_plan.get("refill_batch", [])],
+                    "attempted_urls": list(attempted_urls),
+                    "drop_reasons": evaluation.get("drop_reasons", {}),
+                    "refill_reasons": refill_plan.get("audit", {}).get("refill_reasons", []),
+                    "topic_buckets": detail_plan["audit"].get("populated_topic_buckets", []),
+                    "total_detail_pages": len(detail_attempts),
+                },
             }
 
         except Exception as e:
