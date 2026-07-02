@@ -354,6 +354,282 @@ def test_parse_citations_removes_llm_role_preface():
     assert set(cites) == {1}
 
 
+# ---------------------------------------------------------------------------
+# Phase 3c: Peer comparison material in KnowledgeSynthesizer prompts
+# ---------------------------------------------------------------------------
+
+
+def _sample_peer_material():
+    """Build a standard peer material dict for Phase 3c tests."""
+    return {
+        "schema": "peer_comparison_material.v1",
+        "target": "复旦微电",
+        "peers": ["紫光国微", "安路科技"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "复旦微电",
+                "peer": "紫光国微",
+                "metric": "gross_margin",
+                "target_value": "55.3%",
+                "peer_value": "52.6%",
+                "comparison": "毛利率高于紫光国微(52.6%)约2.7%",
+                "period": "FY2025",
+                "unit": "%",
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+                "source_refs": ["指标:competitor_metrics"],
+            },
+            {
+                "dimension": "估值水平",
+                "target": "复旦微电",
+                "peer": "紫光国微",
+                "metric": "pe_ttm",
+                "target_value": "220.36",
+                "peer_value": "42.97",
+                "comparison": "复旦微电PE(TTM)远高于紫光国微",
+                "period": "2026-07-01",
+                "unit": "倍",
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+                "source_refs": ["指标:competitor_metrics"],
+            },
+            {
+                "dimension": "估值水平",
+                "target": "复旦微电",
+                "peer": "安路科技",
+                "metric": "mcap",
+                "target_value": "352.76",
+                "peer_value": "120.50",
+                "comparison": "总市值高于安路科技",
+                "period": "2026-07-01",
+                "unit": "亿",
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+                "source_refs": ["指标:competitor_metrics"],
+            },
+        ],
+        "warnings": [],
+    }
+
+
+def test_peer_appendix_included_for_industry_logic():
+    """Build prompt for industry_logic with peer material; verify heading, comparisons, source refs."""
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="Q1业绩分析", content="营收增长40%", author="张三",
+            source_platform="雪球", url="http://x", publish_time="2026-05-20",
+            interaction_score=100,
+        ),
+    ] * 3  # ensure >= min_items
+    peer_material = _sample_peer_material()
+
+    prompt = synth._build_prompt("复旦微电", "industry_logic", items, peer_comparison_material=peer_material)
+
+    assert "同行对比材料（正式/指标来源，非新增引用）" in prompt
+    assert "非新增引用" in prompt
+    assert "毛利率高于紫光国微" in prompt
+    assert "指标:competitor_metrics" in prompt
+    assert "使用规则：" in prompt
+    assert "claim_eligible" in prompt
+    assert "confidence=0.85" in prompt
+    assert "不得生成新的 [^n] 引用编号" in prompt
+
+
+def test_peer_appendix_included_for_fundamentals_and_valuation_only():
+    """Peer appendix appears in fundamentals and valuation_debate, NOT in funding_sentiment or events_catalysts."""
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="测试内容", content="测试内容", author="A",
+            source_platform="雪球", url="", publish_time="2026-01-01",
+        ),
+    ] * 3
+    peer_material = _sample_peer_material()
+
+    fundamentals_prompt = synth._build_prompt("复旦微电", "fundamentals", items, peer_comparison_material=peer_material)
+    valuation_prompt = synth._build_prompt("复旦微电", "valuation_debate", items, peer_comparison_material=peer_material)
+    funding_prompt = synth._build_prompt("复旦微电", "funding_sentiment", items, peer_comparison_material=peer_material)
+    events_prompt = synth._build_prompt("复旦微电", "events_catalysts", items, peer_comparison_material=peer_material)
+
+    assert "同行对比材料" in fundamentals_prompt
+    assert "同行对比材料" in valuation_prompt
+    assert "同行对比材料" not in funding_prompt
+    assert "同行对比材料" not in events_prompt
+
+
+def test_peer_appendix_hard_filters_low_confidence_rows():
+    """Peer row with confidence 0.40 must not appear in prompt."""
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="测试", content="测试", author="A",
+            source_platform="雪球", url="", publish_time="2026-01-01",
+        ),
+    ] * 3
+    material = _sample_peer_material()
+    material["rows"].append({
+        "dimension": "盈利能力",
+        "target": "复旦微电",
+        "peer": "聚辰股份",
+        "metric": "gross_margin",
+        "target_value": "55.3%",
+        "peer_value": "48.0%",
+        "comparison": "毛利率高于聚辰股份7.3%",
+        "period": "FY2025",
+        "unit": "%",
+        "confidence": 0.40,
+        "usage": "audit_only",
+        "source_refs": ["来源:old_system"],
+    })
+
+    prompt = synth._build_prompt("复旦微电", "industry_logic", items, peer_comparison_material=material)
+
+    assert "同行对比材料" in prompt  # heading still present
+    assert "聚辰股份" not in prompt  # low-confidence peer dropped
+    assert "毛利率高于聚辰股份" not in prompt
+
+
+def test_peer_appendix_strips_context_only_comparisons():
+    """Context-only row (confidence 0.60) keeps dimension/peer/source but strips comparison/values."""
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="测试", content="测试", author="A",
+            source_platform="雪球", url="", publish_time="2026-01-01",
+        ),
+    ] * 3
+    material = _sample_peer_material()
+    # Add a context_only row with unique values that won't collide with claim_eligible rows.
+    material["rows"].append({
+        "dimension": "盈利能力",
+        "target": "复旦微电",
+        "peer": "兆易创新",
+        "metric": "gross_margin",
+        "target_value": "12345.67%",  # unique value unlikely to appear elsewhere
+        "peer_value": "98765.43%",
+        "comparison": "毛利率高于兆易创新99999.24%",
+        "period": "FY2025",
+        "unit": "%",
+        "confidence": 0.60,
+        "usage": "context_only",
+        "source_refs": ["指标:competitor_metrics"],
+    })
+
+    prompt = synth._build_prompt("复旦微电", "industry_logic", items, peer_comparison_material=material)
+
+    assert "同行对比材料" in prompt
+    assert "兆易创新" in prompt  # peer name remains
+    assert "context_only" in prompt  # context_only label present
+    assert "盈利能力" in prompt  # dimension remains
+    # stripped fields must not appear for the context_only row
+    assert "毛利率高于兆易创新99999.24%" not in prompt
+    assert "12345.67%" not in prompt
+    assert "98765.43%" not in prompt
+
+
+def test_synthesize_passes_peer_material_to_build_prompt(monkeypatch):
+    """Verify peer_material flows from synthesize → _build_prompt."""
+    synth = KnowledgeSynthesizer(client=None)
+    synth.client = object()
+    items = [
+        SynthesisItem(
+            title="Q1业绩分析", content="营收增长40%", author="张三",
+            source_platform="雪球", url="http://x", publish_time="2026-05-20",
+            interaction_score=100,
+        ),
+    ] * 3
+    peer_material = _sample_peer_material()
+    calls = []
+
+    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None):
+        calls.append(peer_comparison_material)
+        return ""
+
+    monkeypatch.setattr(synth, "_build_prompt", spy)
+    monkeypatch.setattr(synth, "_call_llm", lambda prompt: "")
+
+    result = synth.synthesize("复旦微电", {"items": items, "peer_comparison_material": peer_material})
+    # At least one call received the peer_material reference
+    assert any(call is peer_material for call in calls), "peer_material object not passed to _build_prompt"
+
+
+def test_core_fact_extraction_prompt_does_not_include_peer_appendix():
+    """core fact extraction prompt must not contain peer appendix heading."""
+    synth = KnowledgeSynthesizer(client=object())
+    narratives = {"industry_logic": "营收增长[^1]。毛利率改善[^2]。"}
+    prompts_sent = []
+
+    def spy_call_llm(prompt):
+        prompts_sent.append(prompt)
+        return '[{"fact_id": 1, "fact": "营收增长", "data": "10%", "confidence": "高", "source_refs": [1]}]'
+
+    synth._call_llm = spy_call_llm
+    result = synth.extract_core_facts("复旦微电", narratives)
+
+    assert len(prompts_sent) == 1
+    assert "同行对比材料" not in prompts_sent[0]
+    assert "非新增引用" not in prompts_sent[0]
+    assert "营收增长" in prompts_sent[0]
+
+
+def test_peer_appendix_order_before_claim_verification_and_previous_ledger():
+    """Peer appendix is placed after numbered sources, before verification context and previous ledger."""
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="测试", content="测试", author="A",
+            source_platform="雪球", url="", publish_time="2026-01-01",
+        ),
+    ] * 3
+    context = {
+        "enabled": True,
+        "stock": "复旦微电",
+        "counts": {
+            "verified": 1,
+            "supported": 0,
+            "unverified": 0,
+            "needs_review": 0,
+            "high_credit_claims": 1,
+            "low_credit_claims": 0,
+            "skipped_files": 0,
+        },
+        "verified_claims": [
+            {
+                "claim_text": "公告确认营收增长",
+                "action": "verified",
+                "verified_by_titles": ["公司业绩公告"],
+                "confidence": 85,
+            }
+        ],
+        "supported_claims": [],
+        "unverified_claims": [],
+    }
+    previous = {
+        "industry_logic": (
+            "AI算力、800G、1.6T、硅光和CPO是产业技术路线。"
+            "这些主题已在4.1展开。"
+        )
+    }
+
+    prompt = synth._build_prompt(
+        "复旦微电",
+        "fundamentals",
+        items,
+        previous_narratives=previous,
+        claim_verification_context=context,
+        peer_comparison_material=_sample_peer_material(),
+    )
+
+    source_pos = prompt.find("信息来源：")
+    peer_pos = prompt.find("同行对比材料（正式/指标来源，非新增引用）")
+    context_pos = prompt.find("Claim Verification Context")
+    ledger_pos = prompt.find("已展开主题")
+    assert -1 not in {source_pos, peer_pos, context_pos, ledger_pos}
+    assert source_pos < peer_pos < context_pos < ledger_pos
+
+
 def test_extract_core_facts_sanitizes_non_numeric_markers():
     synth = KnowledgeSynthesizer(client=object())
     llm_output = (
@@ -473,7 +749,7 @@ def test_synthesize_passes_context_to_build_prompt(monkeypatch):
     }
     calls = []
 
-    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None):
+    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None):
         calls.append(claim_verification_context)
         return ""
 

@@ -179,6 +179,7 @@ class KnowledgeSynthesizer:
         """
         items: List[SynthesisItem] = all_data.get("items", [])
         claim_verification_context = all_data.get("claim_verification_context")
+        peer_comparison_material = all_data.get("peer_comparison_material")
         if not items:
             logger.warning(f"[{stock_name}] 无内容可供合成")
             return {k: "" for k in THEMES} | {"citations": {}}
@@ -206,7 +207,9 @@ class KnowledgeSynthesizer:
                     if v and k in THEMES
                 }
                 narrative, citations = self._synthesize_theme(
-                    stock_name, theme_key, theme_items, previous_narratives, claim_verification_context
+                    stock_name, theme_key, theme_items,
+                    previous_narratives, claim_verification_context,
+                    peer_comparison_material,
                 )
                 result[theme_key] = narrative
                 # 合并引用（全局去重）
@@ -238,9 +241,14 @@ class KnowledgeSynthesizer:
         items: List[SynthesisItem],
         previous_narratives: Dict[str, str] = None,
         claim_verification_context: Dict[str, Any] = None,
+        peer_comparison_material: Dict[str, Any] = None,
     ) -> Tuple[str, Dict[int, Dict]]:
         """合成单个主题，返回 (叙事文本, 该主题使用的引用字典)"""
-        prompt = self._build_prompt(stock_name, theme_key, items, previous_narratives, claim_verification_context)
+        prompt = self._build_prompt(
+            stock_name, theme_key, items,
+            previous_narratives, claim_verification_context,
+            peer_comparison_material,
+        )
         response_text = self._call_llm(prompt)
         return self._parse_with_citations(response_text)
 
@@ -251,6 +259,7 @@ class KnowledgeSynthesizer:
         items: List[SynthesisItem],
         previous_narratives: Dict[str, str] = None,
         claim_verification_context: Dict[str, Any] = None,
+        peer_comparison_material: Dict[str, Any] = None,
     ) -> str:
         """为特定主题构建 LLM prompt。"""
         prefix_template = THEME_PROMPT_PREFIX.get(theme_key, THEMES["industry_logic"][0])
@@ -272,6 +281,12 @@ class KnowledgeSynthesizer:
         prompt_parts.extend([rules, "信息来源：\n" + "\n".join(source_lines)])
         prompt = "\n\n".join(prompt_parts)
 
+        # Append peer comparison appendix for 4.1/4.2 themes only.
+        if peer_comparison_material and theme_key in {"industry_logic", "fundamentals", "valuation_debate"}:
+            peer_appendix = self._format_peer_appendix(peer_comparison_material, theme_key)
+            if peer_appendix:
+                prompt += "\n\n---\n\n" + peer_appendix
+
         # Append optional claim verification context after numbered sources.
         if claim_verification_context:
             appendix = self._format_claim_verification_context(claim_verification_context)
@@ -286,6 +301,73 @@ class KnowledgeSynthesizer:
                 prompt += "\n\n---\n\n" + ledger + "\n"
 
         return prompt
+
+    @staticmethod
+    def _format_peer_appendix(peer_comparison_material: Dict[str, Any], theme_key: str) -> str:
+        """Build compact non-citable peer comparison appendix for 4.1/4.2 theme prompts."""
+        try:
+            from .peer_comparison_material import filter_peer_rows_for_prompt
+        except ImportError:
+            from peer_comparison_material import filter_peer_rows_for_prompt
+
+        filtered = filter_peer_rows_for_prompt(peer_comparison_material)
+        rows = filtered.get("rows", [])
+        if not rows:
+            return ""
+
+        # Per-theme row caps
+        max_rows = {"industry_logic": 4, "fundamentals": 3, "valuation_debate": 3}
+        limit = max_rows.get(theme_key, 0)
+
+        # For valuation_debate, prefer 估值水平 rows first
+        if theme_key == "valuation_debate":
+            valuation_rows = [r for r in rows if r.get("dimension") == "估值水平"]
+            other_rows = [r for r in rows if r.get("dimension") != "估值水平"]
+            theme_rows = valuation_rows[:limit]
+            if len(theme_rows) < limit:
+                theme_rows.extend(other_rows[:limit - len(theme_rows)])
+        else:
+            theme_rows = rows[:limit]
+
+        if not theme_rows:
+            return ""
+
+        lines = [
+            "同行对比材料（正式/指标来源，非新增引用）",
+            "",
+            "使用规则：",
+            "- 只能基于 claim_eligible 行写\"高于/低于/接近/优于/弱于\"等相对判断。",
+            "- context_only 行只能写成\"后续可跟踪的对比线索\"，不能写成已确认优劣。",
+            "- 不得把同行材料写入 4.3 资金面/催化剂。",
+            "- 不得引用雪球/知乎/微信/精选外部来支撑 4.1/4.2 同行结论。",
+            "- 同行材料不是新的引用来源，不得生成新的 [^n] 引用编号。",
+            "",
+        ]
+
+        for row in theme_rows:
+            usage = row.get("usage", "audit_only")
+            dim = row.get("dimension", "")
+            target = row.get("target", "")
+            peer = row.get("peer", "")
+            metric = row.get("metric", "")
+            conf = row.get("confidence", 0)
+            refs = "; ".join(row.get("source_refs", []))
+
+            if usage == "claim_eligible" and row.get("comparison"):
+                comparison = row.get("comparison", "")
+                target_val = row.get("target_value", "")
+                peer_val = row.get("peer_value", "")
+                lines.append(
+                    f"- {dim} | {target} vs {peer} | {metric}: {target_val} vs {peer_val}"
+                    f" | {comparison} | confidence={conf} | 来源: {refs}"
+                )
+            else:
+                lines.append(
+                    f"- {dim} | peer={peer} | metric={metric} | context_only"
+                    f" | confidence={conf} | 来源: {refs}"
+                )
+
+        return "\n".join(lines)
 
     @staticmethod
     def _filter_items_for_theme(theme_key: str, items: List[SynthesisItem]) -> List[SynthesisItem]:

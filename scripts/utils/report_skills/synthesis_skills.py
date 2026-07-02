@@ -114,6 +114,16 @@ class SynthesisSkill(BaseSkill):
         stock_raw = ctx.get("stock_raw", {})
         keep_posts = ctx.get("keep_posts", [])
 
+        # Build peer comparison material from deterministic metrics.
+        # Must be done BEFORE baseline synthesis so _build_prompt can
+        # add peer appendix to 4.1/4.2 theme prompts.
+        peer_material = build_peer_comparison_material(
+            stock_name=stock_name,
+            competitor_metrics=ctx.get("competitor_metrics"),
+            stock_config=ctx.get("stock_config"),
+        )
+        ctx.set("peer_comparison_material", peer_material)
+
         baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx)
         ctx.set("synthesis", baseline)
         core_facts = self._select_core_facts(
@@ -125,13 +135,6 @@ class SynthesisSkill(BaseSkill):
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))
         ctx.set("industry_relevance_manifest", baseline.get("_industry_relevance_manifest", {}))
-
-        # Build peer comparison material from deterministic metrics.
-        ctx.set("peer_comparison_material", build_peer_comparison_material(
-            stock_name=stock_name,
-            competitor_metrics=ctx.get("competitor_metrics"),
-            stock_config=ctx.get("stock_config"),
-        ))
 
         # Optional experimental paths: annual-report materials and broker-research
         # digest notes may enter the DISPLAY synthesis only.  Canonical synthesis,
@@ -689,6 +692,8 @@ class SynthesisSkill(BaseSkill):
         all_data = {"items": items}
         if cv_context:
             all_data["claim_verification_context"] = cv_context
+        if ctx and ctx.get("peer_comparison_material"):
+            all_data["peer_comparison_material"] = ctx.get("peer_comparison_material")
         result = synthesizer.synthesize(stock_name, all_data)
         result = self._fill_citation_metadata(result, items)
         result = self._enrich_core_fact_provenance(result)
