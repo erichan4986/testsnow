@@ -424,6 +424,359 @@ def test_display_only_risk_with_explanation_passes():
     assert "display_only_risk_without_explanation" not in codes
 
 
+# ---------------------------------------------------------------------------
+# Peer comparison material quality gates
+# ---------------------------------------------------------------------------
+
+
+def _peer_comparison_report_text() -> str:
+    """Return a report text with 4.1 and 4.2 sections for peer gate testing."""
+    return """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.1 行业逻辑与竞争格局
+
+公司为国内该领域的龙头企业，具备较强的技术壁垒。
+
+### 4.2 基本面与估值分析
+
+公司毛利率显著优于同行，估值水平合理。
+
+### 4.3 资金面与催化剂时间线
+
+存储产品涨价通过晶圆厂产能紧张传导至CIS排产，韦尔股份将直接受益。
+
+### 4.4 精选外部观察（Preview）
+
+从雪球观点来看，公司估值在行业中偏高。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+
+
+def test_peer_pack_social_leak_is_error():
+    """Peer material rows with social source refs cause error."""
+    text = _peer_comparison_report_text()
+    peer_material = {
+        "schema": "peer_comparison_material.v1",
+        "target": "测试股",
+        "peers": ["同行A"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "测试股",
+                "peer": "同行A",
+                "metric": "gross_margin",
+                "target_value": 60.0,
+                "peer_value": 65.0,
+                "period": "latest",
+                "unit": "%",
+                "comparison": "毛利率低于同行A",
+                "source_refs": ["雪球:某帖子"],
+                "confidence": 0.80,
+                "usage": "claim_eligible",
+            }
+        ],
+        "warnings": [],
+    }
+    result = check_report_text(text, peer_comparison_material=peer_material)
+    codes = {issue.code for issue in result.issues}
+    assert "peer_pack_social_leak" in codes
+
+
+def test_peer_pack_allowed_refs_pass():
+    """Peer material rows with allowed source refs pass the social leak gate."""
+    text = _peer_comparison_report_text()
+    peer_material = {
+        "schema": "peer_comparison_material.v1",
+        "target": "测试股",
+        "peers": ["同行A"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "测试股",
+                "peer": "同行A",
+                "metric": "gross_margin",
+                "target_value": 60.0,
+                "peer_value": 65.0,
+                "period": "latest",
+                "unit": "%",
+                "comparison": "毛利率低于同行A",
+                "source_refs": ["指标:competitor_metrics"],
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+            }
+        ],
+        "warnings": [],
+    }
+    result = check_report_text(text, peer_comparison_material=peer_material)
+    codes = {issue.code for issue in result.issues}
+    assert "peer_pack_social_leak" not in codes
+
+
+def test_peer_pack_unknown_source_prefix_is_error():
+    """Peer material rows must use explicit formal/professional source prefixes."""
+    text = _peer_comparison_report_text()
+    peer_material = {
+        "schema": "peer_comparison_material.v1",
+        "target": "测试股",
+        "peers": ["同行A"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "测试股",
+                "peer": "同行A",
+                "metric": "gross_margin",
+                "target_value": 60.0,
+                "peer_value": 65.0,
+                "period": "latest",
+                "unit": "%",
+                "comparison": "毛利率低于同行A",
+                "source_refs": ["网页:某财经网站"],
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+            }
+        ],
+        "warnings": [],
+    }
+
+    result = check_report_text(text, peer_comparison_material=peer_material)
+
+    codes = {issue.code for issue in result.issues}
+    assert "peer_pack_social_leak" in codes
+
+
+def test_unsupported_peer_superlative_is_error():
+    """Strong peer comparison terms in 4.1/4.2 without high-confidence pack cause error."""
+    text = _peer_comparison_report_text()
+    # No peer_material provided -> no rows to support the strong claim "显著优于同行"
+    result = check_report_text(text, peer_comparison_material=None)
+    codes = {issue.code for issue in result.issues}
+    assert "unsupported_peer_superlative" in codes
+
+
+def test_high_confidence_sidecar_suppresses_superlative_error():
+    """High-confidence peer material with matching dimension suppresses the error."""
+    lines = [
+        "### 4.1 行业逻辑与竞争格局",
+        "",
+        "公司为国内该领域的龙头企业，具备较强的技术壁垒。",
+        "",
+        "### 4.2 基本面与估值分析",
+        "",
+        "公司毛利率**显著优于**行业平均，PE估值略低于同行，整体竞争力突出。",
+    ]
+    text = _peer_comparison_report_text().replace(
+        "公司毛利率显著优于同行，估值水平合理。",
+        "公司毛利率**显著优于**行业平均，PE估值略低于同行，整体竞争力突出。",
+    )
+    peer_material = {
+        "schema": "peer_comparison_material.v1",
+        "target": "测试股",
+        "peers": ["同行A"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "测试股",
+                "peer": "同行A",
+                "metric": "gross_margin",
+                "target_value": 60.0,
+                "peer_value": 65.0,
+                "period": "latest",
+                "unit": "%",
+                "comparison": "毛利率低于同行A",
+                "source_refs": ["指标:competitor_metrics"],
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+            }
+        ],
+        "warnings": [],
+    }
+    result = check_report_text(text, peer_comparison_material=peer_material)
+    codes = {issue.code for issue in result.issues}
+    assert "unsupported_peer_superlative" not in codes
+
+
+def test_peer_claim_without_peer_pack_warns():
+    """Weak peer comparison terms in 4.1/4.2 without any sidecar cause warning."""
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.1 行业逻辑与竞争格局
+
+公司与同行存在一定差距，后续需观察产品结构改善。
+
+### 4.2 基本面与估值分析
+
+毛利率略低于同行，但估值并未明显偏离行业平均。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text, peer_comparison_material=None)
+    codes = {issue.code for issue in result.issues}
+    assert "peer_claim_without_peer_pack" in codes
+    assert "unsupported_peer_superlative" not in codes
+
+
+def test_peer_claim_without_peer_pack_no_false_positive_with_sidecar():
+    """Weak peer comparison terms pass when sidecar exists with rows."""
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.1 行业逻辑与竞争格局
+
+公司与同行存在一定差距，整体竞争格局稳定。
+
+### 4.2 基本面与估值分析
+
+毛利率略低于同行，但仍处于合理区间。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    peer_material = {
+        "schema": "peer_comparison_material.v1",
+        "target": "测试股",
+        "peers": ["同行A"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "测试股",
+                "peer": "同行A",
+                "metric": "gross_margin",
+                "target_value": 60.0,
+                "peer_value": 65.0,
+                "period": "latest",
+                "unit": "%",
+                "comparison": "毛利率低于同行A",
+                "source_refs": ["指标:competitor_metrics"],
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+            }
+        ],
+        "warnings": [],
+    }
+    result = check_report_text(text, peer_comparison_material=peer_material)
+    codes = {issue.code for issue in result.issues}
+    assert "peer_claim_without_peer_pack" not in codes
+
+
+def test_no_peer_gate_false_positive_on_44_display_only():
+    """4.4 display-only section with peer language should not trigger gates."""
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.1 行业逻辑与竞争格局
+
+公司是国内少数具有量产能力的企业之一。
+
+### 4.2 基本面与估值分析
+
+营收稳健增长，利润率保持稳定。
+
+### 4.4 精选外部观察（Preview）
+
+雪球观点认为公司与紫光国微相比有一定差距，毛利率落后于同行平均。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text, peer_comparison_material=None)
+    codes = {issue.code for issue in result.issues}
+    assert "unsupported_peer_superlative" not in codes
+    assert "peer_claim_without_peer_pack" not in codes
+
+
+def test_check_report_file_loads_peer_comparison_material_sidecar(tmp_path):
+    """check_report_file auto-loads peer material sidecar from report path."""
+    report_path = tmp_path / "测试股_20260702.md"
+    report_path.write_text(
+        _peer_comparison_report_text(),
+        encoding="utf-8",
+    )
+    sidecar_path = tmp_path / "测试股_20260702_peer_comparison_material.json"
+    sidecar_path.write_text(
+        json.dumps({
+            "schema": "peer_comparison_material.v1",
+            "target": "测试股",
+            "peers": ["同行A"],
+            "rows": [
+                {
+                    "dimension": "盈利能力",
+                    "target": "测试股",
+                    "peer": "同行A",
+                    "metric": "gross_margin",
+                    "target_value": 60.0,
+                    "peer_value": 65.0,
+                    "period": "latest",
+                    "unit": "%",
+                    "comparison": "毛利率低于同行A",
+                    "source_refs": ["雪球:某帖子"],
+                    "confidence": 0.80,
+                    "usage": "claim_eligible",
+                }
+            ],
+            "warnings": [],
+        }, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    result = check_report_file(report_path)
+
+    codes = {issue.code for issue in result.issues}
+    # Should detect the social leak in the sidecar
+    assert "peer_pack_social_leak" in codes
+
+
 def test_curated_external_4_4_requires_inline_footnotes_when_sources_exist():
     text = """
 # 测试股 舆情深度报告

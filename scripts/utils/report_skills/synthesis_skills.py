@@ -28,6 +28,7 @@ if __name__.startswith("utils."):
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
     from ..curated_external_display_lint import lint_curated_external_display_text
     from ..industry_news_relevance import build_industry_relevance_manifest
+    from ..peer_comparison_material import build_peer_comparison_material
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -52,6 +53,7 @@ else:
     from synthesis_display_deduper import dedupe_synthesis_display_items
     from curated_external_display_lint import lint_curated_external_display_text
     from industry_news_relevance import build_industry_relevance_manifest
+    from peer_comparison_material import build_peer_comparison_material
 
 
 SYNTHESIS_KEYS = [
@@ -123,6 +125,13 @@ class SynthesisSkill(BaseSkill):
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))
         ctx.set("industry_relevance_manifest", baseline.get("_industry_relevance_manifest", {}))
+
+        # Build peer comparison material from deterministic metrics.
+        ctx.set("peer_comparison_material", build_peer_comparison_material(
+            stock_name=stock_name,
+            competitor_metrics=ctx.get("competitor_metrics"),
+            stock_config=ctx.get("stock_config"),
+        ))
 
         # Optional experimental paths: annual-report materials and broker-research
         # digest notes may enter the DISPLAY synthesis only.  Canonical synthesis,

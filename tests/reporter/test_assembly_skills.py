@@ -351,3 +351,79 @@ def test_header_excludes_agent_reach_when_empty():
     })
     header = skill._header(ctx)
     assert "Agent-Reach外部检索" not in header
+
+
+def test_assembly_writes_peer_comparison_material_sidecar(tmp_path):
+    skill = ReportAssemblySkill()
+    sidecar_material = {
+        "schema": "peer_comparison_material.v1",
+        "target": "测试股",
+        "peers": ["同行A", "同行B"],
+        "rows": [
+            {
+                "dimension": "盈利能力",
+                "target": "测试股",
+                "peer": "同行A",
+                "metric": "gross_margin",
+                "target_value": 60.0,
+                "peer_value": 65.0,
+                "period": "latest",
+                "unit": "%",
+                "comparison": "毛利率低于同行A",
+                "source_refs": ["指标:competitor_metrics"],
+                "confidence": 0.85,
+                "usage": "claim_eligible",
+            }
+        ],
+        "warnings": [],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7, "technical": 6, "sentiment": 5, "fundamental": 6, "fundflow": 5},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20},
+        "consensus": {},
+        "ind_fwd_pe": 25,
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": ""},
+        "keep_posts": [],
+        "peer_comparison_material": sidecar_material,
+    })
+
+    result = skill.run(ctx)
+
+    sidecar_path = tmp_path / "测试股_20260604_peer_comparison_material.json"
+    assert sidecar_path.exists()
+    assert result.get("peer_comparison_material_path") == str(sidecar_path)
+    data = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert data["schema"] == "peer_comparison_material.v1"
+    assert len(data["rows"]) == 1
+
+
+def test_assembly_does_not_write_peer_comparison_material_when_rows_empty(tmp_path):
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7, "technical": 6, "sentiment": 5, "fundamental": 6, "fundflow": 5},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20},
+        "consensus": {},
+        "ind_fwd_pe": 25,
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": ""},
+        "keep_posts": [],
+        "peer_comparison_material": {
+            "schema": "peer_comparison_material.v1",
+            "target": "测试股",
+            "peers": [],
+            "rows": [],
+            "warnings": ["No data"],
+        },
+    })
+
+    skill.run(ctx)
+
+    sidecar_path = tmp_path / "测试股_20260604_peer_comparison_material.json"
+    assert not sidecar_path.exists()

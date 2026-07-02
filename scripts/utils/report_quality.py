@@ -98,6 +98,50 @@ _DISPLAY_ONLY_RISK_TERMS = [
     r"做空",
 ]
 
+# ---------------------------------------------------------------------------
+# Peer comparison material quality gates
+# ---------------------------------------------------------------------------
+
+# Social-only source ref prefixes (error).
+_PEER_SOCIAL_PREFIXES = (
+    "雪球:", "知乎:", "微信:", "精选外部:", "社区:",
+)
+
+# Allowed source ref prefixes for peer comparison material.
+_PEER_ALLOWED_PREFIXES = (
+    "公告:", "年报:", "研报:", "指标:", "行业研报:", "行业资讯:", "iwencai:",
+)
+
+# Strong comparison terms (error) — check 4.1/4.2.
+_PEER_STRONG_TERMS = [
+    "行业第一",
+    "唯一",
+    "全面领先",
+    "显著优于",
+    "远强于",
+    "优于",
+    "领先",
+    "远超",
+    "全面占优",
+    "更具优势",
+]
+
+# Weak comparison terms (warning) — check 4.1/4.2.
+_PEER_WEAK_TERMS = [
+    "对标",
+    "差距",
+    "落后于",
+    "不及",
+    "接近",
+    "略高于",
+    "略低于",
+    "窄于",
+    "好于",
+    "弱于",
+    "行业平均",
+    "同行平均",
+]
+
 
 def _extract_header(text: str, section_prefix: str) -> str:
     """Extract the `### 综合评分: ... | EV: ...（...）` line under a section."""
@@ -118,13 +162,20 @@ def check_report_file(path: str | Path) -> QualityResult:
     report_path = Path(path)
     text = report_path.read_text(encoding="utf-8")
     manifest = _load_industry_relevance_manifest_sidecar(report_path)
-    return check_report_text(text, path=str(report_path), industry_relevance_manifest=manifest)
+    peer_material = _load_peer_comparison_material_sidecar(report_path)
+    return check_report_text(
+        text,
+        path=str(report_path),
+        industry_relevance_manifest=manifest,
+        peer_comparison_material=peer_material,
+    )
 
 
 def check_report_text(
     text: str,
     path: str = "<memory>",
     industry_relevance_manifest: dict | None = None,
+    peer_comparison_material: dict | None = None,
 ) -> QualityResult:
     """Check report Markdown text and return structured issues."""
     issues: List[QualityIssue] = []
@@ -134,6 +185,7 @@ def check_report_text(
     issues.extend(_check_contradictions(normalized))
     issues.extend(_check_curated_external_inline_footnotes(text))
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
+    issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
@@ -399,3 +451,103 @@ def _extract_table_score(text: str, labels: list[str]) -> float | None:
             except (TypeError, ValueError):
                 return None
     return None
+
+
+# ---------------------------------------------------------------------------
+# Peer comparison material helpers
+# ---------------------------------------------------------------------------
+
+
+def _load_peer_comparison_material_sidecar(report_path: Path) -> dict | None:
+    """Load peer comparison material sidecar adjacent to the report file."""
+    sidecar = report_path.with_name(f"{report_path.stem}_peer_comparison_material.json")
+    if not sidecar.exists():
+        return None
+    try:
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _extract_section_41(text: str) -> str:
+    """Extract 4.1 行业逻辑与竞争格局 section text."""
+    return _extract_deep_analysis_subsection(text, "4.1")
+
+
+def _extract_section_42(text: str) -> str:
+    """Extract 4.2 基本面与估值分析 section text."""
+    return _extract_deep_analysis_subsection(text, "4.2")
+
+
+def _check_peer_comparison_quality(
+    text: str,
+    peer_material: dict | None,
+) -> Iterable[QualityIssue]:
+    """Check peer comparison quality gates.
+
+    Checks:
+    - peer_pack_social_leak: social-only source refs in pack.
+    - unsupported_peer_superlative: strong peer terms in 4.1/4.2 without pack support.
+    - peer_claim_without_peer_pack: weak peer terms in 4.1/4.2 without pack.
+    """
+    # --- Gate 1: peer_pack_social_leak ---
+    if peer_material:
+        rows = peer_material.get("rows") or []
+        for row in rows:
+            refs = row.get("source_refs") or []
+            for ref in refs:
+                ref_text = str(ref or "")
+                is_social_ref = any(ref_text.startswith(prefix) for prefix in _PEER_SOCIAL_PREFIXES)
+                is_allowed_ref = any(ref_text.startswith(prefix) for prefix in _PEER_ALLOWED_PREFIXES)
+                if is_social_ref or not is_allowed_ref:
+                    yield QualityIssue(
+                        code="peer_pack_social_leak",
+                        severity="error",
+                        message=f"同行比较 material 包含非正式来源引用: {ref_text}",
+                        evidence=f"row metric={row.get('metric')}, peer={row.get('peer')}",
+                    )
+
+    # Extract 4.1 and 4.2 sections
+    section41 = _extract_section_41(text)
+    section42 = _extract_section_42(text)
+    sections_text = f"{section41}\n{section42}"
+
+    _normalized_41_42 = _normalize(sections_text)
+
+    # Determine if pack has usable rows
+    has_high_confidence_rows = False
+    has_any_rows = False
+    if peer_material:
+        rows = peer_material.get("rows") or []
+        has_any_rows = bool(rows)
+        for row in rows:
+            if row.get("confidence", 0) >= 0.70 and row.get("source_refs"):
+                has_high_confidence_rows = True
+                break
+
+    # --- Gate 2: unsupported_peer_superlative ---
+    strong_match_found = any(
+        term in _normalized_41_42
+        for term in _PEER_STRONG_TERMS
+    )
+    if strong_match_found and not has_high_confidence_rows:
+        yield QualityIssue(
+            code="unsupported_peer_superlative",
+            severity="error",
+            message="4.1/4.2 出现强同行比较表达，但同行比较 material 缺少达标行支撑",
+            evidence="strong terms detected in 4.1/4.2 without high-confidence peer pack rows",
+        )
+
+    # --- Gate 3: peer_claim_without_peer_pack ---
+    weak_match_found = any(
+        term in _normalized_41_42
+        for term in _PEER_WEAK_TERMS
+    )
+    if weak_match_found and not has_any_rows:
+        yield QualityIssue(
+            code="peer_claim_without_peer_pack",
+            severity="warning",
+            message="4.1/4.2 出现弱同行比较表达，但同行比较 material 不存在或无数据行",
+            evidence="weak peer terms in 4.1/4.2 without peer comparison material",
+        )

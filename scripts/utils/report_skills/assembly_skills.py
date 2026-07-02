@@ -66,6 +66,7 @@ class ReportAssemblySkill(BaseSkill):
 
         self._persist_industry_relevance_manifest(ctx, output_dir, stock_name, date_str)
         self._persist_agent_reach_audit(ctx, output_dir, stock_name, date_str)
+        self._persist_peer_comparison_material(ctx, output_dir, stock_name, date_str)
         return ctx
 
     def _persist_industry_relevance_manifest(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
@@ -104,6 +105,25 @@ class ReportAssemblySkill(BaseSkill):
             logger.info(f"Agent-Reach audit persisted: {audit_path}")
         except Exception as e:
             logger.warning(f"Agent-Reach audit persistence failed: {e}")
+
+    def _persist_peer_comparison_material(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
+        """Persist peer comparison material sidecar for report quality checks."""
+        material = ctx.get("peer_comparison_material")
+        if not isinstance(material, dict):
+            return
+        rows = material.get("rows") or []
+        if not rows:
+            return
+        try:
+            material_path = Path(output_dir) / f"{stock_name}_{date_str}_peer_comparison_material.json"
+            material_path.write_text(
+                json.dumps(material, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+            ctx.set("peer_comparison_material_path", str(material_path))
+            logger.info(f"Peer comparison material persisted: {material_path}")
+        except Exception as e:
+            logger.warning(f"Peer comparison material persistence failed: {e}")
 
     def _header(self, ctx: SkillContext) -> str:
         stock_name = ctx.get("stock_name", "")
