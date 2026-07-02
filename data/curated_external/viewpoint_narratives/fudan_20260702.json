@@ -1,0 +1,182 @@
+{
+  "schema_version": "curated_external_viewpoint_narrative.v1",
+  "status": "ok",
+  "stock_name": "复旦微电",
+  "paragraphs": [
+    {
+      "heading": "FPGA高可靠赛道竞争与产品差异化",
+      "text": "外部材料指出，国内FPGA市场呈现三巨头差异化竞争格局：复旦微电走高可靠赛道，客户壁垒高；紫光同创专注5G通信，份额超60%但2025年亏损；安路科技主攻民用中低端，研发投入占比高且亏损。复旦微电被部分外部观点视为A股唯一能量产亿门级高端FPGA的企业，其FPGA/FPAI产品线收入14.14亿元，同比增长25.3%，毛利率高达74.82%。旗舰产品FPAI芯片集SoC、FPGA、NPU于一体，算力覆盖4-128TOPS。此外，公司与复旦大学、国盛投资共建集成电路技术中心，聚焦FPGA等方向，合作期限60个月，投入不超10亿元。",
+      "claim_refs": [
+        "fudan-claim-002",
+        "fudan-claim-007",
+        "fudan-xq-002",
+        "fudan-claim-004",
+        "fudan-claim-005"
+      ]
+    },
+    {
+      "heading": "星载高可靠芯片的待验证增量空间",
+      "text": "有外部观点认为，复旦微电是卫星通信的潜在重要参与者，参与G60千帆星座项目，提供宇航级抗辐照FPGA和星载存储芯片。据该观点，国内高可靠卫星FPGA市占率超过95%，单星配套价值300-500万元。但该线索尚待验证，需跟踪后续订单落地情况。",
+      "claim_refs": [
+        "fudan-xq-004"
+      ]
+    },
+    {
+      "heading": "MCU与存储产品线的差异化进展",
+      "text": "外部材料显示，复旦微电的MCU产品在国网单相智能电表市场份额排名第一，同时向车规级和白电市场拓展，车规MCU已完成ISO26262体系认证，新一代产品已小批量产。存储芯片方面，EEPROM营收历史增长缓慢，均价承压，整体存储器业务有所下降。",
+      "claim_refs": [
+        "fudan-claim-001",
+        "fudan-claim-006"
+      ]
+    },
+    {
+      "heading": "业绩与估值的外部分歧",
+      "text": "外部材料对复旦微电的估值存在显著分歧。有观点认为，当前A股估值已处于乐观情景上沿，相对中性合理估值偏高25-40%，港股折价约50%。另有分析通过三种估值方法收敛，给出审慎、中性、乐观不同情景下的市值区间，核心假设在于2026年净利润能否修复至7.5亿元，券商预测区间4-10.5亿元跨度极大。若军工订单恢复不及预期，盈利可能落入保守端，合理估值需下修。",
+      "claim_refs": [
+        "fudan-xq-val-001",
+        "fudan-xq-val-002",
+        "fudan-xq-val-003",
+        "fudan-xq-val-004"
+      ]
+    }
+  ],
+  "paragraphs_count": 4,
+  "citations": {
+    "1": {
+      "source": "知乎精选观察",
+      "author": "深圳电子平哥",
+      "title": "复旦微电24年:从水房创业到被美国'极限封杀'",
+      "url": "https://zhuanlan.zhihu.com/p/2039795593753649899",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 85,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-claim-002"
+    },
+    "2": {
+      "source": "知乎精选观察",
+      "author": "奔跑的牛市",
+      "title": "2026芯片半导体概念的龙头是谁?",
+      "url": "https://www.zhihu.com/question/1994052197676241383/answer/2015010517203305615",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 35,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-claim-007"
+    },
+    "3": {
+      "source": "雪球专栏观察",
+      "author": "漫随天外_云卷云舒",
+      "title": "物理AI的\"神经中枢\"：李飞飞点将，复旦微电补位",
+      "url": "https://xueqiu.com/9382937090/394087545",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-xq-002"
+    },
+    "4": {
+      "source": "知乎精选观察",
+      "author": "证券之星",
+      "title": "复旦微电:国泰海通证券、开源证券等多家机构于6月9日调研我司",
+      "url": "http://stock.10jqka.com.cn/20260612/c677431592.shtml",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 45,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-claim-004"
+    },
+    "5": {
+      "source": "知乎精选观察",
+      "author": "半导体产业纵横",
+      "title": "复旦微电拟与复旦大学、国盛投资共建集成电路技术中心",
+      "url": "https://zhuanlan.zhihu.com/p/2037591439325058197",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-claim-005"
+    },
+    "6": {
+      "source": "雪球评论观察",
+      "author": "YLXjr8",
+      "title": "复旦微电绝对是卫星通信的隐藏大佬",
+      "url": "https://xueqiu.com/9096992397/397228487",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 45,
+      "verification_status": "tentative_unverified",
+      "claim_id": "fudan-xq-004"
+    },
+    "7": {
+      "source": "知乎精选观察",
+      "author": "深圳电子平哥",
+      "title": "复旦微电24年:从水房创业到被美国'极限封杀'",
+      "url": "https://zhuanlan.zhihu.com/p/2039795593753649899",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 85,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-claim-001"
+    },
+    "8": {
+      "source": "知乎精选观察",
+      "author": "知乎用户5JnG6f",
+      "title": "聚辰股份:终端有华为撑腰的芯片细分龙头为何被机构与市场遗忘?",
+      "url": "https://zhuanlan.zhihu.com/p/298235119",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-claim-006"
+    },
+    "9": {
+      "source": "雪球专栏观察",
+      "author": "锲而不舍金石可镂",
+      "title": "复旦微电(688385)当前市值与估值分析",
+      "url": "https://xueqiu.com/1606930351/392467740",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 50,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-xq-val-001"
+    },
+    "10": {
+      "source": "雪球专栏观察",
+      "author": "锲而不舍金石可镂",
+      "title": "复旦微电(688385)前瞻估值交叉验证",
+      "url": "https://xueqiu.com/1606930351/392467740",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 50,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-xq-val-002"
+    },
+    "11": {
+      "source": "雪球专栏观察",
+      "author": "锲而不舍金石可镂",
+      "title": "A股港股折价对比",
+      "url": "https://xueqiu.com/1606930351/392467740",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 50,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-xq-val-003"
+    },
+    "12": {
+      "source": "雪球专栏观察",
+      "author": "锲而不舍金石可镂",
+      "title": "估值锚命门：军工订单恢复与半年报",
+      "url": "https://xueqiu.com/1606930351/392467740",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 50,
+      "verification_status": "professional_observation",
+      "claim_id": "fudan-xq-val-004"
+    }
+  },
+  "preview_markdown": "# 复旦微电 精选外部观点叙事 Preview\n\n### 4.4 精选外部观察（Preview）\n\n> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。\n\n**FPGA高可靠赛道竞争与产品差异化**\n\n外部材料指出，国内FPGA市场呈现三巨头差异化竞争格局：复旦微电走高可靠赛道，客户壁垒高；紫光同创专注5G通信，份额超60%但2025年亏损；安路科技主攻民用中低端，研发投入占比高且亏损。复旦微电被部分外部观点视为A股唯一能量产亿门级高端FPGA的企业，其FPGA/FPAI产品线收入14.14亿元，同比增长25.3%，毛利率高达74.82%。旗舰产品FPAI芯片集SoC、FPGA、NPU于一体，算力覆盖4-128TOPS。此外，公司与复旦大学、国盛投资共建集成电路技术中心，聚焦FPGA等方向，合作期限60个月，投入不超10亿元[^1][^2][^3][^4][^5]。\n\n**星载高可靠芯片的待验证增量空间**\n\n有外部观点认为，复旦微电是卫星通信的潜在重要参与者，参与G60千帆星座项目，提供宇航级抗辐照FPGA和星载存储芯片。据该观点，国内高可靠卫星FPGA市占率超过95%，单星配套价值300-500万元。但该线索尚待验证，需跟踪后续订单落地情况[^6]。\n\n**MCU与存储产品线的差异化进展**\n\n外部材料显示，复旦微电的MCU产品在国网单相智能电表市场份额排名第一，同时向车规级和白电市场拓展，车规MCU已完成ISO26262体系认证，新一代产品已小批量产。存储芯片方面，EEPROM营收历史增长缓慢，均价承压，整体存储器业务有所下降[^7][^8]。\n\n**业绩与估值的外部分歧**\n\n外部材料对复旦微电的估值存在显著分歧。有观点认为，当前A股估值已处于乐观情景上沿，相对中性合理估值偏高25-40%，港股折价约50%。另有分析通过三种估值方法收敛，给出审慎、中性、乐观不同情景下的市值区间，核心假设在于2026年净利润能否修复至7.5亿元，券商预测区间4-10.5亿元跨度极大。若军工订单恢复不及预期，盈利可能落入保守端，合理估值需下修[^9][^10][^11][^12]。\n\n**本节引用来源：**\n- [^1] 知乎精选观察 | 作者: 深圳电子平哥 | 《复旦微电24年:从水房创业到被美国'极限封杀'》 | https://zhuanlan.zhihu.com/p/2039795593753649899\n- [^2] 知乎精选观察 | 作者: 奔跑的牛市 | 《2026芯片半导体概念的龙头是谁?》 | https://www.zhihu.com/question/1994052197676241383/answer/2015010517203305615\n- [^3] 雪球专栏观察 | 作者: 漫随天外_云卷云舒 | 《物理AI的\"神经中枢\"：李飞飞点将，复旦微电补位》 | https://xueqiu.com/9382937090/394087545\n- [^4] 知乎精选观察 | 作者: 证券之星 | 《复旦微电:国泰海通证券、开源证券等多家机构于6月9日调研我司》 | http://stock.10jqka.com.cn/20260612/c677431592.shtml\n- [^5] 知乎精选观察 | 作者: 半导体产业纵横 | 《复旦微电拟与复旦大学、国盛投资共建集成电路技术中心》 | https://zhuanlan.zhihu.com/p/2037591439325058197\n- [^6] 雪球评论观察 | 作者: YLXjr8 | 《复旦微电绝对是卫星通信的隐藏大佬》 | https://xueqiu.com/9096992397/397228487\n- [^7] 知乎精选观察 | 作者: 深圳电子平哥 | 《复旦微电24年:从水房创业到被美国'极限封杀'》 | https://zhuanlan.zhihu.com/p/2039795593753649899\n- [^8] 知乎精选观察 | 作者: 知乎用户5JnG6f | 《聚辰股份:终端有华为撑腰的芯片细分龙头为何被机构与市场遗忘?》 | https://zhuanlan.zhihu.com/p/298235119\n- [^9] 雪球专栏观察 | 作者: 锲而不舍金石可镂 | 《复旦微电(688385)当前市值与估值分析》 | https://xueqiu.com/1606930351/392467740\n- [^10] 雪球专栏观察 | 作者: 锲而不舍金石可镂 | 《复旦微电(688385)前瞻估值交叉验证》 | https://xueqiu.com/1606930351/392467740\n- [^11] 雪球专栏观察 | 作者: 锲而不舍金石可镂 | 《A股港股折价对比》 | https://xueqiu.com/1606930351/392467740\n- [^12] 雪球专栏观察 | 作者: 锲而不舍金石可镂 | 《估值锚命门：军工订单恢复与半年报》 | https://xueqiu.com/1606930351/392467740\n",
+  "stats": {
+    "drop_reasons": [],
+    "warnings": [],
+    "claims_seen": 15,
+    "paragraphs_count": 4,
+    "citations_count": 12,
+    "claim_ref_repaired_count": 0,
+    "final_overclaim_dropped_count": 0,
+    "overclaim_dropped": []
+  },
+  "wrote_repo_path": false,
+  "wrote_knowledge": false,
+  "connected_synthesis": false,
+  "connected_scoring": false,
+  "connected_risk": false
+}

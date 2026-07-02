@@ -130,8 +130,10 @@ def test_fudan_microelectronics_config_present_and_wired():
 
     assert source_intake["periodic_report_fulltext"]["enabled"] is True
 
-    # 4.4 narrative not yet generated -> curated external viewpoint narrative display must stay off
-    assert "curated_external_viewpoint_narrative_synthesis_display" not in source_intake
+    # 4.4 narrative generated -> curated external viewpoint narrative display is enabled
+    narrative_cfg = source_intake["curated_external_viewpoint_narrative_synthesis_display"]
+    assert narrative_cfg["enabled"] is True
+    assert "fudan_20260702.json" in narrative_cfg["narrative_json"]
 
 
 def test_source_intake_enabled_allows_empty_community_posts(monkeypatch):

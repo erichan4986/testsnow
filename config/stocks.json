@@ -449,6 +449,10 @@
         "enabled": true,
         "report_type": "annual_report"
       },
+      "curated_external_viewpoint_narrative_synthesis_display": {
+        "enabled": true,
+        "narrative_json": "data/curated_external/viewpoint_narratives/fudan_20260702.json"
+      },
       "claim_verification": {
         "enabled": true,
         "risk_signals": true,
