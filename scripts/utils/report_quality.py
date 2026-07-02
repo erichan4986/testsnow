@@ -127,6 +127,7 @@ def check_report_text(text: str, path: str = "<memory>") -> QualityResult:
 
     issues.extend(_check_required_signals(normalized))
     issues.extend(_check_contradictions(normalized))
+    issues.extend(_check_curated_external_inline_footnotes(text))
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
@@ -197,7 +198,7 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
         )
 
     # Risk position label mismatch: if label is constrained, risk advice should not be aggressive
-    if re.search(r"（看多但等待入场|看多但避免追高|风险控制优先）", normalized):
+    if re.search(r"（看多但等待入场|看多但避免追高|看多但控制仓位|风险控制优先）", normalized):
         if ">**仓位建议**:积极配置，最大仓位20%" in normalized:
             yield QualityIssue(
                 code="risk_position_label_mismatch",
@@ -266,6 +267,30 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
             severity="warning",
             message="报告出现趋势走弱/破坏信号，同时包含偏积极建议，需人工复核。",
         )
+
+
+def _check_curated_external_inline_footnotes(text: str) -> Iterable[QualityIssue]:
+    section44_match = re.search(
+        r"(?ms)^#{2,4}\s*(?:4\.4\s*)?(?:精选外部观察|外部观点与待验证变量)（Preview）\s*$"
+        r"(.*?)(?=^##\s|\Z)",
+        text,
+    )
+    if not section44_match:
+        return
+
+    section44 = section44_match.group(1)
+    if "本节引用来源" not in section44 or not re.search(r"(?m)^-\s*\[\^\d+\]", section44):
+        return
+
+    body = section44.split("本节引用来源", 1)[0]
+    if re.search(r"\[\^\d+\]", body):
+        return
+
+    yield QualityIssue(
+        code="curated_external_missing_inline_footnotes",
+        severity="error",
+        message="4.4 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
+    )
 
 
 def _extract_score(text: str, patterns: list[str]) -> float | None:

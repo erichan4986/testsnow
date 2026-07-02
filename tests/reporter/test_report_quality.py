@@ -230,6 +230,23 @@ def test_wait_entry_with_aggressive_risk_advice_is_error():
     assert "risk_position_label_mismatch" in codes
 
 
+def test_control_position_label_with_aggressive_risk_advice_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.2/10 | EV: +9.00%（看多但控制仓位）
+
+## 综合风险评分
+### 风险等级: 2.0/10（低风险）
+> **仓位建议**: 积极配置，最大仓位 20%
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "risk_position_label_mismatch" in codes
+
+
 def test_display_only_risk_without_explanation_warns():
     text = """
 # 测试股 舆情深度报告
@@ -267,3 +284,28 @@ def test_display_only_risk_with_explanation_passes():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "display_only_risk_without_explanation" not in codes
+
+
+def test_curated_external_4_4_requires_inline_footnotes_when_sources_exist():
+    text = """
+# 测试股 舆情深度报告
+
+## 四、深度分析
+
+### 4.4 精选外部观察（Preview）
+
+> 精选外部材料仅作为专业观察，不等同于官方确认事实。
+
+**估值分歧**
+
+外部材料提示估值处于乐观情景上沿，需跟踪盈利修复假设。
+
+**本节引用来源：**
+- [^1] 雪球专栏观察 | 《估值分析》 | https://xueqiu.com/1/2
+
+## 综合风险评分
+### 风险等级: 4.0/10（中等风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "curated_external_missing_inline_footnotes" in codes

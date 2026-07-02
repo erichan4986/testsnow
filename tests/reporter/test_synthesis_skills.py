@@ -1195,6 +1195,54 @@ def test_curated_external_viewpoint_narrative_enabled_sets_deep_analysis_display
     assert "供应链约束" not in ctx.output.get("synthesis_text", "")
 
 
+def test_curated_external_viewpoint_narrative_hydrates_refs_from_claim_ids(tmp_path):
+    narrative_path = _write_viewpoint_narrative_json(
+        tmp_path,
+        [
+            {
+                "heading": "估值分歧",
+                "text": "外部材料提示A股估值处于乐观情景上沿，需跟踪盈利修复假设。",
+                "claim_refs": ["fudan-xq-val-001"],
+            }
+        ],
+        {
+            "1": {
+                "source": "雪球专栏观察",
+                "author": "测试作者",
+                "title": "复旦微电估值分析",
+                "url": "https://xueqiu.com/1606930351/392467740",
+                "source_type": "xueqiu_column_observation",
+                "source_credit": 60,
+                "verification_status": "professional_observation",
+                "claim_id": "fudan-xq-val-001",
+            }
+        },
+    )
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
+        "curated_external_viewpoint_narrative_json": str(narrative_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    display = ctx.output.get("deep_analysis_display")
+    assert display
+    assert display["citations"][1]["source"] == "雪球专栏观察"
+    paragraph = display["_curated_external_narrative_paragraphs"][0]
+    assert paragraph["citation_refs"] == [1]
+    assert "盈利修复假设[^1]" in ctx.output.get("synthesis_text_with_curated_external_viewpoint_narrative", "")
+
+
 def test_curated_external_viewpoint_narrative_has_priority_over_digest(tmp_path):
     narrative_path = _write_viewpoint_narrative_json(
         tmp_path,

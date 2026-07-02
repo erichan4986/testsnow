@@ -64,6 +64,7 @@ class ValuationRenderer:
         pb = quote.get("pb", 0)
         mcap = quote.get("mcap_yi", 0)
         change_pct = quote.get("change_pct", 0)
+        float_mcap_display = self._format_float_mcap(quote)
 
         lines = [
             "## 二、估值与财务快照",
@@ -75,7 +76,7 @@ class ValuationRenderer:
             "| 指标 | 数值 | 说明 |",
             "|------|------|------|",
             f"| 最新价 | {price:.2f} 元 | 较前日 {'+' if change_pct >= 0 else ''}{change_pct:.2f}% |",
-            f"| 总市值 | {mcap:.1f} 亿 | 流通市值 {quote.get('float_mcap_yi', 0):.1f} 亿 |",
+            f"| 总市值 | {mcap:.1f} 亿 | 流通市值 {float_mcap_display} |",
             f"| PE(TTM) | {pe_ttm:.1f} | 滚动市盈率 |",
             f"| PB | {pb:.2f} | 市净率 |",
         ]
@@ -151,6 +152,22 @@ class ValuationRenderer:
                 lines.append("")
 
         return "\n".join(lines)
+
+    @staticmethod
+    def _format_float_mcap(quote: dict) -> str:
+        quality = quote.get("market_cap_quality")
+        if quality == "market_cap_inconsistent":
+            return "N/A（口径冲突）"
+        value = quote.get("float_mcap_yi")
+        if value is None:
+            return "N/A"
+        try:
+            numeric = float(value)
+        except (TypeError, ValueError):
+            return "N/A"
+        if numeric <= 0:
+            return "N/A"
+        return f"{numeric:.1f} 亿"
 
     def _quarterly_financials_table(self, code: str) -> str:
         """最新财务数据快照（含同比）。"""

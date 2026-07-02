@@ -46,6 +46,29 @@ def test_render_basic():
     assert "实时估值指标" in result
 
 
+def test_render_marks_inconsistent_float_market_cap_as_na():
+    renderer = ValuationRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "stock_codes": {"复旦微电": "688385"},
+        "quote": {
+            "price": 69.48,
+            "pe_ttm": 120.0,
+            "pb": 6.0,
+            "mcap_yi": 374.8,
+            "change_pct": 1.5,
+            "float_mcap_yi": 572.3,
+            "market_cap_quality": "market_cap_inconsistent",
+        },
+        "consensus": {},
+    }
+
+    result = renderer.render(ctx)
+
+    assert "流通市值 572.3 亿" not in result
+    assert "流通市值 N/A（口径冲突）" in result
+
+
 def test_render_keeps_peer_table_but_omits_valuation_chart():
     renderer = ValuationRenderer()
     ctx = {

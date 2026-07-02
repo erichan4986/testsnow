@@ -80,6 +80,21 @@ CURATED_EXTERNAL_TOPIC_ALIASES = {
     "dissent": "risk_rumor_rebuttal",
 }
 
+CURATED_EXTERNAL_NARRATIVE_SOURCE_TYPES = {
+    "curated_external_analysis_evidence",
+    "xueqiu_column_observation",
+    "xueqiu_comment_observation",
+    "xueqiu_selected_observation",
+    "zhihu_selected_observation",
+    "wechat_selected_observation",
+    "wechat_column_observation",
+}
+
+CURATED_EXTERNAL_NARRATIVE_VERIFICATION_STATUSES = {
+    "professional_observation",
+    "tentative_unverified",
+}
+
 
 class SynthesisSkill(BaseSkill):
     """LLM 综合叙事生成。"""
@@ -265,6 +280,7 @@ class SynthesisSkill(BaseSkill):
 
         paragraphs = [p for p in narrative.get("paragraphs") or [] if isinstance(p, dict)]
         citations = self._normalize_viewpoint_narrative_citations(narrative.get("citations") or {})
+        paragraphs = self._hydrate_viewpoint_narrative_citation_refs(paragraphs, citations)
         if not paragraphs or not citations:
             ctx.set("curated_external_viewpoint_narrative_status", "empty")
             return
@@ -305,11 +321,45 @@ class SynthesisSkill(BaseSkill):
             if not isinstance(value, dict):
                 continue
             if (
-                value.get("source_type") == "curated_external_analysis_evidence"
-                and value.get("verification_status") == "professional_observation"
+                value.get("source_type") in CURATED_EXTERNAL_NARRATIVE_SOURCE_TYPES
+                and value.get("verification_status") in CURATED_EXTERNAL_NARRATIVE_VERIFICATION_STATUSES
             ):
                 normalized[ref_id] = value
         return normalized
+
+    @classmethod
+    def _hydrate_viewpoint_narrative_citation_refs(cls, paragraphs: list, citations: Dict[int, dict]) -> list:
+        """Fill missing paragraph citation refs from claim_refs and citation claim_id metadata."""
+        claim_to_ref: Dict[str, int] = {}
+        suffix_to_ref: Dict[str, int] = {}
+        for ref_id, meta in citations.items():
+            claim_id = str(meta.get("claim_id") or "").strip()
+            if not claim_id:
+                continue
+            claim_to_ref[claim_id] = ref_id
+            suffix_to_ref[claim_id.rsplit(":", 1)[-1]] = ref_id
+
+        hydrated = []
+        for paragraph in paragraphs:
+            if not isinstance(paragraph, dict):
+                continue
+            existing_refs = paragraph.get("citation_refs") or []
+            if existing_refs:
+                hydrated.append(paragraph)
+                continue
+            refs = []
+            seen = set()
+            for claim_ref in paragraph.get("claim_refs") or []:
+                claim_key = str(claim_ref or "").strip()
+                ref_id = claim_to_ref.get(claim_key)
+                if ref_id is None:
+                    ref_id = suffix_to_ref.get(claim_key.rsplit(":", 1)[-1])
+                if ref_id is None or ref_id in seen:
+                    continue
+                seen.add(ref_id)
+                refs.append(ref_id)
+            hydrated.append({**paragraph, "citation_refs": refs} if refs else paragraph)
+        return hydrated
 
     @classmethod
     def _flatten_viewpoint_narrative_paragraphs(cls, paragraphs: list) -> str:

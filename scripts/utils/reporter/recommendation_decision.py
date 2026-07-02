@@ -212,6 +212,8 @@ def _apply_entry_constraint(raw_label: str, constraint: EntryConstraint) -> str:
         return "看多但避免追高"
     if constraint.state == "severe_technical":
         return "风险控制优先"
+    if constraint.state == "weak_trend":
+        return "看多但控制仓位"
     return raw_label
 
 

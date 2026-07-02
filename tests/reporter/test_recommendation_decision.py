@@ -149,6 +149,34 @@ def test_overheated_bias_downgrades_label():
     assert decision.display_recommendation == "看多但避免追高"
 
 
+def test_weak_trend_downgrades_positive_label():
+    stock_raw = {
+        "technical": {
+            "indicators": {
+                "_resonance": {
+                    "trend_state": {"stage": "高位钝化期", "primary_state": "上升趋势"},
+                    "trend_health": {"score": 41, "grade": "破坏风险高"},
+                }
+            },
+        }
+    }
+    pillar = _pillar()
+    consensus = {"eps_current": 5.0, "eps_next": 6.0}
+    decision = build_recommendation_decision(
+        stock_name="复旦微电",
+        posts=[],
+        stock_raw=stock_raw,
+        quote={"price": 100.0},
+        consensus=consensus,
+        industry_fwd_pe=20.0,
+        pillar=pillar,
+    )
+    assert decision.entry_constraint.state == "weak_trend"
+    assert decision.raw_recommendation in ("强烈看多", "看多")
+    assert decision.display_recommendation == "看多但控制仓位"
+    assert "（看多）" not in decision.render_header()
+
+
 def test_severe_technical_downgrades_label():
     stock_raw = {
         "technical": {

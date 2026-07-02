@@ -268,6 +268,39 @@ def _fetch_usd_to_hkd() -> float:
         return 7.8
 
 
+def _normalize_market_cap_fields(quote: Optional[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    """Normalize total/float market-cap fields before downstream rendering."""
+    if quote is None:
+        return None
+
+    normalized = dict(quote)
+    total = normalized.get("mcap_yi")
+    float_mcap = normalized.get("float_mcap_yi")
+
+    try:
+        total_value = float(total) if total is not None else None
+    except (TypeError, ValueError):
+        total_value = None
+    try:
+        float_value = float(float_mcap) if float_mcap is not None else None
+    except (TypeError, ValueError):
+        float_value = None
+
+    if float_value is None or float_value <= 0:
+        normalized["float_mcap_yi"] = None
+        normalized.setdefault("market_cap_quality", "float_market_cap_unavailable")
+        return normalized
+
+    if total_value and total_value > 0 and float_value > total_value * 1.05:
+        normalized["float_mcap_yi"] = None
+        normalized["market_cap_quality"] = "market_cap_inconsistent"
+        normalized["market_cap_warning"] = "float_mcap_yi larger than mcap_yi"
+        return normalized
+
+    normalized["market_cap_quality"] = "ok"
+    return normalized
+
+
 def fetch_tencent_quote(code: str) -> Optional[Dict[str, Any]]:
     """
     调用腾讯财经 API 获取实时估值数据。
@@ -283,7 +316,7 @@ def fetch_tencent_quote(code: str) -> Optional[Dict[str, Any]]:
             result = hk_stock_quote_tencent(pure_code)
             if result:
                 # 统一字段名以兼容下游 scoring_engine
-                return {
+                return _normalize_market_cap_fields({
                     "price": result.get("price", 0),
                     "last_close": result.get("prev_close", 0),
                     "change_pct": result.get("change_pct", 0),
@@ -296,7 +329,7 @@ def fetch_tencent_quote(code: str) -> Optional[Dict[str, Any]]:
                     "low_52w": result.get("low_52w", 0),
                     "turnover_rate": None,  # 腾讯接口无换手率，由东财补充
                     "source": "tencent_hk",
-                }
+                })
             return None
 
         # === 美股: 纯字母代码，如 MBLY ===
@@ -305,7 +338,7 @@ def fetch_tencent_quote(code: str) -> Optional[Dict[str, Any]]:
             if result:
                 rate = _fetch_usd_to_hkd()
                 mcap_usd = result.get("mcap_usd_yi", 0)
-                return {
+                return _normalize_market_cap_fields({
                     "price": result.get("price", 0),
                     "last_close": result.get("prev_close", 0),
                     "change_pct": result.get("change_pct", 0),
@@ -313,7 +346,7 @@ def fetch_tencent_quote(code: str) -> Optional[Dict[str, Any]]:
                     "pe_ttm": result.get("pe_ttm", 0),
                     "pb": None,
                     "source": "tencent_us",
-                }
+                })
             return None
 
         # === A股: 原有逻辑 ===
@@ -345,7 +378,7 @@ def fetch_tencent_quote(code: str) -> Optional[Dict[str, Any]]:
             "pe_static": float(vals[52]) if vals[52] else 0,
             "source": "tencent_a",
         }
-        return result
+        return _normalize_market_cap_fields(result)
     except Exception as e:
         logger.warning(f"[{code}] 腾讯财经 API 调用失败: {e}")
         return None
