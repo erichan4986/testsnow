@@ -44,6 +44,41 @@ def test_assembly_writes_agent_reach_audit_json(tmp_path):
     assert "content" not in str(data)
 
 
+def test_assembly_writes_industry_relevance_manifest_sidecar(tmp_path):
+    skill = ReportAssemblySkill()
+    manifest = {
+        "schema": "industry_relevance_manifest.v1",
+        "events_catalysts_chains": [
+            {
+                "chain_id": "memory_capacity_to_cis_pricing",
+                "confidence": 0.82,
+                "allowed_terms": ["存储产品涨价", "晶圆厂产能紧张", "CIS排产变化", "待验证变量"],
+            }
+        ],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7, "technical": 6, "sentiment": 5, "fundamental": 6, "fundflow": 5},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20},
+        "consensus": {},
+        "ind_fwd_pe": 25,
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": ""},
+        "keep_posts": [],
+        "industry_relevance_manifest": manifest,
+    })
+
+    result = skill.run(ctx)
+
+    sidecar_path = tmp_path / "测试股_20260604_industry_relevance_manifest.json"
+    assert sidecar_path.exists()
+    assert result.get("industry_relevance_manifest_path") == str(sidecar_path)
+    data = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert data["events_catalysts_chains"][0]["chain_id"] == "memory_capacity_to_cis_pricing"
+
+
 def test_assembly_does_not_write_audit_when_disabled(tmp_path):
     skill = ReportAssemblySkill()
     ctx = SkillContext(input={

@@ -117,10 +117,15 @@ def check_report_file(path: str | Path) -> QualityResult:
     """Check a Markdown report file."""
     report_path = Path(path)
     text = report_path.read_text(encoding="utf-8")
-    return check_report_text(text, path=str(report_path))
+    manifest = _load_industry_relevance_manifest_sidecar(report_path)
+    return check_report_text(text, path=str(report_path), industry_relevance_manifest=manifest)
 
 
-def check_report_text(text: str, path: str = "<memory>") -> QualityResult:
+def check_report_text(
+    text: str,
+    path: str = "<memory>",
+    industry_relevance_manifest: dict | None = None,
+) -> QualityResult:
     """Check report Markdown text and return structured issues."""
     issues: List[QualityIssue] = []
     normalized = _normalize(text)
@@ -128,6 +133,7 @@ def check_report_text(text: str, path: str = "<memory>") -> QualityResult:
     issues.extend(_check_required_signals(normalized))
     issues.extend(_check_contradictions(normalized))
     issues.extend(_check_curated_external_inline_footnotes(text))
+    issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
@@ -150,6 +156,17 @@ def format_quality_result(result: QualityResult) -> str:
 
 def _normalize(text: str) -> str:
     return text.replace(" ", "").replace("\u3000", "")
+
+
+def _load_industry_relevance_manifest_sidecar(report_path: Path) -> dict | None:
+    sidecar = report_path.with_name(f"{report_path.stem}_industry_relevance_manifest.json")
+    if not sidecar.exists():
+        return None
+    try:
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
 
 
 def _check_required_signals(text: str) -> Iterable[QualityIssue]:
@@ -291,6 +308,74 @@ def _check_curated_external_inline_footnotes(text: str) -> Iterable[QualityIssue
         severity="error",
         message="4.4 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
     )
+
+
+_INDUSTRY_CHAIN_TRIGGER_TERMS = [
+    "传导",
+    "对应",
+    "暴露",
+    "受益",
+    "催化",
+    "排产",
+    "待验证变量",
+]
+
+_INDUSTRY_CHAIN_STRONG_CONFIRMATION_TERMS = [
+    "直接受益",
+    "确认受益",
+    "确定催化",
+    "已经传导",
+    "必然传导",
+    "锁定受益",
+]
+
+
+def _check_industry_chain_claims(text: str, manifest: dict | None) -> Iterable[QualityIssue]:
+    if not manifest:
+        return
+
+    section43 = _extract_deep_analysis_subsection(text, "4.3")
+    if not section43:
+        return
+    normalized_section = _normalize(section43)
+    if not any(term in normalized_section for term in _INDUSTRY_CHAIN_TRIGGER_TERMS):
+        return
+
+    chains = manifest.get("events_catalysts_chains") or []
+    if not chains:
+        yield QualityIssue(
+            code="industry_chain_manifest_missing",
+            severity="error",
+            message="4.3 出现行业传导/受益链条表达，但缺少可校验的行业相关性 sidecar。",
+        )
+        return
+
+    for term in _INDUSTRY_CHAIN_STRONG_CONFIRMATION_TERMS:
+        if term in normalized_section:
+            yield QualityIssue(
+                code="industry_chain_unmatched_claim",
+                severity="error",
+                message="4.3 行业链条使用了强确认/受益表达，必须改为待验证变量或提供正式来源确认。",
+                evidence=term,
+            )
+            return
+
+    for chain in chains:
+        allowed_terms = [_normalize(str(term)) for term in chain.get("allowed_terms", []) if str(term).strip()]
+        if allowed_terms and all(term in normalized_section for term in allowed_terms):
+            return
+
+    yield QualityIssue(
+        code="industry_chain_unmatched_claim",
+        severity="error",
+        message="4.3 行业链条表达无法匹配 deterministic relevance_chain，可能存在 LLM 自行补链条。",
+    )
+
+
+def _extract_deep_analysis_subsection(text: str, section_number: str) -> str:
+    pattern = rf"(?ms)^###\s*{re.escape(section_number)}\s+[^\n]*\n(.*?)(?=^###\s*\d\.\d\s+|^##\s|\Z)"
+    match = re.search(pattern, text)
+    return match.group(1) if match else ""
 
 
 def _extract_score(text: str, patterns: list[str]) -> float | None:

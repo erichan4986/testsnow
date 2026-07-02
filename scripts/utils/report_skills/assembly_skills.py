@@ -64,8 +64,28 @@ class ReportAssemblySkill(BaseSkill):
         ctx.set("md_path", str(md_path))
         ctx.set("html_path", str(html_path))
 
+        self._persist_industry_relevance_manifest(ctx, output_dir, stock_name, date_str)
         self._persist_agent_reach_audit(ctx, output_dir, stock_name, date_str)
         return ctx
+
+    def _persist_industry_relevance_manifest(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
+        """Persist industry relevance chain sidecar for report quality checks."""
+        manifest = ctx.get("industry_relevance_manifest")
+        if not isinstance(manifest, dict):
+            return
+        chains = manifest.get("events_catalysts_chains") or []
+        if not chains:
+            return
+        try:
+            manifest_path = Path(output_dir) / f"{stock_name}_{date_str}_industry_relevance_manifest.json"
+            manifest_path.write_text(
+                json.dumps(manifest, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+            ctx.set("industry_relevance_manifest_path", str(manifest_path))
+            logger.info(f"Industry relevance manifest persisted: {manifest_path}")
+        except Exception as e:
+            logger.warning(f"Industry relevance manifest persistence failed: {e}")
 
     def _persist_agent_reach_audit(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
         """Persist compact Agent-Reach audit summary to sidecar JSON."""

@@ -144,6 +144,86 @@ def test_synthesis_skill_enabled_modern_path_passes_context_to_synthesizer(tmp_p
     assert "claim_verification_context" not in all_data
 
 
+def test_synthesis_result_carries_industry_relevance_manifest():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    chain_item = SynthesisItem(
+        title="存储产品涨价带动晶圆厂产能紧张",
+        content="CIS 排产变化仍需跟踪。",
+        author="东方财富资讯",
+        source_platform="行业资讯",
+        url="http://news/chain",
+        publish_time="2026-06-01",
+        extra={
+            "source_type": "mainstream_media",
+            "verification_status": "secondary_source",
+            "report_eligible": True,
+            "allowed_sections": ["4.1", "4.3"],
+            "relevance_class": "industry_chain_relevant",
+            "relevance_chain": {
+                "chain_id": "memory_capacity_to_cis_pricing",
+                "confidence": 0.82,
+                "hops": [
+                    {"canonical_statement": "存储产品涨价", "evidence_type": "news_text"},
+                    {"canonical_statement": "晶圆厂产能紧张", "evidence_type": "news_text"},
+                    {"canonical_statement": "CIS排产变化", "evidence_type": "stock_config"},
+                    {"canonical_statement": "待验证变量", "evidence_type": "stock_config"},
+                ],
+            },
+        },
+    )
+
+    result = skill._synthesize("韦尔股份", {}, [], extra_items=[chain_item])
+
+    manifest = result["_industry_relevance_manifest"]
+    assert manifest["schema"] == "industry_relevance_manifest.v1"
+    assert manifest["events_catalysts_chains"][0]["chain_id"] == "memory_capacity_to_cis_pricing"
+    assert "待验证变量" in manifest["events_catalysts_chains"][0]["allowed_terms"]
+
+
+def test_synthesis_skill_exposes_industry_relevance_manifest_on_context():
+    class ChainSynthesizer(FakeSynthesizer):
+        pass
+
+    skill = SynthesisSkill(synthesizer=ChainSynthesizer())
+    chain_item = SynthesisItem(
+        title="存储产品涨价带动晶圆厂产能紧张",
+        content="CIS 排产变化仍需跟踪。",
+        author="东方财富资讯",
+        source_platform="行业资讯",
+        url="http://news/chain",
+        publish_time="2026-06-01",
+        extra={
+            "source_type": "mainstream_media",
+            "verification_status": "secondary_source",
+            "report_eligible": True,
+            "allowed_sections": ["4.1", "4.3"],
+            "relevance_class": "industry_chain_relevant",
+            "relevance_chain": {
+                "chain_id": "memory_capacity_to_cis_pricing",
+                "confidence": 0.82,
+                "hops": [
+                    {"canonical_statement": "存储产品涨价", "evidence_type": "news_text"},
+                    {"canonical_statement": "晶圆厂产能紧张", "evidence_type": "news_text"},
+                    {"canonical_statement": "CIS排产变化", "evidence_type": "stock_config"},
+                    {"canonical_statement": "待验证变量", "evidence_type": "stock_config"},
+                ],
+            },
+        },
+    )
+    ctx = SkillContext(input={
+        "stock_name": "韦尔股份",
+        "stock_raw": {},
+        "keep_posts": [],
+        "external_evidence_keep_items": [chain_item],
+    })
+
+    skill.run(ctx)
+
+    manifest = ctx.output["industry_relevance_manifest"]
+    assert manifest["events_catalysts_chains"][0]["chain_id"] == "memory_capacity_to_cis_pricing"
+
+
 def test_periodic_report_excerpt_does_not_enter_synthesis_items():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)

@@ -19,8 +19,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
 if __name__.startswith("utils."):
+    from .industry_news_relevance import classify_industry_news_relevance
     from .source_adapter import SynthesisItem
 else:
+    from industry_news_relevance import classify_industry_news_relevance
     from source_adapter import SynthesisItem
 
 
@@ -1171,6 +1173,13 @@ def _adapt_eastmoney_global_news(
         if not _within_lookback(publish_time, lookback_days, today):
             continue
         url = _find_column(row, _NEWS_URL_COLUMN_OPTIONS) or ""
+        relevance = classify_industry_news_relevance(
+            stock_name=stock_name,
+            title=title,
+            content=content,
+            stock_config={"industry_relevance": source_config.get("industry_relevance", {})},
+            matched_keywords=matched,
+        )
         items.append(
             SynthesisItem(
                 title=title,
@@ -1190,6 +1199,7 @@ def _adapt_eastmoney_global_news(
                     "raw_metadata": dict(row),
                     "matched_keywords": matched,
                     "fetch_method": "akshare_stock_info_global_em",
+                    **relevance,
                 },
             )
         )

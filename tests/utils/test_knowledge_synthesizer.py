@@ -91,6 +91,85 @@ def test_build_prompt_includes_topic_ownership_contract_for_final_section():
     assert "不要输出 ## 或 ### 子标题" in prompt
 
 
+def test_events_catalysts_prompt_filters_out_sector_background_industry_news():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="存储概念低开",
+            content="存储概念板块回调。",
+            author="东方财富资讯",
+            source_platform="行业资讯",
+            url="http://news/sector",
+            publish_time="2026-06-01",
+            extra={
+                "source_type": "mainstream_media",
+                "relevance_class": "sector_background",
+                "allowed_sections": ["4.1"],
+            },
+        ),
+        SynthesisItem(
+            title="存储产品涨价带动晶圆厂产能紧张",
+            content="CIS 排产变化是待验证变量。",
+            author="东方财富资讯",
+            source_platform="行业资讯",
+            url="http://news/chain",
+            publish_time="2026-06-01",
+            extra={
+                "source_type": "mainstream_media",
+                "relevance_class": "industry_chain_relevant",
+                "allowed_sections": ["4.1", "4.3"],
+                "relevance_chain": {"chain_id": "memory_capacity_to_cis_pricing", "confidence": 0.8, "hops": []},
+            },
+        ),
+        SynthesisItem(
+            title="公司发布业绩预告",
+            content="公司公告披露净利润变化。",
+            author="公司",
+            source_platform="公告",
+            url="http://notice",
+            publish_time="2026-06-01",
+        ),
+    ]
+
+    prompt = synth._build_prompt("韦尔股份", "events_catalysts", items)
+
+    assert "存储概念低开" not in prompt
+    assert "存储产品涨价带动晶圆厂产能紧张" in prompt
+    assert "公司发布业绩预告" in prompt
+
+
+def test_funding_sentiment_prompt_filters_out_sector_background_industry_news():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="半导体设备走弱",
+            content="板块性抛压扩大。",
+            author="东方财富资讯",
+            source_platform="行业资讯",
+            url="http://news/sector",
+            publish_time="2026-06-01",
+            extra={
+                "source_type": "mainstream_media",
+                "relevance_class": "sector_background",
+                "allowed_sections": ["4.1"],
+            },
+        ),
+        SynthesisItem(
+            title="公司发布回购计划",
+            content="公司公告披露回购安排。",
+            author="公司",
+            source_platform="公告",
+            url="http://notice",
+            publish_time="2026-06-01",
+        ),
+    ]
+
+    prompt = synth._build_prompt("测试股", "funding_sentiment", items)
+
+    assert "半导体设备走弱" not in prompt
+    assert "公司发布回购计划" in prompt
+
+
 def test_build_prompt_uses_previous_topic_ledger_instead_of_raw_previous_prose():
     synth = KnowledgeSynthesizer(client=None)
     items = [

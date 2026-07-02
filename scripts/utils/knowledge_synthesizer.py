@@ -189,8 +189,9 @@ class KnowledgeSynthesizer:
 
         result = {}
         for theme_key, (theme_title, min_items) in THEMES.items():
-            if len(items) < min_items:
-                logger.info(f"[{stock_name}] {theme_title}: 信息不足 ({len(items)} < {min_items})，跳过合成")
+            theme_items = self._filter_items_for_theme(theme_key, items)
+            if len(theme_items) < min_items:
+                logger.info(f"[{stock_name}] {theme_title}: 信息不足 ({len(theme_items)} < {min_items})，跳过合成")
                 result[theme_key] = ""
                 continue
 
@@ -205,7 +206,7 @@ class KnowledgeSynthesizer:
                     if v and k in THEMES
                 }
                 narrative, citations = self._synthesize_theme(
-                    stock_name, theme_key, items, previous_narratives, claim_verification_context
+                    stock_name, theme_key, theme_items, previous_narratives, claim_verification_context
                 )
                 result[theme_key] = narrative
                 # 合并引用（全局去重）
@@ -259,7 +260,8 @@ class KnowledgeSynthesizer:
             prefix = prefix_template
 
         source_lines = []
-        for i, item in enumerate(items):
+        theme_items = self._filter_items_for_theme(theme_key, items)
+        for i, item in enumerate(theme_items):
             source_lines.append(format_synthesis_source_line(i + 1, item))
 
         rules = credit_usage_rules_text()
@@ -284,6 +286,30 @@ class KnowledgeSynthesizer:
                 prompt += "\n\n---\n\n" + ledger + "\n"
 
         return prompt
+
+    @staticmethod
+    def _filter_items_for_theme(theme_key: str, items: List[SynthesisItem]) -> List[SynthesisItem]:
+        """Apply deterministic section eligibility before LLM prompt construction."""
+        if theme_key not in {"funding_sentiment", "events_catalysts"}:
+            return items
+
+        filtered: List[SynthesisItem] = []
+        for item in items:
+            extra = item.extra or {}
+            allowed_sections = extra.get("allowed_sections")
+            is_industry_news = (
+                item.source_platform == "行业资讯"
+                or extra.get("source_type") == "mainstream_media"
+                or extra.get("source_domain") == "eastmoney.com"
+            )
+            if isinstance(allowed_sections, list):
+                if "4.3" in {str(section) for section in allowed_sections}:
+                    filtered.append(item)
+                continue
+            if is_industry_news:
+                continue
+            filtered.append(item)
+        return filtered
 
     def _format_claim_verification_context(self, context: Dict[str, Any]) -> str:
         """Render a guarded, non-citable claim verification appendix for prompts."""

@@ -765,6 +765,75 @@ def test_eastmoney_global_news_filters_keywords_and_stays_out_of_knowledge():
     assert items[0].extra["knowledge_eligible"] is False
     assert items[0].extra["report_eligible"] is True
     assert items[0].extra["matched_keywords"] == ["AI芯片"]
+    assert items[0].extra["relevance_class"] == "sector_background"
+    assert items[0].extra["allowed_sections"] == ["4.1"]
+    assert "4.3" not in items[0].extra["allowed_sections"]
+
+
+def test_eastmoney_global_news_attaches_industry_chain_metadata_for_4_3():
+    from a_stock_source_intake import _adapt_eastmoney_global_news
+
+    fake_ak = MagicMock()
+    fake_df = MagicMock()
+    fake_df.__len__.return_value = 1
+    fake_df.iterrows.return_value = [
+        (
+            0,
+            {
+                "标题": "存储产品涨价带动晶圆厂产能紧张",
+                "摘要": "市场关注存储扩产与晶圆厂排产变化。",
+                "发布时间": "2026-06-24 19:59:36",
+                "链接": "https://finance.eastmoney.com/a/memory-cis.html",
+            },
+        )
+    ]
+    fake_ak.stock_info_global_em.return_value = fake_df
+
+    items = _adapt_eastmoney_global_news(
+        stock_code="603501",
+        source_config={
+            "enabled": True,
+            "max_items": 5,
+            "lookback_days": 30,
+            "keywords": ["存储产品涨价", "晶圆厂产能紧张"],
+            "industry_relevance": {
+                "products": ["CIS", "图像传感器"],
+                "chain_rules": [
+                    {
+                        "chain_id": "memory_capacity_to_cis_pricing",
+                        "target_product": "CIS",
+                        "hops": [
+                            {
+                                "id": "memory_price",
+                                "statement": "存储产品涨价",
+                                "keywords": ["存储产品涨价"],
+                                "requires_news_support": True,
+                            },
+                            {
+                                "id": "wafer_capacity",
+                                "statement": "上游晶圆厂产能紧张",
+                                "keywords": ["晶圆厂产能紧张", "排产变化"],
+                                "requires_news_support": True,
+                            },
+                            {
+                                "id": "cis_capacity",
+                                "statement": "CIS 排产可能被挤占",
+                                "keywords": ["CIS", "图像传感器"],
+                            },
+                        ],
+                    }
+                ],
+            },
+        },
+        stock_name="韦尔股份",
+        today=date(2026, 6, 24),
+        ak_module=fake_ak,
+    )
+
+    assert len(items) == 1
+    assert items[0].extra["relevance_class"] == "industry_chain_relevant"
+    assert "4.3" in items[0].extra["allowed_sections"]
+    assert items[0].extra["relevance_chain"]["chain_id"] == "memory_capacity_to_cis_pricing"
 
 
 def test_iwencai_industry_research_adapter_marks_display_only(monkeypatch):

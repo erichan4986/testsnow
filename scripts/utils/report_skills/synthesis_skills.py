@@ -27,6 +27,7 @@ if __name__.startswith("utils."):
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
     from ..curated_external_display_lint import lint_curated_external_display_text
+    from ..industry_news_relevance import build_industry_relevance_manifest
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -50,6 +51,7 @@ else:
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
     from curated_external_display_lint import lint_curated_external_display_text
+    from industry_news_relevance import build_industry_relevance_manifest
 
 
 SYNTHESIS_KEYS = [
@@ -120,6 +122,7 @@ class SynthesisSkill(BaseSkill):
         ctx.set("synthesis_text", self._flatten_synthesis_text(baseline))
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))
+        ctx.set("industry_relevance_manifest", baseline.get("_industry_relevance_manifest", {}))
 
         # Optional experimental paths: annual-report materials and broker-research
         # digest notes may enter the DISPLAY synthesis only.  Canonical synthesis,
@@ -691,6 +694,7 @@ class SynthesisSkill(BaseSkill):
 
         result["_items_count"] = len(items)
         result["_sources"] = self._source_list(items)
+        result["_industry_relevance_manifest"] = build_industry_relevance_manifest(items)
         return result
 
     def _build_claim_verification_context(

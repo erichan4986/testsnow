@@ -1,3 +1,4 @@
+import json
 import sys
 from pathlib import Path
 
@@ -211,6 +212,143 @@ def test_summary_section1_match_passes():
     codes = {issue.code for issue in result.issues}
     assert "summary_score_label_mismatch" not in codes
     assert "risk_position_label_mismatch" not in codes
+
+
+def test_unmatched_industry_chain_claim_is_error_when_manifest_is_available():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.3 资金面与催化剂时间线
+
+存储产品涨价通过晶圆厂产能紧张传导至CIS排产，韦尔股份将直接受益。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    manifest = {
+        "events_catalysts_chains": [
+            {
+                "chain_id": "memory_capacity_to_cis_pricing",
+                "confidence": 0.82,
+                "canonical_text": "存储产品涨价 -> 晶圆厂产能紧张 -> CIS排产变化 -> 供给和涨价节奏成为待验证变量",
+                "allowed_terms": ["存储产品涨价", "晶圆厂产能紧张", "CIS排产变化", "待验证变量"],
+            }
+        ]
+    }
+
+    result = check_report_text(text, industry_relevance_manifest=manifest)
+
+    codes = {issue.code for issue in result.issues}
+    assert "industry_chain_unmatched_claim" in codes
+
+
+def test_check_report_file_loads_industry_relevance_manifest_sidecar(tmp_path):
+    report_path = tmp_path / "测试股_20260604.md"
+    report_path.write_text(
+        """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.3 资金面与催化剂时间线
+
+存储产品涨价通过晶圆厂产能紧张传导至CIS排产，韦尔股份将直接受益。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+""",
+        encoding="utf-8",
+    )
+    sidecar_path = tmp_path / "测试股_20260604_industry_relevance_manifest.json"
+    sidecar_path.write_text(
+        json.dumps(
+            {
+                "schema": "industry_relevance_manifest.v1",
+                "events_catalysts_chains": [
+                    {
+                        "chain_id": "memory_capacity_to_cis_pricing",
+                        "confidence": 0.82,
+                        "allowed_terms": ["存储产品涨价", "晶圆厂产能紧张", "CIS排产变化", "待验证变量"],
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    result = check_report_file(report_path)
+
+    codes = {issue.code for issue in result.issues}
+    assert "industry_chain_unmatched_claim" in codes
+
+
+def test_canonical_industry_chain_wording_passes_manifest_check():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.3 资金面与催化剂时间线
+
+存储产品涨价与晶圆厂产能紧张形成行业背景，CIS排产变化仍属于待验证变量。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    manifest = {
+        "events_catalysts_chains": [
+            {
+                "chain_id": "memory_capacity_to_cis_pricing",
+                "confidence": 0.82,
+                "canonical_text": "存储产品涨价 -> 晶圆厂产能紧张 -> CIS排产变化 -> 供给和涨价节奏成为待验证变量",
+                "allowed_terms": ["存储产品涨价", "晶圆厂产能紧张", "CIS排产变化", "待验证变量"],
+            }
+        ]
+    }
+
+    result = check_report_text(text, industry_relevance_manifest=manifest)
+
+    codes = {issue.code for issue in result.issues}
+    assert "industry_chain_unmatched_claim" not in codes
 
 
 def test_wait_entry_with_aggressive_risk_advice_is_error():
