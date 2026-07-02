@@ -7,6 +7,7 @@ import urllib.request
 from typing import Any, Dict, List, Optional
 
 from .constants import COMPETITOR_CODES, COMPETITOR_MAP
+from .peer_config import get_peer_codes, get_peer_names
 from .manual_financial_loader import load_manual_financials
 
 # Mac 环境下 Python 的 SSL 证书可能未正确配置
@@ -526,13 +527,17 @@ def _extract_turnover_days(row: Dict) -> tuple:
     return inventory_days, receivable_days
 
 
-def fetch_competitor_metrics(stock_name: str, stock_codes: Dict[str, str]) -> Dict[str, Dict]:
+def fetch_competitor_metrics(
+    stock_name: str,
+    stock_codes: Dict[str, str],
+    stock_config: Dict[str, Any] | None = None,
+) -> Dict[str, Dict]:
     """获取目标股票及其竞争对手的财务+估值指标（支持A股、港股、美股）"""
-    competitors = COMPETITOR_MAP.get(stock_name, [])
-    all_names = [stock_name] + competitors
+    peer_codes = get_peer_codes(stock_name, stock_codes, stock_config)
+    all_names = [stock_name] + get_peer_names(stock_name, stock_config)
     result = {}
     for name in all_names:
-        code = stock_codes.get(name) or COMPETITOR_CODES.get(name)
+        code = peer_codes.get(name) or stock_codes.get(name) or COMPETITOR_CODES.get(name)
         if not code:
             continue
         metrics = {}
@@ -612,7 +617,11 @@ def fetch_competitor_metrics(stock_name: str, stock_codes: Dict[str, str]) -> Di
     return result
 
 
-def competitor_metrics_table(stock_name: str, metrics: Dict[str, Dict]) -> str:
+def competitor_metrics_table(
+    stock_name: str,
+    metrics: Dict[str, Dict],
+    stock_config: Dict[str, Any] | None = None,
+) -> str:
     """生成竞争对手财务指标对比 Markdown 表格"""
     if not metrics:
         return ""
@@ -620,7 +629,7 @@ def competitor_metrics_table(stock_name: str, metrics: Dict[str, Dict]) -> str:
     headers = ["公司", "存货周转(天)", "应收周转(天)", "毛利率(%)", "总市值(亿)", "PE(TTM)", "Forward PE", "PEG", "PS(市销率)"]
     lines.append("| " + " | ".join(headers) + " |")
     lines.append("|" + "|".join(["---"] * len(headers)) + "|")
-    for name in [stock_name] + COMPETITOR_MAP.get(stock_name, []):
+    for name in [stock_name] + get_peer_names(stock_name, stock_config):
         m = metrics.get(name, {})
         def fmt(val, fmt_str="{:.1f}", suffix=""):
             if val is None:

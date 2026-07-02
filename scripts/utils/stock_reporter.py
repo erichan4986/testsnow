@@ -25,6 +25,7 @@ class PerStockReporter:
         raw_data: Dict[str, Any] = None,
         agent_reach_configs: Dict[str, Dict] = None,
         source_intake_configs: Dict[str, Dict] = None,
+        stock_configs: Dict[str, Dict] = None,
         enable_agent_reach: bool = False,
         enable_periodic_report_fulltext_intake: bool = False,
     ):
@@ -36,6 +37,7 @@ class PerStockReporter:
             raw_data: 原始采集数据（研报、公告、资金流向等）
             agent_reach_configs: 每只股票 Agent-Reach 配置
             source_intake_configs: 每只股票 Source Intake v2 配置
+            stock_configs: 每只股票完整配置（行业、同行、source intake 等）
             enable_agent_reach: 全局启用 Agent-Reach（默认 False）
             enable_periodic_report_fulltext_intake: 全局启用年报全文材料层（默认 False；单股配置优先）
         """
@@ -51,6 +53,7 @@ class PerStockReporter:
         self.raw_data = raw_data or {}
         self.agent_reach_configs = agent_reach_configs or {}
         self.source_intake_configs = source_intake_configs or {}
+        self.stock_configs = stock_configs or {}
         self.enable_agent_reach = enable_agent_reach
         self.enable_periodic_report_fulltext_intake = enable_periodic_report_fulltext_intake
         self.date_str = datetime.now().strftime("%Y%m%d")
@@ -90,6 +93,7 @@ class PerStockReporter:
         生成单只股票的深度报告（Pipeline 入口，接口不变）。
         """
         all_posts = self.stocks_data.get(stock_name, [])
+        stock_cfg = self.stock_configs.get(stock_name, {})
         ar_cfg = self.agent_reach_configs.get(stock_name, {})
         si_cfg = self.source_intake_configs.get(stock_name, {})
         agent_reach_enabled = self.enable_agent_reach or ar_cfg.get("enabled", False)
@@ -178,6 +182,7 @@ class PerStockReporter:
                 "stocks_data": self.stocks_data,
                 "raw_data": self.raw_data,
                 "stock_codes": self.stock_codes,
+                "stock_config": stock_cfg,
                 "enable_claim_risk_signals": claim_risk_signals_enabled,
             }
 

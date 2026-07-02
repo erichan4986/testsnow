@@ -99,6 +99,32 @@ def test_source_intake_formal_first_policy_passes_context_and_pipeline_kwarg():
     assert call_input["canonical_synthesis_source_policy"] == "formal_first"
 
 
+def test_stock_config_passes_to_pipeline_input():
+    stock_config = {
+        "industry": "集成电路设计 / FPGA",
+        "competitors": ["紫光国微"],
+        "peer_codes": {"紫光国微": "002049"},
+    }
+    reporter = PerStockReporter(
+        stocks_data={"复旦微电": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
+        stock_codes={"复旦微电": "688385"},
+        raw_data={"复旦微电": {}},
+        stock_configs={"复旦微电": stock_config},
+    )
+
+    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
+        mock_pipeline = MagicMock()
+        mock_ctx = MagicMock()
+        mock_ctx.output.get.return_value = ""
+        mock_pipeline.run.return_value = mock_ctx
+        mock_build.return_value = mock_pipeline
+
+        reporter.generate_stock_report("复旦微电", "/tmp/out")
+
+    call_input = mock_pipeline.run.call_args[0][0]
+    assert call_input["stock_config"] == stock_config
+
+
 def test_pilot_stocks_enable_formal_first_source_policy_in_config():
     config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
     stocks = json.loads(config_path.read_text(encoding="utf-8"))
@@ -119,6 +145,10 @@ def test_fudan_microelectronics_config_present_and_wired():
     assert stock["code"] == "688385"
     assert stock["xueqiu_code"] == "SH688385"
     assert stock["gid"] == "688385"
+    assert "FPGA" in stock["industry"]
+    assert "紫光国微" in stock["competitors"]
+    assert stock["peer_codes"]["紫光国微"] == "002049"
+    assert "产品线重叠" in stock["peer_dimensions"]
 
     source_intake = stock["source_intake"]
     assert source_intake["enabled"] is True

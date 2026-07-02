@@ -109,11 +109,16 @@ def competitor_fetching_skill(ctx: SkillContext) -> SkillContext:
     """获取同业竞争对手估值指标。"""
     stock_name = ctx.get("stock_name")
     stock_codes = ctx.get("stock_codes", {})
+    stock_config = ctx.get("stock_config", {})
 
     competitor_metrics = None
     if stock_name and stock_codes:
         try:
-            competitor_metrics = fetch_competitor_metrics(stock_name, stock_codes)
+            competitor_metrics = fetch_competitor_metrics(
+                stock_name,
+                stock_codes,
+                stock_config=stock_config,
+            )
         except Exception as e:
             logger.warning(f"[{stock_name}] 同业估值指标获取失败，跳过: {e}")
             ctx.set("competitor_metrics_error", str(e))

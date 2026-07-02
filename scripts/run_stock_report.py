@@ -196,7 +196,7 @@ def _install_offline_smoke_patches() -> None:
         data_skills.fetch_consensus_eps = lambda code: None
         data_skills.industry_fwd_pe = lambda stock_name: None
         data_skills.fetch_ps = lambda code, quote: None
-        data_skills.fetch_competitor_metrics = lambda stock_name, stock_codes: None
+        data_skills.fetch_competitor_metrics = lambda stock_name, stock_codes, stock_config=None: None
     except Exception as exc:
         logger.warning("离线 smoke 禁用行情/同业数据失败: %s", exc)
 
@@ -228,7 +228,7 @@ def _patch_data_fetcher_module(module) -> None:
     module.fetch_consensus_eps = lambda code: None
     module.industry_fwd_pe = lambda stock_name: None
     module.fetch_ps = lambda code, quote: None
-    module.fetch_competitor_metrics = lambda stock_name, stock_codes: None
+    module.fetch_competitor_metrics = lambda stock_name, stock_codes, stock_config=None: None
 
 
 def _load_stocks_config(config_path: Path) -> list[dict[str, Any]]:
@@ -631,6 +631,7 @@ def _run_report(args: argparse.Namespace, stock: dict[str, Any]) -> int:
         raw_data=collected_data,
         agent_reach_configs={stock_name: stock["agent_reach"]} if stock.get("agent_reach") else {},
         source_intake_configs={stock_name: stock["source_intake"]} if stock.get("source_intake") else {},
+        stock_configs={stock_name: stock},
     )
     md_path, html_path = reporter.generate_stock_report(stock_name, str(report_dir))
     if md_path:

@@ -146,9 +146,20 @@ class ValuationRenderer:
 
         if fetch_competitor_metrics and competitor_metrics_table:
             stock_codes = ctx.get("stock_codes", {})
-            comp_metrics = fetch_competitor_metrics(stock_name, stock_codes)
+            stock_config = ctx.get("stock_config", {})
+            comp_metrics = ctx.get("competitor_metrics") or fetch_competitor_metrics(
+                stock_name,
+                stock_codes,
+                stock_config=stock_config,
+            )
             if comp_metrics:
-                lines.append(competitor_metrics_table(stock_name, comp_metrics))
+                lines.append(
+                    competitor_metrics_table(
+                        stock_name,
+                        comp_metrics,
+                        stock_config=stock_config,
+                    )
+                )
                 lines.append("")
 
         return "\n".join(lines)

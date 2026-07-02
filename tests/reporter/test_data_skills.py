@@ -74,3 +74,23 @@ def test_competitor_fetching_failure_does_not_abort_pipeline():
 
     assert result.get("competitor_metrics") is None
     assert result.get("competitor_metrics_error") == "network unavailable"
+
+
+def test_competitor_fetching_passes_stock_config_to_fetcher():
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "stock_codes": {"复旦微电": "688385"},
+        "stock_config": {
+            "competitors": ["紫光国微"],
+            "peer_codes": {"紫光国微": "002049"},
+        },
+    })
+
+    with patch("report_skills.data_skills.fetch_competitor_metrics", return_value={"复旦微电": {}}) as mock_fetch:
+        competitor_fetching_skill(ctx)
+
+    mock_fetch.assert_called_once_with(
+        "复旦微电",
+        {"复旦微电": "688385"},
+        stock_config=ctx.get("stock_config"),
+    )
