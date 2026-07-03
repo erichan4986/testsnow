@@ -25,6 +25,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Union
 
 if __name__.startswith("utils."):
+    from ..periodic_report_explanation_pack import build_formal_financial_explanation_pack
     from ..periodic_report_evidence_pack import build_periodic_report_evidence_pack
     from ..periodic_report_fulltext_llm_analysis import (
         backfill_periodic_report_fulltext_analysis_sections,
@@ -43,6 +44,7 @@ if __name__.startswith("utils."):
     from ..skill_pipeline import skill, SkillContext
     from ..source_adapter import SynthesisItem
 else:
+    from periodic_report_explanation_pack import build_formal_financial_explanation_pack
     from periodic_report_evidence_pack import build_periodic_report_evidence_pack
     from periodic_report_fulltext_llm_analysis import (
         backfill_periodic_report_fulltext_analysis_sections,
@@ -312,6 +314,36 @@ def build_periodic_report_filing_core_facts_from_cache(
     return filing_facts_to_core_facts(fact_pack.get("filing_facts") or [])
 
 
+def build_periodic_report_explanation_pack_from_cache(
+    *,
+    stock_code: str,
+    stock_name: str,
+    cache_dir: Union[str, Path],
+    report_type: str = "annual_report",
+) -> Dict[str, Any]:
+    """Build a deterministic financial explanation pack from local report text."""
+    latest = _find_latest_periodic_report_cache_file(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    if latest is None:
+        return {}
+    try:
+        raw_text = latest.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+    if not raw_text.strip():
+        return {}
+
+    return build_formal_financial_explanation_pack(
+        raw_text,
+        stock_name=stock_name,
+        source_doc=latest.name,
+    )
+
+
 def _find_latest_periodic_report_cache_file(
     *,
     stock_code: str,
@@ -421,8 +453,15 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         cache_dir=cache_dir,
         report_type=report_type,
     )
+    explanation_pack = build_periodic_report_explanation_pack_from_cache(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
 
     ctx.set("periodic_report_fulltext_items", items)
     ctx.set("periodic_report_filing_core_facts", filing_core_facts)
+    ctx.set("periodic_report_explanation_pack", explanation_pack)
     ctx.set("periodic_report_fulltext_status", "ok" if items else "empty")
     return ctx

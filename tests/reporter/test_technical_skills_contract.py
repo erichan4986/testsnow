@@ -60,6 +60,66 @@ def test_collected_technical_is_written_back_to_stock_raw():
     assert result.get("daily_data") == collected["daily_data"]
 
 
+def test_collected_technical_fund_flow_is_bridged_to_stock_raw_fundflow():
+    collected = {
+        "daily_data": {"close": [1.0, 1.1], "volume": [100, 110]},
+        "indicators": {"close": 1.1, "rsi_14": 52.0},
+        "fund_flow": [
+            {
+                "date": "2026-07-02",
+                "close": "65.40",
+                "change_pct": "2.5",
+                "main_in": "1200",
+                "super_net_in": "500",
+                "large_net_in": "300",
+                "medium_net_in": "-100",
+                "small_net_in": "-900",
+            }
+        ],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_codes": {"测试股": "300001"},
+        "stock_raw": {},
+    })
+
+    with patch("report_skills.technical_skills.TechnicalCollector") as mock_collector:
+        mock_collector.return_value.collect.return_value = collected
+        result = technical_fetching_skill(ctx)
+
+    fundflow = result.get("stock_raw")["fundflow"]
+    assert len(fundflow) == 1
+    assert fundflow[0]["date"] == "2026-07-02"
+    assert fundflow[0]["main_inflow"] == 1200.0
+    assert fundflow[0]["main_in"] == 1200.0
+    assert fundflow[0]["super_net_in"] == 500.0
+    assert fundflow[0]["large_net_in"] == 300.0
+    assert fundflow[0]["medium_net_in"] == -100.0
+    assert fundflow[0]["small_net_in"] == -900.0
+    assert fundflow[0]["change_pct"] == 2.5
+    assert fundflow[0]["source"] == "baidu_pae"
+
+
+def test_collected_technical_fund_flow_does_not_override_existing_fundflow():
+    existing = [{"date": "2026-07-01", "main_inflow": 88, "source": "manual"}]
+    collected = {
+        "daily_data": {"close": [1.0, 1.1], "volume": [100, 110]},
+        "indicators": {"close": 1.1, "rsi_14": 52.0},
+        "fund_flow": [{"date": "2026-07-02", "main_in": "1200"}],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_codes": {"测试股": "300001"},
+        "stock_raw": {"fundflow": existing},
+    })
+
+    with patch("report_skills.technical_skills.TechnicalCollector") as mock_collector:
+        mock_collector.return_value.collect.return_value = collected
+        result = technical_fetching_skill(ctx)
+
+    assert result.get("stock_raw")["fundflow"] == existing
+
+
 def test_hk_code_uses_hk_market_contract():
     ctx = SkillContext(input={
         "stock_name": "港股测试",

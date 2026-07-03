@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 from curated_external_display_lint import lint_curated_external_display_text
+from curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
 
 
 NARRATIVE_SCHEMA_VERSION = "curated_external_viewpoint_narrative.v1"
@@ -96,12 +97,14 @@ def build_viewpoint_narrative(
         _display_synthesis_from_paragraphs(paragraphs, citations)
     )
 
+    reasoning_cards = _normalize_reasoning_cards(payload.get("reasoning_cards") or [], citations)
     markdown = render_narrative_markdown(stock, paragraphs, citations)
     return {
         **base,
         "status": "ok",
         "paragraphs": paragraphs,
         "paragraphs_count": len(paragraphs),
+        "reasoning_cards": reasoning_cards,
         "citations": {str(key): value for key, value in citations.items()},
         "preview_markdown": markdown,
         "stats": {
@@ -248,7 +251,7 @@ def render_narrative_markdown(
             lines.append(f"**{heading}**")
             lines.append("")
         text = str(paragraph.get("text") or "").strip()
-        lines.append(_attach_refs_to_sentence(text, paragraph.get("citation_refs", [])))
+        lines.append(attach_refs_to_sentence(text, paragraph.get("citation_refs", [])))
         lines.append("")
 
     lines.append("**本节引用来源：**")
@@ -362,6 +365,48 @@ def _display_synthesis_from_paragraphs(
         "events_catalysts": "",
         "citations": citations,
     }
+
+
+def _normalize_reasoning_cards(
+    raw_cards: Any,
+    citations: Dict[int, Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    if not isinstance(raw_cards, list):
+        return []
+    claim_to_ref = {
+        str(meta.get("claim_id") or "").strip(): ref_id
+        for ref_id, meta in citations.items()
+        if str(meta.get("claim_id") or "").strip()
+    }
+    cards: List[Dict[str, Any]] = []
+    for raw in raw_cards:
+        if not isinstance(raw, dict):
+            continue
+        claim_id = str(raw.get("claim_id") or "").strip()
+        ref_id = claim_to_ref.get(claim_id)
+        if not ref_id:
+            continue
+        excerpt, truncated = truncate_curated_source_excerpt(_clean_text(raw.get("source_excerpt", "")))
+        cards.append({
+            "claim_id": claim_id,
+            "display_topic": _clean_text(raw.get("display_topic"))[:60],
+            "claim": _clean_text(raw.get("claim"))[:160],
+            "source_excerpt": excerpt,
+            "excerpt_truncated": bool(raw.get("excerpt_truncated")) or truncated,
+            "reasoning_steps": _clean_text_list(raw.get("reasoning_steps")),
+            "numbers_used": _clean_text_list(raw.get("numbers_used")),
+            "assumptions": _clean_text_list(raw.get("assumptions")),
+            "counterpoints": _clean_text_list(raw.get("counterpoints")),
+            "verification_need": _clean_text(raw.get("verification_need"))[:160],
+            "citation_refs": [ref_id],
+        })
+    return cards[:8]
+
+
+def _clean_text_list(value: Any) -> List[str]:
+    if not isinstance(value, list):
+        return []
+    return [_clean_text(item)[:120] for item in value if _clean_text(item)][:4]
 
 
 def _unsupported_model_token_reasons(
@@ -624,16 +669,6 @@ def _extract_json(text: str) -> Dict[str, Any]:
 def _clean_text(value: Any) -> str:
     text = re.sub(r"\s+", " ", str(value or "")).strip()
     return text.strip("`")
-
-
-def _attach_refs_to_sentence(text: str, refs: List[int]) -> str:
-    ref_text = "".join(f"[^{ref}]" for ref in refs)
-    stripped = str(text or "").strip()
-    if not ref_text:
-        return stripped
-    if stripped.endswith(("。", "；", ";", "！", "？")):
-        return f"{stripped[:-1]}{ref_text}{stripped[-1]}"
-    return f"{stripped}{ref_text}"
 
 
 def _attach_refs_to_each_sentence_for_lint(text: str, refs: List[int]) -> str:

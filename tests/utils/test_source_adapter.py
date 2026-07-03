@@ -70,6 +70,34 @@ def test_adapt_all_accepts_single_fundflow_record():
     assert items[0].extra["net"] == 900
 
 
+def test_fundflow_adapter_accepts_baidu_pae_fields():
+    items = adapt_all(fundflow={
+        "date": "2026-07-02",
+        "main_in": "1200",
+        "super_net_in": "500",
+        "large_net_in": "300",
+        "medium_net_in": "-100",
+        "small_net_in": "-900",
+        "change_pct": "2.5",
+        "close": "65.40",
+        "source": "baidu_pae",
+    })
+
+    assert len(items) == 1
+    item = items[0]
+    assert item.source_platform == "资金流向"
+    assert "主力净流入 1200万" in item.content
+    assert "超大单 500万" in item.content
+    assert "大单 300万" in item.content
+    assert "小单 -900万" in item.content
+    assert "涨跌 2.5%" in item.content
+    assert item.extra["net"] == 1200.0
+    assert item.extra["super_net_in"] == 500.0
+    assert item.extra["large_net_in"] == 300.0
+    assert item.extra["small_net_in"] == -900.0
+    assert item.extra["source"] == "baidu_pae"
+
+
 def test_adapt_all_agent_reach_missing_fields():
     raw = {
         "platform": "twitter",

@@ -97,13 +97,32 @@ def test_filing_facts_convert_to_supported_core_facts() -> None:
         "经营现金流量净额",
     ]
     revenue = core_facts[0]
-    assert revenue["data"] == "100000.00万元"
+    assert revenue["data"] == "10.00亿元"
     assert revenue["confidence"] == "高"
     assert revenue["provenance_status"] == "supported"
     assert revenue["evidence_type"] == "periodic_report_filing_fact"
     assert revenue["source_labels"] == ["2025年annual"]
     assert revenue["source_refs"] == []
     assert "营业收入" in revenue["source_excerpt"]
+
+
+def test_core_facts_display_large_financial_amounts_in_yi_unit() -> None:
+    raw_text = """
+主要会计数据和财务指标
+营业收入 3,982,000,000.00 3,600,000,000.00 10.61%
+归属于上市公司股东的净利润 232,000,000.00 571,000,000.00 -59.37%
+经营活动产生的现金流量净额 -50,000,000.00 100,000,000.00 -150.00%
+"""
+    pack = _fact_pack(raw_text, stock_code="688385")
+
+    core_facts = {
+        fact["fact"]: fact
+        for fact in filing_facts_to_core_facts(pack["filing_facts"])
+    }
+
+    assert core_facts["营业收入"]["data"] == "39.82亿元"
+    assert core_facts["归母净利润"]["data"] == "2.32亿元"
+    assert core_facts["经营现金流量净额"]["data"] == "-0.50亿元"
 
 
 def test_filing_facts_include_stable_excerpt_and_block_hashes() -> None:

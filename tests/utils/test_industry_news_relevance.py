@@ -64,7 +64,7 @@ def test_industry_chain_relevant_supports_multi_hop_cis_capacity_chain():
 
     assert result["relevance_class"] == "industry_chain_relevant"
     assert result["confidence"] >= HIGH_CONFIDENCE_THRESHOLD
-    assert "4.3" in result["allowed_sections"]
+    assert result["allowed_sections"] == ["4.1"]
     assert result["relevance_chain"]["chain_id"] == "memory_capacity_to_cis_pricing"
     assert [hop["id"] for hop in result["relevance_chain"]["hops"]] == [
         "memory_price",
@@ -116,7 +116,7 @@ def test_generic_sector_news_is_not_allowed_in_events_catalysts():
     assert result["allowed_sections"] == ["4.1"]
 
 
-def test_build_manifest_keeps_only_4_3_relevance_chains():
+def test_build_manifest_excludes_industry_chains_not_allowed_in_4_3():
     items = [
         SynthesisItem(
             title="链条新闻",
@@ -126,7 +126,7 @@ def test_build_manifest_keeps_only_4_3_relevance_chains():
             url="http://news/chain",
             publish_time="2026-06-01",
             extra={
-                "allowed_sections": ["4.1", "4.3"],
+                "allowed_sections": ["4.1"],
                 "relevance_class": "industry_chain_relevant",
                 "relevance_chain": {
                     "chain_id": "memory_capacity_to_cis_pricing",
@@ -157,7 +157,4 @@ def test_build_manifest_keeps_only_4_3_relevance_chains():
     manifest = build_industry_relevance_manifest(items)
 
     assert manifest["schema"] == "industry_relevance_manifest.v1"
-    assert len(manifest["events_catalysts_chains"]) == 1
-    chain = manifest["events_catalysts_chains"][0]
-    assert chain["chain_id"] == "memory_capacity_to_cis_pricing"
-    assert chain["allowed_terms"] == ["存储产品涨价", "晶圆厂产能紧张", "CIS排产变化"]
+    assert manifest["events_catalysts_chains"] == []

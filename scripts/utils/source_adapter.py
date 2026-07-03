@@ -9,8 +9,10 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Protocol
 
 if __name__.startswith("utils."):
+    from .fundflow_material import normalize_fundflow_row
     from .source_credit import score_source_credit
 else:
+    from scripts.utils.fundflow_material import normalize_fundflow_row
     from scripts.utils.source_credit import score_source_credit
 
 
@@ -129,11 +131,26 @@ class FundFlowAdapter:
 
     @staticmethod
     def to_synthesis_item(raw: Dict) -> SynthesisItem:
-        date = raw.get("date", "")
-        main_in = raw.get("main_inflow", 0)
-        main_out = raw.get("main_outflow", 0)
-        net = main_in - main_out
-        content = f"日期 {date}: 主力净流入 {net:.0f}万 (流入 {main_in:.0f}万, 流出 {main_out:.0f}万)"
+        row = normalize_fundflow_row(raw)
+        date = row.get("date", "")
+        net = row.get("main_net", 0.0)
+
+        detail_parts = []
+        if "super_net_in" in raw or "super_big_net" in raw:
+            detail_parts.append(f"超大单 {row.get('super_net_in', 0.0):.0f}万")
+        if "large_net_in" in raw or "big_net" in raw:
+            detail_parts.append(f"大单 {row.get('large_net_in', 0.0):.0f}万")
+        if "medium_net_in" in raw or "mid_net" in raw:
+            detail_parts.append(f"中单 {row.get('medium_net', 0.0):.0f}万")
+        if "small_net_in" in raw or "small_net" in raw:
+            detail_parts.append(f"小单 {row.get('small_net', 0.0):.0f}万")
+        if "change_pct" in raw:
+            detail_parts.append(f"涨跌 {row.get('change_pct', 0.0):.1f}%")
+        elif "main_pct" in raw:
+            detail_parts.append(f"主力占比 {row.get('main_pct', 0.0):.1f}%")
+
+        suffix = f"（{'；'.join(detail_parts)}）" if detail_parts else ""
+        content = f"日期 {date}: 主力净流入 {net:.0f}万{suffix}"
         return SynthesisItem(
             title=f"资金流向 {date}",
             content=content,
@@ -142,7 +159,18 @@ class FundFlowAdapter:
             url="",
             publish_time=date,
             interaction_score=0,
-            extra={"main_inflow": main_in, "main_outflow": main_out, "net": net},
+            extra={
+                "main_inflow": row.get("main_inflow", 0.0),
+                "main_outflow": row.get("main_outflow", 0.0),
+                "net": net,
+                "super_net_in": row.get("super_net_in", 0.0),
+                "large_net_in": row.get("large_net_in", 0.0),
+                "medium_net_in": row.get("medium_net", 0.0),
+                "small_net_in": row.get("small_net", 0.0),
+                "change_pct": row.get("change_pct", 0.0),
+                "main_pct": row.get("main_pct", 0.0),
+                "source": row.get("source", ""),
+            },
         )
 
 

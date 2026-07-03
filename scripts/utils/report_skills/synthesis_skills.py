@@ -1,6 +1,7 @@
 """LLM synthesis skill."""
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -27,8 +28,10 @@ if __name__.startswith("utils."):
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
     from ..curated_external_display_lint import lint_curated_external_display_text
+    from ..curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
     from ..industry_news_relevance import build_industry_relevance_manifest
     from ..peer_comparison_material import build_peer_comparison_material
+    from ..fundflow_material import build_fundflow_material_pack
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -52,8 +55,10 @@ else:
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
     from curated_external_display_lint import lint_curated_external_display_text
+    from curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
     from industry_news_relevance import build_industry_relevance_manifest
     from peer_comparison_material import build_peer_comparison_material
+    from fundflow_material import build_fundflow_material_pack
 
 
 SYNTHESIS_KEYS = [
@@ -83,22 +88,6 @@ CURATED_EXTERNAL_TOPIC_ALIASES = {
     "watch_variable": "risk_rumor_rebuttal",
     "dissent": "risk_rumor_rebuttal",
 }
-
-CURATED_EXTERNAL_NARRATIVE_SOURCE_TYPES = {
-    "curated_external_analysis_evidence",
-    "xueqiu_column_observation",
-    "xueqiu_comment_observation",
-    "xueqiu_selected_observation",
-    "zhihu_selected_observation",
-    "wechat_selected_observation",
-    "wechat_column_observation",
-}
-
-CURATED_EXTERNAL_NARRATIVE_VERIFICATION_STATUSES = {
-    "professional_observation",
-    "tentative_unverified",
-}
-
 
 class SynthesisSkill(BaseSkill):
     """LLM 综合叙事生成。"""
@@ -131,7 +120,7 @@ class SynthesisSkill(BaseSkill):
             ctx.get("periodic_report_filing_core_facts", []),
         )
         ctx.set("core_facts", core_facts)
-        ctx.set("synthesis_text", self._flatten_synthesis_text(baseline))
+        ctx.set("synthesis_text", flatten_synthesis_text(baseline))
         ctx.set("synthesis_items_count", baseline.get("_items_count", 0))
         ctx.set("synthesis_sources", baseline.get("_sources", []))
         ctx.set("industry_relevance_manifest", baseline.get("_industry_relevance_manifest", {}))
@@ -161,7 +150,7 @@ class SynthesisSkill(BaseSkill):
                 ctx,
                 extra_items=display_items,
             )
-            display_text = self._flatten_synthesis_text(display)
+            display_text = flatten_synthesis_text(display)
             ctx.set("synthesis_display", display)
             ctx.set("synthesis_display_sources", display.get("_sources", []))
             ctx.set("synthesis_text_with_periodic_display_materials", display_text)
@@ -280,125 +269,19 @@ class SynthesisSkill(BaseSkill):
             )
             return
 
-        try:
-            narrative = json.loads(Path(narrative_json).read_text(encoding="utf-8"))
-        except Exception as exc:
-            ctx.set("curated_external_viewpoint_narrative_status", "reader_error")
-            ctx.set("curated_external_viewpoint_narrative_stats", {"rejection_reasons": [str(exc)]})
+        result = build_curated_external_narrative_display(narrative_json)
+        ctx.set("curated_external_viewpoint_narrative_status", result.get("status"))
+        ctx.set("curated_external_viewpoint_narrative_stats", result.get("stats") or {})
+        if result.get("lint"):
+            ctx.set("curated_external_viewpoint_narrative_lint", result.get("lint"))
+        if result.get("status") != "ok":
             return
 
-        status = str(narrative.get("status") or "")
-        ctx.set("curated_external_viewpoint_narrative_status", status)
-        ctx.set("curated_external_viewpoint_narrative_stats", narrative.get("stats") or {})
-        if status != "ok":
-            return
-
-        paragraphs = [p for p in narrative.get("paragraphs") or [] if isinstance(p, dict)]
-        citations = self._normalize_viewpoint_narrative_citations(narrative.get("citations") or {})
-        paragraphs = self._hydrate_viewpoint_narrative_citation_refs(paragraphs, citations)
-        if not paragraphs or not citations:
-            ctx.set("curated_external_viewpoint_narrative_status", "empty")
-            return
-
-        display = {
-            "industry_logic": self._flatten_viewpoint_narrative_paragraphs(paragraphs),
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "core_facts": [],
-            "citations": citations,
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": paragraphs,
-            "_curated_external_taxonomy_version": "external_viewpoint.v1",
-            "_items_count": len(paragraphs),
-            "_sources": list(citations.values()),
-        }
-        lint = lint_curated_external_display_text(display)
-        ctx.set("curated_external_viewpoint_narrative_lint", lint)
-        if not lint.get("ok"):
-            ctx.set("curated_external_viewpoint_narrative_status", "lint_failed")
-            return
-
+        display = result.get("display") or {}
         ctx.set("deep_analysis_display", display)
         ctx.set("deep_analysis_display_sources", display.get("_sources", []))
-        ctx.set("synthesis_text_with_curated_external_viewpoint_narrative", self._flatten_synthesis_text(display))
+        ctx.set("synthesis_text_with_curated_external_viewpoint_narrative", result.get("synthesis_text") or "")
         ctx.set("curated_external_viewpoint_narrative_status", "ok")
-
-    @staticmethod
-    def _normalize_viewpoint_narrative_citations(citations: Dict[Any, Any]) -> Dict[int, dict]:
-        normalized = {}
-        for key, value in (citations or {}).items():
-            try:
-                ref_id = int(key)
-            except (TypeError, ValueError):
-                continue
-            if not isinstance(value, dict):
-                continue
-            if (
-                value.get("source_type") in CURATED_EXTERNAL_NARRATIVE_SOURCE_TYPES
-                and value.get("verification_status") in CURATED_EXTERNAL_NARRATIVE_VERIFICATION_STATUSES
-            ):
-                normalized[ref_id] = value
-        return normalized
-
-    @classmethod
-    def _hydrate_viewpoint_narrative_citation_refs(cls, paragraphs: list, citations: Dict[int, dict]) -> list:
-        """Fill missing paragraph citation refs from claim_refs and citation claim_id metadata."""
-        claim_to_ref: Dict[str, int] = {}
-        suffix_to_ref: Dict[str, int] = {}
-        for ref_id, meta in citations.items():
-            claim_id = str(meta.get("claim_id") or "").strip()
-            if not claim_id:
-                continue
-            claim_to_ref[claim_id] = ref_id
-            suffix_to_ref[claim_id.rsplit(":", 1)[-1]] = ref_id
-
-        hydrated = []
-        for paragraph in paragraphs:
-            if not isinstance(paragraph, dict):
-                continue
-            existing_refs = paragraph.get("citation_refs") or []
-            if existing_refs:
-                hydrated.append(paragraph)
-                continue
-            refs = []
-            seen = set()
-            for claim_ref in paragraph.get("claim_refs") or []:
-                claim_key = str(claim_ref or "").strip()
-                ref_id = claim_to_ref.get(claim_key)
-                if ref_id is None:
-                    ref_id = suffix_to_ref.get(claim_key.rsplit(":", 1)[-1])
-                if ref_id is None or ref_id in seen:
-                    continue
-                seen.add(ref_id)
-                refs.append(ref_id)
-            hydrated.append({**paragraph, "citation_refs": refs} if refs else paragraph)
-        return hydrated
-
-    @classmethod
-    def _flatten_viewpoint_narrative_paragraphs(cls, paragraphs: list) -> str:
-        parts = []
-        for paragraph in paragraphs:
-            heading = str(paragraph.get("heading") or "").strip()
-            text = str(paragraph.get("text") or "").strip()
-            refs = paragraph.get("citation_refs") or []
-            rendered = cls._attach_refs_to_sentence(text, refs)
-            if heading:
-                parts.append(f"{heading}：{rendered}")
-            elif rendered:
-                parts.append(rendered)
-        return "\n\n".join(parts)
-
-    @staticmethod
-    def _attach_refs_to_sentence(text: str, refs: list) -> str:
-        ref_text = "".join(f"[^{int(ref)}]" for ref in refs if str(ref).isdigit())
-        stripped = str(text or "").strip()
-        if not ref_text:
-            return stripped
-        if stripped.endswith(("。", "；", ";", "！", "？")):
-            return f"{stripped[:-1]}{ref_text}{stripped[-1]}"
-        return f"{stripped}{ref_text}"
 
     def _build_viewpoint_digest_deep_analysis_display(self, ctx: SkillContext) -> None:
         """Build deep-analysis-only display from cached full-body viewpoint digest."""
@@ -448,7 +331,7 @@ class SynthesisSkill(BaseSkill):
 
         ctx.set("deep_analysis_display", display)
         ctx.set("deep_analysis_display_sources", display.get("_sources", []))
-        ctx.set("synthesis_text_with_curated_external_viewpoint_digest", self._flatten_synthesis_text(display))
+        ctx.set("synthesis_text_with_curated_external_viewpoint_digest", flatten_synthesis_text(display))
         ctx.set("curated_external_viewpoint_digest_status", "ok")
 
     @staticmethod
@@ -673,6 +556,10 @@ class SynthesisSkill(BaseSkill):
         if self.llm_client and hasattr(self.llm_client, "chat"):
             return self._legacy_llm_synthesize(stock_name, stock_raw, keep_posts, cv_context)
 
+        fundflow_material_pack = build_fundflow_material_pack(stock_raw.get("fundflow", []))
+        if fundflow_material_pack.get("rows") and ctx is not None:
+            ctx.set("fundflow_material_pack", fundflow_material_pack)
+
         items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx, extra_items=extra_items)
         if extra_items:
             items, deduped_sources = dedupe_synthesis_display_items(items)
@@ -690,13 +577,33 @@ class SynthesisSkill(BaseSkill):
 
         synthesizer = self.synthesizer or KnowledgeSynthesizer(client=self.llm_client)
         all_data = {"items": items}
+        if ctx and ctx.get("stock_config"):
+            all_data["stock_config"] = ctx.get("stock_config")
+        if ctx:
+            financial_fact_pack = self._build_formal_financial_fact_pack(
+                ctx.get("periodic_report_filing_core_facts", [])
+            )
+            if financial_fact_pack.get("facts"):
+                ctx.set("formal_financial_fact_pack", financial_fact_pack)
+                all_data["formal_financial_fact_pack"] = financial_fact_pack
+            financial_explanation_pack = ctx.get("periodic_report_explanation_pack") or {}
+            if isinstance(financial_explanation_pack, dict) and financial_explanation_pack.get("rows"):
+                all_data["formal_financial_explanation_pack"] = financial_explanation_pack
         if cv_context:
             all_data["claim_verification_context"] = cv_context
         if ctx and ctx.get("peer_comparison_material"):
             all_data["peer_comparison_material"] = ctx.get("peer_comparison_material")
+        if fundflow_material_pack.get("rows"):
+            all_data["fundflow_material_pack"] = fundflow_material_pack
         result = synthesizer.synthesize(stock_name, all_data)
         result = self._fill_citation_metadata(result, items)
         result = self._enrich_core_fact_provenance(result)
+        if ctx:
+            result = self._sanitize_financial_missing_contradictions(
+                result,
+                ctx.get("formal_financial_fact_pack") or all_data.get("formal_financial_fact_pack") or {},
+            )
+        result = self._sanitize_indirect_industry_citations_from_43(result, stock_name)
 
         if not any(result.get(k) for k in SYNTHESIS_KEYS):
             return self._template_synthesize(
@@ -710,6 +617,171 @@ class SynthesisSkill(BaseSkill):
         result["_sources"] = self._source_list(items)
         result["_industry_relevance_manifest"] = build_industry_relevance_manifest(items)
         return result
+
+    @staticmethod
+    def _build_formal_financial_fact_pack(filing_core_facts: list) -> dict:
+        """Build a compact formal financial pack for 4.2 prompts only."""
+        facts = []
+        for fact in filing_core_facts or []:
+            if not isinstance(fact, dict):
+                continue
+            metric = str(fact.get("fact") or "")
+            value = str(fact.get("data") or "")
+            if not metric or not value:
+                continue
+            if metric not in {"营业收入", "归母净利润", "经营现金流量净额"}:
+                continue
+            if not SynthesisSkill._is_reliable_financial_value(value):
+                continue
+            source_labels = fact.get("source_labels") or []
+            source = "、".join(str(label) for label in source_labels if label)
+            facts.append({
+                "metric": metric,
+                "value": value,
+                "period": source,
+                "source": fact.get("evidence_type") or "periodic_report_filing_fact",
+            })
+        return {
+            "schema": "formal_financial_fact_pack.v1",
+            "facts": facts,
+        }
+
+    @staticmethod
+    def _sanitize_financial_missing_contradictions(result: dict, fact_pack: dict) -> dict:
+        """Remove LLM claims that revenue/profit are missing when formal facts exist."""
+        available_parts = SynthesisSkill._available_financial_parts(fact_pack, result)
+        if not available_parts:
+            return result
+
+        text = str(result.get("fundamentals") or "")
+        if not text:
+            return result
+
+        missing_pattern = re.compile(
+            r"[^。；\n]*(?:未提供[^。；\n]*(?:营收|营业收入|利润|净利润)|"
+            r"(?:营收|营业收入|利润|净利润)[^。；\n]*未提供)[^。；\n]*[。；]?"
+        )
+        if not missing_pattern.search(text):
+            return result
+
+        replacement = (
+            "正式财务事实包显示，"
+            + "，".join(available_parts)
+            + "；订单、客户、费用率或指引等未在正式事实包中出现的指标仍需等待后续公告。"
+        )
+        result = dict(result)
+        result["fundamentals"] = missing_pattern.sub(replacement, text, count=1).strip()
+        return result
+
+    @staticmethod
+    def _available_financial_parts(fact_pack: dict, result: dict) -> list:
+        """Return reliable revenue/profit snippets for missing-data sanitization."""
+        facts = {
+            str(fact.get("metric") or ""): str(fact.get("value") or "")
+            for fact in ((fact_pack or {}).get("facts") or [])
+            if isinstance(fact, dict) and SynthesisSkill._is_reliable_financial_value(fact.get("value"))
+        }
+        available_parts = []
+        if facts.get("营业收入"):
+            available_parts.append(f"营业收入{facts['营业收入']}")
+        if facts.get("归母净利润"):
+            available_parts.append(f"归母净利润{facts['归母净利润']}")
+        if available_parts:
+            return available_parts
+
+        fallback_parts = []
+        seen_metrics = set()
+        for fact in (result.get("core_facts") or []):
+            if not isinstance(fact, dict):
+                continue
+            status = str(fact.get("provenance_status") or "supported")
+            confidence = str(fact.get("confidence") or "")
+            if status in {"invalid_ref", "unsupported"}:
+                continue
+            if status == "missing_ref" and confidence not in {"高", "high", "High"}:
+                continue
+            label = str(fact.get("fact") or "").strip()
+            value = SynthesisSkill._brief_financial_value(fact.get("data"))
+            if not label or not value or not SynthesisSkill._is_reliable_financial_value(value):
+                continue
+            if ("营收" in label or "营业收入" in label) and "revenue" not in seen_metrics:
+                fallback_parts.append(f"{label}{value}")
+                seen_metrics.add("revenue")
+            elif "归母净利润" in label and "profit" not in seen_metrics:
+                fallback_parts.append(f"{label}{value}")
+                seen_metrics.add("profit")
+        return fallback_parts
+
+    @staticmethod
+    def _brief_financial_value(value: Any) -> str:
+        text = str(value or "").strip()
+        if not text:
+            return ""
+        return re.split(r"[，,；;。]", text, maxsplit=1)[0].strip()
+
+    @staticmethod
+    def _is_reliable_financial_value(value: Any) -> bool:
+        text = str(value or "").strip().replace(",", "")
+        if not text:
+            return False
+        match = re.search(r"-?\d+(?:\.\d+)?", text)
+        if not match:
+            return False
+        try:
+            return abs(float(match.group(0))) > 1e-9
+        except (TypeError, ValueError):
+            return False
+
+    @staticmethod
+    def _sanitize_indirect_industry_citations_from_43(result: dict, stock_name: str) -> dict:
+        """Remove indirect industry/news citations from 4.3 synthesis text."""
+        bad_refs = SynthesisSkill._indirect_industry_ref_ids(result.get("citations") or {}, stock_name)
+        if not bad_refs:
+            return result
+
+        changed = False
+        sanitized = dict(result)
+        for key in ("funding_sentiment", "events_catalysts"):
+            text = str(result.get(key) or "")
+            if not text:
+                continue
+            cleaned = SynthesisSkill._drop_lines_with_refs(text, bad_refs)
+            if cleaned != text:
+                sanitized[key] = cleaned
+                changed = True
+        return sanitized if changed else result
+
+    @staticmethod
+    def _indirect_industry_ref_ids(citations: dict, stock_name: str) -> set:
+        stock_text = str(stock_name or "").strip()
+        bad_refs = set()
+        for raw_ref, meta in (citations or {}).items():
+            if not isinstance(meta, dict):
+                continue
+            source = str(meta.get("source") or "").strip()
+            source_type = str(meta.get("source_type") or "").strip()
+            title = str(meta.get("title") or "").strip()
+            direct_company = bool(stock_text and stock_text in title)
+            is_industry_or_news = (
+                source in {"行业资讯", "新闻", "行业研报"}
+                or source_type in {"mainstream_media", "industry_research"}
+            )
+            if is_industry_or_news and not direct_company:
+                try:
+                    bad_refs.add(int(raw_ref))
+                except (TypeError, ValueError):
+                    continue
+        return bad_refs
+
+    @staticmethod
+    def _drop_lines_with_refs(text: str, bad_refs: set) -> str:
+        bad_markers = {f"[^{ref}]" for ref in bad_refs}
+        kept = []
+        for line in str(text or "").splitlines():
+            if any(marker in line for marker in bad_markers):
+                continue
+            kept.append(line)
+        return "\n".join(kept).strip()
 
     def _build_claim_verification_context(
         self, stock_name: str, ctx: SkillContext
@@ -792,7 +864,7 @@ class SynthesisSkill(BaseSkill):
             zhihu_items=zhihu.get("report_items", []),
             reports=stock_raw.get("reports", []),
             announcements=stock_raw.get("announcements", []),
-            fundflow=stock_raw.get("fundflow", []),
+            fundflow=[] if ctx and ctx.get("fundflow_material_pack") else stock_raw.get("fundflow", []),
             news=stock_raw.get("news", []),
         )
         if source_policy == "formal_first":
@@ -986,9 +1058,6 @@ class SynthesisSkill(BaseSkill):
     def _source_list(self, items: list) -> List[str]:
         return sorted({item.source_platform for item in items if item.source_platform})
 
-    def _flatten_synthesis_text(self, synthesis: dict) -> str:
-        return "\n".join(str(synthesis.get(k, "")) for k in SYNTHESIS_KEYS if synthesis.get(k))
-
     def _build_prompt(self, stock_name: str, stock_raw: dict, keep_posts: list, cv_context: Dict = None) -> str:
         """构建 LLM prompt（legacy chat 路径，复用现代路径的信用规则）。"""
         tech = stock_raw.get("technical", {})
@@ -1055,7 +1124,7 @@ class SynthesisSkill(BaseSkill):
                     f"主流新闻不足；仅保留技术面降级摘要，技术面综合评分 {score}，{trend}。"
                 ),
                 "fundamentals": (
-                    "formal_first 已排除雪球/知乎/微信等社媒材料；在正式来源补足前，"
+                    "formal_first 已排除非正式材料；在正式来源补足前，"
                     "不生成完整基本面叙事。"
                 ),
                 "valuation_debate": "估值多空分歧需等待可引用的正式材料补足后再展开。",

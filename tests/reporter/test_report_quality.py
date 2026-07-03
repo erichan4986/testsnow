@@ -214,6 +214,147 @@ def test_summary_section1_match_passes():
     assert "risk_position_label_mismatch" not in codes
 
 
+def _quality_shell(deep_analysis: str) -> str:
+    return f"""
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+{deep_analysis}
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+
+
+def test_section_too_generic_warns_only_when_specific_content_missing():
+    generic = _quality_shell(
+        """
+### 4.1 产业逻辑与竞争格局
+
+供应链位置重要，后续需关注验证变量，产业链景气度有望带来结构性机会。
+
+### 4.2 业绩路径与多空分歧
+
+收入变化原因来自FPGA产品放量[^1]。
+
+### 4.3 资金面与催化剂时间线
+
+当前未取得可用主力资金流向数据。
+"""
+    )
+    specific = _quality_shell(
+        """
+### 4.1 产业逻辑与竞争格局
+
+供应链位置仍需关注，但FPGA产品在2025年收入增长25%，该变量已有引用支撑[^1]。
+
+### 4.2 业绩路径与多空分歧
+
+收入变化原因来自FPGA产品放量[^1]。
+
+### 4.3 资金面与催化剂时间线
+
+当前未取得可用主力资金流向数据。
+"""
+    )
+
+    generic_codes = {issue.code for issue in check_report_text(generic).issues}
+    specific_codes = {issue.code for issue in check_report_text(specific).issues}
+
+    assert "section_too_generic" in generic_codes
+    assert "section_too_generic" not in specific_codes
+
+
+def test_vague_supply_chain_position_warns_when_no_operating_variable():
+    text = _quality_shell(
+        """
+### 4.1 产业逻辑与竞争格局
+
+公司供应链位置突出，产业链地位重要，后续需关注。
+
+### 4.2 业绩路径与多空分歧
+
+收入变化原因来自FPGA产品放量[^1]。
+
+### 4.3 资金面与催化剂时间线
+
+当前未取得可用主力资金流向数据。
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "vague_supply_chain_position" in codes
+
+
+def test_fundamentals_repeats_core_facts_without_explanation_warns():
+    text = _quality_shell(
+        """
+### 4.1 产业逻辑与竞争格局
+
+FPGA产品仍是核心变量[^1]。
+
+### 4.2 业绩路径与多空分歧
+
+营业收入39.82亿元，归母净利润2.32亿元，综合毛利率56.19%。
+
+### 4.3 资金面与催化剂时间线
+
+当前未取得可用主力资金流向数据。
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "fundamentals_repeats_core_facts" in codes
+
+
+def test_external_viewpoint_overcompressed_warns_when_4_4_has_no_reasoning_cards():
+    text = _quality_shell(
+        """
+### 4.1 产业逻辑与竞争格局
+
+FPGA产品仍是核心变量[^1]。
+
+### 4.2 业绩路径与多空分歧
+
+收入变化原因主要系FPGA产品放量。
+
+### 4.3 资金面与催化剂时间线
+
+当前未取得可用主力资金流向数据。
+
+### 4.4 精选外部观察（Preview）
+
+> 精选外部材料仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**估值分歧**
+
+外部材料认为估值存在分歧[^2]。
+
+**本节引用来源：**
+- [^2] 雪球专栏观察 | 《估值分析》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" in codes
+
+
 def test_unmatched_industry_chain_claim_is_error_when_manifest_is_available():
     text = """
 # 测试股 舆情深度报告
@@ -422,6 +563,221 @@ def test_display_only_risk_with_explanation_passes():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "display_only_risk_without_explanation" not in codes
+
+
+# ---------------------------------------------------------------------------
+# Fudan trial pipeline quality gates
+# ---------------------------------------------------------------------------
+
+
+def test_missing_deep_analysis_subsection_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+### 4.2 业绩路径与多空分歧
+
+业绩路径清晰。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "missing_deep_analysis_subsection" in codes
+
+
+def test_product_industry_mismatch_is_error_for_negated_mlcc_chain():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+MLCC 需求受 AI 服务器和汽车电子驱动，公司主要产品为 FPGA 与存储芯片，不直接涉及 MLCC 技术路线。
+
+### 4.2 业绩路径与多空分歧
+
+业绩路径清晰。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未形成可验证的资金面或催化剂时间线。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "product_industry_mismatch" in codes
+
+
+def test_financial_fact_unit_conflict_is_error():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 三、核心事实基座
+
+| # | 事实 | 数据/来源 | 证据 | 置信度 |
+|---|---|-----------|------|--------|
+| 1 | 营业收入 | 39.82万元 | 年报 | 高 |
+| 2 | 归母净利润 | 2.32万元 | 年报 | 高 |
+
+## 一、公司快照
+
+2026Q1 营业收入 10.32亿，归母净利润 1.48亿。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_fact_unit_conflict" in codes
+
+
+def test_financial_data_missing_contradiction_is_metric_specific_error():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 一、公司快照
+
+2026Q1 营业收入 10.32亿，归母净利润 1.48亿。
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+### 4.2 业绩路径与多空分歧
+
+外部材料未提供最新营收数据，也未提供最新利润数据。客户结构和管理层指引未提供。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未形成可验证的资金面或催化剂时间线。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_data_missing_contradiction" in codes
+
+
+def test_true_missing_order_and_guidance_text_does_not_trigger_financial_contradiction():
+    text = """
+# 测试股 舆情深度报告
+
+## 一、公司快照
+
+2026Q1 营业收入 10.32亿，归母净利润 1.48亿。
+
+## 四、深度分析
+
+### 4.2 业绩路径与多空分歧
+
+订单、客户结构和管理层指引未提供，仍需后续公告验证。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_data_missing_contradiction" not in codes
+
+
+def test_header_config_missing_warns_when_header_shows_dash():
+    text = """
+# 测试股 舆情深度报告
+
+**报告日期**: 2026年07月02日
+**所属赛道**: —
+**可比公司**: —
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    issues = {issue.code: issue for issue in result.issues}
+    assert "header_config_missing" in issues
+    assert issues["header_config_missing"].severity == "warning"
+
+
+def test_fundflow_claim_without_sidecar_catches_financial_data_inferred_buying_pressure():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+### 4.2 业绩路径与多空分歧
+
+营业收入变化已有公司解释。
+
+### 4.3 资金面与催化剂时间线
+
+| 资金变量 | 当前证据 | 对短期交易结构的含义 | 需跟踪 | 来源 |
+| --- | --- | --- | --- | --- |
+| 主力资金 | 2026年Q1营收7.82亿元，环比下降 | 可能压制主动买盘 | 后续交易数据 | [^1] |
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    issues = {issue.code: issue for issue in result.issues}
+    assert "fundflow_claim_without_fundflow_pack" in issues
 
 
 # ---------------------------------------------------------------------------
@@ -775,6 +1131,79 @@ def test_check_report_file_loads_peer_comparison_material_sidecar(tmp_path):
     codes = {issue.code for issue in result.issues}
     # Should detect the social leak in the sidecar
     assert "peer_pack_social_leak" in codes
+
+
+def test_fundflow_claim_without_fundflow_pack_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+正式材料不足。
+
+### 4.2 业绩路径与多空分歧
+
+正式材料不足。
+
+### 4.3 资金面与催化剂时间线
+
+近5日主力净流入合计 1200万，超大单资金持续流入。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量温和，BOLL 波动率正常。评分 5/10，可信度中。
+
+## 综合风险评分
+### 风险等级: 4.0/10（中等风险）
+"""
+    result = check_report_text(text, fundflow_material_pack=None)
+    codes = {issue.code for issue in result.issues}
+    assert "fundflow_claim_without_fundflow_pack" in codes
+
+
+def test_check_report_file_loads_fundflow_material_sidecar(tmp_path):
+    report_path = tmp_path / "测试股_20260702.md"
+    report_path.write_text(
+        """
+# 测试股 舆情深度报告
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+正式材料不足。
+
+### 4.2 业绩路径与多空分歧
+
+正式材料不足。
+
+### 4.3 资金面与催化剂时间线
+
+近5日主力净流入合计 1200万，超大单资金持续流入。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量温和，BOLL 波动率正常。评分 5/10，可信度中。
+
+## 综合风险评分
+### 风险等级: 4.0/10（中等风险）
+""",
+        encoding="utf-8",
+    )
+    sidecar_path = tmp_path / "测试股_20260702_fundflow_material.json"
+    sidecar_path.write_text(
+        json.dumps({
+            "schema": "fundflow_material_pack.v1",
+            "rows": [{"date": "2026-07-02", "main_net": 1200.0}],
+            "summary": {"days": 1, "main_net_total": 1200.0},
+        }, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    result = check_report_file(report_path)
+
+    codes = {issue.code for issue in result.issues}
+    assert "fundflow_claim_without_fundflow_pack" not in codes
 
 
 def test_curated_external_4_4_requires_inline_footnotes_when_sources_exist():

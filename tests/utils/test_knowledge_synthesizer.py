@@ -91,6 +91,52 @@ def test_build_prompt_includes_topic_ownership_contract_for_final_section():
     assert "不要输出 ## 或 ### 子标题" in prompt
 
 
+def test_financial_fact_pack_is_appended_only_to_fundamentals_prompt():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="年度报告",
+            content="公司披露年度报告。",
+            author="公司",
+            source_platform="公告",
+            url="http://notice",
+            publish_time="2026-04-30",
+        )
+    ]
+    fact_pack = {
+        "facts": [
+            {"metric": "营业收入", "value": "39.82亿元", "period": "2025年annual", "source": "年报"},
+            {"metric": "归母净利润", "value": "2.32亿元", "period": "2025年annual", "source": "年报"},
+        ]
+    }
+
+    fundamentals = synth._build_prompt(
+        "复旦微电",
+        "fundamentals",
+        items,
+        formal_financial_fact_pack=fact_pack,
+    )
+    industry = synth._build_prompt(
+        "复旦微电",
+        "industry_logic",
+        items,
+        formal_financial_fact_pack=fact_pack,
+    )
+    funding = synth._build_prompt(
+        "复旦微电",
+        "funding_sentiment",
+        items,
+        formal_financial_fact_pack=fact_pack,
+    )
+
+    assert "正式财务事实包（仅供4.2使用，非新增引用）" in fundamentals
+    assert "营业收入: 39.82亿元" in fundamentals
+    assert "归母净利润: 2.32亿元" in fundamentals
+    assert "不得写“未提供营收/利润数据”" in fundamentals
+    assert "正式财务事实包" not in industry
+    assert "正式财务事实包" not in funding
+
+
 def test_events_catalysts_prompt_filters_out_sector_background_industry_news():
     synth = KnowledgeSynthesizer(client=None)
     items = [
@@ -117,7 +163,7 @@ def test_events_catalysts_prompt_filters_out_sector_background_industry_news():
             extra={
                 "source_type": "mainstream_media",
                 "relevance_class": "industry_chain_relevant",
-                "allowed_sections": ["4.1", "4.3"],
+                "allowed_sections": ["4.1"],
                 "relevance_chain": {"chain_id": "memory_capacity_to_cis_pricing", "confidence": 0.8, "hops": []},
             },
         ),
@@ -134,7 +180,7 @@ def test_events_catalysts_prompt_filters_out_sector_background_industry_news():
     prompt = synth._build_prompt("韦尔股份", "events_catalysts", items)
 
     assert "存储概念低开" not in prompt
-    assert "存储产品涨价带动晶圆厂产能紧张" in prompt
+    assert "存储产品涨价带动晶圆厂产能紧张" not in prompt
     assert "公司发布业绩预告" in prompt
 
 
@@ -168,6 +214,77 @@ def test_funding_sentiment_prompt_filters_out_sector_background_industry_news():
 
     assert "半导体设备走弱" not in prompt
     assert "公司发布回购计划" in prompt
+
+
+def test_industry_logic_prompt_filters_out_non_direct_sector_background_with_stock_config():
+    synth = KnowledgeSynthesizer(client=None)
+    stock_config = {
+        "product_exposure_terms": ["FPGA", "MCU", "EEPROM"],
+        "competitors": ["紫光国微", "安路科技"],
+    }
+    items = [
+        SynthesisItem(
+            title="AI服务器带动 MLCC 需求增长",
+            content="复旦微电主要产品为 FPGA 与存储芯片，不直接涉及 MLCC 技术路线。",
+            author="行业资讯",
+            source_platform="行业资讯",
+            url="http://news/mlcc",
+            publish_time="2026-07-02",
+        ),
+        SynthesisItem(
+            title="FPGA 行业研究报告",
+            content="高可靠 FPGA 需求仍需跟踪。",
+            author="iwencai",
+            source_platform="行业研报",
+            url="http://report/fpga",
+            publish_time="2026-07-02",
+        ),
+        SynthesisItem(
+            title="紫光国微竞争格局",
+            content="紫光国微是军工特种 IC 重要同行。",
+            author="iwencai",
+            source_platform="行业研报",
+            url="http://report/peer",
+            publish_time="2026-07-02",
+        ),
+    ]
+
+    prompt = synth._build_prompt("复旦微电", "industry_logic", items, stock_config=stock_config)
+
+    assert "AI服务器带动 MLCC 需求增长" not in prompt
+    assert "MLCC 技术路线" not in prompt
+    assert "FPGA 行业研究报告" in prompt
+    assert "紫光国微竞争格局" in prompt
+
+
+def test_fundamentals_prompt_uses_keywords_fallback_without_generic_terms():
+    synth = KnowledgeSynthesizer(client=None)
+    stock_config = {
+        "keywords": ["半导体", "芯片", "光模块", "CPO"],
+    }
+    items = [
+        SynthesisItem(
+            title="半导体行业周报",
+            content="半导体板块震荡。",
+            author="行业资讯",
+            source_platform="行业资讯",
+            url="http://news/generic",
+            publish_time="2026-07-02",
+        ),
+        SynthesisItem(
+            title="光模块行业研究报告",
+            content="800G 光模块需求增长。",
+            author="iwencai",
+            source_platform="行业研报",
+            url="http://report/optical",
+            publish_time="2026-07-02",
+        ),
+    ]
+
+    prompt = synth._build_prompt("中际旭创", "fundamentals", items, stock_config=stock_config)
+
+    assert "半导体行业周报" not in prompt
+    assert "光模块行业研究报告" in prompt
 
 
 def test_build_prompt_uses_previous_topic_ledger_instead_of_raw_previous_prose():
@@ -286,6 +403,116 @@ def test_build_prompt_claim_verification_appendix_has_new_wording():
     assert "未验证市场讨论" in prompt
     assert "Phase 1 不输出 corroborated bucket" in prompt
     assert "社区共振/市场关注" in prompt
+
+
+def test_build_prompt_includes_fundflow_pack_only_for_funding_sentiment():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="一季报", content="公司披露一季报", author="复旦微电",
+            source_platform="公告", url="", publish_time="2026-04-30",
+        ),
+    ]
+    pack = {
+        "schema": "fundflow_material_pack.v1",
+        "rows": [{"date": "2026-07-02", "main_net": 1200.0, "super_large_net": 800.0, "small_net": -900.0, "change_pct": 2.5}],
+        "summary": {
+            "days": 1,
+            "main_net_total": 1200.0,
+            "super_large_net_total": 800.0,
+            "small_net_total": -900.0,
+            "price_change_total_pct": 2.5,
+            "signal": "inflow_with_price_up",
+        },
+    }
+
+    funding = synth._build_prompt(
+        "复旦微电",
+        "funding_sentiment",
+        items,
+        fundflow_material_pack=pack,
+    )
+    industry = synth._build_prompt(
+        "复旦微电",
+        "industry_logic",
+        items,
+        fundflow_material_pack=pack,
+    )
+
+    assert "资金流向确定性汇总（仅供4.3使用，非新增引用）" in funding
+    assert "近1日主力净流入合计 1200万" in funding
+    assert "不要自行求和" in funding
+    assert "资金流向确定性汇总" not in industry
+
+
+def test_funding_sentiment_prompt_excludes_financial_announcement_without_fundflow_pack():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="2026年第一季度报告",
+            content="2026年Q1营收7.82亿元，归母净利润1.23亿元，环比下降。",
+            author="复旦微电",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+    ]
+
+    prompt = synth._build_prompt("复旦微电", "funding_sentiment", items)
+
+    assert "2026年Q1营收7.82亿元" not in prompt
+    assert "归母净利润1.23亿元" not in prompt
+    assert "不得用营收、利润、毛利率等财务数据推测主力资金、买盘、卖盘或资金流入流出" in prompt
+
+
+def test_build_prompt_includes_financial_explanation_pack_only_for_fundamentals():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="年报", content="公司披露年度报告", author="复旦微电",
+            source_platform="公告", url="", publish_time="2026-04-30",
+        ),
+    ]
+    pack = {
+        "schema": "formal_financial_explanation_pack.v1",
+        "rows": [
+            {
+                "topic": "revenue_change",
+                "metric": "营业收入",
+                "excerpt": "营业收入变动原因说明：主要系FPGA与MCU产品销售额增加所致。",
+                "normalized_summary": "收入变化原因：主要系FPGA与MCU产品销售额增加所致。",
+                "source_doc": "688385_2025_annual_jina.txt",
+                "confidence": 0.85,
+            },
+            {
+                "topic": "orders_customers_guidance",
+                "metric": "订单客户与经营计划",
+                "excerpt": "公司将继续拓展工业控制和智能电表客户应用。",
+                "normalized_summary": "订单客户或经营计划说明：公司将继续拓展工业控制和智能电表客户应用。",
+                "source_doc": "688385_2025_annual_jina.txt",
+                "confidence": 0.72,
+            },
+        ],
+    }
+
+    fundamentals = synth._build_prompt(
+        "复旦微电",
+        "fundamentals",
+        items,
+        formal_financial_explanation_pack=pack,
+    )
+    industry = synth._build_prompt(
+        "复旦微电",
+        "industry_logic",
+        items,
+        formal_financial_explanation_pack=pack,
+    )
+
+    assert "正式经营解释材料包（仅供4.2使用，非新增引用）" in fundamentals
+    assert "营业收入变动原因说明" in fundamentals
+    assert "不得重复核心事实基座数字成表" in fundamentals
+    assert "若本附录已有订单客户/经营计划片段，不得写“未提供订单/客户/指引”" in fundamentals
+    assert "正式经营解释材料包" not in industry
 
 
 def test_extract_core_facts_prompt_excludes_professional_and_community_claims():
@@ -543,7 +770,7 @@ def test_synthesize_passes_peer_material_to_build_prompt(monkeypatch):
     peer_material = _sample_peer_material()
     calls = []
 
-    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None):
+    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None, stock_config=None, formal_financial_fact_pack=None, formal_financial_explanation_pack=None, fundflow_material_pack=None):
         calls.append(peer_comparison_material)
         return ""
 
@@ -749,7 +976,7 @@ def test_synthesize_passes_context_to_build_prompt(monkeypatch):
     }
     calls = []
 
-    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None):
+    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None, stock_config=None, formal_financial_fact_pack=None, formal_financial_explanation_pack=None, fundflow_material_pack=None):
         calls.append(claim_verification_context)
         return ""
 

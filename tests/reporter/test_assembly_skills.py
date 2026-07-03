@@ -79,6 +79,37 @@ def test_assembly_writes_industry_relevance_manifest_sidecar(tmp_path):
     assert data["events_catalysts_chains"][0]["chain_id"] == "memory_capacity_to_cis_pricing"
 
 
+def test_assembly_writes_fundflow_material_sidecar(tmp_path):
+    skill = ReportAssemblySkill()
+    pack = {
+        "schema": "fundflow_material_pack.v1",
+        "rows": [{"date": "2026-07-02", "main_net": 1200.0}],
+        "summary": {"days": 1, "main_net_total": 1200.0, "signal": "inflow_with_price_up"},
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "date_str": "20260604",
+        "output_dir": str(tmp_path),
+        "pillar_scores": {"valuation": 7, "technical": 6, "sentiment": 5, "fundamental": 6, "fundflow": 5},
+        "total_score": 5.8,
+        "quote": {"pe_ttm": 20},
+        "consensus": {},
+        "ind_fwd_pe": 25,
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": ""},
+        "keep_posts": [],
+        "fundflow_material_pack": pack,
+    })
+
+    result = skill.run(ctx)
+
+    sidecar_path = tmp_path / "测试股_20260604_fundflow_material.json"
+    assert sidecar_path.exists()
+    assert result.get("fundflow_material_path") == str(sidecar_path)
+    data = json.loads(sidecar_path.read_text(encoding="utf-8"))
+    assert data["schema"] == "fundflow_material_pack.v1"
+    assert data["summary"]["main_net_total"] == 1200.0
+
+
 def test_assembly_does_not_write_audit_when_disabled(tmp_path):
     skill = ReportAssemblySkill()
     ctx = SkillContext(input={
@@ -165,6 +196,51 @@ def test_header_uses_dynamic_data_sources():
     assert "新闻资讯" in header
     assert "实时行情/估值" in header
     assert "雪球网热门讨论" not in header
+
+
+def test_header_prefers_stock_config_industry_and_competitors():
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "圣邦股份",
+        "date_str": "20260604",
+        "stock_config": {
+            "industry": "测试行业",
+            "competitors": ["测试对手"],
+        },
+    })
+
+    header = skill._header(ctx)
+
+    assert "**所属赛道**: 测试行业" in header
+    assert "**可比公司**: 测试对手" in header
+    assert "模拟芯片/半导体" not in header
+    assert "思瑞浦" not in header
+
+
+def test_header_falls_back_to_constants_when_stock_config_missing():
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "圣邦股份",
+        "date_str": "20260604",
+    })
+
+    header = skill._header(ctx)
+
+    assert "**所属赛道**: 模拟芯片/半导体" in header
+    assert "**可比公司**: 思瑞浦、杰华特、纳芯微、艾为电子" in header
+
+
+def test_header_renders_dash_when_config_and_constants_missing():
+    skill = ReportAssemblySkill()
+    ctx = SkillContext(input={
+        "stock_name": "未知股票",
+        "date_str": "20260604",
+    })
+
+    header = skill._header(ctx)
+
+    assert "**所属赛道**: —" in header
+    assert "**可比公司**: —" in header
 
 
 def test_source_intake_evidence_renderer_order():

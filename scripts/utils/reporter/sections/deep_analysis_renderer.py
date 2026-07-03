@@ -4,13 +4,16 @@ import re
 from typing import Any, Dict, List
 
 try:
+    from ...curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
     from ...synthesis_credit import sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
 except ImportError:
     try:
+        from scripts.utils.curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
         from scripts.utils.synthesis_credit import sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
     except ImportError:
+        from utils.curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
         from utils.synthesis_credit import sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
 
@@ -48,7 +51,6 @@ CURATED_EXTERNAL_TOPIC_ALIASES = {
     "watch_variable": "risk_rumor_rebuttal",
     "dissent": "risk_rumor_rebuttal",
 }
-
 _CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
     "1225145344": "2026年第一季度报告",
     "1225106812": "2026年第一季度业绩预告",
@@ -199,94 +201,104 @@ class DeepAnalysisRenderer:
 
         # 4.1 产业逻辑与竞争格局
         industry_logic = synthesis.get("industry_logic", "")
-        if industry_logic:
-            lines.extend([
-                "### 4.1 产业逻辑与竞争格局",
-                "",
-                industry_logic,
-                "",
-            ])
-            used_refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", industry_logic))
-            if used_refs:
-                lines.append("**本节引用来源：**")
-                for ref_id in sorted(used_refs):
-                    meta = citations.get(ref_id, {})
-                    source = meta.get("source", "未知")
-                    author = meta.get("author", "")
-                    title_text = meta.get("title", "")
-                    line = f"- [^{ref_id}] {source}"
-                    if author:
-                        line += f" | 作者: {author}"
-                    if title_text:
-                        line += f" | 《{self._truncate_title(title_text, 40)}》"
-                    lines.append(line)
-                lines.append("")
+        lines.extend([
+            "### 4.1 产业逻辑与竞争格局",
+            "",
+            industry_logic
+            or "当前正式材料不足以形成可验证的产业逻辑与竞争格局判断；本节不使用泛行业材料补链条。",
+            "",
+        ])
+        used_refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", industry_logic))
+        if used_refs:
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                line = f"- [^{ref_id}] {source}"
+                if author:
+                    line += f" | 作者: {author}"
+                if title_text:
+                    line += f" | 《{self._truncate_title(title_text, 40)}》"
+                lines.append(line)
+            lines.append("")
 
         # 4.2 业绩路径与多空分歧
         fundamentals = synthesis.get("fundamentals", "")
         valuation_debate = synthesis.get("valuation_debate", "")
-        if fundamentals or valuation_debate:
-            lines.extend([
-                "### 4.2 业绩路径与多空分歧",
-                "",
-            ])
-            if fundamentals:
-                lines.append(fundamentals)
-                lines.append("")
-            if valuation_debate:
-                lines.append(valuation_debate)
-                lines.append("")
+        lines.extend([
+            "### 4.2 业绩路径与多空分歧",
+            "",
+        ])
+        if fundamentals:
+            lines.append(fundamentals)
+            lines.append("")
+        if valuation_debate:
+            lines.append(valuation_debate)
+            lines.append("")
+        if not fundamentals and not valuation_debate:
+            lines.append("当前正式材料不足以形成可验证的业绩路径或估值分歧判断；本节不使用外部观点补充财务结论。")
+            lines.append("")
 
-            used_refs = set()
-            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", fundamentals))
-            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", valuation_debate))
-            if used_refs:
-                lines.append("**本节引用来源：**")
-                for ref_id in sorted(used_refs):
-                    meta = citations.get(ref_id, {})
-                    source = meta.get("source", "未知")
-                    author = meta.get("author", "")
-                    title_text = meta.get("title", "")
-                    line = f"- [^{ref_id}] {source}"
-                    if author:
-                        line += f" | 作者: {author}"
-                    if title_text:
-                        line += f" | 《{self._truncate_title(title_text, 40)}》"
-                    lines.append(line)
-                lines.append("")
+        used_refs = set()
+        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", fundamentals))
+        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", valuation_debate))
+        if used_refs:
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                line = f"- [^{ref_id}] {source}"
+                if author:
+                    line += f" | 作者: {author}"
+                if title_text:
+                    line += f" | 《{self._truncate_title(title_text, 40)}》"
+                lines.append(line)
+            lines.append("")
 
         # 4.3 资金面与催化剂时间线
         funding = synthesis.get("funding_sentiment", "")
         events = synthesis.get("events_catalysts", "")
-        if funding or events:
-            lines.extend([
-                "### 4.3 资金面与催化剂时间线",
-                "",
-            ])
-            if funding:
-                lines.append(funding)
-                lines.append("")
-            if events:
-                lines.append(events)
-                lines.append("")
+        lines.extend([
+            "### 4.3 资金面与催化剂时间线",
+            "",
+        ])
+        if funding:
+            lines.append(funding)
+            lines.append("")
+        if events:
+            lines.append(events)
+            lines.append("")
+        if funding and not events:
+            lines.append("当前正式材料未形成可验证的催化剂时间线。")
+            lines.append("")
+        elif events and not funding:
+            lines.append("当前正式材料未提供足够资金面数据。")
+            lines.append("")
+        elif not funding and not events:
+            lines.append("当前正式材料未形成可验证的资金面或催化剂时间线；本节不使用泛行业新闻补链条。")
+            lines.append("")
 
-            used_refs = set()
-            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", funding))
-            used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", events))
-            if used_refs:
-                lines.append("**本节引用来源：**")
-                for ref_id in sorted(used_refs):
-                    meta = citations.get(ref_id, {})
-                    source = meta.get("source", "未知")
-                    author = meta.get("author", "")
-                    title_text = meta.get("title", "")
-                    line = f"- [^{ref_id}] {source}"
-                    if author:
-                        line += f" | 作者: {author}"
-                    if title_text:
-                        line += f" | 《{self._truncate_title(title_text, 40)}》"
-                    lines.append(line)
-                lines.append("")
+        used_refs = set()
+        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", funding))
+        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", events))
+        if used_refs:
+            lines.append("**本节引用来源：**")
+            for ref_id in sorted(used_refs):
+                meta = citations.get(ref_id, {})
+                source = meta.get("source", "未知")
+                author = meta.get("author", "")
+                title_text = meta.get("title", "")
+                line = f"- [^{ref_id}] {source}"
+                if author:
+                    line += f" | 作者: {author}"
+                if title_text:
+                    line += f" | 《{self._truncate_title(title_text, 40)}》"
+                lines.append(line)
+            lines.append("")
 
         curated_md = self._curated_external_addendum(curated_external_display, curated_citation_offset)
         if curated_md:
@@ -374,7 +386,11 @@ class DeepAnalysisRenderer:
         lines: List[str],
     ) -> str:
         paragraphs = curated_display.get("_curated_external_narrative_paragraphs") or []
-        used_refs = self._curated_external_used_refs_from_rows(paragraphs, citation_offset)
+        reasoning_cards = curated_display.get("_curated_external_reasoning_cards") or []
+        used_refs = self._curated_external_used_refs_from_rows(
+            list(paragraphs) + [card for card in reasoning_cards if isinstance(card, dict)],
+            citation_offset,
+        )
         shifted_citations = self._offset_citations(curated_display.get("citations", {}) or {}, citation_offset)
         ref_map, display_refs = self._curated_external_display_ref_map(shifted_citations, used_refs)
 
@@ -384,7 +400,7 @@ class DeepAnalysisRenderer:
             heading = str(paragraph.get("heading") or "").strip()
             text = str(paragraph.get("text") or "").strip()
             citation_refs = paragraph.get("citation_refs") or []
-            rendered = self._attach_refs_to_sentence(text, citation_refs)
+            rendered = attach_refs_to_sentence(text, citation_refs)
             rendered = self._offset_citation_markers(rendered, citation_offset)
             rendered = self._remap_citation_markers(rendered, ref_map)
             if heading:
@@ -393,6 +409,13 @@ class DeepAnalysisRenderer:
             if rendered:
                 lines.append(rendered)
                 lines.append("")
+
+        self._render_curated_external_reasoning_cards(
+            reasoning_cards,
+            citation_offset,
+            ref_map,
+            lines,
+        )
 
         if display_refs:
             lines.append("**本节引用来源：**")
@@ -411,6 +434,50 @@ class DeepAnalysisRenderer:
                     line += f" | {url}"
                 lines.append(line)
         return "\n".join(lines)
+
+    def _render_curated_external_reasoning_cards(
+        self,
+        cards: List[Any],
+        citation_offset: int,
+        ref_map: dict,
+        lines: List[str],
+    ) -> None:
+        cards = [card for card in cards or [] if isinstance(card, dict)]
+        if not cards:
+            return
+
+        lines.append("**观点卡片：**")
+        lines.append("")
+        for card in cards[:8]:
+            claim = str(card.get("claim") or "").strip()
+            refs = card.get("citation_refs") or []
+            claim_line = attach_refs_to_sentence(claim, refs) if claim else ""
+            claim_line = self._offset_citation_markers(claim_line, citation_offset)
+            claim_line = self._remap_citation_markers(claim_line, ref_map)
+            if claim_line:
+                lines.append(f"- **观点**：{claim_line}")
+
+            excerpt, _ = truncate_curated_source_excerpt(card.get("source_excerpt", ""))
+            if excerpt:
+                excerpt_line = attach_refs_to_sentence(excerpt, refs)
+                excerpt_line = self._offset_citation_markers(excerpt_line, citation_offset)
+                excerpt_line = self._remap_citation_markers(excerpt_line, ref_map)
+                lines.append(f"  - **原文片段**：{excerpt_line}")
+
+            rendered_fields = [
+                ("推理步骤", card.get("reasoning_steps")),
+                ("关键数字", card.get("numbers_used")),
+                ("关键假设", card.get("assumptions")),
+                ("反方约束", card.get("counterpoints")),
+            ]
+            for label, value in rendered_fields:
+                parts = [str(item).strip() for item in (value or []) if str(item).strip()]
+                if parts:
+                    lines.append(f"  - **{label}**：{'；'.join(parts[:4])}")
+            verification_need = str(card.get("verification_need") or "").strip()
+            if verification_need:
+                lines.append(f"  - **待验证项**：{verification_need}")
+        lines.append("")
 
     def _curated_external_grouped_addendum(
         self,
@@ -438,7 +505,7 @@ class DeepAnalysisRenderer:
                 heading = str(row.get("heading") or "").strip()
                 text = str(row.get("text") or "").strip()
                 citation_refs = row.get("citation_refs") or []
-                rendered = self._attach_refs_to_sentence(text, citation_refs)
+                rendered = attach_refs_to_sentence(text, citation_refs)
                 rendered = self._offset_citation_markers(rendered, citation_offset)
                 rendered = self._remap_citation_markers(rendered, ref_map)
                 if heading:
@@ -592,26 +659,6 @@ class DeepAnalysisRenderer:
         if any(token in lower_text for token in ("capex", "800g", "1.6t", "scale up", "scale out")):
             return "technology_route"
         return "other"
-
-    @staticmethod
-    def _attach_refs_to_sentence(text: str, refs: list) -> str:
-        unique_refs = []
-        seen = set()
-        for ref in refs:
-            if not str(ref).isdigit():
-                continue
-            ref_id = int(ref)
-            if ref_id in seen:
-                continue
-            seen.add(ref_id)
-            unique_refs.append(ref_id)
-        ref_text = "".join(f"[^{ref_id}]" for ref_id in unique_refs)
-        stripped = str(text or "").strip()
-        if not ref_text:
-            return stripped
-        if stripped.endswith(("。", "；", ";", "！", "？")):
-            return f"{stripped[:-1]}{ref_text}{stripped[-1]}"
-        return f"{stripped}{ref_text}"
 
     @staticmethod
     def _split_curated_observations(text: str) -> List[str]:

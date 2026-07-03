@@ -58,6 +58,70 @@ def _wind_daily_stale_reason(df_daily, today: date | None = None) -> str:
     return ""
 
 
+def _coerce_float(value, default: float = 0.0) -> float:
+    if value in (None, ""):
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _normalize_fund_flow_rows(rows) -> list[dict]:
+    if not isinstance(rows, list):
+        return []
+
+    normalized = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+
+        main_inflow = row.get("main_inflow")
+        if main_inflow is None:
+            main_inflow = row.get("main_in")
+        if main_inflow is None:
+            main_inflow = row.get("main_net")
+
+        source = row.get("source")
+        if not source:
+            source = "eastmoney_push2his" if "main_net" in row else "baidu_pae"
+
+        record = {
+            "date": row.get("date", ""),
+            "source": source,
+            "main_inflow": _coerce_float(main_inflow),
+            "main_outflow": _coerce_float(row.get("main_outflow")),
+        }
+        for key in (
+            "main_in",
+            "main_net",
+            "super_net_in",
+            "large_net_in",
+            "medium_net_in",
+            "small_net_in",
+            "super_big_net",
+            "big_net",
+            "mid_net",
+            "small_net",
+            "main_pct",
+            "change_pct",
+            "close",
+        ):
+            if key in row:
+                record[key] = _coerce_float(row.get(key))
+        normalized.append(record)
+
+    return normalized
+
+
+def _bridge_technical_fund_flow(stock_raw: dict, tech_data: dict) -> None:
+    if stock_raw.get("fundflow"):
+        return
+    fund_flow = _normalize_fund_flow_rows(tech_data.get("fund_flow"))
+    if fund_flow:
+        stock_raw["fundflow"] = fund_flow
+
+
 @skill(name="technical_fetching")
 def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
     """
@@ -99,7 +163,9 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
             indicators = tech_data.get("indicators", {})
             daily_data = _extract_daily_data(tech_data, indicators)
             stock_raw["technical"] = tech_data
+            _bridge_technical_fund_flow(stock_raw, tech_data)
             ctx.set("stock_raw", stock_raw)
+            ctx.set("fundflow", stock_raw.get("fundflow", []))
             ctx.set("technical", tech_data)
             ctx.set("price_target", tech_data.get("price_target"))
             ctx.set("daily_data", daily_data)

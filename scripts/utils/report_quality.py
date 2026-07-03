@@ -163,11 +163,13 @@ def check_report_file(path: str | Path) -> QualityResult:
     text = report_path.read_text(encoding="utf-8")
     manifest = _load_industry_relevance_manifest_sidecar(report_path)
     peer_material = _load_peer_comparison_material_sidecar(report_path)
+    fundflow_material = _load_fundflow_material_sidecar(report_path)
     return check_report_text(
         text,
         path=str(report_path),
         industry_relevance_manifest=manifest,
         peer_comparison_material=peer_material,
+        fundflow_material_pack=fundflow_material,
     )
 
 
@@ -176,6 +178,7 @@ def check_report_text(
     path: str = "<memory>",
     industry_relevance_manifest: dict | None = None,
     peer_comparison_material: dict | None = None,
+    fundflow_material_pack: dict | None = None,
 ) -> QualityResult:
     """Check report Markdown text and return structured issues."""
     issues: List[QualityIssue] = []
@@ -186,6 +189,13 @@ def check_report_text(
     issues.extend(_check_curated_external_inline_footnotes(text))
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
+    issues.extend(_check_fundflow_claims(text, fundflow_material_pack))
+    issues.extend(_check_deep_analysis_subsections(text))
+    issues.extend(_check_product_industry_mismatch(text))
+    issues.extend(_check_financial_fact_unit_sanity(text))
+    issues.extend(_check_financial_missing_contradictions(text))
+    issues.extend(_check_header_config_missing(text))
+    issues.extend(_check_evidence_depth_warnings(text))
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
@@ -212,6 +222,17 @@ def _normalize(text: str) -> str:
 
 def _load_industry_relevance_manifest_sidecar(report_path: Path) -> dict | None:
     sidecar = report_path.with_name(f"{report_path.stem}_industry_relevance_manifest.json")
+    if not sidecar.exists():
+        return None
+    try:
+        payload = json.loads(sidecar.read_text(encoding="utf-8"))
+    except Exception:
+        return None
+    return payload if isinstance(payload, dict) else None
+
+
+def _load_fundflow_material_sidecar(report_path: Path) -> dict | None:
+    sidecar = report_path.with_name(f"{report_path.stem}_fundflow_material.json")
     if not sidecar.exists():
         return None
     try:
@@ -430,6 +451,34 @@ def _extract_deep_analysis_subsection(text: str, section_number: str) -> str:
     return match.group(1) if match else ""
 
 
+def _check_fundflow_claims(text: str, fundflow_material_pack: dict | None) -> Iterable[QualityIssue]:
+    section43 = _extract_deep_analysis_subsection(text, "4.3")
+    if not section43:
+        return
+    has_directional_amount = re.search(
+        r"(?:主力|超大单|大单|小单)[^。\n|]{0,30}(?:净流入|净流出|流入|流出)[^。\n|]{0,20}\d+(?:\.\d+)?万"
+        r"|\d+(?:\.\d+)?万[^。\n|]{0,30}(?:主力|超大单|大单|小单)[^。\n|]{0,20}(?:净流入|净流出|流入|流出)",
+        section43,
+    )
+    has_inferred_fundflow_claim = re.search(
+        r"(?:主力资金|资金面|资金流向|主动买盘|买盘|卖盘)[^\n]{0,80}"
+        r"(?:压制|支撑|带动|推升|走弱|改善|流入|流出|净流入|净流出)"
+        r"|(?:营收|收入|利润|毛利率|订单)[^\n]{0,100}(?:主动买盘|买盘|卖盘|资金面|主力资金)",
+        section43,
+    )
+    if not has_directional_amount and not has_inferred_fundflow_claim:
+        return
+    rows = (fundflow_material_pack or {}).get("rows") or []
+    if rows:
+        return
+    yield QualityIssue(
+        code="fundflow_claim_without_fundflow_pack",
+        severity="error",
+        message="4.3 出现资金流向/买卖盘判断，但缺少 fundflow_material_pack sidecar 支撑。",
+        evidence="4.3 fund-flow claim without deterministic pack",
+    )
+
+
 def _extract_score(text: str, patterns: list[str]) -> float | None:
     for pattern in patterns:
         match = re.search(pattern, text, flags=re.IGNORECASE)
@@ -451,6 +500,260 @@ def _extract_table_score(text: str, labels: list[str]) -> float | None:
             except (TypeError, ValueError):
                 return None
     return None
+
+
+# ---------------------------------------------------------------------------
+# Fudan trial pipeline quality gates
+# ---------------------------------------------------------------------------
+
+
+def _check_deep_analysis_subsections(text: str) -> Iterable[QualityIssue]:
+    if "## 四、深度分析" not in text:
+        return
+    missing = []
+    for section in ("4.1", "4.2", "4.3"):
+        if not re.search(rf"(?m)^###\s*{re.escape(section)}\s+", text):
+            missing.append(section)
+    if missing:
+        yield QualityIssue(
+            code="missing_deep_analysis_subsection",
+            severity="error",
+            message="深度分析缺少必备 4.1/4.2/4.3 子章节，renderer 不应静默省略。",
+            evidence="missing=" + ",".join(missing),
+        )
+
+
+def _check_product_industry_mismatch(text: str) -> Iterable[QualityIssue]:
+    sections_text = "\n".join([
+        _extract_deep_analysis_subsection(text, "4.1"),
+        _extract_deep_analysis_subsection(text, "4.2"),
+    ])
+    normalized = _normalize(sections_text)
+    if not normalized:
+        return
+
+    unrelated_theme = "MLCC" in normalized.upper()
+    negated_relation = any(
+        phrase in normalized
+        for phrase in ("不直接涉及", "无直接关系", "不属于", "不同于", "并非")
+    )
+    if unrelated_theme and negated_relation:
+        yield QualityIssue(
+            code="product_industry_mismatch",
+            severity="error",
+            message="4.1/4.2 将与公司无直接关系的行业主题写成公司逻辑，存在产品/行业错配。",
+            evidence="MLCC with negated direct relation",
+        )
+
+
+def _check_financial_fact_unit_sanity(text: str) -> Iterable[QualityIssue]:
+    normalized = _normalize(text)
+    has_small_core_amount = re.search(
+        r"(营业收入|归母净利润|净利润|经营现金流[^|。\n]*)[^。\n|]*\|?[^。\n|]{0,20}\d+(?:\.\d+)?万元",
+        normalized,
+    )
+    has_yi_amount = re.search(
+        r"(营业收入|归母净利润|净利润|经营现金流[^。,\n]*)[^。,\n]{0,20}\d+(?:\.\d+)?亿",
+        normalized,
+    )
+    if has_small_core_amount and has_yi_amount:
+        yield QualityIssue(
+            code="financial_fact_unit_conflict",
+            severity="error",
+            message="核心财务事实出现万元级金额，但同报告存在亿元级同类指标，疑似结构化年报单位归一化错误。",
+            evidence=has_small_core_amount.group(0),
+        )
+
+
+def _check_financial_missing_contradictions(text: str) -> Iterable[QualityIssue]:
+    section42 = _extract_deep_analysis_subsection(text, "4.2")
+    if not section42:
+        return
+
+    normalized_report = _normalize(text)
+    normalized_42 = _normalize(section42)
+    checks = [
+        (
+            "revenue",
+            re.search(r"营业收入[^。,\n]{0,20}\d+(?:\.\d+)?亿", normalized_report),
+            re.search(r"未提供[^。,\n]*(?:营收|营业收入)|(?:营收|营业收入)[^。,\n]*未提供", normalized_42),
+        ),
+        (
+            "profit",
+            re.search(r"(?:归母净利润|净利润)[^。,\n]{0,20}\d+(?:\.\d+)?亿", normalized_report),
+            re.search(r"未提供[^。,\n]*(?:利润|净利润)|(?:利润|净利润)[^。,\n]*未提供", normalized_42),
+        ),
+    ]
+    for metric, has_fact, has_missing_text in checks:
+        if has_fact and has_missing_text:
+            yield QualityIssue(
+                code="financial_data_missing_contradiction",
+                severity="error",
+                message="4.2 声称财务指标未提供，但报告已有同一指标的正式财务数据。",
+                evidence=f"metric={metric}; missing_text={has_missing_text.group(0)}",
+            )
+            return
+
+
+def _check_header_config_missing(text: str) -> Iterable[QualityIssue]:
+    normalized = _normalize(text)
+    industry_missing = "**所属赛道**:—" in normalized or "**所属赛道**：—" in normalized
+    competitors_missing = "**可比公司**:—" in normalized or "**可比公司**：—" in normalized
+    if industry_missing or competitors_missing:
+        yield QualityIssue(
+            code="header_config_missing",
+            severity="warning",
+            message="报告头部行业或可比公司仍为空，需检查 stock_config 与常量 fallback 是否接入。",
+        )
+
+
+def _check_evidence_depth_warnings(text: str) -> Iterable[QualityIssue]:
+    yield from _check_section_too_generic(text)
+    yield from _check_vague_supply_chain_position(text)
+    yield from _check_fundamentals_repeats_core_facts(text)
+    yield from _check_external_viewpoint_overcompressed(text)
+
+
+_GENERIC_TEMPLATE_TERMS = (
+    "需关注",
+    "验证变量",
+    "供应链位置",
+    "产业链位置",
+    "市场情绪",
+    "后续跟踪",
+    "有望受益",
+    "结构性机会",
+    "景气度",
+    "催化剂",
+    "不确定性",
+)
+
+_OPERATING_VARIABLE_TERMS = (
+    "供应商",
+    "客户",
+    "产能",
+    "供需",
+    "库存",
+    "存货",
+    "订单",
+    "价格",
+    "交期",
+    "采购",
+    "备货",
+    "交付",
+    "产量",
+)
+
+_EXPLANATION_TERMS = (
+    "原因",
+    "主要系",
+    "主要由于",
+    "受",
+    "影响",
+    "公司解释",
+    "管理层",
+    "变动原因",
+    "所致",
+)
+
+
+def _check_section_too_generic(text: str) -> Iterable[QualityIssue]:
+    for section_id in ("4.1", "4.2", "4.3"):
+        section = _extract_deep_analysis_subsection(text, section_id)
+        if not section:
+            continue
+        normalized = _normalize(section)
+        hits = [term for term in _GENERIC_TEMPLATE_TERMS if term in normalized]
+        if len(hits) < 2:
+            continue
+        if _has_specific_content(section):
+            continue
+        yield QualityIssue(
+            code="section_too_generic",
+            severity="warning",
+            message=f"{section_id} 使用模板化变量词但缺少产品、数字、时间、公司或引用支撑。",
+            evidence="terms=" + ",".join(hits[:4]),
+        )
+
+
+def _has_specific_content(section: str) -> bool:
+    if re.search(r"\d+(?:\.\d+)?", section):
+        return True
+    if re.search(r"20\d{2}|Q[1-4]|[一二三四]季度|\d+月|\d+日", section, flags=re.IGNORECASE):
+        return True
+    if re.search(r"\[\^\d+\]", section):
+        return True
+    if re.search(r"(?:FPGA|FPAI|MCU|EEPROM|CPO|800G|1\.6T|CIS|SoC|NPU|NAND|Flash|DRAM|AI芯片|光模块)", section, flags=re.IGNORECASE):
+        return True
+    if re.search(r"[\u4e00-\u9fff]{2,}(?:股份|科技|电子|微电|创新|国微|光电|智控|生物|智能)", section):
+        return True
+    return False
+
+
+def _check_vague_supply_chain_position(text: str) -> Iterable[QualityIssue]:
+    section41 = _extract_deep_analysis_subsection(text, "4.1")
+    if not section41:
+        return
+    normalized = _normalize(section41)
+    has_supply_position = any(
+        phrase in normalized
+        for phrase in ("供应链位置", "产业链位置", "产业链地位", "供应链地位")
+    )
+    if not has_supply_position:
+        return
+    if any(term in normalized for term in _OPERATING_VARIABLE_TERMS):
+        return
+    yield QualityIssue(
+        code="vague_supply_chain_position",
+        severity="warning",
+        message="4.1 供应链/产业链位置表述缺少供应商、客户、产能、供需、库存、订单、价格或交期变量。",
+        evidence="supply-chain position without operating variable",
+    )
+
+
+def _check_fundamentals_repeats_core_facts(text: str) -> Iterable[QualityIssue]:
+    section42 = _extract_deep_analysis_subsection(text, "4.2")
+    if not section42:
+        return
+    normalized = _normalize(section42)
+    metric_hits = 0
+    for pattern in (
+        r"营业收入[^。；\n|]{0,30}\d+(?:\.\d+)?亿",
+        r"(?:归母净利润|净利润)[^。；\n|]{0,30}\d+(?:\.\d+)?亿",
+        r"毛利率[^。；\n|]{0,30}\d+(?:\.\d+)?%",
+    ):
+        if re.search(pattern, normalized):
+            metric_hits += 1
+    if metric_hits < 2:
+        return
+    if any(term in normalized for term in _EXPLANATION_TERMS):
+        return
+    yield QualityIssue(
+        code="fundamentals_repeats_core_facts",
+        severity="warning",
+        message="4.2 重复核心财务数字但缺少变化原因、公司解释或管理层解释。",
+        evidence=f"metric_hits={metric_hits}",
+    )
+
+
+def _check_external_viewpoint_overcompressed(text: str) -> Iterable[QualityIssue]:
+    section44 = _extract_deep_analysis_subsection(text, "4.4")
+    if not section44:
+        return
+    if not re.search(r"雪球|知乎|微信|精选外部|外部材料|外部观点", section44):
+        return
+    has_reasoning_card = any(
+        marker in section44
+        for marker in ("**观点**：", "**推理步骤**：", "**关键数字**：", "**关键假设**：", "**反方约束**：")
+    )
+    if has_reasoning_card:
+        return
+    yield QualityIssue(
+        code="external_viewpoint_overcompressed",
+        severity="warning",
+        message="4.4 有外部观点材料但未展示观点卡片、推理步骤、关键数字或假设，可能过度压缩。",
+        evidence="4.4 external viewpoint without reasoning card markers",
+    )
 
 
 # ---------------------------------------------------------------------------

@@ -140,6 +140,32 @@
       "半导体",
       "PMIC"
     ],
+    "industry": "模拟芯片 / 电源管理 / 信号链",
+    "competitors": [
+      "思瑞浦",
+      "杰华特",
+      "纳芯微",
+      "艾为电子"
+    ],
+    "peer_codes": {
+      "思瑞浦": "688536",
+      "杰华特": "688141",
+      "纳芯微": "688052",
+      "艾为电子": "688798"
+    },
+    "product_exposure_terms": [
+      "模拟芯片",
+      "模拟IC",
+      "电源管理",
+      "电源管理芯片",
+      "PMIC",
+      "信号链",
+      "运放",
+      "ADC",
+      "DAC",
+      "接口芯片",
+      "车规模拟芯片"
+    ],
     "source_intake": {
       "enabled": true,
       "canonical_synthesis_source_policy": "formal_first",
@@ -256,6 +282,36 @@
       "1.6T",
       "AI算力",
       "硅光"
+    ],
+    "industry": "光通信 / 光模块 / CPO / 硅光",
+    "competitors": [
+      "新易盛",
+      "天孚通信",
+      "光迅科技",
+      "剑桥科技",
+      "华工科技"
+    ],
+    "peer_codes": {
+      "新易盛": "300502",
+      "天孚通信": "300394",
+      "光迅科技": "002281",
+      "剑桥科技": "603083",
+      "华工科技": "000988"
+    },
+    "product_exposure_terms": [
+      "CPO",
+      "光模块",
+      "光通信",
+      "硅光",
+      "数通",
+      "800G",
+      "1.6T",
+      "LPO",
+      "NPO",
+      "XPO",
+      "光引擎",
+      "光连接",
+      "数据中心光模块"
     ],
     "source_intake": {
       "enabled": true,
@@ -391,6 +447,23 @@
       "产品线重叠",
       "毛利率与研发投入",
       "行业景气暴露"
+    ],
+    "product_exposure_terms": [
+      "FPGA",
+      "FPAI",
+      "RF-FPGA",
+      "RFSoC",
+      "PSoC",
+      "MCU",
+      "智能电表芯片",
+      "车规MCU",
+      "安全与识别芯片",
+      "RFID",
+      "非挥发存储器",
+      "非易失存储",
+      "EEPROM",
+      "NOR Flash",
+      "SLC NAND"
     ],
     "source_intake": {
       "enabled": true,

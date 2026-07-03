@@ -16,6 +16,8 @@ try:
         format_topic_ownership_contract,
     )
     from .source_adapter import SynthesisItem
+    from .source_direct_relevance import filter_items_for_canonical_theme
+    from .fundflow_material import format_fundflow_material_pack
     from .synthesis_credit import (
         credit_usage_rules_text,
         format_synthesis_source_line,
@@ -28,6 +30,8 @@ except ImportError:
         format_topic_ownership_contract,
     )
     from source_adapter import SynthesisItem
+    from source_direct_relevance import filter_items_for_canonical_theme
+    from fundflow_material import format_fundflow_material_pack
     from synthesis_credit import (
         credit_usage_rules_text,
         format_synthesis_source_line,
@@ -95,6 +99,7 @@ THEME_PROMPT_PREFIX = {
         "2. 如有3个以上资金变量，优先使用 Markdown 表格：| 资金变量 | 当前证据 | 对短期交易结构的含义 | 需跟踪 | 来源 |。\n"
         "3. 不要重复展开4.1的技术路线和产业背景；不要重复4.2的业绩路径，除非一句话解释资金反应的原因。\n"
         "4. 最后只写资金面对短期波动的影响判断，不写买卖建议。\n"
+        "5. 如果缺少资金流向、融资余额、持仓结构或交易情绪数据，只能写资金面数据缺失；不得用营收、利润、毛利率等财务数据推测主力资金、买盘、卖盘或资金流入流出。\n"
         f"{COMMON_PROSE_CONTRACT}"
     ),
     "events_catalysts": (
@@ -180,6 +185,10 @@ class KnowledgeSynthesizer:
         items: List[SynthesisItem] = all_data.get("items", [])
         claim_verification_context = all_data.get("claim_verification_context")
         peer_comparison_material = all_data.get("peer_comparison_material")
+        formal_financial_fact_pack = all_data.get("formal_financial_fact_pack")
+        formal_financial_explanation_pack = all_data.get("formal_financial_explanation_pack")
+        fundflow_material_pack = all_data.get("fundflow_material_pack")
+        stock_config = all_data.get("stock_config") or {}
         if not items:
             logger.warning(f"[{stock_name}] 无内容可供合成")
             return {k: "" for k in THEMES} | {"citations": {}}
@@ -190,7 +199,7 @@ class KnowledgeSynthesizer:
 
         result = {}
         for theme_key, (theme_title, min_items) in THEMES.items():
-            theme_items = self._filter_items_for_theme(theme_key, items)
+            theme_items = self._filter_items_for_theme(theme_key, items, stock_name, stock_config)
             if len(theme_items) < min_items:
                 logger.info(f"[{stock_name}] {theme_title}: 信息不足 ({len(theme_items)} < {min_items})，跳过合成")
                 result[theme_key] = ""
@@ -210,6 +219,10 @@ class KnowledgeSynthesizer:
                     stock_name, theme_key, theme_items,
                     previous_narratives, claim_verification_context,
                     peer_comparison_material,
+                    stock_config,
+                    formal_financial_fact_pack,
+                    formal_financial_explanation_pack,
+                    fundflow_material_pack,
                 )
                 result[theme_key] = narrative
                 # 合并引用（全局去重）
@@ -242,12 +255,20 @@ class KnowledgeSynthesizer:
         previous_narratives: Dict[str, str] = None,
         claim_verification_context: Dict[str, Any] = None,
         peer_comparison_material: Dict[str, Any] = None,
+        stock_config: Dict[str, Any] = None,
+        formal_financial_fact_pack: Dict[str, Any] = None,
+        formal_financial_explanation_pack: Dict[str, Any] = None,
+        fundflow_material_pack: Dict[str, Any] = None,
     ) -> Tuple[str, Dict[int, Dict]]:
         """合成单个主题，返回 (叙事文本, 该主题使用的引用字典)"""
         prompt = self._build_prompt(
             stock_name, theme_key, items,
             previous_narratives, claim_verification_context,
             peer_comparison_material,
+            stock_config,
+            formal_financial_fact_pack,
+            formal_financial_explanation_pack,
+            fundflow_material_pack,
         )
         response_text = self._call_llm(prompt)
         return self._parse_with_citations(response_text)
@@ -260,6 +281,10 @@ class KnowledgeSynthesizer:
         previous_narratives: Dict[str, str] = None,
         claim_verification_context: Dict[str, Any] = None,
         peer_comparison_material: Dict[str, Any] = None,
+        stock_config: Dict[str, Any] = None,
+        formal_financial_fact_pack: Dict[str, Any] = None,
+        formal_financial_explanation_pack: Dict[str, Any] = None,
+        fundflow_material_pack: Dict[str, Any] = None,
     ) -> str:
         """为特定主题构建 LLM prompt。"""
         prefix_template = THEME_PROMPT_PREFIX.get(theme_key, THEMES["industry_logic"][0])
@@ -269,7 +294,7 @@ class KnowledgeSynthesizer:
             prefix = prefix_template
 
         source_lines = []
-        theme_items = self._filter_items_for_theme(theme_key, items)
+        theme_items = self._filter_items_for_theme(theme_key, items, stock_name, stock_config)
         for i, item in enumerate(theme_items):
             source_lines.append(format_synthesis_source_line(i + 1, item))
 
@@ -287,6 +312,23 @@ class KnowledgeSynthesizer:
             if peer_appendix:
                 prompt += "\n\n---\n\n" + peer_appendix
 
+        if formal_financial_fact_pack and theme_key == "fundamentals":
+            financial_appendix = self._format_formal_financial_fact_pack(formal_financial_fact_pack)
+            if financial_appendix:
+                prompt += "\n\n---\n\n" + financial_appendix
+
+        if formal_financial_explanation_pack and theme_key == "fundamentals":
+            explanation_appendix = self._format_formal_financial_explanation_pack(
+                formal_financial_explanation_pack
+            )
+            if explanation_appendix:
+                prompt += "\n\n---\n\n" + explanation_appendix
+
+        if fundflow_material_pack and theme_key == "funding_sentiment":
+            fundflow_appendix = format_fundflow_material_pack(fundflow_material_pack)
+            if fundflow_appendix:
+                prompt += "\n\n---\n\n" + fundflow_appendix
+
         # Append optional claim verification context after numbered sources.
         if claim_verification_context:
             appendix = self._format_claim_verification_context(claim_verification_context)
@@ -301,6 +343,65 @@ class KnowledgeSynthesizer:
                 prompt += "\n\n---\n\n" + ledger + "\n"
 
         return prompt
+
+    @staticmethod
+    def _format_formal_financial_fact_pack(fact_pack: Dict[str, Any]) -> str:
+        facts = [
+            fact for fact in (fact_pack.get("facts") or [])
+            if isinstance(fact, dict) and fact.get("metric") and fact.get("value")
+        ]
+        if not facts:
+            return ""
+
+        lines = [
+            "正式财务事实包（仅供4.2使用，非新增引用）",
+            "",
+            "使用规则：",
+            "- 这些数字来自公告/年报结构化事实，可用于修正 4.2 的营收、利润、现金流基础表述。",
+            "- 不得为本附录生成新的 [^n] 引用编号；引用仍使用正文信息来源中的公告/年报来源。",
+            "- 若本附录已有营业收入或归母净利润，不得写“未提供营收/利润数据”。",
+            "- 订单、客户、费用率、指引等未在本附录出现的指标，可以保持“未披露/未提供”。",
+            "",
+        ]
+        for fact in facts[:8]:
+            metric = str(fact.get("metric") or "")
+            value = str(fact.get("value") or "")
+            period = str(fact.get("period") or "")
+            source = str(fact.get("source") or "")
+            suffix = "，".join(part for part in (period, source) if part)
+            lines.append(f"- {metric}: {value}" + (f"（{suffix}）" if suffix else ""))
+        return "\n".join(lines)
+
+    @staticmethod
+    def _format_formal_financial_explanation_pack(pack: Dict[str, Any]) -> str:
+        rows = [
+            row for row in (pack.get("rows") or [])
+            if isinstance(row, dict) and row.get("metric") and row.get("excerpt")
+        ]
+        if not rows:
+            return ""
+
+        lines = [
+            "正式经营解释材料包（仅供4.2使用，非新增引用）",
+            "",
+            "使用规则：",
+            "- 这些片段来自年报/季报/公告原文，用于解释财务指标变化原因。",
+            "- 不得重复核心事实基座数字成表；优先引用解释片段说明收入、利润、费用、客户或经营计划变化原因。",
+            "- 不得为本附录生成新的 [^n] 引用编号；引用仍使用正文信息来源中的公告/年报来源。",
+            "- 若本附录已有订单客户/经营计划片段，不得写“未提供订单/客户/指引”。",
+            "",
+        ]
+        for row in rows[:8]:
+            metric = str(row.get("metric") or "")
+            topic = str(row.get("topic") or "")
+            excerpt = str(row.get("excerpt") or "")
+            source = str(row.get("source_doc") or row.get("source_ref") or "")
+            confidence = row.get("confidence", "")
+            suffix_parts = [part for part in (source, f"confidence={confidence}" if confidence != "" else "") if part]
+            suffix = f"（{'，'.join(suffix_parts)}）" if suffix_parts else ""
+            topic_label = f"/{topic}" if topic else ""
+            lines.append(f"- {metric}{topic_label}: {excerpt}{suffix}")
+        return "\n".join(lines)
 
     @staticmethod
     def _format_peer_appendix(peer_comparison_material: Dict[str, Any], theme_key: str) -> str:
@@ -370,13 +471,23 @@ class KnowledgeSynthesizer:
         return "\n".join(lines)
 
     @staticmethod
-    def _filter_items_for_theme(theme_key: str, items: List[SynthesisItem]) -> List[SynthesisItem]:
+    def _filter_items_for_theme(
+        theme_key: str,
+        items: List[SynthesisItem],
+        stock_name: str = "",
+        stock_config: Dict[str, Any] = None,
+    ) -> List[SynthesisItem]:
         """Apply deterministic section eligibility before LLM prompt construction."""
+        if stock_config and theme_key in {"industry_logic", "fundamentals", "valuation_debate"}:
+            return filter_items_for_canonical_theme(theme_key, items, stock_name, stock_config)
+
         if theme_key not in {"funding_sentiment", "events_catalysts"}:
             return items
 
         filtered: List[SynthesisItem] = []
         for item in items:
+            if theme_key == "funding_sentiment" and not KnowledgeSynthesizer._is_funding_sentiment_item(item):
+                continue
             extra = item.extra or {}
             allowed_sections = extra.get("allowed_sections")
             is_industry_news = (
@@ -392,6 +503,18 @@ class KnowledgeSynthesizer:
                 continue
             filtered.append(item)
         return filtered
+
+    @staticmethod
+    def _is_funding_sentiment_item(item: SynthesisItem) -> bool:
+        """Only allow actual funding/position/sentiment materials into 4.3 funding prompt."""
+        if item.source_platform == "资金流向":
+            return True
+        text = f"{item.title or ''} {item.content or ''} {item.author or ''}"
+        return bool(re.search(
+            r"主力资金|资金流向|净流入|净流出|融资余额|融资买入|融资融券|融券|北向|沪股通|深股通|"
+            r"机构持仓|持仓结构|回购|增持|减持|主动买盘|买盘|卖盘|成交额|成交量|换手率|龙虎榜|大宗交易|股东人数",
+            text,
+        ))
 
     def _format_claim_verification_context(self, context: Dict[str, Any]) -> str:
         """Render a guarded, non-citable claim verification appendix for prompts."""

@@ -89,6 +89,55 @@ def test_build_viewpoint_narrative_from_fake_llm_paragraphs():
     assert "不参与评分、风险评分或最终建议" in result["preview_markdown"]
 
 
+def test_build_viewpoint_narrative_preserves_reasoning_cards_with_bounded_excerpt():
+    claims = [
+        _claim(
+            "c1",
+            "外部观点认为A股估值处于乐观情景上沿，需跟踪盈利修复假设。",
+            "复旦微电估值分析",
+        )
+    ]
+    long_excerpt = "估值原文片段" * 60
+
+    def composer(_claims, _baseline, _stock):
+        return {
+            "paragraphs": [
+                {
+                    "heading": "估值分歧",
+                    "text": "外部材料提示A股估值处于乐观情景上沿，需跟踪盈利修复假设。",
+                    "claim_refs": ["c1"],
+                }
+            ],
+            "reasoning_cards": [
+                {
+                    "claim_id": "c1",
+                    "display_topic": "valuation_debate",
+                    "claim": "外部观点认为A股估值处于乐观情景上沿",
+                    "source_excerpt": long_excerpt,
+                    "reasoning_steps": ["用同行盈利作参照", "用PE和PS交叉验证"],
+                    "numbers_used": ["375-420亿", "46-52元"],
+                    "assumptions": ["2026净利修复"],
+                    "counterpoints": ["订单恢复不及预期"],
+                    "verification_need": "跟踪半年报",
+                }
+            ],
+        }
+
+    result = build_viewpoint_narrative(
+        _digest(claims),
+        "baseline synthesis",
+        composer=composer,
+        stock_name="测试股",
+    )
+
+    assert result["status"] == "ok"
+    card = result["reasoning_cards"][0]
+    assert card["citation_refs"] == [1]
+    assert len(card["source_excerpt"]) <= 200
+    assert card["excerpt_truncated"] is True
+    assert card["numbers_used"] == ["375-420亿", "46-52元"]
+
+
 def test_build_viewpoint_narrative_rejects_unresolved_claim_ref():
     claims = [_claim("c1", "市场传言800G交付计划下调。")]
 

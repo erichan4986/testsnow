@@ -149,6 +149,9 @@ def test_fudan_microelectronics_config_present_and_wired():
     assert "紫光国微" in stock["competitors"]
     assert stock["peer_codes"]["紫光国微"] == "002049"
     assert "产品线重叠" in stock["peer_dimensions"]
+    assert "FPGA" in stock["product_exposure_terms"]
+    assert "EEPROM" in stock["product_exposure_terms"]
+    assert "MLCC" not in stock["product_exposure_terms"]
 
     source_intake = stock["source_intake"]
     assert source_intake["enabled"] is True
@@ -164,6 +167,26 @@ def test_fudan_microelectronics_config_present_and_wired():
     narrative_cfg = source_intake["curated_external_viewpoint_narrative_synthesis_display"]
     assert narrative_cfg["enabled"] is True
     assert "fudan_20260702.json" in narrative_cfg["narrative_json"]
+
+
+def test_pilot_stocks_have_direct_relevance_config():
+    config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
+    stocks = json.loads(config_path.read_text(encoding="utf-8"))
+    by_name = {stock.get("name"): stock for stock in stocks}
+
+    zhongji = by_name["中际旭创"]
+    assert "光模块" in zhongji["industry"]
+    assert "新易盛" in zhongji["competitors"]
+    assert zhongji["peer_codes"]["新易盛"] == "300502"
+    assert "光模块" in zhongji["product_exposure_terms"]
+    assert "CPO" in zhongji["product_exposure_terms"]
+
+    shengbang = by_name["圣邦股份"]
+    assert "模拟芯片" in shengbang["industry"]
+    assert "思瑞浦" in shengbang["competitors"]
+    assert shengbang["peer_codes"]["思瑞浦"] == "688536"
+    assert "模拟芯片" in shengbang["product_exposure_terms"]
+    assert "电源管理芯片" in shengbang["product_exposure_terms"]
 
 
 def test_source_intake_enabled_allows_empty_community_posts(monkeypatch):

@@ -57,7 +57,7 @@ def classify_industry_news_relevance(
             return _result(
                 relevance_class="industry_chain_relevant",
                 confidence=confidence,
-                allowed_sections=["4.1", "4.3"],
+                allowed_sections=["4.1"],
                 chain=best_chain,
                 rendering_guardrails=_guardrails_for_confidence(confidence),
             )

@@ -67,6 +67,7 @@ class ReportAssemblySkill(BaseSkill):
         self._persist_industry_relevance_manifest(ctx, output_dir, stock_name, date_str)
         self._persist_agent_reach_audit(ctx, output_dir, stock_name, date_str)
         self._persist_peer_comparison_material(ctx, output_dir, stock_name, date_str)
+        self._persist_fundflow_material(ctx, output_dir, stock_name, date_str)
         return ctx
 
     def _persist_industry_relevance_manifest(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
@@ -125,12 +126,37 @@ class ReportAssemblySkill(BaseSkill):
         except Exception as e:
             logger.warning(f"Peer comparison material persistence failed: {e}")
 
+    def _persist_fundflow_material(self, ctx: SkillContext, output_dir: str, stock_name: str, date_str: str) -> None:
+        """Persist deterministic fund-flow material sidecar for audit checks."""
+        material = ctx.get("fundflow_material_pack")
+        if not isinstance(material, dict):
+            return
+        rows = material.get("rows") or []
+        if not rows:
+            return
+        try:
+            material_path = Path(output_dir) / f"{stock_name}_{date_str}_fundflow_material.json"
+            material_path.write_text(
+                json.dumps(material, ensure_ascii=False, indent=2, default=str),
+                encoding="utf-8",
+            )
+            ctx.set("fundflow_material_path", str(material_path))
+            logger.info(f"Fund-flow material persisted: {material_path}")
+        except Exception as e:
+            logger.warning(f"Fund-flow material persistence failed: {e}")
+
     def _header(self, ctx: SkillContext) -> str:
         stock_name = ctx.get("stock_name", "")
         date_str = ctx.get("date_str", "")
         date_display = f"{date_str[:4]}年{date_str[4:6]}月{date_str[6:]}日" if len(date_str) == 8 else date_str
-        industry = INDUSTRY_MAP.get(stock_name, "—")
-        competitors = "、".join(COMPETITOR_MAP.get(stock_name, [])) or "—"
+        stock_config = ctx.get("stock_config", {}) or {}
+        industry = stock_config.get("industry") or INDUSTRY_MAP.get(stock_name, "—")
+        configured_competitors = stock_config.get("competitors")
+        if isinstance(configured_competitors, list) and configured_competitors:
+            competitor_names = configured_competitors
+        else:
+            competitor_names = COMPETITOR_MAP.get(stock_name, [])
+        competitors = "、".join(str(name) for name in competitor_names if name) or "—"
         data_sources = self._data_sources(ctx)
         return HEADER_TEMPLATE.format(
             stock_name=stock_name,

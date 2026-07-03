@@ -55,6 +55,282 @@ def test_synthesis_skill_disabled_claim_verification_does_not_call_builder():
     assert ctx.output.get("claim_verification_status") != "ok"
 
 
+def test_synthesis_skill_passes_stock_config_to_synthesizer():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    stock_config = {
+        "product_exposure_terms": ["FPGA", "MCU"],
+        "competitors": ["紫光国微"],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "stock_config": stock_config,
+        "stock_raw": {
+            "reports": [{"title": "FPGA 行业研究", "content": "高可靠 FPGA 需求", "institution": "测试证券"}],
+            "announcements": [{"title": "一季报", "content": "营收增长", "date": "2026-04-30"}],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert fake.calls
+    _, all_data = fake.calls[0]
+    assert all_data["stock_config"] == stock_config
+
+
+def test_synthesis_skill_passes_formal_financial_fact_pack_to_synthesizer():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    filing_core_facts = [
+        {
+            "fact": "营业收入",
+            "data": "39.82亿元",
+            "source_labels": ["2025年annual"],
+            "evidence_type": "periodic_report_filing_fact",
+        },
+        {
+            "fact": "归母净利润",
+            "data": "2.32亿元",
+            "source_labels": ["2025年annual"],
+            "evidence_type": "periodic_report_filing_fact",
+        },
+    ]
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "periodic_report_filing_core_facts": filing_core_facts,
+        "stock_raw": {
+            "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    _, all_data = fake.calls[0]
+    assert all_data["formal_financial_fact_pack"]["facts"][0]["metric"] == "营业收入"
+    assert all_data["formal_financial_fact_pack"]["facts"][0]["value"] == "39.82亿元"
+    assert all_data["formal_financial_fact_pack"]["facts"][1]["metric"] == "归母净利润"
+
+
+def test_synthesis_skill_passes_formal_financial_explanation_pack_to_synthesizer():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    explanation_pack = {
+        "schema": "formal_financial_explanation_pack.v1",
+        "rows": [
+            {
+                "topic": "revenue_change",
+                "metric": "营业收入",
+                "excerpt": "营业收入变动原因说明：主要系FPGA与MCU产品销售额增加所致。",
+                "normalized_summary": "收入变化原因：主要系FPGA与MCU产品销售额增加所致。",
+                "source_doc": "688385_2025_annual_jina.txt",
+                "confidence": 0.85,
+            }
+        ],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "periodic_report_explanation_pack": explanation_pack,
+        "stock_raw": {
+            "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    _, all_data = fake.calls[0]
+    assert all_data["formal_financial_explanation_pack"] is explanation_pack
+
+
+def test_synthesis_skill_builds_fundflow_pack_and_removes_raw_fundflow_items():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "stock_raw": {
+            "announcements": [{"title": "一季报", "content": "公司披露一季报", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [
+                {"date": "2026-07-02", "main_in": "1200", "change_pct": "2.5"},
+                {"date": "2026-07-01", "main_in": "-200", "change_pct": "-0.5"},
+            ],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    _, all_data = fake.calls[0]
+    assert all_data["fundflow_material_pack"]["summary"]["main_net_total"] == 1000.0
+    assert ctx.output["fundflow_material_pack"]["summary"]["signal"] == "inflow_with_price_up"
+    assert all(item.source_platform != "资金流向" for item in all_data["items"])
+
+
+def test_synthesis_skill_replaces_financial_missing_contradiction_when_fact_pack_exists():
+    class ContradictingSynthesizer(FakeSynthesizer):
+        def synthesize(self, stock_name, all_data):
+            self.calls.append((stock_name, all_data))
+            return {
+                "industry_logic": "产业逻辑。",
+                "fundamentals": "当前已披露年报未提供营收、利润、毛利率等核心财务数据，需要等待半年报。",
+                "valuation_debate": "估值分歧。",
+                "funding_sentiment": "资金面。",
+                "events_catalysts": "催化剂。",
+                "core_facts": [],
+                "citations": {},
+            }
+
+    fake = ContradictingSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    filing_core_facts = [
+        {
+            "fact": "营业收入",
+            "data": "39.82亿元",
+            "source_labels": ["2025年annual"],
+            "evidence_type": "periodic_report_filing_fact",
+        },
+        {
+            "fact": "归母净利润",
+            "data": "2.32亿元",
+            "source_labels": ["2025年annual"],
+            "evidence_type": "periodic_report_filing_fact",
+        },
+    ]
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "periodic_report_filing_core_facts": filing_core_facts,
+        "stock_raw": {
+            "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    fundamentals = ctx.get("synthesis")["fundamentals"]
+    assert "未提供营收、利润" not in fundamentals
+    assert "营业收入39.82亿元" in fundamentals
+    assert "归母净利润2.32亿元" in fundamentals
+    assert "订单、客户、费用率或指引" in fundamentals
+
+
+def test_formal_financial_fact_pack_drops_zero_amounts_and_sanitizer_uses_core_facts():
+    class ContradictingSynthesizer(FakeSynthesizer):
+        def synthesize(self, stock_name, all_data):
+            self.calls.append((stock_name, all_data))
+            return {
+                "industry_logic": "产业逻辑。",
+                "fundamentals": "当前公告未提供营收、利润数据，需要等待半年报。",
+                "valuation_debate": "估值分歧。",
+                "funding_sentiment": "资金面。",
+                "events_catalysts": "催化剂。",
+                "core_facts": [
+                    {
+                        "fact": "2025年营收",
+                        "data": "36.93亿元，同比增长2.87%",
+                        "confidence": "高",
+                        "provenance_status": "supported",
+                    },
+                    {
+                        "fact": "2025年归母净利润",
+                        "data": "2.32亿元，同比下降59.42%",
+                        "confidence": "高",
+                        "provenance_status": "supported",
+                    },
+                ],
+                "citations": {},
+            }
+
+    fake = ContradictingSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    filing_core_facts = [
+        {
+            "fact": "营业收入",
+            "data": "0.00亿元",
+            "source_labels": ["2025年annual"],
+            "evidence_type": "periodic_report_filing_fact",
+        },
+        {
+            "fact": "归母净利润",
+            "data": "0.00亿元",
+            "source_labels": ["2025年annual"],
+            "evidence_type": "periodic_report_filing_fact",
+        },
+    ]
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "periodic_report_filing_core_facts": filing_core_facts,
+        "stock_raw": {
+            "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    _, all_data = fake.calls[0]
+    assert "formal_financial_fact_pack" not in all_data
+    fundamentals = ctx.get("synthesis")["fundamentals"]
+    assert "未提供营收、利润" not in fundamentals
+    assert "2025年营收36.93亿元" in fundamentals
+    assert "2025年归母净利润2.32亿元" in fundamentals
+    assert "0.00亿元" not in fundamentals
+
+
+def test_synthesis_skill_removes_indirect_industry_citations_from_43_sections():
+    result = {
+        "industry_logic": "行业背景可保留存储价格信息[^10]。",
+        "fundamentals": "业绩分析可保留公司数据。",
+        "valuation_debate": "估值分析。",
+        "funding_sentiment": (
+            "| 资金变量 | 当前证据 | 含义 |\n"
+            "|---|---|---|\n"
+            "| 市场情绪 | 北京君正存储涨价进入超级周期[^10] | 可能传导至公司业绩 |\n"
+            "| 机构持仓 | 复旦微电一季报披露[^2] | 关注调仓 |\n"
+        ),
+        "events_catalysts": (
+            "* **AI基础设施需求**：内存价格进入超级周期[^10]，需验证是否传导至公司。\n"
+            "* **公司季报**：复旦微电一季报已披露[^2]。\n"
+        ),
+        "citations": {
+            2: {"source": "公告", "title": "2026年第一季度报告"},
+            10: {"source": "行业资讯", "title": "北京君正：由于公司存储芯片持续在涨价"},
+        },
+    }
+
+    sanitized = SynthesisSkill._sanitize_indirect_industry_citations_from_43(result, "复旦微电")
+
+    assert "北京君正" not in sanitized["funding_sentiment"]
+    assert "超级周期" not in sanitized["events_catalysts"]
+    assert "传导至公司" not in sanitized["events_catalysts"]
+    assert "复旦微电一季报" in sanitized["funding_sentiment"]
+    assert "复旦微电一季报" in sanitized["events_catalysts"]
+    assert "存储价格信息[^10]" in sanitized["industry_logic"]
+
+
 def test_default_base_dir_resolves_to_repo_root_knowledge():
     """When claim_verification_base_dir is not provided, default resolves to repo root knowledge/."""
     from types import SimpleNamespace
@@ -392,7 +668,10 @@ def test_formal_first_with_only_social_sources_marks_formal_sources_insufficient
     assert synthesis["_source_policy"] == "formal_first"
     assert synthesis["_formal_first_sources_insufficient"] is True
     assert "正式材料不足" in text
-    assert "雪球/知乎/微信" in text
+    assert "非正式材料" in text
+    assert "雪球" not in text
+    assert "知乎" not in text
+    assert "微信" not in text
 
 
 def test_formal_first_extra_items_keep_formal_display_and_reject_social_display():
@@ -1321,6 +1600,78 @@ def test_curated_external_viewpoint_narrative_hydrates_refs_from_claim_ids(tmp_p
     paragraph = display["_curated_external_narrative_paragraphs"][0]
     assert paragraph["citation_refs"] == [1]
     assert "盈利修复假设[^1]" in ctx.output.get("synthesis_text_with_curated_external_viewpoint_narrative", "")
+
+
+def test_curated_external_viewpoint_narrative_preserves_reasoning_cards_and_truncates_excerpt(tmp_path):
+    long_excerpt = "外部原文片段" * 60
+    narrative_path = tmp_path / "viewpoint_narrative_cards.json"
+    narrative_path.write_text(
+        _json.dumps(
+            {
+                "schema_version": "curated_external_viewpoint_narrative.v1",
+                "status": "ok",
+                "stock_name": "复旦微电",
+                "paragraphs": [
+                    {
+                        "heading": "估值分歧",
+                        "text": "外部材料提示估值分歧。",
+                        "claim_refs": ["fudan-xq-val-001"],
+                    }
+                ],
+                "reasoning_cards": [
+                    {
+                        "claim_id": "fudan-xq-val-001",
+                        "display_topic": "valuation_debate",
+                        "claim": "外部观点认为A股估值处于乐观情景上沿",
+                        "source_excerpt": long_excerpt,
+                        "reasoning_steps": ["用紫光国微作盈利参照", "用2026净利和PE交叉验证"],
+                        "numbers_used": ["375-420亿", "46-52元"],
+                        "assumptions": ["2026净利修复到7.5亿"],
+                        "counterpoints": ["军工订单恢复不及预期"],
+                        "verification_need": "跟踪半年报和订单恢复",
+                    }
+                ],
+                "citations": {
+                    "1": {
+                        "source": "雪球专栏观察",
+                        "author": "测试作者",
+                        "title": "复旦微电估值分析",
+                        "url": "https://xueqiu.com/1606930351/392467740",
+                        "source_type": "curated_external_analysis_evidence",
+                        "source_credit": 60,
+                        "verification_status": "professional_observation",
+                        "claim_id": "fudan-xq-val-001",
+                    }
+                },
+                "stats": {"lint": {"ok": True, "violations": []}},
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
+        "curated_external_viewpoint_narrative_json": str(narrative_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    display = ctx.output.get("deep_analysis_display")
+    cards = display["_curated_external_reasoning_cards"]
+    assert cards[0]["citation_refs"] == [1]
+    assert len(cards[0]["source_excerpt"]) <= 201
+    assert cards[0]["excerpt_truncated"] is True
+    assert cards[0]["reasoning_steps"] == ["用紫光国微作盈利参照", "用2026净利和PE交叉验证"]
 
 
 def test_curated_external_viewpoint_narrative_has_priority_over_digest(tmp_path):

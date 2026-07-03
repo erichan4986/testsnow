@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from decimal import Decimal
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional, Tuple
 
 if __name__.startswith("utils."):
@@ -156,6 +156,7 @@ def _filing_fact(
         "label": label,
         "value": f"{cell.get('text', '')}{unit}",
         "normalized_value": str(cell.get("normalized") or ""),
+        "display_value": _display_financial_amount(str(cell.get("normalized") or "")),
         "unit": "万元" if str(cell.get("normalized") or "").endswith("万元") else unit,
         "currency": "CNY",
         "period": str(report_year),
@@ -205,7 +206,7 @@ def filing_facts_to_core_facts(
         report_year = fact.get("report_year", "")
         report_type = str(fact.get("report_type") or "")
         label = _CORE_FACT_LABELS[str(fact.get("metric_key"))]
-        data = str(fact.get("normalized_value") or fact.get("value") or "")
+        data = str(fact.get("display_value") or fact.get("normalized_value") or fact.get("value") or "")
         core_facts.append({
             "fact_id": index,
             "fact": label,
@@ -219,6 +220,21 @@ def filing_facts_to_core_facts(
             "filing_fact_id": fact.get("fact_id", ""),
         })
     return core_facts
+
+
+def _display_financial_amount(value: str) -> str:
+    """Render filing fact amounts in report-friendly units without changing compute normalization."""
+    value = str(value or "").strip()
+    if not value.endswith("万元"):
+        return value
+    try:
+        amount_wan = Decimal(value[:-2])
+    except (InvalidOperation, ValueError):
+        return value
+    amount_yi = (amount_wan / Decimal("10000")).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if amount_yi == Decimal("-0.00"):
+        amount_yi = Decimal("0.00")
+    return f"{amount_yi}亿元"
 
 
 def _build_derived_facts(

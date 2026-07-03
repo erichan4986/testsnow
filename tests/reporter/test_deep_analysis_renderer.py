@@ -35,6 +35,72 @@ def test_render_basic():
     assert "4.1 产业逻辑与竞争格局" in result
 
 
+def test_deep_analysis_renders_controlled_fallbacks_for_empty_sections():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.1 产业逻辑与竞争格局" in result
+    assert "当前正式材料不足以形成可验证的产业逻辑与竞争格局判断" in result
+    assert "### 4.2 业绩路径与多空分歧" in result
+    assert "当前正式材料不足以形成可验证的业绩路径或估值分歧判断" in result
+    assert "### 4.3 资金面与催化剂时间线" in result
+    assert "当前正式材料未形成可验证的资金面或催化剂时间线" in result
+
+
+def test_deep_analysis_funding_only_renders_events_fallback():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "产业逻辑。",
+            "fundamentals": "基本面。",
+            "valuation_debate": "",
+            "funding_sentiment": "资金面内容。",
+            "events_catalysts": "",
+            "citations": {},
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.3 资金面与催化剂时间线" in result
+    assert "资金面内容。" in result
+    assert "当前正式材料未形成可验证的催化剂时间线。" in result
+
+
+def test_deep_analysis_events_only_renders_funding_fallback():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "产业逻辑。",
+            "fundamentals": "基本面。",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "催化剂内容。",
+            "citations": {},
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "### 4.3 资金面与催化剂时间线" in result
+    assert "催化剂内容。" in result
+    assert "当前正式材料未提供足够资金面数据。" in result
+
+
 def test_curated_external_display_is_addendum_not_replacement():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -72,7 +138,72 @@ def test_curated_external_display_is_addendum_not_replacement():
     assert result.index("baseline 产业逻辑") < result.index("### 4.4 外部观点与待验证变量（Preview）")
     assert "不直接形成估值结论" not in result
     assert "- [^1] 雪球" in result
-    assert "- [^2] 微信公众号精选观察" in result
+
+
+def test_curated_external_narrative_reasoning_cards_render_with_bounded_excerpt():
+    renderer = DeepAnalysisRenderer()
+    excerpt = "外部原文片段" * 20
+    ctx = {
+        "stock_name": "复旦微电",
+        "synthesis": {
+            "industry_logic": "baseline 产业逻辑[^1]",
+            "fundamentals": "baseline 业绩路径",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "公告", "title": "年报"}},
+        },
+        "deep_analysis_display": {
+            "industry_logic": "外部材料提示估值分歧[^1]",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {
+                1: {
+                    "source": "雪球专栏观察",
+                    "title": "复旦微电估值分析",
+                    "source_type": "curated_external_analysis_evidence",
+                    "verification_status": "professional_observation",
+                    "claim_id": "fudan-xq-val-001",
+                }
+            },
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "估值分歧",
+                    "text": "外部材料提示估值分歧。",
+                    "citation_refs": [1],
+                }
+            ],
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim_id": "fudan-xq-val-001",
+                    "display_topic": "valuation_debate",
+                    "claim": "外部观点认为A股估值处于乐观情景上沿",
+                    "source_excerpt": excerpt,
+                    "reasoning_steps": ["用紫光国微作盈利参照", "用2026净利和PE交叉验证"],
+                    "numbers_used": ["375-420亿", "46-52元"],
+                    "assumptions": ["2026净利修复到7.5亿"],
+                    "counterpoints": ["军工订单恢复不及预期"],
+                    "verification_need": "跟踪半年报和订单恢复",
+                    "citation_refs": [1],
+                }
+            ],
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "**观点**：外部观点认为A股估值处于乐观情景上沿" in result
+    assert "**推理步骤**：用紫光国微作盈利参照；用2026净利和PE交叉验证" in result
+    assert "**关键数字**：375-420亿；46-52元" in result
+    assert "**关键假设**：2026净利修复到7.5亿" in result
+    assert "**反方约束**：军工订单恢复不及预期" in result
+    assert "**待验证项**：跟踪半年报和订单恢复" in result
+    assert "外部原文片段" in result
+    assert len(result.split("**原文片段**：", 1)[1].split("[^", 1)[0]) <= 210
+    assert "- [^2] 雪球专栏观察" in result
 
 
 def test_curated_external_narrative_renders_flat_planned_paragraphs():
