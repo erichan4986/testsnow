@@ -2637,6 +2637,111 @@ def test_evidence_profile_has_annual_memo_fields():
     assert "formal_thin_layout_variant" in profile
 
 
+def _broker_digest_item(
+    *,
+    card_type="broker_core_view",
+    institution="测试证券",
+    title="测试研报",
+    content="券商认为公司产品升级带动收入增长。",
+    cluster="broker-core",
+):
+    return SynthesisItem(
+        title=f"{institution} | {title}",
+        content=content,
+        author=institution,
+        source_platform="券商研报",
+        url="",
+        publish_time="2026-05-01",
+        interaction_score=0,
+        extra={
+            "source_type": "broker_research",
+            "source_credit": 72,
+            "claim_status": "professional_analysis",
+            "verification_status": "professional_observation",
+            "confirmed_fact": False,
+            "scoring_eligible": False,
+            "risk_score_eligible": False,
+            "institution": institution,
+            "card_type": card_type,
+            "viewpoint_cluster": cluster,
+        },
+    )
+
+
+def test_build_broker_research_memo_admits_two_content_families():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "broker_research_digest_items": [
+            _broker_digest_item(card_type="broker_core_view", content="券商认为 800G 放量支撑增长。", cluster="core"),
+            _broker_digest_item(card_type="broker_product_driver", institution="另一个证券", content="研报认为 1.6T 进入增长接力。", cluster="driver"),
+        ],
+    })
+
+    memo = skill._build_broker_research_memo(ctx)
+
+    assert memo["status"] == "ready"
+    assert memo["institutions"] == ["测试证券", "另一个证券"]
+    assert memo["sections"][0]["citation_refs"]
+    assert memo["sections"][0]["source_ref_ids"][0].startswith("broker_research_digest:")
+    assert memo["validation"]["entered_scoring"] is False
+    assert memo["validation"]["entered_target_price"] is False
+
+
+def test_build_broker_research_memo_rejects_single_thin_card():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "broker_research_digest_items": [
+            _broker_digest_item(card_type="broker_core_view", content="券商认为需求增长。", cluster="core"),
+        ],
+    })
+
+    memo = skill._build_broker_research_memo(ctx)
+
+    assert memo["status"] == "absent"
+    assert memo["sections"] == []
+
+
+def test_build_broker_research_memo_dedupes_same_cluster_across_institutions():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "broker_research_digest_items": [
+            _broker_digest_item(card_type="broker_core_view", institution="甲证券", content="券商认为需求增长。", cluster="same-view"),
+            _broker_digest_item(card_type="broker_core_view", institution="乙证券", content="机构认为需求增长较快。", cluster="same-view"),
+        ],
+    })
+
+    memo = skill._build_broker_research_memo(ctx)
+
+    assert memo["status"] == "absent"
+    assert memo["diagnostics"]["usable_card_count"] == 1
+
+
+def test_build_broker_research_memo_forecast_and_risk_rows_resolve_refs():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "broker_research_digest_items": [
+            _broker_digest_item(card_type="broker_core_view", content="券商认为产品升级打开空间。", cluster="core"),
+            _broker_digest_item(card_type="broker_earnings_forecast", content="研报预计 2026E 归母净利润上修。", cluster="forecast"),
+            _broker_digest_item(card_type="broker_risk_note", content="下游需求不及预期。", cluster="risk"),
+        ],
+    })
+
+    memo = skill._build_broker_research_memo(ctx)
+
+    forecast = memo["forecast_ranges"][0]
+    risk = memo["risks"][0]
+    for row in (forecast, risk):
+        assert row["internal_refs"]
+        assert row["citation_refs"]
+        assert row["source_ref_ids"]
+        assert row["citation_refs"][0] in memo["citations"]
+    assert memo["status"] == "single_institution"
+
+
 def test_build_annual_report_memo_ready_vs_fallback():
     skill = SynthesisSkill(synthesizer=MagicMock())
     ctx = SkillContext(input={
@@ -2666,6 +2771,218 @@ def test_build_annual_report_memo_ready_vs_fallback():
     })
     memo2 = skill._build_annual_report_memo(ctx2)
     assert memo2["status"] == "deterministic_fallback"
+
+
+def test_build_annual_report_memo_uses_in_memory_narrative_cards_without_notes():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": []},
+        "periodic_report_narrative_evidence_cards": {
+            "cards": [
+                {
+                    "card_id": "periodic:1",
+                    "card_type": "business_model",
+                    "title": "主营业务与产品",
+                    "source_excerpt": "EEPROM产品在电表、手机摄像头模组、家电等领域稳步增长，车规级EEPROM产品已实现批量出货。",
+                    "source_block_id": "operation-1",
+                    "report_year": "2025",
+                    "report_type": "annual",
+                    "source_credit": 75,
+                },
+                {
+                    "card_id": "periodic:2",
+                    "card_type": "rd_product_progress",
+                    "title": "研发与产品进展",
+                    "source_excerpt": "新一代先进制程FPGA产品完成可靠性考核，开始量产准备。",
+                    "source_block_id": "rd-1",
+                    "report_year": "2025",
+                    "report_type": "annual",
+                    "source_credit": 75,
+                },
+                {
+                    "card_id": "periodic:3",
+                    "card_type": "management_market_view",
+                    "title": "管理层市场判断",
+                    "source_excerpt": "半导体行业景气度呈现结构性分化，FPGA产品在通信、工业控制、人工智能和高可靠领域应用良好。",
+                    "source_block_id": "market-1",
+                    "report_year": "2025",
+                    "report_type": "annual",
+                    "source_credit": 75,
+                },
+                {
+                    "card_id": "periodic:4",
+                    "card_type": "operation_update",
+                    "title": "经营情况更新",
+                    "source_excerpt": "安全与识别芯片各子线产品市场表现不同，在RFID与传感芯片带动下整体收入小幅增长。",
+                    "source_block_id": "operation-2",
+                    "report_year": "2025",
+                    "report_type": "annual",
+                    "source_credit": 75,
+                },
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+
+    bodies = " ".join(r["body"] for r in memo["sections"]["annual_report_explanation"])
+    assert memo["status"] == "ready"
+    assert "车规级EEPROM" in bodies
+    assert "先进制程FPGA" in bodies
+
+
+def test_build_annual_report_memo_dedupes_duplicate_narrative_card_bodies():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    duplicate_body = "公司是国内领先的FPGA类产品供应商，提供FPGA、PSoC、FPAI等产品。"
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [
+                {
+                    "card_id": "periodic:1",
+                    "card_type": "management_market_view",
+                    "title": "管理层市场判断",
+                    "excerpt": duplicate_body,
+                    "source_block_id": "competitive-1",
+                },
+                {
+                    "card_id": "periodic:2",
+                    "card_type": "margin_competitiveness",
+                    "title": "毛利率与竞争力",
+                    "excerpt": duplicate_body,
+                    "source_block_id": "competitive-1",
+                },
+                {
+                    "card_id": "periodic:3",
+                    "card_type": "operation_update",
+                    "title": "经营情况更新",
+                    "excerpt": "EEPROM产品在电表和车规领域稳步增长。",
+                    "source_block_id": "operation-1",
+                },
+                {
+                    "card_id": "periodic:4",
+                    "card_type": "business_model",
+                    "title": "主营业务与产品",
+                    "excerpt": "公司建立健全FPGA、安全与识别芯片、非挥发存储器等产品线。",
+                    "source_block_id": "business-1",
+                },
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    bodies = [r["body"] for r in memo["sections"]["annual_report_explanation"]]
+
+    assert sum("公司是国内领先的FPGA类产品供应商" in body for body in bodies) == 1
+
+
+def test_build_annual_report_memo_cleans_table_noise_from_narrative_cards():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    noisy_body = (
+        "上海复旦微电子集团股份有限公司2025年年度报告 2025年，半导体行业的景气度呈现出明显的结构性分化。"
+        " 产品类型 产品介绍 应用领域 产品或终端样图 12/ 产品类型 产品介绍 应用领域 产品或终端样图 "
+        "公司拥有包括1xnm FinFET先进制程在内的SRAM型FPGA芯片，逻辑资源从50K至4000K，算力从4TOPS至128TOPS。"
+        " 显示器及屏模组、智能电表、NOR Flash存储器 15/241。"
+    )
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [
+                {
+                    "card_id": "periodic:1",
+                    "card_type": "management_market_view",
+                    "title": "管理层市场判断",
+                    "excerpt": noisy_body,
+                    "source_block_id": "market-1",
+                },
+                {
+                    "card_id": "periodic:2",
+                    "card_type": "operation_update",
+                    "title": "经营情况更新",
+                    "excerpt": "EEPROM产品在电表和车规领域稳步增长。",
+                    "source_block_id": "operation-1",
+                },
+                {
+                    "card_id": "periodic:3",
+                    "card_type": "business_model",
+                    "title": "主营业务与产品",
+                    "excerpt": "公司建立健全FPGA、安全与识别芯片、非挥发存储器等产品线。",
+                    "source_block_id": "business-1",
+                },
+                {
+                    "card_id": "periodic:4",
+                    "card_type": "rd_product_progress",
+                    "title": "研发与产品进展",
+                    "excerpt": "新一代先进制程FPGA产品完成可靠性考核。",
+                    "source_block_id": "rd-1",
+                },
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    body = memo["sections"]["annual_report_explanation"][0]["body"]
+
+    assert "上海复旦微电子集团股份有限公司2025年年度报告" not in body
+    assert "产品类型 产品介绍 应用领域 产品或终端样图" not in body
+    assert "12/" not in body
+    assert "15/241" not in body
+    assert "半导体行业的景气度呈现出明显的结构性分化" in body
+    assert len(body) <= 320
+
+
+def test_build_annual_report_memo_skips_table_fragment_cards():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    table_fragment = (
+        "锁等网络通讯、物联网模块、电脑及周边产品、手机模组、主要由FM25/FM29系列构显示器及屏模组、"
+        "智能电表、NOR Flash存储器成，支持SPI、通用并行接口，存储容量1Mbit-2Gbit。"
+    )
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [
+                {
+                    "card_id": "periodic:1",
+                    "card_type": "rd_product_progress",
+                    "title": "研发与产品进展",
+                    "excerpt": table_fragment,
+                    "source_block_id": "rd-table-1",
+                },
+                {
+                    "card_id": "periodic:2",
+                    "card_type": "operation_update",
+                    "title": "经营情况更新",
+                    "excerpt": "EEPROM产品在电表和车规领域稳步增长。",
+                    "source_block_id": "operation-1",
+                },
+                {
+                    "card_id": "periodic:3",
+                    "card_type": "business_model",
+                    "title": "主营业务与产品",
+                    "excerpt": "公司建立健全FPGA、安全与识别芯片、非挥发存储器等产品线。",
+                    "source_block_id": "business-1",
+                },
+                {
+                    "card_id": "periodic:4",
+                    "card_type": "management_market_view",
+                    "title": "管理层市场判断",
+                    "excerpt": "半导体行业景气度呈现结构性分化。",
+                    "source_block_id": "market-1",
+                },
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    bodies = " ".join(r["body"] for r in memo["sections"]["annual_report_explanation"])
+
+    assert "FM25/FM29系列构显示器" not in bodies
+    assert "EEPROM产品在电表和车规领域稳步增长" in bodies
 
 
 def test_build_annual_report_memo_zero_revenue_warning():

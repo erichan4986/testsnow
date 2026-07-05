@@ -237,12 +237,17 @@ def _extract_conclusion(stock_name: str, text: str) -> str:
 # PE(TTM) spread sanitizer
 # ---------------------------------------------------------------------------
 def _build_pe_spread_facts(material: Optional[Dict[str, Any]], stock_name: str) -> List[Dict[str, Any]]:
-    """Extract structured PE(TTM) rows as spread facts."""
+    """Extract structured valuation rows as spread facts."""
     if not material or not isinstance(material, dict):
         return []
+    metric_labels = {
+        "pe_ttm": ("PE(TTM)", "PE", r"PE\s*\(\s*TTM\s*\)"),
+        "forward_pe": ("Forward PE", "Forward PE", r"Forward\s*PE"),
+        "ps": ("PS(市销率)", "PS", r"PS(?:\s*[（(]\s*市销率\s*[）)])?"),
+    }
     facts, seen = [], set()
     for row in material.get("rows") or []:
-        if not isinstance(row, dict) or row.get("metric") != "pe_ttm":
+        if not isinstance(row, dict) or row.get("metric") not in metric_labels:
             continue
         peer, t, p = row.get("peer"), row.get("target_value"), row.get("peer_value")
         if not peer or t is None or p is None:
@@ -251,10 +256,20 @@ def _build_pe_spread_facts(material: Optional[Dict[str, Any]], stock_name: str) 
             t, p = float(t), float(p)
         except (TypeError, ValueError):
             continue
-        if peer in seen:
+        metric = str(row.get("metric"))
+        if (metric, peer) in seen:
             continue
-        seen.add(peer)
-        facts.append({"peer_name": str(peer), "target_pe": t, "peer_pe": p, "spread_abs": abs(t - p)})
+        seen.add((metric, peer))
+        metric_label, spread_label, metric_pattern = metric_labels[metric]
+        facts.append({
+            "peer_name": str(peer),
+            "target_pe": t,
+            "peer_pe": p,
+            "spread_abs": abs(t - p),
+            "metric_label": metric_label,
+            "spread_label": spread_label,
+            "metric_pattern": metric_pattern,
+        })
     return facts
 
 
@@ -272,10 +287,10 @@ def _rewrite_pe_spread_clause(match: "re.Match", fact: Dict[str, Any], stock_nam
     peer_name = fact["peer_name"]
     if abs(num - spread_abs) >= abs(num - peer_pe):
         return match.group(0)
-    direction = "高出" if target_pe > peer_pe else "低约"
+    direction = "高出" if target_pe > peer_pe else "低"
     return (
-        f"{stock_name} PE(TTM) 为 {_format_pe(target_pe)} 倍，{peer_name}为 {_format_pe(peer_pe)} 倍，"
-        f"{direction}约 {_format_pe(round(spread_abs, 1))} 个 PE 倍数点。"
+        f"{stock_name} {fact.get('metric_label', 'PE(TTM)')} 为 {_format_pe(target_pe)} 倍，{peer_name}为 {_format_pe(peer_pe)} 倍，"
+        f"{direction}约 {_format_pe(round(spread_abs, 1))} 个 {fact.get('spread_label', 'PE')} 倍数点。"
     )
 
 
@@ -285,18 +300,26 @@ def _sanitize_pe_spread_in_text(text: str, facts: List[Dict[str, Any]], stock_na
         return text
     if facts:
         for fact in facts:
+            metric_pattern = fact.get("metric_pattern") or r"PE\s*\(\s*TTM\s*\)"
             pattern = re.compile(
                 rf"(?P<prefix>(?:{re.escape(stock_name)})?\s*)"
-                rf"PE\s*\(\s*TTM\s*\)\s*(?P<target_pe>\d+(?:\.\d+)?)\s*倍\s*"
+                rf"{metric_pattern}\s*(?P<target_pe>\d+(?:\.\d+)?)\s*倍\s*"
                 rf"(?P<cmp>远高于|高于|远低于|低于)\s*"
                 rf"{re.escape(fact['peer_name'])}\s*(?P<num>\d+(?:\.\d+)?)\s*倍"
             )
             text = pattern.sub(lambda m, f=fact: _rewrite_pe_spread_clause(m, f, stock_name), text)
             spread_only_pattern = re.compile(
-                rf"PE\s*\(\s*TTM\s*\)\s*(?P<cmp>远高于|高于|远低于|低于)\s*"
+                rf"{metric_pattern}\s*(?P<cmp>远高于|高于|远低于|低于)\s*"
                 rf"{re.escape(fact['peer_name'])}\s*约?\s*(?P<num>\d+(?:\.\d+)?)\s*倍"
             )
             text = spread_only_pattern.sub(lambda m, f=fact: _rewrite_pe_spread_clause(m, f, stock_name), text)
+            if fact.get("spread_label") == "PE":
+                current_pe_pattern = re.compile(
+                    rf"(?:当前)?PE\s*[（(]\s*TTM\s*(?P<target_pe>\d+(?:\.\d+)?)\s*倍\s*[）)]\s*"
+                    rf"(?P<cmp>远高于|高于|远低于|低于)\s*"
+                    rf"{re.escape(fact['peer_name'])}\s*约?\s*(?P<num>\d+(?:\.\d+)?)\s*倍"
+                )
+                text = current_pe_pattern.sub(lambda m, f=fact: _rewrite_pe_spread_clause(m, f, stock_name), text)
     else:
         text = re.sub(
             r"PE\s*\(\s*TTM\s*\)\s*\d+(?:\.\d+)?\s*倍\s*"

@@ -376,7 +376,7 @@ def test_skill_builds_filing_core_facts_from_cache(tmp_path):
         "归母净利润",
         "经营现金流量净额",
     ]
-    assert core_facts[0]["data"] == "389805.46万元"
+    assert core_facts[0]["data"] == "38.98亿元"
     assert core_facts[0]["provenance_status"] == "supported"
     assert core_facts[0]["evidence_type"] == "periodic_report_filing_fact"
 

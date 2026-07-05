@@ -1406,7 +1406,10 @@ def test_formal_thin_annual_memo_renders_sections():
     result = renderer.render(ctx)
     assert "### 4.1 年报经营摘要" in result
     assert "**已确认**" in result
-    assert "**年报解释**" in result
+    assert "**年报经营线索**" in result
+    assert "**产品线与业务结构**" in result
+    assert "**管理层行业判断**" in result
+    assert "**竞争力与研发**" in result
     assert "**未披露 / 不能下结论**" in result
     assert "营业收入 39.82 亿元" in result
     assert "公司增长主线来自 FPGA" in result
@@ -1436,6 +1439,111 @@ def test_formal_thin_broker_absence_keeps_heading():
     assert "### 4.4 待验证清单" in result
 
 
+def test_formal_thin_broker_memo_renders_with_annual_offset_citations():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+            "broker_memo_status": "single_institution",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "schema": "broker_research_memo.v1",
+            "status": "single_institution",
+            "source_layer": "broker_research",
+            "institutions": ["测试证券"],
+            "sections": [
+                {
+                    "title": "产业与产品判断",
+                    "body": "券商认为 800G 放量支撑增长。",
+                    "internal_refs": ["broker:card:core"],
+                    "citation_refs": [1],
+                    "source_ref_ids": ["broker_research_digest:core"],
+                }
+            ],
+            "forecast_ranges": [
+                {
+                    "metric": "归母净利润",
+                    "period": "2026E",
+                    "range": "券商预测区间 10-12 亿元",
+                    "internal_refs": ["broker:card:forecast"],
+                    "citation_refs": [2],
+                    "source_ref_ids": ["broker_research_digest:forecast"],
+                }
+            ],
+            "risks": [
+                {
+                    "body": "研报提示：若下游需求低于假设，盈利预测需下修。",
+                    "internal_refs": ["broker:card:risk"],
+                    "citation_refs": [3],
+                    "source_ref_ids": ["broker_research_digest:risk"],
+                }
+            ],
+            "validation": {"entered_scoring": False, "entered_target_price": False},
+            "citations": {
+                1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"},
+                2: {"source": "券商研报", "title": "盈利预测", "author": "测试证券"},
+                3: {"source": "券商研报", "title": "风险提示", "author": "测试证券"},
+            },
+        },
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+
+    assert "### 4.2 研报观点与假设" in result
+    assert "单篇研报观点 / 单机构观点" in result
+    assert "当前未取得足够可用研报 digest" not in result
+    assert "券商认为 800G 放量支撑增长" in result
+    assert "券商预测区间 10-12 亿元" in result
+    assert "盈利预测需下修" in result
+    assert "[^6]" in result
+    assert "- [^6] | **券商研报** | 作者: 测试证券 | 《核心观点》" in result
+
+
+def test_formal_thin_global_citations_exclude_unused_external_refs():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": {
+            "schema": "annual_report_memo.v1",
+            "status": "deterministic_fallback",
+            "source_layer": "annual_report",
+            "sections": {"confirmed": [], "annual_report_explanation": [], "not_disclosed": [], "inconclusive": []},
+            "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
+            "citations": {},
+        },
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "知乎精选观察", "title": "已使用"},
+                2: {"source": "雪球精选观察", "title": "未使用"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": "外部材料称技术路线存在分歧",
+                    "assumptions": ["需验证"],
+                    "verification_need": "公告验证",
+                    "citation_refs": [1],
+                }
+            ],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+
+    assert "已使用" in result
+    assert "未使用" not in result
+
+
 def test_annual_memo_rows_render_citation_refs():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -1456,6 +1564,35 @@ def test_annual_memo_rows_render_citation_refs():
     assert "[^1]" in result
     assert "[^4]" in result
     assert "- [^1] 公司年报" in result or "- [^4] 公司年报" in result
+
+
+def test_annual_memo_validation_warnings_use_single_heading():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["validation"]["warnings"] = [
+        "suspicious zero metric: 营业收入=0.00亿元",
+        "suspicious zero metric: 归母净利润=0.00亿元",
+    ]
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "deep_analysis_display": {
+            "citations": {},
+            "_curated_external_reasoning_cards": [],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+
+    assert result.count("**validation warning**") == 1
+    assert "营业收入=0.00亿元" in result
+    assert "归母净利润=0.00亿元" in result
 
 
 def test_annual_memo_unavailable_renders_fallback_no_legacy():
@@ -1566,6 +1703,51 @@ def test_formal_rich_sanitizes_pe_spread_in_deep_analysis_table():
     assert "高于新易盛约15倍" not in result
     assert "新易盛为 68.29 倍" in result
     assert "个 PE 倍数点" in result
+
+
+def test_formal_rich_sanitizes_forward_pe_and_ps_spread_in_deep_analysis_table():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_rich"},
+        "peer_comparison_material": {
+            "rows": [
+                {
+                    "metric": "forward_pe",
+                    "peer": "新易盛",
+                    "target_value": 43.1174,
+                    "peer_value": 34.6546,
+                },
+                {
+                    "metric": "ps",
+                    "peer": "新易盛",
+                    "target_value": 63.5344,
+                    "peer_value": 79.1244,
+                },
+            ]
+        },
+        "synthesis": {
+            "industry_logic": (
+                "| 指标 | 中际旭创 | 对标 | 结论 |\n"
+                "|---|---|---|---|\n"
+                "| Forward PE | 43.1倍 | 新易盛34.7倍 | Forward PE高于新易盛约8.5倍 |\n"
+                "| PS | 63.5倍 | 新易盛79.1倍 | PS(市销率)低于新易盛约15.6倍 |"
+            ),
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+
+    assert "Forward PE高于新易盛约8.5倍" not in result
+    assert "PS(市销率)低于新易盛约15.6倍" not in result
+    assert "中际旭创 Forward PE 为 43.12 倍，新易盛为 34.65 倍，高出约 8.5 个 Forward PE 倍数点" in result
+    assert "中际旭创 PS(市销率) 为 63.53 倍，新易盛为 79.12 倍，低约 15.6 个 PS 倍数点" in result
 
 
 def test_annual_memo_rejects_forbidden_source():

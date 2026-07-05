@@ -1,0 +1,142 @@
+{
+  "schema": "peer_comparison_material.v1",
+  "target": "中际旭创",
+  "peers": [
+    "新易盛",
+    "天孚通信",
+    "光迅科技",
+    "剑桥科技",
+    "华工科技"
+  ],
+  "rows": [
+    {
+      "dimension": "盈利能力",
+      "target": "中际旭创",
+      "peer": "新易盛",
+      "metric": "gross_margin",
+      "target_value": 46.058133,
+      "peer_value": 49.160955,
+      "period": "latest",
+      "unit": "%",
+      "comparison": "毛利率低于新易盛3.1%",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "中际旭创",
+      "peer": "新易盛",
+      "metric": "pe_ttm",
+      "target_value": 83.26,
+      "peer_value": 68.29,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "PE(TTM)高于新易盛15.0倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "中际旭创",
+      "peer": "新易盛",
+      "metric": "forward_pe",
+      "target_value": 43.11743706245073,
+      "peer_value": 34.65462319685605,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "Forward PE高于新易盛8.5倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "中际旭创",
+      "peer": "新易盛",
+      "metric": "ps",
+      "target_value": 63.53445362914127,
+      "peer_value": 79.12446041899624,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "PS(市销率)低于新易盛15.6倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "中际旭创",
+      "peer": "新易盛",
+      "metric": "mcap",
+      "target_value": 12386.93,
+      "peer_value": 6597.32,
+      "period": "latest",
+      "unit": "亿",
+      "comparison": "总市值高于新易盛5789.6亿",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "盈利能力",
+      "target": "中际旭创",
+      "peer": "天孚通信",
+      "metric": "gross_margin",
+      "target_value": 46.058133,
+      "peer_value": 56.603933,
+      "period": "latest",
+      "unit": "%",
+      "comparison": "毛利率低于天孚通信10.5%",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "中际旭创",
+      "peer": "天孚通信",
+      "metric": "pe_ttm",
+      "target_value": 83.26,
+      "peer_value": 125.61,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "PE(TTM)低于天孚通信42.3倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "中际旭创",
+      "peer": "天孚通信",
+      "metric": "forward_pe",
+      "target_value": 43.11743706245073,
+      "peer_value": 60.66486361927401,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "Forward PE低于天孚通信17.5倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    }
+  ],
+  "warnings": []
+}

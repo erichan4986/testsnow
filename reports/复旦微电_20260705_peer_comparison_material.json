@@ -1,0 +1,142 @@
+{
+  "schema": "peer_comparison_material.v1",
+  "target": "复旦微电",
+  "peers": [
+    "紫光国微",
+    "安路科技",
+    "兆易创新",
+    "普冉股份",
+    "聚辰股份"
+  ],
+  "rows": [
+    {
+      "dimension": "盈利能力",
+      "target": "复旦微电",
+      "peer": "紫光国微",
+      "metric": "gross_margin",
+      "target_value": 55.274051,
+      "peer_value": 52.581069,
+      "period": "latest",
+      "unit": "%",
+      "comparison": "毛利率高于紫光国微2.7%",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "复旦微电",
+      "peer": "紫光国微",
+      "metric": "pe_ttm",
+      "target_value": 231.55,
+      "peer_value": 42.05,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "PE(TTM)高于紫光国微189.5倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "复旦微电",
+      "peer": "紫光国微",
+      "metric": "forward_pe",
+      "target_value": 51.47565543071161,
+      "peer_value": 20.794450867052024,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "Forward PE高于紫光国微30.7倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "复旦微电",
+      "peer": "紫光国微",
+      "metric": "ps",
+      "target_value": 8.978975166018051,
+      "peer_value": 11.583048061965082,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "PS(市销率)低于紫光国微2.6倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "复旦微电",
+      "peer": "紫光国微",
+      "metric": "mcap",
+      "target_value": 370.67,
+      "peer_value": 694.56,
+      "period": "latest",
+      "unit": "亿",
+      "comparison": "总市值低于紫光国微323.9亿",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "盈利能力",
+      "target": "复旦微电",
+      "peer": "安路科技",
+      "metric": "gross_margin",
+      "target_value": 55.274051,
+      "peer_value": 41.25853,
+      "period": "latest",
+      "unit": "%",
+      "comparison": "毛利率高于安路科技14.0%",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "复旦微电",
+      "peer": "安路科技",
+      "metric": "pe_ttm",
+      "target_value": 231.55,
+      "peer_value": -63.76,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "PE(TTM)高于安路科技295.3倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    },
+    {
+      "dimension": "估值水平",
+      "target": "复旦微电",
+      "peer": "安路科技",
+      "metric": "forward_pe",
+      "target_value": 51.47565543071161,
+      "peer_value": 2011.0,
+      "period": "latest",
+      "unit": "倍",
+      "comparison": "Forward PE低于安路科技1959.5倍",
+      "source_refs": [
+        "指标:competitor_metrics"
+      ],
+      "confidence": 0.85,
+      "usage": "claim_eligible"
+    }
+  ],
+  "warnings": []
+}

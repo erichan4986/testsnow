@@ -122,27 +122,39 @@ class DeepAnalysisRenderer:
         baseline_citations = synthesis.get("citations", {}) or {}
         annual_citation_offset = self._max_citation_id(baseline_citations)
         annual_memo_citations = annual_memo.get("citations", {}) or {}
+        broker_memo = (ctx.get("broker_research_memo") or {}) if uses_annual_memo_display else {}
+        broker_citation_offset = annual_citation_offset + self._max_citation_id(annual_memo_citations)
+        broker_memo_citations = broker_memo.get("citations", {}) or {}
         deep_md = self._deep_analysis(
             synthesis,
             ctx,
             profile=profile,
             curated_external_display=curated_display if profile_name == "formal_rich" else deep_analysis_display,
-            curated_citation_offset=annual_citation_offset + self._max_citation_id(annual_memo_citations),
+            curated_citation_offset=broker_citation_offset + self._max_citation_id(broker_memo_citations),
             annual_citation_offset=annual_citation_offset,
+            broker_citation_offset=broker_citation_offset,
         )
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), ctx.get("stock_name", ""))
         deep_md = _sanitize_pe_spread_in_text(deep_md, pe_facts, ctx.get("stock_name", ""))
         if deep_md:
             lines.append(deep_md)
 
-        # 全局引用：baseline → annual memo → curated external
+        # 全局引用：baseline → annual memo → broker memo → curated external
         citations = self._merged_citations(
             baseline_citations,
             annual_memo_citations,
         )
         citations = self._merged_citations(
             citations,
-            (curated_display or {}).get("citations", {}) if profile_name == "formal_rich" else (deep_analysis_display.get("citations", {}) or {}),
+            broker_memo_citations,
+        )
+        external_citations = (
+            (curated_display or {}).get("citations", {}) if profile_name == "formal_rich"
+            else self._used_formal_thin_external_citations(deep_analysis_display)
+        )
+        citations = self._merged_citations(
+            citations,
+            external_citations,
         )
         if citations:
             lines.append(self._citations_section("引用来源", citations))
@@ -250,6 +262,7 @@ class DeepAnalysisRenderer:
         curated_external_display: Dict[str, Any] | None = None,
         curated_citation_offset: int = 0,
         annual_citation_offset: int = 0,
+        broker_citation_offset: int = 0,
     ) -> str:
         """
         深度分析板块：根据 evidence profile 渲染不同布局。
@@ -270,6 +283,7 @@ class DeepAnalysisRenderer:
             lines.extend(self._formal_thin_external_rich_body(
                 ctx, curated_external_display,
                 annual_citation_offset=annual_citation_offset,
+                broker_citation_offset=broker_citation_offset,
             ))
         else:
             lines.extend(self._thin_all_body(ctx))
@@ -404,6 +418,7 @@ class DeepAnalysisRenderer:
         ctx: Dict[str, Any],
         curated_display: Dict[str, Any] | None,
         annual_citation_offset: int = 0,
+        broker_citation_offset: int = 0,
     ) -> List[str]:
         """Render formal-thin layout: annual memo + broker placeholder + external map + checklist."""
         lines: List[str] = []
@@ -413,8 +428,10 @@ class DeepAnalysisRenderer:
             memo = ctx.get("annual_report_memo") or {}
             lines.extend(["### 4.1 年报经营摘要", ""])
             lines.extend(self._annual_report_memo_section(memo, annual_citation_offset))
-            lines.extend(["### 4.2 研报观点与假设", "", "当前未取得足够可用研报 digest，不展开研报观点与假设。", ""])
-            external_offset = annual_citation_offset + self._max_citation_id((memo or {}).get("citations", {}))
+            lines.extend(["### 4.2 研报观点与假设", ""])
+            broker_memo = ctx.get("broker_research_memo") or {}
+            lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
+            external_offset = broker_citation_offset + self._max_citation_id((broker_memo or {}).get("citations", {}))
             map_md = self._external_viewpoint_map_section(curated_display, citation_offset=external_offset)
             lines.extend(map_md or ["### 4.3 外部观点地图（Preview，不参与评分）", "", "当前未取得足够外部观点材料。", ""])
             checklist_md = self._verification_checklist_section(curated_display, citation_offset=external_offset)
@@ -434,6 +451,45 @@ class DeepAnalysisRenderer:
             if checklist_md:
                 lines.extend(checklist_md)
 
+        return lines
+
+    def _broker_research_memo_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
+        """Render broker memo as attributed professional assumptions."""
+        if (memo or {}).get("status") not in {"ready", "single_institution"}:
+            return ["当前未取得足够可用研报 digest，不展开研报观点与假设。", ""]
+
+        lines: List[str] = []
+        used: set[int] = set()
+        if memo.get("status") == "single_institution":
+            lines.extend(["**单篇研报观点 / 单机构观点**", ""])
+        for row in (memo.get("sections") or []):
+            if not isinstance(row, dict):
+                continue
+            text = str(row.get("body") or "").strip()
+            title = str(row.get("title") or "").strip()
+            refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
+            if text:
+                lines.append(f"- {attach_refs_to_sentence(f'**{title}**：{text}' if title else text, refs)}")
+                used.update(refs)
+        for row in (memo.get("forecast_ranges") or []):
+            if not isinstance(row, dict):
+                continue
+            text = " ".join(str(row.get(k) or "").strip() for k in ("metric", "period", "range") if row.get(k))
+            refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
+            if text:
+                lines.append(f"- {attach_refs_to_sentence(text, refs)}")
+                used.update(refs)
+        for row in (memo.get("risks") or []):
+            if not isinstance(row, dict):
+                continue
+            text = str(row.get("body") or "").strip()
+            refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
+            if text:
+                lines.append(f"- {attach_refs_to_sentence(text, refs)}")
+                used.update(refs)
+        lines.append("")
+        if used:
+            self._append_section_citations(lines, used, self._offset_citations(memo.get("citations", {}), citation_offset))
         return lines
 
     def _thin_all_body(self, ctx: Dict[str, Any]) -> List[str]:
@@ -456,7 +512,7 @@ class DeepAnalysisRenderer:
         secs = memo.get("sections") or {}
         cits = memo.get("citations", {}) or {}
         used: set[int] = set()
-        for label, key in (("已确认", "confirmed"), ("年报解释", "annual_report_explanation")):
+        for label, key in (("已确认", "confirmed"),):
             rows = [r for r in (secs.get(key) or []) if isinstance(r, dict)]
             if not rows:
                 continue
@@ -469,6 +525,14 @@ class DeepAnalysisRenderer:
                 lines.append(f"- {text}")
                 used.update(refs)
             lines.append("")
+        explanation_rows = [
+            r for r in (secs.get("annual_report_explanation") or [])
+            if isinstance(r, dict)
+        ]
+        if explanation_rows:
+            lines.append("**年报经营线索**")
+            self._append_annual_report_explanation_groups(lines, explanation_rows, used, citation_offset)
+            lines.append("")
         if not (secs.get("confirmed") or secs.get("annual_report_explanation")):
             lines.extend(["当前未取得足够年报材料，无法形成年报经营摘要。", ""])
         nd = [r for r in (secs.get("not_disclosed") or []) if isinstance(r, dict)]
@@ -480,15 +544,65 @@ class DeepAnalysisRenderer:
                 if b:
                     lines.append(f"- {b}")
             lines.append("")
-        for w in (memo.get("validation") or {}).get("warnings") or []:
+        warnings = (memo.get("validation") or {}).get("warnings") or []
+        if warnings:
             if not lines or lines[-1] != "":
                 lines.append("")
-            if not lines or lines[-2] != "**validation warning**":
-                lines.extend(["**validation warning**", ""])
-            lines.append(f"- {w}")
+            lines.extend(["**validation warning**", ""])
+            for w in warnings:
+                lines.append(f"- {w}")
         if used:
             self._append_section_citations(lines, used, self._offset_citations(cits, citation_offset))
         return lines
+
+    def _append_annual_report_explanation_groups(
+        self,
+        lines: List[str],
+        rows: List[Dict[str, Any]],
+        used: set[int],
+        citation_offset: int,
+    ) -> None:
+        labels = (
+            ("product_business", "产品线与业务结构"),
+            ("operation_update", "经营变化与产品进展"),
+            ("management_view", "管理层行业判断"),
+            ("competitiveness_rd", "竞争力与研发"),
+            ("financial_explanation", "财务变化原因"),
+            ("other", "其他年报线索"),
+        )
+        grouped: Dict[str, List[Dict[str, Any]]] = {key: [] for key, _ in labels}
+        for row in rows:
+            group = str(row.get("display_group") or self._annual_row_group(row))
+            if group not in grouped:
+                group = "other"
+            grouped[group].append(row)
+        for group, label in labels:
+            group_rows = grouped.get(group) or []
+            if not group_rows:
+                continue
+            lines.extend(["", f"**{label}**"])
+            for row in group_rows:
+                title = str(row.get("title") or "").strip()
+                body = str(row.get("body") or "").strip()
+                refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
+                text = attach_refs_to_sentence(f"**{title}**：{body}" if title else body, refs)
+                lines.append(f"- {text}")
+                used.update(refs)
+
+    @staticmethod
+    def _annual_row_group(row: Dict[str, Any]) -> str:
+        title = str(row.get("title") or "")
+        if any(term in title for term in ("研发", "技术", "竞争", "毛利率")):
+            return "competitiveness_rd"
+        if any(term in title for term in ("主营", "产品", "业务")):
+            return "product_business"
+        if any(term in title for term in ("经营", "进展", "更新")):
+            return "operation_update"
+        if any(term in title for term in ("管理层", "市场", "行业", "前景")):
+            return "management_view"
+        if any(term in title for term in ("收入", "利润", "费用", "现金流", "存货", "减值")):
+            return "financial_explanation"
+        return "other"
 
     def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:
         """Build 4.1 formal-only summary blocks."""
@@ -609,6 +723,33 @@ class DeepAnalysisRenderer:
             lines.append(f"| {variable} | {why} | {verification} | {credit_label} |")
         lines.append("")
         return lines
+
+    @staticmethod
+    def _used_formal_thin_external_citations(curated_display: Dict[str, Any] | None) -> Dict[int, Any]:
+        """Return only external citations referenced by formal-thin map/checklist rows."""
+        if not curated_display:
+            return {}
+        used: set[int] = set()
+        for card in (curated_display.get("_curated_external_reasoning_cards") or [])[:8]:
+            if isinstance(card, dict):
+                for ref in card.get("citation_refs") or []:
+                    try:
+                        used.add(int(ref))
+                    except (TypeError, ValueError):
+                        continue
+        if not used:
+            for rows in (curated_display.get("_curated_external_topic_groups") or {}).values():
+                if not isinstance(rows, list):
+                    continue
+                for row in rows[:3]:
+                    if isinstance(row, dict):
+                        for ref in row.get("citation_refs") or []:
+                            try:
+                                used.add(int(ref))
+                            except (TypeError, ValueError):
+                                continue
+        citations = curated_display.get("citations", {}) or {}
+        return {ref: citations[ref] for ref in sorted(used) if ref in citations}
 
     @staticmethod
     def _short_heading(text: str) -> str:

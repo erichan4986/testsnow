@@ -35,6 +35,9 @@ if __name__.startswith("utils."):
         render_periodic_report_fulltext_markdown,
         summarize_periodic_report_fulltext_with_llm,
     )
+    from ..periodic_report_narrative_evidence_cards import (
+        build_periodic_report_narrative_evidence_cards,
+    )
     from ..periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from ..periodic_report_required_metrics import build_required_business_metrics
     from ..periodic_report_structured_facts import (
@@ -53,6 +56,9 @@ else:
         build_periodic_report_fulltext_pack,
         render_periodic_report_fulltext_markdown,
         summarize_periodic_report_fulltext_with_llm,
+    )
+    from periodic_report_narrative_evidence_cards import (
+        build_periodic_report_narrative_evidence_cards,
     )
     from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from periodic_report_required_metrics import build_required_business_metrics
@@ -344,6 +350,47 @@ def build_periodic_report_explanation_pack_from_cache(
     )
 
 
+def build_periodic_report_narrative_cards_from_cache(
+    *,
+    stock_code: str,
+    stock_name: str,
+    cache_dir: Union[str, Path],
+    report_type: str = "annual_report",
+    max_total_cards: int = 12,
+) -> Dict[str, Any]:
+    """Build deterministic narrative cards from local report text without writing notes."""
+    latest = _find_latest_periodic_report_cache_file(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    if latest is None:
+        return {}
+    try:
+        raw_text = latest.read_text(encoding="utf-8")
+    except Exception:
+        return {}
+    if not raw_text.strip():
+        return {}
+
+    normalized_report_type = _normalize_report_type(report_type)
+    structured_report_type = _structured_report_type(normalized_report_type)
+    evidence_pack = build_periodic_report_evidence_pack(
+        raw_text,
+        report_type=structured_report_type,
+    )
+    return build_periodic_report_narrative_evidence_cards(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        report_year=_infer_report_year_from_cache_file(latest),
+        report_type=structured_report_type,
+        evidence_pack=evidence_pack,
+        raw_text=raw_text,
+        max_total_cards=max_total_cards,
+    )
+
+
 def _find_latest_periodic_report_cache_file(
     *,
     stock_code: str,
@@ -459,9 +506,17 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         cache_dir=cache_dir,
         report_type=report_type,
     )
+    narrative_cards = build_periodic_report_narrative_cards_from_cache(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+        max_total_cards=12,
+    )
 
     ctx.set("periodic_report_fulltext_items", items)
     ctx.set("periodic_report_filing_core_facts", filing_core_facts)
     ctx.set("periodic_report_explanation_pack", explanation_pack)
+    ctx.set("periodic_report_narrative_evidence_cards", narrative_cards)
     ctx.set("periodic_report_fulltext_status", "ok" if items else "empty")
     return ctx
