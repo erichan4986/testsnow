@@ -1,0 +1,80 @@
+# Environment variables and secrets
+.env
+cookies.txt
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+
+# Test and type caches
+.pytest_cache/
+.mypy_cache/
+
+# Node / build artifacts
+node_modules/
+dist/
+build/
+
+# Logs and temp files
+logs/
+tmp/
+cache/
+.cache/
+.playwright-mcp/
+*.log
+*.tmp
+
+# Local visual verification scratch files
+/visual_report_*.png
+/e2e_*.png
+/pdf_preview_*.png
+/pdf_page1.png
+/snapshot.yml
+
+# Data and reports (keep directory structure but ignore content)
+/data/raw/*.json
+/data/raw/*.csv
+/data/raw/*.xlsx
+/data/raw/2025*/
+/data/raw/2026*/
+/data/raw/broker_research_reports/
+/data/raw/debug/
+/data/raw/periodic_reports/
+/data/processed/
+/reports/*.md
+/reports/*.html
+/reports/*.pdf
+/reports/*.png
+/reports/charts/*.png
+/reports/*_agent_reach*.json
+/reports/*_technical.png
+/reports/*_radar.png
+/reports/*_valuation.png
+/reports/e2e_test/
+
+# Generated source-intake evidence notes
+/knowledge/10-Stocks/**/evidence/
+/knowledge/10-Stocks/测试股/
+/knowledge/10-Stocks/测试科技/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Worktrees
+.worktrees/
+
+# Local agent skills
+.agents/skills/

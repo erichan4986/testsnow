@@ -1,0 +1,244 @@
+"""Tests for scripts/run_中简科技.py single-stock report entry."""
+
+import json
+import sys
+from datetime import datetime
+from pathlib import Path
+from unittest.mock import MagicMock, patch
+
+import pytest
+
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
+
+import run_中简科技 as run_zhongjian
+
+
+STOCK_NAME = "中简科技"
+
+
+def _sample_post():
+    return {
+        "title": "样例帖子",
+        "content": "c" * 50,
+        "url": "https://example.com/post",
+        "like": 100,
+        "comment": 50,
+    }
+
+
+def test_zhongjian_entry_passes_agent_reach_config():
+    """main(--fast-test) must pass 中简科技 Agent-Reach config from config/stocks.json to PerStockReporter."""
+    expected_cfg = {
+        STOCK_NAME: {
+            "enabled": True,
+            "official_domains": ["cninfo.com.cn"],
+            "web_urls": [
+                "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=1",
+                "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=2",
+                "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=3",
+                "http://www.cninfo.com.cn/new/disclosure/detail?stockCode=300777&announcementId=4",
+            ],
+            "claim_verification": {"enabled": True, "risk_signals": True},
+        }
+    }
+    with patch.object(run_zhongjian, "_load_xueqiu_data", return_value=[_sample_post()]):
+        with patch.object(run_zhongjian, "_load_agent_reach_config", return_value=expected_cfg):
+            with patch.object(run_zhongjian, "PerStockReporter") as mock_reporter:
+                with patch.object(run_zhongjian, "export_pdf", return_value="reports/中简科技_20260614.pdf"):
+                    mock_instance = MagicMock()
+                    mock_instance.generate_stock_report.return_value = ("reports/中简科技_20260614.md", "")
+                    mock_reporter.return_value = mock_instance
+
+                    run_zhongjian.main(["--fast-test"])
+
+    mock_reporter.assert_called_once()
+    kwargs = mock_reporter.call_args.kwargs
+    ar_configs = kwargs.get("agent_reach_configs", {})
+    cfg = ar_configs.get(STOCK_NAME, {})
+    assert cfg.get("enabled") is True
+    assert "cninfo.com.cn" in cfg.get("official_domains", [])
+    urls = cfg.get("web_urls", [])
+    assert len(urls) >= 4
+    assert all("cninfo.com.cn" in url for url in urls)
+
+
+def test_zhongjian_entry_passes_source_intake_config():
+    """main(--fast-test) must pass 中简科技 Source Intake config to PerStockReporter."""
+    source_intake_cfg = {
+        STOCK_NAME: {
+            "enabled": True,
+            "a_stock": {
+                "cninfo_announcements": {"enabled": True, "max_items": 8},
+                "eastmoney_stock_news": {"enabled": True, "max_items": 10},
+                "eastmoney_research_reports": {"enabled": True, "max_items": 8},
+            },
+            "evidence_notes": {"enabled": True, "dry_run": False},
+        }
+    }
+    with patch.object(run_zhongjian, "_load_xueqiu_data", return_value=[_sample_post()]):
+        with patch.object(run_zhongjian, "_load_agent_reach_config", return_value={}):
+            with patch.object(run_zhongjian, "_load_source_intake_config", return_value=source_intake_cfg):
+                with patch.object(run_zhongjian, "PerStockReporter") as mock_reporter:
+                    with patch.object(run_zhongjian, "export_pdf", return_value="reports/中简科技_20260614.pdf"):
+                        mock_instance = MagicMock()
+                        mock_instance.generate_stock_report.return_value = ("reports/中简科技_20260614.md", "")
+                        mock_reporter.return_value = mock_instance
+
+                        run_zhongjian.main(["--fast-test"])
+
+    mock_reporter.assert_called_once()
+    kwargs = mock_reporter.call_args.kwargs
+    assert kwargs.get("source_intake_configs") == source_intake_cfg
+
+
+def test_load_source_intake_config_reads_config_file(tmp_path, monkeypatch):
+    """_load_source_intake_config should read only the target stock's source_intake block."""
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    config_dir = tmp_path / "config"
+    config_dir.mkdir()
+    payload = [
+        {"name": "其他股", "source_intake": {"enabled": True}},
+        {
+            "name": STOCK_NAME,
+            "source_intake": {
+                "enabled": True,
+                "a_stock": {"cninfo_announcements": {"enabled": True}},
+            },
+        },
+    ]
+    (config_dir / "stocks.json").write_text(json.dumps(payload, ensure_ascii=False), encoding="utf-8")
+    monkeypatch.setattr(run_zhongjian, "__file__", str(scripts_dir / "run_中简科技.py"))
+
+    result = run_zhongjian._load_source_intake_config(STOCK_NAME)
+
+    assert result == {
+        STOCK_NAME: {
+            "enabled": True,
+            "a_stock": {"cninfo_announcements": {"enabled": True}},
+        }
+    }
+
+
+def test_fast_test_mode_skips_zhihu_collector():
+    """--fast-test must never instantiate or call ZhihuCollector."""
+    with patch.object(run_zhongjian, "ZhihuCollector") as mock_zhihu:
+        with patch.object(run_zhongjian, "_load_xueqiu_data", return_value=[_sample_post()]):
+            with patch.object(run_zhongjian, "PerStockReporter") as mock_reporter:
+                with patch.object(run_zhongjian, "export_pdf", return_value="reports/中简科技_20260614.pdf"):
+                    mock_instance = MagicMock()
+                    mock_instance.generate_stock_report.return_value = ("reports/中简科技_20260614.md", "")
+                    mock_reporter.return_value = mock_instance
+
+                    run_zhongjian.main(["--fast-test"])
+
+    mock_zhihu.assert_not_called()
+
+
+def test_fast_test_mode_reuses_cached_zhihu_data(tmp_path, monkeypatch):
+    """--fast-test must reuse zhihu data saved in data/raw/report_input_*_中简科技.json."""
+    date_str = datetime.now().strftime("%Y%m%d")
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    raw_dir = tmp_path / "data" / "raw"
+    raw_dir.mkdir(parents=True)
+
+    cached_zhihu = {"total": 42, "report_items": [{"title": "cached"}], "fast_test": True}
+    report_input = {
+        "date": date_str,
+        "stock_codes": {STOCK_NAME: "300777"},
+        "stocks_data": {STOCK_NAME: []},
+        "raw_data": {STOCK_NAME: {"zhihu": cached_zhihu}},
+    }
+    (raw_dir / f"report_input_{date_str}_{STOCK_NAME}.json").write_text(
+        json.dumps(report_input, ensure_ascii=False), encoding="utf-8"
+    )
+
+    monkeypatch.setattr(run_zhongjian, "__file__", str(scripts_dir / "run_中简科技.py"))
+    monkeypatch.setattr(run_zhongjian, "_load_xueqiu_data", lambda *a, **k: [])
+    monkeypatch.setattr(
+        run_zhongjian, "_load_agent_reach_config", lambda *a, **k: {STOCK_NAME: {"enabled": True}}
+    )
+
+    with patch.object(run_zhongjian, "PerStockReporter") as mock_reporter:
+        with patch.object(run_zhongjian, "export_pdf", return_value="reports/中简科技_20260614.pdf"):
+            mock_instance = MagicMock()
+            mock_instance.generate_stock_report.return_value = ("reports/中简科技_20260614.md", "")
+            mock_reporter.return_value = mock_instance
+
+            run_zhongjian.main(["--fast-test"])
+
+    call_kwargs = mock_reporter.call_args.kwargs
+    assert call_kwargs["raw_data"][STOCK_NAME]["zhihu"]["total"] == 42
+
+
+def test_load_knowledge_posts_parses_frontmatter_and_body(tmp_path, monkeypatch):
+    """_load_knowledge_posts must parse YAML frontmatter and markdown body into post dicts."""
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    posts_dir = tmp_path / "knowledge" / "10-Stocks" / STOCK_NAME / "posts"
+    posts_dir.mkdir(parents=True)
+    md = (
+        "---\n"
+        "source_url: https://xueqiu.com/123/456\n"
+        "stock_name: 中简科技\n"
+        "author: tester\n"
+        "title: 测试标题\n"
+        "interactions:\n"
+        "  likes: 12\n"
+        "  comments: 7\n"
+        "---\n\n"
+        "# 测试标题\n\n"
+        "这是正文内容。\n"
+    )
+    (posts_dir / "test-post.md").write_text(md, encoding="utf-8")
+
+    monkeypatch.setattr(run_zhongjian, "__file__", str(scripts_dir / "run_中简科技.py"))
+
+    posts = run_zhongjian._load_knowledge_posts(STOCK_NAME)
+    assert len(posts) == 1
+    post = posts[0]
+    assert post["title"] == "测试标题"
+    assert post["url"] == "https://xueqiu.com/123/456"
+    assert "这是正文内容" in post["content"]
+    assert post["like"] == 12
+    assert post["comment"] == 7
+
+
+def test_fast_test_uses_knowledge_posts_without_external_fetch(tmp_path, monkeypatch):
+    """Without xueqiu cache, --fast-test must use knowledge posts and never call external fetch."""
+    scripts_dir = tmp_path / "scripts"
+    scripts_dir.mkdir()
+    posts_dir = tmp_path / "knowledge" / "10-Stocks" / STOCK_NAME / "posts"
+    posts_dir.mkdir(parents=True)
+    md = (
+        "---\n"
+        "source_url: https://xueqiu.com/123/456\n"
+        "title: 知识库帖子\n"
+        "interactions:\n"
+        "  likes: 20\n"
+        "  comments: 10\n"
+        "---\n\n"
+        "正文：中简科技碳纤维业务分析。\n"
+    )
+    (posts_dir / "knowledge-post.md").write_text(md, encoding="utf-8")
+
+    monkeypatch.setattr(run_zhongjian, "__file__", str(scripts_dir / "run_中简科技.py"))
+    monkeypatch.setattr(
+        run_zhongjian, "_load_agent_reach_config", lambda *a, **k: {STOCK_NAME: {"enabled": True}}
+    )
+
+    with patch.object(run_zhongjian, "fetch_all_stocks") as mock_fetch:
+        mock_fetch.side_effect = RuntimeError("external fetch should not be called")
+        with patch.object(run_zhongjian, "PerStockReporter") as mock_reporter:
+            with patch.object(run_zhongjian, "export_pdf", return_value="reports/中简科技_20260614.pdf"):
+                mock_instance = MagicMock()
+                mock_instance.generate_stock_report.return_value = ("reports/中简科技_20260614.md", "")
+                mock_reporter.return_value = mock_instance
+
+                run_zhongjian.main(["--fast-test"])
+
+    mock_fetch.assert_not_called()
+    call_kwargs = mock_reporter.call_args.kwargs
+    posts = call_kwargs["stocks_data"][STOCK_NAME]
+    assert any(p["title"] == "知识库帖子" and "碳纤维业务分析" in p["content"] for p in posts)

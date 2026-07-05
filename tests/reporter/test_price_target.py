@@ -1,0 +1,424 @@
+import pandas as pd
+import numpy as np
+import sys
+from pathlib import Path
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level, estimate_time, analyze_price_target
+
+
+def test_zigzag_basic():
+    """Zigzag should find peaks and valleys with 5% minimum reversal."""
+    close = pd.Series([100, 105, 110, 100, 95, 100, 110, 115, 105, 100, 95, 100])
+    pivots = zigzag(close, min_pct=0.05)
+    assert len(pivots) >= 2
+    types = [p["type"] for p in pivots]
+    assert "peak" in types
+    assert "valley" in types
+    # Check that consecutive pivots alternate
+    for i in range(1, len(pivots)):
+        assert pivots[i]["type"] != pivots[i - 1]["type"]
+
+
+def test_zigzag_no_small_noise():
+    """Moves smaller than min_pct should not create pivots."""
+    close = pd.Series([100, 101, 102, 101, 100, 101, 102])  # all < 3%
+    pivots = zigzag(close, min_pct=0.05)
+    assert len(pivots) <= 1  # only start point
+
+
+def test_zigzag_monotonic_up_final_pivot_is_peak():
+    """Monotonically increasing series: final pivot must be typed 'peak'."""
+    close = pd.Series([100, 106, 112, 120])  # monotonic up, >5% each step
+    pivots = zigzag(close, min_pct=0.05)
+    assert len(pivots) >= 2
+    assert pivots[-1]["type"] == "peak"
+
+
+def test_zigzag_monotonic_down_final_pivot_is_valley():
+    """Monotonically decreasing series: final pivot must be typed 'valley'."""
+    close = pd.Series([120, 114, 108, 100])  # monotonic down, >5% each step
+    pivots = zigzag(close, min_pct=0.05)
+    assert len(pivots) >= 2
+    assert pivots[-1]["type"] == "valley"
+
+
+def test_zigzag_first_move_down_alternates():
+    """First move down: initial pivot typed 'peak', no consecutive same types."""
+    close = pd.Series([100, 94, 88, 90, 95, 100])  # first move down >=5%, then up
+    pivots = zigzag(close, min_pct=0.05)
+    types = [p["type"] for p in pivots]
+    for i in range(1, len(pivots)):
+        assert pivots[i]["type"] != pivots[i - 1]["type"], f"consecutive same types at index {i}: {types}"
+
+
+def test_zigzag_v_shape_pivots():
+    """Simple V-shape should produce 3 alternating pivots with correct types."""
+    close = pd.Series([100, 90, 100])  # down 10%, up 11.1%
+    pivots = zigzag(close, min_pct=0.05)
+    assert len(pivots) == 3
+    assert pivots[0]["type"] == "peak"
+    assert pivots[0]["price"] == 100
+    assert pivots[0]["idx"] == 0
+    assert pivots[1]["type"] == "valley"
+    assert pivots[1]["price"] == 90
+    assert pivots[1]["idx"] == 1
+    assert pivots[2]["type"] == "peak"
+    assert pivots[2]["price"] == 100
+    assert pivots[2]["idx"] == 2
+
+
+def test_zigzag_inverted_v_shape_pivots():
+    """Simple inverted V-shape (^) should produce 3 alternating pivots with correct types."""
+    close = pd.Series([100, 110, 100])  # up 10%, down 9.1%
+    pivots = zigzag(close, min_pct=0.05)
+    assert len(pivots) == 3
+    assert pivots[0]["type"] == "valley"
+    assert pivots[0]["price"] == 100
+    assert pivots[0]["idx"] == 0
+    assert pivots[1]["type"] == "peak"
+    assert pivots[1]["price"] == 110
+    assert pivots[1]["idx"] == 1
+    assert pivots[2]["type"] == "valley"
+    assert pivots[2]["price"] == 100
+    assert pivots[2]["idx"] == 2
+
+
+def test_zigzag_exact_indices_and_prices():
+    """Known input should yield exact pivot indices, prices, and types."""
+    # Series: start 100, up to 110 (10%), down to 95 (~13.6%), up to 105 (~10.5%)
+    close = pd.Series([100, 105, 110, 105, 100, 95, 100, 105])
+    pivots = zigzag(close, min_pct=0.05)
+    # First confirmed move is up at idx 2 (110), so initial valley at 0, peak at 2
+    # Then down move confirmed at idx 5 (95), valley at 5
+    # Then up move confirmed at idx 7 (105), peak at 7
+    assert pivots[0] == {"idx": 0, "price": 100, "type": "valley"}
+    assert pivots[1] == {"idx": 2, "price": 110, "type": "peak"}
+    assert pivots[2] == {"idx": 5, "price": 95, "type": "valley"}
+    assert pivots[3] == {"idx": 7, "price": 105, "type": "peak"}
+
+
+def test_zigzag_short_series_empty():
+    """Series with fewer than 3 points should return empty list."""
+    assert zigzag(pd.Series([100, 105]), min_pct=0.05) == []
+    assert zigzag(pd.Series([100]), min_pct=0.05) == []
+    assert zigzag(pd.Series([]), min_pct=0.05) == []
+
+
+def test_fib_extension():
+    """Fibonacci extension from low=100 to high=120."""
+    assert fib_extension(100, 120, 1.0) == 120.0
+    assert fib_extension(100, 120, 1.272) == 125.44
+    assert abs(fib_extension(100, 120, 1.618) - 132.36) < 0.01
+
+
+def test_fib_convergence():
+    """Multiple bands pointing to similar prices within 3% should converge."""
+    bands = [
+        {"low": 100, "high": 120},   # 1.272 = 125.44
+        {"low": 105, "high": 122},   # 1.272 = 123.62
+    ]
+    targets = fib_targets_with_convergence(bands, level=1.272, convergence_pct=0.03)
+    # 125.44 vs 123.62: diff = 1.46%, within 3% -> should have convergence info
+    assert any(t["in_convergence"] for t in targets)
+
+
+def test_fib_no_convergence():
+    """Bands with prices far apart should NOT converge."""
+    bands = [
+        {"low": 100, "high": 120},   # 1.272 = 125.44
+        {"low": 50, "high": 80},     # 1.272 = 118.16
+    ]
+    targets = fib_targets_with_convergence(bands, level=1.272, convergence_pct=0.03)
+    assert not any(t["in_convergence"] for t in targets)
+
+
+def test_double_bottom_target():
+    """Double bottom: neckline=100, bottom=90 -> target=110."""
+    assert pattern_target(100, 90, is_bullish=True) == 110.0
+
+
+def test_double_top_target():
+    """Double top: neckline=90, top=100 -> target=80."""
+    assert pattern_target(90, 100, is_bullish=False) == 80.0
+
+
+def test_extract_double_bottom():
+    """Extract pattern info from a double bottom dict."""
+    pattern = {"pattern": "双底", "bottom1": 90, "bottom2": 88, "peak": 100}
+    info = extract_pattern_info(pattern)
+    assert info["type"] == "double_bottom"
+    assert info["is_bullish"] is True
+    assert info["neckline"] == 100
+    assert info["extreme"] == 88  # should pick the lower bottom
+
+
+def test_extract_double_top():
+    """Extract pattern info from a double top dict."""
+    pattern = {"pattern": "双顶", "top1": 100, "top2": 102, "valley": 90}
+    info = extract_pattern_info(pattern)
+    assert info["type"] == "double_top"
+    assert info["is_bullish"] is False
+    assert info["neckline"] == 90
+    assert info["extreme"] == 102  # should pick the higher top
+
+
+def test_extract_unknown_pattern():
+    """Unknown pattern should return None."""
+    pattern = {"pattern": "三角形"}
+    assert extract_pattern_info(pattern) is None
+
+
+from price_target import weekly_trend_analysis
+
+
+def test_weekly_trend_strong_bullish():
+    """ADX>30, +DI>-DI -> strong bullish trend."""
+    # Build a strong upward weekly series (need >=14 points for ADX)
+    base = list(range(100, 128))
+    df = pd.DataFrame({
+        "high": [b + 2 for b in base],
+        "low": [b - 2 for b in base],
+        "close": base,
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "多头"
+    assert trend["adx_score"] == 10
+    assert trend["is_ranging"] is False
+
+
+def test_weekly_trend_short_data():
+    """Less than 14 data points should return insufficient data."""
+    df = pd.DataFrame({
+        "high": [110, 112],
+        "low": [105, 107],
+        "close": [108, 110],
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "数据不足"
+    assert trend["is_ranging"] is True
+
+
+def test_weekly_trend_ranging():
+    """ADX<20 for 4 weeks with tight BOLL -> ranging."""
+    # Flat-ish series with low ADX
+    df = pd.DataFrame({
+        "high": [102, 103, 102, 103, 102, 103, 102, 103, 102, 103, 102, 103, 102, 103, 102],
+        "low": [98, 99, 98, 99, 98, 99, 98, 99, 98, 99, 98, 99, 98, 99, 98],
+        "close": [100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100, 100],
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "震荡"
+    assert bool(trend["is_ranging"]) is True
+
+
+def test_weekly_trend_strong_bearish():
+    """ADX>30, +DI<-DI -> strong bearish trend."""
+    base = list(range(128, 100, -1))
+    df = pd.DataFrame({
+        "high": [b + 2 for b in base],
+        "low": [b - 2 for b in base],
+        "close": base,
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "空头"
+    assert trend["adx_score"] == 10
+    assert trend["is_ranging"] is False
+
+
+def test_weekly_trend_adx_boundary_score():
+    """ADX between 25 and 30 with +DI>-DI -> score 7."""
+    # Construct a moderate uptrend: 3 steps +0.3, then 1 step -0.5
+    # This yields ADX ~27.5, score 7 (between the >25 and >30 thresholds)
+    close = [100]
+    for i in range(1, 30):
+        close.append(close[-1] + (0.3 if i % 4 != 0 else -0.5))
+    df = pd.DataFrame({
+        "high": [c + 1.5 for c in close],
+        "low": [c - 1.5 for c in close],
+        "close": close,
+    })
+    trend = weekly_trend_analysis(df)
+    assert trend["direction"] == "多头"
+    assert trend["adx_score"] == 7
+
+
+def test_weekly_trend_boll_bandwidth_gate():
+    """ADX<20 for 4 weeks but BOLL bandwidth >=8% -> is_ranging=False."""
+    # Oscillating close with amplitude 3 yields BOLL bandwidth ~11%
+    # while ADX stays low (~7) due to lack of directional trend
+    close = [100]
+    for i in range(1, 30):
+        close.append(100 + (3 if i % 3 == 0 else -3))
+    df = pd.DataFrame({
+        "high": [c + 1.0 for c in close],
+        "low": [c - 1.0 for c in close],
+        "close": close,
+    })
+    trend = weekly_trend_analysis(df)
+    # ADX low but BOLL wide -> should NOT be ranging
+    assert bool(trend["is_ranging"]) is False
+
+
+def test_synthesize_resonance():
+    """Daily and weekly patterns both bullish -> mean for base target."""
+    daily_pattern = {"type": "double_bottom", "is_bullish": True, "neckline": 100, "extreme": 90}
+    weekly_pattern = {"type": "double_bottom", "is_bullish": True, "neckline": 105, "extreme": 95}
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 115, "1.618": 125}
+    result = synthesize_targets(
+        daily_pattern, weekly_pattern, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["direction"] == "中线看多"
+    # Conservative = min of weekly 1.0, daily neckline
+    assert result["conservative"] == 100.0
+    # Base = mean of daily pattern target (110) and weekly 1.272 (115)
+    assert result["base"] == 112.5
+    # Aggressive = weekly 1.618
+    assert result["aggressive"] == 125.0
+
+
+def test_synthesize_daily_only():
+    """Only daily pattern present -> daily pattern target used as base."""
+    daily_pattern = {"type": "double_bottom", "is_bullish": True, "neckline": 100, "extreme": 90}
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 115, "1.618": 125}
+    result = synthesize_targets(
+        daily_pattern, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["direction"] == "中线看多"
+    assert result["conservative"] == 105.0  # min(daily_pattern_target, weekly_fib_1.0)
+    assert result["base"] == 110.0  # daily pattern target
+    assert result["method"] == "日K形态主导"
+
+
+def test_synthesize_neither_pattern():
+    """No patterns present -> pure Fibonacci fallback."""
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 115, "1.618": 125}
+    result = synthesize_targets(
+        None, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["direction"] == "中线看多"
+    assert result["conservative"] == 105.0  # weekly_fib["1.0"]
+    assert result["base"] == 115.0  # weekly_fib["1.272"]
+    assert result["aggressive"] == 125.0  # weekly_fib["1.618"]
+    assert result["method"] == "纯斐波那契扩展（无形态）"
+
+
+def test_synthesize_bearish():
+    """Bearish direction -> targets below current price."""
+    daily_pattern = {"type": "double_top", "is_bullish": False, "neckline": 100, "extreme": 110}
+    daily_fib = {"1.0": 100, "1.272": 90, "1.618": 80}
+    weekly_fib = {"1.0": 95, "1.272": 85, "1.618": 75}
+    result = synthesize_targets(
+        daily_pattern, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=False
+    )
+    assert result["direction"] == "中线看空"
+    assert result["base"] == 90.0  # neckline - height = 100 - 10 = 90
+
+
+def test_synthesize_aggressive_cap():
+    """Aggressive target exceeding 50% cap should be capped and marked as far."""
+    # Neither mode: aggressive = fib["1.618"] = 300, should be capped to 150
+    daily_fib = {"1.0": 100, "1.272": 110, "1.618": 120}
+    weekly_fib = {"1.0": 105, "1.272": 200, "1.618": 300}
+    result = synthesize_targets(
+        None, None, daily_fib, weekly_fib,
+        current_price=100, is_bullish=True
+    )
+    assert result["aggressive"] == 150.0  # capped at 100 * 1.5
+    assert result["aggressive_raw"] == 300.0  # raw uncapped value
+    assert result["is_far_target"] is True
+
+
+def test_profit_risk_pass():
+    """Conservative target 150, trigger 130.6, stop 118 -> ratio = 19.4/12.6 = 1.54 >= 1.5 -> pass."""
+    result = profit_risk_filter(
+        conservative_target=150.0,
+        neckline=128.5,
+        daily_atr=7.0,
+        min_ratio=1.5,
+    )
+    assert result["pass"] is True
+    assert result["ratio"] >= 1.5
+
+
+def test_profit_risk_fail():
+    """Conservative target 130, trigger 128.5, stop 118 -> ratio = 1.5/10.5 = 0.14 < 1.5 -> fail."""
+    result = profit_risk_filter(
+        conservative_target=130.0,
+        neckline=128.5,
+        daily_atr=7.0,
+        min_ratio=1.5,
+    )
+    assert result["pass"] is False
+
+
+def test_confidence_high():
+    """All best-case factors -> score >= 8.0 (High)."""
+    score = confidence_score(
+        resonance=10, pattern_quality=10, breakout_quality=10,
+        weekly_adx=10, momentum=10, fib_convergence=10,
+    )
+    assert score >= 8.0
+    assert confidence_level(score) == "高"
+
+
+def test_confidence_medium():
+    """Moderate factors -> score between 6.0 and 8.0 (Medium)."""
+    score = confidence_score(
+        resonance=6, pattern_quality=6, breakout_quality=6,
+        weekly_adx=6, momentum=6, fib_convergence=6,
+    )
+    assert 6.0 <= score < 8.0
+    assert confidence_level(score) == "中"
+
+
+def test_confidence_level_far_target_cap():
+    """High score but far target -> confidence capped at '中'."""
+    score = 9.0
+    assert confidence_level(score, aggressive_is_far=True) == "中"
+
+
+def test_estimate_time_basic():
+    """Target 150, current 100, ATR=5 -> base 15-20 days."""
+    low, high = estimate_time(150, 100, 5.0)
+    assert low == 15.0
+    assert high == 20.0
+
+
+def test_estimate_time_macd_expanding():
+    """MACD expanding -> time × 0.85."""
+    low, high = estimate_time(150, 100, 5.0, macd_momentum="expanding")
+    assert low == 12.8  # 15 * 0.85 = 12.75 -> rounded to 1 decimal
+    assert high == 17.0  # 20 * 0.85 = 17.0
+
+
+def test_estimate_time_rsi_high():
+    """RSI > 65 -> time × 1.1."""
+    low, high = estimate_time(150, 100, 5.0, rsi=70.0)
+    assert low == 16.5  # 15 * 1.1
+    assert high == 22.0  # 20 * 1.1
+
+
+def test_analyze_price_target_minimal():
+    """Minimal daily+weekly data should return a result dict with expected keys."""
+    # Generate 70 days so weekly (every 5 days) has 14 rows for ADX calculation
+    daily = pd.DataFrame({
+        "open": [90 + i * 0.8 for i in range(70)],
+        "high": [92 + i * 0.8 for i in range(70)],
+        "low": [88 + i * 0.8 for i in range(70)],
+        "close": [91 + i * 0.8 for i in range(70)],
+        "volume": [1000000] * 70,
+    })
+    weekly = daily.iloc[::5].reset_index(drop=True)
+    result = analyze_price_target(daily, weekly, current_price=float(daily["close"].iloc[-1]))
+    assert "direction" in result
+    assert "confidence" in result
+    assert "conservative" in result
+    assert "base" in result
+    assert "aggressive" in result

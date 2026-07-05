@@ -1,0 +1,560 @@
+[
+  {
+    "name": "黑芝麻智能",
+    "code": "02533",
+    "xueqiu_code": "HK02533",
+    "gid": "hk02533",
+    "keywords": [
+      "智能驾驶芯片",
+      "自动驾驶",
+      "华山芯片",
+      "黑芝麻",
+      "地平线",
+      "Mobileye"
+    ],
+    "agent_reach": {
+      "enabled": true,
+      "web_urls": [
+        "https://www.blacksesame.com/zh/list_10/972.html",
+        "https://www.blacksesame.com/zh/list_9/977.html",
+        "https://www.blacksesame.com/zh/list_9/966.html",
+        "https://www.blacksesame.com/zh/list_9/964.html",
+        "https://www.blacksesame.com/zh/list_9/961.html",
+        "https://www.blacksesame.com/zh/list_10/912.html"
+      ],
+      "official_domains": [
+        "blacksesame.com"
+      ]
+    },
+    "source_intake": {
+      "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
+      "periodic_narrative_cards_synthesis_display": {
+        "enabled": true,
+        "max_display_items": 8
+      },
+      "curated_external_viewpoint_narrative_synthesis_display": {
+        "enabled": true,
+        "narrative_json": "data/curated_external/viewpoint_narratives/heizhima_20260629.json"
+      }
+    }
+  },
+  {
+    "name": "长春高新",
+    "code": "000661",
+    "xueqiu_code": "SZ000661",
+    "gid": "000661"
+  },
+  {
+    "name": "三花智控",
+    "code": "002050",
+    "xueqiu_code": "SZ002050",
+    "gid": "002050"
+  },
+  {
+    "name": "中简科技",
+    "code": "300777",
+    "xueqiu_code": "SZ300777",
+    "gid": "300777",
+    "source_intake": {
+      "enabled": true,
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": false,
+          "max_items": 10,
+          "lookback_days": 30
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": true,
+          "max_items": 5,
+          "lookback_days": 30,
+          "keywords": [
+            "光模块",
+            "800G",
+            "CPO",
+            "模拟芯片",
+            "AI芯片",
+            "AI 芯片",
+            "存储",
+            "机器人",
+            "半导体",
+            "算力",
+            "光通信",
+            "汽车芯片"
+          ]
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      }
+    }
+  },
+  {
+    "name": "圣邦股份",
+    "code": "300661",
+    "xueqiu_code": "SZ300661",
+    "gid": "300661",
+    "keywords": [
+      "圣邦股份",
+      "模拟芯片",
+      "电源管理芯片",
+      "半导体",
+      "PMIC"
+    ],
+    "industry": "模拟芯片 / 电源管理 / 信号链",
+    "competitors": [
+      "思瑞浦",
+      "杰华特",
+      "纳芯微",
+      "艾为电子"
+    ],
+    "peer_codes": {
+      "思瑞浦": "688536",
+      "杰华特": "688141",
+      "纳芯微": "688052",
+      "艾为电子": "688798"
+    },
+    "product_exposure_terms": [
+      "模拟芯片",
+      "模拟IC",
+      "电源管理",
+      "电源管理芯片",
+      "PMIC",
+      "信号链",
+      "运放",
+      "ADC",
+      "DAC",
+      "接口芯片",
+      "车规模拟芯片"
+    ],
+    "source_intake": {
+      "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告",
+            "风险提示"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": false,
+          "max_items": 10,
+          "lookback_days": 30
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": true,
+          "max_items": 5,
+          "lookback_days": 30,
+          "keywords": [
+            "光模块",
+            "800G",
+            "CPO",
+            "模拟芯片",
+            "AI芯片",
+            "AI 芯片",
+            "存储",
+            "机器人",
+            "半导体",
+            "算力",
+            "光通信",
+            "汽车芯片"
+          ]
+        },
+        "iwencai_industry_research": {
+          "enabled": true,
+          "max_items": 8,
+          "max_items_per_query": 3,
+          "recent_days": 90,
+          "fallback_days": 180,
+          "queries": [
+            "半导体 行业研究报告",
+            "半导体 产业链 深度报告",
+            "电子行业 中期策略 半导体",
+            "模拟芯片 行业研究报告",
+            "模拟IC 国产替代 研究报告",
+            "汽车芯片 行业研究报告",
+            "车规芯片 产业链 深度报告"
+          ]
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
+      "periodic_narrative_cards_synthesis_display": {
+        "enabled": true,
+        "max_display_items": 8
+      },
+      "broker_research_digest_synthesis_display": {
+        "enabled": true,
+        "max_display_items": 3
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      }
+    }
+  },
+  {
+    "name": "乐鑫科技",
+    "code": "688018",
+    "xueqiu_code": "SH688018",
+    "gid": "688188"
+  },
+  {
+    "name": "中际旭创",
+    "code": "300308",
+    "xueqiu_code": "SZ300308",
+    "gid": "300308",
+    "keywords": [
+      "中际旭创",
+      "光模块",
+      "800G",
+      "1.6T",
+      "AI算力",
+      "硅光"
+    ],
+    "industry": "光通信 / 光模块 / CPO / 硅光",
+    "competitors": [
+      "新易盛",
+      "天孚通信",
+      "光迅科技",
+      "剑桥科技",
+      "华工科技"
+    ],
+    "peer_codes": {
+      "新易盛": "300502",
+      "天孚通信": "300394",
+      "光迅科技": "002281",
+      "剑桥科技": "603083",
+      "华工科技": "000988"
+    },
+    "product_exposure_terms": [
+      "CPO",
+      "光模块",
+      "光通信",
+      "硅光",
+      "数通",
+      "800G",
+      "1.6T",
+      "LPO",
+      "NPO",
+      "XPO",
+      "光引擎",
+      "光连接",
+      "数据中心光模块"
+    ],
+    "source_intake": {
+      "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告",
+            "风险提示"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": false,
+          "max_items": 10,
+          "lookback_days": 30
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": true,
+          "max_items": 5,
+          "lookback_days": 30,
+          "keywords": [
+            "光模块",
+            "800G",
+            "1.6T",
+            "CPO",
+            "LPO",
+            "NPO",
+            "XPO",
+            "硅光",
+            "AI算力",
+            "数据中心",
+            "光通信"
+          ]
+        },
+        "iwencai_industry_research": {
+          "enabled": true,
+          "max_items": 8,
+          "max_items_per_query": 3,
+          "recent_days": 90,
+          "fallback_days": 180,
+          "queries": [
+            "光模块 行业研究报告",
+            "光通信 产业链 深度报告",
+            "800G 光模块 行业研究报告",
+            "1.6T 光模块 产业链 深度报告",
+            "CPO LPO NPO 光模块 行业研究报告",
+            "AI算力 数据中心 光模块 需求 研究报告",
+            "硅光 光模块 产业链 深度报告"
+          ]
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      },
+      "curated_external_viewpoint_digest_synthesis_display": {
+        "enabled": true,
+        "digest_json": "data/curated_external/viewpoint_digests/zhongjixuchuang_20260629.json"
+      },
+      "curated_external_viewpoint_narrative_synthesis_display": {
+        "enabled": true,
+        "narrative_json": "data/curated_external/viewpoint_narratives/zhongjixuchuang_20260629.json"
+      }
+    }
+  },
+  {
+    "name": "复旦微电",
+    "code": "688385",
+    "xueqiu_code": "SH688385",
+    "gid": "688385",
+    "keywords": [
+      "复旦微电",
+      "FPGA",
+      "MCU",
+      "安全与识别芯片",
+      "非易失存储",
+      "EEPROM",
+      "智能电表",
+      "汽车电子",
+      "集成电路设计"
+    ],
+    "industry": "集成电路设计 / FPGA / MCU / 非易失存储",
+    "competitors": [
+      "紫光国微",
+      "安路科技",
+      "兆易创新",
+      "普冉股份",
+      "聚辰股份"
+    ],
+    "peer_codes": {
+      "紫光国微": "002049",
+      "安路科技": "688107",
+      "兆易创新": "603986",
+      "普冉股份": "688766",
+      "聚辰股份": "688123"
+    },
+    "peer_dimensions": [
+      "盈利能力",
+      "估值水平",
+      "产品线重叠",
+      "毛利率与研发投入",
+      "行业景气暴露"
+    ],
+    "product_exposure_terms": [
+      "FPGA",
+      "FPAI",
+      "RF-FPGA",
+      "RFSoC",
+      "PSoC",
+      "MCU",
+      "智能电表芯片",
+      "车规MCU",
+      "安全与识别芯片",
+      "RFID",
+      "非挥发存储器",
+      "非易失存储",
+      "EEPROM",
+      "NOR Flash",
+      "SLC NAND"
+    ],
+    "source_intake": {
+      "enabled": true,
+      "canonical_synthesis_source_policy": "formal_first",
+      "a_stock": {
+        "enabled": true,
+        "cninfo_announcements": {
+          "enabled": true,
+          "lookback_days": 365,
+          "max_items": 12,
+          "categories": [
+            "年度报告",
+            "季度报告",
+            "业绩预告",
+            "权益分派",
+            "投资者关系活动",
+            "风险提示"
+          ],
+          "read_detail_content": true,
+          "detail_content_categories": [
+            "业绩预告",
+            "季度报告",
+            "一季度报告",
+            "三季度报告",
+            "风险提示"
+          ],
+          "max_detail_items": 3,
+          "detail_max_chars": 6000
+        },
+        "eastmoney_stock_news": {
+          "enabled": false,
+          "max_items": 10,
+          "lookback_days": 30
+        },
+        "eastmoney_research_reports": {
+          "enabled": true,
+          "max_items": 8
+        },
+        "eastmoney_global_news": {
+          "enabled": true,
+          "max_items": 5,
+          "lookback_days": 30,
+          "keywords": [
+            "FPGA",
+            "MCU",
+            "存储芯片",
+            "EEPROM",
+            "安全芯片",
+            "智能电表",
+            "汽车电子",
+            "集成电路",
+            "半导体",
+            "国产替代"
+          ]
+        },
+        "iwencai_industry_research": {
+          "enabled": true,
+          "max_items": 8,
+          "max_items_per_query": 3,
+          "recent_days": 90,
+          "fallback_days": 180,
+          "queries": [
+            "FPGA 行业研究报告",
+            "MCU 行业研究报告",
+            "存储芯片 行业研究报告",
+            "EEPROM 行业研究报告",
+            "安全芯片 行业研究报告",
+            "集成电路设计 行业研究报告",
+            "半导体国产替代 深度报告"
+          ]
+        }
+      },
+      "evidence_notes": {
+        "enabled": true,
+        "dry_run": false
+      },
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
+      "curated_external_viewpoint_narrative_synthesis_display": {
+        "enabled": true,
+        "narrative_json": "data/curated_external/viewpoint_narratives/fudan_20260702.json"
+      },
+      "claim_verification": {
+        "enabled": true,
+        "risk_signals": true,
+        "max_verified": 6,
+        "max_supported": 4,
+        "max_unverified": 6
+      }
+    }
+  }
+]
