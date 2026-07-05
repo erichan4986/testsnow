@@ -79,7 +79,9 @@ def check_report_source_boundary_text(text: str) -> SourceBoundaryResult:
     body = str(text or "")
     issues: List[SourceBoundaryIssue] = []
 
-    formal_region = _formal_deep_analysis_region(body)
+    profile = _parse_deep_analysis_profile(body)
+
+    formal_region = _formal_deep_analysis_region(body, profile)
     for token in FORMAL_ANALYSIS_SOCIAL_TOKENS:
         line = _first_line_containing(formal_region, token)
         if line:
@@ -103,6 +105,7 @@ def check_report_source_boundary_text(text: str) -> SourceBoundaryResult:
         )
 
     protected_text = _remove_curated_external_region(body)
+    protected_text = _remove_formal_thin_external_map_region(protected_text, profile)
     protected_text = _remove_global_reference_sections(protected_text)
     protected_text = _drop_static_data_source_banner(protected_text)
     for token in DISPLAY_ONLY_LEAK_TOKENS:
@@ -118,6 +121,23 @@ def check_report_source_boundary_text(text: str) -> SourceBoundaryResult:
             break
 
     return SourceBoundaryResult(path=None, issues=issues)
+
+
+def _remove_formal_thin_external_map_region(text: str, profile: dict | None) -> str:
+    """Remove the 4.2 display-only external map region for formal_thin_external_rich.
+
+    The external map and its inline reference list are allowed there; they should
+    not trigger display-only-leak scans that are meant for the 4.4 legacy path.
+    """
+    if not profile or profile.get("profile") != "formal_thin_external_rich":
+        return text
+    start = _find_heading(text, r"^###\s+4\.2\b")
+    if start < 0:
+        return text
+    end = _find_heading(text, r"^###\s+4\.3\b", _after_heading_line(text, start))
+    if end < 0:
+        return text
+    return text[:start] + "\n" + text[end:]
 
 
 def format_source_boundary_result(result: SourceBoundaryResult) -> str:
@@ -136,17 +156,43 @@ def source_boundary_results_to_json(results: list[SourceBoundaryResult]) -> str:
     return json.dumps([result.to_dict() for result in results], ensure_ascii=False, indent=2)
 
 
-def _formal_deep_analysis_region(text: str) -> str:
+def _formal_deep_analysis_region(text: str, profile: dict | None = None) -> str:
     start = _find_heading(text, r"^###\s+4\.1\b")
     if start < 0:
         return ""
     search_from = _after_heading_line(text, start)
+    # For formal_thin_external_rich the display-only external viewpoint map
+    # lives in 4.2 and is allowed to contain social/external source tokens.
+    # Scan 4.1 and 4.3 only, skipping the 4.2 external viewpoint map region.
+    if profile and profile.get("profile") == "formal_thin_external_rich":
+        section42_start = _find_heading(text, r"^###\s+4\.2\b", search_from)
+        if section42_start >= 0:
+            section43_start = _find_heading(text, r"^###\s+4\.3\b", _after_heading_line(text, section42_start))
+            if section43_start >= 0:
+                before_42 = text[start:section42_start]
+                after_42_heading = _after_heading_line(text, section43_start)
+                end = _find_heading(text, r"^###\s+4\.4\b", after_42_heading)
+                if end < 0:
+                    end = _find_heading(text, r"^##\s+[^#]", after_42_heading)
+                if end < 0:
+                    end = len(text)
+                return before_42 + text[section43_start:end]
     end = _find_heading(text, r"^###\s+4\.4\b", search_from)
     if end < 0:
         end = _find_heading(text, r"^##\s+[^#]", search_from)
     if end < 0:
         end = len(text)
     return text[start:end]
+
+
+def _parse_deep_analysis_profile(text: str) -> dict | None:
+    match = re.search(r"<!--\s*deep_analysis_profile:\s*(.*?)\s*-->", text)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(1))
+    except Exception:
+        return None
 
 
 def _curated_external_region(text: str) -> str:

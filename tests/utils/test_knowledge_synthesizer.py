@@ -177,7 +177,9 @@ def test_events_catalysts_prompt_filters_out_sector_background_industry_news():
         ),
     ]
 
-    prompt = synth._build_prompt("韦尔股份", "events_catalysts", items)
+    budget = synth._build_theme_material_budget("韦尔股份", items, {})
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["events_catalysts"]["source_refs"]]
+    prompt = synth._build_prompt("韦尔股份", "events_catalysts", source_rows, budget["themes"]["events_catalysts"])
 
     assert "存储概念低开" not in prompt
     assert "存储产品涨价带动晶圆厂产能紧张" not in prompt
@@ -210,7 +212,9 @@ def test_funding_sentiment_prompt_filters_out_sector_background_industry_news():
         ),
     ]
 
-    prompt = synth._build_prompt("测试股", "funding_sentiment", items)
+    budget = synth._build_theme_material_budget("测试股", items, {})
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["funding_sentiment"]["source_refs"]]
+    prompt = synth._build_prompt("测试股", "funding_sentiment", source_rows, budget["themes"]["funding_sentiment"])
 
     assert "半导体设备走弱" not in prompt
     assert "公司发布回购计划" in prompt
@@ -249,7 +253,9 @@ def test_industry_logic_prompt_filters_out_non_direct_sector_background_with_sto
         ),
     ]
 
-    prompt = synth._build_prompt("复旦微电", "industry_logic", items, stock_config=stock_config)
+    budget = synth._build_theme_material_budget("复旦微电", items, {"stock_config": stock_config})
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["industry_logic"]["source_refs"]]
+    prompt = synth._build_prompt("复旦微电", "industry_logic", source_rows, budget["themes"]["industry_logic"], stock_config=stock_config)
 
     assert "AI服务器带动 MLCC 需求增长" not in prompt
     assert "MLCC 技术路线" not in prompt
@@ -281,7 +287,9 @@ def test_fundamentals_prompt_uses_keywords_fallback_without_generic_terms():
         ),
     ]
 
-    prompt = synth._build_prompt("中际旭创", "fundamentals", items, stock_config=stock_config)
+    budget = synth._build_theme_material_budget("中际旭创", items, {"stock_config": stock_config})
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["fundamentals"]["source_refs"]]
+    prompt = synth._build_prompt("中际旭创", "fundamentals", source_rows, budget["themes"]["fundamentals"], stock_config=stock_config)
 
     assert "半导体行业周报" not in prompt
     assert "光模块行业研究报告" in prompt
@@ -458,7 +466,9 @@ def test_funding_sentiment_prompt_excludes_financial_announcement_without_fundfl
         ),
     ]
 
-    prompt = synth._build_prompt("复旦微电", "funding_sentiment", items)
+    budget = synth._build_theme_material_budget("复旦微电", items, {})
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["funding_sentiment"]["source_refs"]]
+    prompt = synth._build_prompt("复旦微电", "funding_sentiment", source_rows, budget["themes"]["funding_sentiment"])
 
     assert "2026年Q1营收7.82亿元" not in prompt
     assert "归母净利润1.23亿元" not in prompt
@@ -770,7 +780,7 @@ def test_synthesize_passes_peer_material_to_build_prompt(monkeypatch):
     peer_material = _sample_peer_material()
     calls = []
 
-    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None, stock_config=None, formal_financial_fact_pack=None, formal_financial_explanation_pack=None, fundflow_material_pack=None):
+    def spy(stock_name, theme_key, source_rows, theme_budget=None, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None, stock_config=None, formal_financial_fact_pack=None, formal_financial_explanation_pack=None, fundflow_material_pack=None):
         calls.append(peer_comparison_material)
         return ""
 
@@ -976,7 +986,7 @@ def test_synthesize_passes_context_to_build_prompt(monkeypatch):
     }
     calls = []
 
-    def spy(stock_name, theme_key, items, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None, stock_config=None, formal_financial_fact_pack=None, formal_financial_explanation_pack=None, fundflow_material_pack=None):
+    def spy(stock_name, theme_key, source_rows, theme_budget=None, previous_narratives=None, claim_verification_context=None, peer_comparison_material=None, stock_config=None, formal_financial_fact_pack=None, formal_financial_explanation_pack=None, fundflow_material_pack=None):
         calls.append(claim_verification_context)
         return ""
 
@@ -1061,3 +1071,218 @@ def test_extract_core_facts_strips_inline_citation_markers():
     assert "[^3]" not in result[0]["data"]
     assert result[0]["fact"] == "营收增长"
     assert result[0]["data"] == "10%"
+
+
+# ---------------------------------------------------------------------------
+# Theme Material Budget with Global Source IDs
+# ---------------------------------------------------------------------------
+
+
+def test_theme_budget_uses_global_source_refs():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="行业资讯",
+            content="半导体板块动态。",
+            author="媒体",
+            source_platform="行业资讯",
+            url="",
+            publish_time="2026-07-01",
+        ),
+        SynthesisItem(
+            title="公司业绩公告",
+            content="2026年Q1营收增长。",
+            author="公司",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+        SynthesisItem(
+            title="资金流向",
+            content="主力净流入1200万。",
+            author="东方财富",
+            source_platform="资金流向",
+            url="",
+            publish_time="2026-07-02",
+        ),
+    ]
+
+    budget = synth._build_theme_material_budget("测试股", items, {})
+    # events_catalysts should include the announcement at global ref 2, not renumber to [1].
+    event_refs = budget["themes"]["events_catalysts"]["source_refs"]
+    assert 2 in event_refs
+    assert 1 not in event_refs  # industry news excluded
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in event_refs]
+    prompt = synth._build_prompt("测试股", "events_catalysts", source_rows, budget["themes"]["events_catalysts"])
+    assert "[2]" in prompt
+    assert "[1]" not in prompt or "[1]" not in prompt.split("信息来源：")[1]
+
+
+def test_build_prompt_uses_precomputed_source_rows_without_refiltering():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="公告",
+            content="公司公告内容。",
+            author="公司",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+    ] * 3
+
+    calls = []
+    original_filter = KnowledgeSynthesizer._filter_items_for_theme
+
+    def spy_filter(theme_key, items, stock_name="", stock_config=None):
+        calls.append((theme_key, len(items)))
+        return original_filter(theme_key, items, stock_name, stock_config)
+
+    import scripts.utils.knowledge_synthesizer as ks_module
+    ks_module.KnowledgeSynthesizer._filter_items_for_theme = staticmethod(spy_filter)
+    try:
+        budget = synth._build_theme_material_budget("测试股", items, {})
+        event_refs = budget["themes"]["events_catalysts"]["source_refs"]
+        source_rows = [(ref_id, items[ref_id - 1]) for ref_id in event_refs]
+        calls.clear()
+        synth._build_prompt("测试股", "events_catalysts", source_rows, budget["themes"]["events_catalysts"])
+        # _build_prompt should not call _filter_items_for_theme again.
+        assert len(calls) == 0
+    finally:
+        ks_module.KnowledgeSynthesizer._filter_items_for_theme = original_filter
+
+
+def test_budget_routes_fundflow_items_only_to_funding_sentiment():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="公告",
+            content="公司公告内容。",
+            author="公司",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+        SynthesisItem(
+            title="资金流向",
+            content="主力净流入1200万。",
+            author="东方财富",
+            source_platform="资金流向",
+            url="",
+            publish_time="2026-07-02",
+        ),
+    ]
+
+    budget = synth._build_theme_material_budget("测试股", items, {})
+    assert budget["themes"]["funding_sentiment"]["source_refs"] == [2]
+    assert 2 not in budget["themes"]["events_catalysts"]["source_refs"]
+    assert 2 not in budget["themes"]["industry_logic"]["source_refs"]
+    assert 2 not in budget["themes"]["fundamentals"]["source_refs"]
+    assert 2 not in budget["themes"]["valuation_debate"]["source_refs"]
+
+
+def test_no_fundflow_no_funding_sentiment_even_with_financial_announcements():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="2026年第一季度报告",
+            content="2026年Q1营收7.82亿元，归母净利润1.23亿元，环比下降。",
+            author="复旦微电",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+    ]
+
+    budget = synth._build_theme_material_budget("复旦微电", items, {})
+    assert budget["themes"]["funding_sentiment"]["source_refs"] == []
+    assert budget["themes"]["funding_sentiment"]["skip_reason"] != ""
+
+
+def test_events_catalysts_can_render_when_funding_missing():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="公司发布业绩预告",
+            content="公司公告披露净利润变化。",
+            author="公司",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+    ]
+
+    budget = synth._build_theme_material_budget("测试股", items, {})
+    assert budget["themes"]["events_catalysts"]["source_refs"] == [1]
+    assert budget["themes"]["funding_sentiment"]["source_refs"] == []
+
+
+def test_fundamentals_prompt_orders_explanation_before_fact_pack():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="年报",
+            content="公司披露年度报告",
+            author="复旦微电",
+            source_platform="公告",
+            url="",
+            publish_time="2026-04-30",
+        ),
+    ]
+    fact_pack = {
+        "facts": [
+            {"metric": "营业收入", "value": "39.82亿元", "period": "2025年annual", "source": "年报"},
+        ]
+    }
+    explanation_pack = {
+        "schema": "formal_financial_explanation_pack.v1",
+        "rows": [
+            {
+                "topic": "revenue_change",
+                "metric": "营业收入",
+                "excerpt": "营业收入变动原因说明：主要系FPGA产品销售额增加所致。",
+                "source_doc": "688385_2025_annual_jina.txt",
+                "confidence": 0.85,
+            }
+        ],
+    }
+
+    budget = synth._build_theme_material_budget("复旦微电", items, {})
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["fundamentals"]["source_refs"]]
+    prompt = synth._build_prompt(
+        "复旦微电",
+        "fundamentals",
+        source_rows,
+        budget["themes"]["fundamentals"],
+        formal_financial_fact_pack=fact_pack,
+        formal_financial_explanation_pack=explanation_pack,
+    )
+
+    explanation_pos = prompt.find("正式经营解释材料包")
+    fact_pos = prompt.find("正式财务事实包")
+    assert explanation_pos != -1
+    assert fact_pos != -1
+    assert explanation_pos < fact_pos
+
+
+def test_supply_chain_state_blocks_generic_position_without_operating_variables():
+    synth = KnowledgeSynthesizer(client=None)
+    items = [
+        SynthesisItem(
+            title="行业研报",
+            content="公司竞争格局稳定。",
+            author="券商",
+            source_platform="行业研报",
+            url="",
+            publish_time="2026-07-01",
+        ),
+    ]
+
+    budget = synth._build_theme_material_budget("测试股", items, {})
+    supply_chain_state = budget["themes"]["industry_logic"]["supply_chain_state"]
+    assert supply_chain_state["has_operating_variable"] is False
+    assert supply_chain_state["matched_terms"] == []
+    source_rows = [(ref_id, items[ref_id - 1]) for ref_id in budget["themes"]["industry_logic"]["source_refs"]]
+    prompt = synth._build_prompt("测试股", "industry_logic", source_rows, budget["themes"]["industry_logic"])
+    assert "披露不足" in prompt
+    assert "不要写出具体供应链位置判断" in prompt

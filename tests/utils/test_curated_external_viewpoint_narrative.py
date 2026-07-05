@@ -8,6 +8,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 
 from curated_external_full_body_viewpoint_claims import normalized_hash
 from curated_external_viewpoint_narrative import (
+    NarrativeComposerError,
     build_viewpoint_narrative,
     llm_narrative_composer_factory,
 )
@@ -87,6 +88,146 @@ def test_build_viewpoint_narrative_from_fake_llm_paragraphs():
     assert "供给约束先影响交付弹性" in result["preview_markdown"]
     assert "[^1][^2]" in result["preview_markdown"]
     assert "不参与评分、风险评分或最终建议" in result["preview_markdown"]
+
+
+def test_build_viewpoint_narrative_falls_back_when_composer_parse_fails():
+    claims = [
+        _claim("c1", "外部材料提示FPGA产品放量仍需跟踪。", "FPGA观点"),
+        _claim("c2", "外部材料提示估值假设分歧较大。", "估值观点"),
+    ]
+
+    def composer(_claims, _baseline, _stock):
+        raise NarrativeComposerError("parse_failed", "invalid json")
+
+    result = build_viewpoint_narrative(
+        _digest(claims),
+        "baseline synthesis",
+        composer=composer,
+        stock_name="测试股",
+    )
+
+    assert result["status"] == "ok"
+    assert result["stats"]["composer_fallback_used"] is True
+    assert result["stats"]["composer_fallback_reason"] == "parse_failed"
+    assert result["paragraphs_count"] == 1
+    assert len(result["reasoning_cards"]) == 2
+    assert result["reasoning_cards"][0]["claim_id"] == "c1"
+
+
+def test_build_viewpoint_narrative_enriches_reasoning_cards_when_payload_omits_them():
+    claims = [
+        _claim("c1", "外部材料提示FPGA收入增长需要跟踪客户交付。", "FPGA观点"),
+    ]
+
+    def composer(_claims, _baseline, _stock):
+        return {
+            "paragraphs": [
+                {
+                    "heading": "FPGA增量线索",
+                    "text": "外部材料提示FPGA收入增长需要跟踪客户交付，这仍属于待验证变量。",
+                    "claim_refs": ["c1"],
+                }
+            ]
+        }
+
+    result = build_viewpoint_narrative(
+        _digest(claims),
+        "baseline synthesis",
+        composer=composer,
+        stock_name="测试股",
+    )
+
+    assert result["status"] == "ok"
+    assert result["stats"]["reasoning_cards_enriched"] is True
+    assert len(result["reasoning_cards"]) == 1
+    assert result["reasoning_cards"][0]["claim_id"] == "c1"
+    assert result["reasoning_cards"][0]["reasoning_steps"]
+
+
+def test_enriched_reasoning_cards_preserve_claim_reasoning_fields():
+    claim = _claim("c1", "外部材料提示A股估值位于乐观情景上沿。", "估值观点")
+    claim.update(
+        {
+            "reasoning_steps": ["用紫光国微盈利作参照", "用前瞻PE与PS交叉验证"],
+            "numbers_used": ["375-420亿", "46-52元"],
+            "assumptions": ["2026净利修复到7.5亿"],
+            "counterpoints": ["军工订单恢复不及预期"],
+            "verification_need": "跟踪半年报利润和军工FPGA订单",
+        }
+    )
+
+    def composer(_claims, _baseline, _stock):
+        return {
+            "paragraphs": [
+                {
+                    "heading": "估值分歧",
+                    "text": "外部材料提示A股估值位于乐观情景上沿，仍需跟踪盈利修复假设。",
+                    "claim_refs": ["c1"],
+                }
+            ]
+        }
+
+    result = build_viewpoint_narrative(
+        _digest([claim]),
+        "baseline synthesis",
+        composer=composer,
+        stock_name="测试股",
+    )
+
+    card = result["reasoning_cards"][0]
+    assert card["reasoning_steps"] == ["用紫光国微盈利作参照", "用前瞻PE与PS交叉验证"]
+    assert card["numbers_used"] == ["375-420亿", "46-52元"]
+    assert card["assumptions"] == ["2026净利修复到7.5亿"]
+    assert card["counterpoints"] == ["军工订单恢复不及预期"]
+    assert card["verification_need"] == "跟踪半年报利润和军工FPGA订单"
+
+
+def test_template_reasoning_cards_are_replaced_with_claim_reasoning_fields():
+    claim = _claim("c1", "外部材料提示A股估值位于乐观情景上沿。", "估值观点")
+    claim.update(
+        {
+            "reasoning_steps": ["用紫光国微盈利作参照", "用前瞻PE与PS交叉验证"],
+            "assumptions": ["2026净利修复到7.5亿"],
+            "counterpoints": ["军工订单恢复不及预期"],
+            "verification_need": "跟踪半年报利润和军工FPGA订单",
+        }
+    )
+
+    def composer(_claims, _baseline, _stock):
+        return {
+            "paragraphs": [
+                {
+                    "heading": "估值分歧",
+                    "text": "外部材料提示A股估值位于乐观情景上沿，仍需跟踪盈利修复假设。",
+                    "claim_refs": ["c1"],
+                }
+            ],
+            "reasoning_cards": [
+                {
+                    "claim_id": "c1",
+                    "display_topic": "valuation_debate",
+                    "claim": "外部材料提示A股估值位于乐观情景上沿。",
+                    "source_excerpt": "外部材料提示A股估值位于乐观情景上沿。",
+                    "reasoning_steps": ["外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。"],
+                    "assumptions": ["该变量仍属外部观察，未获官方确认。"],
+                    "counterpoints": ["若下游需求或公司交付节奏不及预期，该变量可能失效。"],
+                    "verification_need": "跟踪后续公告、订单或行业数据以验证该论断。",
+                }
+            ],
+        }
+
+    result = build_viewpoint_narrative(
+        _digest([claim]),
+        "baseline synthesis",
+        composer=composer,
+        stock_name="测试股",
+    )
+
+    card = result["reasoning_cards"][0]
+    assert card["reasoning_steps"] == ["用紫光国微盈利作参照", "用前瞻PE与PS交叉验证"]
+    assert card["assumptions"] == ["2026净利修复到7.5亿"]
+    assert card["counterpoints"] == ["军工订单恢复不及预期"]
+    assert card["verification_need"] == "跟踪半年报利润和军工FPGA订单"
 
 
 def test_build_viewpoint_narrative_preserves_reasoning_cards_with_bounded_excerpt():
@@ -569,3 +710,34 @@ class _FakeLLMClient:
 class _FakeResponse:
     def __init__(self, text: str):
         self.choices = [type("Choice", (), {"message": type("Message", (), {"content": text})()})]
+
+
+def test_default_viewpoint_narrative_prompt_requires_reasoning_cards():
+    from curated_external_viewpoint_narrative import _default_prompt
+    prompt = _default_prompt()
+    assert '"reasoning_cards"' in prompt
+    assert "reasoning_steps" in prompt
+    assert "numbers_used" in prompt
+    assert "assumptions" in prompt
+    assert "counterpoints" in prompt
+    assert "verification_need" in prompt
+
+
+def test_heuristic_narrative_composer_emits_reasoning_cards():
+    from curated_external_viewpoint_narrative import heuristic_narrative_composer
+    claims = [
+        _claim("c1", "外部材料提示800G交付计划下调传言仍需跟踪。", "上游材料预付款暴涨10倍"),
+        _claim("c2", "预付款项大幅增长可能提示光芯片等核心物料紧张。", "上游材料预付款暴涨10倍"),
+    ]
+    result = heuristic_narrative_composer(claims, "baseline", "测试股")
+    assert "paragraphs" in result
+    assert "reasoning_cards" in result
+    assert len(result["reasoning_cards"]) == 2
+    card = result["reasoning_cards"][0]
+    assert card["claim_id"] == "c1"
+    assert card["display_topic"]
+    assert card["claim"]
+    assert card["reasoning_steps"]
+    assert card["assumptions"]
+    assert card["counterpoints"]
+    assert card["verification_need"]

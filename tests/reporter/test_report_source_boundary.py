@@ -86,6 +86,108 @@ def test_allows_external_sources_inside_4_4_when_disclaimed():
     assert not result.issues
 
 
+def test_formal_thin_external_map_region_is_allowed():
+    text = """
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+#### 4.2.1 外部观点标题
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+**支持线索**：知乎文章提到多款新品[^1]。
+**反方约束**：雪球评论称官方未确认量产进度[^1]。
+**待验证证据**：需等待正式公告验证[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+
+    result = check_report_source_boundary_text(text)
+
+    assert result.passed
+    assert "social_source_in_formal_analysis" not in _codes(result)
+    assert "external_viewpoint_leak_outside_4_4" not in _codes(result)
+
+
+def test_formal_thin_social_token_in_4_1_still_fails():
+    text = """
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+雪球专栏观察认为公司营收增长确定。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+
+    result = check_report_source_boundary_text(text)
+
+    assert not result.passed
+    assert "social_source_in_formal_analysis" in _codes(result)
+
+
+def test_formal_thin_social_token_in_4_3_still_fails():
+    text = """
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 知乎精选观察认为影响收入确认 | 正式公告 | 需正式验证 |
+"""
+
+    result = check_report_source_boundary_text(text)
+
+    assert not result.passed
+    assert "social_source_in_formal_analysis" in _codes(result)
+
+
 def test_flags_4_4_missing_display_only_disclaimer():
     text = """
 ## 四、深度分析

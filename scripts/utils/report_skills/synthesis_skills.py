@@ -113,7 +113,39 @@ class SynthesisSkill(BaseSkill):
         )
         ctx.set("peer_comparison_material", peer_material)
 
-        baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx)
+        # Build formal material packs early so evidence profile can read them.
+        financial_fact_pack = self._build_formal_financial_fact_pack(
+            ctx.get("periodic_report_filing_core_facts", [])
+        )
+        if financial_fact_pack.get("facts"):
+            ctx.set("formal_financial_fact_pack", financial_fact_pack)
+        financial_explanation_pack = ctx.get("periodic_report_explanation_pack") or {}
+        if isinstance(financial_explanation_pack, dict) and financial_explanation_pack.get("rows"):
+            ctx.set("formal_financial_explanation_pack", financial_explanation_pack)
+        fundflow_material_pack = build_fundflow_material_pack(stock_raw.get("fundflow", []))
+        if fundflow_material_pack.get("rows"):
+            ctx.set("fundflow_material_pack", fundflow_material_pack)
+
+        # Build canonical synthesis items once.
+        items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx)
+
+        # Curated external display is independent of baseline synthesis; build it first.
+        self._build_viewpoint_narrative_deep_analysis_display(ctx)
+        if not ctx.get("deep_analysis_display"):
+            self._build_viewpoint_digest_deep_analysis_display(ctx)
+
+        # Evidence-adaptive routing: profile decides which deep-analysis prompts run.
+        profile = self._build_evidence_profile(ctx, items)
+        ctx.set("deep_analysis_evidence_profile", profile)
+
+        if profile["profile"] == "formal_rich":
+            baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx, items=items)
+        else:
+            source_policy = self._canonical_synthesis_source_policy(ctx)
+            formal_first_insufficient = source_policy == "formal_first"
+            if ctx is not None and formal_first_insufficient:
+                ctx.set("formal_first_sources_insufficient", True)
+            baseline = self._empty_baseline_synthesis(stock_raw, items, source_policy=source_policy, formal_first_insufficient=formal_first_insufficient)
         ctx.set("synthesis", baseline)
         core_facts = self._select_core_facts(
             baseline.get("core_facts", []),
@@ -129,19 +161,22 @@ class SynthesisSkill(BaseSkill):
         # digest notes may enter the DISPLAY synthesis only.  Canonical synthesis,
         # core_facts, synthesis_text, and synthesis_sources stay baseline so risk
         # scoring and Knowledge persistence never see display-only material.
+        # Only formal-rich reports generate display synthesis; thin layouts use the
+        # external viewpoint map / formal summary instead.
         display_items = []
         fulltext_items = []
         narrative_card_items = []
         broker_digest_items = []
-        if ctx.get("include_periodic_report_fulltext_in_synthesis"):
-            fulltext_items = self._eligible_periodic_report_fulltext_items(ctx)
-            display_items.extend(fulltext_items)
-        if ctx.get("include_periodic_narrative_cards_in_synthesis_display"):
-            narrative_card_items = self._eligible_periodic_narrative_card_items(ctx)
-            display_items.extend(narrative_card_items)
-        if ctx.get("include_broker_research_digest_in_synthesis_display"):
-            broker_digest_items = self._eligible_broker_research_digest_items(ctx)
-            display_items.extend(broker_digest_items)
+        if profile["profile"] == "formal_rich":
+            if ctx.get("include_periodic_report_fulltext_in_synthesis"):
+                fulltext_items = self._eligible_periodic_report_fulltext_items(ctx)
+                display_items.extend(fulltext_items)
+            if ctx.get("include_periodic_narrative_cards_in_synthesis_display"):
+                narrative_card_items = self._eligible_periodic_narrative_card_items(ctx)
+                display_items.extend(narrative_card_items)
+            if ctx.get("include_broker_research_digest_in_synthesis_display"):
+                broker_digest_items = self._eligible_broker_research_digest_items(ctx)
+                display_items.extend(broker_digest_items)
         if display_items:
             display = self._synthesize(
                 stock_name,
@@ -160,12 +195,6 @@ class SynthesisSkill(BaseSkill):
                 ctx.set("synthesis_text_with_periodic_narrative_cards", display_text)
             if broker_digest_items:
                 ctx.set("synthesis_text_with_broker_research_digest", display_text)
-
-        # Curated external materials: separate deep-analysis-only display paths.
-        # These branches intentionally do not reuse ctx["synthesis_display"].
-        self._build_viewpoint_narrative_deep_analysis_display(ctx)
-        if not ctx.get("deep_analysis_display"):
-            self._build_viewpoint_digest_deep_analysis_display(ctx)
 
         return ctx
 
@@ -350,6 +379,123 @@ class SynthesisSkill(BaseSkill):
             and str(claim.get("source_quote_hash") or "").strip()
         )
 
+    @staticmethod
+    def _build_evidence_profile(ctx: SkillContext, items: list) -> dict:
+        """Deterministic evidence profile used to route Chapter 4 layout."""
+        stock_name = ctx.get("stock_name", "")
+        stock_config = ctx.get("stock_config") or {}
+        fact_pack = ctx.get("formal_financial_fact_pack") or {}
+        explanation_pack = ctx.get("periodic_report_explanation_pack") or {}
+        fundflow_pack = ctx.get("fundflow_material_pack") or {}
+        deep_display = ctx.get("deep_analysis_display") or {}
+        peer_material = ctx.get("peer_comparison_material") or {}
+
+        canonical_items = [it for it in items if is_canonical_synthesis_source(it)]
+
+        def _dedupe_items(seq: list) -> list:
+            seen: set = set()
+            result: list = []
+            for it in seq:
+                extra = getattr(it, "extra", {}) or {}
+                key = (it.source_platform, it.title, it.url)
+                if key in seen:
+                    continue
+                seen.add(key)
+                result.append(it)
+            return result
+
+        industry_items = _dedupe_items(
+            KnowledgeSynthesizer._filter_items_for_theme("industry_logic", canonical_items, stock_name, stock_config)
+        )
+        fundamentals_items = _dedupe_items(
+            KnowledgeSynthesizer._filter_items_for_theme("fundamentals", canonical_items, stock_name, stock_config)
+        )
+        funding_items = _dedupe_items(
+            [it for it in canonical_items if KnowledgeSynthesizer._is_funding_sentiment_item(it)]
+        )
+        events_items = _dedupe_items(
+            KnowledgeSynthesizer._filter_items_for_theme("events_catalysts", canonical_items, stock_name, stock_config)
+        )
+
+        has_fundflow_pack = bool(fundflow_pack.get("rows"))
+        section_support = {
+            "industry": len(industry_items),
+            "fundamentals": len(fundamentals_items),
+            "funding_support": len(funding_items) if (funding_items or has_fundflow_pack) else 0,
+            "catalyst_support": len(events_items),
+        }
+
+        useful_fact_metrics = {
+            "营业收入", "归母净利润", "净利润", "毛利率", "经营现金流", "经营现金流量净额",
+            "订单", "客户", "产能", "产量", "价格", "交付", "交期", "库存", "存货",
+            "供需", "采购", "备货", "供应商", "指引", "费用率", "研发费用", "销售费用",
+            "管理费用", "产品", "产品线", "收入", "成本", "毛利", "营收", "净利",
+        }
+        useless_fact_metrics = {"年报发布", "年度报告发布", "业绩预告披露", "预告披露", "分红实施", "权益分派"}
+
+        formal_insight_facts = 0
+        for fact in (fact_pack.get("facts") or []):
+            if not isinstance(fact, dict):
+                continue
+            metric = str(fact.get("metric") or "")
+            if any(m in metric for m in useless_fact_metrics):
+                continue
+            if any(m in metric for m in useful_fact_metrics):
+                formal_insight_facts += 1
+
+        topic_groups = deep_display.get("_curated_external_topic_groups") or {}
+        reasoning_cards = deep_display.get("_curated_external_reasoning_cards") or []
+        citations = deep_display.get("citations", {}) or {}
+        external_topics = len(topic_groups)
+        external_claims = len({str(c.get("claim_id") or i): c for i, c in enumerate(reasoning_cards)})
+        external_sources = len(citations)
+        distinct_authors = len({
+            (str(m.get("source") or ""), str(m.get("author") or ""))
+            for m in citations.values() if isinstance(m, dict)
+        })
+        single_source = external_sources == 1 and (external_topics >= 3 or external_claims >= 6)
+
+        has_any_formal = any(section_support.values())
+        has_any_item = bool(items)
+        has_external_display = bool(deep_display)
+        external_rich = external_topics >= 3 or external_claims >= 6
+        reasons: List[str] = []
+        if formal_insight_facts >= 5 and section_support["industry"] >= 2 and section_support["fundamentals"] >= 2:
+            profile = "formal_rich"
+            reasons.append("formal_support_sufficient")
+        elif has_external_display and external_rich and formal_insight_facts < 5:
+            profile = "formal_thin_external_rich"
+            reasons.append("formal_thin_external_rich")
+            if single_source:
+                reasons.append("single_source_external_rich")
+        elif has_any_item:
+            profile = "formal_rich"
+            reasons.append("items_present_fallback")
+        else:
+            profile = "thin_all"
+            reasons.append("material_insufficient")
+
+        section_decisions = {
+            "industry": "legacy" if (profile == "formal_rich" and section_support["industry"] >= 2) else ("formal_summary" if profile == "formal_thin_external_rich" else "skipped"),
+            "fundamentals": "legacy" if (profile == "formal_rich" and section_support["fundamentals"] >= 2) else ("formal_summary" if profile == "formal_thin_external_rich" else "skipped"),
+            "funding": "legacy" if (profile == "formal_rich" and section_support["funding_support"] >= 1) else ("fallback" if section_support["catalyst_support"] >= 1 else "skipped"),
+            "catalysts": "timeline" if section_support["catalyst_support"] >= 1 else ("fallback" if profile == "formal_rich" else "skipped"),
+        }
+
+        return {
+            "profile": profile,
+            "formal_insight_facts": formal_insight_facts,
+            "formal_section_support": section_support,
+            "external_viewpoint_topics": external_topics,
+            "external_usable_claims": external_claims,
+            "external_source_count": external_sources,
+            "external_distinct_author_count": distinct_authors,
+            "single_source_external_rich": single_source,
+            "external_signal_count": 0,
+            "section_decisions": section_decisions,
+            "reasons": reasons,
+        }
+
     def _deterministic_viewpoint_digest_display(self, stock_name: str, claims: list) -> dict:
         grouped = {
             "industry_logic": [],
@@ -530,6 +676,7 @@ class SynthesisSkill(BaseSkill):
         keep_posts: list,
         ctx: SkillContext = None,
         extra_items: list = None,
+        items: list = None,
         deduped_sources_key: str = "synthesis_display_deduped_sources",
     ) -> dict:
         """调用 KnowledgeSynthesizer 或降级模板生成综合叙事。"""
@@ -560,11 +707,12 @@ class SynthesisSkill(BaseSkill):
         if fundflow_material_pack.get("rows") and ctx is not None:
             ctx.set("fundflow_material_pack", fundflow_material_pack)
 
-        items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx, extra_items=extra_items)
-        if extra_items:
-            items, deduped_sources = dedupe_synthesis_display_items(items)
-            if ctx is not None:
-                ctx.set(deduped_sources_key, deduped_sources)
+        if items is None:
+            items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx, extra_items=extra_items)
+            if extra_items:
+                items, deduped_sources = dedupe_synthesis_display_items(items)
+                if ctx is not None:
+                    ctx.set(deduped_sources_key, deduped_sources)
         if not items:
             if ctx is not None and source_policy == "formal_first":
                 ctx.set("formal_first_sources_insufficient", True)
@@ -599,10 +747,9 @@ class SynthesisSkill(BaseSkill):
         result = self._fill_citation_metadata(result, items)
         result = self._enrich_core_fact_provenance(result)
         if ctx:
-            result = self._sanitize_financial_missing_contradictions(
-                result,
-                ctx.get("formal_financial_fact_pack") or all_data.get("formal_financial_fact_pack") or {},
-            )
+            fact_pack = ctx.get("formal_financial_fact_pack") or all_data.get("formal_financial_fact_pack") or {}
+            result = self._sanitize_financial_missing_contradictions(result, fact_pack)
+            result = self._sanitize_financial_direction_contradictions(result, fact_pack)
         result = self._sanitize_indirect_industry_citations_from_43(result, stock_name)
 
         if not any(result.get(k) for k in SYNTHESIS_KEYS):
@@ -672,6 +819,89 @@ class SynthesisSkill(BaseSkill):
         result = dict(result)
         result["fundamentals"] = missing_pattern.sub(replacement, text, count=1).strip()
         return result
+
+    @staticmethod
+    def _sanitize_financial_direction_contradictions(result: dict, fact_pack: dict) -> dict:
+        """Align annual net-profit wording with deterministic formal financial facts."""
+        replacement = SynthesisSkill._annual_net_profit_decline_replacement(fact_pack)
+        if not replacement:
+            return result
+
+        sanitized = dict(result)
+        for key in ("industry_logic", "fundamentals", "valuation_debate"):
+            text = str(sanitized.get(key) or "")
+            if text:
+                sanitized[key] = SynthesisSkill._replace_false_annual_profit_growth(text, replacement)
+
+        core_facts = []
+        changed = False
+        for fact in sanitized.get("core_facts") or []:
+            if not isinstance(fact, dict):
+                core_facts.append(fact)
+                continue
+            fact_blob = f"{fact.get('fact', '')} {fact.get('data', '')}"
+            if SynthesisSkill._has_false_annual_profit_growth(fact_blob):
+                changed = True
+                continue
+            core_facts.append(fact)
+        if changed:
+            sanitized["core_facts"] = core_facts
+        return sanitized
+
+    @staticmethod
+    def _annual_net_profit_decline_replacement(fact_pack: dict) -> str:
+        for fact in ((fact_pack or {}).get("facts") or []):
+            if not isinstance(fact, dict):
+                continue
+            metric = str(fact.get("metric") or "")
+            value = str(fact.get("value") or "").strip()
+            if "净利润" not in metric or not value:
+                continue
+            if SynthesisSkill._is_net_profit_decline_value(value):
+                return f"正式财务口径显示归母净利润{value}"
+        return ""
+
+    @staticmethod
+    def _is_net_profit_decline_value(value: Any) -> bool:
+        text = str(value or "").replace("－", "-").replace("—", "-")
+        return bool(re.search(r"(?:同比)?(?:下降|下滑|减少)|-\d+(?:\.\d+)?%", text))
+
+    @staticmethod
+    def _replace_false_annual_profit_growth(text: str, replacement: str) -> str:
+        cleaned = str(text or "")
+        table_title_replacement = "估值溢价需等待盈利修复验证"
+        for pattern in (
+            r"(?:2025年)?年报显示利润随营收增长[，,、]?\s*营收扩张是利润增长主因",
+            r"(?:2025年)?年报显示利润随营收增长",
+            r"营收扩张是利润增长主因",
+        ):
+            cleaned = re.sub(pattern, replacement, cleaned)
+        for pattern in (
+            r"(?:公司)?2025年(?:归母净利润|归母净利|净利润|净利|利润)[^。；\n|]{0,16}同比增速显著",
+            r"(?:公司)?2025年(?:归母净利润|归母净利|净利润|净利|利润)同比大幅增长",
+            r"(?:公司)?2025年(?:归母净利润|归母净利|净利润|净利|利润)同比增长",
+            r"2025年[^。；\n|]{0,16}利润高增",
+        ):
+            cleaned = re.sub(pattern, replacement, cleaned)
+        for pattern in (
+            r"高成长性应享有高估值溢价",
+            r"高成长性支撑估值溢价",
+        ):
+            cleaned = re.sub(pattern, table_title_replacement, cleaned)
+        return cleaned
+
+    @staticmethod
+    def _has_false_annual_profit_growth(text: str) -> bool:
+        return bool(
+            re.search(
+                r"(?:公司)?2025年(?:归母净利润|归母净利|净利润|净利|利润)[^。；\n|]{0,16}同比增速显著|"
+                r"(?:公司)?2025年(?:归母净利润|归母净利|净利润|净利|利润)同比(?:大幅)?增长|"
+                r"2025年[^。；\n|]{0,16}利润高增|"
+                r"(?:2025年)?年报显示利润随营收增长|"
+                r"营收扩张是利润增长主因",
+                str(text or ""),
+            )
+        )
 
     @staticmethod
     def _available_financial_parts(fact_pack: dict, result: dict) -> list:
@@ -859,12 +1089,18 @@ class SynthesisSkill(BaseSkill):
     def _build_synthesis_items(self, stock_raw: dict, keep_posts: list, ctx: SkillContext = None, extra_items: list = None):
         zhihu = stock_raw.get("zhihu", {})
         source_policy = self._canonical_synthesis_source_policy(ctx)
+        fundflow_material_pack = ctx.get("fundflow_material_pack") if ctx else None
+        fundflow = (
+            stock_raw.get("fundflow", [])
+            if (fundflow_material_pack and fundflow_material_pack.get("rows"))
+            else []
+        )
         items = adapt_all(
             xueqiu_items=keep_posts,
             zhihu_items=zhihu.get("report_items", []),
             reports=stock_raw.get("reports", []),
             announcements=stock_raw.get("announcements", []),
-            fundflow=[] if ctx and ctx.get("fundflow_material_pack") else stock_raw.get("fundflow", []),
+            fundflow=fundflow,
             news=stock_raw.get("news", []),
         )
         if source_policy == "formal_first":
@@ -1055,8 +1291,31 @@ class SynthesisSkill(BaseSkill):
             return "supported"
         return "invalid_ref"
 
-    def _source_list(self, items: list) -> List[str]:
+    @staticmethod
+    def _source_list(items: list) -> List[str]:
         return sorted({item.source_platform for item in items if item.source_platform})
+
+    @staticmethod
+    def _empty_baseline_synthesis(stock_raw: dict, items: list, source_policy: str = "legacy_mixed", formal_first_insufficient: bool = False) -> dict:
+        if formal_first_insufficient:
+            return SynthesisSkill._template_synthesize(
+                stock_raw,
+                items_count=len(items),
+                sources=SynthesisSkill._source_list(items),
+                source_policy=source_policy,
+            )
+        return {
+            "industry_logic": "",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "core_facts": [],
+            "citations": {},
+            "_items_count": len(items),
+            "_sources": SynthesisSkill._source_list(items),
+            "_source_policy": source_policy,
+        }
 
     def _build_prompt(self, stock_name: str, stock_raw: dict, keep_posts: list, cv_context: Dict = None) -> str:
         """构建 LLM prompt（legacy chat 路径，复用现代路径的信用规则）。"""
@@ -1094,8 +1353,8 @@ class SynthesisSkill(BaseSkill):
         """Render guarded non-citable appendix for legacy prompt."""
         return format_claim_verification_appendix(context, is_legacy=True)
 
+    @staticmethod
     def _template_synthesize(
-        self,
         stock_raw: dict,
         items_count: int = 0,
         sources: List[str] = None,

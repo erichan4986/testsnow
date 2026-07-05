@@ -155,7 +155,7 @@ def test_synthesis_skill_passes_formal_financial_explanation_pack_to_synthesizer
     assert all_data["formal_financial_explanation_pack"] is explanation_pack
 
 
-def test_synthesis_skill_builds_fundflow_pack_and_removes_raw_fundflow_items():
+def test_synthesis_skill_builds_fundflow_pack_and_keeps_raw_fundflow_items():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
     ctx = SkillContext(input={
@@ -178,7 +178,33 @@ def test_synthesis_skill_builds_fundflow_pack_and_removes_raw_fundflow_items():
     _, all_data = fake.calls[0]
     assert all_data["fundflow_material_pack"]["summary"]["main_net_total"] == 1000.0
     assert ctx.output["fundflow_material_pack"]["summary"]["signal"] == "inflow_with_price_up"
-    assert all(item.source_platform != "资金流向" for item in all_data["items"])
+    assert any(item.source_platform == "资金流向" for item in all_data["items"])
+
+
+def test_fundflow_pack_keeps_citable_fundflow_sources():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "stock_raw": {
+            "announcements": [{"title": "一季报", "content": "公司披露一季报", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [
+                {"date": "2026-07-02", "main_in": "1200", "change_pct": "2.5"},
+            ],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    _, all_data = fake.calls[0]
+    fundflow_items = [item for item in all_data["items"] if item.source_platform == "资金流向"]
+    assert len(fundflow_items) >= 1
+    # The raw fundflow row should be addressable by global source ids in the synthesizer.
+    assert all_data["fundflow_material_pack"]["summary"]["signal"] == "inflow_with_price_up"
 
 
 def test_synthesis_skill_replaces_financial_missing_contradiction_when_fact_pack_exists():
@@ -872,8 +898,8 @@ def test_synthesis_skill_legacy_chat_path_includes_appendix():
         "claim_verification_base_dir": "knowledge",
         "stock_raw": {
             "technical": {"indicators": {"_resonance": {"composite_score": 7}}},
-            "reports": [],
-            "announcements": [],
+            "reports": [{"title": "测试研报", "content": "测试内容", "institution": "测试证券"}],
+            "announcements": [{"title": "测试公告", "content": "测试内容", "date": "2026-06-01"}],
             "fundflow": [],
             "news": [],
             "zhihu": {"report_items": []},
@@ -1851,8 +1877,8 @@ def test_legacy_chat_prompt_includes_credit_rules():
         "claim_verification_base_dir": "knowledge",
         "stock_raw": {
             "technical": {"indicators": {"_resonance": {"composite_score": 7}}},
-            "reports": [],
-            "announcements": [],
+            "reports": [{"title": "测试研报", "content": "测试内容", "institution": "测试证券"}],
+            "announcements": [{"title": "测试公告", "content": "测试内容", "date": "2026-06-01"}],
             "fundflow": [],
             "news": [],
             "zhihu": {"report_items": []},
@@ -2533,3 +2559,54 @@ def test_fill_citation_metadata_preserves_credit_fields():
     assert meta["source_credit"] == 95
     assert meta["source_type"] == "announcement"
     assert meta["verification_status"] == "primary_source"
+
+
+def test_formal_thin_external_rich_skips_legacy_synthesis_with_chat_client(tmp_path):
+    """ formal_thin_external_rich must not call legacy deep-analysis prompts when llm_client.chat exists. """
+    from unittest.mock import MagicMock
+
+    digest_path = _write_viewpoint_digest_json(
+        tmp_path,
+        [
+            _make_viewpoint_claim_with_text("vc1", "外部观点A", topic="technology_route", title="外部A"),
+            _make_viewpoint_claim_with_text("vc2", "外部观点B", topic="order_capacity_delivery", title="外部B"),
+            _make_viewpoint_claim_with_text("vc3", "外部观点C", topic="financial_quality", title="外部C"),
+        ],
+    )
+
+    chat_client = MagicMock()
+    chat_client.chat.return_value = {
+        "industry_logic": "legacy 行业逻辑",
+        "fundamentals": "legacy 基本面",
+        "valuation_debate": "legacy 估值",
+        "funding_sentiment": "legacy 资金",
+        "events_catalysts": "legacy 催化",
+        "core_facts": [],
+        "citations": {},
+    }
+
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(llm_client=chat_client, synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {
+            "reports": [],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+    skill.run(ctx)
+
+    profile = ctx.output.get("deep_analysis_evidence_profile", {})
+    assert profile.get("profile") == "formal_thin_external_rich"
+    assert fake.calls == []
+    assert chat_client.chat.call_count == 0
+    synthesis = ctx.output.get("synthesis", {})
+    assert synthesis.get("industry_logic", "") == ""
+    assert synthesis.get("fundamentals", "") == ""
+    assert "legacy" not in str(synthesis.get("valuation_debate", ""))

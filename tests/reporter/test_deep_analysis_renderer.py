@@ -140,7 +140,7 @@ def test_curated_external_display_is_addendum_not_replacement():
     assert "- [^1] 雪球" in result
 
 
-def test_curated_external_narrative_reasoning_cards_render_with_bounded_excerpt():
+def test_curated_external_narrative_reasoning_cards_not_rendered_visible():
     renderer = DeepAnalysisRenderer()
     excerpt = "外部原文片段" * 20
     ctx = {
@@ -195,14 +195,11 @@ def test_curated_external_narrative_reasoning_cards_render_with_bounded_excerpt(
 
     result = renderer.render(ctx)
 
-    assert "**观点**：外部观点认为A股估值处于乐观情景上沿" in result
-    assert "**推理步骤**：用紫光国微作盈利参照；用2026净利和PE交叉验证" in result
-    assert "**关键数字**：375-420亿；46-52元" in result
-    assert "**关键假设**：2026净利修复到7.5亿" in result
-    assert "**反方约束**：军工订单恢复不及预期" in result
-    assert "**待验证项**：跟踪半年报和订单恢复" in result
-    assert "外部原文片段" in result
-    assert len(result.split("**原文片段**：", 1)[1].split("[^", 1)[0]) <= 210
+    assert "**观点卡片：**" not in result
+    assert "**观点**：外部观点认为A股估值处于乐观情景上沿" not in result
+    assert "**推理步骤**：" not in result
+    assert "**关键数字**：" not in result
+    assert "外部材料提示估值分歧[^2]" in result
     assert "- [^2] 雪球专栏观察" in result
 
 
@@ -1190,3 +1187,130 @@ def test_curated_external_narrative_addendum_renders_paragraphs_not_bullets():
     assert "- **供应链瓶颈与交付疑虑并存**" not in result
     assert "[^1]" in result
     assert "https://mp.weixin.qq.com/s/viewpoint" in result
+
+
+def test_formal_rich_profile_renders_legacy_headings_and_badge():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_rich",
+            "formal_section_support": {"industry": 2, "fundamentals": 2, "funding_support": 1, "catalyst_support": 1},
+        },
+        "synthesis": {
+            "industry_logic": "产业逻辑[^1]",
+            "fundamentals": "基本面",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "研报", "title": "测试"}},
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "<!-- deep_analysis_profile:" in result
+    assert "深度分析形态：正式材料丰富" in result
+    assert "### 4.1 产业逻辑与竞争格局" in result
+    assert "### 4.2 业绩路径与多空分歧" in result
+    assert "### 4.3 资金面与催化剂时间线" in result
+
+
+def test_formal_thin_external_rich_profile_renders_new_layout():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "formal_financial_fact_pack": {
+            "facts": [
+                {"metric": "营业收入", "value": "39.82亿元"},
+                {"metric": "归母净利润", "value": "2.32亿元，同比下降59.42%"},
+            ],
+        },
+        "deep_analysis_display": {
+            "industry_logic": "",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "测试外部", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_topic_groups": {
+                "technology_route": [{"heading": "路线", "text": "外部观点A[^1]", "citation_refs": [1]}],
+                "order_capacity_delivery": [{"heading": "交付", "text": "外部观点B[^1]", "citation_refs": [1]}],
+                "financial_quality": [{"heading": "业绩", "text": "外部观点C[^1]", "citation_refs": [1]}],
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim_id": "c1",
+                    "claim": "外部观点A",
+                    "assumptions": ["假设A"],
+                    "counterpoints": ["反方A"],
+                    "verification_need": "验证A",
+                    "citation_refs": [1],
+                },
+            ],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "深度分析形态：正式材料薄但外部观点丰富" in result
+    assert "<!-- deep_analysis_profile:" in result
+    assert "### 4.1 正式材料要点" in result
+    assert "### 4.2 外部观点地图（Preview，不参与评分）" in result
+    assert "### 4.3 待验证清单" in result
+    assert "### 4.1 产业逻辑与竞争格局" not in result
+    assert "### 4.2 业绩路径与多空分歧" not in result
+    assert "### 4.3 资金面与催化剂时间线" not in result
+    assert "外部材料称：外部观点A[^1]；该说法需以公告、财报拆分或行业第三方数据验证。" in result
+    assert "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |" in result
+
+
+def test_formal_thin_external_map_frames_claims_and_keeps_numbers():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "39.82亿元"}]},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "雪球专栏观察", "title": "测试外部", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim_id": "c1",
+                    "claim": "国内高可靠卫星FPGA市占率95%以上；单星价值300-500万元",
+                    "reasoning_steps": ["需核对95%口径"],
+                    "counterpoints": ["官方未披露市占率"],
+                    "verification_need": "需等待公告或第三方行业数据验证",
+                    "citation_refs": [1],
+                },
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+
+    assert "外部材料称：国内高可靠卫星FPGA市占率95%以上；单星价值300-500万元[^1]" in result
+    assert "该说法需以公告、财报拆分或行业第三方数据验证" in result
+    assert "95%" in result
+    assert "300-500万元" in result
+
+
+def test_thin_all_profile_renders_material_insufficient_layout():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "thin_all"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "10亿元"}]},
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "深度分析形态：材料不足" in result
+    assert "### 4.1 正式材料要点" in result
+    assert "当前可用于深度基本面分析的正式材料不足" in result
+    assert "### 4.2" not in result

@@ -322,7 +322,7 @@ FPGA产品仍是核心变量[^1]。
     assert "fundamentals_repeats_core_facts" in codes
 
 
-def test_external_viewpoint_overcompressed_warns_when_4_4_has_no_reasoning_cards():
+def test_external_viewpoint_4_4_with_disclaimer_and_citations_passes():
     text = _quality_shell(
         """
 ### 4.1 产业逻辑与竞争格局
@@ -352,7 +352,206 @@ FPGA产品仍是核心变量[^1]。
 
     codes = {issue.code for issue in check_report_text(text).issues}
 
+    assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_external_viewpoint_4_4_missing_disclaimer_warns():
+    text = _quality_shell(
+        """
+### 4.1 产业逻辑与竞争格局
+
+FPGA产品仍是核心变量[^1]。
+
+### 4.2 业绩路径与多空分歧
+
+收入变化原因主要系FPGA产品放量。
+
+### 4.3 资金面与催化剂时间线
+
+当前未取得可用主力资金流向数据。
+
+### 4.4 精选外部观察
+
+外部材料认为估值存在分歧[^2]。
+
+**本节引用来源：**
+- [^2] 雪球专栏观察 | 《估值分析》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
     assert "external_viewpoint_overcompressed" in codes
+
+
+def test_formal_thin_external_map_without_visible_cards_does_not_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不参与评分。
+
+#### 4.2.1 产业链与技术路线分歧
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+**支持线索**：产业报告提到多款新品。
+**反方约束**：官方未确认量产进度。
+**待验证证据**：需等待正式公告验证。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
+    assert "external_viewpoint_reasoning_cards_templated" not in codes
+
+
+def test_formal_thin_external_map_missing_structure_warns():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不参与评分。
+
+外部材料讨论技术路线仍有分歧。
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" in codes
+
+
+def test_formal_thin_external_map_only_chain_warns():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不参与评分。
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_viewpoint_overcompressed" in codes
+    issue = next(i for i in result.issues if i.code == "external_viewpoint_overcompressed")
+    assert "支持线索" in issue.evidence
+    assert "反方约束" in issue.evidence
+    assert "待验证证据" in issue.evidence
+
+
+def test_formal_thin_external_map_full_structure_but_no_inline_citations_warns():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不参与评分。
+
+**外部观点链**：外部材料讨论技术路线仍有分歧。
+**支持线索**：产业报告提到多款新品。
+**反方约束**：官方未确认量产进度。
+**待验证证据**：需等待正式公告验证。
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_viewpoint_overcompressed" in codes
+    issue = next(i for i in result.issues if i.code == "external_viewpoint_overcompressed")
+    assert "inline citations" in issue.evidence
+
+
+def test_formal_thin_external_map_full_structure_with_inline_citations_passes():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+已确认：营业收入10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不参与评分。
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+**支持线索**：产业报告提到多款新品[^1]。
+**反方约束**：官方未确认量产进度[^1]。
+**待验证证据**：需等待正式公告验证[^1]。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 量产进度 | 影响收入确认 | 正式公告 | 需正式验证 |
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
 
 
 def test_unmatched_industry_chain_claim_is_error_when_manifest_is_available():
@@ -598,6 +797,36 @@ def test_missing_deep_analysis_subsection_is_error():
     assert "missing_deep_analysis_subsection" in codes
 
 
+def test_thin_all_only_requires_4_1():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "thin_all"} -->
+
+### 4.1 正式材料要点
+
+当前可用于深度基本面分析的正式材料不足，未强制生成 4.2/4.3 推断性内容。
+"""
+    )
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "missing_deep_analysis_subsection" not in codes
+
+
+def test_formal_rich_missing_4_2_and_4_3_still_error():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_rich"} -->
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+"""
+    )
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "missing_deep_analysis_subsection" in codes
+
+
 def test_product_industry_mismatch_is_error_for_negated_mlcc_chain():
     text = """
 # 复旦微电 舆情深度报告
@@ -721,6 +950,216 @@ def test_true_missing_order_and_guidance_text_does_not_trigger_financial_contrad
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "financial_data_missing_contradiction" not in codes
+
+
+def test_profit_growth_wording_conflicts_with_negative_net_profit_signal():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 执行摘要
+
+- 2025年业绩预告利润高增，营收增长由核心产品线驱动。
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+公司公告显示，2025年营收与利润增长，反映下游需求稳定。
+
+### 4.2 业绩路径与多空分歧
+
+若2025年年报及后续季报持续验证利润高增，市场可能接受当前高PE。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未提供足够资金面数据。
+
+### 4.4 精选外部观察（Preview）
+
+外部材料指出，复旦微电2025年归母净利只有2.32亿，同比腰斩59%，需要跟踪盈利修复假设。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_profit_direction_contradiction" in codes
+
+
+def test_profit_growth_wording_conflicts_with_net_profit_repair_signal():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 执行摘要
+
+- 2025年业绩预告利润高增，营收增长由核心产品线驱动。
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+公司公告显示，2025年营收与利润增长，反映下游需求稳定。
+
+### 4.2 业绩路径与多空分歧
+
+若2025年年报及后续季报持续验证利润高增，市场可能接受当前高PE。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未提供足够资金面数据。
+
+### 4.4 精选外部观察（Preview）
+
+外部材料认为，核心假设在于2026年净利润能否修复至7.5亿元，券商预测区间分歧较大。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_profit_direction_contradiction" in codes
+
+
+def test_profit_growth_wording_catches_yoy_large_growth_phrase():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 执行摘要
+
+2025年归母净利润同比大幅增长。
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+公司产品线清晰。
+
+### 4.2 业绩路径与多空分歧
+
+2025年归母净利润同比大幅增长，Forward PE降至52.11倍。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未提供足够资金面数据。
+
+### 4.4 精选外部观察（Preview）
+
+外部材料认为，2026年净利润能否修复至7.5亿元仍是估值锚。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_profit_direction_contradiction" in codes
+
+
+def test_financial_snapshot_yoy_growth_does_not_conflict_with_full_year_repair():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 执行摘要
+
+估值分歧未解，需等待更多确认信号。
+
+## 二、估值与财务快照
+
+> 财务趋势: 营收同比增长16.2%，净利润同比增长8.9%。
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+当前仅完成技术面降级摘要。
+
+### 4.2 业绩路径与多空分歧
+
+基本面 LLM 合成未启用或未产生有效输出。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未提供足够资金面数据。
+
+### 4.4 精选外部观察（Preview）
+
+外部材料认为，2026年净利润能否修复至7.5亿元仍是估值锚。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "financial_profit_direction_contradiction" not in codes
+
+
+def test_external_viewpoint_template_reasoning_cards_are_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+### 4.2 业绩路径与多空分歧
+
+业绩路径清晰。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未提供足够资金面数据。
+
+### 4.4 精选外部观察（Preview）
+
+**观点卡片：**
+
+- **观点**：观点一
+  - **推理步骤**：外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。
+  - **关键假设**：该变量仍属外部观察，未获官方确认。
+- **观点**：观点二
+  - **推理步骤**：外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。
+  - **关键假设**：该变量仍属外部观察，未获官方确认。
+- **观点**：观点三
+  - **推理步骤**：外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。
+  - **关键假设**：该变量仍属外部观察，未获官方确认。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "external_viewpoint_reasoning_cards_templated" in codes
 
 
 def test_header_config_missing_warns_when_header_shows_dash():
@@ -1229,3 +1668,300 @@ def test_curated_external_4_4_requires_inline_footnotes_when_sources_exist():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "curated_external_missing_inline_footnotes" in codes
+
+
+def test_profile_routing_trace_missing_catches_absent_profile():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "profile_routing_trace_missing" in codes
+
+
+def test_formal_thin_forced_legacy_sections_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 产业逻辑与竞争格局
+
+旧模板。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "formal_thin_forced_legacy_deep_sections" in codes
+
+
+def test_funding_claim_without_funding_support_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.3 资金面与催化剂时间线
+
+近5日主力净流入合计 1200万。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "funding_claim_without_funding_support" in codes
+
+
+def test_useless_core_fact_warns():
+    text = """
+# 测试股 舆情深度报告
+
+## 三、核心事实基座
+
+| # | 事实 | 数据/来源 | 证据 | 置信度 |
+|---|---|-----------|------|--------|
+| 1 | 年报已发布 | 2025年年报 | 公告 | 高 |
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_rich"} -->
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "useless_core_fact" in codes
+
+
+def test_external_map_disclaimer_confirmation_word_does_not_falsely_trigger():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料讨论技术路线仍有分歧[^1]。
+**支持线索**：产业报告提到多款新品[^1]。
+**反方约束**：官方未确认量产进度[^1]。
+**待验证证据**：需等待正式公告验证[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
+def test_external_map_body_strong_confirmation_still_triggers():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料确认公司已经进入核心客户供应链[^1]。
+**支持线索**：产业报告提到多款新品[^1]。
+**反方约束**：官方未确认量产进度[^1]。
+**待验证证据**：需等待正式公告验证[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_map_unverified_claim_framing" in codes
+
+
+def test_external_map_framed_market_share_claim_does_not_trigger():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料称国内高可靠卫星FPGA市占率95%以上，该说法需正式验证[^1]。
+**支持线索**：外部材料提到星载芯片需求[^1]。
+**反方约束**：官方未确认市占率口径[^1]。
+**待验证证据**：需等待公告或第三方行业数据验证[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
+def test_external_map_unframed_market_share_claim_still_triggers():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：国内高可靠卫星FPGA市占率已达95%以上[^1]。
+**支持线索**：外部材料提到星载芯片需求[^1]。
+**反方约束**：官方未确认市占率口径[^1]。
+**待验证证据**：需等待公告或第三方行业数据验证[^1]。
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_map_unverified_claim_framing" in codes
+
+
+def test_external_map_missing_disclaimer_is_error():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+外部观点认为公司将进入供应链。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "external_map_unverified_claim_framing" in codes
+
+
+def test_external_map_with_disclaimer_passes():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+可信度：中。风险等级：3.0/10。
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 正式材料要点
+
+**已确认**
+- 营业收入：10亿元。
+
+### 4.2 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不参与评分。
+
+**外部观点链**：外部材料讨论公司可能成为某头部客户供应链的潜在参与者，但仍需正式验证。[^1]
+
+**支持线索**：供应商访谈提及样品验证进度符合预期，部分产能处于爬坡阶段[^1]。
+
+**反方约束**：尚未有官方订单公告，且同行竞争可能压低份额预期[^1]。
+
+**待验证证据**：关注后续财报、客户公告及行业出货量数据以交叉验证[^1]。
+
+### 4.3 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 供应链传闻 | 外部观点增量变量 | 后续财报、客户公告及行业出货量数据 | 来源层级：低信用论坛 / 单源长文 / 需正式验证 |
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线：股价位于MA20与MA60之间。周线：周线大背景仍为整理。成交量：成交额较前期持平。波动率：BOLL收口。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "external_map_missing_display_only_disclaimer" not in codes
+    assert "external_map_unverified_claim_framing" not in codes
+    assert "external_viewpoint_overcompressed" not in codes

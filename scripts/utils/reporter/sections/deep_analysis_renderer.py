@@ -1,5 +1,6 @@
 """深度分析板块渲染器。"""
 
+import json
 import re
 from typing import Any, Dict, List
 
@@ -68,39 +69,53 @@ class DeepAnalysisRenderer:
 
     def render(self, ctx: Dict[str, Any]) -> str:
         stock_name = ctx.get("stock_name", "")
+        if not stock_name:
+            return ""
+
+        profile = ctx.get("deep_analysis_evidence_profile") or {"profile": "formal_rich"}
+        profile_name = profile.get("profile", "formal_rich")
+
         deep_analysis_display = ctx.get("deep_analysis_display") or {}
         uses_curated_external_display = self._has_curated_external_citation(deep_analysis_display)
-        if (
-            deep_analysis_display
-            and not uses_curated_external_display
-            and self._is_main_analysis_display_allowed(deep_analysis_display)
-        ):
-            synthesis = deep_analysis_display
-            curated_display = {}
-        else:
-            synthesis_display = ctx.get("synthesis_display") or {}
-            if synthesis_display and self._is_main_analysis_display_allowed(synthesis_display):
-                synthesis = synthesis_display
+
+        # For formal-rich, preserve existing display-priority logic.
+        # For thin layouts, use the baseline synthesis (often empty) and external map.
+        if profile_name == "formal_rich":
+            if (
+                deep_analysis_display
+                and not uses_curated_external_display
+                and self._is_main_analysis_display_allowed(deep_analysis_display)
+            ):
+                synthesis = deep_analysis_display
+                curated_display = {}
             else:
-                synthesis = ctx.get("synthesis") or {}
-            curated_display = deep_analysis_display
-        if not stock_name or not synthesis:
+                synthesis_display = ctx.get("synthesis_display") or {}
+                if synthesis_display and self._is_main_analysis_display_allowed(synthesis_display):
+                    synthesis = synthesis_display
+                else:
+                    synthesis = ctx.get("synthesis") or {}
+                curated_display = deep_analysis_display
+        else:
+            synthesis = ctx.get("synthesis") or {}
+            curated_display = deep_analysis_display if uses_curated_external_display else {}
+
+        if not synthesis:
             return ""
 
         core_facts = ctx.get("core_facts", [])
         lines = []
 
         # 核心事实基座
-        core_facts_md = self._core_facts_table(core_facts)
+        core_facts_md = self._core_facts_table(core_facts, profile=profile)
         if core_facts_md:
             lines.append(core_facts_md)
 
         # 深度分析
         deep_md = self._deep_analysis(
-            stock_name,
             synthesis,
-            ctx.get("claim_verification_summary"),
-            curated_external_display=curated_display if uses_curated_external_display else None,
+            ctx,
+            profile=profile,
+            curated_external_display=curated_display if profile_name == "formal_rich" else deep_analysis_display,
             curated_citation_offset=self._max_citation_id(synthesis.get("citations", {}) or {}),
         )
         if deep_md:
@@ -109,24 +124,27 @@ class DeepAnalysisRenderer:
         # 全局引用
         citations = self._merged_citations(
             synthesis.get("citations", {}) or {},
-            curated_display.get("citations", {}) if uses_curated_external_display else {},
+            (curated_display or {}).get("citations", {}) if profile_name == "formal_rich" else (deep_analysis_display.get("citations", {}) or {}),
         )
         if citations:
             lines.append(self._citations_section("引用来源", citations))
 
         return "\n".join(lines)
 
-    def _core_facts_table(self, core_facts: List[Dict]) -> str:
+    def _core_facts_table(self, core_facts: List[Dict], profile: Dict[str, Any] = None) -> str:
         """渲染核心事实基座表格。"""
         if not core_facts:
             return ""
+
+        profile_name = (profile or {}).get("profile", "formal_rich")
+        display_facts = self._prune_display_core_facts(core_facts, keep_all=profile_name == "formal_rich")
 
         # Phase 1: only facts with at least one accepted citation are shown as a
         # supportable base.  Rows that are entirely invalid_ref / missing_ref are
         # not presented as a "core facts base".
         supportable_statuses = {"supported", "partially_supported"}
         supportable_facts = [
-            f for f in core_facts
+            f for f in display_facts
             if f.get("provenance_status", "missing_ref") in supportable_statuses
         ]
 
@@ -142,7 +160,7 @@ class DeepAnalysisRenderer:
             "| # | 事实 | 数据/来源 | 证据 | 置信度 |",
             "|---|---|-----------|------|--------|",
         ]
-        for f in core_facts:
+        for f in display_facts:
             fid = f.get("fact_id", "")
             fact = f.get("fact", "").replace("|", "\\|")
             data = f.get("data", "").replace("|", "\\|")
@@ -156,6 +174,35 @@ class DeepAnalysisRenderer:
             "",
         ])
         return "\n".join(lines)
+
+    @staticmethod
+    def _prune_display_core_facts(core_facts: List[Dict], keep_all: bool = False) -> List[Dict]:
+        """Drop document-existence / duplicate / useless facts from the visible table."""
+        if keep_all:
+            return core_facts
+        useless_patterns = (
+            r"年报发布",
+            r"年度报告",
+            r"业绩预告",
+            r"预告披露",
+            r"分红实施",
+            r"权益分派",
+        )
+        kept = []
+        seen = set()
+        for f in core_facts:
+            if not isinstance(f, dict):
+                continue
+            fact_text = str(f.get("fact", "")).strip()
+            data_text = str(f.get("data", "")).strip()
+            if any(re.search(p, fact_text) for p in useless_patterns):
+                continue
+            key = (fact_text, data_text)
+            if key in seen:
+                continue
+            seen.add(key)
+            kept.append(f)
+        return kept
 
     def _render_evidence_cell(self, fact: Dict) -> str:
         """Render the provenance evidence cell for a core fact row."""
@@ -179,20 +226,59 @@ class DeepAnalysisRenderer:
 
     def _deep_analysis(
         self,
-        stock_name: str,
         synthesis: Dict[str, str],
-        claim_verification_summary: Any = None,
+        ctx: Dict[str, Any],
+        profile: Dict[str, Any] = None,
         curated_external_display: Dict[str, Any] | None = None,
         curated_citation_offset: int = 0,
     ) -> str:
         """
-        深度分析板块：合并原5个合成板块为3个子板块。
+        深度分析板块：根据 evidence profile 渲染不同布局。
+        """
+        profile = profile or {"profile": "formal_rich"}
+        profile_name = profile.get("profile", "formal_rich")
+        badge = self._profile_badge(profile_name)
+        profile_json = json.dumps(profile, ensure_ascii=False)
+        lines = ["## 四、深度分析", "", f"<!-- deep_analysis_profile: {profile_json} -->", "", f"> {badge}", ""]
+
+        if profile_name == "formal_rich":
+            lines.extend(self._legacy_deep_analysis_body(
+                synthesis, ctx.get("claim_verification_summary"),
+                curated_external_display=curated_external_display,
+                curated_citation_offset=curated_citation_offset,
+            ))
+        elif profile_name == "formal_thin_external_rich":
+            lines.extend(self._formal_thin_external_rich_body(
+                ctx, curated_external_display,
+            ))
+        else:
+            lines.extend(self._thin_all_body(ctx))
+
+        return "\n".join(lines)
+
+    @staticmethod
+    def _profile_badge(profile_name: str) -> str:
+        if profile_name == "formal_rich":
+            return "深度分析形态：正式材料丰富"
+        if profile_name == "formal_thin_external_rich":
+            return "深度分析形态：正式材料薄但外部观点丰富"
+        return "深度分析形态：材料不足"
+
+    def _legacy_deep_analysis_body(
+        self,
+        synthesis: Dict[str, str],
+        claim_verification_summary: Any = None,
+        curated_external_display: Dict[str, Any] | None = None,
+        curated_citation_offset: int = 0,
+    ) -> List[str]:
+        """
+        原有深度分析板块：合并原5个合成板块为3个子板块。
         4.1 产业逻辑与竞争格局
         4.2 业绩路径与多空分歧
         4.3 资金面与催化剂时间线
         """
         citations = synthesis.get("citations", {})
-        lines = ["## 四、深度分析", ""]
+        lines: List[str] = []
 
         verified_summary = self._verified_claim_summary_section(claim_verification_summary)
         if verified_summary:
@@ -209,20 +295,7 @@ class DeepAnalysisRenderer:
             "",
         ])
         used_refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", industry_logic))
-        if used_refs:
-            lines.append("**本节引用来源：**")
-            for ref_id in sorted(used_refs):
-                meta = citations.get(ref_id, {})
-                source = meta.get("source", "未知")
-                author = meta.get("author", "")
-                title_text = meta.get("title", "")
-                line = f"- [^{ref_id}] {source}"
-                if author:
-                    line += f" | 作者: {author}"
-                if title_text:
-                    line += f" | 《{self._truncate_title(title_text, 40)}》"
-                lines.append(line)
-            lines.append("")
+        self._append_section_citations(lines, used_refs, citations)
 
         # 4.2 业绩路径与多空分歧
         fundamentals = synthesis.get("fundamentals", "")
@@ -244,20 +317,7 @@ class DeepAnalysisRenderer:
         used_refs = set()
         used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", fundamentals))
         used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", valuation_debate))
-        if used_refs:
-            lines.append("**本节引用来源：**")
-            for ref_id in sorted(used_refs):
-                meta = citations.get(ref_id, {})
-                source = meta.get("source", "未知")
-                author = meta.get("author", "")
-                title_text = meta.get("title", "")
-                line = f"- [^{ref_id}] {source}"
-                if author:
-                    line += f" | 作者: {author}"
-                if title_text:
-                    line += f" | 《{self._truncate_title(title_text, 40)}》"
-                lines.append(line)
-            lines.append("")
+        self._append_section_citations(lines, used_refs, citations)
 
         # 4.3 资金面与催化剂时间线
         funding = synthesis.get("funding_sentiment", "")
@@ -285,27 +345,226 @@ class DeepAnalysisRenderer:
         used_refs = set()
         used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", funding))
         used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", events))
-        if used_refs:
-            lines.append("**本节引用来源：**")
-            for ref_id in sorted(used_refs):
-                meta = citations.get(ref_id, {})
-                source = meta.get("source", "未知")
-                author = meta.get("author", "")
-                title_text = meta.get("title", "")
-                line = f"- [^{ref_id}] {source}"
-                if author:
-                    line += f" | 作者: {author}"
-                if title_text:
-                    line += f" | 《{self._truncate_title(title_text, 40)}》"
-                lines.append(line)
-            lines.append("")
+        self._append_section_citations(lines, used_refs, citations)
 
         curated_md = self._curated_external_addendum(curated_external_display, curated_citation_offset)
         if curated_md:
             lines.append(curated_md)
             lines.append("")
 
-        return "\n".join(lines)
+        return lines
+
+    def _append_section_citations(
+        self,
+        lines: List[str],
+        used_refs: set[int],
+        citations: Dict[int, Any],
+        include_url: bool = False,
+    ) -> None:
+        if not used_refs:
+            return
+        lines.append("**本节引用来源：**")
+        for ref_id in sorted(used_refs):
+            meta = citations.get(ref_id, {})
+            source = meta.get("source", "未知")
+            author = meta.get("author", "")
+            title_text = meta.get("title", "")
+            line = f"- [^{ref_id}] {source}"
+            if author:
+                line += f" | 作者: {author}"
+            if title_text:
+                line += f" | 《{self._truncate_title(title_text, 40)}》"
+            if include_url and meta.get("url"):
+                line += f" | {meta.get('url')}"
+            lines.append(line)
+        lines.append("")
+
+    def _formal_thin_external_rich_body(
+        self,
+        ctx: Dict[str, Any],
+        curated_display: Dict[str, Any] | None,
+    ) -> List[str]:
+        """Render 4.1 formal summary + 4.2 external viewpoint map + 4.3 verification checklist."""
+        lines: List[str] = []
+
+        # 4.1 正式材料要点
+        lines.extend(["### 4.1 正式材料要点", ""])
+        lines.extend(self._formal_summary_section(ctx))
+
+        # 4.2 外部观点地图
+        map_md = self._external_viewpoint_map_section(curated_display)
+        if map_md:
+            lines.extend(map_md)
+
+        # 4.3 待验证清单
+        checklist_md = self._verification_checklist_section(curated_display)
+        if checklist_md:
+            lines.extend(checklist_md)
+
+        return lines
+
+    def _thin_all_body(self, ctx: Dict[str, Any]) -> List[str]:
+        """Render material-insufficient layout."""
+        lines: List[str] = [
+            "### 4.1 正式材料要点",
+            "",
+        ]
+        lines.extend(self._formal_summary_section(ctx))
+        lines.extend([
+            "",
+            "当前可用于深度基本面分析的正式材料不足，未强制生成 4.2/4.3 推断性内容。",
+            "",
+        ])
+        return lines
+
+    def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:
+        """Build 4.1 formal-only summary blocks."""
+        lines: List[str] = []
+        fact_pack = ctx.get("formal_financial_fact_pack") or {}
+        explanation_pack = ctx.get("formal_financial_explanation_pack") or {}
+
+        confirmed: List[str] = []
+        for fact in (fact_pack.get("facts") or []):
+            if isinstance(fact, dict) and fact.get("metric") and fact.get("value"):
+                confirmed.append(f"- {fact['metric']}：{fact['value']}")
+        if confirmed:
+            lines.append("**已确认**")
+            lines.extend(confirmed)
+            lines.append("")
+
+        explanations: List[str] = []
+        for row in (explanation_pack.get("rows") or []):
+            if isinstance(row, dict) and row.get("metric") and row.get("excerpt"):
+                explanations.append(f"- {row['metric']}：{row['excerpt']}")
+        if explanations:
+            lines.append("**经营解释**")
+            lines.extend(explanations)
+            lines.append("")
+
+        lines.append("**未披露 / 不能下结论**")
+        lines.append("- 重要客户、订单、产能、供应链、管理层指引或细分拆分未在正式材料中充分披露。")
+        lines.append("- 不得用营收/利润推断主力资金或市场行为。")
+        return lines
+
+    def _external_viewpoint_map_section(self, curated_display: Dict[str, Any] | None) -> List[str]:
+        """Build 4.2 external viewpoint map from curated external display."""
+        if not curated_display or not self._has_curated_external_citation(curated_display):
+            return []
+
+        citations = curated_display.get("citations", {}) or {}
+        reasoning_cards = curated_display.get("_curated_external_reasoning_cards") or []
+        topic_groups = curated_display.get("_curated_external_topic_groups") or {}
+
+        lines: List[str] = [
+            "### 4.2 外部观点地图（Preview，不参与评分）",
+            "",
+            "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
+            "",
+        ]
+
+        if reasoning_cards:
+            for i, card in enumerate(reasoning_cards[:6], 1):
+                if not isinstance(card, dict):
+                    continue
+                claim = str(card.get("claim") or "").strip()
+                refs = card.get("citation_refs") or []
+                rendered_claim = attach_refs_to_sentence(claim, refs)
+                lines.append(f"**观察 {i}：{self._short_heading(claim)}**")
+                lines.append("")
+                lines.append(f"**外部观点链**：{self._frame_external_claim(rendered_claim)}")
+                steps = [str(s).strip() for s in (card.get("reasoning_steps") or []) if str(s).strip()]
+                if steps:
+                    lines.append(f"**支持线索**：{'；'.join(steps[:3])}")
+                numbers = [str(n).strip() for n in (card.get("numbers_used") or []) if str(n).strip()]
+                if numbers:
+                    lines.append(f"**支持线索**：{'、'.join(numbers[:4])}")
+                counterpoints = [str(c).strip() for c in (card.get("counterpoints") or []) if str(c).strip()]
+                if counterpoints:
+                    lines.append(f"**反方约束**：{'；'.join(counterpoints[:3])}")
+                verification = str(card.get("verification_need") or "").strip()
+                if verification:
+                    lines.append(f"**待验证证据**：{verification}")
+                credit_label = self._source_credit_label(citations, refs)
+                lines.append(f"\n{credit_label}")
+                lines.append("")
+        elif topic_groups:
+            for i, (topic_key, label) in enumerate(CURATED_EXTERNAL_TOPIC_LABELS, 1):
+                rows = topic_groups.get(topic_key) or []
+                rows = [r for r in rows if isinstance(r, dict)]
+                if not rows:
+                    continue
+                lines.append(f"**观察 {i}：{label}**")
+                lines.append("")
+                for row in rows[:3]:
+                    text = str(row.get("text") or "").strip()
+                    refs = row.get("citation_refs") or []
+                    rendered = attach_refs_to_sentence(text, refs)
+                    if rendered:
+                        lines.append(f"**外部观点链**：{self._frame_external_claim(rendered)}")
+                        credit_label = self._source_credit_label(citations, refs)
+                        lines.append(f"\n{credit_label}")
+                lines.append("")
+
+        return lines
+
+    def _verification_checklist_section(self, curated_display: Dict[str, Any] | None) -> List[str]:
+        """Build 4.3 verification checklist table from reasoning cards."""
+        if not curated_display:
+            return []
+        reasoning_cards = curated_display.get("_curated_external_reasoning_cards") or []
+        if not reasoning_cards:
+            return []
+
+        citations = curated_display.get("citations", {}) or {}
+        lines: List[str] = [
+            "### 4.3 待验证清单",
+            "",
+            "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |",
+            "|---|---|---|---|",
+        ]
+        for card in reasoning_cards[:8]:
+            if not isinstance(card, dict):
+                continue
+            variable = self._short_heading(str(card.get("claim") or "")) or "未命名变量"
+            assumptions = [str(a).strip() for a in (card.get("assumptions") or []) if str(a).strip()]
+            why = "；".join(assumptions[:2]) if assumptions else "外部观点的增量变量"
+            verification = str(card.get("verification_need") or "").strip() or "后续公告、订单或行业数据"
+            refs = card.get("citation_refs") or []
+            credit_label = self._source_credit_label(citations, refs)
+            lines.append(f"| {variable} | {why} | {verification} | {credit_label} |")
+        lines.append("")
+        return lines
+
+    @staticmethod
+    def _short_heading(text: str) -> str:
+        heading = str(text or "").split("。", 1)[0].split("；", 1)[0].strip()
+        return heading[:40] + "..." if len(heading) > 40 else heading
+
+    @staticmethod
+    def _frame_external_claim(text: str) -> str:
+        claim = str(text or "").strip()
+        if not claim:
+            return ""
+        if claim.startswith(("外部材料称", "外部观点称", "据外部材料")):
+            return claim
+        return f"外部材料称：{claim}；该说法需以公告、财报拆分或行业第三方数据验证。"
+
+    @staticmethod
+    def _source_credit_label(citations: Dict[int, Any], refs: List[Any]) -> str:
+        sources = set()
+        for ref in refs:
+            try:
+                ref_id = int(ref)
+            except (TypeError, ValueError):
+                continue
+            meta = citations.get(ref_id, {})
+            if isinstance(meta, dict):
+                sources.add(str(meta.get("source") or "外部来源"))
+        if len(sources) > 1:
+            return "来源层级：多源一致 / 需正式验证"
+        if "微信公众号精选观察" in sources or "雪球" in sources:
+            return "来源层级：低信用论坛 / 单源长文 / 需正式验证"
+        return "来源层级：需正式验证"
 
     def _curated_external_addendum(
         self,
@@ -362,21 +621,7 @@ class DeepAnalysisRenderer:
             used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", bullet))
         if used_refs:
             shifted_citations = self._offset_citations(citations, citation_offset)
-            lines.append("**本节引用来源：**")
-            for ref_id in sorted(used_refs):
-                meta = shifted_citations.get(ref_id, {})
-                source = meta.get("source", "未知")
-                author = meta.get("author", "")
-                title_text = meta.get("title", "")
-                url = meta.get("url", "")
-                line = f"- [^{ref_id}] {source}"
-                if author:
-                    line += f" | 作者: {author}"
-                if title_text:
-                    line += f" | 《{self._truncate_title(title_text, 40)}》"
-                if url:
-                    line += f" | {url}"
-                lines.append(line)
+            self._append_section_citations(lines, used_refs, shifted_citations, include_url=True)
         return "\n".join(lines)
 
     def _curated_external_narrative_addendum(
@@ -410,74 +655,11 @@ class DeepAnalysisRenderer:
                 lines.append(rendered)
                 lines.append("")
 
-        self._render_curated_external_reasoning_cards(
-            reasoning_cards,
-            citation_offset,
-            ref_map,
-            lines,
-        )
+        # Reasoning cards are kept as internal audit metadata only; do not render
+        # the visible **观点卡片：** block in this batch.
 
-        if display_refs:
-            lines.append("**本节引用来源：**")
-            for ref_id in sorted(display_refs):
-                meta = shifted_citations.get(ref_id, {})
-                source = meta.get("source", "未知")
-                author = meta.get("author", "")
-                title_text = meta.get("title", "")
-                url = meta.get("url", "")
-                line = f"- [^{ref_id}] {source}"
-                if author:
-                    line += f" | 作者: {author}"
-                if title_text:
-                    line += f" | 《{self._truncate_title(title_text, 40)}》"
-                if url:
-                    line += f" | {url}"
-                lines.append(line)
+        self._append_section_citations(lines, display_refs, shifted_citations, include_url=True)
         return "\n".join(lines)
-
-    def _render_curated_external_reasoning_cards(
-        self,
-        cards: List[Any],
-        citation_offset: int,
-        ref_map: dict,
-        lines: List[str],
-    ) -> None:
-        cards = [card for card in cards or [] if isinstance(card, dict)]
-        if not cards:
-            return
-
-        lines.append("**观点卡片：**")
-        lines.append("")
-        for card in cards[:8]:
-            claim = str(card.get("claim") or "").strip()
-            refs = card.get("citation_refs") or []
-            claim_line = attach_refs_to_sentence(claim, refs) if claim else ""
-            claim_line = self._offset_citation_markers(claim_line, citation_offset)
-            claim_line = self._remap_citation_markers(claim_line, ref_map)
-            if claim_line:
-                lines.append(f"- **观点**：{claim_line}")
-
-            excerpt, _ = truncate_curated_source_excerpt(card.get("source_excerpt", ""))
-            if excerpt:
-                excerpt_line = attach_refs_to_sentence(excerpt, refs)
-                excerpt_line = self._offset_citation_markers(excerpt_line, citation_offset)
-                excerpt_line = self._remap_citation_markers(excerpt_line, ref_map)
-                lines.append(f"  - **原文片段**：{excerpt_line}")
-
-            rendered_fields = [
-                ("推理步骤", card.get("reasoning_steps")),
-                ("关键数字", card.get("numbers_used")),
-                ("关键假设", card.get("assumptions")),
-                ("反方约束", card.get("counterpoints")),
-            ]
-            for label, value in rendered_fields:
-                parts = [str(item).strip() for item in (value or []) if str(item).strip()]
-                if parts:
-                    lines.append(f"  - **{label}**：{'；'.join(parts[:4])}")
-            verification_need = str(card.get("verification_need") or "").strip()
-            if verification_need:
-                lines.append(f"  - **待验证项**：{verification_need}")
-        lines.append("")
 
     def _curated_external_grouped_addendum(
         self,
@@ -515,22 +697,7 @@ class DeepAnalysisRenderer:
                     lines.append(rendered)
                     lines.append("")
 
-        if display_refs:
-            lines.append("**本节引用来源：**")
-            for ref_id in sorted(display_refs):
-                meta = shifted_citations.get(ref_id, {})
-                source = meta.get("source", "未知")
-                author = meta.get("author", "")
-                title_text = meta.get("title", "")
-                url = meta.get("url", "")
-                line = f"- [^{ref_id}] {source}"
-                if author:
-                    line += f" | 作者: {author}"
-                if title_text:
-                    line += f" | 《{self._truncate_title(title_text, 40)}》"
-                if url:
-                    line += f" | {url}"
-                lines.append(line)
+        self._append_section_citations(lines, display_refs, shifted_citations, include_url=True)
         return "\n".join(lines)
 
     @staticmethod

@@ -13,6 +13,11 @@ from dataclasses import asdict, dataclass
 from pathlib import Path
 from typing import Iterable, List
 
+try:
+    from .source_direct_relevance import OPERATING_VARIABLE_TERMS
+except ImportError:
+    from source_direct_relevance import OPERATING_VARIABLE_TERMS
+
 
 @dataclass
 class QualityIssue:
@@ -184,6 +189,8 @@ def check_report_text(
     issues: List[QualityIssue] = []
     normalized = _normalize(text)
 
+    profile = _parse_deep_analysis_profile(text)
+
     issues.extend(_check_required_signals(normalized))
     issues.extend(_check_contradictions(normalized))
     issues.extend(_check_curated_external_inline_footnotes(text))
@@ -194,8 +201,10 @@ def check_report_text(
     issues.extend(_check_product_industry_mismatch(text))
     issues.extend(_check_financial_fact_unit_sanity(text))
     issues.extend(_check_financial_missing_contradictions(text))
+    issues.extend(_check_financial_profit_direction_contradictions(text))
     issues.extend(_check_header_config_missing(text))
-    issues.extend(_check_evidence_depth_warnings(text))
+    issues.extend(_check_evidence_depth_warnings(text, profile))
+    issues.extend(_check_evidence_profile_gates(text))
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
@@ -451,6 +460,12 @@ def _extract_deep_analysis_subsection(text: str, section_number: str) -> str:
     return match.group(1) if match else ""
 
 
+def _extract_markdown_section(text: str, heading: str) -> str:
+    pattern = rf"(?ms)^##\s*{re.escape(heading)}\s*\n(.*?)(?=^##\s|\Z)"
+    match = re.search(pattern, text)
+    return match.group(1) if match else ""
+
+
 def _check_fundflow_claims(text: str, fundflow_material_pack: dict | None) -> Iterable[QualityIssue]:
     section43 = _extract_deep_analysis_subsection(text, "4.3")
     if not section43:
@@ -510,15 +525,25 @@ def _extract_table_score(text: str, labels: list[str]) -> float | None:
 def _check_deep_analysis_subsections(text: str) -> Iterable[QualityIssue]:
     if "## 四、深度分析" not in text:
         return
-    missing = []
-    for section in ("4.1", "4.2", "4.3"):
-        if not re.search(rf"(?m)^###\s*{re.escape(section)}\s+", text):
-            missing.append(section)
+    profile = _parse_deep_analysis_profile(text)
+    profile_name = profile.get("profile") if profile else None
+    # thin_all explicitly skips forced 4.2/4.3 inference.
+    if profile_name == "thin_all":
+        required = ("4.1",)
+    else:
+        required = ("4.1", "4.2", "4.3")
+    missing = [
+        section
+        for section in required
+        if not re.search(rf"(?m)^###\s*{re.escape(section)}\s+", text)
+    ]
     if missing:
         yield QualityIssue(
             code="missing_deep_analysis_subsection",
             severity="error",
-            message="深度分析缺少必备 4.1/4.2/4.3 子章节，renderer 不应静默省略。",
+            message="深度分析缺少必备 {} 子章节，renderer 不应静默省略。".format(
+                "/".join(required)
+            ),
             evidence="missing=" + ",".join(missing),
         )
 
@@ -595,6 +620,36 @@ def _check_financial_missing_contradictions(text: str) -> Iterable[QualityIssue]
             return
 
 
+def _check_financial_profit_direction_contradictions(text: str) -> Iterable[QualityIssue]:
+    normalized_report = _normalize(text)
+    formal_text = "\n".join(
+        part
+        for part in (
+            _extract_markdown_section(text, "执行摘要"),
+            _extract_deep_analysis_subsection(text, "4.1"),
+            _extract_deep_analysis_subsection(text, "4.2"),
+        )
+        if part
+    )
+    normalized_formal = _normalize(formal_text)
+
+    negative_profit_signal = re.search(
+        r"(?:归母净利|归母净利润|净利润|净利|盈利)[^。；\n]{0,80}(?:腰斩|修复|同比[-－—]\d|同比下降|同比下滑|同比减少|下降\d|下滑\d|减少\d|-\d+(?:\.\d+)?%)",
+        normalized_report,
+    )
+    positive_profit_wording = re.search(
+        r"(?:利润高增|利润增长|净利润增长|归母净利润增长|营收与利润增长|利润增速[^。；\n]{0,20}超预期|持续验证利润高增|(?:归母净利润|净利润|净利|利润)[^。；\n]{0,20}(?:同比)?大幅增长|(?:归母净利润|净利润|净利|利润)同比增长)",
+        normalized_formal,
+    )
+    if negative_profit_signal and positive_profit_wording:
+        yield QualityIssue(
+            code="financial_profit_direction_contradiction",
+            severity="error",
+            message="报告同时出现净利同比下滑信号与正式章节利润高增/增长表述，需统一财务口径或显式解释差异。",
+            evidence=f"negative={negative_profit_signal.group(0)}; positive={positive_profit_wording.group(0)}",
+        )
+
+
 def _check_header_config_missing(text: str) -> Iterable[QualityIssue]:
     normalized = _normalize(text)
     industry_missing = "**所属赛道**:—" in normalized or "**所属赛道**：—" in normalized
@@ -607,11 +662,166 @@ def _check_header_config_missing(text: str) -> Iterable[QualityIssue]:
         )
 
 
-def _check_evidence_depth_warnings(text: str) -> Iterable[QualityIssue]:
+def _check_evidence_depth_warnings(text: str, profile: dict | None = None) -> Iterable[QualityIssue]:
     yield from _check_section_too_generic(text)
     yield from _check_vague_supply_chain_position(text)
     yield from _check_fundamentals_repeats_core_facts(text)
-    yield from _check_external_viewpoint_overcompressed(text)
+    yield from _check_external_viewpoint_overcompressed(text, profile)
+    yield from _check_external_viewpoint_reasoning_card_templates(text)
+
+
+# ---------------------------------------------------------------------------
+# Evidence-adaptive deep analysis gates
+# ---------------------------------------------------------------------------
+
+
+def _parse_deep_analysis_profile(text: str) -> dict | None:
+    match = re.search(r"<!--\s*deep_analysis_profile:\s*(.*?)\s*-->", text)
+    if not match:
+        return None
+    try:
+        return json.loads(match.group(1))
+    except Exception:
+        return None
+
+
+def _check_evidence_profile_gates(text: str) -> Iterable[QualityIssue]:
+    profile = _parse_deep_analysis_profile(text)
+    if "## 四、深度分析" not in text:
+        return
+
+    yield from _check_profile_routing_trace_missing(text, profile)
+    yield from _check_formal_thin_forced_legacy_deep_sections(text, profile)
+    yield from _check_funding_claim_without_funding_support(text, profile)
+    yield from _check_useless_core_fact(text)
+    yield from _check_external_map_disclaimer_and_framing(text, profile)
+
+
+def _check_profile_routing_trace_missing(text: str, profile: dict | None) -> Iterable[QualityIssue]:
+    if profile is None:
+        yield QualityIssue(
+            code="profile_routing_trace_missing",
+            severity="error",
+            message="第四章缺少可解析的 deep_analysis_profile HTML 注释，无法校验证据自适应路由。",
+        )
+
+
+def _check_formal_thin_forced_legacy_deep_sections(text: str, profile: dict | None) -> Iterable[QualityIssue]:
+    if not profile or profile.get("profile") != "formal_thin_external_rich":
+        return
+    for heading in ("### 4.1 产业逻辑与竞争格局", "### 4.2 业绩路径与多空分歧", "### 4.3 资金面与催化剂时间线"):
+        if heading in text:
+            yield QualityIssue(
+                code="formal_thin_forced_legacy_deep_sections",
+                severity="error",
+                message=f"形态为 formal_thin_external_rich 但报告仍出现旧模板章节：{heading}。",
+                evidence=heading,
+            )
+
+
+def _check_funding_claim_without_funding_support(text: str, profile: dict | None) -> Iterable[QualityIssue]:
+    if not profile:
+        return
+    section43 = _extract_deep_analysis_subsection(text, "4.3")
+    if not section43:
+        return
+    normalized = _normalize(section43)
+    funding_claim = re.search(
+        r"(?:主力|超大单|大单|小单)[^。\n|]{0,30}(?:净流入|净流出|流入|流出)"
+        r"|(?:主动买盘|被动卖盘|资金净流入|主力净卖出|北向|融资余额|融资融券|机构持仓|持仓结构|股东人数)",
+        normalized,
+    )
+    if not funding_claim:
+        return
+    funding_support = (profile.get("formal_section_support") or {}).get("funding_support", 0)
+    if funding_support and funding_support > 0:
+        return
+    yield QualityIssue(
+        code="funding_claim_without_funding_support",
+        severity="error",
+        message="4.3 出现资金面判断但 profile 中 funding_support 为 0。",
+        evidence=funding_claim.group(0),
+    )
+
+
+def _check_useless_core_fact(text: str) -> Iterable[QualityIssue]:
+    section = _extract_markdown_section(text, "三、核心事实基座")
+    if not section:
+        return
+    useless_patterns = (
+        r"年报已发布",
+        r"年度报告已发布",
+        r"业绩预告已披露",
+        r"预告已披露",
+        r"分红已实施",
+        r"权益分派已实施",
+    )
+    for pattern in useless_patterns:
+        match = re.search(pattern, _normalize(section))
+        if match:
+            yield QualityIssue(
+                code="useless_core_fact",
+                severity="warning",
+                message="核心事实基座包含仅表示文档存在的事实，应移除。",
+                evidence=match.group(0),
+            )
+
+
+def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) -> Iterable[QualityIssue]:
+    if not profile or profile.get("profile") != "formal_thin_external_rich":
+        return
+    section = _extract_deep_analysis_subsection(text, "4.2")
+    if not section:
+        return
+    normalized = _normalize(section)
+    if "preview" not in normalized.lower() and "不参与评分" not in section and "display-only" not in normalized:
+        yield QualityIssue(
+            code="external_map_missing_display_only_disclaimer",
+            severity="error",
+            message="4.2 外部观点地图缺少 display-only / 不参与评分免责声明。",
+        )
+    # Scan only the claim body, excluding the blockquote disclaimer, for
+    # strong confirmation terms.  The disclaimer itself contains words like
+    # "确认" and must not trigger an unverified-claim framing error.
+    claim_body = re.sub(r"(?m)^>.*$", "", section).strip()
+    low_credit_only = not re.search(r"来源[:：]\s*(?:公告|年报|研报|官方|交易所)", section)
+    if low_credit_only:
+        confirmation_terms = ("确认", "已经", "确定", "进入供应链", "订单落地", "客户为")
+        normalized_claim = _normalize(claim_body)
+        for term in confirmation_terms:
+            if term == "确认" and "未确认" in normalized_claim:
+                continue
+            if term in normalized_claim:
+                yield QualityIssue(
+                    code="external_map_unverified_claim_framing",
+                    severity="error",
+                    message=f"4.2 外部观点地图在低信用来源下使用强确认表述：{term}。",
+                    evidence=term,
+                )
+                return
+        for line in claim_body.splitlines():
+            normalized_line = _normalize(line)
+            if "反方约束" in normalized_line or "待验证证据" in normalized_line:
+                continue
+            market_position_term = next(
+                (term for term in ("市占率", "份额", "占比") if term in normalized_line),
+                None,
+            )
+            if not market_position_term:
+                continue
+            has_external_framing = re.search(
+                r"外部材料称|外部观点称|据外部材料|据外部观点|该说法需|需(?:正式)?验证|待(?:正式)?验证|未经官方确认|不等同于官方确认|未确认",
+                normalized_line,
+            )
+            if has_external_framing:
+                continue
+            yield QualityIssue(
+                code="external_map_unverified_claim_framing",
+                severity="error",
+                message=f"4.2 外部观点地图在低信用来源下使用强确认表述：{market_position_term}。",
+                evidence=market_position_term,
+            )
+            return
 
 
 _GENERIC_TEMPLATE_TERMS = (
@@ -626,22 +836,6 @@ _GENERIC_TEMPLATE_TERMS = (
     "景气度",
     "催化剂",
     "不确定性",
-)
-
-_OPERATING_VARIABLE_TERMS = (
-    "供应商",
-    "客户",
-    "产能",
-    "供需",
-    "库存",
-    "存货",
-    "订单",
-    "价格",
-    "交期",
-    "采购",
-    "备货",
-    "交付",
-    "产量",
 )
 
 _EXPLANATION_TERMS = (
@@ -701,7 +895,7 @@ def _check_vague_supply_chain_position(text: str) -> Iterable[QualityIssue]:
     )
     if not has_supply_position:
         return
-    if any(term in normalized for term in _OPERATING_VARIABLE_TERMS):
+    if any(term in normalized for term in OPERATING_VARIABLE_TERMS):
         return
     yield QualityIssue(
         code="vague_supply_chain_position",
@@ -736,24 +930,86 @@ def _check_fundamentals_repeats_core_facts(text: str) -> Iterable[QualityIssue]:
     )
 
 
-def _check_external_viewpoint_overcompressed(text: str) -> Iterable[QualityIssue]:
+def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = None) -> Iterable[QualityIssue]:
+    # New evidence-adaptive layout: external viewpoint map lives in 4.2 for
+    # formal_thin_external_rich.  Visible reasoning cards are no longer required;
+    # we check each reasoning-card marker individually rather than accepting any.
+    if profile and profile.get("profile") == "formal_thin_external_rich":
+        section42 = _extract_deep_analysis_subsection(text, "4.2")
+        if not section42:
+            return
+        if not re.search(r"外部材料|外部观点|雪球|知乎|微信|精选外部", section42):
+            return
+        markers = (
+            ("**外部观点链**：", "外部观点链"),
+            ("**支持线索**：", "支持线索"),
+            ("**反方约束**：", "反方约束"),
+            ("**待验证证据**：", "待验证证据"),
+        )
+        missing = [label for marker, label in markers if marker not in section42]
+        if not re.search(r"\[\^\d+\]", section42):
+            missing.append("inline citations")
+        if missing:
+            yield QualityIssue(
+                code="external_viewpoint_overcompressed",
+                severity="warning",
+                message=f"4.2 外部观点地图缺少必要结构或 inline citations：{', '.join(missing)}。",
+                evidence="missing=" + ",".join(missing),
+            )
+        return
+
+    # Legacy 4.4 path: keep an external observation from being a bare paragraph.
     section44 = _extract_deep_analysis_subsection(text, "4.4")
     if not section44:
         return
     if not re.search(r"雪球|知乎|微信|精选外部|外部材料|外部观点", section44):
         return
-    has_reasoning_card = any(
-        marker in section44
-        for marker in ("**观点**：", "**推理步骤**：", "**关键数字**：", "**关键假设**：", "**反方约束**：")
+    normalized44 = _normalize(section44)
+    has_disclaimer = (
+        "preview" in normalized44.lower()
+        or "不参与评分" in section44
+        or "display-only" in normalized44
     )
-    if has_reasoning_card:
+    has_inline_citations = re.search(r"\[\^\d+\]", section44) is not None
+    if not has_disclaimer or not has_inline_citations:
+        yield QualityIssue(
+            code="external_viewpoint_overcompressed",
+            severity="warning",
+            message="4.4 外部观察缺少 display-only 免责声明或 inline citations，可能过度压缩。",
+            evidence="4.4 external observation missing disclaimer or citations",
+        )
+
+
+def _check_external_viewpoint_reasoning_card_templates(text: str) -> Iterable[QualityIssue]:
+    section44 = _extract_deep_analysis_subsection(text, "4.4")
+    if not section44:
         return
-    yield QualityIssue(
-        code="external_viewpoint_overcompressed",
-        severity="warning",
-        message="4.4 有外部观点材料但未展示观点卡片、推理步骤、关键数字或假设，可能过度压缩。",
-        evidence="4.4 external viewpoint without reasoning card markers",
-    )
+    # Only enforce against legacy visible reasoning-card blocks.  The new
+    # evidence-adaptive external viewpoint map renders prose in 4.2 and must
+    # not trigger this gate.
+    if "**观点卡片：**" not in section44 and "**推理步骤**" not in section44:
+        return
+    steps = [
+        _normalize(match)
+        for match in re.findall(r"\*\*推理步骤\*\*[：:]\s*([^\n]+)", section44)
+        if str(match).strip()
+    ]
+    if len(steps) < 3:
+        return
+    generic_steps = [
+        step
+        for step in steps
+        if "外部材料提出该增量变量" in step
+        and "交付能力" in step
+        and "交叉验证" in step
+    ]
+    if len(generic_steps) >= 3 and len(generic_steps) >= max(3, int(len(steps) * 0.6)):
+        yield QualityIssue(
+            code="external_viewpoint_reasoning_cards_templated",
+            severity="error",
+            message="4.4 多张观点卡片使用同一套推理步骤模板，未保留外部观点的真实推理链。",
+            evidence=f"generic_steps={len(generic_steps)}/{len(steps)}",
+        )
 
 
 # ---------------------------------------------------------------------------

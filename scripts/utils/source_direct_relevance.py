@@ -34,6 +34,22 @@ COMPANY_DIRECT_PLATFORMS = {
     "定期报告叙事卡片",
 }
 
+OPERATING_VARIABLE_TERMS = (
+    "供应商",
+    "客户",
+    "产能",
+    "供需",
+    "库存",
+    "存货",
+    "订单",
+    "价格",
+    "交期",
+    "采购",
+    "备货",
+    "交付",
+    "产量",
+)
+
 
 def classify_direct_relevance(
     item: SynthesisItem,

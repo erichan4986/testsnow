@@ -18,6 +18,14 @@ DEFAULT_SOURCE_CREDIT = 55
 MODEL_TOKEN_RE = re.compile(
     r"(?<![A-Za-z0-9])(?:[A-Za-z]{1,8}\d[A-Za-z0-9.]{0,12}|\d+(?:\.\d+)?[A-Za-z]{1,8})(?![A-Za-z0-9])"
 )
+GENERIC_REASONING_MARKERS = (
+    "外部材料提出该增量变量",
+    "交付能力",
+    "交叉验证",
+)
+GENERIC_ASSUMPTION_MARKERS = ("仍属外部观察", "未获官方确认")
+GENERIC_COUNTERPOINT_MARKERS = ("下游需求", "交付节奏", "可能失效")
+GENERIC_VERIFICATION_MARKERS = ("跟踪后续公告", "订单或行业数据", "验证该论断")
 QUANTITY_PATTERNS = [
     re.compile(r"\d+(?:\.\d+)?\s*/\s*\d+(?:\.\d+)?"),
     re.compile(r"\d+(?:\.\d+)?\s*(?:%|％)\s*[-–—~至到]\s*\d+(?:\.\d+)?\s*(?:%|％)"),
@@ -65,13 +73,15 @@ def build_viewpoint_narrative(
     try:
         payload = composer(claims, baseline_text, stock)
     except NarrativeComposerError as exc:
-        base["status"] = exc.status
-        base["stats"]["drop_reasons"].append(str(exc))
-        return base
+        payload = heuristic_narrative_composer(claims, baseline_text, stock)
+        base["stats"]["composer_fallback_used"] = True
+        base["stats"]["composer_fallback_reason"] = exc.status
+        base["stats"]["drop_reasons"].append(f"composer_fallback:{exc.status}")
     except Exception as exc:
-        base["status"] = "composer_failed"
-        base["stats"]["drop_reasons"].append(str(exc))
-        return base
+        payload = heuristic_narrative_composer(claims, baseline_text, stock)
+        base["stats"]["composer_fallback_used"] = True
+        base["stats"]["composer_fallback_reason"] = "composer_failed"
+        base["stats"]["drop_reasons"].append(f"composer_fallback:{type(exc).__name__}")
 
     paragraphs, citations, reasons, claim_ref_repairs = _validate_paragraphs(payload, claims_by_id)
     base["stats"]["claim_ref_repaired_count"] = len(claim_ref_repairs)
@@ -97,7 +107,17 @@ def build_viewpoint_narrative(
         _display_synthesis_from_paragraphs(paragraphs, citations)
     )
 
-    reasoning_cards = _normalize_reasoning_cards(payload.get("reasoning_cards") or [], citations)
+    reasoning_cards = _normalize_reasoning_cards(
+        payload.get("reasoning_cards") or [],
+        citations,
+        claims_by_id,
+    )
+    if not reasoning_cards:
+        claim_refs = _claim_refs_from_paragraphs(paragraphs)
+        generated_cards = _reasoning_cards_from_claims(claims_by_id, claim_refs)
+        reasoning_cards = _normalize_reasoning_cards(generated_cards, citations, claims_by_id)
+        if reasoning_cards:
+            base["stats"]["reasoning_cards_enriched"] = True
     markdown = render_narrative_markdown(stock, paragraphs, citations)
     return {
         **base,
@@ -177,21 +197,92 @@ def heuristic_narrative_composer(
     del baseline_text
     first = claims[:3]
     if not first:
-        return {"paragraphs": []}
+        return {"paragraphs": [], "reasoning_cards": []}
     refs = [str(claim.get("claim_id") or "") for claim in first]
     joined = "；".join(str(claim.get("claim") or "").rstrip("。") for claim in first)
+    paragraphs = [
+        {
+            "heading": "外部观点主线",
+            "text": (
+                f"外部材料对{stock_name}的增量主要集中在这些待验证变量：{joined}。"
+                "这些线索需要和公司交付能力、上游供给和客户需求持续性一起观察。"
+            ),
+            "claim_refs": refs,
+        }
+    ]
+    claims_by_id = {str(claim.get("claim_id") or ""): claim for claim in first}
+    reasoning_cards = _reasoning_cards_from_claims(claims_by_id, refs)
     return {
-        "paragraphs": [
-            {
-                "heading": "外部观点主线",
-                "text": (
-                    f"外部材料对{stock_name}的增量主要集中在这些待验证变量：{joined}。"
-                    "这些线索需要和公司交付能力、上游供给和客户需求持续性一起观察。"
-                ),
-                "claim_refs": refs,
-            }
-        ]
+        "paragraphs": paragraphs,
+        "reasoning_cards": reasoning_cards,
     }
+
+
+def _claim_refs_from_paragraphs(paragraphs: List[Dict[str, Any]]) -> List[str]:
+    refs: List[str] = []
+    seen: set[str] = set()
+    for paragraph in paragraphs:
+        for claim_ref in paragraph.get("claim_refs") or []:
+            claim_id = str(claim_ref or "").strip()
+            if claim_id and claim_id not in seen:
+                refs.append(claim_id)
+                seen.add(claim_id)
+    return refs
+
+
+def _reasoning_cards_from_claims(
+    claims_by_id: Dict[str, Dict[str, Any]],
+    claim_ids: List[str],
+) -> List[Dict[str, Any]]:
+    cards: List[Dict[str, Any]] = []
+    for claim_id in claim_ids:
+        claim = claims_by_id.get(str(claim_id) or "") or {}
+        claim_text = _clean_text(claim.get("claim"))
+        if not claim_id or not claim_text:
+            continue
+        source_excerpt = _clean_text(claim.get("source_quote")) or claim_text
+        cards.append({
+            "claim_id": str(claim_id),
+            "display_topic": _clean_text(claim.get("topic") or "external_observation")[:60],
+            "claim": claim_text[:160],
+            "source_excerpt": source_excerpt[:200],
+            "reasoning_steps": _claim_list_or_default(
+                claim,
+                "reasoning_steps",
+                ["外部材料提出该增量变量，需与公司交付和上游供给交叉验证。"],
+            ),
+            "numbers_used": _claim_numbers_used(claim),
+            "assumptions": _claim_list_or_default(
+                claim,
+                "assumptions",
+                ["该变量仍属待验证状态，未获官方确认。"],
+            ),
+            "counterpoints": _claim_list_or_default(
+                claim,
+                "counterpoints",
+                ["若下游需求或公司交付节奏不及预期，该变量可能失效。"],
+            ),
+            "verification_need": _clean_text(claim.get("verification_need"))
+            or "跟踪后续公告、订单或行业数据以验证该论断。",
+        })
+    return cards
+
+
+def _claim_list_or_default(
+    claim: Dict[str, Any],
+    field: str,
+    fallback: List[str],
+) -> List[str]:
+    values = _clean_text_list(claim.get(field))
+    return values if values else fallback
+
+
+def _claim_numbers_used(claim: Dict[str, Any]) -> List[str]:
+    for field in ("numbers_used", "numbers_mentioned", "quantities"):
+        values = claim.get(field)
+        if isinstance(values, list):
+            return _clean_text_list(values)
+    return []
 
 
 def llm_narrative_composer_factory(
@@ -370,6 +461,7 @@ def _display_synthesis_from_paragraphs(
 def _normalize_reasoning_cards(
     raw_cards: Any,
     citations: Dict[int, Dict[str, Any]],
+    claims_by_id: Dict[str, Dict[str, Any]] | None = None,
 ) -> List[Dict[str, Any]]:
     if not isinstance(raw_cards, list):
         return []
@@ -386,6 +478,7 @@ def _normalize_reasoning_cards(
         ref_id = claim_to_ref.get(claim_id)
         if not ref_id:
             continue
+        claim = (claims_by_id or {}).get(claim_id) or {}
         excerpt, truncated = truncate_curated_source_excerpt(_clean_text(raw.get("source_excerpt", "")))
         cards.append({
             "claim_id": claim_id,
@@ -393,14 +486,73 @@ def _normalize_reasoning_cards(
             "claim": _clean_text(raw.get("claim"))[:160],
             "source_excerpt": excerpt,
             "excerpt_truncated": bool(raw.get("excerpt_truncated")) or truncated,
-            "reasoning_steps": _clean_text_list(raw.get("reasoning_steps")),
+            "reasoning_steps": _card_list_field(
+                raw,
+                claim,
+                "reasoning_steps",
+                GENERIC_REASONING_MARKERS,
+            ),
             "numbers_used": _clean_text_list(raw.get("numbers_used")),
-            "assumptions": _clean_text_list(raw.get("assumptions")),
-            "counterpoints": _clean_text_list(raw.get("counterpoints")),
-            "verification_need": _clean_text(raw.get("verification_need"))[:160],
+            "assumptions": _card_list_field(
+                raw,
+                claim,
+                "assumptions",
+                GENERIC_ASSUMPTION_MARKERS,
+            ),
+            "counterpoints": _card_list_field(
+                raw,
+                claim,
+                "counterpoints",
+                GENERIC_COUNTERPOINT_MARKERS,
+            ),
+            "verification_need": _card_text_field(
+                raw,
+                claim,
+                "verification_need",
+                GENERIC_VERIFICATION_MARKERS,
+            )[:160],
             "citation_refs": [ref_id],
         })
     return cards[:8]
+
+
+def _card_list_field(
+    raw: Dict[str, Any],
+    claim: Dict[str, Any],
+    field: str,
+    generic_markers: tuple[str, ...],
+) -> List[str]:
+    values = _clean_text_list(raw.get(field))
+    if _is_generic_card_field(values, generic_markers):
+        claim_values = _clean_text_list(claim.get(field))
+        if claim_values:
+            return claim_values
+    return values
+
+
+def _card_text_field(
+    raw: Dict[str, Any],
+    claim: Dict[str, Any],
+    field: str,
+    generic_markers: tuple[str, ...],
+) -> str:
+    value = _clean_text(raw.get(field))
+    if _is_generic_card_text(value, generic_markers):
+        claim_value = _clean_text(claim.get(field))
+        if claim_value:
+            return claim_value
+    return value
+
+
+def _is_generic_card_field(values: List[str], generic_markers: tuple[str, ...]) -> bool:
+    if not values:
+        return False
+    return any(_is_generic_card_text(value, generic_markers) for value in values)
+
+
+def _is_generic_card_text(value: str, generic_markers: tuple[str, ...]) -> bool:
+    normalized = _normalize_quantity_token(_clean_text(value))
+    return all(marker in normalized for marker in generic_markers)
 
 
 def _clean_text_list(value: Any) -> List[str]:
@@ -650,8 +802,23 @@ def _default_prompt() -> str:
       "text": "连贯叙事段落，不要带脚注标记",
       "claim_refs": ["curated-viewpoint:股票名:完整hash"]
     }
+  ],
+  "reasoning_cards": [
+    {
+      "claim_id": "curated-viewpoint:股票名:完整hash",
+      "display_topic": "该卡片所属主题，如 valuation_debate / order_capacity_delivery / technology_route",
+      "claim": "外部观点的核心论断，逐字来自对应 claim",
+      "source_excerpt": "从对应 claim 的 source_quote 中摘录的最能支撑论断的原文片段，不要改写",
+      "reasoning_steps": ["步骤1：外部材料如何得出该论断", "步骤2：..."],
+      "numbers_used": ["claim 中出现的具体数字或区间，如 375-420亿", "46-52元"],
+      "assumptions": ["该论断成立所需的关键假设"],
+      "counterpoints": ["可能推翻或削弱该论断的反方约束"],
+      "verification_need": "需要跟踪哪些公告、数据或事件来验证该论断"
+    }
   ]
 }
+8. 每个被段落引用的 claim 都应尽量生成一张 reasoning_card；如果 claim 缺少 source_quote 或无法提取明确论断，可以跳过该 claim 的卡片。
+9. reasoning_cards 中的 claim_id 必须与对应 claim 的 claim_id 逐字一致。
 """
 
 

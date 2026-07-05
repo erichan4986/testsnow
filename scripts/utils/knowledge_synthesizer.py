@@ -16,7 +16,7 @@ try:
         format_topic_ownership_contract,
     )
     from .source_adapter import SynthesisItem
-    from .source_direct_relevance import filter_items_for_canonical_theme
+    from .source_direct_relevance import filter_items_for_canonical_theme, OPERATING_VARIABLE_TERMS
     from .fundflow_material import format_fundflow_material_pack
     from .synthesis_credit import (
         credit_usage_rules_text,
@@ -30,7 +30,7 @@ except ImportError:
         format_topic_ownership_contract,
     )
     from source_adapter import SynthesisItem
-    from source_direct_relevance import filter_items_for_canonical_theme
+    from source_direct_relevance import filter_items_for_canonical_theme, OPERATING_VARIABLE_TERMS
     from fundflow_material import format_fundflow_material_pack
     from synthesis_credit import (
         credit_usage_rules_text,
@@ -197,11 +197,14 @@ class KnowledgeSynthesizer:
         self.source_index = {}
         self._counter = 0
 
+        budget = self._build_theme_material_budget(stock_name, items, all_data)
+
         result = {}
         for theme_key, (theme_title, min_items) in THEMES.items():
-            theme_items = self._filter_items_for_theme(theme_key, items, stock_name, stock_config)
-            if len(theme_items) < min_items:
-                logger.info(f"[{stock_name}] {theme_title}: 信息不足 ({len(theme_items)} < {min_items})，跳过合成")
+            theme_budget = budget["themes"][theme_key]
+            source_refs = theme_budget["source_refs"]
+            if len(source_refs) < min_items:
+                logger.info(f"[{stock_name}] {theme_title}: 信息不足 ({len(source_refs)} < {min_items})，跳过合成")
                 result[theme_key] = ""
                 continue
 
@@ -209,6 +212,7 @@ class KnowledgeSynthesizer:
                 result[theme_key] = ""
                 continue
 
+            source_rows = [(ref_id, items[ref_id - 1]) for ref_id in source_refs]
             try:
                 # 收集已生成的前置板块叙事，避免跨板块重复展开
                 previous_narratives = {
@@ -216,7 +220,7 @@ class KnowledgeSynthesizer:
                     if v and k in THEMES
                 }
                 narrative, citations = self._synthesize_theme(
-                    stock_name, theme_key, theme_items,
+                    stock_name, theme_key, source_rows, theme_budget,
                     previous_narratives, claim_verification_context,
                     peer_comparison_material,
                     stock_config,
@@ -251,7 +255,8 @@ class KnowledgeSynthesizer:
         self,
         stock_name: str,
         theme_key: str,
-        items: List[SynthesisItem],
+        source_rows: List[Tuple[int, SynthesisItem]],
+        theme_budget: Dict[str, Any],
         previous_narratives: Dict[str, str] = None,
         claim_verification_context: Dict[str, Any] = None,
         peer_comparison_material: Dict[str, Any] = None,
@@ -262,7 +267,7 @@ class KnowledgeSynthesizer:
     ) -> Tuple[str, Dict[int, Dict]]:
         """合成单个主题，返回 (叙事文本, 该主题使用的引用字典)"""
         prompt = self._build_prompt(
-            stock_name, theme_key, items,
+            stock_name, theme_key, source_rows, theme_budget,
             previous_narratives, claim_verification_context,
             peer_comparison_material,
             stock_config,
@@ -277,7 +282,8 @@ class KnowledgeSynthesizer:
         self,
         stock_name: str,
         theme_key: str,
-        items: List[SynthesisItem],
+        source_rows: List[Tuple[int, SynthesisItem]],
+        theme_budget: Dict[str, Any] = None,
         previous_narratives: Dict[str, str] = None,
         claim_verification_context: Dict[str, Any] = None,
         peer_comparison_material: Dict[str, Any] = None,
@@ -294,9 +300,10 @@ class KnowledgeSynthesizer:
             prefix = prefix_template
 
         source_lines = []
-        theme_items = self._filter_items_for_theme(theme_key, items, stock_name, stock_config)
-        for i, item in enumerate(theme_items):
-            source_lines.append(format_synthesis_source_line(i + 1, item))
+        if source_rows and not isinstance(source_rows[0], tuple):
+            source_rows = [(i + 1, item) for i, item in enumerate(source_rows)]
+        for ref_id, item in source_rows:
+            source_lines.append(format_synthesis_source_line(ref_id, item))
 
         rules = credit_usage_rules_text()
         ownership_contract = format_topic_ownership_contract(theme_key)
@@ -306,28 +313,43 @@ class KnowledgeSynthesizer:
         prompt_parts.extend([rules, "信息来源：\n" + "\n".join(source_lines)])
         prompt = "\n\n".join(prompt_parts)
 
-        # Append peer comparison appendix for 4.1/4.2 themes only.
-        if peer_comparison_material and theme_key in {"industry_logic", "fundamentals", "valuation_debate"}:
-            peer_appendix = self._format_peer_appendix(peer_comparison_material, theme_key)
-            if peer_appendix:
-                prompt += "\n\n---\n\n" + peer_appendix
+        # Append theme-specific non-citable appendices in budget order.
+        theme_budget = theme_budget or {}
+        appendices = theme_budget.get("appendices")
+        if appendices is None:
+            appendices = {
+                "industry_logic": ["peer_metrics_only"],
+                "fundamentals": [
+                    "formal_financial_explanation_pack",
+                    "formal_financial_fact_pack",
+                    "peer_metrics_only",
+                ],
+                "valuation_debate": ["peer_metrics_only"],
+                "funding_sentiment": ["fundflow_material_pack"],
+                "events_catalysts": [],
+            }.get(theme_key, [])
+        for appendix_key in appendices:
+            appendix = ""
+            if appendix_key == "peer_metrics_only" and peer_comparison_material and theme_key in {"industry_logic", "fundamentals", "valuation_debate"}:
+                appendix = self._format_peer_appendix(peer_comparison_material, theme_key)
+            elif appendix_key == "formal_financial_fact_pack" and formal_financial_fact_pack and theme_key == "fundamentals":
+                appendix = self._format_formal_financial_fact_pack(formal_financial_fact_pack)
+            elif appendix_key == "formal_financial_explanation_pack" and formal_financial_explanation_pack and theme_key == "fundamentals":
+                appendix = self._format_formal_financial_explanation_pack(formal_financial_explanation_pack)
+            elif appendix_key == "fundflow_material_pack" and fundflow_material_pack and theme_key == "funding_sentiment":
+                appendix = format_fundflow_material_pack(fundflow_material_pack)
+            if appendix:
+                prompt += "\n\n---\n\n" + appendix
 
-        if formal_financial_fact_pack and theme_key == "fundamentals":
-            financial_appendix = self._format_formal_financial_fact_pack(formal_financial_fact_pack)
-            if financial_appendix:
-                prompt += "\n\n---\n\n" + financial_appendix
-
-        if formal_financial_explanation_pack and theme_key == "fundamentals":
-            explanation_appendix = self._format_formal_financial_explanation_pack(
-                formal_financial_explanation_pack
-            )
-            if explanation_appendix:
-                prompt += "\n\n---\n\n" + explanation_appendix
-
-        if fundflow_material_pack and theme_key == "funding_sentiment":
-            fundflow_appendix = format_fundflow_material_pack(fundflow_material_pack)
-            if fundflow_appendix:
-                prompt += "\n\n---\n\n" + fundflow_appendix
+        # 4.1 supply-chain guard: degrade to disclosure-insufficient when no operating variables.
+        if theme_key == "industry_logic":
+            supply_chain_state = (theme_budget.get("supply_chain_state") or {})
+            if not supply_chain_state.get("has_operating_variable"):
+                prompt += (
+                    "\n\n---\n\n"
+                    "供应链/产业链位置披露不足说明：当前来源未提供供应商、客户、产能、供需、库存、订单、价格或交期等可验证的运营变量。"
+                    "因此不要写出具体供应链位置判断；只能写“披露不足，仍需跟踪”。"
+                )
 
         # Append optional claim verification context after numbered sources.
         if claim_verification_context:
@@ -469,6 +491,107 @@ class KnowledgeSynthesizer:
                 )
 
         return "\n".join(lines)
+
+    def _build_theme_material_budget(
+        self,
+        stock_name: str,
+        items: List[SynthesisItem],
+        all_data: Dict[str, Any],
+    ) -> Dict[str, Any]:
+        """Build one global source-id budget for canonical theme routing."""
+        stock_config = all_data.get("stock_config") or {}
+        funding_ids = {id(item) for item in items if self._is_funding_sentiment_item(item)}
+
+        canonical_map: Dict[str, set] = {}
+        for theme_key in ("industry_logic", "fundamentals", "valuation_debate"):
+            canonical_map[theme_key] = {
+                id(item)
+                for item in self.__class__._filter_items_for_theme(theme_key, items, stock_name, stock_config)
+            }
+
+        events_ids: set = set()
+        for item in items:
+            if id(item) in funding_ids:
+                continue
+            extra = item.extra or {}
+            allowed_sections = extra.get("allowed_sections")
+            is_industry_news = (
+                item.source_platform == "行业资讯"
+                or extra.get("source_type") == "mainstream_media"
+                or extra.get("source_domain") == "eastmoney.com"
+            )
+            if isinstance(allowed_sections, list):
+                if "4.3" in {str(section) for section in allowed_sections}:
+                    events_ids.add(id(item))
+                continue
+            if is_industry_news:
+                continue
+            events_ids.add(id(item))
+
+        def refs_for(predicate):
+            return [ref_id for ref_id, item in enumerate(items, start=1) if predicate(item)]
+
+        industry_refs = refs_for(
+            lambda item: id(item) not in funding_ids and id(item) in canonical_map["industry_logic"]
+        )
+        fundamentals_refs = refs_for(
+            lambda item: id(item) not in funding_ids and id(item) in canonical_map["fundamentals"]
+        )
+        valuation_refs = refs_for(
+            lambda item: id(item) not in funding_ids and id(item) in canonical_map["valuation_debate"]
+        )
+        funding_refs = refs_for(lambda item: id(item) in funding_ids)
+        events_refs = refs_for(lambda item: id(item) in events_ids)
+
+        matched_terms: List[str] = []
+        for ref_id in industry_refs:
+            text = f"{items[ref_id - 1].title or ''} {items[ref_id - 1].content or ''}"
+            for term in OPERATING_VARIABLE_TERMS:
+                if term in text and term not in matched_terms:
+                    matched_terms.append(term)
+
+        has_fundflow_pack = bool((all_data.get("fundflow_material_pack") or {}).get("rows"))
+
+        return {
+            "schema": "theme_material_budget.v1",
+            "source_ref_base": "items_global_1_based",
+            "themes": {
+                "industry_logic": {
+                    "source_refs": industry_refs,
+                    "supply_chain_state": {
+                        "has_operating_variable": bool(matched_terms),
+                        "matched_terms": matched_terms,
+                    },
+                    "appendices": ["peer_metrics_only"],
+                },
+                "fundamentals": {
+                    "source_refs": fundamentals_refs,
+                    "appendices": [
+                        "formal_financial_explanation_pack",
+                        "formal_financial_fact_pack",
+                        "peer_metrics_only",
+                    ],
+                },
+                "valuation_debate": {
+                    "source_refs": valuation_refs,
+                    "appendices": ["peer_metrics_only"],
+                },
+                "funding_sentiment": {
+                    "source_refs": funding_refs,
+                    "requires": "fundflow_or_position_or_trading_sentiment",
+                    "skip_reason": (
+                        ""
+                        if (funding_refs or has_fundflow_pack)
+                        else "缺少资金流向、持仓结构或交易情绪数据"
+                    ),
+                    "appendices": ["fundflow_material_pack"],
+                },
+                "events_catalysts": {
+                    "source_refs": events_refs,
+                    "appendices": [],
+                },
+            },
+        }
 
     @staticmethod
     def _filter_items_for_theme(

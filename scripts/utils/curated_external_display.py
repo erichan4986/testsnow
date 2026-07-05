@@ -36,6 +36,10 @@ NARRATIVE_VERIFICATION_STATUSES = {
 }
 
 SOURCE_EXCERPT_MAX_CHARS = 200
+GENERIC_REASONING_MARKERS = ("外部材料提出该增量变量", "交叉验证")
+GENERIC_ASSUMPTION_MARKERS = ("仍属外部观察", "未获官方确认")
+GENERIC_COUNTERPOINT_MARKERS = ("下游需求", "交付节奏", "可能失效")
+GENERIC_VERIFICATION_MARKERS = ("跟踪后续公告", "订单或行业数据", "验证该论断")
 
 
 def build_curated_external_narrative_display(narrative_json: str | Path | None) -> dict:
@@ -182,14 +186,80 @@ def normalize_viewpoint_narrative_reasoning_cards(
             "claim": str(card.get("claim") or "").strip(),
             "source_excerpt": excerpt,
             "excerpt_truncated": bool(card.get("excerpt_truncated")) or truncated,
-            "reasoning_steps": clean_string_list(card.get("reasoning_steps")),
+            "reasoning_steps": _reasoning_steps_from_card(card),
             "numbers_used": clean_string_list(card.get("numbers_used")),
-            "assumptions": clean_string_list(card.get("assumptions")),
-            "counterpoints": clean_string_list(card.get("counterpoints")),
-            "verification_need": str(card.get("verification_need") or "").strip(),
+            "assumptions": _assumptions_from_card(card),
+            "counterpoints": _counterpoints_from_card(card),
+            "verification_need": _verification_need_from_card(card),
             "citation_refs": refs,
         })
     return normalized[:8]
+
+
+def _reasoning_steps_from_card(card: dict) -> list:
+    values = clean_string_list(card.get("reasoning_steps"))
+    if values and not _is_generic_values(values, GENERIC_REASONING_MARKERS):
+        return values
+    claim = str(card.get("claim") or "").strip()
+    numbers = clean_string_list(card.get("numbers_used"))
+    steps = []
+    if claim:
+        steps.append(f"先识别外部观点指向的变量：{_short_clause(claim)}")
+    if numbers:
+        steps.append(f"再核对关键数字口径：{'、'.join(numbers[:3])}是否能与正式披露或同行口径对应")
+    else:
+        steps.append("再用公告、调研纪要或财报拆分交叉验证该观点是否有正式证据")
+    return steps[:4]
+
+
+def _assumptions_from_card(card: dict) -> list:
+    values = clean_string_list(card.get("assumptions"))
+    if values and not _is_generic_values(values, GENERIC_ASSUMPTION_MARKERS):
+        return values
+    claim = _short_clause(str(card.get("claim") or ""))
+    if claim:
+        return [f"{claim}后续能被订单、财报拆分或正式披露验证"]
+    return []
+
+
+def _counterpoints_from_card(card: dict) -> list:
+    values = clean_string_list(card.get("counterpoints"))
+    if values and not _is_generic_values(values, GENERIC_COUNTERPOINT_MARKERS):
+        return values
+    text = f"{card.get('claim', '')} {card.get('source_excerpt', '')}"
+    if any(term in text for term in ("估值", "PE", "市值", "股价")):
+        return ["若盈利修复低于外部假设，估值分歧可能向保守情景收敛"]
+    if any(term in text for term in ("G60", "千帆", "卫星", "星座")):
+        return ["若后续无中标、订单或星座配套披露，该线索只能保留为待验证观察"]
+    if any(term in text for term in ("唯一", "第一", "份额", "市占率")):
+        return ["若缺少第三方口径或正式披露，排名/唯一性表述需降权"]
+    if any(term in text for term in ("亏损", "下降", "承压", "价格")):
+        return ["若价格或毛利率趋势改善，该负面线索可能减弱"]
+    return ["若正式公告或财报拆分无法验证，该观点需降权"]
+
+
+def _verification_need_from_card(card: dict) -> str:
+    value = str(card.get("verification_need") or "").strip()
+    if value and not _is_generic_text(value, GENERIC_VERIFICATION_MARKERS):
+        return value
+    claim = _short_clause(str(card.get("claim") or ""))
+    if claim:
+        return f"跟踪与“{claim}”相关的公告、订单、调研纪要和财报拆分。"
+    return ""
+
+
+def _is_generic_values(values: list, markers: tuple[str, ...]) -> bool:
+    return any(_is_generic_text(value, markers) for value in values)
+
+
+def _is_generic_text(value: str, markers: tuple[str, ...]) -> bool:
+    text = str(value or "").strip()
+    return bool(text) and all(marker in text for marker in markers)
+
+
+def _short_clause(text: str, limit: int = 42) -> str:
+    clause = str(text or "").strip().split("；", 1)[0].split("。", 1)[0]
+    return clause[:limit]
 
 
 def clean_string_list(value: Any) -> list:
