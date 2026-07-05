@@ -32,6 +32,7 @@ if __name__.startswith("utils."):
     from ..industry_news_relevance import build_industry_relevance_manifest
     from ..peer_comparison_material import build_peer_comparison_material
     from ..fundflow_material import build_fundflow_material_pack
+    from ..annual_report_material_pack import build_annual_report_material_pack
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -59,6 +60,7 @@ else:
     from industry_news_relevance import build_industry_relevance_manifest
     from peer_comparison_material import build_peer_comparison_material
     from fundflow_material import build_fundflow_material_pack
+    from annual_report_material_pack import build_annual_report_material_pack
 
 
 SYNTHESIS_KEYS = [
@@ -125,6 +127,24 @@ class SynthesisSkill(BaseSkill):
         fundflow_material_pack = build_fundflow_material_pack(stock_raw.get("fundflow", []))
         if fundflow_material_pack.get("rows"):
             ctx.set("fundflow_material_pack", fundflow_material_pack)
+
+        # Build annual-report material pack and deterministic memo skeleton.
+        annual_material_pack: Dict[str, Any] = {}
+        stock_name_for_annual = ctx.get("stock_name")
+        if stock_name_for_annual:
+            base_dir = ctx.get("knowledge_base_dir") or Path(__file__).resolve().parents[3] / "knowledge"
+            try:
+                annual_material_pack = build_annual_report_material_pack(
+                    stock_name=stock_name_for_annual,
+                    base_dir=base_dir,
+                    max_cards=8,
+                    per_type_limit=2,
+                )
+            except Exception:
+                pass
+        if annual_material_pack:
+            ctx.set("annual_report_material_pack", annual_material_pack)
+        ctx.set("annual_report_memo", self._build_annual_report_memo(ctx))
 
         # Build canonical synthesis items once.
         items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx)
@@ -277,6 +297,125 @@ class SynthesisSkill(BaseSkill):
             )
         except Exception:
             return []
+
+    @staticmethod
+    def _build_annual_report_memo(ctx: SkillContext) -> Dict[str, Any]:
+        """Build a deterministic annual-report memo skeleton from existing packs."""
+        material = ctx.get("annual_report_material_pack") or {}
+        fact_pack = ctx.get("formal_financial_fact_pack") or {}
+        explanation_pack = ctx.get("formal_financial_explanation_pack") or {}
+        filing_core = ctx.get("periodic_report_filing_core_facts") or []
+
+        forbidden = ("知乎", "雪球", "券商认为", "研报预计")
+        warnings: List[str] = []
+        valid_cards: List[Dict[str, Any]] = []
+        for card in material.get("selected_narrative_cards") or []:
+            if not isinstance(card, dict):
+                continue
+            text = str(card.get("excerpt") or card.get("title") or "")
+            hit = next((t for t in forbidden if t in text), "")
+            if hit:
+                warnings.append(f"skipped forbidden token '{hit}': {card.get('card_id')}")
+                continue
+            valid_cards.append(card)
+
+        for fact in filing_core:
+            if isinstance(fact, dict) and "0.00亿元" in str(fact.get("data") or ""):
+                m = str(fact.get("fact") or "")
+                if "营收" in m or "收入" in m or "利润" in m:
+                    warnings.append(f"suspicious zero metric: {m}={fact.get('data')}")
+
+        product_types = {"business_model", "rd_product_progress", "technology_platform", "management_market_view", "operation_update"}
+        has_product = any(str(c.get("card_type")) in product_types for c in valid_cards)
+        has_material = bool(valid_cards or fact_pack.get("facts") or explanation_pack.get("rows"))
+
+        citations: Dict[int, Dict[str, Any]] = {}
+        src_to_ref: Dict[tuple, int] = {}
+        nxt = 1
+
+        def _ref(key: tuple, meta: Dict[str, Any]) -> int:
+            nonlocal nxt
+            if key in src_to_ref:
+                return src_to_ref[key]
+            src_to_ref[key] = nxt
+            citations[nxt] = meta
+            nxt += 1
+            return nxt - 1
+
+        def _row(title: str, body: str, iref: str, src: str, key: tuple, meta: Dict[str, Any]) -> Dict[str, Any]:
+            return {
+                "title": title, "body": body,
+                "internal_refs": [iref],
+                "citation_refs": [_ref(key, meta)],
+                "source_ref_ids": [src],
+            }
+
+        def _suspicious_zero_metric(metric: object, value: object) -> bool:
+            metric_text = str(metric or "")
+            value_text = str(value or "")
+            return "0.00亿元" in value_text and any(t in metric_text for t in ("营收", "收入", "利润"))
+
+        confirmed: List[Dict[str, Any]] = []
+        for f in fact_pack.get("facts") or []:
+            if isinstance(f, dict) and f.get("metric") is not None and f.get("value") is not None:
+                if _suspicious_zero_metric(f.get("metric"), f.get("value")):
+                    warning = f"suspicious zero metric: {f.get('metric')}={f.get('value')}"
+                    if warning not in warnings:
+                        warnings.append(warning)
+                    continue
+                s = str(f.get("source") or "公司年报")
+                confirmed.append(_row(
+                    str(f["metric"]), f"{f['metric']}：{f['value']}",
+                    f"fact:{f['metric']}", s,
+                    ("fact", s, f["metric"]),
+                    {"source": "公司年报", "title": s, "source_type": "periodic_report_filing_fact"},
+                ))
+
+        explanation_rows: List[Dict[str, Any]] = []
+        for r in explanation_pack.get("rows") or []:
+            if isinstance(r, dict):
+                m = r.get("metric") or r.get("topic")
+                b = r.get("normalized_summary") or r.get("excerpt")
+                if m and b:
+                    s = str(r.get("source_doc") or "公司年报")
+                    explanation_rows.append(_row(
+                        str(m), str(b),
+                        f"explanation:{r.get('source_ref') or ''}", s,
+                        ("explanation", s, r.get("source_ref") or ""),
+                        {"source": "公司年报", "title": s, "source_type": "periodic_report_explanation"},
+                    ))
+
+        for c in valid_cards[:8]:
+            title = str(c.get("title") or "年报内容")
+            body = str(c.get("excerpt") or c.get("title") or "")
+            sid = c.get("source_block_id") or c.get("card_id") or ""
+            explanation_rows.append(_row(
+                title, body, str(c.get("card_id") or ""), str(sid),
+                ("card", sid),
+                {"source": "公司年报", "title": title, "source_type": "periodic_report_narrative_evidence", "source_credit": c.get("source_credit", 75)},
+            ))
+
+        has_usable_rows = bool(confirmed or explanation_rows)
+        status = (
+            "absent" if not has_material else
+            "ready" if len(valid_cards) >= 4 and has_product and has_usable_rows else
+            "deterministic_fallback" if has_usable_rows else
+            "blocked" if warnings else "deterministic_fallback"
+        )
+
+        return {
+            "schema": "annual_report_memo.v1",
+            "status": status,
+            "source_layer": "annual_report",
+            "sections": {
+                "confirmed": confirmed,
+                "annual_report_explanation": explanation_rows,
+                "not_disclosed": [{"title": "未充分披露项", "body": "重要客户、订单、产能、供应链、管理层指引或细分拆分未在正式材料中充分披露。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
+                "inconclusive": [{"title": "不能下结论", "body": "不得用营收/利润推断主力资金或市场行为。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
+            },
+            "validation": {"warnings": warnings, "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
+            "citations": citations,
+        }
 
     def _build_viewpoint_narrative_deep_analysis_display(self, ctx: SkillContext) -> None:
         """Build deep-analysis-only display from cached full-body narrative JSON."""
@@ -482,6 +621,7 @@ class SynthesisSkill(BaseSkill):
             "catalysts": "timeline" if section_support["catalyst_support"] >= 1 else ("fallback" if profile == "formal_rich" else "skipped"),
         }
 
+        annual_memo = ctx.get("annual_report_memo") or {}
         return {
             "profile": profile,
             "formal_insight_facts": formal_insight_facts,
@@ -494,6 +634,13 @@ class SynthesisSkill(BaseSkill):
             "external_signal_count": 0,
             "section_decisions": section_decisions,
             "reasons": reasons,
+            "annual_memo_status": annual_memo.get("status", "absent"),
+            "broker_memo_status": "absent",
+            "broker_single_institution": False,
+            "memo_refs_resolved": bool(annual_memo.get("citations")),
+            "formal_thin_layout_variant": (
+                "annual_broker_external_checklist" if profile == "formal_thin_external_rich" else None
+            ),
         }
 
     def _deterministic_viewpoint_digest_display(self, stock_name: str, claims: list) -> dict:

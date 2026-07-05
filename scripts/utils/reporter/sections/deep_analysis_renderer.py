@@ -8,15 +8,18 @@ try:
     from ...curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
     from ...synthesis_credit import sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
+    from .executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 except ImportError:
     try:
         from scripts.utils.curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
         from scripts.utils.synthesis_credit import sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
+        from scripts.utils.reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
     except ImportError:
         from utils.curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
         from utils.synthesis_credit import sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
+        from reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 
 
 MAX_VERIFIED_CLAIM_SUMMARY_ROWS = 6
@@ -111,19 +114,34 @@ class DeepAnalysisRenderer:
             lines.append(core_facts_md)
 
         # 深度分析
+        uses_annual_memo_display = (
+            profile_name == "formal_thin_external_rich"
+            and profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist"
+        )
+        annual_memo = (ctx.get("annual_report_memo") or {}) if uses_annual_memo_display else {}
+        baseline_citations = synthesis.get("citations", {}) or {}
+        annual_citation_offset = self._max_citation_id(baseline_citations)
+        annual_memo_citations = annual_memo.get("citations", {}) or {}
         deep_md = self._deep_analysis(
             synthesis,
             ctx,
             profile=profile,
             curated_external_display=curated_display if profile_name == "formal_rich" else deep_analysis_display,
-            curated_citation_offset=self._max_citation_id(synthesis.get("citations", {}) or {}),
+            curated_citation_offset=annual_citation_offset + self._max_citation_id(annual_memo_citations),
+            annual_citation_offset=annual_citation_offset,
         )
+        pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), ctx.get("stock_name", ""))
+        deep_md = _sanitize_pe_spread_in_text(deep_md, pe_facts, ctx.get("stock_name", ""))
         if deep_md:
             lines.append(deep_md)
 
-        # 全局引用
+        # 全局引用：baseline → annual memo → curated external
         citations = self._merged_citations(
-            synthesis.get("citations", {}) or {},
+            baseline_citations,
+            annual_memo_citations,
+        )
+        citations = self._merged_citations(
+            citations,
             (curated_display or {}).get("citations", {}) if profile_name == "formal_rich" else (deep_analysis_display.get("citations", {}) or {}),
         )
         if citations:
@@ -231,6 +249,7 @@ class DeepAnalysisRenderer:
         profile: Dict[str, Any] = None,
         curated_external_display: Dict[str, Any] | None = None,
         curated_citation_offset: int = 0,
+        annual_citation_offset: int = 0,
     ) -> str:
         """
         深度分析板块：根据 evidence profile 渲染不同布局。
@@ -250,6 +269,7 @@ class DeepAnalysisRenderer:
         elif profile_name == "formal_thin_external_rich":
             lines.extend(self._formal_thin_external_rich_body(
                 ctx, curated_external_display,
+                annual_citation_offset=annual_citation_offset,
             ))
         else:
             lines.extend(self._thin_all_body(ctx))
@@ -383,23 +403,36 @@ class DeepAnalysisRenderer:
         self,
         ctx: Dict[str, Any],
         curated_display: Dict[str, Any] | None,
+        annual_citation_offset: int = 0,
     ) -> List[str]:
-        """Render 4.1 formal summary + 4.2 external viewpoint map + 4.3 verification checklist."""
+        """Render formal-thin layout: annual memo + broker placeholder + external map + checklist."""
         lines: List[str] = []
+        profile = ctx.get("deep_analysis_evidence_profile") or {}
 
-        # 4.1 正式材料要点
-        lines.extend(["### 4.1 正式材料要点", ""])
-        lines.extend(self._formal_summary_section(ctx))
+        if profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist":
+            memo = ctx.get("annual_report_memo") or {}
+            lines.extend(["### 4.1 年报经营摘要", ""])
+            lines.extend(self._annual_report_memo_section(memo, annual_citation_offset))
+            lines.extend(["### 4.2 研报观点与假设", "", "当前未取得足够可用研报 digest，不展开研报观点与假设。", ""])
+            external_offset = annual_citation_offset + self._max_citation_id((memo or {}).get("citations", {}))
+            map_md = self._external_viewpoint_map_section(curated_display, citation_offset=external_offset)
+            lines.extend(map_md or ["### 4.3 外部观点地图（Preview，不参与评分）", "", "当前未取得足够外部观点材料。", ""])
+            checklist_md = self._verification_checklist_section(curated_display, citation_offset=external_offset)
+            lines.extend(checklist_md or ["### 4.4 待验证清单", "", "当前无外部观点待验证变量。", ""])
+        else:
+            # 4.1 正式材料要点
+            lines.extend(["### 4.1 正式材料要点", ""])
+            lines.extend(self._formal_summary_section(ctx))
 
-        # 4.2 外部观点地图
-        map_md = self._external_viewpoint_map_section(curated_display)
-        if map_md:
-            lines.extend(map_md)
+            # 4.2 外部观点地图
+            map_md = self._external_viewpoint_map_section(curated_display)
+            if map_md:
+                lines.extend(map_md)
 
-        # 4.3 待验证清单
-        checklist_md = self._verification_checklist_section(curated_display)
-        if checklist_md:
-            lines.extend(checklist_md)
+            # 4.3 待验证清单
+            checklist_md = self._verification_checklist_section(curated_display)
+            if checklist_md:
+                lines.extend(checklist_md)
 
         return lines
 
@@ -415,6 +448,46 @@ class DeepAnalysisRenderer:
             "当前可用于深度基本面分析的正式材料不足，未强制生成 4.2/4.3 推断性内容。",
             "",
         ])
+        return lines
+
+    def _annual_report_memo_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
+        """Render annual memo subsections: confirmed, explanation, not_disclosed, inconclusive."""
+        lines: List[str] = []
+        secs = memo.get("sections") or {}
+        cits = memo.get("citations", {}) or {}
+        used: set[int] = set()
+        for label, key in (("已确认", "confirmed"), ("年报解释", "annual_report_explanation")):
+            rows = [r for r in (secs.get(key) or []) if isinstance(r, dict)]
+            if not rows:
+                continue
+            lines.append(f"**{label}**")
+            for r in rows:
+                t = str(r.get("title") or "").strip()
+                b = str(r.get("body") or "").strip()
+                refs = [int(x) + citation_offset for x in r.get("citation_refs", []) if isinstance(x, (int, str))]
+                text = attach_refs_to_sentence(f"**{t}**：{b}" if t else b, refs)
+                lines.append(f"- {text}")
+                used.update(refs)
+            lines.append("")
+        if not (secs.get("confirmed") or secs.get("annual_report_explanation")):
+            lines.extend(["当前未取得足够年报材料，无法形成年报经营摘要。", ""])
+        nd = [r for r in (secs.get("not_disclosed") or []) if isinstance(r, dict)]
+        ic = [r for r in (secs.get("inconclusive") or []) if isinstance(r, dict)]
+        if nd or ic:
+            lines.append("**未披露 / 不能下结论**")
+            for r in nd + ic:
+                b = str(r.get("body") or "").strip()
+                if b:
+                    lines.append(f"- {b}")
+            lines.append("")
+        for w in (memo.get("validation") or {}).get("warnings") or []:
+            if not lines or lines[-1] != "":
+                lines.append("")
+            if not lines or lines[-2] != "**validation warning**":
+                lines.extend(["**validation warning**", ""])
+            lines.append(f"- {w}")
+        if used:
+            self._append_section_citations(lines, used, self._offset_citations(cits, citation_offset))
         return lines
 
     def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:
@@ -446,8 +519,8 @@ class DeepAnalysisRenderer:
         lines.append("- 不得用营收/利润推断主力资金或市场行为。")
         return lines
 
-    def _external_viewpoint_map_section(self, curated_display: Dict[str, Any] | None) -> List[str]:
-        """Build 4.2 external viewpoint map from curated external display."""
+    def _external_viewpoint_map_section(self, curated_display: Dict[str, Any] | None, citation_offset: int = 0) -> List[str]:
+        """Build 4.2/4.3 external viewpoint map from curated external display."""
         if not curated_display or not self._has_curated_external_citation(curated_display):
             return []
 
@@ -456,7 +529,7 @@ class DeepAnalysisRenderer:
         topic_groups = curated_display.get("_curated_external_topic_groups") or {}
 
         lines: List[str] = [
-            "### 4.2 外部观点地图（Preview，不参与评分）",
+            "### 4.3 外部观点地图（Preview，不参与评分）" if citation_offset else "### 4.2 外部观点地图（Preview，不参与评分）",
             "",
             "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
             "",
@@ -468,7 +541,8 @@ class DeepAnalysisRenderer:
                     continue
                 claim = str(card.get("claim") or "").strip()
                 refs = card.get("citation_refs") or []
-                rendered_claim = attach_refs_to_sentence(claim, refs)
+                display_refs = [r + citation_offset for r in refs]
+                rendered_claim = attach_refs_to_sentence(claim, display_refs)
                 lines.append(f"**观察 {i}：{self._short_heading(claim)}**")
                 lines.append("")
                 lines.append(f"**外部观点链**：{self._frame_external_claim(rendered_claim)}")
@@ -498,7 +572,8 @@ class DeepAnalysisRenderer:
                 for row in rows[:3]:
                     text = str(row.get("text") or "").strip()
                     refs = row.get("citation_refs") or []
-                    rendered = attach_refs_to_sentence(text, refs)
+                    display_refs = [r + citation_offset for r in refs]
+                    rendered = attach_refs_to_sentence(text, display_refs)
                     if rendered:
                         lines.append(f"**外部观点链**：{self._frame_external_claim(rendered)}")
                         credit_label = self._source_credit_label(citations, refs)
@@ -507,8 +582,8 @@ class DeepAnalysisRenderer:
 
         return lines
 
-    def _verification_checklist_section(self, curated_display: Dict[str, Any] | None) -> List[str]:
-        """Build 4.3 verification checklist table from reasoning cards."""
+    def _verification_checklist_section(self, curated_display: Dict[str, Any] | None, citation_offset: int = 0) -> List[str]:
+        """Build 4.4/4.3 verification checklist table from reasoning cards."""
         if not curated_display:
             return []
         reasoning_cards = curated_display.get("_curated_external_reasoning_cards") or []
@@ -517,7 +592,7 @@ class DeepAnalysisRenderer:
 
         citations = curated_display.get("citations", {}) or {}
         lines: List[str] = [
-            "### 4.3 待验证清单",
+            "### 4.4 待验证清单" if citation_offset else "### 4.3 待验证清单",
             "",
             "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |",
             "|---|---|---|---|",

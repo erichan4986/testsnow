@@ -2610,3 +2610,120 @@ def test_formal_thin_external_rich_skips_legacy_synthesis_with_chat_client(tmp_p
     assert synthesis.get("industry_logic", "") == ""
     assert synthesis.get("fundamentals", "") == ""
     assert "legacy" not in str(synthesis.get("valuation_debate", ""))
+
+
+def test_evidence_profile_has_annual_memo_fields():
+    fake = FakeSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "stock_raw": {
+            "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],
+            "reports": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    profile = ctx.output.get("deep_analysis_evidence_profile", {})
+    assert "annual_memo_status" in profile
+    assert profile.get("broker_memo_status") == "absent"
+    assert profile.get("broker_single_institution") is False
+    assert "memo_refs_resolved" in profile
+    assert "formal_thin_layout_variant" in profile
+
+
+def test_build_annual_report_memo_ready_vs_fallback():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [
+                {"card_type": "business_model", "title": "主营业务", "excerpt": "主营 FPGA。", "source_block_id": "b1", "report_year": "2025", "report_type": "annual"},
+                {"card_type": "rd_product_progress", "title": "研发进展", "excerpt": "新品验证中。", "source_block_id": "b2", "report_year": "2025", "report_type": "annual"},
+                {"card_type": "management_market_view", "title": "管理层判断", "excerpt": "需求稳健。", "source_block_id": "b3", "report_year": "2025", "report_type": "annual"},
+                {"card_type": "market_outlook", "title": "市场前景", "excerpt": "行业增长。", "source_block_id": "b4", "report_year": "2025", "report_type": "annual"},
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}]},
+    })
+    memo = skill._build_annual_report_memo(ctx)
+    assert memo["status"] == "ready"
+    assert len(memo["sections"]["annual_report_explanation"]) >= 4
+
+    ctx2 = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [
+                {"card_type": "business_model", "title": "主营业务", "excerpt": "主营 FPGA。", "source_block_id": "b1", "report_year": "2025", "report_type": "annual"},
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+    memo2 = skill._build_annual_report_memo(ctx2)
+    assert memo2["status"] == "deterministic_fallback"
+
+
+def test_build_annual_report_memo_zero_revenue_warning():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": []},
+        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "0.00亿元", "source": "2025年annual"}]},
+        "periodic_report_filing_core_facts": [{"fact": "营业收入", "data": "0.00亿元", "source_labels": ["2025年annual"]}],
+    })
+    memo = skill._build_annual_report_memo(ctx)
+    assert any("0.00亿元" in w or "营业收入" in w for w in memo["validation"]["warnings"])
+    assert memo["status"] in ("blocked", "deterministic_fallback")
+
+
+def test_build_annual_report_memo_zero_metric_does_not_block_explanation_rows():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": []},
+        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "0.00亿元", "source": "2025年annual"}]},
+        "formal_financial_explanation_pack": {
+            "rows": [
+                {
+                    "metric": "营业收入变动原因",
+                    "normalized_summary": "公司说明收入变化主要来自安全与识别芯片、智能电表芯片及 FPGA 销售额增加。",
+                    "source_doc": "2025年annual",
+                    "source_ref": "annual:explanation:revenue",
+                }
+            ]
+        },
+        "periodic_report_filing_core_facts": [{"fact": "营业收入", "data": "0.00亿元", "source_labels": ["2025年annual"]}],
+    })
+    memo = skill._build_annual_report_memo(ctx)
+
+    assert memo["status"] == "deterministic_fallback"
+    assert memo["sections"]["annual_report_explanation"]
+    confirmed_body = " ".join(row["body"] for row in memo["sections"]["confirmed"])
+    assert "0.00亿元" not in confirmed_body
+    assert any("0.00亿元" in w for w in memo["validation"]["warnings"])
+
+
+def test_build_annual_report_memo_skips_forbidden_source_cards():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [
+                {"card_type": "business_model", "title": "主营业务", "excerpt": "主营 FPGA。", "source_block_id": "b1", "report_year": "2025", "report_type": "annual"},
+                {"card_type": "management_market_view", "title": "雪球观点", "excerpt": "雪球上有人认为订单饱满。", "source_block_id": "b2", "report_year": "2025", "report_type": "annual"},
+                {"card_type": "rd_product_progress", "title": "研发进展", "excerpt": "券商认为新品将放量。", "source_block_id": "b3", "report_year": "2025", "report_type": "annual"},
+                {"card_type": "market_outlook", "title": "市场前景", "excerpt": "行业增长。", "source_block_id": "b4", "report_year": "2025", "report_type": "annual"},
+            ],
+        },
+        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}]},
+    })
+    memo = skill._build_annual_report_memo(ctx)
+    bodies = " ".join(r["body"] for r in memo["sections"]["annual_report_explanation"])
+    assert "雪球" not in bodies
+    assert "券商认为" not in bodies
+    assert any("雪球" in w or "券商认为" in w for w in memo["validation"]["warnings"])

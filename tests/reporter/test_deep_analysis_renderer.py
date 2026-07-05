@@ -1314,3 +1314,278 @@ def test_thin_all_profile_renders_material_insufficient_layout():
     assert "### 4.1 正式材料要点" in result
     assert "当前可用于深度基本面分析的正式材料不足" in result
     assert "### 4.2" not in result
+
+
+def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) -> dict:
+    cards = [
+        {
+            "title": "主营业务与产品",
+            "body": "公司增长主线来自 FPGA 与智能电表 MCU。",
+            "internal_refs": ["annual:card:business_model:0"],
+            "citation_refs": [1],
+            "source_ref_ids": ["periodic_report_narrative_evidence:business_model:0"],
+        },
+        {
+            "title": "研发与产品进展",
+            "body": "新一代 FPGA 进入客户验证阶段。",
+            "internal_refs": ["annual:card:rd_product_progress:0"],
+            "citation_refs": [2],
+            "source_ref_ids": ["periodic_report_narrative_evidence:rd_product_progress:0"],
+        },
+        {
+            "title": "管理层市场判断",
+            "body": "管理层认为工业与汽车电子需求保持韧性。",
+            "internal_refs": ["annual:card:management_market_view:0"],
+            "citation_refs": [3],
+            "source_ref_ids": ["periodic_report_narrative_evidence:management_market_view:0"],
+        },
+        {
+            "title": "营业收入",
+            "body": "营业收入 39.82 亿元。",
+            "internal_refs": ["fact:营业收入"],
+            "citation_refs": [4],
+            "source_ref_ids": ["periodic_report_filing_fact:revenue"],
+        },
+    ]
+    if forbidden_card:
+        cards.append({
+            "title": "雪球观点",
+            "body": "雪球上有人认为公司订单饱满。[^5]",
+            "internal_refs": ["annual:card:forbidden:0"],
+            "citation_refs": [5],
+            "source_ref_ids": ["periodic_report_narrative_evidence:forbidden:0"],
+        })
+    return {
+        "schema": "annual_report_memo.v1",
+        "status": status,
+        "source_layer": "annual_report",
+        "sections": {
+            "confirmed": [cards[3]],
+            "annual_report_explanation": cards[:3],
+            "not_disclosed": [{"title": "未充分披露项", "body": "重要客户、订单、产能、供应链、管理层指引或细分拆分未在正式材料中充分披露。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
+            "inconclusive": [{"title": "不能下结论", "body": "不得用营收/利润推断主力资金或市场行为。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
+        },
+        "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
+        "citations": {
+            1: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_narrative_evidence"},
+            2: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_narrative_evidence"},
+            3: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_narrative_evidence"},
+            4: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_filing_fact"},
+            5: {"source": "雪球", "title": "雪球评论", "source_type": "social_media"},
+        },
+    }
+
+
+def test_formal_thin_annual_memo_renders_sections():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "测试外部", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim_id": "c1",
+                    "claim": "外部观点A",
+                    "assumptions": ["假设A"],
+                    "counterpoints": ["反方A"],
+                    "verification_need": "验证A",
+                    "citation_refs": [1],
+                },
+            ],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "### 4.1 年报经营摘要" in result
+    assert "**已确认**" in result
+    assert "**年报解释**" in result
+    assert "**未披露 / 不能下结论**" in result
+    assert "营业收入 39.82 亿元" in result
+    assert "公司增长主线来自 FPGA" in result
+
+
+def test_formal_thin_broker_absence_keeps_heading():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+            "broker_memo_status": "absent",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "deep_analysis_display": {
+            "citations": {},
+            "_curated_external_reasoning_cards": [],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "### 4.2 研报观点与假设" in result
+    assert "当前未取得足够可用研报 digest，不展开研报观点与假设" in result
+    assert "### 4.3 外部观点地图（Preview，不参与评分）" in result
+    assert "### 4.4 待验证清单" in result
+
+
+def test_annual_memo_rows_render_citation_refs():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "deep_analysis_display": {
+            "citations": {},
+            "_curated_external_reasoning_cards": [],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "[^1]" in result
+    assert "[^4]" in result
+    assert "- [^1] 公司年报" in result or "- [^4] 公司年报" in result
+
+
+def test_annual_memo_unavailable_renders_fallback_no_legacy():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": {
+            "schema": "annual_report_memo.v1",
+            "status": "absent",
+            "source_layer": "annual_report",
+            "sections": {"confirmed": [], "annual_report_explanation": [], "not_disclosed": [], "inconclusive": []},
+            "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
+            "citations": {},
+        },
+        "deep_analysis_display": {
+            "citations": {},
+            "_curated_external_reasoning_cards": [],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "### 4.1 年报经营摘要" in result
+    assert "当前未取得足够年报材料" in result
+    assert "### 4.1 产业逻辑与竞争格局" not in result
+    assert "### 4.2 业绩路径与多空分歧" not in result
+    assert "### 4.3 资金面与催化剂时间线" not in result
+
+
+def test_formal_rich_keeps_legacy_headings():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_rich"},
+        "synthesis": {
+            "industry_logic": "产业逻辑[^1]",
+            "fundamentals": "基本面",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "公告", "title": "年报"}},
+        },
+        "annual_report_memo": _annual_memo_fixture(),
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "### 4.1 产业逻辑与竞争格局" in result
+    assert "### 4.2 业绩路径与多空分歧" in result
+    assert "### 4.3 资金面与催化剂时间线" in result
+    assert "### 4.1 年报经营摘要" not in result
+
+
+def test_formal_rich_does_not_emit_unused_annual_memo_citations():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["citations"][1]["title"] = "Annual Memo Only Source"
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_rich"},
+        "synthesis": {
+            "industry_logic": "产业逻辑[^1]",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "公告", "title": "正式引用"}},
+        },
+        "annual_report_memo": memo,
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+
+    assert "Annual Memo Only Source" not in result
+    assert "公司增长主线来自 FPGA" not in result
+
+
+def test_formal_rich_sanitizes_pe_spread_in_deep_analysis_table():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_rich"},
+        "peer_comparison_material": {
+            "rows": [
+                {
+                    "metric": "pe_ttm",
+                    "peer": "新易盛",
+                    "target_value": 83.26,
+                    "peer_value": 68.29,
+                }
+            ]
+        },
+        "synthesis": {
+            "industry_logic": "| 指标 | 中际旭创 | 对标 | 结论 |\n|---|---|---|---|\n| PE(TTM) | 83.26倍 | 新易盛PE TTM 68.29倍 | PE(TTM)高于新易盛约15倍 |",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+
+    assert "高于新易盛约15倍" not in result
+    assert "新易盛为 68.29 倍" in result
+    assert "个 PE 倍数点" in result
+
+
+def test_annual_memo_rejects_forbidden_source():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture(forbidden_card=True)
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "deep_analysis_display": {
+            "citations": {},
+            "_curated_external_reasoning_cards": [],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    assert "雪球上有人认为" not in result
+    # The forbidden card should not be in annual_report_explanation rows.
+    assert any("雪球" in str(r.get("body", "")) for r in memo["sections"]["annual_report_explanation"]) is False
