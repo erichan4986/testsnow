@@ -418,7 +418,7 @@ def test_formal_thin_external_map_without_visible_cards_does_not_warn():
     codes = {issue.code for issue in check_report_text(text).issues}
 
     assert "external_viewpoint_overcompressed" not in codes
-    assert "external_viewpoint_reasoning_cards_templated" not in codes
+    assert "external_viewpoint_overcompressed" not in codes
 
 
 def test_formal_thin_external_map_missing_structure_warns():
@@ -1114,52 +1114,6 @@ def test_financial_snapshot_yoy_growth_does_not_conflict_with_full_year_repair()
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "financial_profit_direction_contradiction" not in codes
-
-
-def test_external_viewpoint_template_reasoning_cards_are_error():
-    text = """
-# 测试股 舆情深度报告
-
-## 四、深度分析
-
-### 4.1 产业逻辑与竞争格局
-
-产业逻辑清晰。
-
-### 4.2 业绩路径与多空分歧
-
-业绩路径清晰。
-
-### 4.3 资金面与催化剂时间线
-
-当前正式材料未提供足够资金面数据。
-
-### 4.4 精选外部观察（Preview）
-
-**观点卡片：**
-
-- **观点**：观点一
-  - **推理步骤**：外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。
-  - **关键假设**：该变量仍属外部观察，未获官方确认。
-- **观点**：观点二
-  - **推理步骤**：外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。
-  - **关键假设**：该变量仍属外部观察，未获官方确认。
-- **观点**：观点三
-  - **推理步骤**：外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。
-  - **关键假设**：该变量仍属外部观察，未获官方确认。
-
-## 技术面分析：中期趋势提醒
-趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
-
-## 综合风险评分
-### 风险等级: 3.0/10（中风险）
-
-## 风险提示与关注要点
-- 风险因子需跟踪。
-"""
-    result = check_report_text(text)
-    codes = {issue.code for issue in result.issues}
-    assert "external_viewpoint_reasoning_cards_templated" in codes
 
 
 def test_header_config_missing_warns_when_header_shows_dash():

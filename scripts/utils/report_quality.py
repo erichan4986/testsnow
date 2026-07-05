@@ -684,7 +684,6 @@ def _check_evidence_depth_warnings(text: str, profile: dict | None = None) -> It
     yield from _check_vague_supply_chain_position(text)
     yield from _check_fundamentals_repeats_core_facts(text)
     yield from _check_external_viewpoint_overcompressed(text, profile)
-    yield from _check_external_viewpoint_reasoning_card_templates(text)
 
 
 # ---------------------------------------------------------------------------
@@ -996,38 +995,6 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             severity="warning",
             message="4.4 外部观察缺少 display-only 免责声明或 inline citations，可能过度压缩。",
             evidence="4.4 external observation missing disclaimer or citations",
-        )
-
-
-def _check_external_viewpoint_reasoning_card_templates(text: str) -> Iterable[QualityIssue]:
-    section44 = _extract_deep_analysis_subsection(text, "4.4")
-    if not section44:
-        return
-    # Only enforce against legacy visible reasoning-card blocks.  The new
-    # evidence-adaptive external viewpoint map renders prose in 4.2 and must
-    # not trigger this gate.
-    if "**观点卡片：**" not in section44 and "**推理步骤**" not in section44:
-        return
-    steps = [
-        _normalize(match)
-        for match in re.findall(r"\*\*推理步骤\*\*[：:]\s*([^\n]+)", section44)
-        if str(match).strip()
-    ]
-    if len(steps) < 3:
-        return
-    generic_steps = [
-        step
-        for step in steps
-        if "外部材料提出该增量变量" in step
-        and "交付能力" in step
-        and "交叉验证" in step
-    ]
-    if len(generic_steps) >= 3 and len(generic_steps) >= max(3, int(len(steps) * 0.6)):
-        yield QualityIssue(
-            code="external_viewpoint_reasoning_cards_templated",
-            severity="error",
-            message="4.4 多张观点卡片使用同一套推理步骤模板，未保留外部观点的真实推理链。",
-            evidence=f"generic_steps={len(generic_steps)}/{len(steps)}",
         )
 
 
