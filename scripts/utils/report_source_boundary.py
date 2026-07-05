@@ -94,7 +94,7 @@ def check_report_source_boundary_text(text: str) -> SourceBoundaryResult:
             )
             break
 
-    external_region = _curated_external_region(body)
+    external_region = _curated_external_region(body, profile)
     if external_region and not all(token in external_region for token in CURATED_EXTERNAL_DISCLAIMER_TOKENS):
         issues.append(
             SourceBoundaryIssue(
@@ -104,8 +104,7 @@ def check_report_source_boundary_text(text: str) -> SourceBoundaryResult:
             )
         )
 
-    protected_text = _remove_curated_external_region(body)
-    protected_text = _remove_formal_thin_external_map_region(protected_text, profile)
+    protected_text = _remove_curated_external_region(body, profile)
     protected_text = _remove_global_reference_sections(protected_text)
     protected_text = _drop_static_data_source_banner(protected_text)
     for token in DISPLAY_ONLY_LEAK_TOKENS:
@@ -121,23 +120,6 @@ def check_report_source_boundary_text(text: str) -> SourceBoundaryResult:
             break
 
     return SourceBoundaryResult(path=None, issues=issues)
-
-
-def _remove_formal_thin_external_map_region(text: str, profile: dict | None) -> str:
-    """Remove the 4.2 display-only external map region for formal_thin_external_rich.
-
-    The external map and its inline reference list are allowed there; they should
-    not trigger display-only-leak scans that are meant for the 4.4 legacy path.
-    """
-    if not profile or profile.get("profile") != "formal_thin_external_rich":
-        return text
-    start = _find_heading(text, r"^###\s+4\.2\b")
-    if start < 0:
-        return text
-    end = _find_heading(text, r"^###\s+4\.3\b", _after_heading_line(text, start))
-    if end < 0:
-        return text
-    return text[:start] + "\n" + text[end:]
 
 
 def format_source_boundary_result(result: SourceBoundaryResult) -> str:
@@ -165,6 +147,10 @@ def _formal_deep_analysis_region(text: str, profile: dict | None = None) -> str:
     # lives in 4.2 and is allowed to contain social/external source tokens.
     # Scan 4.1 and 4.3 only, skipping the 4.2 external viewpoint map region.
     if profile and profile.get("profile") == "formal_thin_external_rich":
+        if _is_annual_broker_external_layout(profile):
+            section43_start = _find_heading(text, r"^###\s+4\.3\b", search_from)
+            if section43_start >= 0:
+                return text[start:section43_start]
         section42_start = _find_heading(text, r"^###\s+4\.2\b", search_from)
         if section42_start >= 0:
             section43_start = _find_heading(text, r"^###\s+4\.3\b", _after_heading_line(text, section42_start))
@@ -195,8 +181,24 @@ def _parse_deep_analysis_profile(text: str) -> dict | None:
         return None
 
 
-def _curated_external_region(text: str) -> str:
-    start = _find_heading(text, r"^###\s+4\.4\b")
+def _is_annual_broker_external_layout(profile: dict | None) -> bool:
+    return bool(
+        profile
+        and profile.get("profile") == "formal_thin_external_rich"
+        and profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist"
+    )
+
+
+def _curated_external_section_pattern(profile: dict | None) -> str:
+    if _is_annual_broker_external_layout(profile):
+        return r"^###\s+4\.3\b"
+    if profile and profile.get("profile") == "formal_thin_external_rich":
+        return r"^###\s+4\.2\b"
+    return r"^###\s+4\.4\b"
+
+
+def _curated_external_region(text: str, profile: dict | None = None) -> str:
+    start = _find_heading(text, _curated_external_section_pattern(profile))
     if start < 0:
         return ""
     end = _find_heading(text, r"^##\s+[^#]", _after_heading_line(text, start))
@@ -205,8 +207,8 @@ def _curated_external_region(text: str) -> str:
     return text[start:end]
 
 
-def _remove_curated_external_region(text: str) -> str:
-    start = _find_heading(text, r"^###\s+4\.4\b")
+def _remove_curated_external_region(text: str, profile: dict | None = None) -> str:
+    start = _find_heading(text, _curated_external_section_pattern(profile))
     if start < 0:
         return text
     end = _find_heading(text, r"^##\s+[^#]", _after_heading_line(text, start))

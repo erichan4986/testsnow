@@ -229,6 +229,23 @@ def _normalize(text: str) -> str:
     return text.replace(" ", "").replace("\u3000", "")
 
 
+def _is_annual_broker_external_layout(profile: dict | None) -> bool:
+    return bool(
+        profile
+        and profile.get("profile") == "formal_thin_external_rich"
+        and profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist"
+    )
+
+
+def _external_map_section_id(profile: dict | None) -> str:
+    return "4.3" if _is_annual_broker_external_layout(profile) else "4.2"
+
+
+def _extract_external_map_section(text: str, profile: dict | None) -> tuple[str, str]:
+    section_id = _external_map_section_id(profile)
+    return section_id, _extract_deep_analysis_subsection(text, section_id)
+
+
 def _load_industry_relevance_manifest_sidecar(report_path: Path) -> dict | None:
     sidecar = report_path.with_name(f"{report_path.stem}_industry_relevance_manifest.json")
     if not sidecar.exists():
@@ -722,6 +739,8 @@ def _check_formal_thin_forced_legacy_deep_sections(text: str, profile: dict | No
 def _check_funding_claim_without_funding_support(text: str, profile: dict | None) -> Iterable[QualityIssue]:
     if not profile:
         return
+    if _is_annual_broker_external_layout(profile):
+        return
     section43 = _extract_deep_analysis_subsection(text, "4.3")
     if not section43:
         return
@@ -770,7 +789,7 @@ def _check_useless_core_fact(text: str) -> Iterable[QualityIssue]:
 def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) -> Iterable[QualityIssue]:
     if not profile or profile.get("profile") != "formal_thin_external_rich":
         return
-    section = _extract_deep_analysis_subsection(text, "4.2")
+    section_id, section = _extract_external_map_section(text, profile)
     if not section:
         return
     normalized = _normalize(section)
@@ -778,7 +797,7 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
         yield QualityIssue(
             code="external_map_missing_display_only_disclaimer",
             severity="error",
-            message="4.2 外部观点地图缺少 display-only / 不参与评分免责声明。",
+            message=f"{section_id} 外部观点地图缺少 display-only / 不参与评分免责声明。",
         )
     # Scan only the claim body, excluding the blockquote disclaimer, for
     # strong confirmation terms.  The disclaimer itself contains words like
@@ -795,7 +814,7 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
                 yield QualityIssue(
                     code="external_map_unverified_claim_framing",
                     severity="error",
-                    message=f"4.2 外部观点地图在低信用来源下使用强确认表述：{term}。",
+                    message=f"{section_id} 外部观点地图在低信用来源下使用强确认表述：{term}。",
                     evidence=term,
                 )
                 return
@@ -818,7 +837,7 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
             yield QualityIssue(
                 code="external_map_unverified_claim_framing",
                 severity="error",
-                message=f"4.2 外部观点地图在低信用来源下使用强确认表述：{market_position_term}。",
+                message=f"{section_id} 外部观点地图在低信用来源下使用强确认表述：{market_position_term}。",
                 evidence=market_position_term,
             )
             return
@@ -935,10 +954,10 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
     # formal_thin_external_rich.  Visible reasoning cards are no longer required;
     # we check each reasoning-card marker individually rather than accepting any.
     if profile and profile.get("profile") == "formal_thin_external_rich":
-        section42 = _extract_deep_analysis_subsection(text, "4.2")
-        if not section42:
+        section_id, section = _extract_external_map_section(text, profile)
+        if not section:
             return
-        if not re.search(r"外部材料|外部观点|雪球|知乎|微信|精选外部", section42):
+        if not re.search(r"外部材料|外部观点|雪球|知乎|微信|精选外部", section):
             return
         markers = (
             ("**外部观点链**：", "外部观点链"),
@@ -946,14 +965,14 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             ("**反方约束**：", "反方约束"),
             ("**待验证证据**：", "待验证证据"),
         )
-        missing = [label for marker, label in markers if marker not in section42]
-        if not re.search(r"\[\^\d+\]", section42):
+        missing = [label for marker, label in markers if marker not in section]
+        if not re.search(r"\[\^\d+\]", section):
             missing.append("inline citations")
         if missing:
             yield QualityIssue(
                 code="external_viewpoint_overcompressed",
                 severity="warning",
-                message=f"4.2 外部观点地图缺少必要结构或 inline citations：{', '.join(missing)}。",
+                message=f"{section_id} 外部观点地图缺少必要结构或 inline citations：{', '.join(missing)}。",
                 evidence="missing=" + ",".join(missing),
             )
         return

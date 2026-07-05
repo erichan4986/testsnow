@@ -1965,3 +1965,58 @@ def test_external_map_with_disclaimer_passes():
     assert "external_map_missing_display_only_disclaimer" not in codes
     assert "external_map_unverified_claim_framing" not in codes
     assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_external_map_new_annual_broker_layout_uses_4_3():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+可信度：中。风险等级：3.0/10。
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 年报经营摘要
+
+**年报解释**
+- 主营业务来自年报摘要。[^1]
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点地图（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料称公司具备高可靠 FPGA 线索，该说法需正式验证。[^2]
+
+**支持线索**：知乎文章提到产品布局。[^2]
+
+**反方约束**：尚未有官方订单公告。[^2]
+
+**待验证证据**：关注后续财报、客户公告及行业出货量数据以交叉验证。[^2]
+
+### 4.4 待验证清单
+
+| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |
+|---|---|---|---|
+| 产品放量 | 外部观点增量变量 | 后续财报、客户公告及行业出货量数据 | 需正式验证 |
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线：股价位于MA20与MA60之间。周线：周线大背景仍为整理。成交量：成交额较前期持平。波动率：BOLL收口。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "external_map_missing_display_only_disclaimer" not in codes
+    assert "external_map_unverified_claim_framing" not in codes
+    assert "external_viewpoint_overcompressed" not in codes
