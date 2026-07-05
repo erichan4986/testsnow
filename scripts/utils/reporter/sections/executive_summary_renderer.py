@@ -233,6 +233,79 @@ def _extract_conclusion(stock_name: str, text: str) -> str:
         return ""
 
 
+# ---------------------------------------------------------------------------
+# PE(TTM) spread sanitizer
+# ---------------------------------------------------------------------------
+def _build_pe_spread_facts(material: Optional[Dict[str, Any]], stock_name: str) -> List[Dict[str, Any]]:
+    """Extract structured PE(TTM) rows as spread facts."""
+    if not material or not isinstance(material, dict):
+        return []
+    facts, seen = [], set()
+    for row in material.get("rows") or []:
+        if not isinstance(row, dict) or row.get("metric") != "pe_ttm":
+            continue
+        peer, t, p = row.get("peer"), row.get("target_value"), row.get("peer_value")
+        if not peer or t is None or p is None:
+            continue
+        try:
+            t, p = float(t), float(p)
+        except (TypeError, ValueError):
+            continue
+        if peer in seen:
+            continue
+        seen.add(peer)
+        facts.append({"peer_name": str(peer), "target_pe": t, "peer_pe": p, "spread_abs": abs(t - p)})
+    return facts
+
+
+def _format_pe(value: float) -> str:
+    return f"{value:.2f}".rstrip("0").rstrip(".")
+
+
+def _rewrite_pe_spread_clause(match: "re.Match", fact: Dict[str, Any], stock_name: str) -> str:
+    """Rewrite a compressed spread clause when the number is closer to the spread."""
+    try:
+        num = float(match.group("num"))
+    except (TypeError, ValueError):
+        return match.group(0)
+    target_pe, peer_pe, spread_abs = fact["target_pe"], fact["peer_pe"], fact["spread_abs"]
+    peer_name = fact["peer_name"]
+    if abs(num - spread_abs) >= abs(num - peer_pe):
+        return match.group(0)
+    direction = "高出" if target_pe > peer_pe else "低约"
+    return (
+        f"{stock_name} PE(TTM) 为 {_format_pe(target_pe)} 倍，{peer_name}为 {_format_pe(peer_pe)} 倍，"
+        f"{direction}约 {_format_pe(round(spread_abs, 1))} 个 PE 倍数点。"
+    )
+
+
+def _sanitize_pe_spread_in_text(text: str, facts: List[Dict[str, Any]], stock_name: str) -> str:
+    """Rewrite or drop PE(TTM) spread compression clauses."""
+    if not text:
+        return text
+    if facts:
+        for fact in facts:
+            pattern = re.compile(
+                rf"(?P<prefix>(?:{re.escape(stock_name)})?\s*)"
+                rf"PE\s*\(\s*TTM\s*\)\s*(?P<target_pe>\d+(?:\.\d+)?)\s*倍\s*"
+                rf"(?P<cmp>远高于|高于|远低于|低于)\s*"
+                rf"{re.escape(fact['peer_name'])}\s*(?P<num>\d+(?:\.\d+)?)\s*倍"
+            )
+            text = pattern.sub(lambda m, f=fact: _rewrite_pe_spread_clause(m, f, stock_name), text)
+            spread_only_pattern = re.compile(
+                rf"PE\s*\(\s*TTM\s*\)\s*(?P<cmp>远高于|高于|远低于|低于)\s*"
+                rf"{re.escape(fact['peer_name'])}\s*约?\s*(?P<num>\d+(?:\.\d+)?)\s*倍"
+            )
+            text = spread_only_pattern.sub(lambda m, f=fact: _rewrite_pe_spread_clause(m, f, stock_name), text)
+    else:
+        text = re.sub(
+            r"PE\s*\(\s*TTM\s*\)\s*\d+(?:\.\d+)?\s*倍\s*"
+            r"(?:远高于|高于|远低于|低于)\s*[^\s，。、：；]{2,20}\s*\d+(?:\.\d+)?\s*倍",
+            "", text,
+        )
+    return text
+
+
 class ExecutiveSummaryRenderer:
     """执行摘要板块 — 综合评分标题 + 核心投资论点 + 一句话结论。"""
 
@@ -299,6 +372,14 @@ class ExecutiveSummaryRenderer:
         bullish_points = _extract_thesis_points(combined, "bullish", claim_verification_summary)
         bearish_points = _extract_thesis_points(combined, "bearish", claim_verification_summary)
 
+        pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), stock_name)
+        for points in (bullish_points, bearish_points):
+            for point in points:
+                if isinstance(point, dict):
+                    point["text"] = _sanitize_pe_spread_in_text(
+                        point.get("text", ""), pe_facts, stock_name
+                    )
+
         if bullish_points:
             lines.append("**看多：**")
             for pt in bullish_points[:4]:
@@ -314,6 +395,7 @@ class ExecutiveSummaryRenderer:
             lines.append("")
 
         conclusion = _extract_conclusion(stock_name, combined)
+        conclusion = _sanitize_pe_spread_in_text(conclusion, pe_facts, stock_name)
         if conclusion:
             lines.append(f"> **一句话结论**：{conclusion}")
             lines.append("")

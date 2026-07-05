@@ -213,3 +213,156 @@ def test_render_falls_back_to_synthesis_when_no_display(monkeypatch):
     renderer.render(ctx)
 
     assert any("baseline" in t for t in captured)
+
+
+def _fake_llm_with_pe_spread(text):
+    return {
+        "bullish": [{"text": "PE(TTM)83.26倍远高于新易盛15倍", "stars": 3}],
+        "bearish": [],
+        "conclusion": "",
+    }
+
+
+def test_pe_spread_rewritten_when_structured_peer_metrics_available(monkeypatch):
+    """A compressed spread '15倍' must be rewritten as peer PE + spread points."""
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        _fake_llm_with_pe_spread,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "valuation_debate": "估值争议。",
+            "fundamentals": "基本面。",
+        },
+        "peer_comparison_material": {
+            "schema": "peer_comparison_material.v1",
+            "target": "中际旭创",
+            "peers": ["新易盛"],
+            "rows": [
+                {
+                    "dimension": "估值水平",
+                    "target": "中际旭创",
+                    "peer": "新易盛",
+                    "metric": "pe_ttm",
+                    "target_value": 83.26,
+                    "peer_value": 68.29,
+                    "period": "latest",
+                    "unit": "倍",
+                }
+            ],
+        },
+    }
+    result = renderer.render(ctx)
+
+    assert "远高于新易盛15倍" not in result
+    assert "新易盛为 68.29 倍" in result
+    assert "高出约 15 个 PE 倍数点" in result
+
+
+def test_pe_spread_removed_when_peer_metrics_unavailable(monkeypatch):
+    """Without structured peer metrics the misleading spread clause must not survive."""
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        _fake_llm_with_pe_spread,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "valuation_debate": "估值争议。",
+            "fundamentals": "基本面。",
+        },
+    }
+    result = renderer.render(ctx)
+
+    assert "远高于新易盛15倍" not in result
+    assert "PE(TTM)83.26倍" not in result
+
+
+def test_valid_peer_pe_is_not_rewritten_as_spread(monkeypatch):
+    """A plainly stated peer PE must be left untouched."""
+
+    def fake_llm(text):
+        return {
+            "bullish": [{"text": "新易盛 PE(TTM) 为 68.29 倍，估值相对合理", "stars": 3}],
+            "bearish": [],
+            "conclusion": "",
+        }
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        fake_llm,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "valuation_debate": "估值争议。",
+            "fundamentals": "基本面。",
+        },
+        "peer_comparison_material": {
+            "schema": "peer_comparison_material.v1",
+            "rows": [
+                {
+                    "metric": "pe_ttm",
+                    "target": "中际旭创",
+                    "peer": "新易盛",
+                    "target_value": 83.26,
+                    "peer_value": 68.29,
+                    "unit": "倍",
+                }
+            ],
+        },
+    }
+    result = renderer.render(ctx)
+
+    assert "新易盛 PE(TTM) 为 68.29 倍" in result
+    assert "高出约" not in result
+    assert "个 PE 倍数点" not in result
+
+
+def test_pe_spread_rewrite_preserves_stock_name_when_clause_has_prefix(monkeypatch):
+    """A prefixed stock name must not be swallowed by the replacement."""
+
+    def fake_llm(text):
+        return {
+            "bullish": [{"text": "中际旭创PE(TTM)83.26倍远高于新易盛15倍", "stars": 3}],
+            "bearish": [],
+            "conclusion": "",
+        }
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        fake_llm,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "synthesis": {
+            "valuation_debate": "估值争议。",
+            "fundamentals": "基本面。",
+        },
+        "peer_comparison_material": {
+            "schema": "peer_comparison_material.v1",
+            "rows": [
+                {
+                    "metric": "pe_ttm",
+                    "target": "中际旭创",
+                    "peer": "新易盛",
+                    "target_value": 83.26,
+                    "peer_value": 68.29,
+                    "unit": "倍",
+                }
+            ],
+        },
+    }
+    result = renderer.render(ctx)
+
+    assert "中际旭创 PE(TTM) 为 83.26 倍" in result
+    assert "- PE(TTM) 为 83.26 倍，新易盛" not in result
