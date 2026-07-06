@@ -53,6 +53,29 @@ def test_material_snapshot_unresolved_ref_fails():
     assert "deep_material_snapshot_unresolved_ref" in codes
 
 
+def test_material_snapshot_external_row_without_citation_refs_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n### 4.3 外部观点与待验证变量（Preview，不参与评分）\n\n**外部观点链**：外部材料称：外部观点A；该说法需以公告验证\n"
+    result = check_report_text(
+        text,
+        deep_analysis_material_snapshot=_snapshot([
+            _snapshot_row(text="外部观点A", citation_refs=()),
+        ]),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert "deep_material_snapshot_external_missing_citation" in codes
+
+
+def test_material_snapshot_malformed_citation_key_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    result = check_report_text(
+        fixture.read_text(encoding="utf-8"),
+        deep_analysis_material_snapshot=_snapshot([], citations={"bad-ref": {"source": "年报"}}),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert "deep_material_snapshot_malformed_citation_key" in codes
+
+
 def test_material_snapshot_non_deep_scope_fails():
     fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
     result = check_report_text(
@@ -2094,3 +2117,96 @@ def test_external_map_new_annual_broker_layout_uses_4_3():
     assert "external_map_missing_display_only_disclaimer" not in codes
     assert "external_map_unverified_claim_framing" not in codes
     assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_annual_broker_4_3_external_map_with_section_refs_requires_inline_footnotes():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+可信度：中。风险等级：3.0/10。
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 年报经营摘要
+
+年报经营摘要。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料称公司具备高可靠 FPGA 线索，该说法需正式验证。
+
+**支持线索**：知乎文章提到产品布局。
+
+**反方约束**：尚未有官方订单公告。
+
+**待验证证据**：关注后续财报、客户公告及行业出货量数据以交叉验证。
+
+**本节引用来源：**
+- [^2] 知乎精选观察 | 《产业观察》
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线：股价位于MA20与MA60之间。周线：周线大背景仍为整理。成交量：成交额较前期持平。波动率：BOLL收口。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "curated_external_missing_inline_footnotes" in codes
+
+
+def test_annual_broker_4_3_display_only_risk_without_explanation_warns():
+    text = """
+# 测试股 舆情深度报告
+
+## 执行摘要
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+可信度：中。风险等级：1.5/10。
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.1 年报经营摘要
+
+年报经营摘要。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**外部观点链**：外部材料称公司估值偏高，该说法需正式验证。[^2]
+
+**支持线索**：知乎文章提到估值分歧。[^2]
+
+**反方约束**：正式研报口径不足。[^2]
+
+**待验证证据**：关注后续公告及研报估值口径。[^2]
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线：股价位于MA20与MA60之间。周线：周线大背景仍为整理。成交量：成交额较前期持平。波动率：BOLL收口。
+
+## 综合风险评分
+### 风险等级: 1.5/10（低风险）
+"""
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "display_only_risk_without_explanation" in codes

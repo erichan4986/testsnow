@@ -193,8 +193,8 @@ def check_report_text(
     profile = _parse_deep_analysis_profile(text)
 
     issues.extend(_check_required_signals(normalized))
-    issues.extend(_check_contradictions(normalized))
-    issues.extend(_check_curated_external_inline_footnotes(text))
+    issues.extend(_check_contradictions(normalized, profile))
+    issues.extend(_check_curated_external_inline_footnotes(text, profile))
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
     issues.extend(_check_fundflow_claims(text, fundflow_material_pack))
@@ -220,11 +220,29 @@ def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[Qua
     rows = _snapshot_get(snapshot, "rows", ()) or ()
     citations = _snapshot_get(snapshot, "citations", {}) or {}
     citation_refs = {_to_int_ref(key) for key in citations.keys()}
+    malformed_citation_keys = [str(key) for key in citations.keys() if _to_int_ref(key) is None]
+    if malformed_citation_keys:
+        issues.append(QualityIssue(
+            code="deep_material_snapshot_malformed_citation_key",
+            severity="error",
+            message="MaterialSnapshot citations must use numeric citation keys.",
+            evidence=f"keys={malformed_citation_keys}",
+        ))
     citation_refs.discard(None)
 
     for row in rows:
         row_id = str(_snapshot_get(row, "row_id", "<unknown>"))
         refs = [ref for ref in (_to_int_ref(ref) for ref in (_snapshot_get(row, "citation_refs", ()) or ())) if ref is not None]
+        source_layer = str(_snapshot_get(row, "source_layer", ""))
+        row_text = str(_snapshot_get(row, "text", "") or "").strip()
+        if source_layer == "external" and row_text and not refs:
+            issues.append(QualityIssue(
+                code="deep_material_snapshot_external_missing_citation",
+                severity="error",
+                message="Visible external MaterialSnapshot rows must carry final citation_refs.",
+                evidence=f"row_id={row_id}",
+            ))
+
         missing_refs = [ref for ref in refs if ref not in citation_refs]
         if missing_refs:
             issues.append(QualityIssue(
@@ -243,7 +261,6 @@ def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[Qua
                 evidence=f"row_id={row_id}; display_scope={display_scope}",
             ))
 
-        source_layer = str(_snapshot_get(row, "source_layer", ""))
         scoring_eligible = bool(_snapshot_get(row, "scoring_eligible", False))
         risk_score_eligible = bool(_snapshot_get(row, "risk_score_eligible", False))
         if source_layer == "external" and (scoring_eligible or risk_score_eligible):
@@ -254,7 +271,6 @@ def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[Qua
                 evidence=f"row_id={row_id}; scoring={scoring_eligible}; risk_scoring={risk_score_eligible}",
             ))
 
-        row_text = str(_snapshot_get(row, "text", "") or "").strip()
         if source_layer == "external" and row_text and not _external_snapshot_row_is_framed(text, row_text):
             issues.append(QualityIssue(
                 code="deep_material_snapshot_external_unframed",
@@ -363,6 +379,23 @@ def _extract_external_map_section(text: str, profile: dict | None) -> tuple[str,
     return section_id, _extract_deep_analysis_subsection(text, section_id)
 
 
+def _extract_display_only_external_section(text: str, profile: dict | None) -> tuple[str, str]:
+    if profile and profile.get("profile") == "formal_thin_external_rich":
+        section_id, section = _extract_external_map_section(text, profile)
+        if section:
+            return section_id, section
+
+    match = re.search(
+        r"(?ms)^#{2,4}\s*(?:(4\.[234])\s*)?(?:精选外部观察|外部观点与待验证变量)"
+        r"(?:（Preview(?:，不参与评分)?）)?\s*$"
+        r"(.*?)(?=^##\s|\Z)",
+        text,
+    )
+    if not match:
+        return "", ""
+    return (match.group(1) or "4.4").strip(), match.group(2)
+
+
 def _load_industry_relevance_manifest_sidecar(report_path: Path) -> dict | None:
     sidecar = report_path.with_name(f"{report_path.stem}_industry_relevance_manifest.json")
     if not sidecar.exists():
@@ -395,7 +428,7 @@ def _check_required_signals(text: str) -> Iterable[QualityIssue]:
             )
 
 
-def _check_contradictions(text: str) -> Iterable[QualityIssue]:
+def _check_contradictions(text: str, profile: dict | None = None) -> Iterable[QualityIssue]:
     normalized = _normalize(text)
 
     # EV: N/A% formatting
@@ -440,15 +473,9 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
             )
 
     # Display-only 4.4 risk observations should have explanation when formal risk score is low
-    section44 = ""
-    section44_match = re.search(
-        r"(?ms)^#{2,4}\s*(?:4\.4\s*)?(?:精选外部观察|外部观点与待验证变量)（Preview）\s*$"
-        r"(.*?)(?=^##\s|\Z)",
-        text,
-    )
-    if section44_match:
-        section44 = _normalize(section44_match.group(1))
-    if section44 and any(re.search(term, section44) for term in _DISPLAY_ONLY_RISK_TERMS):
+    display_only_section_id, display_only_section = _extract_display_only_external_section(text, profile)
+    normalized_display_only = _normalize(display_only_section)
+    if normalized_display_only and any(re.search(term, normalized_display_only) for term in _DISPLAY_ONLY_RISK_TERMS):
         risk_score = _extract_score(normalized, [r"风险等级[:：]?(\d+(?:\.\d+)?)/10"])
         if risk_score is not None and risk_score <= 2.0:
             risk_section = ""
@@ -458,7 +485,7 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
                 yield QualityIssue(
                     code="display_only_risk_without_explanation",
                     severity="warning",
-                    message="4.4 display-only 外部观察包含风险线索，但风险板块未解释其不计入综合风险评分。",
+                    message=f"{display_only_section_id} display-only 外部观察包含风险线索，但风险板块未解释其不计入综合风险评分。",
                 )
 
     weak = any(re.search(p, text, flags=re.IGNORECASE) for p in WEAK_TREND_PATTERNS)
@@ -502,27 +529,22 @@ def _check_contradictions(text: str) -> Iterable[QualityIssue]:
         )
 
 
-def _check_curated_external_inline_footnotes(text: str) -> Iterable[QualityIssue]:
-    section44_match = re.search(
-        r"(?ms)^#{2,4}\s*(?:4\.4\s*)?(?:精选外部观察|外部观点与待验证变量)（Preview）\s*$"
-        r"(.*?)(?=^##\s|\Z)",
-        text,
-    )
-    if not section44_match:
+def _check_curated_external_inline_footnotes(text: str, profile: dict | None = None) -> Iterable[QualityIssue]:
+    section_id, section = _extract_display_only_external_section(text, profile)
+    if not section:
         return
 
-    section44 = section44_match.group(1)
-    if "本节引用来源" not in section44 or not re.search(r"(?m)^-\s*\[\^\d+\]", section44):
+    if "本节引用来源" not in section or not re.search(r"(?m)^-\s*\[\^\d+\]", section):
         return
 
-    body = section44.split("本节引用来源", 1)[0]
+    body = section.split("本节引用来源", 1)[0]
     if re.search(r"\[\^\d+\]", body):
         return
 
     yield QualityIssue(
         code="curated_external_missing_inline_footnotes",
         severity="error",
-        message="4.4 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
+        message=f"{section_id} 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
     )
 
 
