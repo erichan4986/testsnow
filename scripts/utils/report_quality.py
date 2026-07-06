@@ -11,7 +11,7 @@ import json
 import re
 from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Iterable, List
+from typing import Any, Iterable, List
 
 try:
     from .source_direct_relevance import OPERATING_VARIABLE_TERMS
@@ -184,6 +184,7 @@ def check_report_text(
     industry_relevance_manifest: dict | None = None,
     peer_comparison_material: dict | None = None,
     fundflow_material_pack: dict | None = None,
+    deep_analysis_material_snapshot: Any = None,
 ) -> QualityResult:
     """Check report Markdown text and return structured issues."""
     issues: List[QualityIssue] = []
@@ -197,6 +198,7 @@ def check_report_text(
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
     issues.extend(_check_fundflow_claims(text, fundflow_material_pack))
+    issues.extend(_check_global_citation_alignment(text))
     issues.extend(_check_deep_analysis_subsections(text))
     issues.extend(_check_product_industry_mismatch(text))
     issues.extend(_check_financial_fact_unit_sanity(text))
@@ -205,9 +207,124 @@ def check_report_text(
     issues.extend(_check_header_config_missing(text))
     issues.extend(_check_evidence_depth_warnings(text, profile))
     issues.extend(_check_evidence_profile_gates(text))
+    issues.extend(_check_deep_analysis_material_snapshot(text, deep_analysis_material_snapshot))
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
+
+
+def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[QualityIssue]:
+    if not snapshot:
+        return []
+    issues: List[QualityIssue] = []
+    rows = _snapshot_get(snapshot, "rows", ()) or ()
+    citations = _snapshot_get(snapshot, "citations", {}) or {}
+    citation_refs = {_to_int_ref(key) for key in citations.keys()}
+    citation_refs.discard(None)
+
+    for row in rows:
+        row_id = str(_snapshot_get(row, "row_id", "<unknown>"))
+        refs = [ref for ref in (_to_int_ref(ref) for ref in (_snapshot_get(row, "citation_refs", ()) or ())) if ref is not None]
+        missing_refs = [ref for ref in refs if ref not in citation_refs]
+        if missing_refs:
+            issues.append(QualityIssue(
+                code="deep_material_snapshot_unresolved_ref",
+                severity="error",
+                message="MaterialSnapshot row references citations not present in snapshot.citations.",
+                evidence=f"row_id={row_id}; missing={missing_refs}",
+            ))
+
+        display_scope = tuple(_snapshot_get(row, "display_scope", ()) or ())
+        if display_scope != ("deep_analysis",):
+            issues.append(QualityIssue(
+                code="deep_material_snapshot_invalid_scope",
+                severity="error",
+                message="MaterialSnapshot V1 rows must be scoped only to deep_analysis.",
+                evidence=f"row_id={row_id}; display_scope={display_scope}",
+            ))
+
+        source_layer = str(_snapshot_get(row, "source_layer", ""))
+        scoring_eligible = bool(_snapshot_get(row, "scoring_eligible", False))
+        risk_score_eligible = bool(_snapshot_get(row, "risk_score_eligible", False))
+        if source_layer == "external" and (scoring_eligible or risk_score_eligible):
+            issues.append(QualityIssue(
+                code="deep_material_snapshot_external_scoring_leak",
+                severity="error",
+                message="External MaterialSnapshot rows must remain display-only and non-scoring.",
+                evidence=f"row_id={row_id}; scoring={scoring_eligible}; risk_scoring={risk_score_eligible}",
+            ))
+
+        row_text = str(_snapshot_get(row, "text", "") or "").strip()
+        if source_layer == "external" and row_text and not _external_snapshot_row_is_framed(text, row_text):
+            issues.append(QualityIssue(
+                code="deep_material_snapshot_external_unframed",
+                severity="error",
+                message="Visible external MaterialSnapshot row lacks display-only/verification framing.",
+                evidence=f"row_id={row_id}",
+            ))
+
+    return issues
+
+
+def _check_global_citation_alignment(text: str) -> List[QualityIssue]:
+    parts = re.split(r"(?m)^## 引用来源\s*$", text or "", maxsplit=1)
+    if len(parts) < 2:
+        return []
+    body_text, citation_table = parts
+    body_refs = {
+        int(ref)
+        for ref in re.findall(r"\[\^(\d+)\]", body_text)
+    }
+    table_refs = {
+        int(ref)
+        for ref in re.findall(r"\[\^(\d+)\]", citation_table)
+    }
+    issues: List[QualityIssue] = []
+    missing = sorted(body_refs - table_refs)
+    if missing:
+        issues.append(QualityIssue(
+            code="global_citation_missing_refs",
+            severity="error",
+            message="正文存在未在全局引用来源表中列出的 citation。",
+            evidence=f"missing={missing}",
+        ))
+    unused = sorted(table_refs - body_refs)
+    if unused:
+        issues.append(QualityIssue(
+            code="global_citation_unused_refs",
+            severity="error",
+            message="全局引用来源表包含正文未使用的 citation。",
+            evidence=f"unused={unused}",
+        ))
+    return issues
+
+
+def _snapshot_get(obj: Any, key: str, default: Any = None) -> Any:
+    if isinstance(obj, dict):
+        return obj.get(key, default)
+    return getattr(obj, key, default)
+
+
+def _to_int_ref(value: Any) -> int | None:
+    try:
+        return int(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _external_snapshot_row_is_framed(text: str, row_text: str) -> bool:
+    matching_line = next((line for line in text.splitlines() if row_text in line), "")
+    if not matching_line:
+        return True
+    framing_terms = (
+        "外部材料称",
+        "外部观点称",
+        "据外部材料",
+        "不等同于官方确认",
+        "需验证",
+        "待验证",
+    )
+    return any(term in matching_line for term in framing_terms)
 
 
 def format_quality_result(result: QualityResult) -> str:

@@ -286,6 +286,7 @@ def test_display_only_risk_metadata_adds_note_without_changing_score():
     )
     assert decision_with.risk.display_only_notes
     assert "display-only" in decision_with.risk.display_only_notes[0] or "不计入" in decision_with.risk.display_only_notes[0]
+    assert "4.4 外部观察" not in decision_with.risk.display_only_notes[0]
     assert decision_with.risk.score == decision_without.risk.score
 
 

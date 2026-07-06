@@ -160,7 +160,7 @@ class SynthesisSkill(BaseSkill):
         profile = self._build_evidence_profile(ctx, items)
         ctx.set("deep_analysis_evidence_profile", profile)
 
-        if profile["profile"] == "formal_rich":
+        if profile["profile"] in {"formal_rich", "formal_medium"}:
             baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx, items=items)
         else:
             source_policy = self._canonical_synthesis_source_policy(ctx)
@@ -183,13 +183,15 @@ class SynthesisSkill(BaseSkill):
         # digest notes may enter the DISPLAY synthesis only.  Canonical synthesis,
         # core_facts, synthesis_text, and synthesis_sources stay baseline so risk
         # scoring and Knowledge persistence never see display-only material.
-        # Only formal-rich reports generate display synthesis; thin layouts use the
-        # external viewpoint map / formal summary instead.
+        # Formal-rich and formal-medium reports keep the legacy deep-analysis
+        # sections, so they may use display-only formal materials to improve
+        # readability. Thin layouts use the external viewpoint map / formal
+        # summary instead.
         display_items = []
         fulltext_items = []
         narrative_card_items = []
         broker_digest_items = []
-        if profile["profile"] == "formal_rich":
+        if profile["profile"] in {"formal_rich", "formal_medium"}:
             if ctx.get("include_periodic_report_fulltext_in_synthesis"):
                 fulltext_items = self._eligible_periodic_report_fulltext_items(ctx)
                 display_items.extend(fulltext_items)
@@ -832,18 +834,19 @@ class SynthesisSkill(BaseSkill):
             reasons.append("formal_thin_external_rich")
             if single_source:
                 reasons.append("single_source_external_rich")
-        elif has_any_item:
-            profile = "formal_rich"
-            reasons.append("items_present_fallback")
+        elif has_any_formal or has_any_item:
+            profile = "formal_medium"
+            reasons.append("formal_support_partial")
         else:
             profile = "thin_all"
             reasons.append("material_insufficient")
 
+        legacy_profile = profile in {"formal_rich", "formal_medium"}
         section_decisions = {
-            "industry": "legacy" if (profile == "formal_rich" and section_support["industry"] >= 2) else ("formal_summary" if profile == "formal_thin_external_rich" else "skipped"),
-            "fundamentals": "legacy" if (profile == "formal_rich" and section_support["fundamentals"] >= 2) else ("formal_summary" if profile == "formal_thin_external_rich" else "skipped"),
-            "funding": "legacy" if (profile == "formal_rich" and section_support["funding_support"] >= 1) else ("fallback" if section_support["catalyst_support"] >= 1 else "skipped"),
-            "catalysts": "timeline" if section_support["catalyst_support"] >= 1 else ("fallback" if profile == "formal_rich" else "skipped"),
+            "industry": "legacy" if (legacy_profile and section_support["industry"] >= 2) else ("formal_summary" if profile == "formal_thin_external_rich" else "skipped"),
+            "fundamentals": "legacy" if (legacy_profile and section_support["fundamentals"] >= 2) else ("formal_summary" if profile == "formal_thin_external_rich" else "skipped"),
+            "funding": "legacy" if (legacy_profile and section_support["funding_support"] >= 1) else ("fallback" if section_support["catalyst_support"] >= 1 else "skipped"),
+            "catalysts": "timeline" if section_support["catalyst_support"] >= 1 else ("fallback" if legacy_profile else "skipped"),
         }
 
         annual_memo = ctx.get("annual_report_memo") or {}

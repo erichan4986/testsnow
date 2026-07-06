@@ -3627,3 +3627,32 @@ def test_hk_ai_software_business_overview_block_maps_to_business_model_card():
     result = _build_hk_cards(blocks)
     card_types = {card["card_type"] for card in result["cards"]}
     assert "business_model" in card_types
+
+
+def test_table_fragment_snippet_does_not_generate_narrative_card():
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [
+            {
+                "id": "product_capacity_profile-0",
+                "usage": "product_capacity_profile",
+                "section": "第三节 管理层讨论与分析",
+                "title": "主要产品",
+                "text": (
+                    "产品类型 产品介绍 应用领域 产品或终端样图 12/241 "
+                    "主要由FM25/FM29系列构成，支持SPI、通用并行接口，"
+                    "存储容量1Mbit-2Gbit 汽车电子、医疗仪器、工控仪表 15/241"
+                ),
+            }
+        ],
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688385",
+        stock_name="复旦微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+    )
+
+    assert result["cards"] == []

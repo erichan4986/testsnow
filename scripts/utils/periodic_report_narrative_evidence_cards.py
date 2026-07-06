@@ -370,6 +370,10 @@ _TABLE_STRUCTURE_TOKENS = (
     "报告期投资额",
     "上年同期投资额",
     "变动幅度",
+    "产品类型",
+    "产品介绍",
+    "应用领域",
+    "产品或终端样图",
     "适用 □不适用",
     "适用 □不适用",
 )
@@ -1395,6 +1399,19 @@ def _looks_like_table_fragment(snippet: str, card_type: str = "") -> bool:
     """Return True for dense numeric/table-only snippets."""
     if sum(1 for token in _TABLE_STRUCTURE_TOKENS if token in snippet) >= 3:
         return True
+    compact_snippet = _compact_text(snippet)
+    if re.search(r"\b\d{1,3}/\d{1,3}\b", snippet) and any(
+        token in compact_snippet
+        for token in ("产品类型产品介绍应用领域", "产品或终端样图", "主要由")
+    ):
+        return True
+    if (
+        "主要由" in compact_snippet
+        and "系列构" in compact_snippet
+        and "接口" in compact_snippet
+        and "存储容量" in compact_snippet
+    ):
+        return True
     numbers = re.findall(r"(?<![A-Za-z0-9])\d[\d,\.]*(?![A-Za-z0-9])", snippet)
     narrative_number_card_types = {
         "management_market_view",
@@ -1403,9 +1420,8 @@ def _looks_like_table_fragment(snippet: str, card_type: str = "") -> bool:
     }
     if len(numbers) >= 3 and card_type not in narrative_number_card_types:
         return True
-    non_space = re.sub(r"\s+", "", snippet)
-    if non_space:
-        digit_ratio = sum(1 for ch in non_space if ch.isdigit()) / len(non_space)
+    if compact_snippet:
+        digit_ratio = sum(1 for ch in compact_snippet if ch.isdigit()) / len(compact_snippet)
         if digit_ratio > 0.35 and card_type not in narrative_number_card_types:
             return True
     return False

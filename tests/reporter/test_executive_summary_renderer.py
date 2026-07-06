@@ -51,6 +51,86 @@ def test_render_with_pillar():
     assert "综合评分" in result
 
 
+def test_formal_thin_without_core_facts_filters_unsupported_numeric_bullish_claims(monkeypatch):
+    """Formal-thin summaries must not promote ungrounded percentage claims as bullish facts."""
+
+    def fake_llm_extract_thesis(text):
+        return {
+            "bullish": [
+                {"text": "公告显示公司营收同比增长15%，净利润增长20%，基本面稳健", "stars": 4},
+                {"text": "公告披露新订单增长30%，产能利用率达90%", "stars": 4},
+                {"text": "年报经营线索仍需更多正式披露验证", "stars": 2},
+            ],
+            "bearish": [],
+            "conclusion": "订单增长30%支撑高成长",
+        }
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        fake_llm_extract_thesis,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "core_facts": [],
+        "synthesis": {
+            "valuation_debate": "估值需等待验证。",
+            "fundamentals": "当前未形成可由高信用来源支撑的核心事实基座。",
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "营收同比增长15%" not in result
+    assert "净利润增长20%" not in result
+    assert "新订单增长30%" not in result
+    assert "产能利用率达90%" not in result
+    assert "订单增长30%支撑高成长" not in result
+    assert "年报经营线索仍需更多正式披露验证" in result
+
+
+def test_formal_rich_keeps_numeric_bullish_claims(monkeypatch):
+    """The sanitizer must not remove numeric thesis points when high-credit facts exist."""
+
+    def fake_llm_extract_thesis(text):
+        return {
+            "bullish": [
+                {"text": "公告显示公司营收同比增长15%，净利润增长20%", "stars": 4},
+            ],
+            "bearish": [],
+            "conclusion": "",
+        }
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        fake_llm_extract_thesis,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "formal_rich"},
+        "core_facts": [
+            {
+                "fact": "营业收入",
+                "data": "同比增长15%",
+                "provenance_status": "supported",
+            }
+        ],
+        "synthesis": {
+            "valuation_debate": "估值讨论。",
+            "fundamentals": "公告显示公司营收同比增长15%。",
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "营收同比增长15%" in result
+    assert "净利润增长20%" in result
+
+
 def test_extract_thesis_points_sanitizes_status_markers(monkeypatch):
     """Non-numeric citation markers must be stripped before LLM extraction."""
     captured = []

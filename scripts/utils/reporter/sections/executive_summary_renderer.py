@@ -329,6 +329,43 @@ def _sanitize_pe_spread_in_text(text: str, facts: List[Dict[str, Any]], stock_na
     return text
 
 
+def _has_supported_core_fact_basis(ctx: Dict[str, Any]) -> bool:
+    """Return whether visible core facts can support hard numeric thesis claims."""
+    for fact in ctx.get("core_facts") or []:
+        if not isinstance(fact, dict):
+            continue
+        status = str(fact.get("provenance_status") or "").lower()
+        fact_text = str(fact.get("fact") or "")
+        data_text = str(fact.get("data") or "")
+        if status in {"supported", "verified"} and (fact_text or data_text):
+            if "0.00亿元" in data_text:
+                continue
+            return True
+    return False
+
+
+def _is_unsupported_numeric_bullish_text(text: str, ctx: Dict[str, Any]) -> bool:
+    """Detect hard percentage claims that should not survive in formal-thin summaries."""
+    profile = (ctx.get("deep_analysis_evidence_profile") or {}).get("profile")
+    if profile != "formal_thin_external_rich" or _has_supported_core_fact_basis(ctx):
+        return False
+    text = sanitize_citation_markers(str(text or ""))
+    if not re.search(r"\d+(?:\.\d+)?%", text):
+        return False
+    hard_fact_terms = (
+        "公告显示", "公告披露", "年报显示", "公司披露",
+        "营收", "营业收入", "净利润", "订单", "产能利用率",
+    )
+    return any(term in text for term in hard_fact_terms)
+
+
+def _filter_unsupported_numeric_bullish_points(points: List[Dict], ctx: Dict[str, Any]) -> List[Dict]:
+    return [
+        point for point in points
+        if not _is_unsupported_numeric_bullish_text(str(point.get("text", "")), ctx)
+    ]
+
+
 class ExecutiveSummaryRenderer:
     """执行摘要板块 — 综合评分标题 + 核心投资论点 + 一句话结论。"""
 
@@ -394,6 +431,7 @@ class ExecutiveSummaryRenderer:
         claim_verification_summary = ctx.get("claim_verification_summary")
         bullish_points = _extract_thesis_points(combined, "bullish", claim_verification_summary)
         bearish_points = _extract_thesis_points(combined, "bearish", claim_verification_summary)
+        bullish_points = _filter_unsupported_numeric_bullish_points(bullish_points, ctx)
 
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), stock_name)
         for points in (bullish_points, bearish_points):
@@ -419,6 +457,8 @@ class ExecutiveSummaryRenderer:
 
         conclusion = _extract_conclusion(stock_name, combined)
         conclusion = _sanitize_pe_spread_in_text(conclusion, pe_facts, stock_name)
+        if _is_unsupported_numeric_bullish_text(conclusion, ctx):
+            conclusion = ""
         if conclusion:
             lines.append(f"> **一句话结论**：{conclusion}")
             lines.append("")

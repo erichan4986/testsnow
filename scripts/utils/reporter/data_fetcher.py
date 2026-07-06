@@ -653,7 +653,7 @@ def competitor_metrics_table(
     lines.append("")
     target = metrics.get(stock_name, {})
     if target.get("gross_margin"):
-        lines.append(f"**{stock_name} 相对位置**: ")
+        lines.append(f"**{stock_name} 相对位置**:")
         parts = []
         if target.get("inventory_days"):
             parts.append(f"存货周转天数 {target['inventory_days']:.0f} 天")

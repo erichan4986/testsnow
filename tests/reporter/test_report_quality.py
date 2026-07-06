@@ -1,10 +1,37 @@
 import json
 import sys
 from pathlib import Path
+from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
 from report_quality import check_report_file, check_report_text
+
+
+def _snapshot_row(**overrides):
+    data = {
+        "row_id": "external:reasoning_cards:0",
+        "text": "外部观点A",
+        "source_layer": "external",
+        "claim_status": "external_observation",
+        "citation_refs": (1,),
+        "source_ref_ids": ("external-source:1",),
+        "display_scope": ("deep_analysis",),
+        "scoring_eligible": False,
+        "risk_score_eligible": False,
+        "section_hint": "external_map",
+    }
+    data.update(overrides)
+    return SimpleNamespace(**data)
+
+
+def _snapshot(rows, citations=None):
+    return SimpleNamespace(
+        schema="deep_analysis_material_snapshot.v1",
+        rows=tuple(rows),
+        citations=citations or {1: {"source": "微信公众号精选观察", "title": "外部材料"}},
+        diagnostics={},
+    )
 
 
 def test_minimal_quality_report_passes():
@@ -12,6 +39,84 @@ def test_minimal_quality_report_passes():
     result = check_report_file(fixture)
     assert result.passed
     assert result.issues == []
+
+
+def test_material_snapshot_unresolved_ref_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    result = check_report_text(
+        fixture.read_text(encoding="utf-8"),
+        deep_analysis_material_snapshot=_snapshot([
+            _snapshot_row(citation_refs=(9,)),
+        ]),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert "deep_material_snapshot_unresolved_ref" in codes
+
+
+def test_material_snapshot_non_deep_scope_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    result = check_report_text(
+        fixture.read_text(encoding="utf-8"),
+        deep_analysis_material_snapshot=_snapshot([
+            _snapshot_row(display_scope=("executive_summary",)),
+        ]),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert "deep_material_snapshot_invalid_scope" in codes
+
+
+def test_material_snapshot_external_scoring_leak_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    result = check_report_text(
+        fixture.read_text(encoding="utf-8"),
+        deep_analysis_material_snapshot=_snapshot([
+            _snapshot_row(scoring_eligible=True),
+        ]),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert "deep_material_snapshot_external_scoring_leak" in codes
+
+
+def test_material_snapshot_framed_external_row_passes_snapshot_gate():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n### 4.3 外部观点与待验证变量（Preview，不参与评分）\n\n**外部观点链**：外部材料称：外部观点A；该说法需以公告验证[^1]\n"
+    result = check_report_text(
+        text,
+        deep_analysis_material_snapshot=_snapshot([
+            _snapshot_row(text="外部观点A"),
+        ]),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert not {code for code in codes if code.startswith("deep_material_snapshot_")}
+
+
+def test_material_snapshot_visible_unframed_external_row_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n### 4.3 外部观点与待验证变量\n\nFPGA市占率95%以上[^1]\n"
+    result = check_report_text(
+        text,
+        deep_analysis_material_snapshot=_snapshot([
+            _snapshot_row(text="FPGA市占率95%以上"),
+        ]),
+    )
+    codes = {issue.code for issue in result.issues}
+    assert "deep_material_snapshot_external_unframed" in codes
+
+
+def test_global_citation_table_missing_visible_refs_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n## 四、深度分析\n\n正文使用外部引用[^2]\n\n## 引用来源\n\n- [^1] | **公告** | 《年报》\n"
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "global_citation_missing_refs" in codes
+
+
+def test_global_citation_table_unused_refs_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n## 四、深度分析\n\n正文使用正式引用[^1]\n\n## 引用来源\n\n- [^1] | **公告** | 《年报》\n- [^2] | **雪球精选观察** | 《未使用》\n"
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "global_citation_unused_refs" in codes
 
 
 def test_missing_required_sections_fails():
@@ -820,6 +925,21 @@ def test_formal_rich_missing_4_2_and_4_3_still_error():
 ### 4.1 产业逻辑与竞争格局
 
 产业逻辑清晰。
+"""
+    )
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "missing_deep_analysis_subsection" in codes
+
+
+def test_formal_medium_missing_4_2_and_4_3_still_error():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑有限。
 """
     )
     result = check_report_text(text)

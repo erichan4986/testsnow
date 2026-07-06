@@ -6,17 +6,20 @@ from typing import Any, Dict, List
 
 try:
     from ...curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
+    from ...deep_analysis_material_snapshot import build_deep_analysis_material_snapshot
     from ...synthesis_credit import sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
     from .executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 except ImportError:
     try:
         from scripts.utils.curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
+        from scripts.utils.deep_analysis_material_snapshot import build_deep_analysis_material_snapshot
         from scripts.utils.synthesis_credit import sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
         from scripts.utils.reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
     except ImportError:
         from utils.curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
+        from utils.deep_analysis_material_snapshot import build_deep_analysis_material_snapshot
         from utils.synthesis_credit import sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
         from reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
@@ -121,41 +124,60 @@ class DeepAnalysisRenderer:
         annual_memo = (ctx.get("annual_report_memo") or {}) if uses_annual_memo_display else {}
         baseline_citations = synthesis.get("citations", {}) or {}
         annual_citation_offset = self._max_citation_id(baseline_citations)
-        annual_memo_citations = annual_memo.get("citations", {}) or {}
         broker_memo = (ctx.get("broker_research_memo") or {}) if uses_annual_memo_display else {}
-        broker_citation_offset = annual_citation_offset + self._max_citation_id(annual_memo_citations)
-        broker_memo_citations = broker_memo.get("citations", {}) or {}
+        material_snapshot = self._material_snapshot(ctx, uses_annual_memo_display)
+        if material_snapshot is not None:
+            broker_citation_offset = annual_citation_offset + self._max_snapshot_ref(material_snapshot, {"annual"})
+            external_citation_offset = annual_citation_offset + self._max_snapshot_ref(
+                material_snapshot,
+                {"annual", "broker"},
+            )
+        else:
+            annual_memo_citations = annual_memo.get("citations", {}) or {}
+            broker_citation_offset = annual_citation_offset + self._max_citation_id(annual_memo_citations)
+            broker_memo_citations = broker_memo.get("citations", {}) or {}
+            external_citation_offset = broker_citation_offset + self._max_citation_id(broker_memo_citations)
         deep_md = self._deep_analysis(
             synthesis,
             ctx,
             profile=profile,
             curated_external_display=curated_display if profile_name == "formal_rich" else deep_analysis_display,
-            curated_citation_offset=broker_citation_offset + self._max_citation_id(broker_memo_citations),
+            curated_citation_offset=external_citation_offset,
             annual_citation_offset=annual_citation_offset,
             broker_citation_offset=broker_citation_offset,
+            external_citation_offset=external_citation_offset,
         )
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), ctx.get("stock_name", ""))
         deep_md = _sanitize_pe_spread_in_text(deep_md, pe_facts, ctx.get("stock_name", ""))
         if deep_md:
             lines.append(deep_md)
 
-        # 全局引用：baseline → annual memo → broker memo → curated external
-        citations = self._merged_citations(
-            baseline_citations,
-            annual_memo_citations,
-        )
-        citations = self._merged_citations(
-            citations,
-            broker_memo_citations,
-        )
-        external_citations = (
-            (curated_display or {}).get("citations", {}) if profile_name == "formal_rich"
-            else self._used_formal_thin_external_citations(deep_analysis_display)
-        )
-        citations = self._merged_citations(
-            citations,
-            external_citations,
-        )
+        # 全局引用：baseline → deep-analysis material snapshot.
+        # Snapshot citations contain only rows that are admitted into the
+        # chapter-4 material read model, avoiding stale memo citation entries.
+        if material_snapshot is not None:
+            citations = {self._citation_key(k): v for k, v in (baseline_citations or {}).items()}
+            citations.update(self._offset_citations(material_snapshot.citations, self._max_citation_id(citations)))
+        else:
+            annual_memo_citations = annual_memo.get("citations", {}) or {}
+            broker_memo_citations = broker_memo.get("citations", {}) or {}
+            citations = self._merged_citations(
+                baseline_citations,
+                annual_memo_citations,
+            )
+            citations = self._merged_citations(
+                citations,
+                broker_memo_citations,
+            )
+            external_citations = (
+                (curated_display or {}).get("citations", {}) if profile_name in {"formal_rich", "formal_medium"}
+                else self._used_formal_thin_external_citations(deep_analysis_display)
+            )
+            citations = self._merged_citations(
+                citations,
+                external_citations,
+            )
+        citations = self._visible_citations_only(citations, "\n".join(lines))
         if citations:
             lines.append(self._citations_section("引用来源", citations))
 
@@ -208,8 +230,6 @@ class DeepAnalysisRenderer:
     @staticmethod
     def _prune_display_core_facts(core_facts: List[Dict], keep_all: bool = False) -> List[Dict]:
         """Drop document-existence / duplicate / useless facts from the visible table."""
-        if keep_all:
-            return core_facts
         useless_patterns = (
             r"年报发布",
             r"年度报告",
@@ -225,6 +245,11 @@ class DeepAnalysisRenderer:
                 continue
             fact_text = str(f.get("fact", "")).strip()
             data_text = str(f.get("data", "")).strip()
+            if DeepAnalysisRenderer._is_suspicious_zero_financial_fact(f):
+                continue
+            if keep_all:
+                kept.append(f)
+                continue
             if any(re.search(p, fact_text) for p in useless_patterns):
                 continue
             key = (fact_text, data_text)
@@ -233,6 +258,14 @@ class DeepAnalysisRenderer:
             seen.add(key)
             kept.append(f)
         return kept
+
+    @staticmethod
+    def _is_suspicious_zero_financial_fact(fact: Dict[str, Any]) -> bool:
+        fact_text = str(fact.get("fact") or "")
+        data_text = str(fact.get("data") or "")
+        if "0.00亿元" not in data_text:
+            return False
+        return any(term in fact_text for term in ("营收", "营业收入", "收入", "利润", "净利润", "现金流"))
 
     def _render_evidence_cell(self, fact: Dict) -> str:
         """Render the provenance evidence cell for a core fact row."""
@@ -263,6 +296,7 @@ class DeepAnalysisRenderer:
         curated_citation_offset: int = 0,
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
+        external_citation_offset: int = 0,
     ) -> str:
         """
         深度分析板块：根据 evidence profile 渲染不同布局。
@@ -273,7 +307,7 @@ class DeepAnalysisRenderer:
         profile_json = json.dumps(profile, ensure_ascii=False)
         lines = ["## 四、深度分析", "", f"<!-- deep_analysis_profile: {profile_json} -->", "", f"> {badge}", ""]
 
-        if profile_name == "formal_rich":
+        if profile_name in {"formal_rich", "formal_medium"}:
             lines.extend(self._legacy_deep_analysis_body(
                 synthesis, ctx.get("claim_verification_summary"),
                 curated_external_display=curated_external_display,
@@ -284,6 +318,7 @@ class DeepAnalysisRenderer:
                 ctx, curated_external_display,
                 annual_citation_offset=annual_citation_offset,
                 broker_citation_offset=broker_citation_offset,
+                external_citation_offset=external_citation_offset,
             ))
         else:
             lines.extend(self._thin_all_body(ctx))
@@ -294,6 +329,8 @@ class DeepAnalysisRenderer:
     def _profile_badge(profile_name: str) -> str:
         if profile_name == "formal_rich":
             return "深度分析形态：正式材料丰富"
+        if profile_name == "formal_medium":
+            return "深度分析形态：正式材料中等"
         if profile_name == "formal_thin_external_rich":
             return "深度分析形态：正式材料薄但外部观点丰富"
         return "深度分析形态：材料不足"
@@ -419,6 +456,7 @@ class DeepAnalysisRenderer:
         curated_display: Dict[str, Any] | None,
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
+        external_citation_offset: int | None = None,
     ) -> List[str]:
         """Render formal-thin layout: annual memo + broker placeholder + external map + checklist."""
         lines: List[str] = []
@@ -431,11 +469,17 @@ class DeepAnalysisRenderer:
             lines.extend(["### 4.2 研报观点与假设", ""])
             broker_memo = ctx.get("broker_research_memo") or {}
             lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
-            external_offset = broker_citation_offset + self._max_citation_id((broker_memo or {}).get("citations", {}))
-            map_md = self._external_viewpoint_map_section(curated_display, citation_offset=external_offset)
-            lines.extend(map_md or ["### 4.3 外部观点地图（Preview，不参与评分）", "", "当前未取得足够外部观点材料。", ""])
-            checklist_md = self._verification_checklist_section(curated_display, citation_offset=external_offset)
-            lines.extend(checklist_md or ["### 4.4 待验证清单", "", "当前无外部观点待验证变量。", ""])
+            external_offset = (
+                external_citation_offset
+                if external_citation_offset is not None
+                else broker_citation_offset + self._max_citation_id((broker_memo or {}).get("citations", {}))
+            )
+            map_md = self._external_viewpoint_map_section(
+                curated_display,
+                citation_offset=external_offset,
+                heading="### 4.3 外部观点与待验证变量（Preview，不参与评分）",
+            )
+            lines.extend(map_md or ["### 4.3 外部观点与待验证变量（Preview，不参与评分）", "", "当前未取得足够外部观点材料。", ""])
         else:
             # 4.1 正式材料要点
             lines.extend(["### 4.1 正式材料要点", ""])
@@ -452,6 +496,21 @@ class DeepAnalysisRenderer:
                 lines.extend(checklist_md)
 
         return lines
+
+    @staticmethod
+    def _material_snapshot(ctx: Dict[str, Any], enabled: bool) -> Any:
+        if not enabled:
+            return None
+        return ctx.get("deep_analysis_material_snapshot") or build_deep_analysis_material_snapshot(ctx)
+
+    @staticmethod
+    def _max_snapshot_ref(snapshot: Any, layers: set[str]) -> int:
+        refs: List[int] = []
+        for row in getattr(snapshot, "rows", ()) or ():
+            if getattr(row, "source_layer", "") not in layers:
+                continue
+            refs.extend(int(ref) for ref in getattr(row, "citation_refs", ()) or ())
+        return max(refs) if refs else 0
 
     def _broker_research_memo_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
         """Render broker memo as attributed professional assumptions."""
@@ -513,7 +572,10 @@ class DeepAnalysisRenderer:
         cits = memo.get("citations", {}) or {}
         used: set[int] = set()
         for label, key in (("已确认", "confirmed"),):
-            rows = [r for r in (secs.get(key) or []) if isinstance(r, dict)]
+            rows = [
+                r for r in (secs.get(key) or [])
+                if isinstance(r, dict) and not self._is_suspicious_zero_annual_row(r)
+            ]
             if not rows:
                 continue
             lines.append(f"**{label}**")
@@ -546,6 +608,7 @@ class DeepAnalysisRenderer:
             lines.append("")
         warnings = (memo.get("validation") or {}).get("warnings") or []
         if warnings:
+            warnings = self._display_validation_warnings(warnings)
             if not lines or lines[-1] != "":
                 lines.append("")
             lines.extend(["**validation warning**", ""])
@@ -554,6 +617,29 @@ class DeepAnalysisRenderer:
         if used:
             self._append_section_citations(lines, used, self._offset_citations(cits, citation_offset))
         return lines
+
+    @staticmethod
+    def _is_suspicious_zero_annual_row(row: Dict[str, Any]) -> bool:
+        return DeepAnalysisRenderer._is_suspicious_zero_financial_fact({
+            "fact": row.get("title"),
+            "data": row.get("body"),
+        })
+
+    @staticmethod
+    def _display_validation_warnings(warnings: List[Any]) -> List[str]:
+        display: List[str] = []
+        has_zero_metric_warning = False
+        for warning in warnings:
+            text = str(warning or "").strip()
+            if not text:
+                continue
+            if "suspicious zero metric" in text and "0.00亿元" in text:
+                has_zero_metric_warning = True
+                continue
+            display.append(text)
+        if has_zero_metric_warning:
+            display.insert(0, "财务指标抽取出现 0 值异常，相关指标已从可见事实中过滤。")
+        return display
 
     def _append_annual_report_explanation_groups(
         self,
@@ -633,7 +719,12 @@ class DeepAnalysisRenderer:
         lines.append("- 不得用营收/利润推断主力资金或市场行为。")
         return lines
 
-    def _external_viewpoint_map_section(self, curated_display: Dict[str, Any] | None, citation_offset: int = 0) -> List[str]:
+    def _external_viewpoint_map_section(
+        self,
+        curated_display: Dict[str, Any] | None,
+        citation_offset: int = 0,
+        heading: str | None = None,
+    ) -> List[str]:
         """Build 4.2/4.3 external viewpoint map from curated external display."""
         if not curated_display or not self._has_curated_external_citation(curated_display):
             return []
@@ -643,7 +734,7 @@ class DeepAnalysisRenderer:
         topic_groups = curated_display.get("_curated_external_topic_groups") or {}
 
         lines: List[str] = [
-            "### 4.3 外部观点地图（Preview，不参与评分）" if citation_offset else "### 4.2 外部观点地图（Preview，不参与评分）",
+            heading or ("### 4.3 外部观点地图（Preview，不参与评分）" if citation_offset else "### 4.2 外部观点地图（Preview，不参与评分）"),
             "",
             "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
             "",
@@ -1081,6 +1172,20 @@ class DeepAnalysisRenderer:
                 continue
             shifted[ref_id + offset] = value
         return shifted
+
+    @staticmethod
+    def _visible_citations_only(citations: Dict, body_text: str) -> Dict:
+        if not citations:
+            return {}
+        visible_refs = {
+            int(ref)
+            for ref in re.findall(r"\[\^(\d+)\]", body_text or "")
+        }
+        return {
+            ref_id: meta
+            for ref_id, meta in (citations or {}).items()
+            if isinstance(ref_id, int) and ref_id in visible_refs
+        }
 
     @staticmethod
     def _citation_key(key: Any) -> Any:

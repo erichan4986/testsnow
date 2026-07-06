@@ -2637,6 +2637,35 @@ def test_evidence_profile_has_annual_memo_fields():
     assert "formal_thin_layout_variant" in profile
 
 
+def test_evidence_profile_routes_partial_formal_material_to_formal_medium():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={"stock_name": "测试股"})
+    ctx.set("formal_financial_fact_pack", {
+        "facts": [
+            {"metric": "营业收入", "value": "10亿元"},
+            {"metric": "归母净利润", "value": "1亿元"},
+        ]
+    })
+    ctx.set("annual_report_memo", {"status": "absent"})
+    ctx.set("broker_research_memo", {"status": "absent"})
+    item = SynthesisItem(
+        title="公司公告",
+        content="公司披露收入增长但材料不足以支撑完整产业和业绩分析。",
+        author="公司公告",
+        source_platform="公司公告",
+        url="",
+        publish_time="2026-04-30",
+        interaction_score=0,
+        extra={"source_type": "announcement", "source_credit": 90},
+    )
+
+    profile = skill._build_evidence_profile(ctx, [item])
+
+    assert profile["profile"] == "formal_medium"
+    assert "formal_support_partial" in profile["reasons"]
+    assert "items_present_fallback" not in profile["reasons"]
+
+
 def _broker_digest_item(
     *,
     card_type="broker_core_view",

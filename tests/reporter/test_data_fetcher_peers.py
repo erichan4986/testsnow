@@ -57,3 +57,13 @@ def test_competitor_metrics_table_uses_config_peer_order():
     assert "| 安路科技 |" in table
     assert "思瑞浦" not in table
 
+
+def test_competitor_metrics_table_has_no_trailing_whitespace():
+    metrics = {
+        "复旦微电": {"gross_margin": 60, "mcap": 360},
+    }
+
+    table = data_fetcher.competitor_metrics_table("复旦微电", metrics)
+
+    assert "**复旦微电 相对位置**:" in table
+    assert not any(line.endswith(" ") for line in table.splitlines())

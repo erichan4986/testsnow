@@ -902,7 +902,7 @@ def _display_only_risk_notes(display_only_external_risks: List[object]) -> List[
         return []
     names = "、".join(r.name for r in validated_risks)
     return [
-        "4.4 外部观察为 display-only，不计入综合风险评分；"
+        "外部观察为 display-only，不计入综合风险评分；"
         f"相关变量（{names}）仅作为人工跟踪项。"
     ]
 
