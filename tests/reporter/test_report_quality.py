@@ -126,6 +126,20 @@ def test_material_snapshot_visible_unframed_external_row_fails():
     assert "deep_material_snapshot_external_unframed" in codes
 
 
+def test_check_report_file_does_not_run_snapshot_gates(tmp_path):
+    """check_report_file is Markdown-only and must not inspect in-memory snapshots."""
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    report_path = tmp_path / "report.md"
+    report_path.write_text(fixture.read_text(encoding="utf-8"), encoding="utf-8")
+    # Place a malformed snapshot sidecar to prove it is ignored by check_report_file.
+    sidecar = tmp_path / "report_deep_analysis_material_snapshot.json"
+    sidecar.write_text(json.dumps({"citations": {"bad-key": {}}}), encoding="utf-8")
+
+    result = check_report_file(report_path)
+    snapshot_codes = {issue.code for issue in result.issues if issue.code.startswith("deep_material_snapshot_")}
+    assert not snapshot_codes
+
+
 def test_global_citation_table_missing_visible_refs_fails():
     fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
     text = fixture.read_text(encoding="utf-8") + "\n\n## 四、深度分析\n\n正文使用外部引用[^2]\n\n## 引用来源\n\n- [^1] | **公告** | 《年报》\n"
@@ -968,6 +982,81 @@ def test_formal_medium_missing_4_2_and_4_3_still_error():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "missing_deep_analysis_subsection" in codes
+
+
+def test_formal_medium_thin_sections_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 产业逻辑与竞争格局
+
+产业逻辑清晰。
+
+### 4.2 业绩路径与多空分歧
+
+业绩路径清晰。
+
+### 4.3 资金面与催化剂时间线
+
+当前正式材料未形成可验证的资金面或催化剂时间线。
+"""
+    )
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "formal_medium_section_too_thin" in codes
+
+
+def test_formal_medium_section_without_citations_but_specific_content_passes():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 产业逻辑与竞争格局
+
+AI 算力集群对 800G/1.6T 光模块需求持续扩张，中际旭创处于产业链中游，负责光电器件集成与制造。2026 年 Q1 营收同比增长 192%。
+
+### 4.2 业绩路径与多空分歧
+
+2025 年全年营业收入 382.40 亿元，1.6T 产品推动一季度盈利高速增长。毛利率 46.06% 低于新易盛 49.16%。
+
+### 4.3 资金面与催化剂时间线
+
+2026-04-17 披露第一季度报告，2026-08 下旬预计披露半年度报告。下一个催化剂为 1.6T 出货量环比增速。
+"""
+    )
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "formal_medium_section_too_thin" not in codes
+    assert "formal_medium_section_lacks_evidence" not in codes
+
+
+def test_formal_medium_normal_report_with_citations_passes_evidence_depth():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 产业逻辑与竞争格局
+
+AI 算力集群对高速光模块的需求持续扩张[^1]。公司布局 NPO 等新技术[^2]。中际旭创处于光模块产业链中游。
+
+### 4.2 业绩路径与多空分歧
+
+2025 年全年营业收入 382.40 亿元[^3]。1.6T 产品推动一季度盈利高速增长[^4]。毛利率 46.06% 低于新易盛 49.16% 。
+
+### 4.3 资金面与催化剂时间线
+
+| 时间点 | 催化剂/事件 | 当前状态 |
+|--------|------------|----------|
+| 2026-04-17 | 披露第一季度报告[^5] | 已完成 |
+
+当前正式材料未提供足够资金面数据。
+"""
+    )
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "formal_medium_section_too_thin" not in codes
+    assert "formal_medium_section_lacks_evidence" not in codes
 
 
 def test_product_industry_mismatch_is_error_for_negated_mlcc_chain():

@@ -163,7 +163,14 @@ def _extract_header(text: str, section_prefix: str) -> str:
 
 
 def check_report_file(path: str | Path) -> QualityResult:
-    """Check a Markdown report file."""
+    """Check a Markdown report file.
+
+    This entry point is file-system only: it reads the Markdown and loads
+    adjacent sidecars (industry relevance, peer comparison, fundflow).  It does
+    NOT load or check an in-memory ``deep_analysis_material_snapshot``.  To run
+    the snapshot-specific gates (e.g. ``deep_material_snapshot_malformed_citation_key``)
+    use ``check_report_text(..., deep_analysis_material_snapshot=...)`` directly.
+    """
     report_path = Path(path)
     text = report_path.read_text(encoding="utf-8")
     manifest = _load_industry_relevance_manifest_sidecar(report_path)
@@ -186,7 +193,20 @@ def check_report_text(
     fundflow_material_pack: dict | None = None,
     deep_analysis_material_snapshot: Any = None,
 ) -> QualityResult:
-    """Check report Markdown text and return structured issues."""
+    """Check report Markdown text and return structured issues.
+
+    Args:
+        text: Markdown report content.
+        path: Optional identifier for the report (used in the result).
+        industry_relevance_manifest: Optional sidecar for industry-chain claims.
+        peer_comparison_material: Optional sidecar for peer comparison claims.
+        fundflow_material_pack: Optional sidecar for fund-flow claims.
+        deep_analysis_material_snapshot: Optional in-memory material snapshot.
+            When provided, the snapshot-specific gates (malformed keys,
+            unresolved refs, external framing, etc.) are evaluated in addition
+            to the Markdown-only checks. ``check_report_file`` does NOT supply
+            this parameter because the snapshot is not persisted to disk.
+    """
     issues: List[QualityIssue] = []
     normalized = _normalize(text)
 
@@ -847,6 +867,7 @@ def _check_evidence_profile_gates(text: str) -> Iterable[QualityIssue]:
 
     yield from _check_profile_routing_trace_missing(text, profile)
     yield from _check_formal_thin_forced_legacy_deep_sections(text, profile)
+    yield from _check_formal_medium_evidence_depth(text, profile)
     yield from _check_funding_claim_without_funding_support(text, profile)
     yield from _check_useless_core_fact(text)
     yield from _check_external_map_disclaimer_and_framing(text, profile)
@@ -871,6 +892,56 @@ def _check_formal_thin_forced_legacy_deep_sections(text: str, profile: dict | No
                 severity="error",
                 message=f"形态为 formal_thin_external_rich 但报告仍出现旧模板章节：{heading}。",
                 evidence=heading,
+            )
+
+
+_FORMAL_MEDIUM_FALLBACK_PATTERNS = (
+    r"产业逻辑(?:清晰|有限|不清晰)",
+    r"业绩路径(?:清晰|有限|不清晰)",
+    r"当前正式材料未形成",
+    r"资金面.*待验证",
+    r"催化剂.*待验证",
+    r"待进一步验证",
+    r"暂不形成结论",
+)
+
+
+def _check_formal_medium_evidence_depth(text: str, profile: dict | None) -> Iterable[QualityIssue]:
+    """Lightweight evidence-depth gate for formal_medium deep-analysis sections.
+
+    Ensures 4.1/4.2/4.3 are not bare placeholder paragraphs.  Does NOT require
+    the completeness expected of formal_rich.
+    """
+    if not profile or profile.get("profile") != "formal_medium":
+        return
+
+    for section_id in ("4.1", "4.2", "4.3"):
+        section = _extract_deep_analysis_subsection(text, section_id)
+        if not section:
+            continue
+
+        stripped = re.sub(r"\s|\[\^\d+\]", "", section)
+        char_count = len(stripped)
+        has_inline_citation = re.search(r"\[\^\d+\]", section) is not None
+        has_specific = _has_specific_content(section)
+        normalized = _normalize(section)
+        looks_like_fallback = any(re.search(p, normalized) for p in _FORMAL_MEDIUM_FALLBACK_PATTERNS)
+
+        if char_count < 40 or (looks_like_fallback and char_count < 80):
+            yield QualityIssue(
+                code="formal_medium_section_too_thin",
+                severity="warning",
+                message=f"{section_id} 内容过薄，疑似空泛占位段落。",
+                evidence=f"chars={char_count}; section_id={section_id}",
+            )
+            continue
+
+        if not has_inline_citation and not has_specific:
+            yield QualityIssue(
+                code="formal_medium_section_lacks_evidence",
+                severity="warning",
+                message=f"{section_id} 缺少 inline citations 或具体数字/产品/公司/时间证据。",
+                evidence=f"section_id={section_id}",
             )
 
 
