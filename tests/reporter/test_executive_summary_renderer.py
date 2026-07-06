@@ -133,6 +133,49 @@ def test_formal_thin_filters_numeric_bullish_claim_unmatched_by_core_facts(monke
     assert "营业收入同比增长16.2%" in result
 
 
+def test_formal_thin_filters_unsupported_qualitative_bullish_fact(monkeypatch):
+    """Formal-thin summaries must not promote ungrounded product/revenue forecasts."""
+
+    def fake_llm_extract_thesis(text):
+        return {
+            "bullish": [
+                {"text": "公司新产品获行业认证，预计下半年贡献收入增量", "stars": 3},
+                {"text": "年报经营线索仍需更多正式披露验证", "stars": 2},
+            ],
+            "bearish": [],
+            "conclusion": "新产品预计贡献收入增量支撑看多",
+        }
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        fake_llm_extract_thesis,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "core_facts": [
+            {
+                "fact": "营业收入",
+                "data": "同比增长16.2%",
+                "provenance_status": "supported",
+            }
+        ],
+        "synthesis": {
+            "fundamentals": "当前未形成可由高信用来源支撑的核心事实基座。",
+            "valuation_debate": "外部材料称新产品可能带来增量，但仍需正式披露验证。",
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "新产品获行业认证" not in result
+    assert "预计下半年贡献收入增量" not in result
+    assert "新产品预计贡献收入增量支撑看多" not in result
+    assert "年报经营线索仍需更多正式披露验证" in result
+
+
 def test_formal_rich_keeps_numeric_bullish_claims(monkeypatch):
     """The sanitizer must not remove numeric thesis points when high-credit facts exist."""
 
