@@ -482,7 +482,14 @@ class DeepAnalysisRenderer:
             return ["当前未取得足够官方材料，无法形成业务与财务基座。", ""]
 
         sections = memo.get("sections") or {}
-        rows = [r for r in (sections.get("annual_report_explanation") or []) if isinstance(r, dict)]
+        rows = [
+            row for row in (
+                self._clean_formal_medium_official_row(r)
+                for r in (sections.get("annual_report_explanation") or [])
+                if isinstance(r, dict)
+            )
+            if row
+        ]
         confirmed = [
             r for r in (sections.get("confirmed") or [])
             if isinstance(r, dict) and not self._is_suspicious_zero_annual_row(r)
@@ -698,29 +705,21 @@ class DeepAnalysisRenderer:
             evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
             lines.append(f"| 机构假设 | 券商关于需求、产品放量或盈利弹性的假设兑现，当前估值可被业绩增长消化 | 机构假设落空，盈利预测或估值溢价面临下修 | {evidence} |")
 
-        external_cards = [
-            card for card in ((curated_display or {}).get("_curated_external_reasoning_cards") or [])
-            if isinstance(card, dict)
-        ]
-        if external_cards:
-            card = external_cards[0]
-            refs = self._display_refs(card, external_citation_offset)
+        external_pick = self._first_curated_external_row_with_refs(curated_display, external_citation_offset)
+        if external_pick:
+            text, refs = external_pick
             used.update(refs)
-            evidence = attach_refs_to_sentence(self._compact_text(str(card.get("claim") or ""), 80), refs)
+            evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
             lines.append(f"| 外部待验证 | 外部变量被公告、订单或行业数据验证，可提升市场置信度和仓位上限 | 外部变量被证伪或长期无正式证据，只作为情绪噪音处理 | {evidence} |")
 
         if len(lines) == 3:
             lines.append("| 材料不足 | 暂不形成上行推演 | 暂不形成下行推演 | 等待官方材料、研报或外部变量补充 |")
         lines.append("")
         if used:
-            citations = self._merged_citations(
-                self._offset_citations(annual_memo.get("citations", {}) or {}, annual_citation_offset),
-                self._offset_citations(broker_memo.get("citations", {}) or {}, broker_citation_offset),
-            )
-            citations = self._merged_citations(
-                citations,
-                self._offset_citations((curated_display or {}).get("citations", {}) or {}, external_citation_offset),
-            )
+            citations = {}
+            citations.update(self._offset_citations(annual_memo.get("citations", {}) or {}, annual_citation_offset))
+            citations.update(self._offset_citations(broker_memo.get("citations", {}) or {}, broker_citation_offset))
+            citations.update(self._offset_citations((curated_display or {}).get("citations", {}) or {}, external_citation_offset))
             self._append_section_citations(lines, used, citations)
         return lines
 
@@ -1013,6 +1012,27 @@ class DeepAnalysisRenderer:
         return cleaned[:limit].rstrip(" ，,；;。") + "..."
 
     @staticmethod
+    def _clean_formal_medium_official_row(row: Dict[str, Any]) -> Dict[str, Any] | None:
+        body = str(row.get("body") or "").strip()
+        if not body:
+            return None
+        body = re.sub(r"公司需遵守《[^》]+》[^。；，,]*披露要求[，,。；]*", "", body)
+        body = re.sub(r"需遵守《[^》]+》[^。；，,]*披露要求[，,。；]*", "", body)
+        body = re.sub(r"公司需遵守[^。；，,]*披露要求[，,。；]*", "", body)
+        body = body.replace("报告期内公司从事的主要业务公司主营业务", "公司主营业务")
+        body = body.replace("报告期内公司从事的主要业务", "")
+        body = re.sub(r"\s+", " ", body).strip(" ，,；;。")
+        if not body:
+            return None
+        noise_terms = ("采购模式", "经营模式", "直接销售模式", "代理销售")
+        signal_terms = ("主营业务", "产品服务", "100G", "800G", "1.6T", "云数据中心", "光模块", "产品线")
+        if any(term in body for term in noise_terms) and not any(term in body for term in signal_terms):
+            return None
+        cleaned = dict(row)
+        cleaned["body"] = body
+        return cleaned
+
+    @staticmethod
     def _ensure_broker_attribution(text: str, default_prefix: str = "券商认为") -> str:
         value = str(text or "").strip()
         if not value:
@@ -1029,6 +1049,32 @@ class DeepAnalysisRenderer:
             body = str(row.get("body") or row.get("range") or "").strip()
             if body and refs:
                 return body, refs
+        return None
+
+    def _first_curated_external_row_with_refs(
+        self,
+        curated_display: Dict[str, Any] | None,
+        offset: int = 0,
+    ) -> tuple[str, List[int]] | None:
+        if not curated_display:
+            return None
+        rows: List[Dict[str, Any]] = []
+        rows.extend(
+            row for row in (curated_display.get("_curated_external_reasoning_cards") or [])
+            if isinstance(row, dict)
+        )
+        rows.extend(
+            row for row in (curated_display.get("_curated_external_narrative_paragraphs") or [])
+            if isinstance(row, dict)
+        )
+        topic_groups = curated_display.get("_curated_external_topic_groups") or {}
+        for topic_key, _label in CURATED_EXTERNAL_TOPIC_LABELS:
+            rows.extend(row for row in (topic_groups.get(topic_key) or []) if isinstance(row, dict))
+        for row in rows:
+            refs = self._display_refs(row, offset)
+            text = str(row.get("claim") or row.get("text") or row.get("body") or "").strip()
+            if text and refs:
+                return text, refs
         return None
 
     def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:

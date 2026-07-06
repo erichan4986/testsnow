@@ -1932,6 +1932,9 @@ def test_formal_medium_uses_source_layer_headings_with_medium_badge():
     assert "官方确认" in result
     assert "机构假设" in result
     assert "外部待验证" in result
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+    assert "未知" not in section44
+    assert "券商研报 | 作者: 测试证券 | 《核心观点》" in section44
     assert "当前可用于深度基本面分析的正式材料不足" not in result
 
 
@@ -1975,7 +1978,52 @@ def test_formal_medium_global_citations_include_visible_4_4_refs():
     assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
     assert "外部材料称：外部材料提示供应链约束会影响交付弹性" in result
     assert "该说法需以公告、财报拆分或行业第三方数据验证[^2]" in result
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+    assert "外部待验证" in section44
+    assert "外部材料提示供应链约束会影响交付弹性[^2]" in section44
+    assert "未知" not in section44
     assert "- [^2] | **微信公众号精选观察** | 作者: 测试账号 | 《外部深度文章》" in global_refs
+
+
+def test_formal_medium_official_material_filters_disclosure_noise_for_portrait():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务与产品",
+            "body": "报告期内公司从事的主要业务公司需遵守《深圳证券交易所上市公司自律监管指引第4号——创业板行业信息披露》中的通信相关业务披露要求，公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "采购模式以直接销售模式为主，包含客户认证和售后服务流程。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "公司为云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
+            "citation_refs": [1],
+        },
+    ]
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
+
+    assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section41
+    assert "100G、200G、400G、800G和1.6T高速光模块" in section41
+    assert "监管指引" not in section41
+    assert "披露要求" not in section41
+    assert "采购模式" not in section41
+    assert "直接销售模式" not in section41
 
 
 def test_formal_rich_does_not_emit_unused_annual_memo_citations():
