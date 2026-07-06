@@ -2001,6 +2001,16 @@ def test_formal_medium_official_material_filters_disclosure_noise_for_portrait()
         },
         {
             "title": "主营业务与产品",
+            "body": "和代理销售，但以直接销售模式为主，即直接面向下游客户进行高速光模块产品推介、签订合同并交付、提供售后技术支持与服务。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "（二）经营模式 1、采购模式公司生产的100G高速光模块产品所需原材料主要包括光器件、集成电路芯片以及结构件等。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
             "body": "公司为云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
             "citation_refs": [1],
         },
@@ -2024,6 +2034,8 @@ def test_formal_medium_official_material_filters_disclosure_noise_for_portrait()
     assert "披露要求" not in section41
     assert "采购模式" not in section41
     assert "直接销售模式" not in section41
+    assert "代理销售" not in section41
+    assert "经营模式" not in section41
 
 
 def test_formal_rich_does_not_emit_unused_annual_memo_citations():

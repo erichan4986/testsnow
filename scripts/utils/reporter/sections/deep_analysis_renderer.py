@@ -1024,10 +1024,13 @@ class DeepAnalysisRenderer:
         body = re.sub(r"\s+", " ", body).strip(" ，,；;。")
         if not body:
             return None
-        noise_terms = ("采购模式", "经营模式", "直接销售模式", "代理销售")
-        signal_terms = ("主营业务", "产品服务", "100G", "800G", "1.6T", "云数据中心", "光模块", "产品线")
-        if any(term in body for term in noise_terms) and not any(term in body for term in signal_terms):
-            return None
+        if any(term in body for term in ("采购模式", "经营模式", "直接销售模式", "代理销售")):
+            prefix = re.split(r"采购模式|经营模式|直接销售模式|代理销售", body, maxsplit=1)[0]
+            prefix = prefix.strip(" ，,；;。")
+            if len(prefix) >= 20 and any(term in prefix for term in ("主营业务", "产品服务", "云数据中心", "光模块", "产品线")):
+                body = prefix
+            else:
+                return None
         cleaned = dict(row)
         cleaned["body"] = body
         return cleaned
