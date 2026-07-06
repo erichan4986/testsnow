@@ -391,6 +391,8 @@ def _is_annual_broker_external_layout(profile: dict | None) -> bool:
 
 
 def _external_map_section_id(profile: dict | None) -> str:
+    if profile and profile.get("profile") == "formal_medium":
+        return "4.3"
     return "4.3" if _is_annual_broker_external_layout(profile) else "4.2"
 
 
@@ -400,13 +402,13 @@ def _extract_external_map_section(text: str, profile: dict | None) -> tuple[str,
 
 
 def _extract_display_only_external_section(text: str, profile: dict | None) -> tuple[str, str]:
-    if profile and profile.get("profile") == "formal_thin_external_rich":
+    if profile and profile.get("profile") in {"formal_thin_external_rich", "formal_medium"}:
         section_id, section = _extract_external_map_section(text, profile)
         if section:
             return section_id, section
 
     match = re.search(
-        r"(?ms)^#{2,4}\s*(?:(4\.[234])\s*)?(?:精选外部观察|外部观点与待验证变量)"
+        r"(?ms)^#{2,4}\s*(?:(4\.[234])\s*)?(?:精选外部观察|外部观点与待验证变量|外部观察与待验证变量)"
         r"(?:（Preview(?:，不参与评分)?）)?\s*$"
         r"(.*?)(?=^##\s|\Z)",
         text,
@@ -868,6 +870,7 @@ def _check_evidence_profile_gates(text: str) -> Iterable[QualityIssue]:
     yield from _check_profile_routing_trace_missing(text, profile)
     yield from _check_formal_thin_forced_legacy_deep_sections(text, profile)
     yield from _check_formal_medium_evidence_depth(text, profile)
+    yield from _check_formal_medium_source_layer_contract(text, profile)
     yield from _check_funding_claim_without_funding_support(text, profile)
     yield from _check_useless_core_fact(text)
     yield from _check_external_map_disclaimer_and_framing(text, profile)
@@ -945,10 +948,59 @@ def _check_formal_medium_evidence_depth(text: str, profile: dict | None) -> Iter
             )
 
 
+_FORMAL_MEDIUM_OFFICIAL_FORBIDDEN_TERMS = (
+    "券商认为", "券商预计", "券商预测", "研报认为", "研报预计", "研报提示",
+    "机构认为", "机构假设", "外部材料", "外部观点", "雪球", "知乎", "微信", "公众号", "股吧",
+)
+
+_FORMAL_MEDIUM_BROKER_ATTRIBUTION_TERMS = (
+    "券商认为", "券商预计", "券商预测", "研报认为", "研报预计", "研报提示",
+    "机构认为", "机构假设", "机构预计", "分析师认为",
+)
+
+_FORMAL_MEDIUM_BROKER_HARD_FACT_TERMS = (
+    "公司已经", "已经进入", "确认", "确定", "订单落地", "客户为", "市占率",
+    "已获", "获认证", "量产", "批量出货", "将持续", "盈利将",
+)
+
+
+def _check_formal_medium_source_layer_contract(text: str, profile: dict | None) -> Iterable[QualityIssue]:
+    """Check source-layer boundaries for formal_medium layout."""
+    if not profile or profile.get("profile") != "formal_medium":
+        return
+
+    official = _extract_deep_analysis_subsection(text, "4.1")
+    official_hits = [term for term in _FORMAL_MEDIUM_OFFICIAL_FORBIDDEN_TERMS if term in official]
+    if official_hits:
+        yield QualityIssue(
+            code="formal_medium_official_section_source_leak",
+            severity="error",
+            message="formal_medium 的 4.1 官方材料确认中出现研报/外部/社媒 attribution，需移到 4.2 或 4.3。",
+            evidence="terms=" + ",".join(official_hits[:5]),
+        )
+
+    broker = _extract_deep_analysis_subsection(text, "4.2")
+    for sentence in re.split(r"[。\n|]", broker):
+        sentence = sentence.strip()
+        if not sentence:
+            continue
+        if not any(term in sentence for term in _FORMAL_MEDIUM_BROKER_HARD_FACT_TERMS):
+            continue
+        if any(term in sentence for term in _FORMAL_MEDIUM_BROKER_ATTRIBUTION_TERMS):
+            continue
+        yield QualityIssue(
+            code="formal_medium_broker_claim_without_attribution",
+            severity="error",
+            message="formal_medium 的 4.2 研报观点使用确认事实/预测语气但缺少券商/研报/机构 attribution。",
+            evidence=sentence[:120],
+        )
+        return
+
+
 def _check_funding_claim_without_funding_support(text: str, profile: dict | None) -> Iterable[QualityIssue]:
     if not profile:
         return
-    if _is_annual_broker_external_layout(profile):
+    if _is_annual_broker_external_layout(profile) or profile.get("profile") == "formal_medium":
         return
     section43 = _extract_deep_analysis_subsection(text, "4.3")
     if not section43:

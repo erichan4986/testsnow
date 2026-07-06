@@ -1059,6 +1059,117 @@ AI 算力集群对高速光模块的需求持续扩张[^1]。公司布局 NPO �
     assert "formal_medium_section_lacks_evidence" not in codes
 
 
+def test_formal_medium_official_section_rejects_non_official_attribution():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+券商认为公司 800G 光模块订单饱满，雪球用户称供应链弹性较强[^1]。
+
+### 4.2 机构观点与盈利假设
+
+券商认为：1.6T 放量支撑增长[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：供应链变量仍需验证[^3]。
+"""
+    )
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "formal_medium_official_section_source_leak" in codes
+
+
+def test_formal_medium_broker_section_requires_attribution_for_confirmed_claims():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+公司披露 2025 年营业收入 382.40 亿元[^1]。
+
+### 4.2 机构观点与盈利假设
+
+公司已经进入 1.6T 核心客户供应链，盈利将持续高增[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：供应链变量仍需验证[^3]。
+"""
+    )
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "formal_medium_broker_claim_without_attribution" in codes
+
+
+def test_formal_medium_source_layer_headings_pass_evidence_depth():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+公司披露 2025 年营业收入 382.40 亿元，800G/1.6T 光模块为主要增长线索[^1]。
+
+### 4.2 机构观点与盈利假设
+
+券商认为：800G 放量和 1.6T 导入支撑盈利增长，研报预计毛利率随产品结构改善[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：供应链变量仍需验证[^3]。
+
+### 4.4 上行 / 下行条件与股价推演
+
+| 来源层级 | 上行条件 | 下行条件 | 观察证据 |
+|---|---|---|---|
+| 官方确认 | 收入增长延续 | 毛利率恶化 | 年报与季报 |
+"""
+    )
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "formal_medium_section_too_thin" not in codes
+    assert "formal_medium_section_lacks_evidence" not in codes
+    assert "formal_medium_official_section_source_leak" not in codes
+    assert "formal_medium_broker_claim_without_attribution" not in codes
+
+
+def test_formal_medium_external_map_funding_terms_do_not_trigger_funding_gate():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium", "formal_section_support": {"funding_support": 0}} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+公司披露 2025 年营业收入 382.40 亿元[^1]。
+
+### 4.2 机构观点与盈利假设
+
+券商认为：800G 放量支撑增长[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：主力净流入变化可能影响短线情绪，该说法需以正式资金面数据验证[^3]。
+
+### 4.4 上行 / 下行条件与股价推演
+
+| 来源层级 | 上行条件 | 下行条件 | 观察证据 |
+|---|---|---|---|
+| 外部待验证 | 外部变量被验证 | 外部变量被证伪 | 后续公告 |
+"""
+    )
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "funding_claim_without_funding_support" not in codes
+
+
 def test_product_industry_mismatch_is_error_for_negated_mlcc_chain():
     text = """
 # 复旦微电 舆情深度报告

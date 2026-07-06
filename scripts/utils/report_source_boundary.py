@@ -143,6 +143,10 @@ def _formal_deep_analysis_region(text: str, profile: dict | None = None) -> str:
     if start < 0:
         return ""
     search_from = _after_heading_line(text, start)
+    if profile and profile.get("profile") == "formal_medium":
+        section43_start = _find_heading(text, r"^###\s+4\.3\b", search_from)
+        if section43_start >= 0:
+            return text[start:section43_start]
     # For formal_thin_external_rich the display-only external viewpoint map
     # lives in 4.2 and is allowed to contain social/external source tokens.
     # Scan 4.1 and 4.3 only, skipping the 4.2 external viewpoint map region.
@@ -191,6 +195,8 @@ def _is_annual_broker_external_layout(profile: dict | None) -> bool:
 
 def _curated_external_section_pattern(profile: dict | None) -> str:
     if _is_annual_broker_external_layout(profile):
+        return r"^###\s+4\.3\b"
+    if profile and profile.get("profile") == "formal_medium":
         return r"^###\s+4\.3\b"
     if profile and profile.get("profile") == "formal_thin_external_rich":
         return r"^###\s+4\.2\b"

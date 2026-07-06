@@ -118,8 +118,11 @@ class DeepAnalysisRenderer:
 
         # 深度分析
         uses_annual_memo_display = (
-            profile_name == "formal_thin_external_rich"
-            and profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist"
+            profile_name == "formal_medium"
+            or (
+                profile_name == "formal_thin_external_rich"
+                and profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist"
+            )
         )
         annual_memo = (ctx.get("annual_report_memo") or {}) if uses_annual_memo_display else {}
         baseline_citations = synthesis.get("citations", {}) or {}
@@ -307,11 +310,19 @@ class DeepAnalysisRenderer:
         profile_json = json.dumps(profile, ensure_ascii=False)
         lines = ["## 四、深度分析", "", f"<!-- deep_analysis_profile: {profile_json} -->", "", f"> {badge}", ""]
 
-        if profile_name in {"formal_rich", "formal_medium"}:
+        if profile_name == "formal_rich":
             lines.extend(self._legacy_deep_analysis_body(
                 synthesis, ctx.get("claim_verification_summary"),
                 curated_external_display=curated_external_display,
                 curated_citation_offset=curated_citation_offset,
+            ))
+        elif profile_name == "formal_medium":
+            lines.extend(self._formal_medium_source_layer_body(
+                ctx,
+                curated_external_display,
+                annual_citation_offset=annual_citation_offset,
+                broker_citation_offset=broker_citation_offset,
+                external_citation_offset=external_citation_offset,
             ))
         elif profile_name == "formal_thin_external_rich":
             lines.extend(self._formal_thin_external_rich_body(
@@ -423,6 +434,294 @@ class DeepAnalysisRenderer:
             lines.append(curated_md)
             lines.append("")
 
+        return lines
+
+    def _formal_medium_source_layer_body(
+        self,
+        ctx: Dict[str, Any],
+        curated_display: Dict[str, Any] | None,
+        annual_citation_offset: int = 0,
+        broker_citation_offset: int = 0,
+        external_citation_offset: int = 0,
+    ) -> List[str]:
+        """Render formal-medium reports as source-layer-first analysis."""
+        annual_memo = ctx.get("annual_report_memo") or {}
+        broker_memo = ctx.get("broker_research_memo") or {}
+        lines: List[str] = []
+
+        lines.extend(["### 4.1 官方材料确认：业务与财务基座", ""])
+        lines.extend(self._formal_medium_official_material_section(annual_memo, annual_citation_offset))
+
+        lines.extend(["### 4.2 机构观点与盈利假设", ""])
+        lines.extend(self._formal_medium_broker_assumption_section(broker_memo, broker_citation_offset))
+
+        external_map = self._formal_medium_external_variable_map(curated_display, external_citation_offset)
+        lines.extend(external_map or [
+            "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
+            "",
+            "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
+            "",
+            "当前未取得足够外部观点材料。",
+            "",
+        ])
+
+        lines.extend(["### 4.4 上行 / 下行条件与股价推演", ""])
+        lines.extend(self._formal_medium_price_path_section(
+            annual_memo,
+            broker_memo,
+            curated_display,
+            annual_citation_offset=annual_citation_offset,
+            broker_citation_offset=broker_citation_offset,
+            external_citation_offset=external_citation_offset,
+        ))
+        return lines
+
+    def _formal_medium_official_material_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
+        """Render official materials without dumping raw excerpts verbatim."""
+        if (memo or {}).get("status") not in {"ready", "deterministic_fallback"}:
+            return ["当前未取得足够官方材料，无法形成业务与财务基座。", ""]
+
+        sections = memo.get("sections") or {}
+        rows = [r for r in (sections.get("annual_report_explanation") or []) if isinstance(r, dict)]
+        confirmed = [
+            r for r in (sections.get("confirmed") or [])
+            if isinstance(r, dict) and not self._is_suspicious_zero_annual_row(r)
+        ]
+        used: set[int] = set()
+        lines: List[str] = []
+
+        product_rows = self._annual_rows_by_group(rows, "product_business")
+        portrait_row = product_rows[0] if product_rows else (confirmed[0] if confirmed else None)
+        if portrait_row:
+            refs = self._display_refs(portrait_row, citation_offset)
+            used.update(refs)
+            portrait = self._compact_text(str(portrait_row.get("body") or ""), 110)
+            lines.extend([f"**一句话业务画像**：{attach_refs_to_sentence(portrait, refs)}", ""])
+
+        block_rows = (
+            ("业务结构", product_rows),
+            ("经营变化", self._annual_rows_by_group(rows, "operation_update") + self._annual_rows_by_group(rows, "management_view")),
+            ("研发与产品进展", self._annual_rows_by_group(rows, "competitiveness_rd")),
+            ("财务变化原因", self._annual_rows_by_group(rows, "financial_explanation") + confirmed),
+        )
+        for label, group_rows in block_rows:
+            group_rows = [row for row in group_rows if str(row.get("body") or "").strip()]
+            if not group_rows:
+                continue
+            lines.append(f"**{label}**")
+            for row in group_rows[:3]:
+                title = str(row.get("title") or "").strip()
+                body = self._compact_text(str(row.get("body") or ""), 120)
+                refs = self._display_refs(row, citation_offset)
+                used.update(refs)
+                text = f"**{title}**：{body}" if title else body
+                lines.append(f"- {attach_refs_to_sentence(text, refs)}")
+            lines.append("")
+
+        boundary_rows = [
+            r for key in ("not_disclosed", "inconclusive")
+            for r in (sections.get(key) or [])
+            if isinstance(r, dict) and str(r.get("body") or "").strip()
+        ]
+        lines.extend(["**官方材料边界表**", "| 边界 | 当前处理 |", "|---|---|"])
+        if boundary_rows:
+            for row in boundary_rows[:4]:
+                title = str(row.get("title") or "未披露/不能下结论").strip()
+                body = self._compact_text(str(row.get("body") or ""), 90)
+                lines.append(f"| {title} | {body} |")
+        else:
+            lines.append("| 未披露/不能下结论 | 重要客户、订单、产能、供应链或管理层指引若未披露，不做推断。 |")
+        lines.append("")
+
+        warnings = self._display_validation_warnings((memo.get("validation") or {}).get("warnings") or [])
+        if warnings:
+            lines.extend(["**validation warning**", ""])
+            for warning in warnings:
+                lines.append(f"- {warning}")
+            lines.append("")
+
+        if used:
+            self._append_section_citations(lines, used, self._offset_citations(memo.get("citations", {}) or {}, citation_offset))
+        return lines
+
+    def _formal_medium_broker_assumption_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
+        """Render broker research as attributed assumptions, not official facts."""
+        if (memo or {}).get("status") not in {"ready", "single_institution"}:
+            return ["当前未取得足够可用研报 digest，不展开机构观点与盈利假设。", ""]
+
+        rows: List[Dict[str, Any]] = []
+        for row in (memo.get("sections") or []):
+            if not isinstance(row, dict) or not str(row.get("body") or "").strip():
+                continue
+            rows.append({
+                "assumption": str(row.get("title") or "机构核心观点").strip(),
+                "view": self._ensure_broker_attribution(str(row.get("body") or "").strip()),
+                "impact": "若机构假设兑现，支撑业绩增长和估值消化。",
+                "constraint": "需等待公告、财报拆分、订单或客户数据验证。",
+                "refs": self._display_refs(row, citation_offset),
+            })
+        for row in (memo.get("forecast_ranges") or []):
+            if not isinstance(row, dict):
+                continue
+            metric = str(row.get("metric") or "盈利预测").strip()
+            period = str(row.get("period") or "").strip()
+            value_range = str(row.get("range") or "").strip()
+            if not value_range:
+                continue
+            rows.append({
+                "assumption": f"{metric}{period}",
+                "view": self._ensure_broker_attribution(value_range, default_prefix="研报预计"),
+                "impact": "作为盈利弹性和估值消化的参考区间。",
+                "constraint": "预测区间不是公司指引，需以后续业绩兑现校验。",
+                "refs": self._display_refs(row, citation_offset),
+            })
+        for row in (memo.get("risks") or []):
+            if not isinstance(row, dict) or not str(row.get("body") or "").strip():
+                continue
+            rows.append({
+                "assumption": "反方约束",
+                "view": self._ensure_broker_attribution(str(row.get("body") or "").strip(), default_prefix="研报提示"),
+                "impact": "若风险兑现，盈利预测和估值溢价需下修。",
+                "constraint": "观察需求、交付、毛利率和客户资本开支变化。",
+                "refs": self._display_refs(row, citation_offset),
+            })
+
+        lines = [
+            "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |",
+            "|---|---|---|---|---|",
+        ]
+        used: set[int] = set()
+        for row in rows[:8]:
+            refs = row["refs"]
+            used.update(refs)
+            view = attach_refs_to_sentence(self._compact_text(row["view"], 110), refs)
+            lines.append(f"| {row['assumption']} | {view} | {row['impact']} | {row['constraint']} | 后续公告、财报拆分、订单/客户或行业数据 |")
+        if len(lines) == 2:
+            lines.append("| 研报假设 | 当前研报 digest 可用信息不足 | 不形成业绩假设 | 不写成官方确认事实 | 等待更多研报或公告 |")
+        lines.append("")
+        if used:
+            self._append_section_citations(lines, used, self._offset_citations(memo.get("citations", {}) or {}, citation_offset))
+        return lines
+
+    def _formal_medium_external_variable_map(self, curated_display: Dict[str, Any] | None, citation_offset: int = 0) -> List[str]:
+        """Render curated external material as a compact variable map."""
+        if not curated_display or not self._has_curated_external_citation(curated_display):
+            return []
+
+        citations = curated_display.get("citations", {}) or {}
+        cards = [c for c in (curated_display.get("_curated_external_reasoning_cards") or []) if isinstance(c, dict)]
+        lines = [
+            "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
+            "",
+            "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
+            "",
+            "| 外部变量 | 外部材料在说什么 | 与 4.1/4.2 的关系 | 当前处理 |",
+            "|---|---|---|---|",
+        ]
+        used: set[int] = set()
+        if cards:
+            for card in cards[:6]:
+                claim = str(card.get("claim") or "").strip()
+                refs = self._display_refs(card, citation_offset)
+                used.update(refs)
+                variable = self._short_heading(claim) or "外部变量"
+                framed = attach_refs_to_sentence(self._frame_external_claim(self._compact_text(claim, 90)), refs)
+                lines.append(
+                    f"| {variable} | {framed} | 作为官方材料与研报假设的交叉验证变量，不替代正式证据。 | 保留为待验证变量，不参与评分、风险评分或目标价。 |"
+                )
+        elif curated_display.get("_curated_external_narrative_paragraphs"):
+            for paragraph in (curated_display.get("_curated_external_narrative_paragraphs") or [])[:6]:
+                if not isinstance(paragraph, dict):
+                    continue
+                text = str(paragraph.get("text") or "").strip()
+                if not text:
+                    continue
+                refs = self._display_refs(paragraph, citation_offset)
+                used.update(refs)
+                variable = str(paragraph.get("heading") or self._short_heading(text) or "外部变量")
+                framed = attach_refs_to_sentence(self._frame_external_claim(self._compact_text(text, 90)), refs)
+                lines.append(
+                    f"| {variable} | {framed} | 作为官方材料与研报假设的交叉验证变量，不替代正式证据。 | 保留为待验证变量，不参与评分、风险评分或目标价。 |"
+                )
+        else:
+            for topic_key, label in CURATED_EXTERNAL_TOPIC_LABELS:
+                topic_rows = [
+                    row for row in (curated_display.get("_curated_external_topic_groups") or {}).get(topic_key, [])
+                    if isinstance(row, dict) and str(row.get("text") or "").strip()
+                ]
+                if not topic_rows:
+                    continue
+                row = topic_rows[0]
+                refs = self._display_refs(row, citation_offset)
+                used.update(refs)
+                framed = attach_refs_to_sentence(self._frame_external_claim(self._compact_text(str(row.get("text") or ""), 90)), refs)
+                lines.append(f"| {label} | {framed} | 与官方/研报线索交叉验证 | 仅作待验证变量 |")
+        lines.append("")
+        if used:
+            self._append_section_citations(lines, used, self._offset_citations(citations, citation_offset))
+        return lines
+
+    def _formal_medium_price_path_section(
+        self,
+        annual_memo: Dict[str, Any],
+        broker_memo: Dict[str, Any],
+        curated_display: Dict[str, Any] | None,
+        annual_citation_offset: int = 0,
+        broker_citation_offset: int = 0,
+        external_citation_offset: int = 0,
+    ) -> List[str]:
+        """Render deterministic upgrade/downgrade conditions without changing scoring."""
+        lines = [
+            "> 本节只做股价方向的条件推演，不直接修改目标价、评分、风险评分或最终推荐。",
+            "",
+            "| 来源层级 | 上行条件 | 下行条件 | 观察证据 |",
+            "|---|---|---|---|",
+        ]
+        used: set[int] = set()
+
+        annual_rows = [
+            row for row in ((annual_memo.get("sections") or {}).get("annual_report_explanation") or [])
+            if isinstance(row, dict)
+        ]
+        annual_pick = self._first_row_with_refs(annual_rows, annual_citation_offset)
+        if annual_pick:
+            text, refs = annual_pick
+            used.update(refs)
+            evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
+            lines.append(f"| 官方确认 | 年报/公告确认的产品线、经营变化和财务解释继续兑现，当前股价更容易获得基本面支撑 | 官方材料中的增长线索不能延续，或毛利率、现金流、费用率恶化 | {evidence} |")
+
+        broker_rows = [row for row in (broker_memo.get("sections") or []) if isinstance(row, dict)]
+        broker_pick = self._first_row_with_refs(broker_rows, broker_citation_offset)
+        if broker_pick:
+            text, refs = broker_pick
+            used.update(refs)
+            evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
+            lines.append(f"| 机构假设 | 券商关于需求、产品放量或盈利弹性的假设兑现，当前估值可被业绩增长消化 | 机构假设落空，盈利预测或估值溢价面临下修 | {evidence} |")
+
+        external_cards = [
+            card for card in ((curated_display or {}).get("_curated_external_reasoning_cards") or [])
+            if isinstance(card, dict)
+        ]
+        if external_cards:
+            card = external_cards[0]
+            refs = self._display_refs(card, external_citation_offset)
+            used.update(refs)
+            evidence = attach_refs_to_sentence(self._compact_text(str(card.get("claim") or ""), 80), refs)
+            lines.append(f"| 外部待验证 | 外部变量被公告、订单或行业数据验证，可提升市场置信度和仓位上限 | 外部变量被证伪或长期无正式证据，只作为情绪噪音处理 | {evidence} |")
+
+        if len(lines) == 3:
+            lines.append("| 材料不足 | 暂不形成上行推演 | 暂不形成下行推演 | 等待官方材料、研报或外部变量补充 |")
+        lines.append("")
+        if used:
+            citations = self._merged_citations(
+                self._offset_citations(annual_memo.get("citations", {}) or {}, annual_citation_offset),
+                self._offset_citations(broker_memo.get("citations", {}) or {}, broker_citation_offset),
+            )
+            citations = self._merged_citations(
+                citations,
+                self._offset_citations((curated_display or {}).get("citations", {}) or {}, external_citation_offset),
+            )
+            self._append_section_citations(lines, used, citations)
         return lines
 
     def _append_section_citations(
@@ -689,6 +988,48 @@ class DeepAnalysisRenderer:
         if any(term in title for term in ("收入", "利润", "费用", "现金流", "存货", "减值")):
             return "financial_explanation"
         return "other"
+
+    def _annual_rows_by_group(self, rows: List[Dict[str, Any]], group: str) -> List[Dict[str, Any]]:
+        return [
+            row for row in rows
+            if str(row.get("display_group") or self._annual_row_group(row)) == group
+        ]
+
+    @staticmethod
+    def _display_refs(row: Dict[str, Any], offset: int = 0) -> List[int]:
+        refs: List[int] = []
+        for ref in row.get("citation_refs") or []:
+            try:
+                refs.append(int(ref) + offset)
+            except (TypeError, ValueError):
+                continue
+        return refs
+
+    @staticmethod
+    def _compact_text(text: str, limit: int = 120) -> str:
+        cleaned = re.sub(r"\s+", " ", str(text or "")).strip(" ；;。")
+        if len(cleaned) <= limit:
+            return cleaned
+        return cleaned[:limit].rstrip(" ，,；;。") + "..."
+
+    @staticmethod
+    def _ensure_broker_attribution(text: str, default_prefix: str = "券商认为") -> str:
+        value = str(text or "").strip()
+        if not value:
+            return ""
+        if any(term in value for term in ("券商认为", "研报认为", "研报预计", "机构认为", "机构假设", "研报提示", "券商预测")):
+            return value
+        return f"{default_prefix}：{value}"
+
+    def _first_row_with_refs(self, rows: List[Dict[str, Any]], offset: int = 0) -> tuple[str, List[int]] | None:
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            refs = self._display_refs(row, offset)
+            body = str(row.get("body") or row.get("range") or "").strip()
+            if body and refs:
+                return body, refs
+        return None
 
     def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:
         """Build 4.1 formal-only summary blocks."""

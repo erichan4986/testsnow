@@ -1860,7 +1860,7 @@ def test_formal_rich_keeps_legacy_headings():
     assert "### 4.1 年报经营摘要" not in result
 
 
-def test_formal_medium_keeps_legacy_headings_with_medium_badge():
+def test_formal_medium_uses_source_layer_headings_with_medium_badge():
     renderer = DeepAnalysisRenderer()
     ctx = {
         "stock_name": "测试股",
@@ -1873,15 +1873,65 @@ def test_formal_medium_keeps_legacy_headings_with_medium_badge():
             "events_catalysts": "",
             "citations": {1: {"source": "公告", "title": "年报"}},
         },
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "schema": "broker_research_memo.v1",
+            "status": "ready",
+            "source_layer": "broker_research",
+            "institutions": ["测试证券"],
+            "sections": [
+                {
+                    "title": "产业与产品判断",
+                    "body": "券商认为 800G 放量支撑增长。",
+                    "citation_refs": [1],
+                }
+            ],
+            "forecast_ranges": [],
+            "risks": [
+                {
+                    "body": "研报提示：若需求低于假设，盈利预测需下修。",
+                    "citation_refs": [2],
+                }
+            ],
+            "citations": {
+                1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"},
+                2: {"source": "券商研报", "title": "风险提示", "author": "测试证券"},
+            },
+        },
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "外部观察", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": "外部材料提示供应链约束影响交付弹性",
+                    "reasoning_steps": ["跟踪预付款和交付数据"],
+                    "counterpoints": ["公司公告未确认供应链瓶颈"],
+                    "verification_need": "需要公告、订单或财报拆分验证",
+                    "citation_refs": [1],
+                }
+            ],
+        },
         "core_facts": [],
     }
 
     result = renderer.render(ctx)
 
     assert "深度分析形态：正式材料中等" in result
-    assert "### 4.1 产业逻辑与竞争格局" in result
-    assert "### 4.2 业绩路径与多空分歧" in result
-    assert "### 4.3 资金面与催化剂时间线" in result
+    assert "### 4.1 官方材料确认：业务与财务基座" in result
+    assert "### 4.2 机构观点与盈利假设" in result
+    assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
+    assert "### 4.4 上行 / 下行条件与股价推演" in result
+    assert "### 4.1 产业逻辑与竞争格局" not in result
+    assert "### 4.2 业绩路径与多空分歧" not in result
+    assert "### 4.3 资金面与催化剂时间线" not in result
+    assert "公司增长主线来自 FPGA" in result
+    assert "券商认为 800G 放量支撑增长" in result
+    assert "外部材料称：外部材料提示供应链约束影响交付弹性" in result
+    assert "| 来源层级 | 上行条件 | 下行条件 | 观察证据 |" in result
+    assert "官方确认" in result
+    assert "机构假设" in result
+    assert "外部待验证" in result
     assert "当前可用于深度基本面分析的正式材料不足" not in result
 
 
@@ -1922,7 +1972,9 @@ def test_formal_medium_global_citations_include_visible_4_4_refs():
     result = renderer.render(ctx)
     global_refs = result.split("## 引用来源", 1)[1]
 
-    assert "外部材料提示供应链约束会影响交付弹性[^2]" in result
+    assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
+    assert "外部材料称：外部材料提示供应链约束会影响交付弹性" in result
+    assert "该说法需以公告、财报拆分或行业第三方数据验证[^2]" in result
     assert "- [^2] | **微信公众号精选观察** | 作者: 测试账号 | 《外部深度文章》" in global_refs
 
 

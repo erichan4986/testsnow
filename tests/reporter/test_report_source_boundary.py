@@ -229,6 +229,70 @@ def test_formal_thin_social_token_in_4_3_still_fails():
     assert "social_source_in_formal_analysis" in _codes(result)
 
 
+def test_formal_medium_source_layer_external_map_region_is_allowed():
+    text = """
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+公司披露 2025 年营业收入 382.40 亿元[^1]。
+
+### 4.2 机构观点与盈利假设
+
+券商认为：800G 放量支撑增长[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：微信公众号精选观察讨论供应链变量，雪球观点仍需公告验证[^3]。
+
+**本节引用来源：**
+- [^3] 微信公众号精选观察 | 《外部变量》
+
+### 4.4 上行 / 下行条件与股价推演
+
+| 来源层级 | 上行条件 | 下行条件 | 观察证据 |
+|---|---|---|---|
+| 外部待验证 | 外部变量获正式验证 | 外部变量被证伪 | 后续公告 |
+"""
+
+    result = check_report_source_boundary_text(text)
+
+    assert result.passed
+    assert "social_source_in_formal_analysis" not in _codes(result)
+    assert "external_viewpoint_leak_outside_4_4" not in _codes(result)
+
+
+def test_formal_medium_social_token_in_4_1_still_fails():
+    text = """
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+微信公众号精选观察称公司订单饱满。
+
+### 4.2 机构观点与盈利假设
+
+券商认为：800G 放量支撑增长[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：供应链变量仍需验证[^3]。
+"""
+
+    result = check_report_source_boundary_text(text)
+
+    assert not result.passed
+    assert "social_source_in_formal_analysis" in _codes(result)
+
+
 def test_flags_4_4_missing_display_only_disclaimer():
     text = """
 ## 四、深度分析
