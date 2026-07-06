@@ -91,6 +91,48 @@ def test_formal_thin_without_core_facts_filters_unsupported_numeric_bullish_clai
     assert "年报经营线索仍需更多正式披露验证" in result
 
 
+def test_formal_thin_filters_numeric_bullish_claim_unmatched_by_core_facts(monkeypatch):
+    """A supported annual fact must not admit unrelated market-share bullish claims."""
+
+    def fake_llm_extract_thesis(text):
+        return {
+            "bullish": [
+                {"text": "行业研报指出市场需求扩大，公司市占率有望提升至20%", "stars": 3},
+                {"text": "年报显示营业收入同比增长16.2%", "stars": 3},
+            ],
+            "bearish": [],
+            "conclusion": "市占率提升至20%支撑看多",
+        }
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        fake_llm_extract_thesis,
+    )
+
+    renderer = ExecutiveSummaryRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "core_facts": [
+            {
+                "fact": "营业收入",
+                "data": "同比增长16.2%",
+                "provenance_status": "supported",
+            }
+        ],
+        "synthesis": {
+            "fundamentals": "年报显示营业收入同比增长16.2%。",
+            "valuation_debate": "行业研报指出市场需求扩大，公司市占率有望提升至20%。",
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "市占率有望提升至20%" not in result
+    assert "市占率提升至20%支撑看多" not in result
+    assert "营业收入同比增长16.2%" in result
+
+
 def test_formal_rich_keeps_numeric_bullish_claims(monkeypatch):
     """The sanitizer must not remove numeric thesis points when high-credit facts exist."""
 

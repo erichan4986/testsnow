@@ -329,8 +329,8 @@ def _sanitize_pe_spread_in_text(text: str, facts: List[Dict[str, Any]], stock_na
     return text
 
 
-def _has_supported_core_fact_basis(ctx: Dict[str, Any]) -> bool:
-    """Return whether visible core facts can support hard numeric thesis claims."""
+def _numeric_bullish_claim_supported_by_core_facts(text: str, ctx: Dict[str, Any]) -> bool:
+    """Return whether the same numeric claim is backed by supported core facts."""
     for fact in ctx.get("core_facts") or []:
         if not isinstance(fact, dict):
             continue
@@ -340,21 +340,25 @@ def _has_supported_core_fact_basis(ctx: Dict[str, Any]) -> bool:
         if status in {"supported", "verified"} and (fact_text or data_text):
             if "0.00亿元" in data_text:
                 continue
-            return True
+            if _claim_matches_point(f"{fact_text} {data_text}", text):
+                return True
     return False
 
 
 def _is_unsupported_numeric_bullish_text(text: str, ctx: Dict[str, Any]) -> bool:
     """Detect hard percentage claims that should not survive in formal-thin summaries."""
     profile = (ctx.get("deep_analysis_evidence_profile") or {}).get("profile")
-    if profile != "formal_thin_external_rich" or _has_supported_core_fact_basis(ctx):
+    if profile != "formal_thin_external_rich":
         return False
     text = sanitize_citation_markers(str(text or ""))
     if not re.search(r"\d+(?:\.\d+)?%", text):
         return False
+    if _numeric_bullish_claim_supported_by_core_facts(text, ctx):
+        return False
     hard_fact_terms = (
         "公告显示", "公告披露", "年报显示", "公司披露",
         "营收", "营业收入", "净利润", "订单", "产能利用率",
+        "市占率", "市场份额", "份额", "占比", "提升至", "有望提升",
     )
     return any(term in text for term in hard_fact_terms)
 
