@@ -2140,6 +2140,30 @@ def test_external_map_disclaimer_confirmation_word_does_not_falsely_trigger():
     assert "external_map_unverified_claim_framing" not in codes
 
 
+def test_external_map_table_negative_confirmation_phrase_does_not_trigger():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist", "formal_section_support": {"industry": 0, "fundamentals": 0, "funding_support": 0, "catalyst_support": 0}} -->
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |
+|---|---|---|---|
+| 星载芯片 | 外部材料称公司具备高可靠 FPGA 线索，该说法需正式验证[^1]。 | 只能作为外部待验证变量，不替代官方确认。 | 跟踪公告、订单和财报拆分。 |
+
+**本节引用来源：**
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
 def test_external_map_body_strong_confirmation_still_triggers():
     text = _quality_shell(
         """

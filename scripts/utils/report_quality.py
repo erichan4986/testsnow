@@ -1067,10 +1067,8 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
     low_credit_only = not re.search(r"来源[:：]\s*(?:公告|年报|研报|官方|交易所)", section)
     if low_credit_only:
         confirmation_terms = ("确认", "已经", "确定", "进入供应链", "订单落地", "客户为")
-        normalized_claim = _normalize(claim_body)
+        normalized_claim = _strip_negative_confirmation_phrases(_normalize(claim_body))
         for term in confirmation_terms:
-            if term == "确认" and "未确认" in normalized_claim:
-                continue
             if term in normalized_claim:
                 yield QualityIssue(
                     code="external_map_unverified_claim_framing",
@@ -1102,6 +1100,20 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
                 evidence=market_position_term,
             )
             return
+
+
+def _strip_negative_confirmation_phrases(text: str) -> str:
+    """Remove negated confirmation wording before scanning external-map claims."""
+    patterns = (
+        r"不(?:等同于|替代|代表)官方确认",
+        r"非官方确认",
+        r"未经官方确认",
+        r"官方未确认",
+        r"未确认",
+    )
+    for pattern in patterns:
+        text = re.sub(pattern, "", text)
+    return text
 
 
 _GENERIC_TEMPLATE_TERMS = (
