@@ -1333,9 +1333,10 @@ def test_annual_broker_layout_merges_external_map_and_checklist():
     assert "### 4.3 外部观点与待验证变量（Preview，不参与评分）" in result
     assert "### 4.4 待验证清单" not in result
     assert "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |" not in result
-    assert "**外部观点链**" in result
-    assert "**反方约束**" in result
-    assert "**待验证证据**" in result
+    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" in result
+    assert "**外部观点链**" not in result
+    assert "**反方约束**" not in result
+    assert "**待验证证据**" not in result
 
 
 def test_suspicious_zero_financial_core_facts_are_not_visible():
@@ -1503,12 +1504,11 @@ def test_formal_thin_annual_memo_renders_sections():
     }
     result = renderer.render(ctx)
     assert "### 4.1 年报经营摘要" in result
-    assert "**已确认**" in result
-    assert "**年报经营线索**" in result
-    assert "**产品线与业务结构**" in result
-    assert "**管理层行业判断**" in result
-    assert "**竞争力与研发**" in result
-    assert "**未披露 / 不能下结论**" in result
+    assert "**一句话画像**" in result
+    assert "**业务结构**" in result
+    assert "**官方材料边界**" in result
+    assert "**已确认**" not in result
+    assert "**年报经营线索**" not in result
     assert "营业收入 39.82 亿元" in result
     assert "公司增长主线来自 FPGA" in result
 
@@ -1928,7 +1928,8 @@ def test_formal_medium_uses_source_layer_headings_with_medium_badge():
     assert "公司增长主线来自 FPGA" in result
     assert "券商认为 800G 放量支撑增长" in result
     assert "外部材料称：外部材料提示供应链约束影响交付弹性" in result
-    assert "| 来源层级 | 上行条件 | 下行条件 | 观察证据 |" in result
+    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" in result
+    assert "**推演结论**" in result
     assert "官方确认" in result
     assert "机构假设" in result
     assert "外部待验证" in result
@@ -2160,3 +2161,155 @@ def test_annual_memo_rejects_forbidden_source():
     assert "雪球上有人认为" not in result
     # The forbidden card should not be in annual_report_explanation rows.
     assert any("雪球" in str(r.get("body", "")) for r in memo["sections"]["annual_report_explanation"]) is False
+
+
+def test_formal_thin_annual_memo_projects_to_readable_business_profile():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务与产品",
+            "body": "公司建立 FPGA 芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集成电路测试服务等产品线，应用于通信、工业控制、人工智能和卫星通信。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "FPGA 产品覆盖 PSoC、RFSoC、FPAI 等系列，逻辑资源从 50K 至 4000K，算力从 4TOPS 至 128TOPS。",
+            "citation_refs": [2],
+        },
+        {
+            "title": "管理层市场判断",
+            "body": "2025 年半导体行业景气度结构性分化，FPGA 在通信、卫星通信、工业控制、人工智能及高可靠领域应用良好。",
+            "citation_refs": [3],
+        },
+    ]
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
+
+    assert "**一句话画像**" in section41
+    assert "**业务结构**" in section41
+    assert "**官方材料边界**" in section41
+    assert "**年报经营线索**" not in section41
+    assert section41.count("主营业务与产品") <= 1
+    assert "FPGA 产品覆盖" in section41
+    assert "2025 年半导体行业景气度结构性分化" in section41
+
+
+def test_formal_thin_external_map_renders_variable_table_not_reasoning_card_template():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "外部变量", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": "外部材料讨论高可靠 FPGA 订单和卫星通信需求弹性",
+                    "reasoning_steps": ["先识别变量", "再核对订单口径"],
+                    "counterpoints": ["公司公告未披露订单客户"],
+                    "verification_need": "观察公告、订单、财报拆分",
+                    "citation_refs": [1],
+                }
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" in section43
+    assert "**支持线索**" not in section43
+    assert "**反方约束**" not in section43
+    assert "**待验证证据**" not in section43
+    assert "外部材料称：外部材料讨论高可靠 FPGA 订单和卫星通信需求弹性" in section43
+
+
+def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes_assumptions():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "schema": "broker_research_memo.v1",
+            "status": "ready",
+            "sections": [
+                {"title": "产业与产品判断", "body": "国金证券认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长。", "citation_refs": [1]},
+                {"title": "盈利预测", "body": "西南证券认为：毛利率改善和产品结构升级推动盈利弹性。", "citation_refs": [2]},
+            ],
+            "forecast_ranges": [],
+            "risks": [{"body": "山西证券提示：若客户资本开支放缓，盈利预测存在下修风险。", "citation_refs": [3]}],
+            "citations": {
+                1: {"source": "券商研报", "title": "国金研报", "author": "国金证券"},
+                2: {"source": "券商研报", "title": "西南研报", "author": "西南证券"},
+                3: {"source": "券商研报", "title": "山西研报", "author": "山西证券"},
+            },
+        },
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
+
+    assert "**机构共识**" in section42
+    assert "**主要分歧 / 反方风险**" in section42
+    assert "券商认为：国金证券认为" not in section42
+    assert "国金证券研报认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长" in section42
+    assert "山西证券研报提示：若客户资本开支放缓" in section42
+
+
+def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "schema": "broker_research_memo.v1",
+            "status": "ready",
+            "sections": [{"title": "产品放量", "body": "研报认为 800G 和 1.6T 放量是盈利弹性核心。", "citation_refs": [1]}],
+            "forecast_ranges": [],
+            "risks": [],
+            "citations": {1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"}},
+        },
+        "deep_analysis_display": {
+            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
+            "_curated_external_reasoning_cards": [{"claim": "外部材料提示供应链紧张影响交付节奏", "citation_refs": [1]}],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" in section44
+    assert "**推演结论**" in section44
+    assert "不直接修改目标价、评分、风险评分或最终推荐" in section44
+    assert "官方确认" in section44
+    assert "机构假设" in section44
+    assert "外部待验证" in section44

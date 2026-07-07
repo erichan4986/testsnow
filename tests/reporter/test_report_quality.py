@@ -563,6 +563,37 @@ def test_formal_thin_external_map_without_visible_cards_does_not_warn():
     assert "external_viewpoint_overcompressed" not in codes
 
 
+def test_formal_thin_external_variable_table_does_not_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |
+|---|---|---|---|
+| FPGA 订单 | 外部材料称：外部材料讨论高可靠 FPGA 订单弹性；该说法需以公告、财报拆分或行业第三方数据验证[^1]。 | 交叉验证正式材料与研报假设，不替代官方确认。 | 跟踪公告、订单和财报拆分。 |
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
+
+
 def test_formal_thin_external_map_missing_structure_warns():
     text = _quality_shell(
         """

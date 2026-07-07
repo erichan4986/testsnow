@@ -1220,13 +1220,21 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             return
         if not re.search(r"外部材料|外部观点|雪球|知乎|微信|精选外部", section):
             return
-        markers = (
-            ("**外部观点链**：", "外部观点链"),
-            ("**支持线索**：", "支持线索"),
-            ("**反方约束**：", "反方约束"),
-            ("**待验证证据**：", "待验证证据"),
+        has_variable_table = (
+            "待验证变量" in section
+            and "外部材料在说什么" in section
+            and "下一步看什么" in section
         )
-        missing = [label for marker, label in markers if marker not in section]
+        if has_variable_table:
+            missing = []
+        else:
+            markers = (
+                ("**外部观点链**：", "外部观点链"),
+                ("**支持线索**：", "支持线索"),
+                ("**反方约束**：", "反方约束"),
+                ("**待验证证据**：", "待验证证据"),
+            )
+            missing = [label for marker, label in markers if marker not in section]
         if not re.search(r"\[\^\d+\]", section):
             missing.append("inline citations")
         if missing:
