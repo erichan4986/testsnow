@@ -218,6 +218,7 @@ def check_report_text(
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
     issues.extend(_check_fundflow_claims(text, fundflow_material_pack))
+    issues.extend(_check_malformed_citation_markers(text))
     issues.extend(_check_global_citation_alignment(text))
     issues.extend(_check_deep_analysis_subsections(text))
     issues.extend(_check_product_industry_mismatch(text))
@@ -231,6 +232,20 @@ def check_report_text(
 
     error_count = sum(1 for i in issues if i.severity == "error")
     return QualityResult(path=path, passed=error_count == 0, issues=issues)
+
+
+def _check_malformed_citation_markers(text: str) -> List[QualityIssue]:
+    malformed = re.findall(r"\[\^\d+(?:\.\.\.|(?![\d\]]))", text)
+    if not malformed:
+        return []
+    return [
+        QualityIssue(
+            code="malformed_citation_marker",
+            severity="error",
+            message="报告存在被截断或未闭合的引用标记。",
+            evidence=", ".join(sorted(set(malformed))[:5]),
+        )
+    ]
 
 
 def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[QualityIssue]:

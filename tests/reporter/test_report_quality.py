@@ -156,6 +156,22 @@ def test_global_citation_table_unused_refs_fails():
     assert "global_citation_unused_refs" in codes
 
 
+def test_malformed_citation_marker_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n## 四、深度分析\n\n外部变量被截断为坏引用[^11...\n\n## 引用来源\n\n- [^11] | **知乎精选观察** | 《外部观点》\n"
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "malformed_citation_marker" in codes
+
+
+def test_valid_multi_digit_citation_marker_does_not_trigger_malformed_gate():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + "\n\n## 四、深度分析\n\n正文使用外部引用[^10]\n\n## 引用来源\n\n- [^10] | **知乎精选观察** | 《外部观点》\n"
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "malformed_citation_marker" not in codes
+
+
 def test_missing_required_sections_fails():
     result = check_report_text("# 测试股\n\n只有标题。")
     codes = {issue.code for issue in result.issues}

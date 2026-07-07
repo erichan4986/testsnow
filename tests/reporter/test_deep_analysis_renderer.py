@@ -1,5 +1,7 @@
 """Tests for DeepAnalysisRenderer."""
 
+import re
+
 import pytest
 from scripts.utils.reporter.sections import DeepAnalysisRenderer
 
@@ -1642,6 +1644,58 @@ def test_formal_thin_global_citations_exclude_unused_external_refs():
 
     assert "已使用" in result
     assert "未使用" not in result
+
+
+def test_formal_thin_external_map_preserves_citations_after_compaction():
+    renderer = DeepAnalysisRenderer()
+    long_claim = (
+        "国内FPGA三巨头路线对比：复旦微电走高可靠赛道，紫光同创专注5G通信，"
+        "安路科技主攻民用中低端，外部材料同时引用多组收入、亏损和研发强度数字，"
+        "并进一步比较客户壁垒、通信份额、研发投入、民用产品线和高可靠场景的路线差异"
+    )
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "知乎精选观察", "title": "三巨头路线", "source_type": "curated_external_analysis_evidence"},
+                2: {"source": "雪球评论观察", "title": "FPAI观点", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": long_claim,
+                    "assumptions": ["需验证"],
+                    "verification_need": "公告验证",
+                    "citation_refs": [1],
+                },
+                {
+                    "claim": (
+                        "FPAI芯片=SoC+NPU+FPGA三核异构，实现端侧物理AI全链路闭环，"
+                        "旗舰产品FMZQ400TAI卧龙架构，FPGA业务收入14.14亿、增长25.3%、"
+                        "毛利率74.82%，还讨论 RF-FPGA、RFSoC 和端侧物理 AI 场景"
+                    ),
+                    "assumptions": ["需验证"],
+                    "verification_need": "公告验证",
+                    "citation_refs": [2],
+                },
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+    data_rows = [line for line in section43.splitlines() if line.startswith("| ") and not line.startswith("|---")][1:]
+
+    assert len(data_rows) == 2
+    assert all(re.search(r"\[\^\d+\]", row) for row in data_rows)
+    assert not re.search(r"\[\^\d+(?:\.\.\.|(?!\]))", section43)
 
 
 def test_formal_thin_global_citations_exclude_unrendered_external_cards():

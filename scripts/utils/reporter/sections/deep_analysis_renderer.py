@@ -1138,11 +1138,13 @@ class DeepAnalysisRenderer:
                 display_refs = self._display_refs(card, citation_offset)
                 if not claim or not display_refs:
                     continue
-                rendered_claim = attach_refs_to_sentence(claim, display_refs)
+                rendered_claim = self._frame_external_claim(
+                    attach_refs_to_sentence(self._compact_text(claim, 95), display_refs)
+                )
                 lines.append(
                     "| {variable} | {claim_text} | {relation} | {watch} |".format(
                         variable=self._short_heading(claim) or "外部变量",
-                        claim_text=self._frame_external_claim(self._compact_text(rendered_claim, 95)),
+                        claim_text=rendered_claim,
                         relation="交叉验证正式材料与研报假设，不替代官方确认。",
                         watch=self._external_next_watch(card),
                     )
@@ -1158,10 +1160,12 @@ class DeepAnalysisRenderer:
                     display_refs = self._display_refs(row, citation_offset)
                     if not text or not display_refs:
                         continue
-                    rendered = attach_refs_to_sentence(text, display_refs)
+                    rendered = self._frame_external_claim(
+                        attach_refs_to_sentence(self._compact_text(text, 95), display_refs)
+                    )
                     if rendered:
                         lines.append(
-                            f"| {label} | {self._frame_external_claim(self._compact_text(rendered, 95))} | 交叉验证正式材料与研报假设，不替代官方确认。 | {self._external_next_watch(row)} |"
+                            f"| {label} | {rendered} | 交叉验证正式材料与研报假设，不替代官方确认。 | {self._external_next_watch(row)} |"
                         )
 
         if len(lines) == 6:
