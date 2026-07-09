@@ -160,7 +160,7 @@ def test_reader_rejects_display_only_notes(tmp_path: Path) -> None:
     assert items == []
 
 
-def test_reader_dedupes_by_viewpoint_cluster(tmp_path: Path) -> None:
+def test_reader_preserves_same_viewpoint_cluster_across_institutions(tmp_path: Path) -> None:
     _write_broker_note(
         tmp_path,
         publish_time="2026-06-01",
@@ -177,6 +177,13 @@ def test_reader_dedupes_by_viewpoint_cluster(tmp_path: Path) -> None:
     )
     _write_broker_note(
         tmp_path,
+        publish_time="2026-06-04",
+        institution="券商B",
+        viewpoint_cluster="business_driver_product_mix",
+        excerpt="B观点重复。",
+    )
+    _write_broker_note(
+        tmp_path,
         publish_time="2026-06-03",
         institution="券商C",
         viewpoint_cluster="earnings_forecast",
@@ -190,7 +197,7 @@ def test_reader_dedupes_by_viewpoint_cluster(tmp_path: Path) -> None:
     )
 
     clusters = [item.extra.get("viewpoint_cluster") for item in items]
-    assert clusters.count("business_driver_product_mix") == 1
+    assert clusters.count("business_driver_product_mix") == 2
     assert "earnings_forecast" in clusters
 
 

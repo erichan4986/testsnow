@@ -289,11 +289,11 @@ class SynthesisSkill(BaseSkill):
         base_dir = ctx.get("knowledge_base_dir")
         if not base_dir:
             base_dir = Path(__file__).resolve().parents[3] / "knowledge"
-        max_items = ctx.get("broker_research_digest_max_display_items", 5)
+        max_items = ctx.get("broker_research_digest_max_display_items", 8)
         try:
             max_items = int(max_items)
         except (TypeError, ValueError):
-            max_items = 5
+            max_items = 8
         try:
             return load_broker_research_digest_synthesis_items(
                 stock_name=stock_name,
@@ -738,9 +738,9 @@ class SynthesisSkill(BaseSkill):
     @staticmethod
     def _broker_digest_loader_max_items(ctx: SkillContext) -> int:
         try:
-            return int(ctx.get("broker_research_digest_max_display_items", 5))
+            return int(ctx.get("broker_research_digest_max_display_items", 8))
         except (TypeError, ValueError):
-            return 5
+            return 8
 
     @staticmethod
     def _broker_digest_note_coverage(ctx: SkillContext) -> Dict[str, Any]:

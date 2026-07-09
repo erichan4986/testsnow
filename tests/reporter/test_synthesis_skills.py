@@ -3176,3 +3176,9 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
     assert coverage["external"]["citation_source_count"] == 2
     assert coverage["external"]["narrative_paragraph_count"] == 1
     assert coverage["external"]["topic_group_count"] == 1
+
+
+def test_broker_digest_loader_default_budget_matches_research_cache_width():
+    ctx = SkillContext(input={})
+
+    assert SynthesisSkill._broker_digest_loader_max_items(ctx) == 8

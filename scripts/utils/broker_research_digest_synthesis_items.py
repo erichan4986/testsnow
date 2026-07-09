@@ -44,13 +44,15 @@ def load_broker_research_digest_synthesis_items(
         candidates.append(item)
 
     selected: List[SynthesisItem] = []
-    seen_clusters: set[str] = set()
-    # First pass: keep at most one item per viewpoint_cluster.
+    seen_keys: set[tuple[str, str]] = set()
+    # First pass: keep at most one item per institution/viewpoint_cluster.
     for item in candidates:
         cluster = str((item.extra or {}).get("viewpoint_cluster", "")).strip()
-        if not cluster or cluster in seen_clusters:
+        institution = str((item.extra or {}).get("institution") or item.author or "").strip()
+        key = (cluster, institution)
+        if not cluster or key in seen_keys:
             continue
-        seen_clusters.add(cluster)
+        seen_keys.add(key)
         selected.append(item)
         if len(selected) >= max_items:
             break
@@ -61,9 +63,11 @@ def load_broker_research_digest_synthesis_items(
             if item in selected:
                 continue
             cluster = str((item.extra or {}).get("viewpoint_cluster", "")).strip()
-            if cluster in seen_clusters:
+            institution = str((item.extra or {}).get("institution") or item.author or "").strip()
+            key = (cluster, institution)
+            if key in seen_keys:
                 continue
-            seen_clusters.add(cluster)
+            seen_keys.add(key)
             selected.append(item)
             if len(selected) >= max_items:
                 break
