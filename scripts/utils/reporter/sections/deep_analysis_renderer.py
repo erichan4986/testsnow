@@ -197,7 +197,7 @@ class DeepAnalysisRenderer:
             "| # | 事实 | 数据/来源 | 证据 | 置信度 |",
             "|---|---|-----------|------|--------|",
         ]
-        for f in display_facts:
+        for f in supportable_facts:
             fid = f.get("fact_id", "")
             fact = f.get("fact", "").replace("|", "\\|")
             data = f.get("data", "").replace("|", "\\|")

@@ -557,7 +557,7 @@ def test_render_core_facts_evidence_column():
     assert "雪球、研报 (mixed)" in result
 
 
-def test_render_old_style_fact_renders_missing_ref():
+def test_render_old_style_fact_omits_missing_ref_from_core_base():
     renderer = DeepAnalysisRenderer()
     ctx = {
         "stock_name": "TestStock",
@@ -571,7 +571,9 @@ def test_render_old_style_fact_renders_missing_ref():
         ],
     }
     result = renderer.render(ctx)
-    assert "未绑定引用 (unknown)" in result
+    assert "营收增长" in result
+    assert "毛利提升" not in result
+    assert "未绑定引用 (unknown)" not in result
 
 
 def test_render_evidence_cell_no_numbered_citations():
@@ -623,7 +625,7 @@ def test_render_partially_supported_evidence_cell():
     assert "雪球 (community, 部分引用无效)" in result
 
 
-def test_render_invalid_ref_evidence_cell():
+def test_render_invalid_ref_omitted_from_core_base():
     renderer = DeepAnalysisRenderer()
     ctx = {
         "stock_name": "TestStock",
@@ -653,7 +655,9 @@ def test_render_invalid_ref_evidence_cell():
         ],
     }
     result = renderer.render(ctx)
-    assert "引用无效 (unknown)" in result
+    assert "营收增长" in result
+    assert "毛利提升" not in result
+    assert "引用无效 (unknown)" not in result
 
 
 def test_render_verified_claim_summary_section():
@@ -943,7 +947,7 @@ def test_render_core_facts_all_invalid_shows_empty_state():
     assert "引用无效 (unknown)" not in result
 
 
-def test_render_core_facts_mixed_invalid_keeps_table():
+def test_render_core_facts_mixed_invalid_omits_unsupported_rows():
     renderer = DeepAnalysisRenderer()
     ctx = {
         "stock_name": "圣邦股份",
@@ -956,8 +960,8 @@ def test_render_core_facts_mixed_invalid_keeps_table():
     result = renderer.render(ctx)
     assert "| # | 事实 | 数据/来源 | 证据 | 置信度 |" in result
     assert "营收增长" in result
-    assert "毛利提升" in result
-    assert "引用无效 (unknown)" in result
+    assert "毛利提升" not in result
+    assert "引用无效 (unknown)" not in result
 
 
 def test_render_claim_summary_uses_neutral_title():
