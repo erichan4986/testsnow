@@ -2722,7 +2722,7 @@ def test_formal_medium_broker_projection_summarizes_raw_earnings_recaps():
             "sections": [
                 {
                     "title": "产业与产品判断",
-                    "body": "业绩简评 2026 年 4 月 17 日公司发布 2026 年一季报，2026Q1 实现收入 194.96 亿元，同比+191.1%，环比+47.3%；归母净利润57.35亿元，同比+262.3%；800G 和 1.6T 放量，NPO/Scale-up 新技术路线有望继续卡位。",
+                    "body": "业绩简评 2026 年 4 月 17 日，中际旭创发布 2026 年一季报：2026Q1 实现营业收入 194.96 亿元，同比+191.1%，环比+47.3%；归母净利润57.35亿元，同比+262.3%；▌ 800G 和 1.6T 放量，预计 20 2027 年需求继续增长，NPO/Scale-up 新技术路线有望继续卡位。",
                     "citation_refs": [1],
                 },
             ],
@@ -2738,10 +2738,20 @@ def test_formal_medium_broker_projection_summarizes_raw_earnings_recaps():
     section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
 
     assert "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |" not in section42
-    assert "国金证券研报认为：研报关注800G/1.6T 放量、NPO/Scale-up 等新技术路线" in section42
+    assert "国金证券研报认为：2026Q1营业收入194.96亿元" in section42
+    assert "归母净利润57.35亿元" in section42
+    assert "800G 和 1.6T 放量" in section42
+    assert "预计2027年需求继续增长" in section42
+    assert "NPO/Scale-up 新技术路线有望继续卡位" in section42
+    assert "中际旭创发布" not in section42
+    assert "发布 2026 年一季报" not in section42
     assert "验证重点是出货节奏、毛利率和客户资本开支" not in section42
+    assert "研报关注" not in section42
+    assert "▌" not in section42
+    assert "202027" not in section42
+    assert "20 2027" not in section42
     assert "业绩简评" not in section42
-    assert "2026Q1 实现收入" not in section42
+    assert "经营分析" not in section42
 
 
 def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion():

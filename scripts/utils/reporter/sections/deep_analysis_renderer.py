@@ -531,7 +531,7 @@ class DeepAnalysisRenderer:
         for row in assumption_rows[:6]:
             refs = row["refs"]
             used.update(refs)
-            view = attach_refs_to_sentence(self._compact_annual_text(row["view"], 220), refs)
+            view = attach_refs_to_sentence(self._compact_annual_text(row["view"], 320), refs)
             lines.append(f"- **{row['assumption']}**：{view}。")
         if not assumption_rows:
             lines.append("- 当前研报 digest 可用信息不足，不形成业绩假设，也不写成官方确认事实。")
@@ -1015,21 +1015,36 @@ class DeepAnalysisRenderer:
         if not match:
             return value
         prefix, body = match.group(1), match.group(2)
-        noisy_recap = any(term in body for term in ("业绩简评", "一季报", "Q1", "实现收入", "归母净利润", "同比", "环比"))
-        if not noisy_recap:
-            return value
-        themes: List[str] = []
-        if re.search(r"800G|1\.6T", body):
-            themes.append("800G/1.6T 放量")
-        if re.search(r"NPO|CPO|XPO|Scale[- ]?up|Scaleup", body, re.IGNORECASE):
-            themes.append("NPO/Scale-up 等新技术路线")
-        if any(term in body for term in ("毛利率", "产品结构", "规模效应")):
-            themes.append("产品结构升级和毛利率弹性")
-        if any(term in body for term in ("客户资本开支", "CSP", "AI 数据中心", "AI算力")):
-            themes.append("AI 客户资本开支")
-        if not themes:
-            return value
-        return f"{prefix}：研报关注{'、'.join(themes[:3])}。"
+        projected = DeepAnalysisRenderer._clean_broker_assumption_body(body)
+        return f"{prefix}：{projected}" if projected else value
+
+    @staticmethod
+    def _clean_broker_assumption_body(text: str) -> str:
+        value = re.sub(r"\s+", " ", str(text or "")).strip(" ：:；;。")
+        if not value:
+            return ""
+        value = re.sub(r"[▌•●]\s*", "", value)
+        value = re.sub(r"^(?:业绩简评|经营分析|投资要点|事件|观点)[：:，,\s]*", "", value)
+        value = re.sub(r"(?:(?<=^)|(?<=[。；;，,]))\s*(?:经营分析|投资要点|事件|观点|公司业务概况)[：:，,\s]*", "", value)
+        value = re.sub(
+            r"^20\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日公司发布\s*20\d{2}\s*年[一二三四]季报[，,]\s*",
+            "",
+            value,
+        )
+        value = re.sub(
+            r"^20\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日[，,]\s*[^，,：:；;。]{0,18}?发布\s*20\d{2}\s*年[一二三四]季报[：:，,]\s*",
+            "",
+            value,
+        )
+        value = re.sub(r"(?<=预计)\s*20\s+(?=20\d{2}\s*年)", "", value)
+        value = re.sub(r"(20\d{2})\s+年", r"\1年", value)
+        value = re.sub(r"(?<=Q[1-4])\s*实现(?=(?:营业)?收入)", "", value)
+        value = re.sub(r"(?<=Q[1-4])\s+(?=收入)", "", value)
+        value = re.sub(r"(收入|营收|净利润|毛利率)\s+(\d)", r"\1\2", value)
+        value = re.sub(r"(?<=\d)\s+(?=(?:亿元|%|pct|倍|G|T))", "", value)
+        value = re.sub(r"\s*([，,；;。])\s*", r"\1", value)
+        value = re.sub(r"\s+", " ", value)
+        return value.strip(" ：:；;。")
 
     @staticmethod
     def _annual_row_group(row: Dict[str, Any]) -> str:
