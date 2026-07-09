@@ -522,21 +522,39 @@ def _find_heading_positions(text: str, heading: str) -> List[int]:
     return [m.start() for m in re.finditer(pattern, text)]
 
 
+def _find_heading_spans(text: str, heading: str) -> List[Tuple[int, int]]:
+    pattern = re.compile(_HEADING_BOUNDARY_TEMPLATE.format(re.escape(heading)))
+    return [(m.start(), m.end()) for m in re.finditer(pattern, text)]
+
+
 def _extract_section(text: str, heading: str) -> str:
-    positions = _find_heading_positions(text, heading)
-    if not positions:
+    spans = _find_heading_spans(text, heading)
+    if not spans:
         return ""
-    start = positions[0]
-    content_start = start + len(heading)
-    next_positions = []
-    for other in _ALL_HEADINGS + tuple(_STOP_PATTERNS):
-        if other == heading:
-            continue
-        for idx in _find_heading_positions(text[content_start:], other):
-            next_positions.append(content_start + idx)
-            break
-    end = min(next_positions) if next_positions else min(len(text), start + 1600)
-    return text[start:end].strip()
+    candidates: List[Tuple[int, int, str]] = []
+    for start, content_start in spans:
+        next_positions = []
+        for other in _ALL_HEADINGS + tuple(_STOP_PATTERNS):
+            for idx in _find_heading_positions(text[content_start:], other):
+                next_positions.append(content_start + idx)
+                break
+        end = min(next_positions) if next_positions else min(len(text), start + 1600)
+        raw = text[start:end].strip()
+        score = _section_candidate_score(_clean_excerpt(raw))
+        candidates.append((score, -start, raw))
+    candidates.sort(reverse=True)
+    return candidates[0][2].strip()
+
+
+def _section_candidate_score(text: str) -> int:
+    if not text:
+        return -1000
+    score = _quality_score(text) + _generic_driver_score(text)
+    if _looks_like_financial_table_fragment(text) or _looks_like_rating_table_fragment(text):
+        score -= 80
+    score -= 8 * len(re.findall(r"[\u4e00-\u9fff]\s+[\u4e00-\u9fff]", text))
+    score -= 24 * len(re.findall(r"(?:营收|收入)\d+\.(?:\s|[，,；;。]|$)", text))
+    return score
 
 
 def _clean_excerpt(text: str) -> str:

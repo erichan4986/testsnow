@@ -212,6 +212,29 @@ def test_digest_repairs_common_pdf_ocr_artifacts_in_excerpts() -> None:
     assert "20 2027" not in excerpt
 
 
+def test_digest_prefers_clean_repeated_heading_candidate_over_noisy_first_match() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    公司2026年一季度实现营收195. 环比分别增长192.1%、47.3%；实现归母净利润57.3亿元。
+
+    投资要点
+    下游云厂商资本开支持续扩张，800G与1.6T高速光模块需求延续高景气，
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
+
+    风险提示
+    客户资本开支不及预期。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    core_excerpt = next(card["source_excerpt"] for card in cards if card["card_type"] == "broker_core_view")
+
+    assert "下游云厂商资本开支持续扩张" in core_excerpt
+    assert "产品结构升级推动收入增长" in core_excerpt
+    assert "营收195." not in core_excerpt
+
+
 def test_digest_recognizes_bullet_prefixed_headings_from_pdf_text() -> None:
     from broker_research_digest import build_broker_research_digest_cards
 
