@@ -579,7 +579,7 @@ def test_formal_thin_external_map_without_visible_cards_does_not_warn():
     assert "external_viewpoint_overcompressed" not in codes
 
 
-def test_formal_thin_external_variable_table_does_not_warn():
+def test_formal_thin_external_variable_narrative_does_not_warn():
     text = _quality_shell(
         """
 <!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
@@ -596,9 +596,8 @@ def test_formal_thin_external_variable_table_does_not_warn():
 
 > 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
 
-| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |
-|---|---|---|---|
-| FPGA 订单 | 外部材料称：外部材料讨论高可靠 FPGA 订单弹性；该说法需以公告、财报拆分或行业第三方数据验证[^1]。 | 交叉验证正式材料与研报假设，不替代官方确认。 | 跟踪公告、订单和财报拆分。 |
+**FPGA 订单弹性**
+- 外部材料称：高可靠 FPGA 订单弹性需要与正式公告、财报拆分和研报假设交叉验证[^1]
 
 **本节引用来源：**
 - [^1] 微信公众号精选观察 | 《产业观察》
@@ -1215,6 +1214,38 @@ def test_formal_medium_external_map_funding_terms_do_not_trigger_funding_gate():
     )
     codes = {issue.code for issue in check_report_text(text).issues}
     assert "funding_claim_without_funding_support" not in codes
+
+
+def test_formal_medium_price_path_external_row_does_not_trigger_legacy_external_warning():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+公司披露 2025 年营业收入 382.40 亿元，800G/1.6T 光模块为主要增长线索[^1]。
+
+### 4.2 机构观点与盈利假设
+
+国金证券研报认为：800G 放量支撑增长[^2]。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+外部材料称：供应链变量仍需验证[^3]。
+
+### 4.4 上行 / 下行条件与股价推演
+
+> 本节只做股价方向的条件推演，不直接修改目标价、评分、风险评分或最终推荐。
+
+| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |
+|---|---|---|---|---|
+| 外部待验证 | 供应链与交付 | 外部变量被公告验证 | 外部变量被证伪 | 外部材料称：供应链变量仍需验证[^3] |
+"""
+    )
+    codes = {issue.code for issue in check_report_text(text).issues}
+    assert "external_viewpoint_overcompressed" not in codes
 
 
 def test_product_industry_mismatch_is_error_for_negated_mlcc_chain():

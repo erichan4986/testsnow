@@ -1265,7 +1265,8 @@ def test_formal_thin_external_rich_profile_renders_new_layout():
     assert "### 4.1 产业逻辑与竞争格局" not in result
     assert "### 4.2 业绩路径与多空分歧" not in result
     assert "### 4.3 资金面与催化剂时间线" not in result
-    assert "外部材料称：外部观点A[^1]；该说法需以公告、财报拆分或行业第三方数据验证。" in result
+    assert "外部材料称：外部观点A[^1]" in result
+    assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
     assert "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |" in result
 
 
@@ -1297,7 +1298,7 @@ def test_formal_thin_external_map_frames_claims_and_keeps_numbers():
     result = renderer.render(ctx)
 
     assert "外部材料称：国内高可靠卫星FPGA市占率95%以上；单星价值300-500万元[^1]" in result
-    assert "该说法需以公告、财报拆分或行业第三方数据验证" in result
+    assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
     assert "95%" in result
     assert "300-500万元" in result
 
@@ -1335,7 +1336,9 @@ def test_annual_broker_layout_merges_external_map_and_checklist():
     assert "### 4.3 外部观点与待验证变量（Preview，不参与评分）" in result
     assert "### 4.4 待验证清单" not in result
     assert "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |" not in result
-    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" in result
+    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" not in result
+    assert "下一步看什么" not in result
+    assert "**外部称FPGA订单修复**" in result
     assert "**外部观点链**" not in result
     assert "**反方约束**" not in result
     assert "**待验证证据**" not in result
@@ -1398,7 +1401,8 @@ def test_annual_memo_confirmed_rows_hide_suspicious_zero_financial_values():
 
     assert "**营业收入**：0.00亿元" not in result
     assert "公司已建立FPGA、安全与识别芯片等产品线" in result
-    assert "财务指标抽取出现 0 值异常" in result
+    assert "财务指标抽取出现 0 值异常" not in result
+    assert "**validation warning**" not in result
 
 
 def test_thin_all_profile_renders_material_insufficient_layout():
@@ -1507,8 +1511,7 @@ def test_formal_thin_annual_memo_renders_sections():
     result = renderer.render(ctx)
     assert "### 4.1 年报经营摘要" in result
     assert "**一句话画像**" in result
-    assert "**业务结构**" in result
-    assert "**官方材料边界**" in result
+    assert "**官方材料边界**" not in result
     assert "**已确认**" not in result
     assert "**年报经营线索**" not in result
     assert "营业收入 39.82 亿元" in result
@@ -1597,7 +1600,8 @@ def test_formal_thin_broker_memo_renders_with_snapshot_annual_offset_citations()
     assert "### 4.2 研报观点与假设" in result
     assert "单篇研报观点 / 单机构观点" in result
     assert "当前未取得足够可用研报 digest" not in result
-    assert "券商认为 800G 放量支撑增长" in result
+    assert "测试证券研报认为：800G 放量支撑增长" in result
+    assert "券商认为 800G 放量支撑增长" not in result
     assert "券商预测区间 10-12 亿元" in result
     assert "盈利预测需下修" in result
     assert "[^5]" in result
@@ -1691,10 +1695,10 @@ def test_formal_thin_external_map_preserves_citations_after_compaction():
 
     result = renderer.render(ctx)
     section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-    data_rows = [line for line in section43.splitlines() if line.startswith("| ") and not line.startswith("|---")][1:]
+    claim_lines = [line for line in section43.splitlines() if line.startswith("- 外部材料称：")]
 
-    assert len(data_rows) == 2
-    assert all(re.search(r"\[\^\d+\]", row) for row in data_rows)
+    assert len(claim_lines) == 2
+    assert all(re.search(r"\[\^\d+\]", row) for row in claim_lines)
     assert not re.search(r"\[\^\d+(?:\.\.\.|(?!\]))", section43)
 
 
@@ -1739,8 +1743,8 @@ def test_formal_thin_global_citations_exclude_unrendered_external_cards():
 
     result = renderer.render(ctx)
 
-    assert "外部材料称观点6" in result
-    assert "外部材料称观点7" not in result
+    assert "外部材料称：观点6" in result
+    assert "外部材料称：观点7" not in result
     assert "外部材料6" in result
     assert "外部材料7" not in result
 
@@ -1854,8 +1858,8 @@ def test_annual_memo_validation_warnings_use_single_heading():
 
     result = renderer.render(ctx)
 
-    assert result.count("**validation warning**") == 1
-    assert "财务指标抽取出现 0 值异常" in result
+    assert "**validation warning**" not in result
+    assert "财务指标抽取出现 0 值异常" not in result
     assert "营业收入=0.00亿元" not in result
     assert "归母净利润=0.00亿元" not in result
 
@@ -1980,14 +1984,21 @@ def test_formal_medium_uses_source_layer_headings_with_medium_badge():
     assert "### 4.2 业绩路径与多空分歧" not in result
     assert "### 4.3 资金面与催化剂时间线" not in result
     assert "公司增长主线来自 FPGA" in result
-    assert "券商认为 800G 放量支撑增长" in result
-    assert "外部材料称：外部材料提示供应链约束影响交付弹性" in result
-    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" in result
-    assert "**推演结论**" in result
+    assert "测试证券研报认为：800G 放量支撑增长" in result
+    assert "券商认为 800G 放量支撑增长" not in result
+    assert "外部材料称：供应链约束影响交付弹性" in result
+    assert "外部材料称：外部材料提示" not in result
     assert "官方确认" in result
     assert "机构假设" in result
     assert "外部待验证" in result
     section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" not in section44
+    assert "**推演结论**" not in section44
+    assert "**官方确认：" in section44
+    assert "**机构假设：" in section44
+    assert "**外部待验证：" in section44
+    assert "外部材料称：供应链约束影响交付弹性" in section44
+    assert "外部材料提示供应链约束影响交付弹性" not in section44
     assert "未知" not in section44
     assert "券商研报 | 作者: 测试证券 | 《核心观点》" in section44
     assert "当前可用于深度基本面分析的正式材料不足" not in result
@@ -2029,15 +2040,83 @@ def test_formal_medium_global_citations_include_visible_4_4_refs():
 
     result = renderer.render(ctx)
     global_refs = result.split("## 引用来源", 1)[1]
+    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
 
     assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
-    assert "外部材料称：外部材料提示供应链约束会影响交付弹性" in result
-    assert "该说法需以公告、财报拆分或行业第三方数据验证[^2]" in result
+    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" not in section43
+    assert "下一步看什么" not in section43
+    assert "跟踪客户验证、量产时间和产品收入" not in section43
+    assert "外部材料称：供应链约束会影响交付弹性" in result
+    assert "外部材料称：外部材料提示" not in result
+    assert "外部材料称：供应链约束会影响交付弹性[^2]" in result
+    assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
     section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
     assert "外部待验证" in section44
-    assert "外部材料提示供应链约束会影响交付弹性[^2]" in section44
+    assert "外部材料称：供应链约束会影响交付弹性[^2]" in section44
     assert "未知" not in section44
     assert "- [^2] | **微信公众号精选观察** | 作者: 测试账号 | 《外部深度文章》" in global_refs
+
+
+def test_external_variable_map_cleans_source_intro_prefixes():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "供应链观察", "source_type": "curated_external_analysis_evidence"},
+                2: {"source": "微信公众号精选观察", "title": "技术路线", "source_type": "curated_external_analysis_evidence"},
+                3: {"source": "微信公众号精选观察", "title": "需求指引", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {"claim": "，中际旭创当前面临供应链紧张状况", "citation_refs": [1]},
+                {"claim": "外部文章指出，中际旭创下一代互连技术布局获得客户认可", "citation_refs": [2]},
+                {"claim": "外部信息显示，部分下游客户已给出需求指引", "citation_refs": [3]},
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
+
+    assert "外部材料称：中际旭创当前面临供应链紧张状况" in section43
+    assert "外部材料称：中际旭创下一代互连技术布局获得客户认可" in section43
+    assert "外部材料称：部分下游客户已给出需求指引" in section43
+    assert "外部材料称：，" not in section43
+    assert "外部材料称：外部文章指出" not in section43
+    assert "外部材料称：外部信息显示" not in section43
+
+
+def test_external_variable_map_keeps_enough_claim_context_after_compaction():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "供应链观察", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": "外部文章指出，中际旭创当前面临明显的供应链紧张状况，海外客户拉货节奏、上游光芯片供给、交付排产、库存管理、资本开支节奏和订单交付节奏均需要持续跟踪，尽管公司否认交付计划下调传言，但原材料端压力信号已逐步显现，预付款项变化值得跟踪。",
+                    "citation_refs": [1],
+                },
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
+
+    assert "原材料端压力信号已逐步显现" in section43
 
 
 def test_formal_medium_official_material_filters_disclosure_noise_for_portrait():
@@ -2046,7 +2125,7 @@ def test_formal_medium_official_material_filters_disclosure_noise_for_portrait()
     memo["sections"]["annual_report_explanation"] = [
         {
             "title": "主营业务与产品",
-            "body": "报告期内公司从事的主要业务公司需遵守《深圳证券交易所上市公司自律监管指引第4号——创业板行业信息披露》中的通信相关业务披露要求，公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心。",
+            "body": "报告期内公司从事的主要业务公司需遵守《深圳证券交易所上市公司自律监管指引第4号——创业板行业信息披露》中的通信相关业务披露要求，公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心、数据通信、5G无线网络、电信传输和固网接入等领域的客户。公司注重技术研发，并推动产品向高速率、小型化、低功耗、低成本方向发展。",
             "citation_refs": [1],
         },
         {
@@ -2085,12 +2164,96 @@ def test_formal_medium_official_material_filters_disclosure_noise_for_portrait()
 
     assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section41
     assert "100G、200G、400G、800G和1.6T高速光模块" in section41
+    assert section41.count("公司主营业务为高端光通信收发模块研发、生产及销售") == 1
+    assert "..." not in section41
     assert "监管指引" not in section41
     assert "披露要求" not in section41
     assert "采购模式" not in section41
     assert "直接销售模式" not in section41
     assert "代理销售" not in section41
     assert "经营模式" not in section41
+
+
+def test_formal_medium_official_material_keeps_financial_section_financial():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务与产品",
+            "body": "公司主营业务为高端光通信收发模块的研发、生产及销售，产品服务于云计算数据中心和数据通信客户。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "费用与研发",
+            "body": "费用与研发投入说明：公司主营业务为高端光通信收发模块的研发、生产及销售，产品服务于云计算数据中心、数据通信。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "营业收入",
+            "body": "收入变化原因：主要系 800G 高速光模块销售增长及产品结构升级所致。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "毛利率",
+            "body": "毛利率变化原因：主要系产品结构改善及高端产品占比提升所致。",
+            "citation_refs": [1],
+        },
+    ]
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
+    financial = section41.split("**财务基座**", 1)[1].split("**本节引用来源：**", 1)[0]
+
+    assert "收入变化原因" in financial
+    assert "毛利率变化原因" in financial
+    assert "公司主营业务为高端光通信收发模块" not in financial
+
+
+def test_formal_medium_official_material_includes_confirmed_financial_base():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["confirmed"] = [
+        {"title": "2025年全年营收", "body": "382.40亿元", "citation_refs": [1]},
+        {"title": "2025年全年经营现金流量净额", "body": "108.96亿元", "citation_refs": [1]},
+    ]
+    memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务与产品",
+            "body": "公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心和数据通信客户。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "营业收入",
+            "body": "收入变化原因：主要系 800G 高速光模块销售增长及产品结构升级所致。",
+            "citation_refs": [1],
+        },
+    ]
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
+
+    assert "**财务基座**" in section41
+    assert "2025年全年营收：382.40亿元" in section41
+    assert "2025年全年经营现金流量净额：108.96亿元" in section41
+    assert "**财务变化原因**" not in section41
 
 
 def test_formal_rich_does_not_emit_unused_annual_memo_citations():
@@ -2254,12 +2417,64 @@ def test_formal_thin_annual_memo_projects_to_readable_business_profile():
     section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
 
     assert "**一句话画像**" in section41
+    assert "**一句话画像**：" not in section41
+    assert re.search(r"\*\*一句话画像\*\*\n- .+\[\^\d+\]", section41)
     assert "**业务结构**" in section41
-    assert "**官方材料边界**" in section41
+    assert "**官方材料边界**" not in section41
     assert "**年报经营线索**" not in section41
     assert section41.count("主营业务与产品") <= 1
     assert "FPGA 产品覆盖" in section41
     assert "2025 年半导体行业景气度结构性分化" in section41
+
+
+def test_formal_thin_annual_memo_prefers_company_portrait_over_narrow_product_line():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务与产品",
+            "body": "复旦微电的存储芯片产品线可提供多种接口、各型封装、全面容量的非挥发存储器产品。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "1、主要业务 复旦微电是一家从事超大规模集成电路的设计、开发、测试，并为客户提供系统解决方案的专业公司，公司已建立FPGA芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集成电路测试服务等产品线。",
+            "citation_refs": [2],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "2、主要产品及服务情况 2.1 FPGA芯片 FPGA是一种硬件可重构的集成电路芯片，适用于通信、人工智能和工业控制。",
+            "citation_refs": [3],
+        },
+        {
+            "title": "研发与产品进展",
+            "body": "（FPGA）芯片 2、 报告期内获得的研发成果截至报告期末，公司拥有境内外发明专利225项。",
+            "citation_refs": [4],
+        },
+    ]
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
+    portrait = section41.split("**一句话画像**", 1)[1].split("**业务结构**", 1)[0]
+
+    assert "从事超大规模集成电路的设计、开发、测试" in portrait
+    assert "存储芯片产品线可提供" not in portrait
+    assert "1、主要业务" not in section41
+    assert "2、主要产品及服务情况" not in section41
+    assert "2.1 FPGA芯片" not in section41
+    assert "（FPGA）芯片 2、" not in section41
 
 
 def test_formal_thin_external_map_renders_variable_table_not_reasoning_card_template():
@@ -2293,11 +2508,137 @@ def test_formal_thin_external_map_renders_variable_table_not_reasoning_card_temp
     result = renderer.render(ctx)
     section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
 
-    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" in section43
+    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" not in section43
+    assert "下一步看什么" not in section43
+    assert "跟踪客户验证、量产时间和产品收入" not in section43
+    assert "**高可靠 FPGA 订单和卫星通信需求弹性**" in section43
     assert "**支持线索**" not in section43
     assert "**反方约束**" not in section43
     assert "**待验证证据**" not in section43
-    assert "外部材料称：外部材料讨论高可靠 FPGA 订单和卫星通信需求弹性" in section43
+    assert "外部材料称：高可靠 FPGA 订单和卫星通信需求弹性" in section43
+    assert "外部材料称：外部材料讨论" not in section43
+    assert "处理口径" not in section43
+
+
+def test_formal_thin_external_map_keeps_long_claim_readable_without_handling_label():
+    renderer = DeepAnalysisRenderer()
+    long_claim = (
+        "外部材料讨论供应链瓶颈与交付疑虑并存，预付款激增释放预警信号。"
+        "文章认为 2026 年 Q1 预付款项环比增长超 10 倍，可能反映磷化铟衬底、光芯片等核心物料供给缺口。"
+        "公司回应订单获取与产品交付正常有序，但市场仍需要观察正式公告和财报拆分。"
+        "如果上游供给继续偏紧，订单兑现节奏和毛利率弹性都会受到影响。"
+    )
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "外部变量", "source_type": "curated_external_analysis_evidence"},
+            },
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": long_claim,
+                    "citation_refs": [1],
+                }
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "外部材料称：供应链瓶颈与交付疑虑并存" in section43
+    assert "核心物料供给缺口" in section43
+    assert "正式公告和财报拆分" in section43
+    assert "若核心物..." not in section43
+    assert "..." not in section43
+    assert "处理口径" not in section43
+    assert re.search(r"\[\^\d+\]", section43)
+
+
+def test_formal_thin_external_map_prefers_narrative_paragraphs_over_short_cards():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "FPAI 产品与 AI 端侧场景",
+                    "text": "外部材料讨论 FPAI 芯片集成 SoC、NPU 与 FPGA 三类模块，强调端侧物理 AI 闭环、4-128TOPS 算力区间和 FPGA 业务收入、毛利率等线索。该观点不是公司正式预测，但比单句产品标题更能说明外部材料为何关注复旦微电。",
+                    "citation_refs": [1],
+                }
+            ],
+            "_curated_external_reasoning_cards": [
+                {
+                    "claim": "A股唯一能量产亿门级高端FPGA的企业",
+                    "citation_refs": [1],
+                }
+            ],
+            "citations": {
+                1: {"source": "雪球专栏观察", "title": "物理AI观察", "source_type": "curated_external_analysis_evidence"},
+            },
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "**FPAI 产品与 AI 端侧场景**" in section43
+    assert "端侧物理 AI 闭环" in section43
+    assert "比单句产品标题更能说明外部材料为何关注复旦微电" in section43
+    assert "A股唯一能量产亿门级高端FPGA的企业" not in section43
+
+
+def test_formal_thin_external_map_softens_unverified_order_landing_wording():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_narrative": True,
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "星载高可靠芯片订单落地情况",
+                    "text": "有外部观点认为，复旦微电是卫星通信潜在参与者。但该线索尚待验证，需跟踪后续订单落地情况。",
+                    "citation_refs": [1],
+                }
+            ],
+            "citations": {
+                1: {"source": "雪球专栏观察", "title": "卫星观察", "source_type": "curated_external_analysis_evidence"},
+            },
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "订单落地" not in section43
+    assert "后续订单进展" in section43
+    assert "尚待验证" in section43
+    assert re.search(r"\[\^\d+\]", section43)
 
 
 def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes_assumptions():
@@ -2315,7 +2656,7 @@ def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes
                 {"title": "盈利预测", "body": "西南证券认为：毛利率改善和产品结构升级推动盈利弹性。", "citation_refs": [2]},
             ],
             "forecast_ranges": [],
-            "risks": [{"body": "山西证券提示：若客户资本开支放缓，盈利预测存在下修风险。", "citation_refs": [3]}],
+            "risks": [{"body": "研报提示：风险提示：若客户资本开支放缓，盈利预测存在下修风险。", "citation_refs": [3]}],
             "citations": {
                 1: {"source": "券商研报", "title": "国金研报", "author": "国金证券"},
                 2: {"source": "券商研报", "title": "西南研报", "author": "西南证券"},
@@ -2330,19 +2671,68 @@ def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes
     section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
 
     assert "**机构共识**" in section42
+    assert "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |" not in section42
     assert "**主要分歧 / 反方风险**" in section42
     assert "券商认为：国金证券认为" not in section42
+    assert "研报研报提示" not in section42
+    assert "风险研报提示" not in section42
     assert "国金证券研报认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长" in section42
     assert "山西证券研报提示：若客户资本开支放缓" in section42
+    assert "若机构假设兑现，支撑业绩增长和估值消化" not in section42
+    assert "需等待公告、财报拆分、订单或客户数据验证" not in section42
+    assert "后续需要财报、订单和客户资本开支验证" not in section42
 
 
-def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion():
+def test_formal_medium_broker_projection_summarizes_raw_earnings_recaps():
     renderer = DeepAnalysisRenderer()
     ctx = {
         "stock_name": "中际旭创",
         "deep_analysis_evidence_profile": {"profile": "formal_medium"},
         "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
         "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "schema": "broker_research_memo.v1",
+            "status": "ready",
+            "sections": [
+                {
+                    "title": "产业与产品判断",
+                    "body": "业绩简评 2026 年 4 月 17 日公司发布 2026 年一季报，2026Q1 实现收入 194.96 亿元，同比+191.1%，环比+47.3%；归母净利润57.35亿元，同比+262.3%；800G 和 1.6T 放量，NPO/Scale-up 新技术路线有望继续卡位。",
+                    "citation_refs": [1],
+                },
+            ],
+            "forecast_ranges": [],
+            "risks": [],
+            "citations": {1: {"source": "券商研报", "title": "国金研报", "author": "国金证券"}},
+        },
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
+
+    assert "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |" not in section42
+    assert "国金证券研报认为：研报关注800G/1.6T 放量、NPO/Scale-up 等新技术路线" in section42
+    assert "验证重点是出货节奏、毛利率和客户资本开支" not in section42
+    assert "业绩简评" not in section42
+    assert "2026Q1 实现收入" not in section42
+
+
+def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion():
+    renderer = DeepAnalysisRenderer()
+    annual_memo = _annual_memo_fixture()
+    annual_memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务与产品",
+            "body": "公司主营业务为高端光通信收发模块研发、生产及销售，面向云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
+            "citation_refs": [1],
+        }
+    ]
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": annual_memo,
         "broker_research_memo": {
             "schema": "broker_research_memo.v1",
             "status": "ready",
@@ -2353,7 +2743,7 @@ def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion(
         },
         "deep_analysis_display": {
             "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
-            "_curated_external_reasoning_cards": [{"claim": "外部材料提示供应链紧张影响交付节奏", "citation_refs": [1]}],
+            "_curated_external_reasoning_cards": [{"claim": "外部材料提示供应链紧张影响800G交付节奏", "citation_refs": [1]}],
         },
         "core_facts": [],
     }
@@ -2361,9 +2751,73 @@ def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion(
     result = renderer.render(ctx)
     section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
 
-    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" in section44
-    assert "**推演结论**" in section44
+    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" not in section44
+    assert "**推演结论**" not in section44
     assert "不直接修改目标价、评分、风险评分或最终推荐" in section44
-    assert "官方确认" in section44
-    assert "机构假设" in section44
-    assert "外部待验证" in section44
+    assert "**官方确认：业务覆盖 / 产品线**" in section44
+    assert "**机构假设：高速光模块放量**" in section44
+    assert "**外部待验证：供应链与交付**" in section44
+    assert "**官方确认：高速光模块放量**" not in section44
+    assert "**外部待验证：高速光模块放量**" not in section44
+    assert "若年报/公告确认的产品线、经营变化和财务解释继续兑现" in section44
+    assert "若机构假设落空" in section44
+    assert "若被证伪或长期无正式证据" in section44
+
+
+def test_formal_medium_price_path_external_evidence_is_not_hard_truncated():
+    renderer = DeepAnalysisRenderer()
+    long_claim = (
+        "外部材料提示中际旭创当前面临明显的供应链紧张状况，尽管公司否认交付计划下调传言，"
+        "但原材料端压力信号已逐步显现。2026年Q1公司预付款项环比增长超10倍至14.9亿元，"
+        "外部文章认为这可能反映磷化铟衬底、光芯片等核心物料供给缺口。"
+    )
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
+            "_curated_external_reasoning_cards": [{"claim": long_claim, "citation_refs": [1]}],
+        },
+        "core_facts": [],
+    }
+    result = renderer.render(ctx)
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "磷化铟衬底、光芯片等核心物料供给缺口" in section44
+    assert "光芯片等核..." not in section44
+    assert "..." not in section44
+
+
+def test_formal_medium_price_path_prefers_business_evidence_over_financial_noise():
+    renderer = DeepAnalysisRenderer()
+    annual_memo = _annual_memo_fixture()
+    annual_memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "费用与研发",
+            "body": "费用与研发投入说明：公司员工薪酬和研发费用有所增加。",
+            "citation_refs": [1],
+        },
+        {
+            "title": "主营业务与产品",
+            "body": "公司主营业务为高端光通信收发模块研发、生产及销售，面向云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
+            "citation_refs": [2],
+        },
+    ]
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": annual_memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section44
+    assert "费用与研发投入说明" not in section44

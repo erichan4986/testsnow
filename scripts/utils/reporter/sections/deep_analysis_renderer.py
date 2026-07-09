@@ -40,24 +40,6 @@ CURATED_EXTERNAL_TOPIC_LABELS = [
     ("risk_rumor_rebuttal", "风险传言与反证线索"),
     ("other", "其他待验证观察"),
 ]
-CURATED_EXTERNAL_TOPIC_ALIASES = {
-    "supply_delivery_capacity": "order_capacity_delivery",
-    "order_capacity": "order_capacity_delivery",
-    "delivery_capacity": "order_capacity_delivery",
-    "technology_route": "technology_route",
-    "tech_route": "technology_route",
-    "industry_logic": "technology_route",
-    "financial_quality": "financial_quality",
-    "fundamentals": "financial_quality",
-    "earnings_quality": "financial_quality",
-    "competition_commercialization": "competition_commercialization",
-    "commercialization": "competition_commercialization",
-    "market_expectation": "market_expectation",
-    "capital_market": "market_expectation",
-    "risk_rumor_rebuttal": "risk_rumor_rebuttal",
-    "watch_variable": "risk_rumor_rebuttal",
-    "dissent": "risk_rumor_rebuttal",
-}
 _CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
     "1225145344": "2026年第一季度报告",
     "1225106812": "2026年第一季度业绩预告",
@@ -482,6 +464,8 @@ class DeepAnalysisRenderer:
             memo,
             citation_offset,
             fallback="当前未取得足够官方材料，无法形成业务与财务基座。",
+            include_confirmed_financial_rows=True,
+            financial_label="财务基座",
         )
 
     def _formal_medium_broker_assumption_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
@@ -498,11 +482,10 @@ class DeepAnalysisRenderer:
                 default_prefix="研报认为",
                 author=self._broker_row_author(row, memo),
             )
+            view = self._project_broker_assumption_view(view)
             rows.append({
                 "assumption": str(row.get("title") or "机构核心观点").strip(),
                 "view": view,
-                "impact": "若机构假设兑现，支撑业绩增长和估值消化。",
-                "constraint": "需等待公告、财报拆分、订单或客户数据验证。",
                 "refs": self._display_refs(row, citation_offset),
             })
         for row in (memo.get("forecast_ranges") or []):
@@ -516,8 +499,6 @@ class DeepAnalysisRenderer:
             rows.append({
                 "assumption": f"{metric}{period}",
                 "view": self._normalize_broker_attribution(value_range, default_prefix="研报预计"),
-                "impact": "作为盈利弹性和估值消化的参考区间。",
-                "constraint": "预测区间不是公司指引，需以后续业绩兑现校验。",
                 "refs": self._display_refs(row, citation_offset),
             })
         for row in (memo.get("risks") or []):
@@ -525,9 +506,11 @@ class DeepAnalysisRenderer:
                 continue
             rows.append({
                 "assumption": "反方约束",
-                "view": self._normalize_broker_attribution(str(row.get("body") or "").strip(), default_prefix="研报提示"),
-                "impact": "若风险兑现，盈利预测和估值溢价需下修。",
-                "constraint": "观察需求、交付、毛利率和客户资本开支变化。",
+                "view": self._normalize_broker_attribution(
+                    str(row.get("body") or "").strip(),
+                    default_prefix="研报提示",
+                    author=self._broker_row_author(row, memo),
+                ),
                 "refs": self._display_refs(row, citation_offset),
             })
 
@@ -538,17 +521,16 @@ class DeepAnalysisRenderer:
 
         lines.extend([
             "**关键盈利假设**",
-            "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |",
-            "|---|---|---|---|---|",
         ])
         used: set[int] = set()
-        for row in rows[:8]:
+        assumption_rows = [row for row in rows if row["assumption"] != "反方约束"]
+        for row in assumption_rows[:6]:
             refs = row["refs"]
             used.update(refs)
-            view = attach_refs_to_sentence(self._compact_text(row["view"], 110), refs)
-            lines.append(f"| {row['assumption']} | {view} | {row['impact']} | {row['constraint']} | 后续公告、财报拆分、订单/客户或行业数据 |")
-        if not rows:
-            lines.append("| 研报假设 | 当前研报 digest 可用信息不足 | 不形成业绩假设 | 不写成官方确认事实 | 等待更多研报或公告 |")
+            view = attach_refs_to_sentence(self._compact_annual_text(row["view"], 220), refs)
+            lines.append(f"- **{row['assumption']}**：{view}。")
+        if not assumption_rows:
+            lines.append("- 当前研报 digest 可用信息不足，不形成业绩假设，也不写成官方确认事实。")
         lines.append("")
         risk_rows = [row for row in rows if row["assumption"] == "反方约束"]
         if risk_rows:
@@ -556,7 +538,7 @@ class DeepAnalysisRenderer:
             for row in risk_rows[:2]:
                 refs = row["refs"]
                 used.update(refs)
-                lines.append(f"- {attach_refs_to_sentence(self._compact_text(row['view'], 120), refs)}")
+                lines.append(f"- {attach_refs_to_sentence(self._compact_annual_text(row['view'], 180), refs)}")
             lines.append("")
         if used:
             self._append_section_citations(lines, used, self._offset_citations(memo.get("citations", {}) or {}, citation_offset))
@@ -574,8 +556,6 @@ class DeepAnalysisRenderer:
             "",
             "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
             "",
-            "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |",
-            "|---|---|---|---|",
         ]
         used: set[int] = set()
         if cards:
@@ -584,9 +564,11 @@ class DeepAnalysisRenderer:
                 refs = self._display_refs(card, citation_offset)
                 used.update(refs)
                 variable = self._short_heading(claim) or "外部变量"
-                framed = attach_refs_to_sentence(self._frame_external_claim(self._compact_text(claim, 90)), refs)
-                lines.append(
-                    f"| {variable} | {framed} | 交叉验证官方材料与研报假设，不替代正式证据。 | {self._external_next_watch(card)} |"
+                framed = self._external_claim_sentence(claim, refs)
+                self._append_external_variable_paragraph(
+                    lines,
+                    variable,
+                    framed,
                 )
         elif curated_display.get("_curated_external_narrative_paragraphs"):
             for paragraph in (curated_display.get("_curated_external_narrative_paragraphs") or [])[:6]:
@@ -598,9 +580,11 @@ class DeepAnalysisRenderer:
                 refs = self._display_refs(paragraph, citation_offset)
                 used.update(refs)
                 variable = str(paragraph.get("heading") or self._short_heading(text) or "外部变量")
-                framed = attach_refs_to_sentence(self._frame_external_claim(self._compact_text(text, 90)), refs)
-                lines.append(
-                    f"| {variable} | {framed} | 交叉验证官方材料与研报假设，不替代正式证据。 | {self._external_next_watch(paragraph)} |"
+                framed = self._external_claim_sentence(text, refs)
+                self._append_external_variable_paragraph(
+                    lines,
+                    variable,
+                    framed,
                 )
         else:
             for topic_key, label in CURATED_EXTERNAL_TOPIC_LABELS:
@@ -613,8 +597,12 @@ class DeepAnalysisRenderer:
                 row = topic_rows[0]
                 refs = self._display_refs(row, citation_offset)
                 used.update(refs)
-                framed = attach_refs_to_sentence(self._frame_external_claim(self._compact_text(str(row.get("text") or ""), 90)), refs)
-                lines.append(f"| {label} | {framed} | 与官方/研报线索交叉验证 | {self._external_next_watch(row)} |")
+                framed = self._external_claim_sentence(str(row.get("text") or ""), refs)
+                self._append_external_variable_paragraph(
+                    lines,
+                    label,
+                    framed,
+                )
         lines.append("")
         if used:
             self._append_section_citations(lines, used, self._offset_citations(citations, citation_offset))
@@ -633,46 +621,70 @@ class DeepAnalysisRenderer:
         lines = [
             "> 本节只做股价方向的条件推演，不直接修改目标价、评分、风险评分或最终推荐。",
             "",
-            "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |",
-            "|---|---|---|---|---|",
         ]
         used: set[int] = set()
+        entry_count = 0
 
-        annual_rows = [
+        raw_annual_rows = [
             row for row in ((annual_memo.get("sections") or {}).get("annual_report_explanation") or [])
             if isinstance(row, dict)
         ]
+        annual_rows = [
+            row for row in (self._clean_formal_medium_official_row(row) for row in raw_annual_rows)
+            if row
+        ]
+        preferred_annual_rows: List[Dict[str, Any]] = []
+        for group in ("product_business", "operation_update", "management_view", "competitiveness_rd", "financial_explanation", "other"):
+            preferred_annual_rows.extend(self._annual_rows_by_group(annual_rows, group))
+        annual_rows = preferred_annual_rows or annual_rows
         annual_pick = self._first_row_with_refs(annual_rows, annual_citation_offset)
         if annual_pick:
             text, refs = annual_pick
             used.update(refs)
-            evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
-            lines.append(f"| 官方确认 | {self._infer_key_variable(text, '收入 / 产品线')} | 年报/公告确认的产品线、经营变化和财务解释继续兑现，当前股价更容易获得基本面支撑 | 官方材料中的增长线索不能延续，或毛利率、现金流、费用率恶化 | {evidence} |")
+            variable = self._infer_key_variable(text, "业务覆盖 / 产品线")
+            evidence = attach_refs_to_sentence(self._compact_annual_text(text, 150), refs)
+            lines.extend([
+                f"**官方确认：{variable}**",
+                f"- {evidence}。若年报/公告确认的产品线、经营变化和财务解释继续兑现，当前股价更容易获得基本面支撑；若增长线索不能延续，或毛利率、现金流、费用率恶化，则估值支撑减弱。",
+                "",
+            ])
+            entry_count += 1
 
         broker_rows = [row for row in (broker_memo.get("sections") or []) if isinstance(row, dict)]
         broker_pick = self._first_row_with_refs(broker_rows, broker_citation_offset)
         if broker_pick:
             text, refs = broker_pick
             used.update(refs)
-            evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
-            lines.append(f"| 机构假设 | {self._infer_key_variable(text, '产品放量 / 盈利弹性')} | 券商关于需求、产品放量或盈利弹性的假设兑现，当前估值可被业绩增长消化 | 机构假设落空，盈利预测或估值溢价面临下修 | {evidence} |")
+            text = self._normalize_broker_attribution(
+                text,
+                default_prefix="研报认为",
+                author=self._broker_author_from_display_refs(refs, broker_memo, broker_citation_offset),
+            )
+            text = self._project_broker_assumption_view(text)
+            variable = self._infer_key_variable(text, "产品放量 / 盈利弹性")
+            evidence = attach_refs_to_sentence(self._compact_annual_text(text, 170), refs)
+            lines.extend([
+                f"**机构假设：{variable}**",
+                f"- {evidence}。若券商关于需求、产品放量或盈利弹性的假设兑现，当前估值可由业绩增长消化；若机构假设落空，盈利预测或估值溢价面临下修。",
+                "",
+            ])
+            entry_count += 1
 
         external_pick = self._first_curated_external_row_with_refs(curated_display, external_citation_offset)
         if external_pick:
             text, refs = external_pick
             used.update(refs)
-            evidence = attach_refs_to_sentence(self._compact_text(text, 80), refs)
-            lines.append(f"| 外部待验证 | {self._infer_key_variable(text, '供应链 / 技术路线')} | 外部变量被公告、订单或行业数据验证，可提升市场置信度和仓位上限 | 外部变量被证伪或长期无正式证据，只作为情绪噪音处理 | {evidence} |")
+            variable = self._infer_key_variable(text, "供应链 / 技术路线")
+            evidence = self._external_claim_sentence(text, refs, limit=280)
+            lines.extend([
+                f"**外部待验证：{variable}**",
+                f"- {evidence}。若该变量被公告、订单或行业数据验证，可提升市场置信度；若被证伪或长期无正式证据，则只作为情绪噪音处理。",
+                "",
+            ])
+            entry_count += 1
 
-        if len(lines) == 3:
-            lines.append("| 材料不足 | 可验证变量不足 | 暂不形成上行推演 | 暂不形成下行推演 | 等待官方材料、研报或外部变量补充 |")
-        lines.append("")
-        lines.extend([
-            "**推演结论**",
-            "- 当前股价能否继续获得基本面支撑，取决于官方材料中的经营兑现、机构假设中的盈利弹性，以及外部变量能否被公告或财报验证。",
-            "- 外部待验证变量只影响观察框架和置信度，不直接进入评分、风险评分、目标价或最终推荐。",
-            "",
-        ])
+        if entry_count == 0:
+            lines.extend(["- 当前可验证变量不足，暂不形成上行/下行推演。", ""])
         if used:
             citations = {}
             citations.update(self._offset_citations(annual_memo.get("citations", {}) or {}, annual_citation_offset))
@@ -784,6 +796,11 @@ class DeepAnalysisRenderer:
             title = str(row.get("title") or "").strip()
             refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
             if text:
+                text = self._normalize_broker_attribution(
+                    text,
+                    default_prefix="研报认为",
+                    author=self._broker_row_author(row, memo),
+                )
                 lines.append(f"- {attach_refs_to_sentence(f'**{title}**：{text}' if title else text, refs)}")
                 used.update(refs)
         for row in (memo.get("forecast_ranges") or []):
@@ -800,6 +817,11 @@ class DeepAnalysisRenderer:
             text = str(row.get("body") or "").strip()
             refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
             if text:
+                text = self._normalize_broker_attribution(
+                    text,
+                    default_prefix="研报提示",
+                    author=self._broker_row_author(row, memo),
+                )
                 lines.append(f"- {attach_refs_to_sentence(text, refs)}")
                 used.update(refs)
         lines.append("")
@@ -834,6 +856,8 @@ class DeepAnalysisRenderer:
         memo: Dict[str, Any],
         citation_offset: int = 0,
         fallback: str = "当前未取得足够年报材料，无法形成业务画像。",
+        include_confirmed_financial_rows: bool = True,
+        financial_label: str = "财务变化原因",
     ) -> List[str]:
         """Project annual memo rows into a compact business profile."""
         lines: List[str] = []
@@ -858,57 +882,47 @@ class DeepAnalysisRenderer:
         ]
 
         product_rows = self._annual_rows_by_group(explanation_rows, "product_business")
-        portrait_row = product_rows[0] if product_rows else (confirmed_rows[0] if confirmed_rows else None)
+        portrait_row = self._select_annual_portrait_row(product_rows) if product_rows else (confirmed_rows[0] if confirmed_rows else None)
         if portrait_row:
             refs = self._display_refs(portrait_row, citation_offset)
             used.update(refs)
-            portrait = self._compact_text(str(portrait_row.get("body") or ""), 115)
-            lines.extend([f"**一句话画像**：{attach_refs_to_sentence(portrait, refs)}", ""])
+            portrait = self._compact_annual_text(str(portrait_row.get("body") or ""), 140)
+            lines.extend(["**一句话画像**", f"- {attach_refs_to_sentence(portrait, refs)}", ""])
 
+        seen_business_keys = {self._annual_row_text_key(portrait_row)} if portrait_row else set()
+        business_rows: List[Dict[str, Any]] = []
+        for row in product_rows:
+            key = self._annual_row_text_key(row)
+            if key in seen_business_keys:
+                continue
+            seen_business_keys.add(key)
+            business_rows.append(row)
+        financial_rows = [
+            row for row in self._annual_rows_by_group(explanation_rows, "financial_explanation")
+            if self._is_financial_explanation_row(row)
+        ]
+        if include_confirmed_financial_rows:
+            financial_rows.extend(confirmed_rows)
         groups = (
-            ("业务结构", product_rows),
+            ("业务结构", business_rows),
             ("经营变化", self._annual_rows_by_group(explanation_rows, "operation_update") + self._annual_rows_by_group(explanation_rows, "management_view")),
             ("研发与产品进展", self._annual_rows_by_group(explanation_rows, "competitiveness_rd")),
-            ("财务变化原因", self._annual_rows_by_group(explanation_rows, "financial_explanation") + confirmed_rows),
+            (financial_label, financial_rows),
         )
         for label, rows in groups:
             rows = [row for row in rows if str(row.get("body") or "").strip()]
             if not rows:
                 continue
             lines.append(f"**{label}**")
-            for row in rows[:2]:
+            row_limit = 4 if label == financial_label else 2
+            for row in rows[:row_limit]:
                 refs = self._display_refs(row, citation_offset)
                 used.update(refs)
-                body = self._compact_text(str(row.get("body") or ""), 120)
+                body = self._annual_row_visible_body(row, include_title=(label == financial_label))
                 lines.append(f"- {attach_refs_to_sentence(body, refs)}")
             lines.append("")
-        explanation_rows = [
-            r for r in (secs.get("annual_report_explanation") or [])
-            if isinstance(r, dict)
-        ]
-        nd = [r for r in (secs.get("not_disclosed") or []) if isinstance(r, dict)]
-        ic = [r for r in (secs.get("inconclusive") or []) if isinstance(r, dict)]
         if not lines and not (confirmed_rows or explanation_rows):
             lines.extend([fallback, ""])
-        lines.extend(["**官方材料边界**", "| 问题 | 当前正式材料状态 | 报告处理 |", "|---|---|---|"])
-        boundary_rows = nd + ic
-        if boundary_rows:
-            for r in boundary_rows[:4]:
-                title = str(r.get("title") or "未披露/不能下结论").strip()
-                body = self._compact_text(str(r.get("body") or ""), 80)
-                handling = "不做推断，等待公告、年报、半年报或财报拆分补充。"
-                lines.append(f"| {title} | {body} | {handling} |")
-        else:
-            lines.append("| 未披露/不能下结论 | 重要客户、订单、产能、供应链或管理层指引若未披露。 | 不做推断。 |")
-        lines.append("")
-        warnings = (memo.get("validation") or {}).get("warnings") or []
-        if warnings:
-            warnings = self._display_validation_warnings(warnings)
-            if not lines or lines[-1] != "":
-                lines.append("")
-            lines.extend(["**validation warning**", ""])
-            for w in warnings:
-                lines.append(f"- {w}")
         if used:
             self._append_section_citations(lines, used, self._offset_citations(cits, citation_offset))
         return lines
@@ -919,22 +933,6 @@ class DeepAnalysisRenderer:
             "fact": row.get("title"),
             "data": row.get("body"),
         })
-
-    @staticmethod
-    def _display_validation_warnings(warnings: List[Any]) -> List[str]:
-        display: List[str] = []
-        has_zero_metric_warning = False
-        for warning in warnings:
-            text = str(warning or "").strip()
-            if not text:
-                continue
-            if "suspicious zero metric" in text and "0.00亿元" in text:
-                has_zero_metric_warning = True
-                continue
-            display.append(text)
-        if has_zero_metric_warning:
-            display.insert(0, "财务指标抽取出现 0 值异常，相关指标已从可见事实中过滤。")
-        return display
 
     @staticmethod
     def _broker_row_author(row: Dict[str, Any], memo: Dict[str, Any]) -> str:
@@ -949,11 +947,32 @@ class DeepAnalysisRenderer:
         return ""
 
     @staticmethod
+    def _broker_author_from_display_refs(refs: List[int], memo: Dict[str, Any], citation_offset: int = 0) -> str:
+        citations = memo.get("citations") or {}
+        for ref in refs:
+            try:
+                meta = citations.get(int(ref) - int(citation_offset), {})
+            except (TypeError, ValueError):
+                continue
+            author = str(meta.get("author") or "").strip()
+            if author:
+                return author
+        return ""
+
+    @staticmethod
     def _normalize_broker_attribution(text: str, default_prefix: str = "研报认为", author: str = "") -> str:
         value = re.sub(r"\s+", " ", str(text or "")).strip(" ：:")
         if not value:
             return ""
         author = str(author or "").strip()
+        broker_prefix = f"{author}研报" if author else "研报"
+        generic_assumption = re.match(r"^(?:券商认为|研报认为|机构认为)(?:[：:，,]\s*|\s+)(.+)$", value)
+        if generic_assumption:
+            return f"{broker_prefix}认为：{generic_assumption.group(1).strip()}"
+        generic_risk = re.match(r"^(?:券商提示|研报提示|机构提示|风险提示)(?:[：:，,]\s*|\s+)(.+)$", value)
+        if generic_risk:
+            body = re.sub(r"^(?:风险提示|提示)[：:]\s*", "", generic_risk.group(1).strip())
+            return f"{broker_prefix}提示：{body}"
         if author and value.startswith(f"{author}认为"):
             return value.replace(f"{author}认为", f"{author}研报认为", 1)
         if author and value.startswith(f"{author}提示"):
@@ -966,6 +985,8 @@ class DeepAnalysisRenderer:
         value = re.sub(r"^(?:券商认为|研报认为|机构认为)[：:]\s*([^：:]{2,12})提示[：:]\s*", r"\1研报提示：", value)
         if any(term in value for term in ("券商认为", "研报认为", "研报预计", "机构认为", "机构假设", "研报提示", "券商预测")):
             return value
+        if author and default_prefix.startswith("研报"):
+            return f"{broker_prefix}{default_prefix.removeprefix('研报')}：{value}"
         return f"{default_prefix}：{value}"
 
     @staticmethod
@@ -976,15 +997,42 @@ class DeepAnalysisRenderer:
             if term in texts and term not in themes:
                 themes.append(term)
         if themes:
-            return "研报共识集中在" + "、".join(themes[:4]) + "等变量，后续需要财报、订单和客户资本开支验证。"
+            return "研报共识集中在" + "、".join(themes[:4]) + "等变量。"
         if rows:
-            return "研报观点主要围绕需求、产品放量、盈利弹性与反方风险，需以后续公告和财报拆分验证。"
+            return "研报观点主要围绕需求、产品放量、盈利弹性与反方风险。"
         return ""
+
+    @staticmethod
+    def _project_broker_assumption_view(text: str) -> str:
+        value = re.sub(r"\s+", " ", str(text or "")).strip()
+        if not value:
+            return ""
+        match = re.match(r"^(.{0,18}?研报(?:认为|预计|提示)|研报(?:认为|预计|提示))[：:]\s*(.+)$", value)
+        if not match:
+            return value
+        prefix, body = match.group(1), match.group(2)
+        noisy_recap = any(term in body for term in ("业绩简评", "一季报", "Q1", "实现收入", "归母净利润", "同比", "环比"))
+        if not noisy_recap:
+            return value
+        themes: List[str] = []
+        if re.search(r"800G|1\.6T", body):
+            themes.append("800G/1.6T 放量")
+        if re.search(r"NPO|CPO|XPO|Scale[- ]?up|Scaleup", body, re.IGNORECASE):
+            themes.append("NPO/Scale-up 等新技术路线")
+        if any(term in body for term in ("毛利率", "产品结构", "规模效应")):
+            themes.append("产品结构升级和毛利率弹性")
+        if any(term in body for term in ("客户资本开支", "CSP", "AI 数据中心", "AI算力")):
+            themes.append("AI 客户资本开支")
+        if not themes:
+            return value
+        return f"{prefix}：研报关注{'、'.join(themes[:3])}。"
 
     @staticmethod
     def _annual_row_group(row: Dict[str, Any]) -> str:
         title = str(row.get("title") or "")
-        if any(term in title for term in ("研发", "技术", "竞争", "毛利率")):
+        if any(term in title for term in ("收入", "利润", "费用", "现金流", "存货", "减值", "毛利率")):
+            return "financial_explanation"
+        if any(term in title for term in ("研发", "技术", "竞争")):
             return "competitiveness_rd"
         if any(term in title for term in ("主营", "产品", "业务")):
             return "product_business"
@@ -992,8 +1040,6 @@ class DeepAnalysisRenderer:
             return "operation_update"
         if any(term in title for term in ("管理层", "市场", "行业", "前景")):
             return "management_view"
-        if any(term in title for term in ("收入", "利润", "费用", "现金流", "存货", "减值")):
-            return "financial_explanation"
         return "other"
 
     def _annual_rows_by_group(self, rows: List[Dict[str, Any]], group: str) -> List[Dict[str, Any]]:
@@ -1001,6 +1047,52 @@ class DeepAnalysisRenderer:
             row for row in rows
             if str(row.get("display_group") or self._annual_row_group(row)) == group
         ]
+
+    @staticmethod
+    def _annual_row_text_key(row: Dict[str, Any] | None) -> str:
+        if not isinstance(row, dict):
+            return ""
+        return re.sub(r"\s+", "", str(row.get("body") or ""))[:80]
+
+    @staticmethod
+    def _is_financial_explanation_row(row: Dict[str, Any]) -> bool:
+        body = str(row.get("body") or "")
+        title = str(row.get("title") or "")
+        if not body.strip():
+            return False
+        if any(term in body for term in ("变化原因", "主要系", "所致")):
+            return True
+        if any(term in title for term in ("营业收入", "归母净利润", "净利润", "毛利率", "现金流", "存货", "费用")):
+                return any(term in body for term in ("增长", "下降", "增加", "减少", "提升", "改善", "承压", "同比", "环比"))
+        return False
+
+    def _annual_row_visible_body(self, row: Dict[str, Any], include_title: bool = False) -> str:
+        body = self._compact_annual_text(str(row.get("body") or ""), 140)
+        title = str(row.get("title") or "").strip()
+        if include_title and title and title not in body and "原因" not in body:
+            return f"{title}：{body}"
+        return body
+
+    @staticmethod
+    def _select_annual_portrait_row(rows: List[Dict[str, Any]]) -> Dict[str, Any] | None:
+        if not rows:
+            return None
+
+        def score(row: Dict[str, Any]) -> int:
+            body = str(row.get("body") or "")
+            value = 0
+            if "从事" in body and any(term in body for term in ("设计", "开发", "测试", "系统解决方案")):
+                value += 8
+            if "产品线" in body:
+                value += 5
+            for term in ("FPGA", "安全与识别", "非挥发", "智能电表", "集成电路测试", "光模块"):
+                if term in body:
+                    value += 2
+            if "存储芯片产品线" in body and "FPGA" not in body:
+                value -= 4
+            return value
+
+        return max(rows, key=score)
 
     @staticmethod
     def _display_refs(row: Dict[str, Any], offset: int = 0) -> List[int]:
@@ -1020,6 +1112,52 @@ class DeepAnalysisRenderer:
         return cleaned[:limit].rstrip(" ，,；;。") + "..."
 
     @staticmethod
+    def _compact_annual_text(text: str, limit: int = 140) -> str:
+        cleaned = re.sub(r"\s+", " ", str(text or "")).strip(" ；;。")
+        if len(cleaned) <= limit:
+            return cleaned
+        chunks = re.split(r"(?<=[。！？；;])", cleaned)
+        kept = ""
+        for chunk in chunks:
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            next_text = (kept + chunk).strip()
+            if len(next_text) <= limit:
+                kept = next_text
+                continue
+            break
+        if kept:
+            return kept.strip(" ；;。")
+        return cleaned[:limit].rstrip(" ，,；;。")
+
+    @staticmethod
+    def _compact_external_text(text: str, limit: int = 380) -> str:
+        cleaned = re.sub(r"\s+", " ", str(text or "")).strip(" ；;。")
+        if len(cleaned) <= limit:
+            return cleaned
+        chunks = re.split(r"(?<=[。！？；;])", cleaned)
+        kept = ""
+        for chunk in chunks:
+            chunk = chunk.strip()
+            if not chunk:
+                continue
+            next_text = (kept + chunk).strip()
+            if len(next_text) <= limit:
+                kept = next_text
+                continue
+            break
+        if kept:
+            return kept.strip(" ；;。")
+        return cleaned[:limit].rstrip(" ，,；;。")
+
+    def _external_claim_sentence(self, text: str, refs: List[int], limit: int = 380) -> str:
+        return attach_refs_to_sentence(
+            self._frame_external_claim(self._compact_external_text(text, limit)),
+            refs,
+        )
+
+    @staticmethod
     def _clean_formal_medium_official_row(row: Dict[str, Any]) -> Dict[str, Any] | None:
         body = str(row.get("body") or "").strip()
         if not body:
@@ -1029,6 +1167,10 @@ class DeepAnalysisRenderer:
         body = re.sub(r"公司需遵守[^。；，,]*披露要求[，,。；]*", "", body)
         body = body.replace("报告期内公司从事的主要业务公司主营业务", "公司主营业务")
         body = body.replace("报告期内公司从事的主要业务", "")
+        body = re.sub(r"^\d+[、.]\s*(?:主要业务|主要产品及服务情况)\s*", "", body)
+        body = re.sub(r"^\d+(?:\.\d+)+\s*(?:FPGA芯片|[^，。；;]{1,20})\s*", "", body)
+        body = re.sub(r"^（?[^）]{1,20}）?芯片\s*\d+[、.]\s*", "", body)
+        body = body.replace("报告期内获得的研发成果截至", "截至")
         body = re.sub(r"\s+", " ", body).strip(" ，,；;。")
         if not body:
             return None
@@ -1118,6 +1260,10 @@ class DeepAnalysisRenderer:
         if not curated_display or not self._has_curated_external_citation(curated_display):
             return []
 
+        narrative_paragraphs = [
+            paragraph for paragraph in (curated_display.get("_curated_external_narrative_paragraphs") or [])
+            if isinstance(paragraph, dict)
+        ]
         reasoning_cards = curated_display.get("_curated_external_reasoning_cards") or []
         topic_groups = curated_display.get("_curated_external_topic_groups") or {}
 
@@ -1126,11 +1272,21 @@ class DeepAnalysisRenderer:
             "",
             "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
             "",
-            "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |",
-            "|---|---|---|---|",
         ]
 
-        if reasoning_cards:
+        if narrative_paragraphs:
+            for paragraph in narrative_paragraphs[:6]:
+                text = str(paragraph.get("text") or "").strip()
+                display_refs = self._display_refs(paragraph, citation_offset)
+                if not text or not display_refs:
+                    continue
+                rendered = self._external_claim_sentence(text, display_refs)
+                self._append_external_variable_paragraph(
+                    lines,
+                    str(paragraph.get("heading") or self._short_heading(text) or "外部变量"),
+                    rendered,
+                )
+        elif reasoning_cards:
             for card in reasoning_cards[:6]:
                 if not isinstance(card, dict):
                     continue
@@ -1138,16 +1294,11 @@ class DeepAnalysisRenderer:
                 display_refs = self._display_refs(card, citation_offset)
                 if not claim or not display_refs:
                     continue
-                rendered_claim = self._frame_external_claim(
-                    attach_refs_to_sentence(self._compact_text(claim, 95), display_refs)
-                )
-                lines.append(
-                    "| {variable} | {claim_text} | {relation} | {watch} |".format(
-                        variable=self._short_heading(claim) or "外部变量",
-                        claim_text=rendered_claim,
-                        relation="交叉验证正式材料与研报假设，不替代官方确认。",
-                        watch=self._external_next_watch(card),
-                    )
+                rendered_claim = self._external_claim_sentence(claim, display_refs)
+                self._append_external_variable_paragraph(
+                    lines,
+                    self._short_heading(claim) or "外部变量",
+                    rendered_claim,
                 )
         elif topic_groups:
             for topic_key, label in CURATED_EXTERNAL_TOPIC_LABELS:
@@ -1160,16 +1311,16 @@ class DeepAnalysisRenderer:
                     display_refs = self._display_refs(row, citation_offset)
                     if not text or not display_refs:
                         continue
-                    rendered = self._frame_external_claim(
-                        attach_refs_to_sentence(self._compact_text(text, 95), display_refs)
-                    )
+                    rendered = self._external_claim_sentence(text, display_refs)
                     if rendered:
-                        lines.append(
-                            f"| {label} | {rendered} | 交叉验证正式材料与研报假设，不替代官方确认。 | {self._external_next_watch(row)} |"
+                        self._append_external_variable_paragraph(
+                            lines,
+                            label,
+                            rendered,
                         )
 
-        if len(lines) == 6:
-            lines.append("| 外部变量 | 当前外部材料不足以形成可展示变量 | 不替代正式材料或研报假设 | 等待更多可引用材料 |")
+        if len(lines) == 4:
+            lines.append("- 当前外部材料不足以形成可展示变量。")
         lines.append("")
         return lines
 
@@ -1235,36 +1386,55 @@ class DeepAnalysisRenderer:
 
     @staticmethod
     def _frame_external_claim(text: str) -> str:
-        claim = str(text or "").strip()
+        claim = re.sub(r"\s+", " ", str(text or "")).strip(" ，,；;。")
         if not claim:
             return ""
-        if claim.startswith(("外部材料称", "外部观点称", "据外部材料")):
-            return claim
-        return f"外部材料称：{claim}；该说法需以公告、财报拆分或行业第三方数据验证。"
+        claim = re.sub(
+            r"^(?:外部材料|外部观点|外部文章|外部信息)(?:称|认为|提示|讨论|指出|显示)[，,：:\s]*",
+            "",
+            claim,
+        ).strip(" ，,；;。")
+        claim = re.sub(r"^据外部材料[，,：:\s]*", "", claim).strip(" ，,；;。")
+        claim = DeepAnalysisRenderer._soften_external_unverified_terms(claim)
+        if not claim:
+            return ""
+        return f"外部材料称：{claim}"
 
     @staticmethod
-    def _external_next_watch(row: Dict[str, Any]) -> str:
-        text = " ".join(
-            str(row.get(key) or "")
-            for key in ("claim", "text", "body", "verification_need")
-        )
-        if any(term in text for term in ("供应链", "预付款", "交付", "物料")):
-            return "跟踪存货、预付款、交付节奏和公告。"
-        if any(term in text for term in ("NPO", "XPO", "CPO", "技术", "算力", "FPGA", "1.6T", "800G")):
-            return "跟踪客户验证、量产时间和产品收入。"
-        if any(term in text for term in ("需求", "资本开支", "订单", "客户")):
-            return "跟踪订单、客户资本开支和财报拆分。"
-        return "跟踪公告、订单、财报拆分和行业第三方数据。"
+    def _append_external_variable_paragraph(lines: List[str], variable: str, claim_text: str) -> None:
+        variable = re.sub(r"\s+", " ", str(variable or "")).strip(" ：:，,；;。") or "外部变量"
+        variable = re.sub(
+            r"^(?:外部材料|外部观点|外部文章|外部信息)(?:称|认为|提示|讨论|指出|显示)[，,：:\s]*",
+            "",
+            variable,
+        ).strip(" ：:，,；;。") or "外部变量"
+        variable = DeepAnalysisRenderer._soften_external_unverified_terms(variable)
+        claim_text = re.sub(r"\s+", " ", str(claim_text or "")).strip()
+        if not claim_text:
+            return
+        lines.append(f"**{variable}**")
+        lines.append(f"- {claim_text}")
+        lines.append("")
+
+    @staticmethod
+    def _soften_external_unverified_terms(text: str) -> str:
+        softened = str(text or "")
+        softened = softened.replace("后续订单落地情况", "后续订单进展")
+        softened = softened.replace("订单落地情况", "订单进展")
+        softened = softened.replace("订单落地", "订单进展")
+        return softened
 
     @staticmethod
     def _infer_key_variable(text: str, fallback: str) -> str:
         value = str(text or "")
+        if any(term in value for term in ("供应链", "预付款", "交付")):
+            return "供应链与交付"
+        if any(term in value for term in ("主营业务", "产品服务", "业务覆盖")):
+            return fallback
         if any(term in value for term in ("1.6T", "800G", "3.2T")):
             return "高速光模块放量"
         if any(term in value for term in ("毛利率", "盈利", "利润")):
             return "盈利弹性 / 毛利率"
-        if any(term in value for term in ("供应链", "预付款", "交付")):
-            return "供应链与交付"
         if any(term in value for term in ("产品", "业务", "收入", "客户")):
             return fallback
         return fallback
@@ -1504,48 +1674,6 @@ class DeepAnalysisRenderer:
             return "".join(f"[^{ref}]" for ref in refs)
 
         return re.sub(r"(?:\[\^\d+\]){2,}", replace_cluster, text)
-
-    def _topic_groups_from_paragraphs(self, paragraphs: List[Any]) -> Dict[str, List[dict]]:
-        groups = {key: [] for key, _ in CURATED_EXTERNAL_TOPIC_LABELS}
-        for paragraph in paragraphs:
-            if not isinstance(paragraph, dict):
-                continue
-            topic_key = self._curated_external_topic_key(paragraph)
-            if not topic_key:
-                topic_key = "other"
-            groups.setdefault(topic_key, []).append(paragraph)
-        return {key: rows for key, rows in groups.items() if rows}
-
-    @classmethod
-    def _curated_external_topic_key(cls, row: Dict[str, Any]) -> str:
-        raw_topic = str(row.get("topic") or row.get("primary_topic") or "").strip()
-        if raw_topic:
-            alias = CURATED_EXTERNAL_TOPIC_ALIASES.get(raw_topic)
-            if alias:
-                return alias
-            if raw_topic.lower() in {"misc", "other", "unknown", "uncategorized"}:
-                return "other"
-
-        text = " ".join(
-            str(row.get(field) or "")
-            for field in ("topic", "primary_topic", "heading", "text", "claim", "why_incremental")
-        )
-        lower_text = text.lower()
-        if any(token in text for token in ("传言", "否认", "制裁", "清单", "反证", "回应", "1260H")):
-            return "risk_rumor_rebuttal"
-        if any(token in text for token in ("预付款", "交付", "产能", "订单", "供应链", "物料", "客户需求", "需求指引")):
-            return "order_capacity_delivery"
-        if any(token in text for token in ("NPO", "XPO", "CPO", "LPO", "硅光", "可插拔", "光进铜退", "技术路线")):
-            return "technology_route"
-        if any(token in text for token in ("营收", "利润", "毛利率", "费用", "现金流", "亏损", "研发开支")):
-            return "financial_quality"
-        if any(token in text for token in ("竞争", "商业化", "定点", "标杆车型", "市场份额", "客户拓展")):
-            return "competition_commercialization"
-        if any(token in text for token in ("估值", "股价", "市值", "资金", "情绪", "预期差", "机构持仓", "IPO")):
-            return "market_expectation"
-        if any(token in lower_text for token in ("capex", "800g", "1.6t", "scale up", "scale out")):
-            return "technology_route"
-        return "other"
 
     @staticmethod
     def _split_curated_observations(text: str) -> List[str]:

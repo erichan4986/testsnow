@@ -1252,7 +1252,12 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             and "外部材料在说什么" in section
             and "下一步看什么" in section
         )
-        if has_variable_table:
+        has_variable_narrative = (
+            "外部材料称" in section
+            and re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(r"\[\^\d+\]", section)
+        )
+        if has_variable_table or has_variable_narrative:
             missing = []
         else:
             markers = (
@@ -1274,6 +1279,8 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
         return
 
     # Legacy 4.4 path: keep an external observation from being a bare paragraph.
+    if profile and profile.get("profile") == "formal_medium":
+        return
     section44 = _extract_deep_analysis_subsection(text, "4.4")
     if not section44:
         return
