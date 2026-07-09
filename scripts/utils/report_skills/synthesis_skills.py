@@ -1290,6 +1290,11 @@ class SynthesisSkill(BaseSkill):
         result = self._fill_citation_metadata(result, items)
         result = self._enrich_core_fact_provenance(result)
         if ctx:
+            result = self._enrich_peer_comparison_fact_provenance(
+                result,
+                ctx.get("peer_comparison_material"),
+            )
+        if ctx:
             fact_pack = ctx.get("formal_financial_fact_pack") or all_data.get("formal_financial_fact_pack") or {}
             result = self._sanitize_financial_missing_contradictions(result, fact_pack)
             result = self._sanitize_financial_direction_contradictions(result, fact_pack)
@@ -1833,6 +1838,59 @@ class SynthesisSkill(BaseSkill):
                 return "partially_supported"
             return "supported"
         return "invalid_ref"
+
+    @staticmethod
+    def _enrich_peer_comparison_fact_provenance(synthesis: dict, peer_material: dict | None) -> dict:
+        """Mark peer-comparison core facts as structured metric evidence.
+
+        These facts are generated from deterministic ``peer_comparison_material``
+        rather than numbered citation refs.  They should not render as unknown,
+        but they also should not be mislabeled as official announcements.
+        """
+        if not peer_material or not isinstance(peer_material, dict):
+            return synthesis
+        rows = peer_material.get("rows") or []
+        if not rows:
+            return synthesis
+
+        for fact in synthesis.get("core_facts", []) or []:
+            if not isinstance(fact, dict):
+                continue
+            status = str(fact.get("provenance_status") or "")
+            if status not in {"missing_ref", "invalid_ref"}:
+                continue
+            if not SynthesisSkill._matches_peer_comparison_row(fact, rows):
+                continue
+            fact["source_labels"] = ["结构化同行估值数据"]
+            fact["evidence_type"] = "peer_comparison_metric"
+            fact["provenance_status"] = "supported"
+        return synthesis
+
+    @staticmethod
+    def _matches_peer_comparison_row(fact: dict, rows: list) -> bool:
+        blob = f"{fact.get('fact', '')} {fact.get('data', '')}"
+        blob = re.sub(r"\s+", "", str(blob))
+        if not blob:
+            return False
+
+        metric_labels = {
+            "gross_margin": ("毛利率",),
+            "pe_ttm": ("PE(TTM)", "PETTM"),
+            "forward_pe": ("ForwardPE",),
+            "ps": ("PS(市销率)", "PS", "市销率"),
+            "mcap": ("总市值", "市值"),
+        }
+        for row in rows:
+            if not isinstance(row, dict):
+                continue
+            peer = re.sub(r"\s+", "", str(row.get("peer") or ""))
+            metric = str(row.get("metric") or "")
+            labels = metric_labels.get(metric, ())
+            if not peer or not labels:
+                continue
+            if peer in blob and any(label in blob for label in labels):
+                return True
+        return False
 
     @staticmethod
     def _source_list(items: list) -> List[str]:

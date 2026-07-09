@@ -1043,6 +1043,14 @@ def _check_useless_core_fact(text: str) -> Iterable[QualityIssue]:
     section = _extract_markdown_section(text, "三、核心事实基座")
     if not section:
         return
+    unknown_match = re.search(r"(?:未绑定引用|引用无效)\s*\(unknown\)", section)
+    if unknown_match:
+        yield QualityIssue(
+            code="core_fact_unknown_evidence",
+            severity="warning",
+            message="核心事实基座包含 unknown 证据标签，应补充结构化来源标签或移出核心事实表。",
+            evidence=unknown_match.group(0),
+        )
     useless_patterns = (
         r"年报已发布",
         r"年度报告已发布",

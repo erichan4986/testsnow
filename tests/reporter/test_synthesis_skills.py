@@ -980,6 +980,53 @@ def test_enrich_missing_ref():
     assert fact["provenance_status"] == "missing_ref"
 
 
+def test_enrich_peer_comparison_facts_use_structured_metric_label():
+    skill = SynthesisSkill()
+    result = _build_result_for_provenance(
+        core_facts=[
+            {
+                "fact_id": 8,
+                "fact": "PE(TTM)对比新易盛",
+                "data": "高于新易盛17.9倍（新易盛PE(TTM)为66.32）",
+                "confidence": "中",
+                "source_refs": [],
+            },
+            {
+                "fact_id": 9,
+                "fact": "产品订单增长",
+                "data": "订单增长较快",
+                "confidence": "中",
+                "source_refs": [],
+            },
+        ],
+        citations={},
+    )
+    peer_material = {
+        "schema": "peer_comparison_material.v1",
+        "rows": [
+            {
+                "peer": "新易盛",
+                "metric": "pe_ttm",
+                "comparison": "PE(TTM)高于新易盛17.9倍",
+                "source_refs": ["指标:competitor_metrics"],
+                "usage": "claim_eligible",
+            },
+        ],
+    }
+
+    enriched = skill._enrich_core_fact_provenance(result)
+    enriched = skill._enrich_peer_comparison_fact_provenance(enriched, peer_material)
+
+    peer_fact = enriched["core_facts"][0]
+    ordinary_fact = enriched["core_facts"][1]
+    assert peer_fact["source_labels"] == ["结构化同行估值数据"]
+    assert peer_fact["evidence_type"] == "peer_comparison_metric"
+    assert peer_fact["provenance_status"] == "supported"
+    assert ordinary_fact["source_labels"] == []
+    assert ordinary_fact["evidence_type"] == "unknown"
+    assert ordinary_fact["provenance_status"] == "missing_ref"
+
+
 def test_enrich_invalid_ref():
     skill = SynthesisSkill()
     result = _build_result_for_provenance(

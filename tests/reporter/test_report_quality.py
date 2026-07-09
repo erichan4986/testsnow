@@ -2162,6 +2162,38 @@ def test_useless_core_fact_warns():
     assert "useless_core_fact" in codes
 
 
+def test_unknown_core_fact_evidence_warns():
+    text = """
+# 测试股 舆情深度报告
+
+## 三、核心事实基座
+
+| # | 事实 | 数据/来源 | 证据 | 置信度 |
+|---|---|-----------|------|--------|
+| 1 | PE(TTM)对比新易盛 | 高于新易盛17.9倍 | 未绑定引用 (unknown) | 中 |
+
+## 一、综合评分与推荐
+### 综合评分: 5.0/10 | EV: +5.00%（中性）
+
+## 四、深度分析
+
+<!-- deep_analysis_profile: {"profile": "formal_medium"} -->
+
+### 4.1 官方材料确认：业务与财务基座
+
+产业逻辑清晰。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+"""
+    result = check_report_text(text)
+    codes = {issue.code for issue in result.issues}
+    assert "core_fact_unknown_evidence" in codes
+
+
 def test_external_map_disclaimer_confirmation_word_does_not_falsely_trigger():
     text = _quality_shell(
         """
