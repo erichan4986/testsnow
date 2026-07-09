@@ -7,8 +7,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 if __name__.startswith("utils."):
+    from .broker_research_digest import clean_broker_research_excerpt_text
     from .source_adapter import SynthesisItem
 else:
+    from broker_research_digest import clean_broker_research_excerpt_text
     from source_adapter import SynthesisItem
 
 
@@ -176,7 +178,7 @@ def _extract_broker_research_excerpt(text: str) -> str:
             lines.append(stripped.lstrip(">").strip())
         elif lines and stripped:
             break
-    return re.sub(r"\s+", " ", " ".join(lines)).strip()
+    return clean_broker_research_excerpt_text(re.sub(r"\s+", " ", " ".join(lines)).strip())
 
 
 def _parse_frontmatter(text: str) -> Dict[str, Any]:

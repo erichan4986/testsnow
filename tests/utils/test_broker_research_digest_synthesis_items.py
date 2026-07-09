@@ -91,6 +91,33 @@ def test_reader_parses_broker_digest_note_into_synthesis_item(tmp_path: Path) ->
     assert item.extra.get("viewpoint_cluster") == "business_driver_product_mix"
 
 
+def test_reader_repairs_common_pdf_ocr_artifacts_from_existing_notes(tmp_path: Path) -> None:
+    _write_broker_note(
+        tmp_path,
+        excerpt=(
+            "受益于终端客户对算力基础设施的强劲投入，2025 年公司 品出货较快增长，"
+            "随着产 方案不断优化，公司营业收入与净利 均同比实现大幅增长，"
+            "预计 20 2027 年 800G 光模块需求持续增长，1.6T 光模块需求将迎 强劲增长。"
+        ),
+        institution="华鑫证券",
+    )
+
+    items = load_broker_research_digest_synthesis_items(
+        stock_name="测试股",
+        base_dir=tmp_path,
+    )
+
+    assert len(items) == 1
+    assert "公司产品出货较快增长" in items[0].content
+    assert "产品方案不断优化" in items[0].content
+    assert "营业收入与净利润均同比实现大幅增长" in items[0].content
+    assert "预计2027年800G光模块需求持续增长" in items[0].content
+    assert "1.6T光模块需求将迎来强劲增长" in items[0].content
+    assert "公司 品" not in items[0].content
+    assert "产 方案" not in items[0].content
+    assert "净利 均" not in items[0].content
+
+
 def test_reader_rejects_non_broker_source_type(tmp_path: Path) -> None:
     _write_broker_note(
         tmp_path,

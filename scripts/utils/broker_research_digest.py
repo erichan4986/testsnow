@@ -120,6 +120,49 @@ _SPECIFIC_TERMS = [
     "光模块",
 ]
 
+_PDF_OCR_ARTIFACT_REPAIRS = (
+    ("公司 品出货", "公司产品出货"),
+    ("随着产 方案", "随着产品方案"),
+    ("产 方案", "产品方案"),
+    ("净利 均", "净利润均"),
+    ("稳中 升", "稳中有升"),
+    ("将迎 强劲", "将迎来强劲"),
+    ("延续增 势", "延续增长态势"),
+    ("产 投入", "产能投入"),
+    ("已 到", "已达到"),
+    ("客 给予", "客户给予"),
+    ("实现归 公司股东", "实现归属于公司股东"),
+    ("产品毛 净利润率", "产品毛利率、净利润率"),
+    ("同环比 分别", "同环比分别"),
+    ("拉货 动", "拉货波动"),
+    ("继 加", "继续增加"),
+)
+
+
+def clean_broker_research_excerpt_text(text: str) -> str:
+    """Clean common PDF-extraction artifacts while preserving broker claims."""
+    value = re.sub(r"\s+", " ", str(text or "")).strip(" ：:；;。")
+    if not value:
+        return ""
+    value = re.sub(r"[▌•●]\s*", "", value)
+    value = re.sub(r"^(?:投资要点|核心观点|事件|观点|业绩简评|经营分析)[：:，,\s]*", "", value)
+    value = re.sub(r"(?:(?<=^)|(?<=[。；;，,]))\s*(?:事件|观点|业绩简评|经营分析|投资要点)[：:，,\s]*", "", value)
+    value = re.sub(
+        r"^20\d{2}\s*年\s*\d{1,2}\s*月\s*\d{1,2}\s*日[，,]?\s*[^，,：:；;。]{0,18}?发布\s*20\d{2}\s*年[一二三四]季报[：:，,]\s*",
+        "",
+        value,
+    )
+    for old, new in _PDF_OCR_ARTIFACT_REPAIRS:
+        value = value.replace(old, new)
+    value = re.sub(r"(?<=预计)\s*20\s+(?=20\d{2}\s*年)", "", value)
+    value = re.sub(r"(20\d{2})\s+年", r"\1年", value)
+    value = re.sub(r"(?<=\d)\s+(?=(?:年|亿元|%|pct|倍|G|T))", "", value)
+    value = re.sub(r"(?<=年)\s+(?=\d)", "", value)
+    value = re.sub(r"(800G|1\.6T)\s+(?=光模块)", r"\1", value)
+    value = re.sub(r"\s*([，,；;。])\s*", r"\1", value)
+    value = re.sub(r"\s+", " ", value)
+    return value.strip(" ：:；;。")
+
 
 def build_broker_research_digest_cards(
     item: SynthesisItem,
@@ -521,7 +564,9 @@ def _clean_excerpt(text: str) -> str:
     for noise in _GENERIC_NOISE_PATTERNS:
         text = text.replace(noise, " ")
     text = re.sub(r"\s+", " ", text).strip()
+    text = clean_broker_research_excerpt_text(text)
     text = _condense_excerpt(text)
+    text = clean_broker_research_excerpt_text(text)
     return text[:900].strip()
 
 

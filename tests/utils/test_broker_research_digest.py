@@ -183,6 +183,35 @@ def test_digest_removes_pdf_front_matter_noise_from_core_view() -> None:
     assert "总市值" not in excerpt
 
 
+def test_digest_repairs_common_pdf_ocr_artifacts_in_excerpts() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    事件：2026 年 4 月 17 日，中际旭创发布 2026 年一季报：
+    受益于终端客户对算力基础设施的强劲投入，2025 年公司 品出货较快增长，
+    随着产 方案不断优化，公司营业收入与净利 均同比实现大幅增长，
+    2026 年全年毛利率有望保持稳中 升，预计 20 2027 年 800G 光模块需求持续增长，
+    1.6T 光模块需求将迎 强劲增长，公司业绩延续增 势。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
+    excerpt = cards[0]["source_excerpt"]
+
+    assert "公司产品出货较快增长" in excerpt
+    assert "产品方案不断优化" in excerpt
+    assert "营业收入与净利润均同比实现大幅增长" in excerpt
+    assert "毛利率有望保持稳中有升" in excerpt
+    assert "预计2027年800G光模块需求持续增长" in excerpt
+    assert "1.6T光模块需求将迎来强劲增长" in excerpt
+    assert "公司业绩延续增长态势" in excerpt
+    assert "公司 品" not in excerpt
+    assert "产 方案" not in excerpt
+    assert "净利 均" not in excerpt
+    assert "稳中 升" not in excerpt
+    assert "20 2027" not in excerpt
+
+
 def test_digest_recognizes_bullet_prefixed_headings_from_pdf_text() -> None:
     from broker_research_digest import build_broker_research_digest_cards
 
