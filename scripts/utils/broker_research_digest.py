@@ -139,8 +139,18 @@ _PDF_OCR_ARTIFACT_REPAIRS = (
 )
 
 
-def clean_broker_research_excerpt_text(text: str) -> str:
-    """Clean common PDF-extraction artifacts while preserving broker claims."""
+def clean_broker_research_excerpt_text(
+    text: str,
+    *,
+    repair_legacy_artifacts: bool = False,
+) -> str:
+    """Clean broker excerpts while preserving broker claims.
+
+    ``repair_legacy_artifacts`` is intentionally opt-in. New digest production
+    should prefer cleaner source candidates instead of rewriting broken OCR
+    fragments into synthetic-looking claims; the opt-in path keeps old persisted
+    notes readable until they are regenerated.
+    """
     value = re.sub(r"\s+", " ", str(text or "")).strip(" ：:；;。")
     if not value:
         return ""
@@ -152,8 +162,9 @@ def clean_broker_research_excerpt_text(text: str) -> str:
         "",
         value,
     )
-    for old, new in _PDF_OCR_ARTIFACT_REPAIRS:
-        value = value.replace(old, new)
+    if repair_legacy_artifacts:
+        for old, new in _PDF_OCR_ARTIFACT_REPAIRS:
+            value = value.replace(old, new)
     value = re.sub(r"(?<=预计)\s*20\s+(?=20\d{2}\s*年)", "", value)
     value = re.sub(r"(20\d{2})\s+年", r"\1年", value)
     value = re.sub(r"(?<=\d)\s+(?=(?:年|亿元|%|pct|倍|G|T))", "", value)
@@ -182,16 +193,26 @@ def build_broker_research_digest_cards(
     for card_type, headings, title in _SECTION_SPECS:
         if card_type not in allowed_card_types:
             continue
-        section_parts = []
-        matched_headings = []
+        section_candidates: List[Tuple[int, int, str, str]] = []
         for heading in headings:
             section = _extract_section(useful_text, heading)
             if not section:
                 continue
-            section_parts.append(section)
-            matched_headings.append(heading)
-        if section_parts:
-            excerpt = _clean_excerpt(" ".join(section_parts))
+            excerpt_part = _clean_excerpt(section)
+            if not excerpt_part:
+                continue
+            section_candidates.append(
+                (
+                    _section_candidate_score(excerpt_part),
+                    len(section_candidates),
+                    heading,
+                    excerpt_part,
+                )
+            )
+        selected_sections = _select_section_candidates(card_type, section_candidates)
+        if selected_sections:
+            excerpt = _clean_excerpt(" ".join(part for _, _, _, part in selected_sections))
+            matched_headings = [heading for _, _, heading, _ in selected_sections]
             if card_type == "broker_risk_note":
                 valid = _is_valid_risk_excerpt(excerpt)
             elif card_type == "broker_earnings_forecast":
@@ -555,6 +576,29 @@ def _section_candidate_score(text: str) -> int:
     score -= 8 * len(re.findall(r"[\u4e00-\u9fff]\s+[\u4e00-\u9fff]", text))
     score -= 24 * len(re.findall(r"(?:营收|收入)\d+\.(?:\s|[，,；;。]|$)", text))
     return score
+
+
+def _select_section_candidates(
+    card_type: str,
+    candidates: List[Tuple[int, int, str, str]],
+) -> List[Tuple[int, int, str, str]]:
+    if not candidates:
+        return []
+    ordered = sorted(candidates, key=lambda item: (-item[0], item[1]))
+    if card_type != "broker_product_driver":
+        return ordered[:1]
+
+    selected: List[Tuple[int, int, str, str]] = []
+    seen: List[str] = []
+    for candidate in ordered:
+        fingerprint = _fingerprint(candidate[3])
+        if any(_near_duplicate(fingerprint, old) for old in seen):
+            continue
+        selected.append(candidate)
+        seen.append(fingerprint)
+        if len(selected) >= 2:
+            break
+    return selected or ordered[:1]
 
 
 def _clean_excerpt(text: str) -> str:

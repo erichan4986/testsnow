@@ -183,7 +183,7 @@ def test_digest_removes_pdf_front_matter_noise_from_core_view() -> None:
     assert "总市值" not in excerpt
 
 
-def test_digest_repairs_common_pdf_ocr_artifacts_in_excerpts() -> None:
+def test_digest_prefers_clean_candidate_instead_of_repairing_noisy_excerpt() -> None:
     from broker_research_digest import build_broker_research_digest_cards
 
     text = """
@@ -193,23 +193,42 @@ def test_digest_repairs_common_pdf_ocr_artifacts_in_excerpts() -> None:
     随着产 方案不断优化，公司营业收入与净利 均同比实现大幅增长，
     2026 年全年毛利率有望保持稳中 升，预计 20 2027 年 800G 光模块需求持续增长，
     1.6T 光模块需求将迎 强劲增长，公司业绩延续增 势。
+
+    投资要点
+    下游云厂商资本开支持续扩张，800G与1.6T高速光模块需求延续高景气，
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
     """
 
     cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
     excerpt = cards[0]["source_excerpt"]
 
-    assert "公司产品出货较快增长" in excerpt
-    assert "产品方案不断优化" in excerpt
-    assert "营业收入与净利润均同比实现大幅增长" in excerpt
-    assert "毛利率有望保持稳中有升" in excerpt
-    assert "预计2027年800G光模块需求持续增长" in excerpt
-    assert "1.6T光模块需求将迎来强劲增长" in excerpt
-    assert "公司业绩延续增长态势" in excerpt
+    assert "下游云厂商资本开支持续扩张" in excerpt
+    assert "产品结构升级推动收入增长" in excerpt
     assert "公司 品" not in excerpt
     assert "产 方案" not in excerpt
     assert "净利 均" not in excerpt
     assert "稳中 升" not in excerpt
     assert "20 2027" not in excerpt
+
+
+def test_excerpt_cleaner_only_repairs_pdf_artifacts_when_legacy_mode_enabled() -> None:
+    from broker_research_digest import clean_broker_research_excerpt_text
+
+    noisy = "2025 年公司 品出货较快增长，随着产 方案不断优化，公司净利 均增长。"
+
+    default_cleaned = clean_broker_research_excerpt_text(noisy)
+    legacy_cleaned = clean_broker_research_excerpt_text(
+        noisy,
+        repair_legacy_artifacts=True,
+    )
+
+    assert "公司 品出货较快增长" in default_cleaned
+    assert "产 方案" in default_cleaned
+    assert "公司产品出货较快增长" not in default_cleaned
+
+    assert "公司产品出货较快增长" in legacy_cleaned
+    assert "产品方案不断优化" in legacy_cleaned
+    assert "净利润均增长" in legacy_cleaned
 
 
 def test_digest_prefers_clean_repeated_heading_candidate_over_noisy_first_match() -> None:

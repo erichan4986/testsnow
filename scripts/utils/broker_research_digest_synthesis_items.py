@@ -178,7 +178,10 @@ def _extract_broker_research_excerpt(text: str) -> str:
             lines.append(stripped.lstrip(">").strip())
         elif lines and stripped:
             break
-    return clean_broker_research_excerpt_text(re.sub(r"\s+", " ", " ".join(lines)).strip())
+    return clean_broker_research_excerpt_text(
+        re.sub(r"\s+", " ", " ".join(lines)).strip(),
+        repair_legacy_artifacts=True,
+    )
 
 
 def _parse_frontmatter(text: str) -> Dict[str, Any]:
