@@ -545,7 +545,8 @@ class SynthesisSkill(BaseSkill):
             excerpt = " ".join(str(getattr(item, "content", "") or "").split())
             if not family or not excerpt:
                 continue
-            key = (family, str(extra.get("viewpoint_cluster") or excerpt[:80]))
+            institution = str(extra.get("institution") or getattr(item, "author", "") or "").strip()
+            key = (family, str(extra.get("viewpoint_cluster") or excerpt[:80]), institution)
             if key in seen:
                 continue
             seen.add(key)

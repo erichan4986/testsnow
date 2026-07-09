@@ -607,6 +607,31 @@ def test_deduplicates_same_viewpoint_cluster_but_preserves_distinct_clusters() -
     assert selected == [same_stronger, distinct]
 
 
+def test_dedup_preserves_same_viewpoint_from_distinct_institutions() -> None:
+    from broker_research_digest import deduplicate_broker_digest_cards_by_viewpoint
+
+    first = {
+        "card_type": "broker_core_view",
+        "viewpoint_cluster": "optical_module_scaleup",
+        "quality_score": 20,
+        "source_excerpt": "800G光模块需求增长。",
+        "institution": "甲证券",
+        "stock_code": "300308",
+    }
+    second = {
+        "card_type": "broker_core_view",
+        "viewpoint_cluster": "optical_module_scaleup",
+        "quality_score": 40,
+        "source_excerpt": "800G和1.6T光模块快速放量。",
+        "institution": "乙证券",
+        "stock_code": "300308",
+    }
+
+    selected = deduplicate_broker_digest_cards_by_viewpoint([first, second])
+
+    assert selected == [first, second]
+
+
 def test_dedup_preserves_long_report_body_card_against_short_commentary_duplicate() -> None:
     from broker_research_digest import deduplicate_broker_digest_cards_by_viewpoint
 

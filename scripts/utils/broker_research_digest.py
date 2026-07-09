@@ -987,6 +987,7 @@ def deduplicate_broker_digest_cards_by_viewpoint(
     protected_long_body_count_by_stock: Dict[str, int] = {}
     for idx, card in enumerate(cards):
         stock_key = str(card.get("stock_code") or card.get("stock_name") or "")
+        institution = str(card.get("institution") or "")
         cluster = str(card.get("viewpoint_cluster") or "")
         if not cluster:
             cluster = f"{card.get('card_type', '')}:{_fingerprint(str(card.get('source_excerpt', '')))}"
@@ -996,7 +997,7 @@ def deduplicate_broker_digest_cards_by_viewpoint(
                 continue
             protected_long_body_count_by_stock[stock_key] = count + 1
             cluster = f"{cluster}:long_report_body:{idx}"
-        key = (stock_key, cluster)
+        key = (stock_key, cluster, institution)
         order_by_key.setdefault(key, idx)
         current = best_by_key.get(key)
         if current is None:

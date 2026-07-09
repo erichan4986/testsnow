@@ -2733,7 +2733,7 @@ def test_build_broker_research_memo_rejects_single_thin_card():
     assert memo["sections"] == []
 
 
-def test_build_broker_research_memo_dedupes_same_cluster_across_institutions():
+def test_build_broker_research_memo_preserves_same_cluster_across_institutions():
     skill = SynthesisSkill(synthesizer=MagicMock())
     ctx = SkillContext(input={
         "stock_name": "中际旭创",
@@ -2745,8 +2745,9 @@ def test_build_broker_research_memo_dedupes_same_cluster_across_institutions():
 
     memo = skill._build_broker_research_memo(ctx)
 
-    assert memo["status"] == "absent"
-    assert memo["diagnostics"]["usable_card_count"] == 1
+    assert memo["status"] == "ready"
+    assert memo["diagnostics"]["usable_card_count"] == 2
+    assert memo["institutions"] == ["甲证券", "乙证券"]
 
 
 def test_build_broker_research_memo_forecast_and_risk_rows_resolve_refs():
