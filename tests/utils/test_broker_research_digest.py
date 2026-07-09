@@ -254,6 +254,61 @@ def test_digest_prefers_clean_repeated_heading_candidate_over_noisy_first_match(
     assert "营收195." not in core_excerpt
 
 
+def test_digest_records_section_candidate_diagnostics() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    公司2026年一季度实现营收195. 环比分别增长192.1%、47.3%；实现归母净利润57.3亿元。
+
+    投资要点
+    下游云厂商资本开支持续扩张，800G与1.6T高速光模块需求延续高景气，
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+    diagnostics = core_card["selection_diagnostics"]
+
+    assert len(diagnostics) == 2
+    assert {entry["heading"] for entry in diagnostics} == {"投资要点"}
+    assert any(entry["status"] == "selected" for entry in diagnostics)
+    assert any(entry["status"] == "skipped" for entry in diagnostics)
+    assert all(isinstance(entry["score"], int) for entry in diagnostics)
+    assert "selected" in core_card["selection_reason"]
+
+
+def test_digest_recognizes_broader_existing_category_headings() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    主要观点
+    AI算力资本开支保持高景气，公司800G与1.6T高速光模块需求快速增长，收入和利润弹性提升。
+
+    客户结构
+    北美云厂商客户需求延续，重点客户订单能见度提升，产品结构向高端光模块升级。
+
+    估值分析
+    预计公司2026-2028年归母净利润为80/110/140亿元，维持买入评级，对应PE继续消化。
+
+    主要风险
+    客户资本开支不及预期，高速光模块价格竞争加剧，新产品交付不及预期。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+
+    assert [card["card_type"] for card in cards] == [
+        "broker_core_view",
+        "broker_product_driver",
+        "broker_earnings_forecast",
+        "broker_risk_note",
+    ]
+    assert next(card for card in cards if card["card_type"] == "broker_core_view")["source_heading"] == "主要观点"
+    assert next(card for card in cards if card["card_type"] == "broker_product_driver")["source_heading"] == "客户结构"
+    assert next(card for card in cards if card["card_type"] == "broker_earnings_forecast")["source_heading"] == "估值分析"
+    assert next(card for card in cards if card["card_type"] == "broker_risk_note")["source_heading"] == "主要风险"
+
+
 def test_digest_recognizes_bullet_prefixed_headings_from_pdf_text() -> None:
     from broker_research_digest import build_broker_research_digest_cards
 

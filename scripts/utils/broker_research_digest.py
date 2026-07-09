@@ -46,7 +46,11 @@ _STOP_PATTERNS = [
 ]
 
 _SECTION_SPECS: List[Tuple[str, Tuple[str, ...], str]] = [
-    ("broker_core_view", ("核心观点", "投资要点", "事件", "观点", "点评"), "券商核心观点"),
+    (
+        "broker_core_view",
+        ("核心观点", "投资要点", "主要观点", "核心结论", "事件", "观点", "点评", "事件点评"),
+        "券商核心观点",
+    ),
     (
         "broker_product_driver",
         (
@@ -57,13 +61,20 @@ _SECTION_SPECS: List[Tuple[str, Tuple[str, ...], str]] = [
             "业务结构",
             "业务演进路径",
             "产品与产业",
+            "产品布局",
+            "客户结构",
+            "订单与交付",
+            "产能与供应链",
+            "技术优势",
             "行业趋势",
+            "行业需求",
             "增长逻辑",
+            "成长逻辑",
         ),
         "产品与产业驱动",
     ),
-    ("broker_earnings_forecast", ("盈利预测", "投资建议", "财务数据与估值"), "盈利预测与评级"),
-    ("broker_risk_note", ("风险提示",), "风险提示"),
+    ("broker_earnings_forecast", ("盈利预测", "业绩预测", "投资建议", "投资评级", "财务数据与估值", "盈利与估值", "估值分析"), "盈利预测与评级"),
+    ("broker_risk_note", ("风险提示", "主要风险", "风险因素", "风险分析"), "风险提示"),
 ]
 _SHORT_REPORT_CARD_TYPES = {"broker_core_view", "broker_earnings_forecast", "broker_risk_note"}
 _MEDIUM_REPORT_CARD_TYPES = {
@@ -195,24 +206,14 @@ def build_broker_research_digest_cards(
             continue
         section_candidates: List[Tuple[int, int, str, str]] = []
         for heading in headings:
-            section = _extract_section(useful_text, heading)
-            if not section:
-                continue
-            excerpt_part = _clean_excerpt(section)
-            if not excerpt_part:
-                continue
-            section_candidates.append(
-                (
-                    _section_candidate_score(excerpt_part),
-                    len(section_candidates),
-                    heading,
-                    excerpt_part,
-                )
+            section_candidates.extend(
+                _extract_section_candidates(useful_text, heading, order_offset=len(section_candidates))
             )
         selected_sections = _select_section_candidates(card_type, section_candidates)
         if selected_sections:
             excerpt = _clean_excerpt(" ".join(part for _, _, _, part in selected_sections))
             matched_headings = [heading for _, _, heading, _ in selected_sections]
+            diagnostics = _section_selection_diagnostics(section_candidates, selected_sections)
             if card_type == "broker_risk_note":
                 valid = _is_valid_risk_excerpt(excerpt)
             elif card_type == "broker_earnings_forecast":
@@ -231,10 +232,15 @@ def build_broker_research_digest_cards(
                     excerpt=excerpt,
                     heading=",".join(matched_headings),
                     report_length_class=report_length_class,
+                    selection_diagnostics=diagnostics,
+                    selection_reason=_selection_reason(card_type, selected_sections),
                 )
             )
 
-    if not _has_knowledge_driver_candidate(candidates):
+    if (
+        ("broker_product_driver" in allowed_card_types or not candidates)
+        and not _has_knowledge_driver_candidate(candidates)
+    ):
         for driver_excerpt in _generic_driver_block_excerpts(useful_text):
             candidates.append(
                 _build_card(
@@ -244,6 +250,15 @@ def build_broker_research_digest_cards(
                     excerpt=driver_excerpt,
                     heading="generic_driver_block",
                     report_length_class=report_length_class,
+                    selection_diagnostics=[
+                        _diagnostic_entry(
+                            heading="generic_driver_block",
+                            score=_section_candidate_score(driver_excerpt),
+                            status="selected",
+                            reason="selected_generic_driver_block",
+                        )
+                    ],
+                    selection_reason="selected_generic_driver_block",
                 )
             )
 
@@ -258,6 +273,15 @@ def build_broker_research_digest_cards(
                     excerpt=excerpt,
                     heading="fallback",
                     report_length_class=report_length_class,
+                    selection_diagnostics=[
+                        _diagnostic_entry(
+                            heading="fallback",
+                            score=_section_candidate_score(excerpt),
+                            status="selected",
+                            reason="selected_fallback_excerpt",
+                        )
+                    ],
+                    selection_reason="selected_fallback_excerpt",
                 )
             )
 
@@ -321,11 +345,24 @@ def build_broker_research_digest_preview_markdown(
                 f"- viewpoint_cluster：`{card.get('viewpoint_cluster', '')}`",
                 f"- report_length_class：`{card.get('report_length_class', '')}`",
                 f"- source_pdf_path：`{card.get('source_pdf_path', '')}`",
+                f"- selection_reason：`{card.get('selection_reason', '')}`",
                 "",
                 "> " + str(card.get("source_excerpt", "")),
                 "",
             ]
         )
+        diagnostics = card.get("selection_diagnostics") or []
+        if diagnostics:
+            lines.extend(["### Selection Diagnostics", ""])
+            for entry in diagnostics[:6]:
+                lines.append(
+                    "- "
+                    f"heading=`{entry.get('heading', '')}` | "
+                    f"score=`{entry.get('score', '')}` | "
+                    f"status=`{entry.get('status', '')}` | "
+                    f"reason=`{entry.get('reason', '')}`"
+                )
+            lines.append("")
     return "\n".join(lines)
 
 
@@ -439,6 +476,8 @@ def _build_card(
     excerpt: str,
     heading: str,
     report_length_class: str,
+    selection_diagnostics: Optional[List[Dict[str, Any]]] = None,
+    selection_reason: str = "",
 ) -> Dict[str, Any]:
     source_hash = hashlib.sha256(excerpt.encode("utf-8")).hexdigest()
     institution = str((item.extra or {}).get("institution") or item.author or "")
@@ -471,6 +510,8 @@ def _build_card(
         "viewpoint_cluster": viewpoint_cluster,
         "report_length_class": report_length_class,
         "quality_score": _quality_score(excerpt),
+        "selection_reason": selection_reason or "selected_by_digest_quality_score",
+        "selection_diagnostics": selection_diagnostics or [],
     }
 
 
@@ -549,11 +590,22 @@ def _find_heading_spans(text: str, heading: str) -> List[Tuple[int, int]]:
 
 
 def _extract_section(text: str, heading: str) -> str:
+    candidates = _extract_section_candidates(text, heading)
+    if not candidates:
+        return ""
+    return max(candidates, key=lambda item: (item[0], -item[1]))[3]
+
+
+def _extract_section_candidates(
+    text: str,
+    heading: str,
+    order_offset: int = 0,
+) -> List[Tuple[int, int, str, str]]:
     spans = _find_heading_spans(text, heading)
     if not spans:
-        return ""
-    candidates: List[Tuple[int, int, str]] = []
-    for start, content_start in spans:
+        return []
+    candidates: List[Tuple[int, int, str, str]] = []
+    for local_order, (start, content_start) in enumerate(spans):
         next_positions = []
         for other in _ALL_HEADINGS + tuple(_STOP_PATTERNS):
             for idx in _find_heading_positions(text[content_start:], other):
@@ -561,10 +613,12 @@ def _extract_section(text: str, heading: str) -> str:
                 break
         end = min(next_positions) if next_positions else min(len(text), start + 1600)
         raw = text[start:end].strip()
-        score = _section_candidate_score(_clean_excerpt(raw))
-        candidates.append((score, -start, raw))
-    candidates.sort(reverse=True)
-    return candidates[0][2].strip()
+        excerpt = _clean_excerpt(raw)
+        if not excerpt:
+            continue
+        score = _section_candidate_score(excerpt)
+        candidates.append((score, order_offset + local_order, heading, excerpt))
+    return candidates
 
 
 def _section_candidate_score(text: str) -> int:
@@ -599,6 +653,46 @@ def _select_section_candidates(
         if len(selected) >= 2:
             break
     return selected or ordered[:1]
+
+
+def _section_selection_diagnostics(
+    candidates: List[Tuple[int, int, str, str]],
+    selected: List[Tuple[int, int, str, str]],
+) -> List[Dict[str, Any]]:
+    selected_keys = {(score, order, heading) for score, order, heading, _ in selected}
+    selected_fingerprints = [_fingerprint(text) for _, _, _, text in selected]
+    diagnostics: List[Dict[str, Any]] = []
+    for score, order, heading, text in sorted(candidates, key=lambda item: item[1]):
+        key = (score, order, heading)
+        if key in selected_keys:
+            diagnostics.append(_diagnostic_entry(heading=heading, score=score, status="selected", reason="selected"))
+            continue
+        fingerprint = _fingerprint(text)
+        duplicate = any(_near_duplicate(fingerprint, old) for old in selected_fingerprints)
+        diagnostics.append(
+            _diagnostic_entry(
+                heading=heading,
+                score=score,
+                status="skipped",
+                reason="skipped_near_duplicate" if duplicate else "skipped_lower_score",
+            )
+        )
+    return diagnostics
+
+
+def _diagnostic_entry(*, heading: str, score: int, status: str, reason: str) -> Dict[str, Any]:
+    return {
+        "heading": heading,
+        "score": int(score),
+        "status": status,
+        "reason": reason,
+    }
+
+
+def _selection_reason(card_type: str, selected: List[Tuple[int, int, str, str]]) -> str:
+    if card_type == "broker_product_driver" and len(selected) > 1:
+        return "selected_complementary_product_driver_candidates"
+    return "selected_best_heading_candidate"
 
 
 def _clean_excerpt(text: str) -> str:
@@ -821,7 +915,7 @@ def _has_knowledge_driver_candidate(candidates: List[Dict[str, Any]]) -> bool:
     return any(
         bool(card.get("knowledge_eligible"))
         and not bool(card.get("display_only"))
-        and str(card.get("card_type")) in {"broker_core_view", "broker_product_driver"}
+        and str(card.get("card_type")) == "broker_product_driver"
         for card in candidates
     )
 
