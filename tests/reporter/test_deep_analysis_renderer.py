@@ -37,6 +37,32 @@ def test_render_basic():
     assert "4.1 产业逻辑与竞争格局" in result
 
 
+def test_render_embeds_material_coverage_diagnostics_comment():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "TestStock",
+        "synthesis": {
+            "industry_logic": "行业逻辑内容。",
+            "fundamentals": "基本面内容。",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "deep_analysis_material_coverage": {
+            "annual": {"narrative_cards_seen": 10, "narrative_cards_selected": 4},
+            "broker": {"raw_report_count": 3, "memo_usable_card_count": 2},
+            "external": {"citation_source_count": 2},
+        },
+    }
+
+    result = renderer.render(ctx)
+
+    assert "<!-- deep_analysis_material_coverage:" in result
+    assert '"raw_report_count": 3' in result
+    assert "narrative_cards_seen" not in result.split("<!-- deep_analysis_material_coverage:", 1)[0]
+
+
 def test_deep_analysis_renders_controlled_fallbacks_for_empty_sections():
     renderer = DeepAnalysisRenderer()
     ctx = {

@@ -1,4 +1,5 @@
 import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -3073,3 +3074,77 @@ def test_build_annual_report_memo_skips_forbidden_source_cards():
     assert "雪球" not in bodies
     assert "券商认为" not in bodies
     assert any("雪球" in w or "券商认为" in w for w in memo["validation"]["warnings"])
+
+
+def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tmp_path):
+    raw_root = tmp_path / "raw"
+    manifest_dir = raw_root / "broker_research_reports" / "测试股_123456"
+    manifest_dir.mkdir(parents=True)
+    (manifest_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "reports": [
+                    {"institution": "甲证券", "title": "报告一", "status": "ok"},
+                    {"institution": "乙证券", "title": "报告二", "status": "ok"},
+                    {"institution": "丙证券", "title": "报告三", "status": "ok"},
+                ]
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "stock_codes": {"测试股": "123456"},
+        "broker_research_cache_root": str(raw_root / "broker_research_reports"),
+        "annual_report_material_pack": {
+            "diagnostics": {
+                "cards_seen": 10,
+                "cards_selected": 4,
+                "by_type_seen": {"business_model": 3},
+                "by_type_selected": {"business_model": 1},
+            },
+        },
+        "annual_report_memo": {
+            "status": "ready",
+            "sections": {
+                "confirmed": [{"body": "营业收入：100亿元"}],
+                "annual_report_explanation": [{"body": "主营业务说明"}],
+            },
+        },
+        "broker_research_memo": {
+            "status": "ready",
+            "institutions": ["甲证券", "乙证券"],
+            "sections": [{"body": "甲证券认为：需求增长"}],
+            "risks": [{"body": "乙证券提示：风险"}],
+            "diagnostics": {
+                "input_item_count": 5,
+                "usable_card_count": 2,
+                "content_families": ["core_view", "risk_note"],
+                "institution_count": 2,
+            },
+        },
+        "deep_analysis_display": {
+            "citations": {
+                1: {"source": "微信公众号精选观察", "author": "作者A"},
+                2: {"source": "知乎精选观察", "author": "作者B"},
+            },
+            "_curated_external_narrative_paragraphs": [{"heading": "供应链"}],
+            "_curated_external_topic_groups": {"technology_route": [{"claim": "NPO"}]},
+        },
+    })
+
+    coverage = SynthesisSkill._build_material_coverage_diagnostics(ctx)
+
+    assert coverage["annual"]["narrative_cards_seen"] == 10
+    assert coverage["annual"]["narrative_cards_selected"] == 4
+    assert coverage["annual"]["memo_row_count"] == 2
+    assert coverage["broker"]["raw_report_count"] == 3
+    assert coverage["broker"]["raw_institution_count"] == 3
+    assert coverage["broker"]["uncovered_raw_institutions"] == ["丙证券"]
+    assert coverage["broker"]["digest_item_count"] == 5
+    assert coverage["broker"]["memo_usable_card_count"] == 2
+    assert coverage["broker"]["memo_row_count"] == 2
+    assert coverage["external"]["citation_source_count"] == 2
+    assert coverage["external"]["narrative_paragraph_count"] == 1
+    assert coverage["external"]["topic_group_count"] == 1

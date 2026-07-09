@@ -291,6 +291,10 @@ class DeepAnalysisRenderer:
         badge = self._profile_badge(profile_name)
         profile_json = json.dumps(profile, ensure_ascii=False)
         lines = ["## 四、深度分析", "", f"<!-- deep_analysis_profile: {profile_json} -->", "", f"> {badge}", ""]
+        coverage = ctx.get("deep_analysis_material_coverage")
+        if isinstance(coverage, dict) and coverage:
+            coverage_json = json.dumps(coverage, ensure_ascii=False)
+            lines[3:3] = [f"<!-- deep_analysis_material_coverage: {coverage_json} -->", ""]
 
         if profile_name == "formal_rich":
             lines.extend(self._legacy_deep_analysis_body(

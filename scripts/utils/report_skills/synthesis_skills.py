@@ -159,6 +159,7 @@ class SynthesisSkill(BaseSkill):
         # Evidence-adaptive routing: profile decides which deep-analysis prompts run.
         profile = self._build_evidence_profile(ctx, items)
         ctx.set("deep_analysis_evidence_profile", profile)
+        ctx.set("deep_analysis_material_coverage", self._build_material_coverage_diagnostics(ctx))
 
         if profile["profile"] in {"formal_rich", "formal_medium"}:
             baseline = self._synthesize(stock_name, stock_raw, keep_posts, ctx, items=items)
@@ -636,6 +637,7 @@ class SynthesisSkill(BaseSkill):
             "forecast_ranges": forecast_ranges,
             "risks": risks,
             "diagnostics": {
+                "input_item_count": len(items or []),
                 "usable_card_count": len(selected),
                 "content_families": sorted(families),
                 "institution_count": len(institutions),
@@ -643,6 +645,113 @@ class SynthesisSkill(BaseSkill):
             "validation": {"attributed_forecasts_only": True, "entered_scoring": False, "entered_target_price": False},
             "citations": citations,
         }
+
+    @staticmethod
+    def _build_material_coverage_diagnostics(ctx: SkillContext) -> Dict[str, Any]:
+        """Return lightweight source-layer coverage diagnostics for chapter 4.
+
+        This is audit-only metadata. It is not used for routing, scoring,
+        target price, risk score, or recommendation wording.
+        """
+        annual_pack = ctx.get("annual_report_material_pack") or {}
+        annual_diag = annual_pack.get("diagnostics") or {}
+        annual_memo = ctx.get("annual_report_memo") or {}
+        annual_sections = annual_memo.get("sections") or {}
+
+        broker_memo = ctx.get("broker_research_memo") or {}
+        broker_diag = broker_memo.get("diagnostics") or {}
+        raw_broker = SynthesisSkill._broker_raw_report_coverage(ctx)
+        memo_institutions = broker_memo.get("institutions") or []
+        uncovered_raw_institutions = [
+            name for name in raw_broker["institutions"]
+            if name not in memo_institutions
+        ]
+
+        deep_display = ctx.get("deep_analysis_display") or {}
+        topic_groups = deep_display.get("_curated_external_topic_groups") or {}
+        topic_claim_count = 0
+        if isinstance(topic_groups, dict):
+            topic_claim_count = sum(len(v) for v in topic_groups.values() if isinstance(v, list))
+
+        return {
+            "schema": "deep_analysis_material_coverage.v1",
+            "annual": {
+                "memo_status": annual_memo.get("status", "absent"),
+                "narrative_cards_seen": int(annual_diag.get("cards_seen") or 0),
+                "narrative_cards_selected": int(annual_diag.get("cards_selected") or 0),
+                "by_type_seen": annual_diag.get("by_type_seen") or {},
+                "by_type_selected": annual_diag.get("by_type_selected") or {},
+                "confirmed_row_count": len(annual_sections.get("confirmed") or []),
+                "explanation_row_count": len(annual_sections.get("annual_report_explanation") or []),
+                "memo_row_count": (
+                    len(annual_sections.get("confirmed") or [])
+                    + len(annual_sections.get("annual_report_explanation") or [])
+                ),
+                "validation_warning_count": len((annual_memo.get("validation") or {}).get("warnings") or []),
+            },
+            "broker": {
+                "memo_status": broker_memo.get("status", "absent"),
+                "raw_manifest_status": raw_broker["status"],
+                "raw_report_count": raw_broker["report_count"],
+                "raw_institution_count": len(raw_broker["institutions"]),
+                "raw_institutions": raw_broker["institutions"],
+                "uncovered_raw_institutions": uncovered_raw_institutions,
+                "digest_item_count": int(broker_diag.get("input_item_count") or broker_diag.get("usable_card_count") or 0),
+                "memo_usable_card_count": int(broker_diag.get("usable_card_count") or 0),
+                "memo_row_count": (
+                    len(broker_memo.get("sections") or [])
+                    + len(broker_memo.get("forecast_ranges") or [])
+                    + len(broker_memo.get("risks") or [])
+                ),
+                "memo_institution_count": int(broker_diag.get("institution_count") or len(broker_memo.get("institutions") or [])),
+                "memo_institutions": memo_institutions,
+                "content_families": broker_diag.get("content_families") or [],
+            },
+            "external": {
+                "citation_source_count": len(deep_display.get("citations") or {}),
+                "reasoning_card_count": len(deep_display.get("_curated_external_reasoning_cards") or []),
+                "narrative_paragraph_count": len(deep_display.get("_curated_external_narrative_paragraphs") or []),
+                "topic_group_count": len(topic_groups) if isinstance(topic_groups, dict) else 0,
+                "topic_claim_count": topic_claim_count,
+                "status": (
+                    ctx.get("curated_external_viewpoint_narrative_status")
+                    or ctx.get("curated_external_viewpoint_digest_status")
+                    or "absent"
+                ),
+            },
+        }
+
+    @staticmethod
+    def _broker_raw_report_coverage(ctx: SkillContext) -> Dict[str, Any]:
+        stock_name = str(ctx.get("stock_name") or "").strip()
+        stock_code = str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip()
+        root = ctx.get("broker_research_cache_root")
+        cache_root = Path(root) if root else Path(__file__).resolve().parents[3] / "data" / "raw" / "broker_research_reports"
+        candidates: List[Path] = []
+        if stock_name and stock_code:
+            candidates.append(cache_root / f"{stock_name}_{stock_code}" / "manifest.json")
+        if stock_name:
+            candidates.append(cache_root / stock_name / "manifest.json")
+            candidates.extend(sorted(cache_root.glob(f"{stock_name}_*/manifest.json")))
+
+        manifest_path = next((p for p in candidates if p.exists()), None)
+        if manifest_path is None:
+            return {"status": "missing", "report_count": 0, "institutions": []}
+        try:
+            payload = json.loads(manifest_path.read_text(encoding="utf-8"))
+        except Exception:
+            return {"status": "unreadable", "report_count": 0, "institutions": []}
+        reports = payload.get("reports") if isinstance(payload, dict) else []
+        if not isinstance(reports, list):
+            reports = []
+        institutions: List[str] = []
+        for report in reports:
+            if not isinstance(report, dict):
+                continue
+            institution = str(report.get("institution") or report.get("orgName") or "").strip()
+            if institution and institution not in institutions:
+                institutions.append(institution)
+        return {"status": "ok", "report_count": len(reports), "institutions": institutions}
 
     def _build_viewpoint_narrative_deep_analysis_display(self, ctx: SkillContext) -> None:
         """Build deep-analysis-only display from cached full-body narrative JSON."""
