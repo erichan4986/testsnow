@@ -3093,10 +3093,33 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
         ),
         encoding="utf-8",
     )
+    knowledge_dir = tmp_path / "knowledge"
+    notes_dir = knowledge_dir / "10-Stocks" / "测试股" / "broker_research_digest"
+    notes_dir.mkdir(parents=True)
+    for institution in ("甲证券", "乙证券"):
+        (notes_dir / f"2026-06-01-{institution}-broker-core-view.md").write_text(
+            "---\n"
+            "source_type: broker_research\n"
+            "card_type: broker_core_view\n"
+            f"institution: {institution}\n"
+            "source_credit: 72\n"
+            "claim_status: professional_analysis\n"
+            "confirmed_fact: false\n"
+            "scoring_eligible: false\n"
+            "risk_score_eligible: false\n"
+            "display_only: false\n"
+            "viewpoint_cluster: broker_core_view\n"
+            "---\n\n"
+            "## Broker Research Excerpt\n\n"
+            f"> {institution}认为：需求增长。\n",
+            encoding="utf-8",
+        )
     ctx = SkillContext(input={
         "stock_name": "测试股",
         "stock_codes": {"测试股": "123456"},
+        "knowledge_base_dir": str(knowledge_dir),
         "broker_research_cache_root": str(raw_root / "broker_research_reports"),
+        "broker_research_digest_max_display_items": 3,
         "annual_report_material_pack": {
             "diagnostics": {
                 "cards_seen": 10,
@@ -3141,6 +3164,10 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
     assert coverage["annual"]["memo_row_count"] == 2
     assert coverage["broker"]["raw_report_count"] == 3
     assert coverage["broker"]["raw_institution_count"] == 3
+    assert coverage["broker"]["digest_note_count"] == 2
+    assert coverage["broker"]["digest_note_institutions"] == ["乙证券", "甲证券"]
+    assert coverage["broker"]["loader_max_items"] == 3
+    assert coverage["broker"]["note_to_raw_gap_count"] == 1
     assert coverage["broker"]["uncovered_raw_institutions"] == ["丙证券"]
     assert coverage["broker"]["digest_item_count"] == 5
     assert coverage["broker"]["memo_usable_card_count"] == 2

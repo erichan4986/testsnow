@@ -661,10 +661,16 @@ class SynthesisSkill(BaseSkill):
         broker_memo = ctx.get("broker_research_memo") or {}
         broker_diag = broker_memo.get("diagnostics") or {}
         raw_broker = SynthesisSkill._broker_raw_report_coverage(ctx)
+        digest_notes = SynthesisSkill._broker_digest_note_coverage(ctx)
+        loader_max_items = SynthesisSkill._broker_digest_loader_max_items(ctx)
         memo_institutions = broker_memo.get("institutions") or []
         uncovered_raw_institutions = [
             name for name in raw_broker["institutions"]
             if name not in memo_institutions
+        ]
+        raw_without_digest_note_institutions = [
+            name for name in raw_broker["institutions"]
+            if name not in digest_notes["institutions"]
         ]
 
         deep_display = ctx.get("deep_analysis_display") or {}
@@ -695,6 +701,13 @@ class SynthesisSkill(BaseSkill):
                 "raw_report_count": raw_broker["report_count"],
                 "raw_institution_count": len(raw_broker["institutions"]),
                 "raw_institutions": raw_broker["institutions"],
+                "digest_note_count": digest_notes["note_count"],
+                "digest_note_institution_count": len(digest_notes["institutions"]),
+                "digest_note_institutions": digest_notes["institutions"],
+                "raw_without_digest_note_institutions": raw_without_digest_note_institutions,
+                "note_to_raw_gap_count": len(raw_without_digest_note_institutions),
+                "loader_max_items": loader_max_items,
+                "loader_budget_limited": digest_notes["note_count"] > loader_max_items,
                 "uncovered_raw_institutions": uncovered_raw_institutions,
                 "digest_item_count": int(broker_diag.get("input_item_count") or broker_diag.get("usable_card_count") or 0),
                 "memo_usable_card_count": int(broker_diag.get("usable_card_count") or 0),
@@ -720,6 +733,47 @@ class SynthesisSkill(BaseSkill):
                 ),
             },
         }
+
+    @staticmethod
+    def _broker_digest_loader_max_items(ctx: SkillContext) -> int:
+        try:
+            return int(ctx.get("broker_research_digest_max_display_items", 5))
+        except (TypeError, ValueError):
+            return 5
+
+    @staticmethod
+    def _broker_digest_note_coverage(ctx: SkillContext) -> Dict[str, Any]:
+        stock_name = str(ctx.get("stock_name") or "").strip()
+        if not stock_name:
+            return {"status": "missing_stock", "note_count": 0, "institutions": []}
+        base_dir = ctx.get("knowledge_base_dir") or Path(__file__).resolve().parents[3] / "knowledge"
+        notes_dir = (
+            Path(base_dir)
+            / "10-Stocks"
+            / SynthesisSkill._safe_dir_segment(stock_name)
+            / "broker_research_digest"
+        )
+        if not notes_dir.exists():
+            return {"status": "missing", "note_count": 0, "institutions": []}
+
+        institutions: List[str] = []
+        note_count = 0
+        for path in sorted(notes_dir.glob("*.md")):
+            note_count += 1
+            try:
+                text = path.read_text(encoding="utf-8")
+            except OSError:
+                continue
+            match = re.search(r"(?m)^institution:\s*[\"']?([^\"'\n]+)", text)
+            institution = match.group(1).strip() if match else ""
+            if institution and institution not in institutions:
+                institutions.append(institution)
+        return {"status": "ok", "note_count": note_count, "institutions": sorted(institutions)}
+
+    @staticmethod
+    def _safe_dir_segment(value: str) -> str:
+        cleaned = re.sub(r"[\\/:\*\?\"<>\|\r\n\t]+", "_", str(value or "")).strip(" ._")
+        return cleaned or "unknown"
 
     @staticmethod
     def _broker_raw_report_coverage(ctx: SkillContext) -> Dict[str, Any]:
