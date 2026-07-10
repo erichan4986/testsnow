@@ -282,7 +282,7 @@ def test_broker_digest_writer_refreshes_current_note_missing_selection_version(
     path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
 
     stale = path.read_text(encoding="utf-8").replace(
-        "selection_version: broker_digest_v3_1\n", ""
+        "selection_version: broker_digest_v3_2\n", ""
     )
     path.write_text(stale, encoding="utf-8")
 
@@ -296,7 +296,7 @@ def test_broker_digest_writer_refreshes_current_note_missing_selection_version(
     refreshed = path.read_text(encoding="utf-8")
     assert len(plan.written) == 1
     assert plan.skipped_existing == []
-    assert "selection_version: broker_digest_v3_1" in refreshed
+    assert "selection_version: broker_digest_v3_2" in refreshed
 
 
 def test_broker_digest_writer_skips_existing_note_with_selection_version(
@@ -309,7 +309,7 @@ def test_broker_digest_writer_skips_existing_note_with_selection_version(
         base_dir=tmp_path,
     )
     path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
-    assert "selection_version: broker_digest_v3_1" in path.read_text(encoding="utf-8")
+    assert "selection_version: broker_digest_v3_2" in path.read_text(encoding="utf-8")
 
     plan = write_broker_research_digest_card_notes(
         stock_name="圣邦股份",
@@ -322,7 +322,7 @@ def test_broker_digest_writer_skips_existing_note_with_selection_version(
     assert len(plan.skipped_existing) == 1
 
 
-def test_broker_digest_writer_refreshes_v3_note_after_damage_gate_revision(
+def test_broker_digest_writer_refreshes_v3_1_note_after_selector_damage_gate_revision(
     tmp_path: Path,
 ) -> None:
     write_broker_research_digest_card_notes(
@@ -333,8 +333,8 @@ def test_broker_digest_writer_refreshes_v3_note_after_damage_gate_revision(
     )
     path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
     stale = path.read_text(encoding="utf-8").replace(
+        "selection_version: broker_digest_v3_2\n",
         "selection_version: broker_digest_v3_1\n",
-        "selection_version: broker_digest_v3\n",
     )
     path.write_text(stale, encoding="utf-8")
 
@@ -348,7 +348,7 @@ def test_broker_digest_writer_refreshes_v3_note_after_damage_gate_revision(
     refreshed = path.read_text(encoding="utf-8")
     assert len(plan.written) == 1
     assert plan.skipped_existing == []
-    assert "selection_version: broker_digest_v3_1" in refreshed
+    assert "selection_version: broker_digest_v3_2" in refreshed
 
 
 def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
@@ -364,7 +364,7 @@ def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
         "card_id: broker:abc123\n"
         "selection_reason: selected_best_heading_candidate\n"
         "excerpt_cleaner_version: broker_ocr_v2\n"
-        "selection_version: broker_digest_v3_1\n"
+        "selection_version: broker_digest_v3_2\n"
         "---\n\n"
         "## Broker Research Excerpt\n\n"
         "> 人工保留摘录。\n\n"

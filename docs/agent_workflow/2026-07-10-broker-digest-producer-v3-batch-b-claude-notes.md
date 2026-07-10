@@ -243,3 +243,30 @@ Because the first rerun already persisted `broker_digest_v3` notes, the damage
 gate follow-up advances `SELECTION_VERSION` to `broker_digest_v3_1`. The writer's
 existing freshness contract therefore rewrites old v3 notes instead of silently
 reusing the rejected excerpts. A migration test locks this behavior.
+
+## Second Report Acceptance Addendum
+
+The formal rerun after `6c04931` removed the original chart, incomplete-series,
+and invalid-unit failures, but three 西南证券 generic-driver cards still contained
+broken OCR clauses. Their persisted diagnostics reported OCR penalties of 20,
+28, and 36, while the selected usable cards in the same run reported 4 or 8.
+`check_report_quality.py` failed on one damaged clause.
+
+The root cause was a remaining admission inconsistency: heading candidates used
+`_has_severe_ocr_damage()`, but generic-driver and fallback excerpts could reach
+the shared `_select_excerpt_units()` without that gate. The selector now owns the
+OCR admission check for every caller. The severe threshold is 20: four ordinary
+CJK PDF line-wrap gaps (penalty 16) remain eligible, while five gaps (penalty 20)
+are rejected. This is a source-quality rule, not a stock, institution, or industry
+phrase list.
+
+`SELECTION_VERSION` advances to `broker_digest_v3_2`, and the writer migration
+test verifies that persisted v3_1 notes are refreshed. A direct check against the
+three rejected 西南 excerpts returns an empty selection for all three.
+
+Fresh verification results:
+
+- producer tests: 81 passed, 3 skipped;
+- downstream Chapter 4 contracts: 283 passed;
+- runtime delta against Batch A: 242 additions, 167 deletions, net +75;
+- formal report generation still needs one new post-v3_2 acceptance run.

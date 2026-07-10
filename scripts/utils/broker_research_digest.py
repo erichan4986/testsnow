@@ -20,7 +20,7 @@ else:
 SOURCE_TYPE = "broker_research"
 SOURCE_CREDIT = 72
 SCHEMA_VERSION = "broker_research_digest_card.v1"
-SELECTION_VERSION = "broker_digest_v3_1"
+SELECTION_VERSION = "broker_digest_v3_2"
 
 SCORE_PART_KEYS = (
     "signal", "evidence", "completeness", "coherence",
@@ -191,6 +191,8 @@ def _units_redundant(left: str, right: str) -> bool:
 def _select_excerpt_units(text: str, card_type: str, max_units: int = 5) -> str:
     text = str(text or "").strip()
     if not text:
+        return ""
+    if _has_severe_ocr_damage(_candidate_score_parts(text)):
         return ""
     if card_type == "broker_earnings_forecast" and _looks_like_financial_table_fragment(text):
         return ""
@@ -864,7 +866,7 @@ def _candidate_total(parts: Dict[str, int]) -> int:
 
 
 def _has_severe_ocr_damage(parts: Dict[str, int]) -> bool:
-    return parts["ocr_penalty"] >= 40
+    return parts["ocr_penalty"] >= 20
 
 
 def _quality_score(text: str) -> int:

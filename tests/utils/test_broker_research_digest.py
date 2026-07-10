@@ -47,7 +47,7 @@ def test_digest_cards_include_selection_version() -> None:
     cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
 
     assert len(cards) >= 1
-    assert all(card["selection_version"] == "broker_digest_v3_1" for card in cards)
+    assert all(card["selection_version"] == "broker_digest_v3_2" for card in cards)
 
 
 def test_digest_card_identity_hashes_final_selected_excerpt() -> None:
@@ -410,6 +410,31 @@ def test_digest_clean_pdf_line_wraps_are_not_severe_ocr_damage() -> None:
     core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
 
     assert all(entry["status"] != "rejected" for entry in core_card["selection_diagnostics"])
+
+
+def test_digest_selector_rejects_five_cjk_gaps_but_keeps_four_line_wraps() -> None:
+    from broker_research_digest import (
+        _candidate_score_parts,
+        _has_severe_ocr_damage,
+        _select_excerpt_units,
+    )
+
+    clean = (
+        "下游云厂商资本开支持续 扩张，高速光模块需求延续 景气，"
+        "客户订单和产品结构 升级推动收入 增长，毛利率有望改善。"
+    )
+    damaged = (
+        "公司处于算力产业链关键互联环节，产品需求持续 扩张，"
+        "高速模块出货明显 提升，客户订单加速 释放，"
+        "产品结构持续 优化，盈利能力逐步 改善。"
+    )
+
+    assert _candidate_score_parts(clean)["ocr_penalty"] == 16
+    assert not _has_severe_ocr_damage(_candidate_score_parts(clean))
+    assert _select_excerpt_units(clean, "broker_product_driver") == clean
+    assert _candidate_score_parts(damaged)["ocr_penalty"] == 20
+    assert _has_severe_ocr_damage(_candidate_score_parts(damaged))
+    assert _select_excerpt_units(damaged, "broker_product_driver") == ""
 
 
 def test_digest_selector_rejects_residual_chart_metadata() -> None:
