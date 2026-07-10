@@ -24,9 +24,9 @@ class MaterialRow:
     claim_status: str
     citation_refs: Tuple[int, ...]
     source_ref_ids: Tuple[str, ...]
-    display_scope: Tuple[str, ...]
-    scoring_eligible: bool
-    risk_score_eligible: bool
+    display_scope: Tuple[str, ...] = DEEP_ANALYSIS_SCOPE
+    scoring_eligible: bool = False
+    risk_score_eligible: bool = False
     section_hint: str = ""
     title: str = ""
     body: str = ""
@@ -34,12 +34,6 @@ class MaterialRow:
     attribution: str = ""
     source_credit: str = ""
     diagnostics: Tuple[Tuple[str, str], ...] = ()
-
-
-# Compatibility name for existing callers and tests. MaterialRow is the
-# canonical Chapter 4 row contract from V2 onward.
-EvidenceRow = MaterialRow
-
 
 @dataclass(frozen=True)
 class MaterialSnapshot:
@@ -99,23 +93,17 @@ class _CitationAllocator:
 def build_deep_analysis_material_snapshot(ctx: Mapping[str, Any]) -> MaterialSnapshot:
     """Project current chapter-4 material fields into a deterministic snapshot."""
     allocator = _CitationAllocator()
-    rows = []
-
-    annual_memo = ctx.get("annual_report_memo") or {}
-    rows.extend(_annual_rows(annual_memo, allocator))
-
-    broker_memo = ctx.get("broker_research_memo") or {}
-    rows.extend(_broker_rows(broker_memo, allocator))
-
-    external_display = ctx.get("deep_analysis_display") or {}
-    rows.extend(_external_rows(external_display, allocator, ctx.get("deep_analysis_evidence_profile") or {}))
-
-    diagnostics = _diagnostics(ctx, rows)
+    profile = ctx.get("deep_analysis_evidence_profile") or {}
+    rows = [
+        *_annual_rows(ctx.get("annual_report_memo") or {}, allocator),
+        *_broker_rows(ctx.get("broker_research_memo") or {}, allocator),
+        *_external_rows(ctx.get("deep_analysis_display") or {}, allocator, profile),
+    ]
     return MaterialSnapshot(
         schema=SCHEMA,
         rows=tuple(rows),
         citations=allocator.citations,
-        diagnostics=diagnostics,
+        diagnostics=_diagnostics(ctx, rows),
     )
 
 
@@ -128,26 +116,16 @@ def build_chapter4_view_model(
     if profile_name != "formal_medium":
         raise ValueError(f"Chapter4ViewModel V1 only supports formal_medium, got {profile_name!r}")
 
+    usable_rows = tuple(row for row in snapshot.rows if row.text and row.citation_refs)
     annual_rows = tuple(
-        row for row in snapshot.rows
-        if row.source_layer == "annual"
-        and row.claim_status in {"formal_fact", "formal_explanation"}
-        and row.text
-        and row.citation_refs
+        row for row in usable_rows
+        if row.source_layer == "annual" and row.claim_status in {"formal_fact", "formal_explanation"}
     )
-    broker_rows = tuple(
-        row for row in snapshot.rows
-        if row.source_layer == "broker"
-        and row.text
-        and row.citation_refs
-        and row.attribution
-    )
+    broker_rows = tuple(row for row in usable_rows if row.source_layer == "broker" and row.attribution)
     external_rows = tuple(
         _dedupe_row_refs_by_citation_identity(row, snapshot.citations)
-        for row in snapshot.rows
+        for row in usable_rows
         if row.source_layer == "external"
-        and row.text
-        and row.citation_refs
         and not row.scoring_eligible
         and not row.risk_score_eligible
     )
@@ -181,15 +159,15 @@ def build_chapter4_view_model(
             "本节只做股价方向的条件推演，不直接修改目标价、评分、风险评分或最终推荐。",
         ),
     )
-    visible_refs = {
+    visible_refs = sorted({
         ref
         for section in sections
         for row in section.rows
         for ref in row.citation_refs
-    }
+    })
     citations = {
         ref: dict(snapshot.citations.get(ref) or {})
-        for ref in sorted(visible_refs)
+        for ref in visible_refs
         if ref in snapshot.citations
     }
     diagnostics = dict(snapshot.diagnostics)
@@ -198,12 +176,7 @@ def build_chapter4_view_model(
         "visible_rows_count": sum(len(section.rows) for section in sections[:3]),
         "visible_citation_count": len(citations),
     })
-    return Chapter4ViewModel(
-        profile=profile_name,
-        sections=sections,
-        citations=citations,
-        diagnostics=diagnostics,
-    )
+    return Chapter4ViewModel(profile_name, sections, citations, diagnostics)
 
 
 def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list[MaterialRow]:
@@ -223,21 +196,17 @@ def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
             if not isinstance(row, dict):
                 continue
             title = str(row.get("title") or "").strip()
-            body = str(row.get("body") or "").strip()
-            text = f"{title}：{body}" if title and body else title or body
-            result.append(_make_row(
-                row_id=f"annual:{section}:{idx}",
-                text=text,
+            result.append(_adapt_material_row(
+                row,
+                allocator,
+                citations,
+                f"annual:{section}:{idx}",
                 source_layer="annual",
                 claim_status=claim_status,
-                citation_refs=allocator.map_refs(row.get("citation_refs") or [], citations),
-                source_ref_ids=row.get("source_ref_ids") or [],
                 section_hint="annual_memo",
                 title=title,
-                body=body,
                 render_role=classify_annual_render_role(title, row.get("display_group")),
                 source_credit="official",
-                diagnostics=_row_diagnostics(row),
             ))
     return result
 
@@ -251,16 +220,14 @@ def _broker_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
         for idx, row in enumerate(memo.get(section) or []):
             if not isinstance(row, dict):
                 continue
-            text = _broker_row_text(section, row)
             title, body = _broker_title_body(section, row)
-            refs = allocator.map_refs(row.get("citation_refs") or [], citations)
-            result.append(_make_row(
-                row_id=f"broker:{section}:{idx}",
-                text=text,
+            material_row = _adapt_material_row(
+                row,
+                allocator,
+                citations,
+                f"broker:{section}:{idx}",
                 source_layer="broker",
                 claim_status="professional_analysis",
-                citation_refs=refs,
-                source_ref_ids=row.get("source_ref_ids") or [],
                 section_hint="broker_memo",
                 title=title,
                 body=body,
@@ -269,9 +236,11 @@ def _broker_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
                     "forecast_ranges": "broker_forecast",
                     "risks": "broker_risk",
                 }[section],
-                attribution=_broker_attribution(row, refs, allocator.citations),
                 source_credit="professional",
-                diagnostics=_row_diagnostics(row),
+            )
+            result.append(replace(
+                material_row,
+                attribution=_broker_attribution(row, material_row.citation_refs, allocator.citations),
             ))
     return result
 
@@ -280,79 +249,36 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
     citations = display.get("citations") or {}
     result = []
     section_hint = "external_map" if profile.get("profile") == "formal_thin_external_rich" else "external_addendum"
-
-    for idx, card in enumerate(display.get("_curated_external_reasoning_cards") or []):
-        if not isinstance(card, dict):
-            continue
-        text = str(card.get("claim") or card.get("verification_need") or "").strip()
-        result.append(_make_row(
-            row_id=f"external:reasoning_cards:{idx}",
-            text=text,
-            source_layer="external",
-            claim_status="external_observation",
-            citation_refs=allocator.map_refs(card.get("citation_refs") or [], citations),
-            source_ref_ids=card.get("source_ref_ids") or [],
-            section_hint=section_hint,
-            title=str(card.get("heading") or "外部变量").strip(),
-            body=text,
-            render_role="external_variable",
-            source_credit="external_low_credit",
-            diagnostics=_row_diagnostics(card),
-        ))
-
-    for group_name, group_rows in (display.get("_curated_external_topic_groups") or {}).items():
-        if not isinstance(group_rows, list):
-            continue
-        for idx, row in enumerate(group_rows):
+    sources = [("reasoning_cards", display.get("_curated_external_reasoning_cards") or [])]
+    sources.extend(
+        (f"topic_groups:{name}", rows)
+        for name, rows in (display.get("_curated_external_topic_groups") or {}).items()
+        if isinstance(rows, list)
+    )
+    sources.append(("narrative_paragraphs", display.get("_curated_external_narrative_paragraphs") or []))
+    for bucket, source_rows in sources:
+        for idx, row in enumerate(source_rows):
             if not isinstance(row, dict):
                 continue
-            heading = str(row.get("heading") or "").strip()
-            body = str(row.get("text") or "").strip()
-            text = f"{heading}：{body}" if heading and body else heading or body
-            result.append(_make_row(
-                row_id=f"external:topic_groups:{group_name}:{idx}",
-                text=text,
+            body = (
+                str(row.get("claim") or row.get("verification_need") or "")
+                if bucket == "reasoning_cards"
+                else str(row.get("text") or "")
+            ).strip()
+            result.append(_adapt_material_row(
+                row,
+                allocator,
+                citations,
+                f"external:{bucket}:{idx}",
                 source_layer="external",
                 claim_status="external_observation",
-                citation_refs=allocator.map_refs(row.get("citation_refs") or [], citations),
-                source_ref_ids=row.get("source_ref_ids") or [],
                 section_hint=section_hint,
-                title=heading or "外部变量",
+                title=str(row.get("heading") or "外部变量").strip(),
                 body=body,
                 render_role="external_variable",
                 source_credit="external_low_credit",
-                diagnostics=_row_diagnostics(row),
             ))
-
-    for idx, paragraph in enumerate(display.get("_curated_external_narrative_paragraphs") or []):
-        if not isinstance(paragraph, dict):
-            continue
-        heading = str(paragraph.get("heading") or "").strip()
-        body = str(paragraph.get("text") or "").strip()
-        text = f"{heading}：{body}" if heading and body else heading or body
-        result.append(_make_row(
-            row_id=f"external:narrative_paragraphs:{idx}",
-            text=text,
-            source_layer="external",
-            claim_status="external_observation",
-            citation_refs=allocator.map_refs(paragraph.get("citation_refs") or [], citations),
-            source_ref_ids=paragraph.get("source_ref_ids") or [],
-            section_hint=section_hint,
-            title=heading or "外部变量",
-            body=body,
-            render_role="external_variable",
-            source_credit="external_low_credit",
-            diagnostics=_row_diagnostics(paragraph),
-        ))
     return result
-
-
-def _broker_row_text(section: str, row: Mapping[str, Any]) -> str:
-    if section == "forecast_ranges":
-        return " ".join(str(row.get(key) or "").strip() for key in ("metric", "period", "range") if row.get(key))
-    title = str(row.get("title") or "").strip()
-    body = str(row.get("body") or "").strip()
-    return f"{title}：{body}" if title and body else title or body
 
 
 def _broker_title_body(section: str, row: Mapping[str, Any]) -> tuple[str, str]:
@@ -363,39 +289,37 @@ def _broker_title_body(section: str, row: Mapping[str, Any]) -> tuple[str, str]:
     return title, str(row.get("body") or "").strip()
 
 
-def _make_row(
-    *,
+def _adapt_material_row(
+    source: Mapping[str, Any],
+    allocator: _CitationAllocator,
+    citations: Mapping[Any, Any],
     row_id: str,
-    text: str,
+    *,
     source_layer: str,
     claim_status: str,
-    citation_refs: Iterable[int],
-    source_ref_ids: Iterable[Any],
     section_hint: str,
-    title: str = "",
-    body: str = "",
+    title: str | None = None,
+    body: str | None = None,
     render_role: str = "",
     attribution: str = "",
     source_credit: str = "",
-    diagnostics: Iterable[tuple[str, str]] = (),
 ) -> MaterialRow:
+    title = str(source.get("title") if title is None else title).strip()
+    body = str(source.get("body") if body is None else body).strip()
     return MaterialRow(
         row_id=row_id,
-        text=str(text or "").strip(),
+        text=f"{title}：{body}" if title and body else title or body,
         source_layer=source_layer,
         claim_status=claim_status,
-        citation_refs=tuple(int(ref) for ref in citation_refs),
-        source_ref_ids=tuple(str(ref) for ref in (source_ref_ids or ()) if str(ref)),
-        display_scope=DEEP_ANALYSIS_SCOPE,
-        scoring_eligible=False,
-        risk_score_eligible=False,
+        citation_refs=allocator.map_refs(source.get("citation_refs") or (), citations),
+        source_ref_ids=tuple(str(ref) for ref in (source.get("source_ref_ids") or ()) if str(ref)),
         section_hint=section_hint,
-        title=str(title or "").strip(),
-        body=str(body or "").strip(),
+        title=title,
+        body=body,
         render_role=str(render_role or "").strip(),
         attribution=str(attribution or "").strip(),
         source_credit=str(source_credit or "").strip(),
-        diagnostics=tuple((str(key), str(value)) for key, value in diagnostics),
+        diagnostics=_row_diagnostics(source),
     )
 
 
@@ -403,17 +327,16 @@ def classify_annual_render_role(title: str, configured_group: Any = "") -> str:
     configured = str(configured_group or "").strip()
     if configured:
         return configured
-    if any(term in title for term in ("收入", "利润", "费用", "现金流", "存货", "减值", "毛利率")):
-        return "financial_explanation"
-    if any(term in title for term in ("研发", "技术", "竞争")):
-        return "competitiveness_rd"
-    if any(term in title for term in ("主营", "产品", "业务")):
-        return "product_business"
-    if any(term in title for term in ("经营", "进展", "更新")):
-        return "operation_update"
-    if any(term in title for term in ("管理层", "市场", "行业", "前景")):
-        return "management_view"
-    return "other"
+    return next(
+        (role for role, terms in (
+            ("financial_explanation", ("收入", "利润", "费用", "现金流", "存货", "减值", "毛利率")),
+            ("competitiveness_rd", ("研发", "技术", "竞争")),
+            ("product_business", ("主营", "产品", "业务")),
+            ("operation_update", ("经营", "进展", "更新")),
+            ("management_view", ("管理层", "市场", "行业", "前景")),
+        ) if any(term in title for term in terms)),
+        "other",
+    )
 
 
 def _broker_attribution(
@@ -438,16 +361,12 @@ def _row_diagnostics(row: Mapping[str, Any]) -> Tuple[Tuple[str, str], ...]:
     return tuple((key, str(row.get(key))) for key in keys if row.get(key) not in (None, ""))
 
 
-def _first_row_by_role(
-    rows: Iterable[MaterialRow],
-    roles: Iterable[str],
-) -> MaterialRow | None:
+def _first_row_by_role(rows: Iterable[MaterialRow], roles: Iterable[str]) -> MaterialRow | None:
     row_list = tuple(rows)
-    for role in roles:
-        for row in row_list:
-            if row.render_role == role:
-                return row
-    return row_list[0] if row_list else None
+    return next(
+        (row for role in roles for row in row_list if row.render_role == role),
+        row_list[0] if row_list else None,
+    )
 
 
 def _dedupe_row_refs_by_citation_identity(

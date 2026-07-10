@@ -9,8 +9,9 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
 from deep_analysis_material_snapshot import (  # noqa: E402
+    _CitationAllocator,
+    _adapt_material_row,
     Chapter4ViewModel,
-    EvidenceRow,
     MaterialRow,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
@@ -144,7 +145,7 @@ def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations
     snapshot = build_deep_analysis_material_snapshot(_ctx())
 
     assert snapshot.schema == "deep_analysis_material_snapshot.v1"
-    assert all(isinstance(row, EvidenceRow) for row in snapshot.rows)
+    assert all(isinstance(row, MaterialRow) for row in snapshot.rows)
     assert all(row.display_scope == ("deep_analysis",) for row in snapshot.rows)
     assert all(row.scoring_eligible is False for row in snapshot.rows)
     assert all(row.risk_score_eligible is False for row in snapshot.rows)
@@ -282,3 +283,34 @@ def test_shared_material_classification_and_citation_identity_helpers():
         "正文",
     )
     assert citation_identity({}, fallback_ref=7) == ("ref", 7)
+
+
+def test_material_row_adapter_owns_common_refs_source_ids_and_diagnostics():
+    allocator = _CitationAllocator()
+    source = {
+        "title": "管理层讨论",
+        "body": "增长来自产品升级。",
+        "citation_refs": ["1"],
+        "source_ref_ids": ["annual-source:management"],
+        "selection_reason": "highest_score",
+    }
+
+    row = _adapt_material_row(
+        source,
+        allocator,
+        {1: {"source": "公司年报", "title": "管理层讨论"}},
+        "annual:annual_report_explanation:0",
+        source_layer="annual",
+        claim_status="formal_explanation",
+        section_hint="annual_memo",
+        render_role="management_view",
+        source_credit="official",
+    )
+
+    assert row.title == "管理层讨论"
+    assert row.body == "增长来自产品升级。"
+    assert row.text == "管理层讨论：增长来自产品升级。"
+    assert row.citation_refs == (1,)
+    assert row.source_ref_ids == ("annual-source:management",)
+    assert row.diagnostics == (("selection_reason", "highest_score"),)
+    assert allocator.citations[1]["source"] == "公司年报"
