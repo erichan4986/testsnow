@@ -118,6 +118,27 @@ def _unit_roles(text: str) -> set[str]:
     return roles
 
 
+def _source_unit_damage_reason(text: str) -> str:
+    if re.search(r"(?:图\s*\d+[:：]|(?:数据|资料)来源[:：]?|\bWind\b)", text, re.IGNORECASE):
+        return "chart_metadata"
+    if re.search(
+        r"(?:营业收入|归母净利润|扣非(?:归母)?净利润)\s*\d+(?:\.\d+)?\s*元(?:[，,；;。]|同比|$)",
+        text,
+    ):
+        return "invalid_financial_unit"
+    for match in re.finditer(
+        r"(20\d{2})\s*[–—-]\s*(20\d{2})年?[^。；;]{0,24}?分别为\s*"
+        r"((?:\d+(?:\.\d+)?\s*(?:%|亿元|元|倍|pct)\s*[、/,，]?\s*)+)",
+        text,
+        re.IGNORECASE,
+    ):
+        expected = int(match.group(2)) - int(match.group(1)) + 1
+        values = re.findall(r"\d+(?:\.\d+)?\s*(?:%|亿元|元|倍|pct)", match.group(3), re.IGNORECASE)
+        if 1 <= expected <= 10 and len(values) < expected:
+            return "incomplete_period_series"
+    return ""
+
+
 def _complete_source_units(text: str) -> List[str]:
     units: List[str] = []
     cursor = 0
@@ -126,12 +147,15 @@ def _complete_source_units(text: str) -> List[str]:
         unit = clean_broker_research_excerpt_text(match.group(0).strip())
         if len(unit) < 14 or _looks_like_front_matter_noise(unit):
             continue
+        if _source_unit_damage_reason(unit):
+            continue
         if _unit_roles(unit):
             units.append(unit)
     tail = clean_broker_research_excerpt_text(text[cursor:].strip())
     if (
         14 <= len(tail) <= 180
         and not _looks_like_front_matter_noise(tail)
+        and not _source_unit_damage_reason(tail)
         and _unit_roles(tail)
     ):
         units.append(tail)

@@ -412,6 +412,47 @@ def test_digest_clean_pdf_line_wraps_are_not_severe_ocr_damage() -> None:
     assert all(entry["status"] != "rejected" for entry in core_card["selection_diagnostics"])
 
 
+def test_digest_selector_rejects_residual_chart_metadata() -> None:
+    from broker_research_digest import _select_excerpt_units
+
+    damaged = (
+        "图 12：2016-2026Q1公司研发费用及增速 图 13：20 数据来源：Wind，西南证券整理 "
+        "应收账款同比增长98.42%，应付账款同比增长169.26%，资本开支扩大支撑产能建设。"
+    )
+
+    assert _select_excerpt_units(damaged, "broker_product_driver") == ""
+
+
+def test_digest_selector_rejects_incomplete_multi_period_series() -> None:
+    from broker_research_digest import _select_excerpt_units
+
+    damaged = (
+        "预计公司高端产品毛利率2026-2028年分别为45.0%、48.0，"
+        "产品结构升级推动盈利能力持续提升。"
+    )
+
+    assert _select_excerpt_units(damaged, "broker_product_driver") == ""
+
+
+def test_digest_selector_rejects_corporate_profit_with_bare_yuan_unit() -> None:
+    from broker_research_digest import _select_excerpt_units
+
+    damaged = "公司2025年实现营业收入382.40亿元，实现归母净利润107.97元，同比增长108.78%。"
+
+    assert _select_excerpt_units(damaged, "broker_core_view") == ""
+
+
+def test_digest_selector_keeps_complete_multi_period_series() -> None:
+    from broker_research_digest import _select_excerpt_units
+
+    complete = (
+        "预计公司高端产品毛利率2026-2028年分别为45.0%、48.0%、50.0%，"
+        "产品结构升级推动盈利能力持续提升。"
+    )
+
+    assert _select_excerpt_units(complete, "broker_product_driver") == complete
+
+
 def test_digest_retreats_to_sentence_boundary_when_900_falls_mid_clause() -> None:
     from broker_research_digest import _bounded_complete_excerpt
 

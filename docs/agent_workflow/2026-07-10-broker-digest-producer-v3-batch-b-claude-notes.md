@@ -4,7 +4,7 @@
 
 > Date: 2026-07-10
 > Status: completed
-> Verdict: Batch B passes; producer v3 is ready for a newly generated 中际旭创 report
+> Verdict: Batch B passes after post-report damage-gate fix; a fresh report rerun is required
 
 ## Changed Files
 
@@ -112,7 +112,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m pytest \
   tests/utils/test_broker_research_digest_synthesis_items.py \
   -q -p no:cacheprovider
 
-75 passed, 3 skipped in 0.65s
+79 passed, 3 skipped in 0.86s
 ```
 
 ### Downstream contract tests
@@ -125,7 +125,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m pytest \
   tests/reporter/test_report_quality.py \
   -q -p no:cacheprovider
 
-283 passed in 2.94s
+283 passed in 4.24s
 ```
 
 ### Repository gates
@@ -144,9 +144,9 @@ Measured against the Batch A commit (`a564898`) for the only modified runtime fi
 
 | File | Additions | Deletions | Net |
 | --- | --- | --- | --- |
-| `scripts/utils/broker_research_digest.py` | 214 | 165 | **+49** |
+| `scripts/utils/broker_research_digest.py` | 238 | 165 | **+73** |
 
-Target was ≤ +80 net runtime lines; hard stop was +100. Combined Batch B net is **+49**,
+Target was ≤ +80 net runtime lines; hard stop was +100. Combined Batch B net is **+73**,
 well within target.
 
 ## Requirement-Test Matrix
@@ -164,7 +164,7 @@ well within target.
 | Incoherent fallback rejected | `_fallback_excerpt()` returns empty when family contract not met | `test_digest_rejects_incoherent_fallback_without_business_reason` → pass |
 | Single selector, no parallel paths | `_select_excerpt_units()` is the only admission/selection owner | code review + all tests pass |
 | Table/rating/risk guards preserved | `_select_excerpt_units()` early returns for forecast tables, generic risks, and risk-only product text | `test_generic_risk_with_financial_table_is_dropped_but_specific_risk_survives`, `test_table_only_earnings_forecast_is_dropped`, `test_digest_does_not_classify_risk_sentence_as_product_driver` → pass |
-| Runtime budget | net +49 runtime lines | `git diff --numstat` → within +80 target |
+| Runtime budget | net +73 runtime lines | `git diff --numstat` → within +80 target |
 
 ## Blocker / Warning / Deviation
 
@@ -184,7 +184,7 @@ well within target.
     covered. Instead, the implementation joins the already-admitted heading excerpts and
     applies only `_bounded_complete_excerpt` for boundary safety, preserving cross-heading
     complementarity.
-- **Budget note:** Net +49 leaves ample headroom; no risk of exceeding the +100 hard stop.
+- **Budget note:** Net +73 remains within the +80 target and +100 hard stop.
 
 ## Ready For 中际旭创 Report Generation
 
@@ -192,7 +192,7 @@ Yes. Batch B focused tests, downstream contract tests, CI grep gates, and
 `git diff --check` all pass. The producer now enforces an explicit claim/evidence
 contract for all four broker card families, preserves source order and verbatim
 source substrings, drops semantic duplicates, and keeps complementary cross-heading
-product-driver content. Runtime net growth is +49 lines, within the +80 target.
+product-driver content. Runtime net growth is +73 lines, within the +80 target.
 
 ## Codex Acceptance Addendum
 
@@ -208,6 +208,33 @@ commit:
    terms such as “推动 / 带动 / 支撑 / 来自 / 受益于” populate the mechanism
    role without adding stock-specific vocabulary.
 
-Fresh acceptance results are 75 passed / 3 skipped for producer tests, 283
+Fresh acceptance results are 79 passed / 3 skipped for producer tests, 283
 passed downstream, all CI grep gates passed, and `git diff --check` is clean.
-Batch B runtime net growth is +49 lines.
+Batch B runtime net growth is +73 lines.
+
+## Post-Report Damage-Gate Addendum
+
+The first formal 中际旭创 rerun after `d8ae4f2` passed automated gates but did
+not pass manual content acceptance. Three 西南证券 generic-driver cards retained
+chart metadata or incomplete numeric clauses, and one 华鑫证券 core-view card
+rendered corporate net profit as `107.97元`.
+
+Root-cause tracing showed that generic-driver blocks called the semantic selector
+but the selector did not own residual source-damage admission. Two selected notes
+even recorded `ocr_penalty=40`, proving the severe gate was bypassed outside the
+heading-candidate path.
+
+The single `_complete_source_units()` admission path now rejects source units
+containing:
+
+- residual chart/source metadata such as `图 12`、`数据来源` or `Wind`;
+- incomplete multi-period `分别为` series whose value count is below the year
+  range count;
+- corporate revenue/profit metrics expressed in bare `元`, without guessing the
+  missing unit.
+
+Four tests reproduce the actual report failures and include a complete three-year
+series negative control. Final verification is 79 passed / 3 skipped for producer
+tests, 283 downstream tests passed, CI grep gates passed, and diff-check is clean.
+The formal report must be generated again after the follow-up commit; the report
+produced from `d8ae4f2` is not the final acceptance sample.
