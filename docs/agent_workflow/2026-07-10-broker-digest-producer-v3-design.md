@@ -2,7 +2,7 @@
 
 > **Date**: 2026-07-10
 > **Owner**: Codex
-> **Status**: Under Round 1 Review
+> **Status**: Under Round 2 Review
 
 ## 1. Goal
 
@@ -28,8 +28,9 @@ rendering. This batch does not add an LLM memo.
 - Do not add stock-specific OCR replacements.
 - Do not modify renderer, evidence-profile routing, `KnowledgeSynthesizer`
   prompts, source collection, or PDF download behavior.
-- Keep runtime growth bounded: prefer at most 60 net new runtime lines; stop at
-  100 unless replacing equivalent legacy logic in the same batch.
+- Keep runtime growth bounded per implementation batch: target at most 80 net
+  new runtime lines and stop at 100. New logic must replace the legacy helpers
+  listed in Section 9 rather than run beside them.
 
 ## 3. Current Failure
 
@@ -142,13 +143,75 @@ not guess replacement text.
 
 - Add `selection_version: broker_digest_v3` to cards and note frontmatter.
 - Persist score parts in `Selection Diagnostics` in a compact stable form.
-- Existing notes without the current selection version are refreshed by the
-  existing report-flow writer and legacy notes continue to be archived.
+- `_render_note()` writes both `excerpt_cleaner_version: broker_ocr_v2` and
+  `selection_version: broker_digest_v3` during the transition.
+- `_has_current_diagnostics_note_shape()` requires the current selection
+  version in addition to the existing schema, cleaner, reason, and diagnostics
+  markers. Notes missing it are refreshed by the report-flow writer.
+- `_is_legacy_broker_digest_note()` continues to identify and archive old broker
+  notes; a current-schema note missing only `selection_version` is refreshed in
+  place rather than treated as an unrelated file.
 - `source_excerpt_hash` and `card_id` derive from the final selected excerpt.
 
 Diagnostics are debug metadata only and do not render in Chapter 4.
 
-## 9. Implementation Scope
+## 9. Implementation Batches And Replacement Budget
+
+### 9.1 Batch A: Candidate Integrity And Diagnostics
+
+Batch A delivers:
+
+- boundary-safe excerpt construction with no final `[:900]` slicing;
+- explicit score parts and total score;
+- severe OCR/numeric-damage rejection;
+- `selection_version` card/note persistence and stale-note refresh;
+- diagnostics that explain selected, skipped, and rejected candidates.
+
+It replaces these producer helpers rather than adding a parallel path:
+
+- `_condense_excerpt`
+- `_quality_score`
+- `_section_candidate_score`
+- `_diagnostic_entry`
+
+It modifies these writer functions in place:
+
+- `_render_note`
+- `_has_current_diagnostics_note_shape`
+- `_is_legacy_broker_digest_note` only if needed to preserve archive semantics
+
+The four replaced producer helpers currently occupy about 50 runtime lines.
+Batch A may introduce at most 130 replacement lines across both runtime files,
+for a target net delta of at most +80 and hard stop at +100.
+
+### 9.2 Batch B: Semantic Pairing And Complementarity
+
+Batch B delivers:
+
+- source-unit semantic roles;
+- card-family claim/evidence admission;
+- complementary unit selection in source order;
+- the same complete-unit rules for no-heading fallback.
+
+It replaces or folds these helpers:
+
+- `_select_section_candidates`
+- `_fallback_excerpt`
+- `_is_valid_excerpt`
+- `_is_valid_product_driver_excerpt`
+- `_is_valid_forecast_excerpt`
+- `_is_valid_risk_excerpt`
+- `_unit_has_signal` where its role is absorbed by family-specific scoring
+
+These helpers currently occupy about 100 runtime lines. Batch B targets no more
+than +80 net runtime lines and stops at +100. If a third selection path is
+needed, implementation stops instead of adding it.
+
+Batch A must pass before Batch B starts. Batch A may improve candidate integrity
+without yet satisfying the final family-pairing acceptance criteria; the v3
+feature is complete only after both batches pass.
+
+## 10. Implementation Scope
 
 Allowed runtime files:
 
@@ -163,7 +226,7 @@ Allowed tests:
 
 No other runtime file may change without stopping for review.
 
-## 10. Failure Modes And Gates
+## 11. Failure Modes And Gates
 
 | Failure | Visible symptom | Required gate |
 | --- | --- | --- |
@@ -176,7 +239,14 @@ No other runtime file may change without stopping for review.
 | Stale notes survive v3 | report still loads v2 excerpt | note refresh test for missing/old selection version |
 | Source boundary regression | broker claim becomes official/scoring input | existing source-boundary and CI grep gates |
 
-## 11. Verification
+Batch A additionally requires tests proving that severe OCR damage produces a
+`rejected` diagnostic rather than merely a lower selected score, and that a
+normal multi-digit citation or financial number is not mistaken for damage.
+
+Batch B additionally requires one claim-without-evidence rejection test per card
+family and a source-substring assertion for every selected unit.
+
+## 12. Verification
 
 Focused tests:
 
@@ -192,11 +262,16 @@ tests/reporter/test_report_quality.py
 
 Then run `tools/ci_grep_gates.sh` and `git diff --check`.
 
+CI acceptance uses deterministic synthetic fixtures. The newly generated
+中际旭创 report remains a local post-implementation acceptance step; its mtime
+must be later than the final producer commit, but CI does not depend on that
+mtime or report artifact.
+
 Formal report acceptance uses a newly generated 中际旭创 report. The run must
 prove the report mtime is later than the producer commit. Review 4.2 for coherent
 claim/evidence pairs, broken numbers, OCR gaps, attribution, and citation hygiene.
 
-## 12. Stop Conditions
+## 13. Stop Conditions
 
 Stop and return to design if implementation requires:
 
@@ -205,4 +280,32 @@ Stop and return to design if implementation requires:
 - source-specific OCR word guessing;
 - new card families;
 - altered scoring, target price, risk, recommendation, or technical paths;
-- more than 100 net new runtime lines without deleting equivalent legacy logic.
+- more than 100 net new runtime lines in either batch.
+
+## 14. Design Delta After Round 1
+
+### Accepted
+
+- Made `selection_version` writer and freshness-check ownership explicit.
+- Retained `excerpt_cleaner_version` during migration.
+- Split implementation into two bounded batches and listed the legacy helpers
+  each batch replaces.
+- Added explicit severe-damage rejection, complete-boundary, score-part,
+  source-substring, family-pairing, stale-refresh, and hash tests.
+- Clarified that report mtime validation is local acceptance, not a CI gate.
+
+### Rejected
+
+- The review described missing runtime implementation as separate design
+  blockers. Those items remain implementation requirements, not evidence that
+  the target architecture is invalid. They are now assigned to Batch A or B.
+
+### Deferred
+
+- Removing `excerpt_cleaner_version`; it remains useful while v2 notes exist.
+- LLM rewriting and new card families.
+
+### Round 2 Required
+
+Yes. Round 1 contained blockers and the implementation was split into two
+batches, which materially changes delivery and budget enforcement.
