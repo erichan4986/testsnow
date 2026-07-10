@@ -565,7 +565,7 @@ class DeepAnalysisRenderer:
         if cards:
             for card in cards[:6]:
                 claim = str(card.get("claim") or "").strip()
-                refs = self._display_refs(card, citation_offset)
+                refs = self._display_refs_unique_by_citation_identity(card, citations, citation_offset)
                 used.update(refs)
                 variable = self._short_heading(claim) or "外部变量"
                 framed = self._external_claim_sentence(claim, refs)
@@ -581,7 +581,7 @@ class DeepAnalysisRenderer:
                 text = str(paragraph.get("text") or "").strip()
                 if not text:
                     continue
-                refs = self._display_refs(paragraph, citation_offset)
+                refs = self._display_refs_unique_by_citation_identity(paragraph, citations, citation_offset)
                 used.update(refs)
                 variable = str(paragraph.get("heading") or self._short_heading(text) or "外部变量")
                 framed = self._external_claim_sentence(text, refs)
@@ -599,7 +599,7 @@ class DeepAnalysisRenderer:
                 if not topic_rows:
                     continue
                 row = topic_rows[0]
-                refs = self._display_refs(row, citation_offset)
+                refs = self._display_refs_unique_by_citation_identity(row, citations, citation_offset)
                 used.update(refs)
                 framed = self._external_claim_sentence(str(row.get("text") or ""), refs)
                 self._append_external_variable_paragraph(
@@ -1234,11 +1234,35 @@ class DeepAnalysisRenderer:
         for topic_key, _label in CURATED_EXTERNAL_TOPIC_LABELS:
             rows.extend(row for row in (topic_groups.get(topic_key) or []) if isinstance(row, dict))
         for row in rows:
-            refs = self._display_refs(row, offset)
+            refs = self._display_refs_unique_by_citation_identity(
+                row,
+                curated_display.get("citations", {}) or {},
+                offset,
+            )
             text = str(row.get("claim") or row.get("text") or row.get("body") or "").strip()
             if text and refs:
                 return text, refs
         return None
+
+    def _display_refs_unique_by_citation_identity(
+        self,
+        row: Dict[str, Any],
+        citations: Dict[int, Any],
+        offset: int = 0,
+    ) -> List[int]:
+        refs = self._display_refs(row, offset)
+        if len(refs) <= 1:
+            return refs
+        shifted_citations = self._offset_citations(citations or {}, offset)
+        seen: set[tuple] = set()
+        unique_refs: List[int] = []
+        for ref in refs:
+            key = self._curated_external_citation_identity(shifted_citations.get(ref, {})) or ("ref", ref)
+            if key in seen:
+                continue
+            seen.add(key)
+            unique_refs.append(ref)
+        return unique_refs
 
     def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:
         """Build 4.1 formal-only summary blocks."""

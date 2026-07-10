@@ -2087,6 +2087,50 @@ def test_formal_medium_global_citations_include_visible_4_4_refs():
     assert "- [^2] | **微信公众号精选观察** | 作者: 测试账号 | 《外部深度文章》" in global_refs
 
 
+def test_formal_medium_external_refs_dedupe_same_source_in_4_3_and_4_4():
+    renderer = DeepAnalysisRenderer()
+    duplicate_source = {
+        "source": "微信公众号精选观察",
+        "author": "半导体产业纵横",
+        "title": "上游材料预付款暴涨10倍！中际旭创Q1营收194.96亿元",
+        "url": "https://mp.weixin.qq.com/s/same-source",
+        "source_type": "curated_external_analysis_evidence",
+    }
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {
+                1: duplicate_source,
+                2: dict(duplicate_source),
+                3: {"source": "微信公众号精选观察", "title": "光通信观察", "url": "https://mp.weixin.qq.com/s/other"},
+            },
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "供应链观察",
+                    "text": "外部文章指出，中际旭创预付款增长可能反映上游光芯片供给紧张。",
+                    "citation_refs": [1, 2, 3],
+                }
+            ],
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "[^5][^6][^7]" not in section43
+    assert "[^5][^6][^7]" not in section44
+    assert "[^5][^7]" in section43
+    assert "[^5][^7]" in section44
+    assert section43.count("半导体产业纵横") == 1
+    assert section44.count("半导体产业纵横") == 1
+
+
 def test_external_variable_map_cleans_source_intro_prefixes():
     renderer = DeepAnalysisRenderer()
     ctx = {
