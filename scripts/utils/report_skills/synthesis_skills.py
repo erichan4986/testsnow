@@ -27,6 +27,9 @@ if __name__.startswith("utils."):
     from ..broker_research_digest_synthesis_items import (
         load_broker_research_digest_synthesis_items,
     )
+    from ..broker_research_digest_note_writer import (
+        refresh_broker_research_digest_card_notes_from_manifest,
+    )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
     from ..curated_external_display_lint import lint_curated_external_display_text
     from ..curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
@@ -54,6 +57,9 @@ else:
     )
     from broker_research_digest_synthesis_items import (
         load_broker_research_digest_synthesis_items,
+    )
+    from broker_research_digest_note_writer import (
+        refresh_broker_research_digest_card_notes_from_manifest,
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
     from curated_external_display_lint import lint_curated_external_display_text
@@ -146,6 +152,7 @@ class SynthesisSkill(BaseSkill):
         if annual_material_pack:
             ctx.set("annual_report_material_pack", annual_material_pack)
         ctx.set("annual_report_memo", self._build_annual_report_memo(ctx))
+        self._refresh_broker_research_digest_notes(ctx)
         ctx.set("broker_research_memo", self._build_broker_research_memo(ctx))
 
         # Build canonical synthesis items once.
@@ -302,6 +309,52 @@ class SynthesisSkill(BaseSkill):
             )
         except Exception:
             return []
+
+    @staticmethod
+    def _refresh_broker_research_digest_notes(ctx: SkillContext) -> None:
+        """Generate/update broker digest notes from local PDF cache before reading them."""
+        if not ctx.get("include_broker_research_digest_in_synthesis_display"):
+            return
+        stock_name = str(ctx.get("stock_name") or "").strip()
+        if not stock_name:
+            return
+        manifest_path = SynthesisSkill._broker_research_manifest_path(ctx)
+        if manifest_path is None:
+            ctx.set("broker_research_digest_note_refresh", {"status": "missing_manifest"})
+            return
+        stock_code = str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip()
+        base_dir = ctx.get("knowledge_base_dir") or Path(__file__).resolve().parents[3] / "knowledge"
+        status = refresh_broker_research_digest_card_notes_from_manifest(
+            stock_name=stock_name,
+            stock_code=stock_code,
+            manifest_path=manifest_path,
+            base_dir=base_dir,
+            max_pdfs=SynthesisSkill._int_ctx(ctx, "broker_research_digest_max_source_pdfs", 8),
+            max_cards_per_pdf=SynthesisSkill._int_ctx(ctx, "broker_research_digest_max_cards_per_pdf", 5),
+            collected_at=str(ctx.get("collected_at") or ""),
+        )
+        ctx.set("broker_research_digest_note_refresh", status)
+
+    @staticmethod
+    def _broker_research_manifest_path(ctx: SkillContext) -> Path | None:
+        stock_name = str(ctx.get("stock_name") or "").strip()
+        stock_code = str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip()
+        root = ctx.get("broker_research_cache_root")
+        cache_root = Path(root) if root else Path(__file__).resolve().parents[3] / "data" / "raw" / "broker_research_reports"
+        candidates: List[Path] = []
+        if stock_name and stock_code:
+            candidates.append(cache_root / f"{stock_name}_{stock_code}" / "manifest.json")
+        if stock_name:
+            candidates.append(cache_root / stock_name / "manifest.json")
+            candidates.extend(sorted(cache_root.glob(f"{stock_name}_*/manifest.json")))
+        return next((path for path in candidates if path.exists()), None)
+
+    @staticmethod
+    def _int_ctx(ctx: SkillContext, key: str, default: int) -> int:
+        try:
+            return int(ctx.get(key, default))
+        except (TypeError, ValueError):
+            return default
 
     @staticmethod
     def _annual_narrative_cards(ctx: SkillContext, material: Dict[str, Any]) -> List[Dict[str, Any]]:
@@ -778,18 +831,7 @@ class SynthesisSkill(BaseSkill):
 
     @staticmethod
     def _broker_raw_report_coverage(ctx: SkillContext) -> Dict[str, Any]:
-        stock_name = str(ctx.get("stock_name") or "").strip()
-        stock_code = str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip()
-        root = ctx.get("broker_research_cache_root")
-        cache_root = Path(root) if root else Path(__file__).resolve().parents[3] / "data" / "raw" / "broker_research_reports"
-        candidates: List[Path] = []
-        if stock_name and stock_code:
-            candidates.append(cache_root / f"{stock_name}_{stock_code}" / "manifest.json")
-        if stock_name:
-            candidates.append(cache_root / stock_name / "manifest.json")
-            candidates.extend(sorted(cache_root.glob(f"{stock_name}_*/manifest.json")))
-
-        manifest_path = next((p for p in candidates if p.exists()), None)
+        manifest_path = SynthesisSkill._broker_research_manifest_path(ctx)
         if manifest_path is None:
             return {"status": "missing", "report_count": 0, "institutions": []}
         try:

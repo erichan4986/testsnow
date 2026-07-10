@@ -44,6 +44,8 @@ def load_broker_research_digest_synthesis_items(
         if item is None:
             continue
         candidates.append(item)
+    candidates.sort(key=lambda item: not bool((item.extra or {}).get("has_selection_diagnostics")))
+    candidates = _prefer_diagnostic_notes(candidates)
 
     selected: List[SynthesisItem] = []
     seen_keys: set[tuple[str, str]] = set()
@@ -77,6 +79,23 @@ def load_broker_research_digest_synthesis_items(
     return selected
 
 
+def _prefer_diagnostic_notes(candidates: List[SynthesisItem]) -> List[SynthesisItem]:
+    """When refreshed notes exist, do not let stale same-institution notes refill the display budget."""
+    refreshed_institutions = {
+        str((item.extra or {}).get("institution") or item.author or "").strip()
+        for item in candidates
+        if (item.extra or {}).get("has_selection_diagnostics")
+    }
+    if not refreshed_institutions:
+        return candidates
+    return [
+        item for item in candidates
+        if (item.extra or {}).get("has_selection_diagnostics")
+        or str((item.extra or {}).get("institution") or item.author or "").strip()
+        not in refreshed_institutions
+    ]
+
+
 def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
     try:
         text = path.read_text(encoding="utf-8")
@@ -97,6 +116,7 @@ def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
     viewpoint_cluster = str(frontmatter.get("viewpoint_cluster") or "").strip()
     report_length_class = str(frontmatter.get("report_length_class") or "").strip()
     publish_time = str(frontmatter.get("publish_time") or "").strip()
+    has_selection_diagnostics = "## Selection Diagnostics" in text
 
     return SynthesisItem(
         title=f"{institution} | {title}".strip(" |") if institution else title,
@@ -122,6 +142,7 @@ def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
             "card_type": card_type,
             "viewpoint_cluster": viewpoint_cluster,
             "report_length_class": report_length_class,
+            "has_selection_diagnostics": has_selection_diagnostics,
         },
     )
 

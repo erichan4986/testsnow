@@ -29,6 +29,7 @@ def _write_broker_note(
     risk_score_eligible: bool = False,
     source_credit: int = 72,
     claim_status: str = "professional_analysis",
+    selection_diagnostics: bool = False,
 ) -> Path:
     notes_dir = base_dir / "10-Stocks" / stock_name / "broker_research_digest"
     notes_dir.mkdir(parents=True, exist_ok=True)
@@ -59,6 +60,13 @@ def _write_broker_note(
         f"- institution: {institution}\n",
         encoding="utf-8",
     )
+    if selection_diagnostics:
+        path.write_text(
+            path.read_text(encoding="utf-8")
+            + "\n## Selection Diagnostics\n\n"
+            "- heading=`核心观点`; score=88; status=selected; reason=selected\n",
+            encoding="utf-8",
+        )
     return path
 
 
@@ -226,6 +234,34 @@ def test_reader_preserves_same_viewpoint_cluster_across_institutions(tmp_path: P
     clusters = [item.extra.get("viewpoint_cluster") for item in items]
     assert clusters.count("business_driver_product_mix") == 2
     assert "earnings_forecast" in clusters
+
+
+def test_reader_prefers_diagnostic_notes_over_stale_same_institution_notes(tmp_path: Path) -> None:
+    _write_broker_note(
+        tmp_path,
+        publish_time="2026-06-01",
+        institution="测试证券",
+        viewpoint_cluster="",
+        excerpt="旧摘录。",
+    )
+    _write_broker_note(
+        tmp_path,
+        publish_time="2026-06-02",
+        institution="测试证券",
+        viewpoint_cluster="business_driver_product_mix",
+        excerpt="新摘录，包含更完整的高速光模块论点。",
+        selection_diagnostics=True,
+    )
+
+    items = load_broker_research_digest_synthesis_items(
+        stock_name="测试股",
+        base_dir=tmp_path,
+        max_items=5,
+    )
+
+    text = "\n".join(item.content for item in items)
+    assert "新摘录" in text
+    assert "旧摘录" not in text
 
 
 def test_reader_respects_max_display_items(tmp_path: Path) -> None:

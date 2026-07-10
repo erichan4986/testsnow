@@ -2476,6 +2476,102 @@ def test_broker_research_digest_synthesis_display_keeps_baseline_invariants(tmp_
     assert "券商观点" not in knowledge_input
 
 
+def test_broker_research_digest_notes_refresh_from_manifest_before_loading(tmp_path, monkeypatch):
+    raw_root = tmp_path / "raw"
+    stock_dir = raw_root / "broker_research_reports" / "中际旭创_300308"
+    pdf_dir = stock_dir / "_downloads"
+    pdf_dir.mkdir(parents=True)
+    pdf_path = pdf_dir / "2026-06-01-测试证券-高速光模块放量.pdf"
+    pdf_path.write_bytes(b"%PDF-1.4 test")
+    (stock_dir / "manifest.json").write_text(
+        json.dumps(
+            {
+                "schema_version": "broker_research_cache_manifest.v1",
+                "stock_name": "中际旭创",
+                "stock_code": "300308",
+                "reports": [
+                    {
+                        "title": "高速光模块放量",
+                        "institution": "测试证券",
+                        "publish_time": "2026-06-01",
+                        "url": "https://pdf.dfcfw.com/pdf/H3_TEST_1.pdf",
+                        "path": str(pdf_path),
+                        "status": "ok",
+                    }
+                ],
+            },
+            ensure_ascii=False,
+        ),
+        encoding="utf-8",
+    )
+    notes_dir = tmp_path / "knowledge" / "10-Stocks" / "中际旭创" / "broker_research_digest"
+    notes_dir.mkdir(parents=True)
+    (notes_dir / "2026-06-01-测试证券-broker-core-view-old.md").write_text(
+        "---\n"
+        "source_type: broker_research\n"
+        "card_id: broker:old\n"
+        "card_type: broker_core_view\n"
+        "institution: 测试证券\n"
+        "source_credit: 72\n"
+        "claim_status: professional_analysis\n"
+        "confirmed_fact: false\n"
+        "scoring_eligible: false\n"
+        "risk_score_eligible: false\n"
+        "display_only: false\n"
+        "---\n\n"
+        "## Broker Research Excerpt\n\n"
+        "> 旧摘录。\n",
+        encoding="utf-8",
+    )
+
+    def fake_extract_pdf_text(path):
+        assert path == str(pdf_path)
+        return (
+            "核心观点\n"
+            "测试证券认为高速光模块需求增长，800G与1.6T产品放量推动收入增长，"
+            "毛利率和产品结构改善带来盈利弹性。\n"
+        )
+
+    monkeypatch.setattr(
+        "broker_research_digest_note_writer.extract_pdf_text",
+        fake_extract_pdf_text,
+    )
+
+    fake = DualSynthesizer()
+    skill = SynthesisSkill(synthesizer=fake)
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "stock_codes": {"中际旭创": "300308"},
+        "knowledge_base_dir": str(tmp_path / "knowledge"),
+        "broker_research_cache_root": str(raw_root / "broker_research_reports"),
+        "include_broker_research_digest_in_synthesis_display": True,
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "研发投入增加", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    note_text = "\n".join(path.read_text(encoding="utf-8") for path in notes_dir.glob("*.md"))
+    assert "## Selection Diagnostics" in note_text
+    assert "selection_reason" in note_text
+    assert "heading=`核心观点`" in note_text
+    assert "高速光模块需求增长" in note_text
+    display_items = fake.calls[-1]
+    broker_text = "\n".join(
+        str(getattr(item, "content", ""))
+        for item in display_items
+        if (getattr(item, "extra", {}) or {}).get("source_type") == "broker_research"
+    )
+    assert "高速光模块需求增长" in broker_text
+    assert "旧摘录" not in broker_text
+
+
 def test_broker_research_digest_fulltext_and_narrative_share_one_display_synthesis(tmp_path):
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)

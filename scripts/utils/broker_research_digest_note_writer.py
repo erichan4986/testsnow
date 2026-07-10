@@ -8,10 +8,26 @@ confirmed facts or scoring/risk inputs.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Callable, Dict, List, Optional, Union
+
+if __name__.startswith("utils."):
+    from .broker_research_digest import (
+        build_broker_research_digest_cards,
+        deduplicate_broker_digest_cards_by_viewpoint,
+        extract_pdf_text,
+    )
+    from .source_adapter import SynthesisItem
+else:
+    from broker_research_digest import (
+        build_broker_research_digest_cards,
+        deduplicate_broker_digest_cards_by_viewpoint,
+        extract_pdf_text,
+    )
+    from source_adapter import SynthesisItem
 
 
 BROKER_RESEARCH_SOURCE_TYPE = "broker_research"
@@ -243,3 +259,115 @@ def write_broker_research_digest_card_notes(
             )
         plan.written.append(meta)
     return plan
+
+
+def refresh_broker_research_digest_card_notes_from_manifest(
+    *,
+    stock_name: str,
+    stock_code: str,
+    manifest_path: Union[str, Path],
+    base_dir: Union[str, Path],
+    max_pdfs: int = 8,
+    max_cards_per_pdf: int = 5,
+    collected_at: str = "",
+    extractor: Optional[Callable[[str], str]] = None,
+) -> Dict[str, Any]:
+    """Build broker digest cards from cached PDFs and refresh Knowledge notes."""
+    manifest = Path(manifest_path)
+    try:
+        payload = json.loads(manifest.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {"status": "unreadable_manifest", "error": str(exc)}
+
+    reports = payload.get("reports") if isinstance(payload, dict) else []
+    if not isinstance(reports, list):
+        reports = []
+    resolved_stock_code = str(stock_code or payload.get("stock_code") or "").strip()
+    read_pdf = extractor or extract_pdf_text
+    cards: List[Dict[str, Any]] = []
+    errors: List[Dict[str, str]] = []
+    processed = 0
+    for report in reports[:max_pdfs]:
+        if not isinstance(report, dict):
+            continue
+        pdf_path = _resolve_manifest_pdf_path(report, manifest)
+        if pdf_path is None:
+            continue
+        try:
+            pdf_text = read_pdf(str(pdf_path))
+        except Exception as exc:
+            errors.append({"path": str(pdf_path), "error": str(exc)})
+            continue
+        item = _research_item_from_manifest_report(
+            report,
+            pdf_path=pdf_path,
+            pdf_text=pdf_text,
+            stock_name=stock_name,
+            stock_code=resolved_stock_code,
+        )
+        cards.extend(build_broker_research_digest_cards(item, pdf_text, max_cards=max_cards_per_pdf))
+        processed += 1
+    if not cards:
+        return {"status": "no_cards", "processed_pdf_count": processed, "errors": errors}
+
+    cards = deduplicate_broker_digest_cards_by_viewpoint(cards)
+    plan = write_broker_research_digest_card_notes(
+        stock_name=stock_name,
+        stock_code=resolved_stock_code,
+        cards=cards,
+        base_dir=base_dir,
+        collected_at=collected_at,
+    )
+    return {
+        "status": "ok",
+        "processed_pdf_count": processed,
+        "cards_count": len(cards),
+        "written_count": len(plan.written),
+        "skipped_existing_count": len(plan.skipped_existing),
+        "filtered_count": len(plan.filtered),
+        "errors": errors,
+    }
+
+
+def _resolve_manifest_pdf_path(report: Dict[str, Any], manifest_path: Path) -> Optional[Path]:
+    raw_path = str(report.get("path") or report.get("pdf_local_path") or "").strip()
+    if not raw_path:
+        return None
+    path = Path(raw_path)
+    project_root = Path(__file__).resolve().parents[2]
+    candidates = [path] if path.is_absolute() else [manifest_path.parent / path, project_root / path]
+    return next((candidate for candidate in candidates if candidate.exists()), None)
+
+
+def _research_item_from_manifest_report(
+    report: Dict[str, Any],
+    *,
+    pdf_path: Path,
+    pdf_text: str,
+    stock_name: str,
+    stock_code: str,
+) -> SynthesisItem:
+    institution = str(report.get("institution") or report.get("orgName") or "券商研报")
+    return SynthesisItem(
+        title=str(report.get("title") or pdf_path.stem),
+        content=str(report.get("title") or pdf_path.stem),
+        author=institution,
+        source_platform="研报",
+        url=str(report.get("url") or ""),
+        publish_time=str(report.get("publish_time") or "")[:10],
+        interaction_score=0,
+        extra={
+            "source_type": BROKER_RESEARCH_SOURCE_TYPE,
+            "source_credit": 72,
+            "verification_status": "professional_observation",
+            "institution": institution,
+            "stock_name": stock_name,
+            "stock_code": stock_code,
+            "pdf_local_path": str(pdf_path),
+            "pdf_page_count": _infer_pdf_page_count(pdf_text),
+        },
+    )
+
+
+def _infer_pdf_page_count(pdf_text: str) -> int:
+    return len(re.findall(r"\f", pdf_text or "")) + 1 if "\f" in (pdf_text or "") else 0
