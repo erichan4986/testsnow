@@ -28,6 +28,169 @@ SCORE_PART_KEYS = (
 )
 _EXCERPT_TERMINATORS = "。；;！？!?"
 
+
+def _unit_roles(text: str) -> set[str]:
+    roles: set[str] = set()
+    if any(
+        term in text
+        for term in (
+            "增长",
+            "提升",
+            "改善",
+            "受益",
+            "推动",
+            "带动",
+            "实现",
+            "认为",
+            "看好",
+        )
+    ):
+        roles.add("claim")
+    if re.search(r"\d+(?:\.\d+)?\s*(?:亿元|%|pct|倍|G|T|元)", text) or any(
+        term in text for term in ("客户", "订单", "产能", "毛利率", "净利润", "收入")
+    ):
+        roles.add("evidence")
+    if any(
+        term in text
+        for term in (
+            "产品",
+            "需求",
+            "客户",
+            "订单",
+            "产能",
+            "应用",
+            "下游",
+            "技术",
+            "供应链",
+            "交付",
+        )
+    ):
+        roles.add("driver")
+    if any(
+        term in text
+        for term in (
+            "预计",
+            "预测",
+            "上调",
+            "维持",
+            "评级",
+            "目标价",
+            "EPS",
+            "PE",
+            "估值",
+        )
+    ):
+        roles.add("forecast")
+    if any(
+        term in text
+        for term in (
+            "风险",
+            "不及预期",
+            "下滑",
+            "竞争加剧",
+            "波动",
+            "承压",
+        )
+    ):
+        roles.add("risk")
+    if any(
+        term in text
+        for term in (
+            "导致",
+            "影响",
+            "拖累",
+            "压制",
+            "取决于",
+            "若",
+            "受到",
+            "价格",
+            "毛利率",
+            "收入",
+            "利润",
+            "推动",
+            "带动",
+            "支撑",
+            "来自",
+            "受益于",
+        )
+    ):
+        roles.add("mechanism")
+    return roles
+
+
+def _complete_source_units(text: str) -> List[str]:
+    units: List[str] = []
+    cursor = 0
+    for match in re.finditer(r"[^。；;！？!?]+[。；;！？!?]", text):
+        cursor = match.end()
+        unit = clean_broker_research_excerpt_text(match.group(0).strip())
+        if len(unit) < 14 or _looks_like_front_matter_noise(unit):
+            continue
+        if _unit_roles(unit):
+            units.append(unit)
+    tail = clean_broker_research_excerpt_text(text[cursor:].strip())
+    if (
+        14 <= len(tail) <= 180
+        and not _looks_like_front_matter_noise(tail)
+        and _unit_roles(tail)
+    ):
+        units.append(tail)
+    return units
+
+
+def _family_requirements_met(card_type: str, units: List[str]) -> bool:
+    roles = set().union(*(_unit_roles(unit) for unit in units)) if units else set()
+    text = " ".join(units)
+    if card_type == "broker_core_view":
+        return "claim" in roles and bool(roles & {"evidence", "mechanism"})
+    if card_type == "broker_product_driver":
+        clusters = _generic_driver_cluster_labels(text)
+        return "driver" in roles and ("evidence" in roles or len(clusters) >= 2)
+    if card_type == "broker_earnings_forecast":
+        return "forecast" in roles and "evidence" in roles
+    if card_type == "broker_risk_note":
+        return "risk" in roles and bool(roles & {"mechanism", "evidence"})
+    return False
+
+
+def _units_redundant(left: str, right: str) -> bool:
+    number_pattern = r"\d+(?:\.\d+)?(?:年|亿元|%|pct|倍|G|T|元)?"
+    if set(re.findall(number_pattern, left)) != set(re.findall(number_pattern, right)):
+        return False
+    left_tokens = set(re.findall(r"[一-鿿]|[A-Za-z0-9]+", left.lower()))
+    right_tokens = set(re.findall(r"[一-鿿]|[A-Za-z0-9]+", right.lower()))
+    if not left_tokens or not right_tokens:
+        return False
+    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens) >= 0.5
+
+
+def _select_excerpt_units(text: str, card_type: str, max_units: int = 5) -> str:
+    text = str(text or "").strip()
+    if not text:
+        return ""
+    if card_type == "broker_earnings_forecast" and _looks_like_financial_table_fragment(text):
+        return ""
+    if card_type == "broker_risk_note" and not _has_specific_risk_signal(text):
+        return ""
+    if card_type == "broker_product_driver" and _looks_like_risk_only(text):
+        return ""
+    units = _complete_source_units(text)
+    chosen: List[Tuple[int, str]] = []
+    covered: set[str] = set()
+    for index, unit in enumerate(units):
+        roles = _unit_roles(unit)
+        if roles <= covered:
+            if any(_units_redundant(unit, selected) for _, selected in chosen):
+                continue
+        chosen.append((index, unit))
+        covered.update(roles)
+        if len(chosen) >= max_units:
+            break
+    selected = [unit for _, unit in chosen]
+    if not _family_requirements_met(card_type, selected):
+        return ""
+    return _bounded_complete_excerpt(" ".join(selected))
+
 _STOP_PATTERNS = [
     "免责声明",
     "免责条款",
@@ -225,35 +388,35 @@ def build_broker_research_digest_cards(
         section_candidates: List[Tuple[int, int, str, str]] = []
         for heading in headings:
             section_candidates.extend(
-                _extract_section_candidates(useful_text, heading, order_offset=len(section_candidates))
-            )
-        selected_sections = _select_section_candidates(card_type, section_candidates)
-        if selected_sections:
-            excerpt = _clean_excerpt(" ".join(part for _, _, _, part in selected_sections))
-            matched_headings = [heading for _, _, heading, _ in selected_sections]
-            diagnostics = _section_selection_diagnostics(section_candidates, selected_sections)
-            if card_type == "broker_risk_note":
-                valid = _is_valid_risk_excerpt(excerpt)
-            elif card_type == "broker_earnings_forecast":
-                valid = _is_valid_forecast_excerpt(excerpt)
-            elif card_type == "broker_product_driver":
-                valid = _is_valid_product_driver_excerpt(excerpt)
-            else:
-                valid = _is_valid_excerpt(excerpt)
-            if not valid:
-                continue
-            candidates.append(
-                _build_card(
-                    item=item,
-                    card_type=card_type,
-                    title=title,
-                    excerpt=excerpt,
-                    heading=",".join(matched_headings),
-                    report_length_class=report_length_class,
-                    selection_diagnostics=diagnostics,
-                    selection_reason=_selection_reason(card_type, selected_sections),
+                _extract_section_candidates(
+                    useful_text, heading, card_type, order_offset=len(section_candidates)
                 )
             )
+        selected_sections = _select_section_candidates(card_type, section_candidates)
+        if not selected_sections:
+            continue
+        joined_excerpt = " ".join(part for _, _, _, part in selected_sections)
+        excerpt = (
+            _bounded_complete_excerpt(joined_excerpt)
+            if card_type == "broker_product_driver"
+            else selected_sections[0][3]
+        )
+        if not excerpt:
+            continue
+        matched_headings = [heading for _, _, heading, _ in selected_sections]
+        diagnostics = _section_selection_diagnostics(section_candidates, selected_sections)
+        candidates.append(
+            _build_card(
+                item=item,
+                card_type=card_type,
+                title=title,
+                excerpt=excerpt,
+                heading=",".join(matched_headings),
+                report_length_class=report_length_class,
+                selection_diagnostics=diagnostics,
+                selection_reason=_selection_reason(card_type, selected_sections),
+            )
+        )
 
     if (
         ("broker_product_driver" in allowed_card_types or not candidates)
@@ -283,7 +446,7 @@ def build_broker_research_digest_cards(
 
     if not candidates and _allow_fallback_excerpt(useful_text):
         excerpt = _fallback_excerpt(useful_text)
-        if _is_valid_excerpt(excerpt):
+        if excerpt:
             candidates.append(
                 _build_card(
                     item=item,
@@ -610,16 +773,10 @@ def _find_heading_spans(text: str, heading: str) -> List[Tuple[int, int]]:
     return [(m.start(), m.end()) for m in re.finditer(pattern, text)]
 
 
-def _extract_section(text: str, heading: str) -> str:
-    candidates = _extract_section_candidates(text, heading)
-    if not candidates:
-        return ""
-    return max(candidates, key=lambda item: (item[0], -item[1]))[3]
-
-
 def _extract_section_candidates(
     text: str,
     heading: str,
+    card_type: str,
     order_offset: int = 0,
 ) -> List[Tuple[int, int, str, str]]:
     spans = _find_heading_spans(text, heading)
@@ -633,8 +790,16 @@ def _extract_section_candidates(
                 next_positions.append(content_start + idx)
                 break
         end = min(next_positions) if next_positions else min(len(text), start + 1600)
-        raw = text[start:end].strip()
-        excerpt = _clean_excerpt(raw)
+        raw = text[content_start:end].strip()
+        cleaned = _clean_excerpt(raw)
+        if not cleaned:
+            continue
+        parts = _candidate_score_parts(cleaned)
+        if _has_severe_ocr_damage(parts):
+            score = _candidate_total(parts)
+            candidates.append((score, order_offset + local_order, heading, cleaned))
+            continue
+        excerpt = _select_excerpt_units(cleaned, card_type)
         if not excerpt:
             continue
         score = _section_candidate_score(excerpt)
@@ -694,8 +859,9 @@ def _select_section_candidates(
     if not candidates:
         return []
     eligible = [
-        candidate for candidate in candidates
-        if not _has_severe_ocr_damage(_candidate_score_parts(candidate[3]))
+        candidate
+        for candidate in candidates
+        if candidate[3] and not _has_severe_ocr_damage(_candidate_score_parts(candidate[3]))
     ]
     ordered = sorted(eligible, key=lambda item: (-item[0], item[1]))
     if card_type != "broker_product_driver":
@@ -798,9 +964,7 @@ def _clean_excerpt(text: str) -> str:
         text = text.replace(noise, " ")
     text = re.sub(r"\s+", " ", text).strip()
     text = clean_broker_research_excerpt_text(text)
-    text = _condense_excerpt(text)
-    text = clean_broker_research_excerpt_text(text)
-    return _bounded_complete_excerpt(text)
+    return text
 
 
 def _bounded_complete_excerpt(text: str, limit: int = 900, extension: int = 80) -> str:
@@ -816,33 +980,6 @@ def _bounded_complete_excerpt(text: str, limit: int = 900, extension: int = 80) 
         return text[: min(next_positions) + 1].strip()
     previous = max(text.rfind(mark, 0, limit + 1) for mark in _EXCERPT_TERMINATORS)
     return text[: previous + 1].strip() if previous >= 0 else ""
-
-
-def _condense_excerpt(text: str) -> str:
-    """Keep the most readable, information-bearing units from a noisy PDF section."""
-    if len(text) <= 420:
-        return text
-    units = [
-        unit.strip()
-        for unit in re.split(r"(?<=[。；])\s*|[]\s*", text)
-        if unit.strip()
-    ]
-    selected = []
-    for unit in units:
-        if len(unit) < 14:
-            continue
-        if _looks_like_front_matter_noise(unit):
-            continue
-        if not _unit_has_signal(unit):
-            continue
-        selected.append(unit)
-        if len(selected) >= 5:
-            break
-    while selected and not selected[-1][-1] in _EXCERPT_TERMINATORS:
-        selected.pop()
-    if not selected:
-        return _bounded_complete_excerpt(text)
-    return _bounded_complete_excerpt(" ".join(selected))
 
 
 def _looks_like_front_matter_noise(text: str) -> bool:
@@ -871,35 +1008,13 @@ def _looks_like_front_matter_noise(text: str) -> bool:
     return False
 
 
-def _unit_has_signal(text: str) -> bool:
-    if any(term in text for term in _SPECIFIC_TERMS):
-        return True
-    return any(
-        term in text
-        for term in (
-            "预计",
-            "预测",
-            "维持",
-            "评级",
-            "不及预期",
-            "竞争加剧",
-            "景气",
-            "放量",
-            "导入",
-        )
-    )
-
-
 def _fallback_excerpt(text: str) -> str:
-    chunks = re.split(r"[。；]\s*", text)
-    useful = []
-    for chunk in chunks:
-        chunk = _clean_excerpt(chunk)
-        if _is_valid_excerpt(chunk):
-            useful.append(chunk)
-        if len("。".join(useful)) >= 280:
-            break
-    return _bounded_complete_excerpt("。".join(useful))
+    cleaned = _clean_excerpt(text)
+    for card_type in ("broker_core_view", "broker_product_driver"):
+        excerpt = _select_excerpt_units(cleaned, card_type)
+        if excerpt:
+            return excerpt
+    return ""
 
 
 def _allow_fallback_excerpt(text: str) -> bool:
@@ -912,73 +1027,6 @@ def _allow_fallback_excerpt(text: str) -> bool:
         if heading != "风险提示"
     )
     if has_risk_heading and not has_non_risk_heading:
-        return False
-    return True
-
-
-def _is_valid_excerpt(text: str) -> bool:
-    if len(text) < 40:
-        return False
-    if all(term not in text for term in _SPECIFIC_TERMS):
-        return False
-    if sum(ch.isdigit() for ch in text) < 2 and not any(
-        term in text for term in ("客户", "订单", "产能", "产品", "业务", "需求", "导入", "升级")
-    ):
-        return False
-    return True
-
-
-def _is_valid_product_driver_excerpt(text: str) -> bool:
-    if not _is_valid_excerpt(text):
-        return False
-    if _looks_like_risk_only(text):
-        return False
-    return any(
-        term in text
-        for term in (
-            "需求",
-            "客户",
-            "订单",
-            "产能",
-            "产品",
-            "业务",
-            "应用",
-            "下游",
-            "导入",
-            "升级",
-            "结构",
-            "份额",
-            "景气",
-            "增长",
-            "市场",
-            "交付",
-            "盈利能力",
-            "研发",
-            "技术",
-            "竞争优势",
-            "供应链",
-        )
-    )
-
-
-def _is_valid_forecast_excerpt(text: str) -> bool:
-    if not _is_valid_excerpt(text):
-        return False
-    if _looks_like_financial_table_fragment(text):
-        return False
-    return any(term in text for term in ("预计", "预测", "上调", "维持", "评级", "规模效应", "放量"))
-
-
-def _is_valid_risk_excerpt(text: str) -> bool:
-    if len(text) < 10:
-        return False
-    if any(pattern in text for pattern in _STOP_PATTERNS):
-        return False
-    if _looks_like_financial_table_fragment(text):
-        return False
-    if "风险" not in text and "不及预期" not in text:
-        return False
-    if not _has_specific_risk_signal(text):
         return False
     return True
 
@@ -1010,11 +1058,12 @@ def _generic_driver_block_excerpts(text: str, max_blocks: int = 3) -> List[str]:
     scored: List[Tuple[int, int, str]] = []
     for order, block in enumerate(_iter_generic_driver_blocks(text)):
         block = _clean_driver_excerpt(block)
-        if not _is_valid_product_driver_excerpt(block):
-            continue
         if _looks_like_financial_table_fragment(block):
             continue
         if _looks_like_rating_table_fragment(block):
+            continue
+        block = _select_excerpt_units(block, "broker_product_driver")
+        if not block:
             continue
         score = _generic_driver_score(block)
         if score <= 0:

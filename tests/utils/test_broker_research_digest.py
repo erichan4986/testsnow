@@ -697,10 +697,192 @@ def test_financial_core_view_does_not_block_generic_driver_fallback() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Layout-aware PDF extraction tests (use real PDFs from smoke cache)
+# Batch B: claim/evidence admission, complementarity, and source fidelity
 # ---------------------------------------------------------------------------
 
 import pytest
+
+
+@pytest.mark.parametrize(
+    "card_type,heading,text",
+    [
+        ("broker_core_view", "核心观点", "公司长期发展前景良好。"),
+        ("broker_core_view", "核心观点", "公司核心产品市场需求有望保持较快增长。"),
+        ("broker_product_driver", "产品布局", "公司产品需求有望增长。"),
+        ("broker_earnings_forecast", "盈利预测", "我们预计公司业绩增长，维持买入评级。"),
+        ("broker_risk_note", "风险提示", "市场竞争风险。"),
+    ],
+)
+def test_digest_rejects_claim_without_evidence_per_family(card_type, heading, text):
+    from broker_research_digest import build_broker_research_digest_cards
+
+    page_count = 18 if card_type == "broker_product_driver" else 4
+    cards = build_broker_research_digest_cards(
+        _research_item(pdf_page_count=page_count),
+        f"{heading}\n{text}",
+        max_cards=8,
+    )
+    assert card_type not in [c["card_type"] for c in cards]
+
+
+@pytest.mark.parametrize(
+    "card_type,heading,text",
+    [
+        (
+            "broker_core_view",
+            "核心观点",
+            "公司2026年一季度收入同比增长39.08%，产品结构升级推动毛利率改善。",
+        ),
+        (
+            "broker_product_driver",
+            "产品布局",
+            "800G与1.6T产品需求增长，重点客户订单和产能扩张支撑交付。",
+        ),
+        (
+            "broker_earnings_forecast",
+            "盈利预测",
+            "预计公司2026年归母净利润为80亿元，对应PE为30倍，维持买入评级。",
+        ),
+        (
+            "broker_risk_note",
+            "风险提示",
+            "若客户资本开支不及预期，订单放量和收入增长可能受到影响。",
+        ),
+    ],
+)
+def test_digest_admits_claim_with_evidence_per_family(card_type, heading, text):
+    from broker_research_digest import build_broker_research_digest_cards
+
+    page_count = 18 if card_type == "broker_product_driver" else 4
+    cards = build_broker_research_digest_cards(
+        _research_item(pdf_page_count=page_count),
+        f"{heading}\n{text}",
+        max_cards=8,
+    )
+    matching = [c for c in cards if c["card_type"] == card_type]
+    assert len(matching) == 1
+    assert text in matching[0]["source_excerpt"]
+
+
+def test_digest_selects_complementary_units_and_drops_semantic_duplicate():
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    产品布局
+    AI算力资本开支持续增长，高速互联需求保持高景气。
+    800G与1.6T产品进入重点客户验证，订单和产能扩张支撑交付。
+    AI算力需求保持高景气，高速互联市场继续增长。
+    """
+    cards = build_broker_research_digest_cards(
+        _research_item(pdf_page_count=18), text, max_cards=8
+    )
+    driver = next(c for c in cards if c["card_type"] == "broker_product_driver")
+    excerpt = driver["source_excerpt"]
+
+    assert "AI算力资本开支持续增长，高速互联需求保持高景气。" in excerpt
+    assert "800G与1.6T产品进入重点客户验证，订单和产能扩张支撑交付。" in excerpt
+    assert "AI算力需求保持高景气，高速互联市场继续增长。" not in excerpt
+    assert excerpt.index("800G") > excerpt.index("AI算力资本")
+
+
+def test_digest_core_view_accepts_causal_business_reason_without_numbers():
+    from broker_research_digest import build_broker_research_digest_cards
+
+    sentence = "AI算力需求增长推动高端产品放量，形成持续增长动力。"
+    cards = build_broker_research_digest_cards(
+        _research_item(), f"核心观点\n{sentence}", max_cards=3
+    )
+
+    core = next(c for c in cards if c["card_type"] == "broker_core_view")
+    assert sentence in core["source_excerpt"]
+
+
+def test_digest_keeps_same_wording_forecasts_with_distinct_periods_and_values():
+    from broker_research_digest import build_broker_research_digest_cards
+
+    first = "预计公司2026年收入为100亿元，同比增长20%。"
+    second = "预计公司2027年收入为130亿元，同比增长30%。"
+    cards = build_broker_research_digest_cards(
+        _research_item(), f"盈利预测\n{first}\n{second}", max_cards=3
+    )
+
+    forecast = next(c for c in cards if c["card_type"] == "broker_earnings_forecast")
+    assert first in forecast["source_excerpt"]
+    assert second in forecast["source_excerpt"]
+
+
+def _units_from_excerpt(excerpt: str) -> list[str]:
+    return [
+        unit.strip() + mark
+        for unit, mark in re.findall(r"([^。；;！？!?]+)([。；;！？!?])", excerpt)
+        if unit.strip()
+    ]
+
+
+def test_digest_selected_units_are_ordered_source_substrings_in_cleaned_text():
+    from broker_research_digest import (
+        build_broker_research_digest_cards,
+        clean_broker_research_excerpt_text,
+    )
+
+    text = """
+    投资要点
+    公司2026年一季度实现收入10.98亿元，同比增长39.08%，毛利率为51.63%。
+    下游云厂商资本开支持续扩张，800G与1.6T高速光模块需求延续高景气。
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
+    """
+    cards = build_broker_research_digest_cards(
+        _research_item(pdf_page_count=18), text, max_cards=8
+    )
+    core = next(c for c in cards if c["card_type"] == "broker_core_view")
+    excerpt = core["source_excerpt"]
+    source = clean_broker_research_excerpt_text(text)
+    units = _units_from_excerpt(excerpt)
+    assert units
+
+    last_pos = -1
+    for unit in units:
+        pos = source.find(unit)
+        assert pos >= 0, f"unit not in source: {unit}"
+        assert pos > last_pos, f"unit order wrong: {unit}"
+        last_pos = pos
+
+
+def test_digest_preserves_cross_heading_product_driver_complementarity():
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    产业趋势
+    AI算力基础设施投资持续增长，800G与1.6T高速光模块需求快速提升。
+    公司通过预付账款、长期协议和产能扩张提升订单交付确定性。
+
+    竞争格局
+    公司在硅光芯片、自研能力和重点客户联合开发方面形成交付优势。
+    """
+    cards = build_broker_research_digest_cards(
+        _research_item(pdf_page_count=18), text, max_cards=8
+    )
+    driver = next(c for c in cards if c["card_type"] == "broker_product_driver")
+    excerpt = driver["source_excerpt"]
+
+    assert "800G与1.6T高速光模块需求快速提升" in excerpt
+    assert "硅光芯片" in excerpt
+    assert "自研能力" in excerpt
+    assert "重点客户联合开发" in excerpt
+
+
+def test_digest_rejects_incoherent_fallback_without_business_reason():
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = "公司长期发展前景良好，业务布局持续优化，市场份额稳步提升，盈利能力不断改善，经营质量持续提高。"
+    cards = build_broker_research_digest_cards(_research_item(), text, max_cards=3)
+    assert cards == []
+
+
+# ---------------------------------------------------------------------------
+# Layout-aware PDF extraction tests (use real PDFs from smoke cache)
+# ---------------------------------------------------------------------------
+
 
 _SMOKE_PDF_DIR = Path("/private/tmp/eastmoney_research_pdf_smoke")
 
