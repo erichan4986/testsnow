@@ -20,7 +20,7 @@ else:
 SOURCE_TYPE = "broker_research"
 SOURCE_CREDIT = 72
 SCHEMA_VERSION = "broker_research_digest_card.v1"
-SELECTION_VERSION = "broker_digest_v3"
+SELECTION_VERSION = "broker_digest_v3_1"
 
 SCORE_PART_KEYS = (
     "signal", "evidence", "completeness", "coherence",

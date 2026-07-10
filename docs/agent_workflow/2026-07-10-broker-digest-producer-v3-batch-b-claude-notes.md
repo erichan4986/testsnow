@@ -112,7 +112,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m pytest \
   tests/utils/test_broker_research_digest_synthesis_items.py \
   -q -p no:cacheprovider
 
-79 passed, 3 skipped in 0.86s
+80 passed, 3 skipped in 0.73s
 ```
 
 ### Downstream contract tests
@@ -125,7 +125,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m pytest \
   tests/reporter/test_report_quality.py \
   -q -p no:cacheprovider
 
-283 passed in 4.24s
+283 passed in 2.92s
 ```
 
 ### Repository gates
@@ -208,7 +208,7 @@ commit:
    terms such as “推动 / 带动 / 支撑 / 来自 / 受益于” populate the mechanism
    role without adding stock-specific vocabulary.
 
-Fresh acceptance results are 79 passed / 3 skipped for producer tests, 283
+Fresh acceptance results are 80 passed / 3 skipped for producer tests, 283
 passed downstream, all CI grep gates passed, and `git diff --check` is clean.
 Batch B runtime net growth is +73 lines.
 
@@ -234,7 +234,12 @@ containing:
   missing unit.
 
 Four tests reproduce the actual report failures and include a complete three-year
-series negative control. Final verification is 79 passed / 3 skipped for producer
+series negative control. Final verification is 80 passed / 3 skipped for producer
 tests, 283 downstream tests passed, CI grep gates passed, and diff-check is clean.
 The formal report must be generated again after the follow-up commit; the report
 produced from `d8ae4f2` is not the final acceptance sample.
+
+Because the first rerun already persisted `broker_digest_v3` notes, the damage
+gate follow-up advances `SELECTION_VERSION` to `broker_digest_v3_1`. The writer's
+existing freshness contract therefore rewrites old v3 notes instead of silently
+reusing the rejected excerpts. A migration test locks this behavior.

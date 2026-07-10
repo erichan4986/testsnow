@@ -47,7 +47,7 @@ def test_digest_cards_include_selection_version() -> None:
     cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
 
     assert len(cards) >= 1
-    assert all(card["selection_version"] == "broker_digest_v3" for card in cards)
+    assert all(card["selection_version"] == "broker_digest_v3_1" for card in cards)
 
 
 def test_digest_card_identity_hashes_final_selected_excerpt() -> None:
