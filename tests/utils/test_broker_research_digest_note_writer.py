@@ -170,6 +170,65 @@ def test_broker_digest_writer_refreshes_existing_note_without_selection_diagnost
     assert "heading=`核心观点` | score=`41` | status=`skipped` | reason=`skipped_lower_score`" in text
 
 
+def test_broker_digest_writer_repairs_ocr_artifacts_in_persisted_excerpt(
+    tmp_path: Path,
+) -> None:
+    noisy = (
+        "营收、利润实 现双增，高速光模 块出货比例提升。现 方面，公司经营活动现金流净额改善，"
+        "高速光 过持续向更高端速率升级，收入稳增长与盈 展。"
+        "核心增 链能力作为关键支撑，结构升级驱 的业务格局，"
+        "公司实现营收195. 环比分别增长，归母净利润57.3亿元，同环比 262.3%。"
+    )
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt=noisy)],
+        base_dir=tmp_path,
+    )
+
+    text = Path(plan.written[0]["planned_path"]).read_text(encoding="utf-8")
+    assert "实现双增" in text
+    assert "高速光模块" in text
+    assert "现金流方面" in text
+    assert "收入稳增长与盈利扩展" in text
+    assert "核心增长与供应链能力" in text
+    assert "结构升级驱动的业务格局" in text
+    assert "营收195亿元，环比" in text
+    assert "同环比增长262.3%" in text
+    for artifact in ("实 现", "光模 块", "现 方面", "高速光 过", "盈 展", "核心增 链", "结构升级驱 的", "营收195. 环比", "同环比 262.3%"):
+        assert artifact not in text
+
+
+def test_broker_digest_writer_refreshes_current_note_missing_cleaner_version(
+    tmp_path: Path,
+) -> None:
+    write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt="高速光模 块出货比例提升。")],
+        base_dir=tmp_path,
+    )
+    path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
+
+    stale = path.read_text(encoding="utf-8").replace("excerpt_cleaner_version: broker_ocr_v2\n", "")
+    path.write_text(stale, encoding="utf-8")
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt="高速光模 块出货比例提升。")],
+        base_dir=tmp_path,
+    )
+
+    refreshed = path.read_text(encoding="utf-8")
+    assert len(plan.written) == 1
+    assert plan.skipped_existing == []
+    assert "excerpt_cleaner_version: broker_ocr_v2" in refreshed
+    assert "高速光模块出货比例提升" in refreshed
+    assert "高速光模 块" not in refreshed
+
+
 def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
     tmp_path: Path,
 ) -> None:
@@ -182,6 +241,7 @@ def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
         "schema_version: broker_research_digest_card.v1\n"
         "card_id: broker:abc123\n"
         "selection_reason: selected_best_heading_candidate\n"
+        "excerpt_cleaner_version: broker_ocr_v2\n"
         "---\n\n"
         "## Broker Research Excerpt\n\n"
         "> 人工保留摘录。\n\n"

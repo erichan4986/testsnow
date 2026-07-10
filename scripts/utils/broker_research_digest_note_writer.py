@@ -17,6 +17,7 @@ from typing import Any, Callable, Dict, List, Optional, Union
 if __name__.startswith("utils."):
     from .broker_research_digest import (
         build_broker_research_digest_cards,
+        clean_broker_research_excerpt_text,
         deduplicate_broker_digest_cards_by_viewpoint,
         extract_pdf_text,
     )
@@ -24,6 +25,7 @@ if __name__.startswith("utils."):
 else:
     from broker_research_digest import (
         build_broker_research_digest_cards,
+        clean_broker_research_excerpt_text,
         deduplicate_broker_digest_cards_by_viewpoint,
         extract_pdf_text,
     )
@@ -32,6 +34,7 @@ else:
 
 BROKER_RESEARCH_SOURCE_TYPE = "broker_research"
 BROKER_RESEARCH_FACT_STATUS = "professional_analysis"
+BROKER_EXCERPT_CLEANER_VERSION = "broker_ocr_v2"
 
 
 @dataclass
@@ -105,8 +108,11 @@ def _target_filename(card: Dict[str, Any]) -> str:
 
 
 def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, collected_at: str) -> str:
-    excerpt = str(card.get("source_excerpt", "")).strip()
-    excerpt_hash = str(card.get("source_excerpt_hash") or _source_text_hash(excerpt))
+    excerpt = clean_broker_research_excerpt_text(
+        str(card.get("source_excerpt", "")).strip(),
+        repair_legacy_artifacts=True,
+    )
+    excerpt_hash = _source_text_hash(excerpt)
     selection_reason = str(card.get("selection_reason", "")).strip()
     frontmatter = _render_frontmatter(
         [
@@ -131,6 +137,7 @@ def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, coll
             ("risk_score_eligible", False),
             ("display_only", False),
             ("source_excerpt_hash", excerpt_hash),
+            ("excerpt_cleaner_version", BROKER_EXCERPT_CLEANER_VERSION),
             ("source_pdf_path", str(card.get("source_pdf_path", ""))),
             ("source_url", str(card.get("source_url", ""))),
             ("source_heading", str(card.get("source_heading", ""))),
@@ -190,6 +197,7 @@ def _has_current_diagnostics_note_shape(path: Path) -> bool:
     return (
         re.search(r'(?m)^schema_version:\s*"?broker_research_digest_card\.v1"?\s*$', text) is not None
         and re.search(r"(?m)^selection_reason:", text) is not None
+        and re.search(rf"(?m)^excerpt_cleaner_version:\s*\"?{BROKER_EXCERPT_CLEANER_VERSION}\"?\s*$", text) is not None
         and "## Selection Diagnostics" in text
     )
 
