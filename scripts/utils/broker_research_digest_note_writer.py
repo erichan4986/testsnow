@@ -44,6 +44,7 @@ class BrokerResearchDigestWritePlan:
     written: List[Dict[str, Any]] = field(default_factory=list)
     skipped_existing: List[Dict[str, Any]] = field(default_factory=list)
     filtered: List[Dict[str, Any]] = field(default_factory=list)
+    archived_legacy: List[Dict[str, Any]] = field(default_factory=list)
 
 
 def _safe_dir_segment(segment: str, *, fallback: str = "unknown") -> str:
@@ -202,6 +203,46 @@ def _has_current_diagnostics_note_shape(path: Path) -> bool:
     )
 
 
+def _is_legacy_broker_digest_note(path: Path) -> bool:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return (
+        re.search(r"(?m)^source_type:\s*\"?broker_research\"?\s*$", text) is not None
+        and "## Broker Research Excerpt" in text
+        and not _has_current_diagnostics_note_shape(path)
+    )
+
+
+def _unique_archive_path(path: Path) -> Path:
+    if not path.exists():
+        return path
+    stem, suffix = path.stem, path.suffix
+    for index in range(1, 1000):
+        candidate = path.with_name(f"{stem}-{index}{suffix}")
+        if not candidate.exists():
+            return candidate
+    return path.with_name(f"{stem}-{_source_text_hash(path.name)[:8]}{suffix}")
+
+
+def _archive_legacy_broker_notes(notes_dir: Path, *, dry_run: bool = False) -> List[Dict[str, Any]]:
+    if not notes_dir.exists():
+        return []
+    archive_dir = notes_dir / "_legacy_archive"
+    archived: List[Dict[str, Any]] = []
+    for path in sorted(notes_dir.glob("*.md")):
+        if not _is_legacy_broker_digest_note(path):
+            continue
+        target = _unique_archive_path(archive_dir / path.name)
+        meta = {"path": str(path), "archived_path": str(target)}
+        if not dry_run:
+            archive_dir.mkdir(parents=True, exist_ok=True)
+            path.replace(target)
+        archived.append(meta)
+    return archived
+
+
 def _filter_reason(card: Dict[str, Any], stock_code: str) -> Optional[str]:
     if str(card.get("source_type", "")) != BROKER_RESEARCH_SOURCE_TYPE:
         return f"source_type not broker_research: {card.get('source_type') or '<empty>'}"
@@ -266,6 +307,7 @@ def write_broker_research_digest_card_notes(
                 encoding="utf-8",
             )
         plan.written.append(meta)
+    plan.archived_legacy.extend(_archive_legacy_broker_notes(notes_dir, dry_run=dry_run))
     return plan
 
 

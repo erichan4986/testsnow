@@ -178,6 +178,7 @@ def test_broker_digest_writer_repairs_ocr_artifacts_in_persisted_excerpt(
         "高速光 过持续向更高端速率升级，收入稳增长与盈 展。"
         "核心增 链能力作为关键支撑，结构升级驱 的业务格局，"
         "公司实现营收195. 环比分别增长，归母净利润57.3亿元，同环比 262.3%。"
+        "全年营业收 382.40亿元，面向超大 互联场景。"
     )
 
     plan = write_broker_research_digest_card_notes(
@@ -196,8 +197,46 @@ def test_broker_digest_writer_repairs_ocr_artifacts_in_persisted_excerpt(
     assert "结构升级驱动的业务格局" in text
     assert "营收195亿元，环比" in text
     assert "同环比增长262.3%" in text
-    for artifact in ("实 现", "光模 块", "现 方面", "高速光 过", "盈 展", "核心增 链", "结构升级驱 的", "营收195. 环比", "同环比 262.3%"):
+    assert "营业收入382.40亿元" in text
+    assert "超大互联场景" in text
+    for artifact in ("实 现", "光模 块", "现 方面", "高速光 过", "盈 展", "核心增 链", "结构升级驱 的", "营收195. 环比", "同环比 262.3%", "营业收 382.40", "超大 互联"):
         assert artifact not in text
+
+
+def test_broker_digest_writer_archives_legacy_broker_notes(
+    tmp_path: Path,
+) -> None:
+    notes_dir = _notes_dir(tmp_path)
+    notes_dir.mkdir(parents=True)
+    legacy = notes_dir / "2026-05-12-国信证券-broker-core-view-old.md"
+    legacy.write_text(
+        "---\n"
+        "source_type: broker_research\n"
+        "card_id: broker:old\n"
+        "claim_status: professional_analysis\n"
+        "source_credit: 72\n"
+        "confirmed_fact: false\n"
+        "scoring_eligible: false\n"
+        "risk_score_eligible: false\n"
+        "display_only: false\n"
+        "---\n\n"
+        "## Broker Research Excerpt\n\n"
+        "> 旧格式摘录。\n",
+        encoding="utf-8",
+    )
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card()],
+        base_dir=tmp_path,
+    )
+
+    archived = notes_dir / "_legacy_archive" / legacy.name
+    assert len(plan.archived_legacy) == 1
+    assert not legacy.exists()
+    assert archived.exists()
+    assert "旧格式摘录" in archived.read_text(encoding="utf-8")
 
 
 def test_broker_digest_writer_refreshes_current_note_missing_cleaner_version(
