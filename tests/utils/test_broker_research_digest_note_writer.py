@@ -115,3 +115,101 @@ def test_broker_digest_writer_skips_existing_by_default(tmp_path: Path) -> None:
 
     assert second.written == []
     assert len(second.skipped_existing) == 1
+
+
+def test_broker_digest_writer_refreshes_existing_note_without_selection_diagnostics(
+    tmp_path: Path,
+) -> None:
+    notes_dir = _notes_dir(tmp_path)
+    notes_dir.mkdir(parents=True)
+    path = notes_dir / "2026-05-12-国信证券-broker-core-view-abc123.md"
+    path.write_text(
+        "---\n"
+        "source_type: broker_research\n"
+        "card_id: broker:abc123\n"
+        "---\n\n"
+        "## Broker Research Excerpt\n\n"
+        "> 旧摘录。\n",
+        encoding="utf-8",
+    )
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[
+            _card(
+                source_excerpt="新摘录保留券商论点、论据和差异。",
+                selection_reason="selected_best_heading_candidate",
+                selection_diagnostics=[
+                    {
+                        "heading": "投资要点",
+                        "score": 82,
+                        "status": "selected",
+                        "reason": "selected",
+                    },
+                    {
+                        "heading": "核心观点",
+                        "score": 41,
+                        "status": "skipped",
+                        "reason": "skipped_lower_score",
+                    },
+                ],
+            )
+        ],
+        base_dir=tmp_path,
+    )
+
+    assert len(plan.written) == 1
+    assert plan.skipped_existing == []
+
+    text = path.read_text(encoding="utf-8")
+    assert "新摘录保留券商论点、论据和差异" in text
+    assert "selection_reason: selected_best_heading_candidate" in text
+    assert "## Selection Diagnostics" in text
+    assert "heading=`投资要点` | score=`82` | status=`selected` | reason=`selected`" in text
+    assert "heading=`核心观点` | score=`41` | status=`skipped` | reason=`skipped_lower_score`" in text
+
+
+def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
+    tmp_path: Path,
+) -> None:
+    notes_dir = _notes_dir(tmp_path)
+    notes_dir.mkdir(parents=True)
+    path = notes_dir / "2026-05-12-国信证券-broker-core-view-abc123.md"
+    existing = (
+        "---\n"
+        "source_type: broker_research\n"
+        "schema_version: broker_research_digest_card.v1\n"
+        "card_id: broker:abc123\n"
+        "selection_reason: selected_best_heading_candidate\n"
+        "---\n\n"
+        "## Broker Research Excerpt\n\n"
+        "> 人工保留摘录。\n\n"
+        "## Selection Diagnostics\n\n"
+        "- heading=`投资要点` | score=`80` | status=`selected` | reason=`selected`\n"
+    )
+    path.write_text(existing, encoding="utf-8")
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[
+            _card(
+                source_excerpt="不应覆盖的新摘录。",
+                selection_reason="selected_best_heading_candidate",
+                selection_diagnostics=[
+                    {
+                        "heading": "投资要点",
+                        "score": 82,
+                        "status": "selected",
+                        "reason": "selected",
+                    }
+                ],
+            )
+        ],
+        base_dir=tmp_path,
+    )
+
+    assert plan.written == []
+    assert len(plan.skipped_existing) == 1
+    assert path.read_text(encoding="utf-8") == existing

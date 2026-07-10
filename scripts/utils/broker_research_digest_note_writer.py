@@ -91,6 +91,7 @@ def _target_filename(card: Dict[str, Any]) -> str:
 def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, collected_at: str) -> str:
     excerpt = str(card.get("source_excerpt", "")).strip()
     excerpt_hash = str(card.get("source_excerpt_hash") or _source_text_hash(excerpt))
+    selection_reason = str(card.get("selection_reason", "")).strip()
     frontmatter = _render_frontmatter(
         [
             ("stock", stock_name),
@@ -116,19 +117,37 @@ def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, coll
             ("source_excerpt_hash", excerpt_hash),
             ("source_pdf_path", str(card.get("source_pdf_path", ""))),
             ("source_url", str(card.get("source_url", ""))),
+            ("source_heading", str(card.get("source_heading", ""))),
+            ("selection_reason", selection_reason),
             ("viewpoint_cluster", str(card.get("viewpoint_cluster", ""))),
             ("report_length_class", str(card.get("report_length_class", ""))),
             ("collected_at", collected_at),
         ]
     )
-    return "\n".join(
+    lines = [
+        frontmatter,
+        f"# {stock_name} broker research digest",
+        "",
+        "## Broker Research Excerpt",
+        "",
+        f"> {excerpt or '（无摘录）'}",
+        "",
+        "## Selection Diagnostics",
+        "",
+        f"- selection_reason: `{selection_reason or 'selected_by_digest_quality_score'}`",
+    ]
+    for entry in (card.get("selection_diagnostics") or [])[:8]:
+        if not isinstance(entry, dict):
+            continue
+        lines.append(
+            "- "
+            f"heading=`{entry.get('heading', '')}` | "
+            f"score=`{entry.get('score', '')}` | "
+            f"status=`{entry.get('status', '')}` | "
+            f"reason=`{entry.get('reason', '')}`"
+        )
+    lines.extend(
         [
-            frontmatter,
-            f"# {stock_name} broker research digest",
-            "",
-            "## Broker Research Excerpt",
-            "",
-            f"> {excerpt or '（无摘录）'}",
             "",
             "## Source",
             "",
@@ -143,6 +162,19 @@ def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, coll
             "- It stays outside scoring, risk scoring, and automated fact confirmation.",
             "",
         ]
+    )
+    return "\n".join(lines)
+
+
+def _has_current_diagnostics_note_shape(path: Path) -> bool:
+    try:
+        text = path.read_text(encoding="utf-8")
+    except OSError:
+        return False
+    return (
+        re.search(r'(?m)^schema_version:\s*"?broker_research_digest_card\.v1"?\s*$', text) is not None
+        and re.search(r"(?m)^selection_reason:", text) is not None
+        and "## Selection Diagnostics" in text
     )
 
 
@@ -193,9 +225,11 @@ def write_broker_research_digest_card_notes(
             continue
         meta = {"card_id": card_id, "planned_path": str(target)}
         if target.exists():
-            meta["reason"] = "note already exists"
-            plan.skipped_existing.append(meta)
-            continue
+            if _has_current_diagnostics_note_shape(target):
+                meta["reason"] = "note already exists"
+                plan.skipped_existing.append(meta)
+                continue
+            meta["reason"] = "refreshed missing selection diagnostics"
         if not dry_run:
             notes_dir.mkdir(parents=True, exist_ok=True)
             target.write_text(
