@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import hashlib
+import re
 import sys
 from pathlib import Path
 
@@ -27,6 +29,41 @@ def _research_item(**extra) -> SynthesisItem:
         publish_time="2026-05-12",
         extra=merged_extra,
     )
+
+
+def test_digest_cards_include_selection_version() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    核心观点
+    一季度收入创季度新高，归母净利润同比翻倍以上。公司2026年一季度实现收入10.98亿元，
+    同比增长39.08%，毛利率为51.63%。2025年网络与计算收入占比超15%，工业与能源占比超30%。
+
+    风险提示：产品研发不及预期，客户导入不及预期，竞争加剧。
+    免责声明
+    本报告仅供客户参考，不构成投资建议。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
+
+    assert len(cards) >= 1
+    assert all(card["selection_version"] == "broker_digest_v3" for card in cards)
+
+
+def test_digest_card_identity_hashes_final_selected_excerpt() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    核心观点
+    公司2026年一季度实现收入10.98亿元，同比增长39.08%，毛利率为51.63%。
+    下游客户需求保持增长，产品结构升级推动盈利能力改善。
+    """
+
+    card = build_broker_research_digest_cards(_research_item(), text, max_cards=1)[0]
+    expected_hash = hashlib.sha256(card["source_excerpt"].encode("utf-8")).hexdigest()
+
+    assert card["source_excerpt_hash"] == expected_hash
+    assert card["card_id"] == f"broker:{expected_hash[:16]}"
 
 
 def test_digest_extracts_high_value_sections_and_is_professional_analysis() -> None:
@@ -273,9 +310,164 @@ def test_digest_records_section_candidate_diagnostics() -> None:
     assert len(diagnostics) == 2
     assert {entry["heading"] for entry in diagnostics} == {"投资要点"}
     assert any(entry["status"] == "selected" for entry in diagnostics)
-    assert any(entry["status"] == "skipped" for entry in diagnostics)
+    assert any(entry["status"] in ("skipped", "rejected") for entry in diagnostics)
     assert all(isinstance(entry["score"], int) for entry in diagnostics)
     assert "selected" in core_card["selection_reason"]
+
+
+def test_digest_diagnostics_explain_score_parts() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    公司2026年一季度实现营收195亿元，同比增长192.1%，环比增长47.3%。
+
+    投资要点
+    下游云厂商资本开支持续扩张，800G与1.6T高速光模块需求延续高景气，
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+    diagnostics = core_card["selection_diagnostics"]
+
+    expected_parts = {
+        "signal",
+        "evidence",
+        "completeness",
+        "coherence",
+        "ocr_penalty",
+        "noise_penalty",
+    }
+    for entry in diagnostics:
+        assert expected_parts == set(entry["score_parts"])
+        assert entry["score"] == (
+            entry["score_parts"]["signal"]
+            + entry["score_parts"]["evidence"]
+            + entry["score_parts"]["completeness"]
+            + entry["score_parts"]["coherence"]
+            - entry["score_parts"]["ocr_penalty"]
+            - entry["score_parts"]["noise_penalty"]
+        )
+
+
+def test_digest_rejects_severe_ocr_damage_candidate() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    clean_claim = "下游云厂商资本开支持续扩张"
+    text = f"""
+    投资要点
+    公司2026年一 度实现营 收195. 环比分别 增长192.1%、47.3%；实现归母净 利润57.3亿元，
+    预计 20 2027 年 800G 光模 块需求持续 增长，1.6T 光模 块需求将迎 强劲增长，
+    公司产 品出 货较快增长，随着产 方案不断优化，公司营业收入与净利 均同比实现大幅增长。
+
+    投资要点
+    {clean_claim}，800G与1.6T高速光模块需求延续高景气，
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
+
+    风险提示
+    客户资本开支不及预期。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+
+    assert clean_claim in core_card["source_excerpt"]
+    assert any(
+        entry["status"] == "rejected"
+        and entry["reason"] == "rejected_ocr_damage"
+        for entry in core_card["selection_diagnostics"]
+    )
+
+
+def test_digest_valid_numbers_are_not_rejected_as_severe_damage() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    我们预计公司2026年实现营收57.3亿元，同比增长262.3%，对应EPS为1.6元，
+    1.6T光模块需求保持强劲，2026年全年毛利率稳中回升。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+
+    assert all(entry["status"] != "rejected" for entry in core_card["selection_diagnostics"])
+
+
+def test_digest_clean_pdf_line_wraps_are_not_severe_ocr_damage() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    下游云厂商资本开支持续
+    扩张，高速光模块需求延续
+    景气，客户订单和产品结构
+    升级推动收入增长，毛利率有望改善。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+
+    assert all(entry["status"] != "rejected" for entry in core_card["selection_diagnostics"])
+
+
+def test_digest_retreats_to_sentence_boundary_when_900_falls_mid_clause() -> None:
+    from broker_research_digest import _bounded_complete_excerpt
+
+    complete_prefix = "甲" * 850 + "。"
+    excerpt = _bounded_complete_excerpt(complete_prefix + "乙" * 200 + "。")
+
+    assert excerpt == complete_prefix
+
+
+def test_digest_extends_to_nearby_sentence_boundary_within_limit() -> None:
+    from broker_research_digest import _bounded_complete_excerpt
+
+    expected = "甲" * 850 + "。" + "乙" * 70 + "。"
+    excerpt = _bounded_complete_excerpt(expected + "丙" * 100)
+
+    assert excerpt == expected
+    assert 900 < len(excerpt) <= 980
+
+
+def test_digest_selected_units_are_ordered_source_substrings() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    text = """
+    投资要点
+    公司2026年一季度实现收入10.98亿元，同比增长39.08%，毛利率为51.63%。
+    下游云厂商资本开支持续扩张，800G与1.6T高速光模块需求延续高景气。
+    客户订单和产品结构升级推动收入增长，毛利率有望受规模效应改善。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+    excerpt = core_card["source_excerpt"]
+
+    assert "公司2026年一季度实现收入10.98亿元" in excerpt
+    assert "下游云厂商资本开支持续扩张" in excerpt
+    assert "客户订单和产品结构升级推动收入增长" in excerpt
+    assert excerpt.index("下游云厂商") > excerpt.index("公司2026年")
+    assert excerpt.index("客户订单") > excerpt.index("下游云厂商")
+
+
+def test_digest_rejects_long_clause_without_sentence_boundary() -> None:
+    from broker_research_digest import build_broker_research_digest_cards
+
+    long_clause = "A" * 2000
+    text = f"""
+    投资要点
+    {long_clause}
+
+    核心观点
+    公司2026年一季度实现收入10.98亿元，同比增长39.08%，毛利率为51.63%。
+    """
+
+    cards = build_broker_research_digest_cards(_research_item(pdf_page_count=18), text, max_cards=5)
+    core_card = next(card for card in cards if card["card_type"] == "broker_core_view")
+
+    assert "A" * 100 not in core_card["source_excerpt"]
 
 
 def test_digest_recognizes_broader_existing_category_headings() -> None:

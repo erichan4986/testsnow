@@ -166,8 +166,10 @@ def test_broker_digest_writer_refreshes_existing_note_without_selection_diagnost
     assert "新摘录保留券商论点、论据和差异" in text
     assert "selection_reason: selected_best_heading_candidate" in text
     assert "## Selection Diagnostics" in text
-    assert "heading=`投资要点` | score=`82` | status=`selected` | reason=`selected`" in text
-    assert "heading=`核心观点` | score=`41` | status=`skipped` | reason=`skipped_lower_score`" in text
+    assert "heading=`投资要点` | score=`82` | parts=`" in text
+    assert "status=`selected` | reason=`selected`" in text
+    assert "heading=`核心观点` | score=`41` | parts=`" in text
+    assert "status=`skipped` | reason=`skipped_lower_score`" in text
 
 
 def test_broker_digest_writer_repairs_ocr_artifacts_in_persisted_excerpt(
@@ -268,6 +270,58 @@ def test_broker_digest_writer_refreshes_current_note_missing_cleaner_version(
     assert "高速光模 块" not in refreshed
 
 
+def test_broker_digest_writer_refreshes_current_note_missing_selection_version(
+    tmp_path: Path,
+) -> None:
+    write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt="高速光模 块出货比例提升。")],
+        base_dir=tmp_path,
+    )
+    path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
+
+    stale = path.read_text(encoding="utf-8").replace(
+        "selection_version: broker_digest_v3\n", ""
+    )
+    path.write_text(stale, encoding="utf-8")
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt="高速光模 块出货比例提升。")],
+        base_dir=tmp_path,
+    )
+
+    refreshed = path.read_text(encoding="utf-8")
+    assert len(plan.written) == 1
+    assert plan.skipped_existing == []
+    assert "selection_version: broker_digest_v3" in refreshed
+
+
+def test_broker_digest_writer_skips_existing_note_with_selection_version(
+    tmp_path: Path,
+) -> None:
+    write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt="高速光模 块出货比例提升。")],
+        base_dir=tmp_path,
+    )
+    path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
+    assert "selection_version: broker_digest_v3" in path.read_text(encoding="utf-8")
+
+    plan = write_broker_research_digest_card_notes(
+        stock_name="圣邦股份",
+        stock_code="300661",
+        cards=[_card(source_excerpt="高速光模 块出货比例提升。")],
+        base_dir=tmp_path,
+    )
+
+    assert plan.written == []
+    assert len(plan.skipped_existing) == 1
+
+
 def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
     tmp_path: Path,
 ) -> None:
@@ -281,6 +335,7 @@ def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
         "card_id: broker:abc123\n"
         "selection_reason: selected_best_heading_candidate\n"
         "excerpt_cleaner_version: broker_ocr_v2\n"
+        "selection_version: broker_digest_v3\n"
         "---\n\n"
         "## Broker Research Excerpt\n\n"
         "> 人工保留摘录。\n\n"

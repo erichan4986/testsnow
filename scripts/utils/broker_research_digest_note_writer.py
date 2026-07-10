@@ -16,6 +16,8 @@ from typing import Any, Callable, Dict, List, Optional, Union
 
 if __name__.startswith("utils."):
     from .broker_research_digest import (
+        SCORE_PART_KEYS,
+        SELECTION_VERSION,
         build_broker_research_digest_cards,
         clean_broker_research_excerpt_text,
         deduplicate_broker_digest_cards_by_viewpoint,
@@ -24,6 +26,8 @@ if __name__.startswith("utils."):
     from .source_adapter import SynthesisItem
 else:
     from broker_research_digest import (
+        SCORE_PART_KEYS,
+        SELECTION_VERSION,
         build_broker_research_digest_cards,
         clean_broker_research_excerpt_text,
         deduplicate_broker_digest_cards_by_viewpoint,
@@ -139,6 +143,7 @@ def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, coll
             ("display_only", False),
             ("source_excerpt_hash", excerpt_hash),
             ("excerpt_cleaner_version", BROKER_EXCERPT_CLEANER_VERSION),
+            ("selection_version", SELECTION_VERSION),
             ("source_pdf_path", str(card.get("source_pdf_path", ""))),
             ("source_url", str(card.get("source_url", ""))),
             ("source_heading", str(card.get("source_heading", ""))),
@@ -163,10 +168,13 @@ def _render_note(card: Dict[str, Any], *, stock_name: str, stock_code: str, coll
     for entry in (card.get("selection_diagnostics") or [])[:8]:
         if not isinstance(entry, dict):
             continue
+        parts = entry.get("score_parts") or {}
+        parts_text = ",".join(f"{key}={parts.get(key, 0)}" for key in SCORE_PART_KEYS)
         lines.append(
             "- "
             f"heading=`{entry.get('heading', '')}` | "
             f"score=`{entry.get('score', '')}` | "
+            f"parts=`{parts_text}` | "
             f"status=`{entry.get('status', '')}` | "
             f"reason=`{entry.get('reason', '')}`"
         )
@@ -199,6 +207,7 @@ def _has_current_diagnostics_note_shape(path: Path) -> bool:
         re.search(r'(?m)^schema_version:\s*"?broker_research_digest_card\.v1"?\s*$', text) is not None
         and re.search(r"(?m)^selection_reason:", text) is not None
         and re.search(rf"(?m)^excerpt_cleaner_version:\s*\"?{BROKER_EXCERPT_CLEANER_VERSION}\"?\s*$", text) is not None
+        and re.search(rf"(?m)^selection_version:\s*\"?{SELECTION_VERSION}\"?\s*$", text) is not None
         and "## Selection Diagnostics" in text
     )
 

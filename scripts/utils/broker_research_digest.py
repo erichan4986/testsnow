@@ -20,6 +20,13 @@ else:
 SOURCE_TYPE = "broker_research"
 SOURCE_CREDIT = 72
 SCHEMA_VERSION = "broker_research_digest_card.v1"
+SELECTION_VERSION = "broker_digest_v3"
+
+SCORE_PART_KEYS = (
+    "signal", "evidence", "completeness", "coherence",
+    "ocr_penalty", "noise_penalty",
+)
+_EXCERPT_TERMINATORS = "。；;！？!?"
 
 _STOP_PATTERNS = [
     "免责声明",
@@ -173,7 +180,7 @@ def clean_broker_research_excerpt_text(
     fragments into synthetic-looking claims; the opt-in path keeps old persisted
     notes readable until they are regenerated.
     """
-    value = re.sub(r"\s+", " ", str(text or "")).strip(" ：:；;。")
+    value = re.sub(r"\s+", " ", str(text or "")).strip(" ：:")
     if not value:
         return ""
     value = re.sub(r"[▌•●]\s*", "", value)
@@ -194,7 +201,7 @@ def clean_broker_research_excerpt_text(
     value = re.sub(r"(800G|1\.6T)\s+(?=光模块)", r"\1", value)
     value = re.sub(r"\s*([，,；;。])\s*", r"\1", value)
     value = re.sub(r"\s+", " ", value)
-    return value.strip(" ：:；;。")
+    return value.strip(" ：:")
 
 
 def build_broker_research_digest_cards(
@@ -267,6 +274,7 @@ def build_broker_research_digest_cards(
                             score=_section_candidate_score(driver_excerpt),
                             status="selected",
                             reason="selected_generic_driver_block",
+                            text=driver_excerpt,
                         )
                     ],
                     selection_reason="selected_generic_driver_block",
@@ -290,6 +298,7 @@ def build_broker_research_digest_cards(
                             score=_section_candidate_score(excerpt),
                             status="selected",
                             reason="selected_fallback_excerpt",
+                            text=excerpt,
                         )
                     ],
                     selection_reason="selected_fallback_excerpt",
@@ -496,6 +505,7 @@ def _build_card(
     display_only = _is_display_only_card(card_type, viewpoint_cluster, excerpt)
     return {
         "schema_version": SCHEMA_VERSION,
+        "selection_version": SELECTION_VERSION,
         "card_id": f"broker:{source_hash[:16]}",
         "card_type": card_type,
         "title": title,
@@ -632,15 +642,49 @@ def _extract_section_candidates(
     return candidates
 
 
+def _candidate_score_parts(text: str) -> Dict[str, int]:
+    digit_count = min(sum(ch.isdigit() for ch in text), 20)
+    specific_count = sum(term in text for term in _SPECIFIC_TERMS)
+    complete_sentences = len(re.findall(r"[。；;！？!?]", text))
+    directional = any(
+        term in text
+        for term in ("预计", "认为", "维持", "受益", "推动", "带动", "提升", "改善", "风险", "不及预期")
+    )
+    evidence_signal = bool(re.search(r"\d+(?:\.\d+)?\s*(?:亿元|%|pct|倍|G|T)", text)) or any(
+        term in text for term in ("客户", "订单", "产能", "产品", "毛利率", "净利润")
+    )
+    gap_count = len(re.findall(r"[\u4e00-\u9fff]\s+[\u4e00-\u9fff]", text))
+    dangling_decimal_count = len(re.findall(r"\d+\.(?=\s|[，,；;。]|$)", text))
+    broken_year_count = len(re.findall(r"(?:20\s+20\d{2}|20\d{2}\s+年)", text))
+    noise_hits = sum(pattern in text for pattern in _GENERIC_NOISE_PATTERNS)
+    table_noise = _looks_like_financial_table_fragment(text) or _looks_like_rating_table_fragment(text)
+    return {
+        "signal": min(specific_count * 3, 60),
+        "evidence": digit_count + (8 if evidence_signal else 0),
+        "completeness": min(complete_sentences * 4, 12),
+        "coherence": 8 if directional and evidence_signal else 0,
+        "ocr_penalty": gap_count * 4 + dangling_decimal_count * 40 + broken_year_count * 40,
+        "noise_penalty": noise_hits * 12 + (80 if table_noise else 0),
+    }
+
+
+def _candidate_total(parts: Dict[str, int]) -> int:
+    return sum(parts[key] for key in SCORE_PART_KEYS[:4]) - sum(
+        parts[key] for key in SCORE_PART_KEYS[4:]
+    )
+
+
+def _has_severe_ocr_damage(parts: Dict[str, int]) -> bool:
+    return parts["ocr_penalty"] >= 40
+
+
+def _quality_score(text: str) -> int:
+    return _candidate_total(_candidate_score_parts(text))
+
+
 def _section_candidate_score(text: str) -> int:
-    if not text:
-        return -1000
-    score = _quality_score(text) + _generic_driver_score(text)
-    if _looks_like_financial_table_fragment(text) or _looks_like_rating_table_fragment(text):
-        score -= 80
-    score -= 8 * len(re.findall(r"[\u4e00-\u9fff]\s+[\u4e00-\u9fff]", text))
-    score -= 24 * len(re.findall(r"(?:营收|收入)\d+\.(?:\s|[，,；;。]|$)", text))
-    return score
+    parts = _candidate_score_parts(text)
+    return _candidate_total(parts)
 
 
 def _select_section_candidates(
@@ -649,7 +693,11 @@ def _select_section_candidates(
 ) -> List[Tuple[int, int, str, str]]:
     if not candidates:
         return []
-    ordered = sorted(candidates, key=lambda item: (-item[0], item[1]))
+    eligible = [
+        candidate for candidate in candidates
+        if not _has_severe_ocr_damage(_candidate_score_parts(candidate[3]))
+    ]
+    ordered = sorted(eligible, key=lambda item: (-item[0], item[1]))
     if card_type != "broker_product_driver":
         return ordered[:1]
 
@@ -674,9 +722,23 @@ def _section_selection_diagnostics(
     selected_fingerprints = [_fingerprint(text) for _, _, _, text in selected]
     diagnostics: List[Dict[str, Any]] = []
     for score, order, heading, text in sorted(candidates, key=lambda item: item[1]):
+        parts = _candidate_score_parts(text)
+        if _has_severe_ocr_damage(parts):
+            diagnostics.append(
+                _diagnostic_entry(
+                    heading=heading,
+                    score=score,
+                    status="rejected",
+                    reason="rejected_ocr_damage",
+                    text=text,
+                )
+            )
+            continue
         key = (score, order, heading)
         if key in selected_keys:
-            diagnostics.append(_diagnostic_entry(heading=heading, score=score, status="selected", reason="selected"))
+            diagnostics.append(
+                _diagnostic_entry(heading=heading, score=score, status="selected", reason="selected", text=text)
+            )
             continue
         fingerprint = _fingerprint(text)
         duplicate = any(_near_duplicate(fingerprint, old) for old in selected_fingerprints)
@@ -686,15 +748,19 @@ def _section_selection_diagnostics(
                 score=score,
                 status="skipped",
                 reason="skipped_near_duplicate" if duplicate else "skipped_lower_score",
+                text=text,
             )
         )
     return diagnostics
 
 
-def _diagnostic_entry(*, heading: str, score: int, status: str, reason: str) -> Dict[str, Any]:
+def _diagnostic_entry(
+    *, heading: str, score: int, status: str, reason: str, text: str
+) -> Dict[str, Any]:
     return {
         "heading": heading,
         "score": int(score),
+        "score_parts": _candidate_score_parts(text),
         "status": status,
         "reason": reason,
     }
@@ -734,7 +800,22 @@ def _clean_excerpt(text: str) -> str:
     text = clean_broker_research_excerpt_text(text)
     text = _condense_excerpt(text)
     text = clean_broker_research_excerpt_text(text)
-    return text[:900].strip()
+    return _bounded_complete_excerpt(text)
+
+
+def _bounded_complete_excerpt(text: str, limit: int = 900, extension: int = 80) -> str:
+    text = str(text or "").strip()
+    if len(text) <= limit:
+        return text
+    hard_end = min(len(text), limit + extension)
+    next_positions = [
+        pos for mark in _EXCERPT_TERMINATORS
+        if (pos := text.find(mark, limit, hard_end + 1)) >= 0
+    ]
+    if next_positions:
+        return text[: min(next_positions) + 1].strip()
+    previous = max(text.rfind(mark, 0, limit + 1) for mark in _EXCERPT_TERMINATORS)
+    return text[: previous + 1].strip() if previous >= 0 else ""
 
 
 def _condense_excerpt(text: str) -> str:
@@ -757,9 +838,11 @@ def _condense_excerpt(text: str) -> str:
         selected.append(unit)
         if len(selected) >= 5:
             break
+    while selected and not selected[-1][-1] in _EXCERPT_TERMINATORS:
+        selected.pop()
     if not selected:
-        return text[:900].strip()
-    return " ".join(selected)[:900].strip()
+        return _bounded_complete_excerpt(text)
+    return _bounded_complete_excerpt(" ".join(selected))
 
 
 def _looks_like_front_matter_noise(text: str) -> bool:
@@ -816,7 +899,7 @@ def _fallback_excerpt(text: str) -> str:
             useful.append(chunk)
         if len("。".join(useful)) >= 280:
             break
-    return "。".join(useful)[:900].strip()
+    return _bounded_complete_excerpt("。".join(useful))
 
 
 def _allow_fallback_excerpt(text: str) -> bool:
@@ -907,19 +990,6 @@ def _looks_like_risk_only(text: str) -> bool:
     if any(term in text for term in positive_terms):
         return False
     return True
-
-
-def _quality_score(text: str) -> int:
-    score = 0
-    score += min(sum(ch.isdigit() for ch in text), 20)
-    for term in _SPECIFIC_TERMS:
-        if term in text:
-            score += 3
-    if any(term in text for term in ("预计", "预测", "2026", "2027", "2028")):
-        score += 8
-    if any(term in text for term in ("客户", "订单", "产能", "产品", "研发")):
-        score += 8
-    return score
 
 
 def _has_knowledge_driver_candidate(candidates: List[Dict[str, Any]]) -> bool:
