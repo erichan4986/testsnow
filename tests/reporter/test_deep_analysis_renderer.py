@@ -2912,8 +2912,8 @@ def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion(
     assert "**推演结论**" not in section44
     assert "不直接修改目标价、评分、风险评分或最终推荐" in section44
     assert "**官方确认：业务覆盖 / 产品线**" in section44
-    assert "**机构假设：高速光模块放量**" in section44
-    assert "**外部待验证：供应链与交付**" in section44
+    assert "**机构假设：产品放量**" in section44
+    assert "**外部待验证：供应链 / 技术路线**" in section44
     assert "**官方确认：高速光模块放量**" not in section44
     assert "**外部待验证：高速光模块放量**" not in section44
     assert "若年报/公告确认的产品线、经营变化和财务解释继续兑现" in section44
@@ -2978,3 +2978,96 @@ def test_formal_medium_price_path_prefers_business_evidence_over_financial_noise
 
     assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section44
     assert "费用与研发投入说明" not in section44
+
+
+def test_annual_portrait_selection_uses_generic_company_scope_not_chip_keywords():
+    renderer = DeepAnalysisRenderer()
+    rows = [
+        {"body": "光模块、FPGA、安全与识别、智能电表产品线介绍。"},
+        {"body": "公司从事精密设备设计、开发、测试，并提供系统解决方案，面向多个行业客户。"},
+    ]
+
+    portrait = renderer._select_annual_portrait_row(rows)
+
+    assert portrait["body"].startswith("公司从事精密设备")
+
+
+def test_broker_consensus_uses_assumption_titles_for_generic_sector():
+    renderer = DeepAnalysisRenderer()
+
+    consensus = renderer._broker_consensus_sentence([
+        {"assumption": "产能利用率", "view": "研报认为产能利用率改善。"},
+        {"assumption": "海外渠道", "view": "研报认为海外渠道扩张。"},
+    ])
+
+    assert consensus == "研报关注点集中在产能利用率、海外渠道。"
+
+
+def test_official_row_cleaner_preserves_generic_business_prefix_before_mode_noise():
+    renderer = DeepAnalysisRenderer()
+
+    cleaned = renderer._clean_formal_medium_official_row({
+        "title": "主营业务与产品",
+        "body": "公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
+    })
+
+    assert cleaned is not None
+    assert cleaned["body"] == "公司提供工业控制设备并服务大型制造客户"
+
+
+def test_formal_medium_price_path_uses_material_titles_in_generic_sector():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "通用设备公司",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {
+            "industry_logic": "",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "annual_report_memo": {
+            "status": "ready",
+            "sections": {
+                "confirmed": [],
+                "annual_report_explanation": [{
+                    "title": "渠道扩张",
+                    "body": "公司新增直营网点并覆盖更多区域客户。",
+                    "display_group": "operation_update",
+                    "citation_refs": [1],
+                }],
+                "not_disclosed": [],
+                "inconclusive": [],
+            },
+            "citations": {1: {"source": "公司年报", "title": "年度报告"}},
+        },
+        "broker_research_memo": {
+            "status": "ready",
+            "sections": [{
+                "title": "产能利用率",
+                "body": "研报认为产能利用率提升将改善盈利表现。",
+                "citation_refs": [1],
+            }],
+            "forecast_ranges": [],
+            "risks": [],
+            "citations": {1: {"source": "券商研报", "title": "跟踪报告", "author": "测试证券"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [{
+                "heading": "海外认证",
+                "text": "外部文章称新产品正在推进海外认证。",
+                "citation_refs": [1],
+            }],
+            "citations": {1: {"source": "微信公众号精选观察", "title": "海外市场观察"}},
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "**官方确认：渠道扩张**" in section44
+    assert "**机构假设：产能利用率**" in section44
+    assert "**外部待验证：海外认证**" in section44

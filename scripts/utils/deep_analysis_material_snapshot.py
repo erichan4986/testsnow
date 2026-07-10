@@ -235,7 +235,7 @@ def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
                 section_hint="annual_memo",
                 title=title,
                 body=body,
-                render_role=_annual_render_role(title, row.get("display_group")),
+                render_role=classify_annual_render_role(title, row.get("display_group")),
                 source_credit="official",
                 diagnostics=_row_diagnostics(row),
             ))
@@ -399,7 +399,7 @@ def _make_row(
     )
 
 
-def _annual_render_role(title: str, configured_group: Any = "") -> str:
+def classify_annual_render_role(title: str, configured_group: Any = "") -> str:
     configured = str(configured_group or "").strip()
     if configured:
         return configured
@@ -458,7 +458,7 @@ def _dedupe_row_refs_by_citation_identity(
     seen = set()
     for ref in row.citation_refs:
         meta = citations.get(ref) or {}
-        identity = _citation_identity(meta, ref)
+        identity = citation_identity(meta, fallback_ref=ref)
         if identity in seen:
             continue
         seen.add(identity)
@@ -466,9 +466,9 @@ def _dedupe_row_refs_by_citation_identity(
     return replace(row, citation_refs=tuple(refs))
 
 
-def _citation_identity(meta: Any, fallback_ref: int) -> tuple:
+def citation_identity(meta: Any, fallback_ref: int | None = None) -> tuple:
     if not isinstance(meta, Mapping):
-        return ("ref", fallback_ref)
+        return ("ref", fallback_ref) if fallback_ref is not None else ()
     url = str(meta.get("url") or "").strip()
     if url:
         return ("url", url)
@@ -476,7 +476,9 @@ def _citation_identity(meta: Any, fallback_ref: int) -> tuple:
         str(meta.get(key) or "").strip()
         for key in ("source", "author", "title")
     )
-    return ("meta",) + identity if any(identity) else ("ref", fallback_ref)
+    if any(identity):
+        return ("meta",) + identity
+    return ("ref", fallback_ref) if fallback_ref is not None else ()
 
 
 def _diagnostics(ctx: Mapping[str, Any], rows: list[MaterialRow]) -> Dict[str, Any]:

@@ -14,6 +14,8 @@ from deep_analysis_material_snapshot import (  # noqa: E402
     MaterialRow,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
+    citation_identity,
+    classify_annual_render_role,
 )
 
 
@@ -266,3 +268,17 @@ def test_snapshot_does_not_admit_stale_rows_from_absent_annual_or_broker_memo():
     assert not view_model.section("4.1").rows
     assert not view_model.section("4.2").rows
     assert all(row.source_layer == "external" for row in snapshot.rows)
+
+
+def test_shared_material_classification_and_citation_identity_helpers():
+    assert classify_annual_render_role("营业收入") == "financial_explanation"
+    assert classify_annual_render_role("主营业务与产品") == "product_business"
+    assert classify_annual_render_role("任意标题", "management_view") == "management_view"
+    assert citation_identity({"url": "https://example.com/a"}) == ("url", "https://example.com/a")
+    assert citation_identity({"source": "研报", "author": "机构", "title": "正文"}) == (
+        "meta",
+        "研报",
+        "机构",
+        "正文",
+    )
+    assert citation_identity({}, fallback_ref=7) == ("ref", 7)

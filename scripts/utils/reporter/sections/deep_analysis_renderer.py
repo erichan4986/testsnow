@@ -11,6 +11,8 @@ try:
         MaterialRow,
         build_chapter4_view_model,
         build_deep_analysis_material_snapshot,
+        citation_identity,
+        classify_annual_render_role,
     )
     from ...synthesis_credit import sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -23,6 +25,8 @@ except ImportError:
             MaterialRow,
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
+            citation_identity,
+            classify_annual_render_role,
         )
         from scripts.utils.synthesis_credit import sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -34,6 +38,8 @@ except ImportError:
             MaterialRow,
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
+            citation_identity,
+            classify_annual_render_role,
         )
         from utils.synthesis_credit import sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -646,7 +652,7 @@ class DeepAnalysisRenderer:
             })
             text = str((cleaned or {}).get("body") or annual_row.body)
             used.update(refs)
-            variable = self._infer_key_variable(text, "业务覆盖 / 产品线")
+            variable = self._material_key_variable(annual_row, "业务覆盖 / 产品线")
             evidence = attach_refs_to_sentence(self._compact_annual_text(text, 150), refs)
             lines.extend([
                 f"**官方确认：{variable}**",
@@ -665,7 +671,7 @@ class DeepAnalysisRenderer:
                 author="" if broker_row.attribution == "研报" else broker_row.attribution,
             )
             text = self._project_broker_assumption_view(text)
-            variable = self._infer_key_variable(text, "产品放量 / 盈利弹性")
+            variable = self._material_key_variable(broker_row, "产品放量 / 盈利弹性")
             evidence = attach_refs_to_sentence(self._compact_annual_text(text, 170), refs)
             lines.extend([
                 f"**机构假设：{variable}**",
@@ -679,7 +685,7 @@ class DeepAnalysisRenderer:
             text = external_row.body
             refs = [ref + citation_offset for ref in external_row.citation_refs]
             used.update(refs)
-            variable = self._infer_key_variable(text, "供应链 / 技术路线")
+            variable = self._material_key_variable(external_row, "供应链 / 技术路线")
             evidence = self._external_claim_sentence(text, refs, limit=280)
             lines.extend([
                 f"**外部待验证：{variable}**",
@@ -979,13 +985,15 @@ class DeepAnalysisRenderer:
 
     @staticmethod
     def _broker_consensus_sentence(rows: List[Dict[str, Any]]) -> str:
-        texts = "；".join(str(row.get("view") or "") for row in rows)
+        generic_titles = {"", "机构核心观点", "产业与产品判断", "反方约束", "风险提示"}
         themes: List[str] = []
-        for term in ("800G", "1.6T", "AI 数据中心", "毛利率", "产品结构升级", "客户资本开支"):
-            if term in texts and term not in themes:
-                themes.append(term)
+        for row in rows:
+            title = str(row.get("assumption") or "").strip()
+            if title in generic_titles or title in themes:
+                continue
+            themes.append(title)
         if themes:
-            return "研报共识集中在" + "、".join(themes[:4]) + "等变量。"
+            return "研报关注点集中在" + "、".join(themes[:4]) + "。"
         if rows:
             return "研报观点主要围绕需求、产品放量、盈利弹性与反方风险。"
         return ""
@@ -1030,25 +1038,13 @@ class DeepAnalysisRenderer:
         value = re.sub(r"\s+", " ", value)
         return value.strip(" ：:；;。")
 
-    @staticmethod
-    def _annual_row_group(row: Dict[str, Any]) -> str:
-        title = str(row.get("title") or "")
-        if any(term in title for term in ("收入", "利润", "费用", "现金流", "存货", "减值", "毛利率")):
-            return "financial_explanation"
-        if any(term in title for term in ("研发", "技术", "竞争")):
-            return "competitiveness_rd"
-        if any(term in title for term in ("主营", "产品", "业务")):
-            return "product_business"
-        if any(term in title for term in ("经营", "进展", "更新")):
-            return "operation_update"
-        if any(term in title for term in ("管理层", "市场", "行业", "前景")):
-            return "management_view"
-        return "other"
-
     def _annual_rows_by_group(self, rows: List[Dict[str, Any]], group: str) -> List[Dict[str, Any]]:
         return [
             row for row in rows
-            if str(row.get("display_group") or self._annual_row_group(row)) == group
+            if classify_annual_render_role(
+                str(row.get("title") or ""),
+                row.get("display_group"),
+            ) == group
         ]
 
     @staticmethod
@@ -1084,15 +1080,22 @@ class DeepAnalysisRenderer:
         def score(row: Dict[str, Any]) -> int:
             body = str(row.get("body") or "")
             value = 0
-            if "从事" in body and any(term in body for term in ("设计", "开发", "测试", "系统解决方案")):
-                value += 8
-            if "产品线" in body:
+            if "公司" in body:
+                value += 3
+            if "主营业务" in body:
                 value += 5
-            for term in ("FPGA", "安全与识别", "非挥发", "智能电表", "集成电路测试", "光模块"):
-                if term in body:
-                    value += 2
-            if "存储芯片产品线" in body and "FPGA" not in body:
-                value -= 4
+            if "从事" in body:
+                value += 4
+            value += min(5, sum(
+                1 for term in ("设计", "开发", "研发", "制造", "生产", "测试", "系统解决方案")
+                if term in body
+            ))
+            if "产品线" in body:
+                value += 2
+            if any(term in body for term in ("客户", "应用", "行业", "市场")):
+                value += 2
+            if "介绍" in body and len(body) < 60:
+                value -= 3
             return value
 
         return max(rows, key=score)
@@ -1106,13 +1109,6 @@ class DeepAnalysisRenderer:
             except (TypeError, ValueError):
                 continue
         return refs
-
-    @staticmethod
-    def _compact_text(text: str, limit: int = 120) -> str:
-        cleaned = re.sub(r"\s+", " ", str(text or "")).strip(" ；;。")
-        if len(cleaned) <= limit:
-            return cleaned
-        return cleaned[:limit].rstrip(" ，,；;。") + "..."
 
     @staticmethod
     def _compact_annual_text(text: str, limit: int = 140) -> str:
@@ -1171,7 +1167,7 @@ class DeepAnalysisRenderer:
         body = body.replace("报告期内公司从事的主要业务公司主营业务", "公司主营业务")
         body = body.replace("报告期内公司从事的主要业务", "")
         body = re.sub(r"^\d+[、.]\s*(?:主要业务|主要产品及服务情况)\s*", "", body)
-        body = re.sub(r"^\d+(?:\.\d+)+\s*(?:FPGA芯片|[^，。；;]{1,20})\s*", "", body)
+        body = re.sub(r"^\d+(?:\.\d+)+\s*[^，。；;]{1,20}\s*", "", body)
         body = re.sub(r"^（?[^）]{1,20}）?芯片\s*\d+[、.]\s*", "", body)
         body = body.replace("报告期内获得的研发成果截至", "截至")
         body = re.sub(r"\s+", " ", body).strip(" ，,；;。")
@@ -1180,7 +1176,10 @@ class DeepAnalysisRenderer:
         if any(term in body for term in ("采购模式", "经营模式", "直接销售模式", "代理销售")):
             prefix = re.split(r"采购模式|经营模式|直接销售模式|代理销售", body, maxsplit=1)[0]
             prefix = prefix.strip(" ，,；;。")
-            if len(prefix) >= 20 and any(term in prefix for term in ("主营业务", "产品服务", "云数据中心", "光模块", "产品线")):
+            business_signals = (
+                "主营业务", "产品", "设备", "客户", "研发", "生产", "制造", "销售", "提供", "服务", "产品线",
+            )
+            if len(prefix) >= 12 and any(term in prefix for term in business_signals):
                 body = prefix
             else:
                 return None
@@ -1392,19 +1391,21 @@ class DeepAnalysisRenderer:
         return softened
 
     @staticmethod
-    def _infer_key_variable(text: str, fallback: str) -> str:
-        value = str(text or "")
-        if any(term in value for term in ("供应链", "预付款", "交付")):
-            return "供应链与交付"
-        if any(term in value for term in ("主营业务", "产品服务", "业务覆盖")):
-            return fallback
-        if any(term in value for term in ("1.6T", "800G", "3.2T")):
-            return "高速光模块放量"
-        if any(term in value for term in ("毛利率", "盈利", "利润")):
-            return "盈利弹性 / 毛利率"
-        if any(term in value for term in ("产品", "业务", "收入", "客户")):
-            return fallback
-        return fallback
+    def _material_key_variable(row: MaterialRow, fallback: str) -> str:
+        title = re.sub(r"\s+", " ", str(row.title or "")).strip(" ：:，,；;。")
+        generic_titles = {
+            "", "外部变量", "主营业务与产品", "产业与产品判断", "机构核心观点", "反方约束",
+        }
+        if title not in generic_titles and len(title) <= 24:
+            return title
+        role_labels = {
+            "operation_update": "经营变化",
+            "management_view": "管理层判断",
+            "competitiveness_rd": "研发与竞争力",
+            "financial_explanation": "财务表现",
+            "broker_risk": "反方风险",
+        }
+        return role_labels.get(row.render_role, fallback)
 
     @staticmethod
     def _source_credit_label(citations: Dict[int, Any], refs: List[Any]) -> str:
@@ -1587,7 +1588,7 @@ class DeepAnalysisRenderer:
         display_refs = set()
         for ref_id in sorted(used_refs):
             meta = shifted_citations.get(ref_id, {})
-            key = self._curated_external_citation_identity(meta)
+            key = citation_identity(meta)
             if not key:
                 canonical = ref_id
             elif key in canonical_by_key:
@@ -1598,20 +1599,6 @@ class DeepAnalysisRenderer:
             ref_map[ref_id] = canonical
             display_refs.add(canonical)
         return ref_map, display_refs
-
-    @staticmethod
-    def _curated_external_citation_identity(meta: Any) -> tuple:
-        if not isinstance(meta, dict):
-            return ()
-        url = str(meta.get("url") or "").strip()
-        source = str(meta.get("source") or "").strip()
-        author = str(meta.get("author") or "").strip()
-        title = str(meta.get("title") or "").strip()
-        if url:
-            return ("url", url)
-        if source and (author or title):
-            return ("fallback", source, author, title)
-        return ()
 
     @staticmethod
     def _remap_citation_markers(text: str, ref_map: dict) -> str:
