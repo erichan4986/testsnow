@@ -136,6 +136,16 @@ def test_pilot_stocks_enable_formal_first_source_policy_in_config():
         assert source_intake["canonical_synthesis_source_policy"] == "formal_first"
 
 
+def test_zhongji_config_enables_broker_digest_display():
+    config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
+    stocks = json.loads(config_path.read_text(encoding="utf-8"))
+    by_name = {stock.get("name"): stock for stock in stocks}
+
+    broker_cfg = by_name["中际旭创"]["source_intake"]["broker_research_digest_synthesis_display"]
+    assert broker_cfg["enabled"] is True
+    assert broker_cfg["max_display_items"] >= 5
+
+
 def test_fudan_microelectronics_config_present_and_wired():
     config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
     stocks = json.loads(config_path.read_text(encoding="utf-8"))
