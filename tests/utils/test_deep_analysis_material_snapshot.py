@@ -9,7 +9,10 @@ import pytest
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
 from deep_analysis_material_snapshot import (  # noqa: E402
+    Chapter4ViewModel,
     EvidenceRow,
+    MaterialRow,
+    build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
 )
 
@@ -199,3 +202,67 @@ def test_evidence_rows_are_immutable():
 
     with pytest.raises(Exception):
         snapshot.rows[0].text = "changed"
+
+
+def test_formal_medium_view_model_unifies_source_layers_and_visible_citations():
+    snapshot = build_deep_analysis_material_snapshot(_ctx())
+
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    assert isinstance(view_model, Chapter4ViewModel)
+    assert all(isinstance(row, MaterialRow) for row in snapshot.rows)
+    assert [section.section_id for section in view_model.sections] == ["4.1", "4.2", "4.3", "4.4"]
+    assert {row.source_layer for row in view_model.section("4.1").rows} == {"annual"}
+    assert {row.source_layer for row in view_model.section("4.2").rows} == {"broker"}
+    assert {row.source_layer for row in view_model.section("4.3").rows} == {"external"}
+    assert {row.source_layer for row in view_model.section("4.4").rows} == {"annual", "broker", "external"}
+    assert all(row.attribution for row in view_model.section("4.2").rows)
+    assert all(row.source_credit == "official" for row in view_model.section("4.1").rows)
+    assert all(row.source_credit == "professional" for row in view_model.section("4.2").rows)
+    assert all(row.source_credit == "external_low_credit" for row in view_model.section("4.3").rows)
+    assert all(
+        not row.scoring_eligible and not row.risk_score_eligible
+        for row in view_model.section("4.3").rows
+    )
+
+    visible_refs = {
+        ref
+        for section in view_model.sections
+        for row in section.rows
+        for ref in row.citation_refs
+    }
+    assert visible_refs == set(view_model.citations)
+    assert not any(row.row_id == "annual:not_disclosed:0" for row in view_model.section("4.1").rows)
+
+
+def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
+    ctx = _ctx()
+    before = copy.deepcopy({k: v for k, v in ctx.items() if k != "recommendation_decision"})
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    annual_row = next(row for row in view_model.section("4.1").rows if row.row_id == "annual:confirmed:0")
+    broker_row = next(row for row in view_model.section("4.2").rows if row.row_id == "broker:sections:0")
+    external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:reasoning_cards:0")
+    assert annual_row.title == "营业收入"
+    assert annual_row.body == "营业收入 10 亿元"
+    assert annual_row.render_role == "financial_explanation"
+    assert broker_row.render_role == "broker_assumption"
+    assert broker_row.attribution == "测试证券"
+    assert external_row.render_role == "external_variable"
+    assert external_row.title == "外部变量"
+    assert {k: v for k, v in ctx.items() if k != "recommendation_decision"} == before
+
+
+def test_snapshot_does_not_admit_stale_rows_from_absent_annual_or_broker_memo():
+    ctx = _ctx()
+    ctx["annual_report_memo"]["status"] = "absent"
+    ctx["broker_research_memo"]["status"] = "absent"
+
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    assert not view_model.section("4.1").rows
+    assert not view_model.section("4.2").rows
+    assert all(row.source_layer == "external" for row in snapshot.rows)

@@ -3,6 +3,10 @@
 import re
 
 import pytest
+from scripts.utils.deep_analysis_material_snapshot import (
+    build_chapter4_view_model,
+    build_deep_analysis_material_snapshot,
+)
 from scripts.utils.reporter.sections import DeepAnalysisRenderer
 
 
@@ -2032,6 +2036,75 @@ def test_formal_medium_uses_source_layer_headings_with_medium_badge():
     assert "未知" not in section44
     assert "券商研报 | 作者: 测试证券 | 《核心观点》" in section44
     assert "当前可用于深度基本面分析的正式材料不足" not in result
+
+
+def test_formal_medium_renderer_uses_prebuilt_view_model_not_raw_material_payloads():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {
+            "industry_logic": "",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "status": "ready",
+            "sections": [{
+                "title": "产品放量",
+                "body": "券商认为 800G 放量支撑增长。",
+                "citation_refs": [1],
+            }],
+            "forecast_ranges": [],
+            "risks": [],
+            "citations": {
+                1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"},
+            },
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [{
+                "heading": "供应链观察",
+                "text": "外部材料提示供应链约束影响交付弹性。",
+                "citation_refs": [1],
+            }],
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "供应链观察"},
+            },
+        },
+        "core_facts": [],
+    }
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    ctx["chapter4_view_model"] = build_chapter4_view_model(
+        snapshot,
+        ctx["deep_analysis_evidence_profile"],
+    )
+    ctx["annual_report_memo"] = {
+        "status": "ready",
+        "sections": {"annual_report_explanation": [{"title": "MUTATED_ANNUAL", "body": "MUTATED_ANNUAL", "citation_refs": [1]}]},
+        "citations": {1: {"source": "公司年报", "title": "MUTATED_ANNUAL"}},
+    }
+    ctx["broker_research_memo"] = {
+        "status": "ready",
+        "sections": [{"title": "MUTATED_BROKER", "body": "MUTATED_BROKER", "citation_refs": [1]}],
+        "citations": {1: {"source": "券商研报", "title": "MUTATED_BROKER"}},
+    }
+    ctx["deep_analysis_display"] = {
+        "_curated_external_narrative_paragraphs": [{"heading": "MUTATED_EXTERNAL", "text": "MUTATED_EXTERNAL", "citation_refs": [1]}],
+        "citations": {1: {"source": "微信公众号精选观察", "title": "MUTATED_EXTERNAL"}},
+    }
+
+    result = renderer.render(ctx)
+
+    assert "公司增长主线来自 FPGA" in result
+    assert "测试证券研报认为：800G 放量支撑增长" in result
+    assert "外部材料称：供应链约束影响交付弹性" in result
+    assert "MUTATED_ANNUAL" not in result
+    assert "MUTATED_BROKER" not in result
+    assert "MUTATED_EXTERNAL" not in result
 
 
 def test_formal_medium_global_citations_include_visible_4_4_refs():
