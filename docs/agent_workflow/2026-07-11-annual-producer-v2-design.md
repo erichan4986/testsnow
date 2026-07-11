@@ -1,6 +1,6 @@
 # Annual Producer v2 Design
 
-**Status:** Revised after Round 1; awaiting Round 2 review
+**Status:** Approved after Round 2; ready for implementation planning
 **Date:** 2026-07-11
 **Scope:** Deterministic annual-report narrative material only
 
