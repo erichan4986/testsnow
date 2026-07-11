@@ -305,3 +305,20 @@ generic excerpt and return zero 西南 generic excerpts.
 rebuilt. Fresh verification results are 84 passed / 3 skipped for producer tests,
 283 downstream tests passed, and the cumulative Batch B runtime delta is net
 +80 lines against Batch A. One new post-v3.3 formal report run remains required.
+
+## Final Formal Report Acceptance
+
+The post-v3.3 中际旭创 report generated at `2026-07-11 10:47:08 +0800`,
+after commit `70a7c98`, passed formal acceptance:
+
+- all four persisted digest notes use `broker_digest_v3_3`;
+- institutions are 华鑫证券、国金证券、华龙证券、山西证券;
+- the degraded 西南证券 source produces zero notes and does not enter Chapter 4;
+- the usable 国金证券 product-driver card is restored and its legacy OCR spacing
+  is cleaned before display;
+- report quality and source-boundary checks pass;
+- citation alignment has no missing or unused references.
+
+The only remaining prose warning is the existing cross-section repetition of
+`800G` in 4.1/4.2/4.3. It does not affect producer admission, citation hygiene,
+or source boundaries and is deferred from Producer v3.
