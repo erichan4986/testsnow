@@ -6,6 +6,8 @@ import re
 import sys
 from pathlib import Path
 
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
 from annual_argument_schema import (
@@ -137,6 +139,55 @@ def test_v1_adapter_maps_each_non_margin_legacy_type():
         assert card["argument_family"] == expected_family
 
 
+def test_v1_adapter_returns_canonical_fields_without_mutable_aliases():
+    legacy = _legacy_card(
+        fact_anchors=[{"name": "A2000"}],
+        secondary_signals=[{"name": "customer_validation"}],
+        score_parts={"anchor": {"score": 3}},
+        unknown_legacy_metadata={"keep": "out"},
+    )
+
+    card = adapt_v1_card(legacy)
+
+    assert set(card) == {
+        "schema_version",
+        "selection_version",
+        "card_id",
+        "argument_family",
+        "argument_complete",
+        "title",
+        "source_block_id",
+        "source_unit_ids",
+        "source_units",
+        "source_excerpt",
+        "fact_anchors",
+        "secondary_signals",
+        "score_parts",
+        "quality_score",
+        "selection_reason",
+        "source_type",
+        "source_credit",
+        "report_year",
+        "report_type",
+    }
+    card["fact_anchors"][0]["name"] = "changed"
+    card["secondary_signals"][0]["name"] = "changed"
+    card["score_parts"]["anchor"]["score"] = 0
+    assert legacy["fact_anchors"] == [{"name": "A2000"}]
+    assert legacy["secondary_signals"] == [{"name": "customer_validation"}]
+    assert legacy["score_parts"] == {"anchor": {"score": 3}}
+
+
+def test_v1_adapter_rejects_empty_or_missing_source_excerpt_for_supported_card():
+    missing_excerpt = _legacy_card()
+    del missing_excerpt["source_excerpt"]
+
+    for legacy in (_legacy_card(source_excerpt=""), missing_excerpt):
+        assert is_v1_card(legacy)
+        with pytest.raises(ValueError, match="legacy v1 card requires non-empty source_excerpt"):
+            adapt_v1_card(legacy)
+
+
 def test_validation_rejects_unknown_family_and_mismatched_units():
     card = adapt_v1_card(_legacy_card(card_type="business_model"))
     card["argument_family"] = "old_display_role"
@@ -167,6 +218,44 @@ def test_validation_rejects_missing_required_field():
     del card["title"]
 
     assert "missing_card_field" in validate_card_v2(card)
+
+
+def test_validation_rejects_malformed_required_field_shapes():
+    text_fields = {
+        "card_id": "",
+        "title": [],
+        "source_block_id": "",
+        "source_excerpt": {},
+        "selection_reason": "",
+        "source_type": 75,
+        "report_type": (),
+    }
+    for field, value in text_fields.items():
+        card = adapt_v1_card(_legacy_card())
+        card[field] = value
+        assert "invalid_card_text_field" in validate_card_v2(card)
+
+    for field, value in {"fact_anchors": {}, "secondary_signals": ()}.items():
+        card = adapt_v1_card(_legacy_card())
+        card[field] = value
+        assert "invalid_card_signal_lists" in validate_card_v2(card)
+
+    card = adapt_v1_card(_legacy_card())
+    card["score_parts"] = []
+    assert "invalid_score_parts" in validate_card_v2(card)
+
+    card = adapt_v1_card(_legacy_card())
+    card["quality_score"] = True
+    assert "invalid_quality_score" in validate_card_v2(card)
+
+    card = adapt_v1_card(_legacy_card())
+    card["source_credit"] = "75"
+    assert "invalid_source_credit" in validate_card_v2(card)
+
+    for report_year in (True, -1):
+        card = adapt_v1_card(_legacy_card())
+        card["report_year"] = report_year
+        assert "invalid_report_year" in validate_card_v2(card)
 
 
 def test_validation_rejects_wrong_schema_selection_and_non_bool_completeness():
@@ -210,6 +299,39 @@ def test_validation_rejects_non_monotonic_and_overlapping_source_units():
     assert "overlapping_source_units" in errors
 
 
+def test_validation_rejects_duplicate_or_foreign_source_units():
+    card = adapt_v1_card(_legacy_card())
+    card["source_units"] = [
+        {
+            "unit_id": "rd-0:u0",
+            "block_id": "rd-0",
+            "ordinal": 0,
+            "start_pos": 0,
+            "end_pos": 4,
+            "text": "甲乙丙丁",
+        },
+        {
+            "unit_id": "rd-0:u1",
+            "block_id": "rd-0",
+            "ordinal": 1,
+            "start_pos": 4,
+            "end_pos": 8,
+            "text": "戊己庚辛",
+        },
+    ]
+    card["source_unit_ids"] = [unit["unit_id"] for unit in card["source_units"]]
+    assert validate_card_v2(card) == ()
+
+    duplicate = copy.deepcopy(card)
+    duplicate["source_units"][1]["unit_id"] = "rd-0:u0"
+    duplicate["source_unit_ids"] = [unit["unit_id"] for unit in duplicate["source_units"]]
+    assert "duplicate_source_unit_id" in validate_card_v2(duplicate)
+
+    foreign = copy.deepcopy(card)
+    foreign["source_units"][1]["block_id"] = "other-0"
+    assert "source_unit_block_id_mismatch" in validate_card_v2(foreign)
+
+
 def test_source_unit_validation_rejects_missing_non_integer_and_invalid_ranges():
     missing = validate_source_unit({})
     invalid = validate_source_unit({
@@ -228,8 +350,17 @@ def test_source_unit_validation_rejects_missing_non_integer_and_invalid_ranges()
         "end_pos": 4,
         "text": "text",
     })
+    negative_ordinal = validate_source_unit({
+        "unit_id": "u0",
+        "block_id": "b0",
+        "ordinal": -1,
+        "start_pos": 0,
+        "end_pos": 4,
+        "text": "text",
+    })
 
     assert "missing_source_unit_field" in missing
     assert "invalid_source_unit_ordinal" in invalid
     assert "invalid_source_unit_range" in invalid
     assert "invalid_source_unit_position" in invalid_position
+    assert "invalid_source_unit_ordinal" in negative_ordinal

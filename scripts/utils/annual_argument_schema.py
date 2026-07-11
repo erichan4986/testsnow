@@ -3,7 +3,9 @@
 from __future__ import annotations
 
 import hashlib
+from copy import deepcopy
 from collections.abc import Mapping
+from numbers import Real
 from typing import Any
 
 
@@ -77,6 +79,15 @@ _FINANCIAL_METRIC_TOKENS = (
     "每股收益",
 )
 _CAUSAL_TOKENS = ("主要系", "由于", "所致", "影响")
+_TEXT_CARD_FIELDS = (
+    "card_id",
+    "title",
+    "source_block_id",
+    "source_excerpt",
+    "selection_reason",
+    "source_type",
+    "report_type",
+)
 
 
 def validate_source_unit(unit: dict) -> tuple[str, ...]:
@@ -89,7 +100,7 @@ def validate_source_unit(unit: dict) -> tuple[str, ...]:
         errors.append("missing_source_unit_field")
 
     ordinal = unit.get("ordinal")
-    if not _is_int(ordinal):
+    if not _is_int(ordinal) or ordinal < 0:
         errors.append("invalid_source_unit_ordinal")
 
     start_pos = unit.get("start_pos")
@@ -128,6 +139,18 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
         errors.append("invalid_argument_family")
     if not isinstance(card.get("argument_complete"), bool):
         errors.append("invalid_argument_complete")
+    if any(not isinstance(card.get(field), str) or not card[field].strip() for field in _TEXT_CARD_FIELDS):
+        errors.append("invalid_card_text_field")
+    if not isinstance(card.get("fact_anchors"), list) or not isinstance(card.get("secondary_signals"), list):
+        errors.append("invalid_card_signal_lists")
+    if not isinstance(card.get("score_parts"), dict):
+        errors.append("invalid_score_parts")
+    if not _is_number(card.get("quality_score")):
+        errors.append("invalid_quality_score")
+    if not _is_number(card.get("source_credit")):
+        errors.append("invalid_source_credit")
+    if not _is_int(card.get("report_year")) or card["report_year"] < 0:
+        errors.append("invalid_report_year")
 
     raw_units = card.get("source_units")
     units = raw_units if isinstance(raw_units, list) else []
@@ -145,11 +168,19 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
         errors.append("source_unit_ids_mismatch")
 
     positions = []
+    unit_ids = []
     for unit in units:
         unit_errors = validate_source_unit(unit)
         errors.extend(unit_errors)
+        if isinstance(unit, dict) and isinstance(unit.get("unit_id"), str) and unit["unit_id"]:
+            unit_ids.append(unit["unit_id"])
+        if isinstance(unit, dict) and unit.get("block_id") != card.get("source_block_id"):
+            errors.append("source_unit_block_id_mismatch")
         if not unit_errors:
             positions.append((unit["ordinal"], unit["start_pos"], unit["end_pos"]))
+
+    if len(unit_ids) != len(set(unit_ids)):
+        errors.append("duplicate_source_unit_id")
 
     if any(
         right[0] <= left[0] or right[1] <= left[1] or right[2] <= left[2]
@@ -167,16 +198,16 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
 def adapt_v1_card(card: dict) -> dict:
     """Adapt one legacy card in memory without ranking, filtering, or writing."""
     legacy = dict(card)
-    excerpt = str(legacy.get("source_excerpt") or "")
+    excerpt = legacy.get("source_excerpt")
+    if not isinstance(excerpt, str) or not excerpt.strip():
+        raise ValueError("legacy v1 card requires non-empty source_excerpt")
     block_id = str(legacy.get("source_block_id") or "legacy")
     normalized_excerpt = " ".join(excerpt.split())
     excerpt_hash = hashlib.sha256(normalized_excerpt.encode("utf-8")).hexdigest()
     unit_id = f"{block_id}:legacy:{excerpt_hash}"
     family = _legacy_family(str(legacy.get("card_type") or ""), excerpt)
 
-    adapted = dict(legacy)
-    adapted.pop("card_type", None)
-    adapted.update({
+    return {
         "schema_version": CARD_SCHEMA_VERSION,
         "selection_version": SELECTION_VERSION,
         "card_id": legacy.get("card_id") or unit_id,
@@ -194,21 +225,24 @@ def adapt_v1_card(card: dict) -> dict:
             "text": excerpt,
         }],
         "source_excerpt": excerpt,
-        "fact_anchors": _value_or_default(legacy.get("fact_anchors"), []),
-        "secondary_signals": _value_or_default(legacy.get("secondary_signals"), []),
-        "score_parts": _value_or_default(legacy.get("score_parts"), {}),
+        "fact_anchors": _copy_or_default(legacy.get("fact_anchors"), []),
+        "secondary_signals": _copy_or_default(legacy.get("secondary_signals"), []),
+        "score_parts": _copy_or_default(legacy.get("score_parts"), {}),
         "quality_score": _value_or_default(legacy.get("quality_score"), 0),
         "selection_reason": "legacy_v1_adapter",
         "source_type": "periodic_report_narrative_evidence",
         "source_credit": 75,
         "report_year": _value_or_default(legacy.get("report_year"), 0),
         "report_type": legacy.get("report_type") or "annual",
-    })
-    return adapted
+    }
 
 
 def _is_int(value: Any) -> bool:
     return isinstance(value, int) and not isinstance(value, bool)
+
+
+def _is_number(value: Any) -> bool:
+    return isinstance(value, Real) and not isinstance(value, bool)
 
 
 def _legacy_family(card_type: str, excerpt: str) -> str:
@@ -228,3 +262,7 @@ def _has_financial_metric(excerpt: str) -> bool:
 
 def _value_or_default(value: Any, default: Any) -> Any:
     return default if value is None else value
+
+
+def _copy_or_default(value: Any, default: Any) -> Any:
+    return deepcopy(default if value is None else value)
