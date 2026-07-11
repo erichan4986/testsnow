@@ -188,6 +188,14 @@ def test_v1_adapter_rejects_empty_or_missing_source_excerpt_for_supported_card()
             adapt_v1_card(legacy)
 
 
+def test_v1_adapter_rejects_non_v1_or_post_adaptation_invalid_cards():
+    with pytest.raises(ValueError, match="card is not a supported v1 narrative card"):
+        adapt_v1_card(_legacy_card(schema_version=CARD_SCHEMA_VERSION))
+
+    with pytest.raises(ValueError, match="adapted v1 card failed v2 validation: invalid_card_signal_lists"):
+        adapt_v1_card(_legacy_card(fact_anchors={"not": "a list"}))
+
+
 def test_validation_rejects_unknown_family_and_mismatched_units():
     card = adapt_v1_card(_legacy_card(card_type="business_model"))
     card["argument_family"] = "old_display_role"
@@ -332,6 +340,39 @@ def test_validation_rejects_duplicate_or_foreign_source_units():
     assert "source_unit_block_id_mismatch" in validate_card_v2(foreign)
 
 
+def test_validation_rejects_nonstring_source_identity_and_numeric_duplicates():
+    card = adapt_v1_card(_legacy_card())
+    card["source_units"] = [
+        {
+            "unit_id": 7,
+            "block_id": "rd-0",
+            "ordinal": 0,
+            "start_pos": 0,
+            "end_pos": 4,
+            "text": "甲乙丙丁",
+        },
+        {
+            "unit_id": 7,
+            "block_id": "rd-0",
+            "ordinal": 1,
+            "start_pos": 4,
+            "end_pos": 8,
+            "text": 8,
+        },
+    ]
+    card["source_unit_ids"] = [7, 7]
+
+    errors = validate_card_v2(card)
+
+    assert "invalid_source_unit_text_field" in errors
+    assert "invalid_source_unit_ids" in errors
+    assert "duplicate_source_unit_id" in errors
+
+    card = adapt_v1_card(_legacy_card())
+    card["source_unit_ids"] = [" "]
+    assert "invalid_source_unit_ids" in validate_card_v2(card)
+
+
 def test_source_unit_validation_rejects_missing_non_integer_and_invalid_ranges():
     missing = validate_source_unit({})
     invalid = validate_source_unit({
@@ -364,3 +405,19 @@ def test_source_unit_validation_rejects_missing_non_integer_and_invalid_ranges()
     assert "invalid_source_unit_range" in invalid
     assert "invalid_source_unit_position" in invalid_position
     assert "invalid_source_unit_ordinal" in negative_ordinal
+
+
+def test_source_unit_validation_requires_nonblank_identity_strings():
+    normal = {
+        "unit_id": "b0:u0",
+        "block_id": "b0",
+        "ordinal": 0,
+        "start_pos": 0,
+        "end_pos": 4,
+        "text": "正文内容",
+    }
+    assert validate_source_unit(normal) == ()
+
+    for field, value in {"unit_id": 1, "block_id": " ", "text": 3}.items():
+        invalid = dict(normal, **{field: value})
+        assert "invalid_source_unit_text_field" in validate_source_unit(invalid)

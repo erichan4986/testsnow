@@ -79,6 +79,7 @@ _FINANCIAL_METRIC_TOKENS = (
     "每股收益",
 )
 _CAUSAL_TOKENS = ("主要系", "由于", "所致", "影响")
+_SOURCE_UNIT_TEXT_FIELDS = ("unit_id", "block_id", "text")
 _TEXT_CARD_FIELDS = (
     "card_id",
     "title",
@@ -98,6 +99,11 @@ def validate_source_unit(unit: dict) -> tuple[str, ...]:
     errors = []
     if any(key not in unit or unit.get(key) in (None, "") for key in _SOURCE_UNIT_FIELDS):
         errors.append("missing_source_unit_field")
+    if any(
+        not isinstance(unit.get(field), str) or not unit[field].strip()
+        for field in _SOURCE_UNIT_TEXT_FIELDS
+    ):
+        errors.append("invalid_source_unit_text_field")
 
     ordinal = unit.get("ordinal")
     if not _is_int(ordinal) or ordinal < 0:
@@ -158,7 +164,10 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
         errors.append("invalid_source_units")
 
     source_unit_ids = card.get("source_unit_ids")
-    if not isinstance(source_unit_ids, list):
+    if not isinstance(source_unit_ids, list) or any(
+        not isinstance(unit_id, str) or not unit_id.strip()
+        for unit_id in source_unit_ids or []
+    ):
         errors.append("invalid_source_unit_ids")
         expected_ids = []
     else:
@@ -172,14 +181,14 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
     for unit in units:
         unit_errors = validate_source_unit(unit)
         errors.extend(unit_errors)
-        if isinstance(unit, dict) and isinstance(unit.get("unit_id"), str) and unit["unit_id"]:
+        if isinstance(unit, dict) and "unit_id" in unit:
             unit_ids.append(unit["unit_id"])
         if isinstance(unit, dict) and unit.get("block_id") != card.get("source_block_id"):
             errors.append("source_unit_block_id_mismatch")
         if not unit_errors:
             positions.append((unit["ordinal"], unit["start_pos"], unit["end_pos"]))
 
-    if len(unit_ids) != len(set(unit_ids)):
+    if _has_duplicates(unit_ids):
         errors.append("duplicate_source_unit_id")
 
     if any(
@@ -198,6 +207,8 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
 def adapt_v1_card(card: dict) -> dict:
     """Adapt one legacy card in memory without ranking, filtering, or writing."""
     legacy = dict(card)
+    if not is_v1_card(legacy):
+        raise ValueError("card is not a supported v1 narrative card")
     excerpt = legacy.get("source_excerpt")
     if not isinstance(excerpt, str) or not excerpt.strip():
         raise ValueError("legacy v1 card requires non-empty source_excerpt")
@@ -207,7 +218,7 @@ def adapt_v1_card(card: dict) -> dict:
     unit_id = f"{block_id}:legacy:{excerpt_hash}"
     family = _legacy_family(str(legacy.get("card_type") or ""), excerpt)
 
-    return {
+    adapted = {
         "schema_version": CARD_SCHEMA_VERSION,
         "selection_version": SELECTION_VERSION,
         "card_id": legacy.get("card_id") or unit_id,
@@ -235,6 +246,10 @@ def adapt_v1_card(card: dict) -> dict:
         "report_year": _value_or_default(legacy.get("report_year"), 0),
         "report_type": legacy.get("report_type") or "annual",
     }
+    errors = validate_card_v2(adapted)
+    if errors:
+        raise ValueError(f"adapted v1 card failed v2 validation: {', '.join(errors)}")
+    return adapted
 
 
 def _is_int(value: Any) -> bool:
@@ -243,6 +258,15 @@ def _is_int(value: Any) -> bool:
 
 def _is_number(value: Any) -> bool:
     return isinstance(value, Real) and not isinstance(value, bool)
+
+
+def _has_duplicates(values: list[Any]) -> bool:
+    seen = []
+    for value in values:
+        if any(value == previous for previous in seen):
+            return True
+        seen.append(value)
+    return False
 
 
 def _legacy_family(card_type: str, excerpt: str) -> str:
