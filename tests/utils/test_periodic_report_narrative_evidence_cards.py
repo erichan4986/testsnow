@@ -9,6 +9,8 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import periodic_report_narrative_evidence_cards as narrative_cards
+
 from annual_argument_schema import CANONICAL_FAMILIES, validate_card_v2
 
 from periodic_report_narrative_evidence_cards import (
@@ -209,6 +211,34 @@ def test_unnamed_technology_capability_is_secondary_to_market_primary():
     assert named_product["argument_family"] == "technology_product_progress"
 
 
+def test_unnamed_platform_capability_under_rd_usage_is_rejected():
+    result = _build_v2_cards(
+        "公司拥有研发平台、核心技术体系和研发资源。",
+        "rd_product_progress",
+    )
+
+    assert result["cards"] == []
+    assert result["diagnostics"]["rejection_counts"]["no_anchor"] == 1
+
+
+def test_ambiguous_unit_uses_one_post_bundle_primary_family_resolution(monkeypatch):
+    calls = []
+    original = narrative_cards._primary_family
+
+    def spy_primary_family(text, usage_hint, *, signals=None):
+        calls.append((text, usage_hint))
+        return original(text, usage_hint, signals=signals)
+
+    monkeypatch.setattr(narrative_cards, "_primary_family", spy_primary_family)
+    text = "公司主营车规芯片，A2000已通过认证并进入客户验证阶段。"
+    result = _build_v2_cards(text, "product_capacity_profile")
+
+    assert [(card["argument_family"], card["source_excerpt"]) for card in result["cards"]] == [
+        ("technology_product_progress", text),
+    ]
+    assert calls == [(text, "product_capacity_profile")]
+
+
 def test_diagnostics_and_candidate_invariant_contract_are_stable():
     result = _build_v2_cards("公司主营电池计量芯片。", "business_overview")
     required = {
@@ -225,6 +255,36 @@ def test_diagnostics_and_candidate_invariant_contract_are_stable():
     )
     assert "candidate_count_exceeds_usable_units" in errors
     assert "reused_source_units" in errors
+
+
+def test_producer_fails_closed_and_reports_blocks_for_reused_source_units(monkeypatch):
+    original = narrative_cards._build_candidate
+    first_source_unit_id = None
+
+    def reuse_first_source_unit(**kwargs):
+        nonlocal first_source_unit_id
+        candidate = original(**kwargs)
+        if first_source_unit_id is None:
+            first_source_unit_id = candidate["source_unit_ids"][0]
+        else:
+            candidate["source_unit_ids"] = [first_source_unit_id]
+        return candidate
+
+    monkeypatch.setattr(narrative_cards, "_build_candidate", reuse_first_source_unit)
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack={"blocks": [
+            {"id": "first-block", "usage": "business_overview", "text": "公司主营产品P1并服务客户C1。"},
+            {"id": "second-block", "usage": "business_overview", "text": "公司主营产品P2并服务客户C2。"},
+        ]},
+    )
+
+    assert result["cards"] == []
+    assert result["diagnostics"]["candidate_explosion"] is True
+    assert result["diagnostics"]["admission_invariant_violation"] is True
+    assert result["diagnostics"]["candidate_explosion_block_ids"] == [
+        "first-block", "second-block",
+    ]
 
 
 def _normalized_hash(text: str) -> str:
@@ -496,7 +556,7 @@ def test_generic_business_model_with_technology_words_does_not_map_to_technology
     assert not any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
 
 
-def test_core_technology_system_maps_to_technology_platform_not_product_progress():
+def test_core_technology_system_does_not_use_rd_product_progress_fallback():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
@@ -521,7 +581,7 @@ def test_core_technology_system_maps_to_technology_platform_not_product_progress
         evidence_pack=evidence_pack,
     )
 
-    assert any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
+    assert result["cards"] == []
 
 
 def test_generic_risk_mass_production_process_does_not_map_to_product_progress():
@@ -579,7 +639,7 @@ def test_procurement_supplier_onboarding_does_not_map_to_product_progress():
     assert not any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
 
 
-def test_rd_team_capability_uses_rd_product_progress_usage_fallback():
+def test_rd_team_capability_does_not_use_rd_product_progress_usage_fallback():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
@@ -600,9 +660,7 @@ def test_rd_team_capability_uses_rd_product_progress_usage_fallback():
         evidence_pack=evidence_pack,
     )
 
-    card = result["cards"][0]
-    assert card["argument_family"] == "technology_product_progress"
-    assert card["selection_reason"] == "usage_hint:technology_product_progress"
+    assert result["cards"] == []
 
 
 def test_business_model_and_rd_product_progress_do_not_dedupe_each_other():

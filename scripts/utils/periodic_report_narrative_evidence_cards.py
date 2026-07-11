@@ -68,7 +68,7 @@ _FINANCIAL_ACTIONS = ("计提", "計提", "减值", "減值", "确认收入", "�
 _PROGRESS_TOKENS = (
     "认证", "認證", "验证", "驗證", "量产", "量產", "批量", "交付", "供货", "供貨",
     "导入", "導入", "定点", "定點", "搭载", "搭載", "发布", "發佈", "完成", "进入",
-    "進入", "实现", "實現", "升级", "升級", "推出",
+    "進入", "实现", "實現", "升级", "升級", "更新", "推出",
 )
 _TECH_TOKENS = ("芯片", "晶片", "SoC", "平台", "平台式", "算法", "算法", "工艺", "工藝", "IP核", "模型", "技术体系", "技術體系", "研发", "研發", "研发能力", "研發能力")
 _OPERATING_TOKENS = ("报告期", "報告期", "本期", "本年度", "销量", "銷量", "产量", "產量", "产能", "產能", "订单", "訂單", "库存", "庫存", "收入", "出货", "出貨", "同比", "环比", "增長", "增长")
@@ -129,17 +129,27 @@ def build_periodic_report_narrative_evidence_cards(
                 _reject(diagnostics, noise_reason)
                 prepared_units.append(None)
                 continue
-            family = _primary_family(unit["text"], usage_hint)
-            if family is None:
+            signals = _family_signals(unit["text"])
+            fallback = _usage_fallback_family(unit["text"], usage_hint)
+            eligible_signals = [
+                family
+                for family in signals
+                if _is_primary_eligible_signal(family, unit["text"], signals)
+            ]
+            if not eligible_signals and fallback is None:
                 _reject(diagnostics, "no_family_signal")
                 prepared_units.append(None)
                 continue
-            if not _is_self_contained_atomic_fact(unit["text"], family):
+            admission_families = eligible_signals or [fallback]
+            if not any(
+                _is_self_contained_atomic_fact(unit["text"], family)
+                for family in admission_families
+            ):
                 _reject(diagnostics, "not_self_contained")
                 prepared_units.append(None)
                 continue
             diagnostics["usable_units"] += 1
-            prepared_units.append((unit, family))
+            prepared_units.append((unit, signals))
 
         unit_index = 0
         while unit_index < len(prepared_units):
@@ -147,19 +157,20 @@ def build_periodic_report_narrative_evidence_cards(
             if prepared is None:
                 unit_index += 1
                 continue
-            unit, primary_family = prepared
+            unit, bundle_signals = prepared
             bundle = [unit]
             next_index = unit_index + 1
             while next_index < len(prepared_units):
                 following = prepared_units[next_index]
                 if following is None:
                     break
-                following_unit, following_family = following
-                if following_family != primary_family or not _continues_same_argument(
-                    bundle, following_unit, primary_family,
+                following_unit, following_signals = following
+                if not _units_may_continue_same_argument(
+                    bundle, bundle_signals, following_unit, following_signals,
                 ):
                     break
                 bundle.append(following_unit)
+                bundle_signals = bundle_signals | following_signals
                 next_index += 1
 
             source_excerpt = cleaned[bundle[0]["start_pos"]:bundle[-1]["end_pos"]]
@@ -200,7 +211,7 @@ def build_periodic_report_narrative_evidence_cards(
     candidate_errors = _candidate_invariant_errors(candidates, diagnostics["usable_units"])
     admitted_errors = _candidate_invariant_errors(cards, diagnostics["usable_units"])
     invariant_errors = tuple(dict.fromkeys((*candidate_errors, *admitted_errors)))
-    diagnostics["candidate_explosion"] = "candidate_count_exceeds_usable_units" in invariant_errors
+    diagnostics["candidate_explosion"] = bool(invariant_errors)
     diagnostics["candidate_explosion_block_ids"] = _candidate_explosion_block_ids(candidates)
     diagnostics["admission_invariant_violation"] = bool(invariant_errors)
     if invariant_errors:
@@ -286,7 +297,13 @@ def _primary_family(text: str, usage_hint: str, *, signals: set[str] | None = No
     )
     if family is not None:
         return family
+    return _usage_fallback_family(text, usage_hint)
+
+
+def _usage_fallback_family(text: str, usage_hint: str) -> str | None:
     fallback = _USAGE_FALLBACKS.get(usage_hint)
+    if fallback == "technology_product_progress" and not _has_product_progress(text):
+        return None
     return fallback if fallback and _has_atomic_anchor(text) else None
 
 
@@ -441,10 +458,22 @@ def _candidate_explosion_block_ids(candidates: Iterable[dict]) -> list[str]:
         for candidate in candidates if isinstance(candidate, dict)
         for unit in candidate.get("source_units", []) if isinstance(unit, dict)
     )
-    return sorted(
+    implicated = {
         block_id for block_id, candidate_count in candidates_by_block.items()
         if candidate_count > units_by_block[block_id]
-    )
+    }
+    blocks_by_unit_id: dict[str, list[str]] = defaultdict(list)
+    for candidate in candidates:
+        if not isinstance(candidate, dict):
+            continue
+        block_id = str(candidate.get("source_block_id") or "")
+        for unit_id in candidate.get("source_unit_ids", []):
+            if isinstance(unit_id, str):
+                blocks_by_unit_id[unit_id].append(block_id)
+    for blocks in blocks_by_unit_id.values():
+        if len(blocks) > 1:
+            implicated.update(blocks)
+    return sorted(block_id for block_id in implicated if block_id)
 
 
 def _noise_reason(text: str, *, source_block_text: str = "") -> str | None:
@@ -659,6 +688,21 @@ def _continues_same_argument(bundle: Sequence[dict], following: dict, family: st
     if family == "financial_quality_explanation":
         return bool(_matching_tokens(previous_text + following_text, _CAUSAL_TOKENS))
     return not following_text.startswith(("公司", "本公司", "集團", "集团"))
+
+
+def _units_may_continue_same_argument(
+    bundle: Sequence[dict],
+    bundle_signals: set[str],
+    following: dict,
+    following_signals: set[str],
+) -> bool:
+    """Use compatible evidence signals for continuity without choosing a primary family."""
+    for family in _FAMILY_PRECEDENCE:
+        if family in bundle_signals & following_signals and _continues_same_argument(
+            bundle, following, family,
+        ):
+            return True
+    return False
 
 
 def _market_argument_continues(previous_text: str, following_text: str) -> bool:
