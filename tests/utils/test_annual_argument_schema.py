@@ -56,12 +56,16 @@ def test_versions_families_and_labels_are_locked():
 
 
 def test_v1_adapter_is_read_only_and_uses_legacy_proxy_unit():
-    legacy = _legacy_card()
+    legacy = _legacy_card(source_excerpt="A2000芯片已进入\n\n客户验证阶段。")
     original = copy.deepcopy(legacy)
     normalized_excerpt = re.sub(r"\s+", " ", legacy["source_excerpt"]).strip()
     expected_unit_id = (
         f"{legacy['source_block_id']}:legacy:"
         f"{hashlib.sha256(normalized_excerpt.encode('utf-8')).hexdigest()}"
+    )
+    raw_unit_id = (
+        f"{legacy['source_block_id']}:legacy:"
+        f"{hashlib.sha256(legacy['source_excerpt'].encode('utf-8')).hexdigest()}"
     )
 
     card = adapt_v1_card(legacy)
@@ -75,7 +79,9 @@ def test_v1_adapter_is_read_only_and_uses_legacy_proxy_unit():
     assert card["source_type"] == "periodic_report_narrative_evidence"
     assert card["source_credit"] == 75
     assert "card_type" not in card
+    assert expected_unit_id != raw_unit_id
     assert card["source_unit_ids"] == [expected_unit_id]
+    assert card["source_unit_ids"] != [raw_unit_id]
     assert card["source_unit_ids"] == [card["source_units"][0]["unit_id"]]
     assert card["source_units"] == [{
         "unit_id": card["source_unit_ids"][0],
