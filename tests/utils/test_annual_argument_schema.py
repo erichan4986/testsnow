@@ -15,6 +15,7 @@ from annual_argument_schema import (
     FAMILY_LABELS,
     SELECTION_VERSION,
     adapt_v1_card,
+    is_v1_card,
     validate_card_v2,
     validate_source_unit,
 )
@@ -83,13 +84,15 @@ def test_v1_adapter_is_read_only_and_uses_legacy_proxy_unit():
     assert card["source_unit_ids"] == [expected_unit_id]
     assert card["source_unit_ids"] != [raw_unit_id]
     assert card["source_unit_ids"] == [card["source_units"][0]["unit_id"]]
+    assert card["source_excerpt"] == legacy["source_excerpt"]
+    assert card["source_units"][0]["text"] == legacy["source_excerpt"]
     assert card["source_units"] == [{
         "unit_id": card["source_unit_ids"][0],
         "block_id": "rd-0",
         "ordinal": 0,
         "start_pos": 0,
-        "end_pos": len(card["source_excerpt"]),
-        "text": card["source_excerpt"],
+        "end_pos": len(legacy["source_excerpt"]),
+        "text": legacy["source_excerpt"],
     }]
     assert ":legacy:" in card["source_unit_ids"][0]
     assert validate_card_v2(card) == ()
@@ -102,11 +105,20 @@ def test_v1_adapter_maps_margin_cards_by_metric_and_causal_token():
     ))
     outlook = adapt_v1_card(_legacy_card(
         card_type="margin_competitiveness",
-        source_excerpt="公司凭借客户覆盖和交付能力保持竞争优势。",
+        source_excerpt="毛利率承压，但公司客户覆盖和交付能力保持竞争优势。",
     ))
 
     assert financial["argument_family"] == "financial_quality_explanation"
     assert outlook["argument_family"] == "market_competition_outlook"
+
+
+def test_is_v1_card_accepts_only_supported_legacy_card_mappings():
+    assert is_v1_card({"card_type": "business_model"})
+    assert is_v1_card({"card_type": "margin_competitiveness", "schema_version": "legacy.v1"})
+    assert not is_v1_card({"card_type": "business_model", "schema_version": CARD_SCHEMA_VERSION})
+    assert not is_v1_card({"card_type": "unknown"})
+    assert not is_v1_card({})
+    assert not is_v1_card(["business_model"])
 
 
 def test_v1_adapter_maps_each_non_margin_legacy_type():
@@ -134,6 +146,27 @@ def test_validation_rejects_unknown_family_and_mismatched_units():
 
     assert "invalid_argument_family" in errors
     assert "source_unit_ids_mismatch" in errors
+
+
+def test_validation_requires_list_source_unit_ids_and_permits_empty_projection():
+    card = adapt_v1_card(_legacy_card())
+
+    for source_unit_ids in (tuple(card["source_unit_ids"]), card["source_unit_ids"][0]):
+        card["source_unit_ids"] = source_unit_ids
+        errors = validate_card_v2(card)
+        assert "invalid_source_unit_ids" in errors
+        assert "source_unit_ids_mismatch" in errors
+
+    card["source_units"] = []
+    card["source_unit_ids"] = []
+    assert validate_card_v2(card) == ()
+
+
+def test_validation_rejects_missing_required_field():
+    card = adapt_v1_card(_legacy_card())
+    del card["title"]
+
+    assert "missing_card_field" in validate_card_v2(card)
 
 
 def test_validation_rejects_wrong_schema_selection_and_non_bool_completeness():

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from typing import Any
 
 
@@ -101,6 +102,16 @@ def validate_source_unit(unit: dict) -> tuple[str, ...]:
     return tuple(dict.fromkeys(errors))
 
 
+def is_v1_card(card: Any) -> bool:
+    """Return whether a mapping carries one supported legacy card type."""
+    if not isinstance(card, Mapping) or card.get("schema_version") == CARD_SCHEMA_VERSION:
+        return False
+    card_type = card.get("card_type")
+    return card_type == "margin_competitiveness" or (
+        isinstance(card_type, str) and card_type in _V1_FAMILY_MAP
+    )
+
+
 def validate_card_v2(card: dict) -> tuple[str, ...]:
     """Return deterministic validation errors for a v2 annual argument card."""
     if not isinstance(card, dict):
@@ -124,7 +135,11 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
         errors.append("invalid_source_units")
 
     source_unit_ids = card.get("source_unit_ids")
-    expected_ids = list(source_unit_ids) if isinstance(source_unit_ids, (list, tuple)) else []
+    if not isinstance(source_unit_ids, list):
+        errors.append("invalid_source_unit_ids")
+        expected_ids = []
+    else:
+        expected_ids = source_unit_ids
     actual_ids = [unit.get("unit_id") if isinstance(unit, dict) else None for unit in units]
     if actual_ids != expected_ids:
         errors.append("source_unit_ids_mismatch")
