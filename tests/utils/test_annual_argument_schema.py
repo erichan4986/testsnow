@@ -207,7 +207,17 @@ def test_validation_rejects_unknown_family_and_mismatched_units():
     assert "source_unit_ids_mismatch" in errors
 
 
-def test_validation_requires_list_source_unit_ids_and_permits_empty_projection():
+def test_validation_rejects_retired_card_type_but_allows_future_fields():
+    card = adapt_v1_card(_legacy_card())
+    card["card_type"] = "rd_product_progress"
+    assert "retired_card_type" in validate_card_v2(card)
+
+    card = adapt_v1_card(_legacy_card())
+    card["future_extension"] = "allowed"
+    assert validate_card_v2(card) == ()
+
+
+def test_validation_requires_list_source_unit_ids_and_at_least_one_source_unit():
     card = adapt_v1_card(_legacy_card())
 
     for source_unit_ids in (tuple(card["source_unit_ids"]), card["source_unit_ids"][0]):
@@ -218,7 +228,7 @@ def test_validation_requires_list_source_unit_ids_and_permits_empty_projection()
 
     card["source_units"] = []
     card["source_unit_ids"] = []
-    assert validate_card_v2(card) == ()
+    assert "missing_source_units" in validate_card_v2(card)
 
 
 def test_validation_rejects_missing_required_field():
@@ -338,6 +348,23 @@ def test_validation_rejects_duplicate_or_foreign_source_units():
     foreign = copy.deepcopy(card)
     foreign["source_units"][1]["block_id"] = "other-0"
     assert "source_unit_block_id_mismatch" in validate_card_v2(foreign)
+
+
+def test_validation_enforces_normal_and_legacy_source_unit_id_provenance():
+    normal = adapt_v1_card(_legacy_card())
+    normal["selection_reason"] = "v2_selector"
+    normal["source_units"][0]["unit_id"] = "rd-0:u1"
+    normal["source_unit_ids"] = ["rd-0:u1"]
+    assert "invalid_source_unit_id_provenance" in validate_card_v2(normal)
+
+    forged_proxy = adapt_v1_card(_legacy_card())
+    forged_proxy["selection_reason"] = "v2_selector"
+    assert "invalid_source_unit_id_provenance" in validate_card_v2(forged_proxy)
+
+    malformed_proxy = adapt_v1_card(_legacy_card())
+    malformed_proxy["source_units"][0]["unit_id"] = "rd-0:legacy:not-a-sha256"
+    malformed_proxy["source_unit_ids"] = ["rd-0:legacy:not-a-sha256"]
+    assert "invalid_source_unit_id_provenance" in validate_card_v2(malformed_proxy)
 
 
 def test_validation_rejects_nonstring_source_identity_and_numeric_duplicates():

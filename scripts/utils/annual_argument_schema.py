@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from copy import deepcopy
 from collections.abc import Mapping
 from numbers import Real
@@ -79,6 +80,7 @@ _FINANCIAL_METRIC_TOKENS = (
     "每股收益",
 )
 _CAUSAL_TOKENS = ("主要系", "由于", "所致", "影响")
+_LEGACY_PROXY_UNIT_ID_RE = re.compile(r"^(?P<block_id>.+):legacy:[0-9a-f]{64}$")
 _SOURCE_UNIT_TEXT_FIELDS = ("unit_id", "block_id", "text")
 _TEXT_CARD_FIELDS = (
     "card_id",
@@ -143,6 +145,8 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
         errors.append("invalid_selection_version")
     if card.get("argument_family") not in CANONICAL_FAMILIES:
         errors.append("invalid_argument_family")
+    if "card_type" in card:
+        errors.append("retired_card_type")
     if not isinstance(card.get("argument_complete"), bool):
         errors.append("invalid_argument_complete")
     if any(not isinstance(card.get(field), str) or not card[field].strip() for field in _TEXT_CARD_FIELDS):
@@ -162,6 +166,8 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
     units = raw_units if isinstance(raw_units, list) else []
     if raw_units is not None and not isinstance(raw_units, list):
         errors.append("invalid_source_units")
+    if isinstance(card.get("source_excerpt"), str) and card["source_excerpt"].strip() and not units:
+        errors.append("missing_source_units")
 
     source_unit_ids = card.get("source_unit_ids")
     if not isinstance(source_unit_ids, list) or any(
@@ -187,6 +193,8 @@ def validate_card_v2(card: dict) -> tuple[str, ...]:
             errors.append("source_unit_block_id_mismatch")
         if not unit_errors:
             positions.append((unit["ordinal"], unit["start_pos"], unit["end_pos"]))
+            if not _has_valid_source_unit_identity(card, unit, len(units)):
+                errors.append("invalid_source_unit_id_provenance")
 
     if _has_duplicates(unit_ids):
         errors.append("duplicate_source_unit_id")
@@ -267,6 +275,22 @@ def _has_duplicates(values: list[Any]) -> bool:
             return True
         seen.append(value)
     return False
+
+
+def _has_valid_source_unit_identity(card: dict, unit: dict, source_unit_count: int) -> bool:
+    unit_id = unit["unit_id"]
+    block_id = unit["block_id"]
+    if unit_id == f"{block_id}:u{unit['ordinal']}":
+        return True
+
+    proxy_match = _LEGACY_PROXY_UNIT_ID_RE.fullmatch(unit_id)
+    return bool(
+        proxy_match
+        and proxy_match.group("block_id") == block_id
+        and card.get("selection_reason") == "legacy_v1_adapter"
+        and unit["ordinal"] == 0
+        and source_unit_count == 1
+    )
 
 
 def _legacy_family(card_type: str, excerpt: str) -> str:
