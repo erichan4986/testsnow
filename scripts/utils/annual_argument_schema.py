@@ -154,7 +154,8 @@ def adapt_v1_card(card: dict) -> dict:
     legacy = dict(card)
     excerpt = str(legacy.get("source_excerpt") or "")
     block_id = str(legacy.get("source_block_id") or "legacy")
-    excerpt_hash = hashlib.sha256(excerpt.encode("utf-8")).hexdigest()
+    normalized_excerpt = " ".join(excerpt.split())
+    excerpt_hash = hashlib.sha256(normalized_excerpt.encode("utf-8")).hexdigest()
     unit_id = f"{block_id}:legacy:{excerpt_hash}"
     family = _legacy_family(str(legacy.get("card_type") or ""), excerpt)
 
