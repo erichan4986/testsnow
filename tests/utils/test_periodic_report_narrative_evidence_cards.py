@@ -223,13 +223,13 @@ def test_unnamed_platform_capability_under_rd_usage_is_rejected():
 
 def test_ambiguous_unit_uses_one_post_bundle_primary_family_resolution(monkeypatch):
     calls = []
-    original = narrative_cards._primary_family
+    original = narrative_cards.resolve_argument_family
 
-    def spy_primary_family(text, usage_hint, *, signals=None):
+    def spy_resolver(text, usage_hint=""):
         calls.append((text, usage_hint))
-        return original(text, usage_hint, signals=signals)
+        return original(text, usage_hint)
 
-    monkeypatch.setattr(narrative_cards, "_primary_family", spy_primary_family)
+    monkeypatch.setattr(narrative_cards, "resolve_argument_family", spy_resolver)
     text = "公司主营车规芯片，A2000已通过认证并进入客户验证阶段。"
     result = _build_v2_cards(text, "product_capacity_profile")
 
@@ -3499,7 +3499,7 @@ def test_ashare_industry_barrier_text_does_not_generate_rd_product_progress_card
         }
     ])
 
-    assert not any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
+    assert result["cards"] == []
 
 
 def test_generic_industry_barrier_with_customer_validation_cycle_does_not_generate_rd_product_progress():
@@ -3518,7 +3518,7 @@ def test_generic_industry_barrier_with_customer_validation_cycle_does_not_genera
         }
     ])
 
-    assert not any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
+    assert result["cards"] == []
 
 
 def test_dangling_product_progress_start_is_rejected():

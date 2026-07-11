@@ -492,6 +492,8 @@ def _noise_reason(text: str, *, source_block_text: str = "") -> str | None:
         return "table_or_ocr"
     if _looks_like_definition_or_hash_fragment(text):
         return "definition_or_hash"
+    if source_block_text and _looks_like_industry_barrier_block(source_block_text):
+        return "audit_or_policy"
     if _looks_like_structural_boilerplate(text):
         return "audit_or_policy"
     if source_block_text and _looks_like_block_table(source_block_text):
@@ -499,6 +501,17 @@ def _noise_reason(text: str, *, source_block_text: str = "") -> str | None:
     if source_block_text and _looks_like_block_boilerplate(source_block_text):
         return "audit_or_policy"
     return None
+
+
+def _looks_like_industry_barrier_block(text: str) -> bool:
+    compact = _compact_text(text)
+    barrier_tokens = (
+        "技术壁垒", "技術壁壘", "准入门槛", "准入門檻", "客户验证周期长", "客戶驗證周期長",
+        "新进入者难以快速打开市场", "新進入者難以快速打開市場", "持续研发与人才壁垒",
+        "持續研發與人才壁壘", "综合护城河", "綜合護城河", "行业需要跨学科复合型人才",
+        "行業需要跨學科複合型人才", "竞争焦点集中", "競爭焦點集中", "竞争格局集中", "競爭格局集中",
+    )
+    return sum(token in compact for token in barrier_tokens) >= 2
 
 
 def _looks_like_checkbox_or_page_marker(text: str) -> bool:
