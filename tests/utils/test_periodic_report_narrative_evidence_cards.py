@@ -89,6 +89,25 @@ def test_contiguous_market_units_bundle_into_one_source_exact_argument():
     assert cards[0]["source_excerpt"] == text
 
 
+def test_adjacent_independent_market_assertions_keep_disjoint_source_units():
+    text = (
+        "汽车行业需求保持增长，车规客户导入加速。"
+        "数据中心行业需求保持增长，云服务客户采购增加。"
+    )
+    result = _build_v2_cards(text, "industry_outlook")
+    cards = [
+        card for card in result["cards"]
+        if card["argument_family"] == "market_competition_outlook"
+    ]
+
+    assert len(cards) == 2
+    assert [card["source_excerpt"] for card in cards] == [
+        "汽车行业需求保持增长，车规客户导入加速。",
+        "数据中心行业需求保持增长，云服务客户采购增加。",
+    ]
+    assert set(cards[0]["source_unit_ids"]).isdisjoint(cards[1]["source_unit_ids"])
+
+
 def test_more_than_twelve_distinct_cards_survive():
     blocks = [{
         "id": f"operation-{index}",
@@ -146,6 +165,48 @@ def test_complete_argument_scores_above_atomic_fact():
     by_block = {card["source_block_id"]: card for card in result["cards"]}
     assert by_block["rd-complete"]["argument_complete"] is True
     assert by_block["rd-complete"]["quality_score"] > by_block["rd-atomic"]["quality_score"]
+
+
+def test_complete_candidate_score_dominates_many_anchor_atomic_candidate():
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack={"blocks": [
+            {
+                "id": "many-anchor-atomic",
+                "usage": "rd_product_progress",
+                "text": "2025年A1000、B2000、C3000、D4000、E5000芯片已通过认证并进入客户验证。",
+            },
+            {
+                "id": "minimal-complete",
+                "usage": "rd_product_progress",
+                "text": "A2000芯片完成1.6T互连适配，因此进入客户验证。",
+            },
+        ]},
+    )
+    by_block = {card["source_block_id"]: card for card in result["cards"]}
+
+    assert by_block["many-anchor-atomic"]["argument_complete"] is False
+    assert by_block["minimal-complete"]["argument_complete"] is True
+    assert (
+        by_block["minimal-complete"]["quality_score"]
+        > by_block["many-anchor-atomic"]["quality_score"]
+    )
+
+
+def test_unnamed_technology_capability_is_secondary_to_market_primary():
+    result = _build_v2_cards(
+        "管理层认为公司研发平台、核心技术体系和研发资源将支撑汽车行业需求增长。",
+        "management_market_view",
+    )
+    card = result["cards"][0]
+    assert card["argument_family"] == "market_competition_outlook"
+    assert "technology_product_progress" in card["secondary_signals"]
+
+    named_product = _build_v2_cards(
+        "管理层认为A2000芯片已进入客户验证。",
+        "management_market_view",
+    )["cards"][0]
+    assert named_product["argument_family"] == "technology_product_progress"
 
 
 def test_diagnostics_and_candidate_invariant_contract_are_stable():
@@ -367,7 +428,7 @@ def test_rd_product_progress_card_from_debang_like_rd_progress_block():
     assert "小批量交付" in _all_excerpts(cards)
 
 
-def test_rd_platform_capability_maps_to_technology_platform_not_product_progress():
+def test_rd_platform_capability_is_secondary_to_market_evidence():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
@@ -392,10 +453,9 @@ def test_rd_platform_capability_maps_to_technology_platform_not_product_progress
         evidence_pack=evidence_pack,
     )
 
-    card_types = [card["argument_family"] for card in result["cards"]]
-    assert "technology_product_progress" in card_types
-    card = next(c for c in result["cards"] if c["argument_family"] == "technology_product_progress")
-    assert card["title"] == "技术与产品进展"
+    card = result["cards"][0]
+    assert card["argument_family"] == "market_competition_outlook"
+    assert "technology_product_progress" in card["secondary_signals"]
     assert "强化平台建设" in card["source_excerpt"]
 
 
@@ -519,13 +579,13 @@ def test_procurement_supplier_onboarding_does_not_map_to_product_progress():
     assert not any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
 
 
-def test_rd_team_capability_maps_to_technology_platform_not_product_progress():
+def test_rd_team_capability_uses_rd_product_progress_usage_fallback():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
             {
-                "id": "management_strategy-0",
-                "usage": "management_strategy",
+                "id": "rd_product_progress-0",
+                "usage": "rd_product_progress",
                 "section": "第三节 管理层讨论与分析",
                 "title": "研发团队优势",
                 "text": "公司通过多年集成电路研发实践，组建了高素质的核心管理团队和专业化的骨干研发队伍。",
@@ -540,7 +600,9 @@ def test_rd_team_capability_maps_to_technology_platform_not_product_progress():
         evidence_pack=evidence_pack,
     )
 
-    assert any(card["argument_family"] == "technology_product_progress" for card in result["cards"])
+    card = result["cards"][0]
+    assert card["argument_family"] == "technology_product_progress"
+    assert card["selection_reason"] == "usage_hint:technology_product_progress"
 
 
 def test_business_model_and_rd_product_progress_do_not_dedupe_each_other():
@@ -2989,12 +3051,13 @@ def test_financial_note_rejects_orphaned_note_heading_with_bullet():
     assert result["cards"] == []
 
 
-def test_long_excerpt_truncates_at_sentence_boundary():
-    sentence = "公司主要从事高性能碳纤维及相关产品的研发、生产、销售和技术服务，客户覆盖航空航天主机厂。"
-    long_text = sentence + (
-        "公司采用直接销售模式，产品经客户定型认证通过后进入最终用户认定的合格供方目录。"
-        * 20
+def test_long_source_unit_is_preserved_exactly_without_a_legacy_excerpt_cap():
+    long_text = (
+        "公司主要从事高性能碳纤维及相关产品的研发、生产、销售和技术服务，客户覆盖航空航天主机厂，"
+        + "公司采用直接销售模式并持续服务合格供方目录客户，" * 20
+        + "形成稳定业务结构。"
     )
+    assert len(long_text) > 500
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
@@ -3014,12 +3077,22 @@ def test_long_excerpt_truncates_at_sentence_boundary():
         report_year=2025,
         report_type="annual",
         evidence_pack=evidence_pack,
+        max_cards_per_type=1,
+        max_total_cards=1,
+    )
+    uncapped = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
     )
 
     assert result["cards"]
     excerpt = result["cards"][0]["source_excerpt"]
-    assert len(excerpt) <= 500
-    assert excerpt.endswith("。")
+    assert result["cards"] == uncapped["cards"]
+    assert excerpt == long_text
+    assert len(excerpt) > 500
 
 
 def test_long_excerpt_preserves_the_exact_cleaned_source_without_mid_sentence_cut():
@@ -3688,49 +3761,36 @@ def test_hk_bond_and_deferred_income_table_line_does_not_generate_financial_card
     )
 
 
-def test_global_cap_reserves_slots_for_product_progress_not_only_business_model():
-    """A flood of business_model candidates must not starve product progress.
-
-    Regression guard for HK annual reports where many paragraphs map to
-    business_model: the global cap should be shared fairly across card types so
-    rd_product_progress (high-value product progress) still surfaces.
-    """
-    blocks = []
-    for i in range(8):
-        blocks.append({
-            "id": f"hk_business_overview-{i}",
-            "usage": "hk_business_overview",
-            "section": "管理層討論及分析",
-            "title": "hk_business_overview",
-            "text": (
-                f"我們是領先的車規級智能汽車計算 SoC 供應商之{i}，"
-                "通過自研 IP 核及算法提供全棧式智能汽車解決方案以滿足客戶廣泛需求。"
-            ),
-        })
-    for i in range(8):
-        blocks.append({
-            "id": f"hk_product_progress-{i}",
-            "usage": "hk_product_progress",
-            "section": "管理層討論及分析",
-            "title": "hk_product_progress",
-            "text": (
-                f"華山 A2000 系列芯片第{i}代基於 7nm 先進工藝打造，已實現量產並通過車規認證，"
-                "搭載於頭部車企多款新車型，目前正與核心算法廠商進行深度適配與驗證。"
-            ),
-        })
-    result = build_periodic_report_narrative_evidence_cards(
+def test_legacy_limit_parameters_do_not_truncate_distinct_source_exact_cards():
+    blocks = [{
+        "id": f"hk_business_overview-{index}",
+        "usage": "hk_business_overview",
+        "section": "管理層討論及分析",
+        "title": "hk_business_overview",
+        "text": f"我們主營產品P{index}並服務客戶C{index}。",
+    } for index in range(8)]
+    limited = build_periodic_report_narrative_evidence_cards(
         stock_code="02533",
         stock_name="黑芝麻智能",
         report_year=2025,
         report_type="annual",
         evidence_pack={"schema_version": "periodic_report_evidence_pack.v1", "blocks": blocks},
-        max_cards_per_type=12,
-        max_total_cards=6,
+        max_cards_per_type=1,
+        max_total_cards=1,
     )
-    card_types = [c["argument_family"] for c in result["cards"]]
-    assert len(result["cards"]) <= 6
-    assert "technology_product_progress" in card_types
-    assert "business_structure" in card_types
+    uncapped = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="黑芝麻智能",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"schema_version": "periodic_report_evidence_pack.v1", "blocks": blocks},
+    )
+
+    assert limited["cards"] == uncapped["cards"]
+    assert len(limited["cards"]) == 8
+    assert [card["source_excerpt"] for card in limited["cards"]] == [
+        block["text"] for block in blocks
+    ]
 
 
 def test_hk_ai_software_product_progress_block_maps_to_rd_card():

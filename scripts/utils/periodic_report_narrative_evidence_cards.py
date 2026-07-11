@@ -80,6 +80,10 @@ _TABLE_TOKENS = ("项目 本期", "項目 本期", "单位：", "單位：", "�
 _RISK_TOKENS = ("风险提示", "風險提示", "风险因素", "風險因素", "不确定性", "不確定性", "可能导致", "可能導致")
 _POLICY_TOKENS = ("会计政策", "會計政策", "初始计量", "初始計量", "后续计量", "後續計量", "确认和计量", "確認和計量")
 
+_MAX_ANCHORED_FACT_SCORE = 2
+_MAX_SOURCE_UNIT_SCORE = 1
+_COMPLETE_ARGUMENT_BONUS = 4
+
 
 def build_periodic_report_narrative_evidence_cards(
     *,
@@ -253,8 +257,9 @@ def resolve_argument_family(text: str, usage_hint: str = "") -> tuple[str | None
     """Resolve exactly one family using the locked precedence order."""
     signals = _family_signals(text)
     family = _primary_family(text, usage_hint, signals=signals)
-    reason = "signal" if family else ""
-    if family and family not in signals:
+    primary_signal = family is not None and _is_primary_eligible_signal(family, text, signals)
+    reason = "signal" if primary_signal else ""
+    if family and not primary_signal:
         signals.add(family)
         reason = "usage_hint"
     secondary = [item for item in _FAMILY_PRECEDENCE if item != family and item in signals]
@@ -272,11 +277,23 @@ _FAMILY_PRECEDENCE = (
 
 def _primary_family(text: str, usage_hint: str, *, signals: set[str] | None = None) -> str | None:
     resolved_signals = _family_signals(text) if signals is None else signals
-    family = next((item for item in _FAMILY_PRECEDENCE if item in resolved_signals), None)
+    family = next(
+        (
+            item for item in _FAMILY_PRECEDENCE
+            if _is_primary_eligible_signal(item, text, resolved_signals)
+        ),
+        None,
+    )
     if family is not None:
         return family
     fallback = _USAGE_FALLBACKS.get(usage_hint)
     return fallback if fallback and _has_atomic_anchor(text) else None
+
+
+def _is_primary_eligible_signal(family: str, text: str, signals: set[str]) -> bool:
+    if family not in signals:
+        return False
+    return family != "technology_product_progress" or _has_product_progress(text)
 
 
 def _family_signals(text: str) -> set[str]:
@@ -319,9 +336,9 @@ def _build_candidate(
     excerpt = cleaned_block[first["start_pos"]:last["end_pos"]]
     anchors = _fact_anchors(excerpt, family)
     score_parts = {
-        "anchored_fact": len(anchors),
-        "argument_complete": 3 if argument_complete else 0,
-        "source_unit_count": len(units),
+        "anchored_fact": min(len(anchors), _MAX_ANCHORED_FACT_SCORE),
+        "argument_complete": _COMPLETE_ARGUMENT_BONUS if argument_complete else 0,
+        "source_unit_count": min(len(units), _MAX_SOURCE_UNIT_SCORE),
     }
     card_seed = "|".join((stock_code, str(report_year), report_type, source_block_id, *[unit["unit_id"] for unit in units]))
     return {
@@ -629,10 +646,10 @@ def _continues_same_argument(bundle: Sequence[dict], following: dict, family: st
     """Allow only adjacent source units that extend the same assertion."""
     previous_text = bundle[-1]["text"]
     following_text = following["text"]
-    if family == "market_competition_outlook":
-        return True
     if previous_text.endswith(("；", ";")):
         return False
+    if family == "market_competition_outlook":
+        return _market_argument_continues(previous_text, following_text)
     if family == "technology_product_progress":
         previous_products = _named_products(previous_text)
         following_products = _named_products(following_text)
@@ -642,6 +659,33 @@ def _continues_same_argument(bundle: Sequence[dict], following: dict, family: st
     if family == "financial_quality_explanation":
         return bool(_matching_tokens(previous_text + following_text, _CAUSAL_TOKENS))
     return not following_text.startswith(("公司", "本公司", "集團", "集团"))
+
+
+def _market_argument_continues(previous_text: str, following_text: str) -> bool:
+    compact_following = _compact_text(following_text).lstrip("，、:：")
+    continuation_prefixes = (
+        "其中", "同时", "同時", "此外", "并且", "並且", "但", "但是", "但是", "然而", "不过", "不過",
+        "相较", "相較", "一方面", "另一方面", "受此", "在此基础上", "在此基礎上", "从而", "從而",
+    )
+    if compact_following.startswith(continuation_prefixes):
+        return True
+    return bool(_market_subject_tokens(previous_text) & _market_subject_tokens(following_text))
+
+
+def _market_subject_tokens(text: str) -> set[str]:
+    """Extract short, non-generic subject fragments for market argument continuity."""
+    generic_characters = frozenset(
+        "公司集团我們我们管理层層认为認為行业業市场場需求保持增长增長竞争競爭景气氣价格價承压壓"
+        "产能產能规模模高端低端客户戶服务務供应應商未来來预计預計发展發展趋势勢影响響提升下降增加减少"
+    )
+    subjects = set()
+    for phrase in re.findall(r"[\u4e00-\u9fffA-Za-z0-9]+", _compact_text(text)):
+        for size in range(2, min(len(phrase), 4) + 1):
+            for index in range(len(phrase) - size + 1):
+                token = phrase[index:index + size]
+                if any(character not in generic_characters for character in token):
+                    subjects.add(token)
+    return subjects
 
 
 def _is_self_contained_atomic_fact(text: str, family: str) -> bool:
