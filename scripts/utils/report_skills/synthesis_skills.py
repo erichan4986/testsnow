@@ -144,8 +144,6 @@ class SynthesisSkill(BaseSkill):
                 annual_material_pack = build_annual_report_material_pack(
                     stock_name=stock_name_for_annual,
                     base_dir=base_dir,
-                    max_cards=8,
-                    per_type_limit=2,
                 )
             except Exception:
                 pass
@@ -282,7 +280,6 @@ class SynthesisSkill(BaseSkill):
                 base_dir=base_dir,
                 max_cards=max_cards,
                 use_pack=True,
-                per_type_limit=3,
             )
         except Exception:
             return []
@@ -372,16 +369,10 @@ class SynthesisSkill(BaseSkill):
             excerpt = c.get("excerpt") or c.get("source_excerpt")
             if not excerpt:
                 continue
-            cards.append({
-                "card_id": c.get("card_id"),
-                "card_type": c.get("card_type"),
-                "title": c.get("title"),
-                "excerpt": excerpt,
-                "source_block_id": c.get("source_block_id"),
-                "report_year": c.get("report_year"),
-                "report_type": c.get("report_type"),
-                "source_credit": c.get("source_credit", 75),
-            })
+            card = dict(c)
+            card["excerpt"] = excerpt
+            card.setdefault("source_credit", 75)
+            cards.append(card)
         return cards
 
     @staticmethod
@@ -459,8 +450,21 @@ class SynthesisSkill(BaseSkill):
                 if "营收" in m or "收入" in m or "利润" in m:
                     warnings.append(f"suspicious zero metric: {m}={fact.get('data')}")
 
-        product_types = {"business_model", "rd_product_progress", "technology_platform", "management_market_view", "operation_update"}
-        has_product = any(str(c.get("card_type")) in product_types for c in valid_cards)
+        family_map = {
+            "business_model": "business_structure",
+            "operation_update": "operating_progress",
+            "management_market_view": "market_competition_outlook",
+            "market_outlook": "market_competition_outlook",
+            "technology_platform": "technology_product_progress",
+            "rd_product_progress": "technology_product_progress",
+            "financial_note": "financial_quality_explanation",
+        }
+        def _family(card: Dict[str, Any]) -> str:
+            return str(card.get("argument_family") or family_map.get(str(card.get("card_type") or ""), "business_structure"))
+
+        has_product = any(
+            _family(c) != "financial_quality_explanation" for c in valid_cards
+        )
         has_material = bool(narrative_cards or fact_pack.get("facts") or explanation_pack.get("rows"))
 
         citations: Dict[int, Dict[str, Any]] = {}
@@ -476,14 +480,20 @@ class SynthesisSkill(BaseSkill):
             nxt += 1
             return nxt - 1
 
-        def _annual_row(title, body, iref, src, source_type, citation_key, citation_title="", source_credit=None, display_group=""):
+        def _annual_row(
+            title, body, iref, src, source_type, citation_key, citation_title="",
+            source_credit=None, display_group="", argument_complete=False,
+        ):
             meta: Dict[str, Any] = {"source": "公司年报", "title": citation_title or src, "source_type": source_type}
             if source_credit is not None:
                 meta["source_credit"] = source_credit
             row = {"title": title, "body": body, "internal_refs": [iref],
-                   "citation_refs": [_ref(citation_key, meta)], "source_ref_ids": [src]}
+                   "citation_refs": [_ref(citation_key, meta)], "source_ref_ids": [src],
+                   "source_type": source_type}
             if display_group:
                 row["display_group"] = display_group
+            row["argument_family"] = display_group or "financial_quality_explanation"
+            row["argument_complete"] = bool(argument_complete)
             return row
 
         def _suspicious_zero_metric(metric: object, value: object) -> bool:
@@ -504,6 +514,7 @@ class SynthesisSkill(BaseSkill):
                 confirmed.append(_annual_row(
                     metric, f"{metric}：{f['value']}", f"fact:{metric}", s,
                     "periodic_report_filing_fact", ("fact", s, f["metric"]),
+                    display_group="financial_quality_explanation",
                 ))
 
         explanation_rows: List[Dict[str, Any]] = []
@@ -517,27 +528,19 @@ class SynthesisSkill(BaseSkill):
                     explanation_rows.append(_annual_row(
                         str(m), str(b), f"explanation:{source_ref}", s,
                         "periodic_report_explanation", ("explanation", s, source_ref),
-                        display_group="financial_explanation",
+                        display_group="financial_quality_explanation",
                     ))
 
-        card_group = {
-            "business_model": "product_business",
-            "operation_update": "operation_update",
-            "management_market_view": "management_view",
-            "market_outlook": "management_view",
-            "margin_competitiveness": "competitiveness_rd",
-            "technology_platform": "competitiveness_rd",
-            "rd_product_progress": "competitiveness_rd",
-            "financial_note": "financial_explanation",
-        }
-        for c in valid_cards[:8]:
+        for c in valid_cards:
             title = str(c.get("title") or "年报内容")
             body = str(c.get("excerpt") or c.get("title") or "")
             sid = c.get("source_block_id") or c.get("card_id") or ""
+            family = _family(c)
             explanation_rows.append(_annual_row(
                 title, body, str(c.get("card_id") or ""), str(sid),
                 "periodic_report_narrative_evidence", ("card", sid), title, c.get("source_credit", 75),
-                display_group=card_group.get(str(c.get("card_type") or ""), "product_business"),
+                display_group=family,
+                argument_complete=c.get("argument_complete", False),
             ))
 
         has_usable_rows = bool(confirmed or explanation_rows)

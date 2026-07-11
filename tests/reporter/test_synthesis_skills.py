@@ -2947,6 +2947,101 @@ def test_build_annual_report_memo_ready_vs_fallback():
     assert memo2["status"] == "deterministic_fallback"
 
 
+def test_build_annual_report_memo_preserves_all_canonical_v2_narrative_cards():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    families = (
+        "business_structure",
+        "operating_progress",
+        "market_competition_outlook",
+        "technology_product_progress",
+        "financial_quality_explanation",
+    )
+    cards = []
+    for index in range(14):
+        family = families[index % len(families)]
+        cards.append({
+            "schema_version": "periodic_report_narrative_evidence_card.v2",
+            "selection_version": "annual_argument_selection.v2",
+            "card_id": f"periodic:v2:{index}",
+            "argument_family": family,
+            "argument_complete": index % 2 == 0,
+            "title": f"年报论据 {index}",
+            "source_block_id": f"block-{index}",
+            "source_unit_ids": [f"unit-{index}"],
+            "source_units": [{
+                "unit_id": f"unit-{index}",
+                "block_id": f"block-{index}",
+                "ordinal": 0,
+                "start_pos": 0,
+                "end_pos": 10,
+                "text": f"年报论据内容 {index}。",
+            }],
+            "source_excerpt": f"年报论据内容 {index}。",
+            "excerpt": f"年报论据内容 {index}。",
+            "fact_anchors": [f"事实锚点 {index}"],
+            "secondary_signals": [],
+            "score_parts": {"anchored_fact": 1},
+            "quality_score": 1,
+            "selection_reason": f"signal:{family}",
+            "source_type": "periodic_report_narrative_evidence",
+            "source_credit": 75,
+            "report_year": 2025,
+            "report_type": "annual",
+        })
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": cards},
+        "formal_financial_fact_pack": {"facts": []},
+        "periodic_narrative_cards_max_display_items": 3,
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    rows = memo["sections"]["annual_report_explanation"]
+    legacy_groups = {
+        "product_business",
+        "operation_update",
+        "management_view",
+        "competitiveness_rd",
+        "financial_explanation",
+    }
+
+    assert len(rows) == 14
+    assert len(ctx.get("annual_report_material_pack")["selected_narrative_cards"]) == 14
+    assert all(row["source_type"] == "periodic_report_narrative_evidence" for row in rows)
+    assert all(row["display_group"] in families for row in rows)
+    assert all("argument_complete" in row for row in rows)
+    assert not legacy_groups.intersection(row["display_group"] for row in rows)
+    assert [row["argument_family"] for row in rows] == [card["argument_family"] for card in cards]
+    assert [row["argument_complete"] for row in rows] == [card["argument_complete"] for card in cards]
+
+
+def test_build_annual_report_memo_marks_formal_financial_rows_as_incomplete_quality_explanations():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": []},
+        "formal_financial_fact_pack": {
+            "facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}],
+        },
+        "formal_financial_explanation_pack": {
+            "rows": [{
+                "metric": "营业收入变动原因",
+                "normalized_summary": "收入变化主要系产品销售额增加所致。",
+                "source_doc": "2025年annual",
+                "source_ref": "annual:revenue",
+            }],
+        },
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    rows = memo["sections"]["confirmed"] + memo["sections"]["annual_report_explanation"]
+
+    assert len(rows) == 2
+    assert all(row["display_group"] == "financial_quality_explanation" for row in rows)
+    assert all(row["argument_family"] == "financial_quality_explanation" for row in rows)
+    assert all(row["argument_complete"] is False for row in rows)
+
+
 def test_build_annual_report_memo_uses_in_memory_narrative_cards_without_notes():
     skill = SynthesisSkill(synthesizer=MagicMock())
     ctx = SkillContext(input={
