@@ -75,6 +75,7 @@ def _write_v2_note(
     complete: bool = True,
     quality_score: int = 6,
     source_units: list[dict] | None = None,
+    source_excerpt: str | None = None,
 ) -> Path:
     if source_units is None:
         text = f"产品 {card_id} 完成客户验证。"
@@ -86,7 +87,7 @@ def _write_v2_note(
             "end_pos": len(text),
             "text": text,
         }]
-    excerpt = "".join(unit["text"] for unit in source_units)
+    excerpt = source_excerpt if source_excerpt is not None else "".join(unit["text"] for unit in source_units)
     card = {
         "schema_version": "periodic_report_narrative_evidence_card.v2",
         "selection_version": "annual_argument_selection.v2",
@@ -246,6 +247,57 @@ def test_v2_roundtrip_preserves_units_and_selection_diagnostics(tmp_path: Path) 
     assert card["argument_family"] == "financial_quality_explanation"
     assert card["score_parts"] == {"anchored_fact": 1, "argument_complete": 4}
     assert card["selection_diagnostics"]["selection_reason"] == "signal:financial_quality_explanation"
+
+
+def test_v2_empty_signal_list_roundtrips_and_malformed_units_are_rejected(tmp_path: Path) -> None:
+    path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-empty-signals.md",
+        card_id="annual-argument:empty-signals",
+        source_block_id="empty",
+        source_units=[{
+            "unit_id": "empty:u0", "block_id": "empty", "ordinal": 0,
+            "start_pos": 0, "end_pos": len("产品完成验证。"), "text": "产品完成验证。",
+        }],
+    )
+    text = path.read_text(encoding="utf-8").replace(
+        "secondary_signals:\n  - market_competition_outlook\n",
+        "secondary_signals: []\n",
+    )
+    path.write_text(text, encoding="utf-8")
+
+    valid = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    assert len(valid["selected_narrative_cards"]) == 1
+
+    _write_v2_note(
+        tmp_path,
+        filename="2025-annual-malformed-units.md",
+        card_id="annual-argument:malformed-units",
+        source_units=[{
+            "unit_id": "bad:u0", "block_id": "bad", "ordinal": 0,
+            "start_pos": 999, "end_pos": 1001, "text": "伪造",
+        }],
+        source_excerpt="真实摘录。",
+    )
+    invalid = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    assert [card["card_id"] for card in invalid["selected_narrative_cards"]] == [
+        "annual-argument:empty-signals",
+    ]
+
+
+def test_same_block_different_excerpt_does_not_shadow_v1(tmp_path: Path) -> None:
+    _write_note(tmp_path, card_id="legacy:same-block", body_excerpt="旧版摘录保留。")
+    _write_v2_note(
+        tmp_path,
+        filename="2025-annual-market-competition-outlook-different.md",
+        card_id="annual-argument:different-excerpt",
+        family="market_competition_outlook",
+        source_block_id="market_demand_outlook-0",
+    )
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    assert len(pack["selected_narrative_cards"]) == 2
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 1
 
 
 def test_build_pack_quality_prefers_specific_product_metric_cards(tmp_path: Path) -> None:

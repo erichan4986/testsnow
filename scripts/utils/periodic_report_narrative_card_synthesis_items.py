@@ -211,6 +211,10 @@ def _extract_narrative_evidence_excerpt(text: str) -> str:
 
 
 def _clean_scalar(value: str) -> Any:
+    if value == "[]":
+        return []
+    if value == "{}":
+        return {}
     if value.lower() == "true":
         return True
     if value.lower() == "false":

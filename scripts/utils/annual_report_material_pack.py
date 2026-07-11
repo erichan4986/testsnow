@@ -290,7 +290,7 @@ def _read_note_as_record(
             "selection_reason": diagnostics.get("selection_reason") or "",
             "selection_diagnostics": diagnostics,
         })
-        if validate_card_v2(card):
+        if validate_card_v2(card) or not _source_units_match_excerpt(source_units, excerpt):
             return None
         return _record_from_card(path, card, is_v2=True)
 
@@ -395,6 +395,22 @@ def _extract_narrative_evidence_excerpt(text: str) -> str:
         elif lines and stripped:
             break
     return re.sub(r"\s+", " ", " ".join(lines)).strip()
+
+
+def _source_units_match_excerpt(source_units: List[Dict[str, Any]], excerpt: str) -> bool:
+    """Validate persisted block-relative positions against the visible slice."""
+    if not source_units or not excerpt:
+        return False
+    try:
+        base = int(source_units[0]["start_pos"])
+        for unit in source_units:
+            start = int(unit["start_pos"]) - base
+            end = int(unit["end_pos"]) - base
+            if start < 0 or end > len(excerpt) or excerpt[start:end] != unit["text"]:
+                return False
+    except (KeyError, TypeError, ValueError):
+        return False
+    return True
 
 
 def _score_excerpt(excerpt: str) -> tuple[float, List[str]]:
@@ -573,7 +589,7 @@ def _record_identity_keys(record: _CardRecord) -> Set[str]:
     if card_id:
         keys.add(f"card:{card_id}")
     if source_block_id:
-        keys.add(f"source:{source_block_id}")
+        keys.add(f"source:{source_block_id}:{_normalize_text(record.excerpt)}")
     return keys
 
 
@@ -634,6 +650,10 @@ def _record_to_dict(record: _CardRecord) -> Dict[str, Any]:
 
 
 def _clean_scalar(value: str) -> Any:
+    if value == "[]":
+        return []
+    if value == "{}":
+        return {}
     if value.lower() == "true":
         return True
     if value.lower() == "false":
