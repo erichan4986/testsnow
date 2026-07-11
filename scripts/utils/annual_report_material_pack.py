@@ -6,46 +6,21 @@ narrative cards for display-only synthesis.
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 if __name__.startswith("utils."):
     from .source_adapter import SynthesisItem
+    from .annual_argument_schema import CARD_SCHEMA_VERSION, adapt_v1_card, validate_card_v2
 else:
     from source_adapter import SynthesisItem
+    from annual_argument_schema import CARD_SCHEMA_VERSION, adapt_v1_card, validate_card_v2
 
 
 SCHEMA_VERSION = "annual_report_material_pack.v1"
 NARRATIVE_CARD_SOURCE_TYPE = "periodic_report_narrative_evidence"
-
-# High-value card types are balanced first during selection.
-HIGH_VALUE_CARD_TYPES = [
-    "rd_product_progress",
-    "market_outlook",
-    "margin_competitiveness",
-    "technology_platform",
-    "management_market_view",
-]
-
-# Fallback ordering for other known card types.
-OTHER_KNOWN_CARD_TYPES = [
-    "operation_update",
-    "business_model",
-    "financial_note",
-]
-
-_CARD_TYPE_TITLES = {
-    "business_model": "主营业务与产品",
-    "operation_update": "经营进展",
-    "management_market_view": "管理层市场判断",
-    "market_outlook": "市场前景判断",
-    "margin_competitiveness": "毛利率与竞争力",
-    "technology_platform": "技术平台与研发能力",
-    "rd_product_progress": "研发与产品进展",
-    "financial_note": "财务备注",
-    "uncategorized": "其他年报内容",
-}
 
 # Default high-interest terms for diagnostics. These are examples / cross-domain
 # signals, not a company-specific whitelist or dominant ranking feature.
@@ -92,8 +67,9 @@ _PRODUCT_PATTERNS = [
 class _CardRecord:
     __slots__ = (
         "path",
+        "card",
         "card_id",
-        "card_type",
+        "argument_family",
         "title",
         "report_year",
         "report_type",
@@ -102,14 +78,16 @@ class _CardRecord:
         "source_block_id",
         "quality_score",
         "quality_reasons",
+        "is_v2",
     )
 
     def __init__(
         self,
         *,
         path: Path,
+        card: Dict[str, Any],
         card_id: str,
-        card_type: str,
+        argument_family: str,
         title: str,
         report_year: str,
         report_type: str,
@@ -118,10 +96,12 @@ class _CardRecord:
         source_block_id: str,
         quality_score: float,
         quality_reasons: List[str],
+        is_v2: bool,
     ) -> None:
         self.path = path
+        self.card = card
         self.card_id = card_id
-        self.card_type = card_type
+        self.argument_family = argument_family
         self.title = title
         self.report_year = report_year
         self.report_type = report_type
@@ -130,25 +110,21 @@ class _CardRecord:
         self.source_block_id = source_block_id
         self.quality_score = quality_score
         self.quality_reasons = quality_reasons
+        self.is_v2 = is_v2
 
 
 def build_annual_report_material_pack(
     *,
     stock_name: str,
     base_dir: str | Path,
-    max_cards: int = 16,
-    per_type_limit: int = 3,
-    high_value_terms: Optional[Set[str]] = None,
+    **_legacy_options: Any,
 ) -> Dict[str, Any]:
     """Build a deterministic, display-only annual-report material pack.
 
     The pack only reads narrative-card Knowledge notes. It does not call LLMs,
     fetch data, or modify Knowledge.
     """
-    max_cards = max(0, int(max_cards))
-    per_type_limit = max(1, int(per_type_limit))
-    high_value_terms = high_value_terms or DEFAULT_HIGH_VALUE_TERMS
-    term_canonical = {t.lower(): t for t in high_value_terms}
+    del _legacy_options
 
     notes_dir = (
         Path(base_dir)
@@ -162,7 +138,7 @@ def build_annual_report_material_pack(
 
     records: List[_CardRecord] = []
     for path in sorted(notes_dir.glob("*.md")):
-        record = _read_note_as_record(path)
+        record = _read_note_as_record(path, adapt_legacy=False)
         if record is None:
             continue
         records.append(record)
@@ -170,25 +146,31 @@ def build_annual_report_material_pack(
     if not records:
         return _empty_pack(stock_name)
 
-    by_type_seen: Dict[str, int] = {}
-    for r in records:
-        by_type_seen[r.card_type] = by_type_seen.get(r.card_type, 0) + 1
-
     cards_seen = len(records)
-    records = _deduplicate_records(records)
-    selected = _select_records(
-        records,
-        max_cards=max_cards,
-        per_type_limit=per_type_limit,
-    )
+    v2_records = [record for record in records if record.is_v2]
+    v2_shadow_keys = {
+        key
+        for record in v2_records
+        for key in _record_identity_keys(record)
+    }
+    adapted_legacy: List[_CardRecord] = []
+    v1_adapter_use_count = 0
+    for record in records:
+        if record.is_v2:
+            continue
+        if _record_identity_keys(record) & v2_shadow_keys:
+            continue
+        try:
+            adapted = adapt_v1_card(record.card)
+        except (TypeError, ValueError):
+            continue
+        adapted_legacy.append(_record_from_card(record.path, adapted, is_v2=False))
+        v1_adapter_use_count += 1
 
-    by_type_selected: Dict[str, int] = {}
-    for r in selected:
-        by_type_selected[r.card_type] = by_type_selected.get(r.card_type, 0) + 1
-
-    skipped_high_value = _build_skipped_high_value(
-        records, selected, term_canonical
-    )
+    # Canonical v2 cards are already source-unit-owned and must all survive.
+    # Keep the historical duplicate filtering only for adapted v1 notes.
+    selected = v2_records + _deduplicate_records(adapted_legacy)
+    selected.sort(key=_record_sort_key)
 
     return {
         "schema_version": SCHEMA_VERSION,
@@ -197,9 +179,9 @@ def build_annual_report_material_pack(
         "diagnostics": {
             "cards_seen": cards_seen,
             "cards_selected": len(selected),
-            "by_type_seen": by_type_seen,
-            "by_type_selected": by_type_selected,
-            "skipped_high_value": skipped_high_value,
+            "by_family_seen": _count_by_family(records),
+            "by_family_selected": _count_by_family(selected),
+            "v1_adapter_use_count": v1_adapter_use_count,
             "skipped": [],
         },
     }
@@ -213,8 +195,38 @@ def selected_cards_to_synthesis_items(
     for card in selected_cards:
         report_year = str(card.get("report_year") or "")
         report_type = str(card.get("report_type") or "")
-        card_type = str(card.get("card_type") or "")
-        title = str(card.get("title") or _CARD_TYPE_TITLES.get(card_type) or "年报叙事卡片")
+        title = str(card.get("title") or "年报叙事卡片")
+        extra = {
+            "source_type": NARRATIVE_CARD_SOURCE_TYPE,
+            "source_credit": int(card.get("source_credit") or 75),
+            "verification_status": "professional_analysis",
+            "claim_status": "professional_analysis",
+            "knowledge_eligible": False,
+            "report_eligible": False,
+            "synthesis_eligible": False,
+            "synthesis_display_only": True,
+            "experimental": True,
+            "card_id": str(card.get("card_id") or ""),
+            "source_block_id": str(card.get("source_block_id") or ""),
+            "report_year": _as_int(report_year, report_year),
+            "report_type": report_type,
+        }
+        for key in (
+            "argument_family",
+            "argument_complete",
+            "schema_version",
+            "selection_version",
+            "source_unit_ids",
+            "source_units",
+            "fact_anchors",
+            "secondary_signals",
+            "score_parts",
+            "quality_score",
+            "selection_reason",
+            "selection_diagnostics",
+        ):
+            if key in card:
+                extra[key] = card[key]
         items.append(
             SynthesisItem(
                 title=f"{report_year} {report_type} | {title}".strip(),
@@ -224,22 +236,7 @@ def selected_cards_to_synthesis_items(
                 url="",
                 publish_time=report_year,
                 interaction_score=0,
-                extra={
-                    "source_type": NARRATIVE_CARD_SOURCE_TYPE,
-                    "source_credit": int(card.get("source_credit") or 75),
-                    "verification_status": "professional_analysis",
-                    "claim_status": "professional_analysis",
-                    "knowledge_eligible": False,
-                    "report_eligible": False,
-                    "synthesis_eligible": False,
-                    "synthesis_display_only": True,
-                    "experimental": True,
-                    "card_type": card_type,
-                    "card_id": str(card.get("card_id") or ""),
-                    "source_block_id": str(card.get("source_block_id") or ""),
-                    "report_year": _as_int(report_year, report_year),
-                    "report_type": report_type,
-                },
+                extra=extra,
             )
         )
     return items
@@ -253,15 +250,19 @@ def _empty_pack(stock_name: str) -> Dict[str, Any]:
         "diagnostics": {
             "cards_seen": 0,
             "cards_selected": 0,
-            "by_type_seen": {},
-            "by_type_selected": {},
-            "skipped_high_value": [],
+            "by_family_seen": {},
+            "by_family_selected": {},
+            "v1_adapter_use_count": 0,
             "skipped": [],
         },
     }
 
 
-def _read_note_as_record(path: Path) -> Optional[_CardRecord]:
+def _read_note_as_record(
+    path: Path,
+    *,
+    adapt_legacy: bool = True,
+) -> Optional[_CardRecord]:
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
@@ -275,31 +276,60 @@ def _read_note_as_record(path: Path) -> Optional[_CardRecord]:
     if not excerpt:
         return None
 
-    card_type = str(frontmatter.get("card_type") or "").strip()
-    if not card_type:
-        card_type = "uncategorized"
+    is_v2 = str(frontmatter.get("schema_version") or "") == CARD_SCHEMA_VERSION
+    if is_v2:
+        source_units = _extract_json_section(text, "Source Units")
+        diagnostics = _extract_json_section(text, "Selection Diagnostics")
+        if not isinstance(source_units, list) or not isinstance(diagnostics, dict):
+            return None
+        card = dict(frontmatter)
+        card.update({
+            "source_excerpt": excerpt,
+            "source_units": source_units,
+            "score_parts": diagnostics.get("score_parts") or {},
+            "selection_reason": diagnostics.get("selection_reason") or "",
+            "selection_diagnostics": diagnostics,
+        })
+        if validate_card_v2(card):
+            return None
+        return _record_from_card(path, card, is_v2=True)
 
-    title = str(frontmatter.get("title") or "").strip()
-    report_year = str(frontmatter.get("report_year") or "").strip()
-    report_type = str(frontmatter.get("report_type") or "").strip()
-    card_id = str(frontmatter.get("card_id") or path.stem)
-    source_credit = _as_int(frontmatter.get("source_credit"), 75)
-    source_block_id = str(frontmatter.get("source_block_id") or "")
+    card = dict(frontmatter)
+    card["source_excerpt"] = excerpt
+    if adapt_legacy:
+        try:
+            card = adapt_v1_card(card)
+        except (TypeError, ValueError):
+            return None
+    return _record_from_card(path, card, is_v2=False)
 
-    score, reasons = _score_excerpt(excerpt, card_type)
 
+def _record_from_card(path: Path, card: Dict[str, Any], *, is_v2: bool) -> _CardRecord:
+    excerpt = str(card.get("source_excerpt") or "")
+    family = str(card.get("argument_family") or "")
+    score_value = card.get("quality_score")
+    try:
+        score = float(score_value)
+    except (TypeError, ValueError):
+        score = _score_excerpt(excerpt)[0]
+    if is_v2:
+        reasons = [str(card.get("selection_reason") or "")]
+    else:
+        score, reasons = _score_excerpt(excerpt)
     return _CardRecord(
         path=path,
-        card_id=card_id,
-        card_type=card_type,
-        title=title,
-        report_year=report_year,
-        report_type=report_type,
+        card=dict(card),
+        card_id=str(card.get("card_id") or path.stem),
+        argument_family=family,
+        title=str(card.get("title") or "年报叙事卡片"),
+        report_year=card.get("report_year") or "",
+        report_type=str(card.get("report_type") or ""),
         excerpt=excerpt,
-        source_credit=source_credit,
-        source_block_id=source_block_id,
+        source_credit=_as_int(card.get("source_credit"), 75),
+        source_block_id=str(card.get("source_block_id") or ""),
         quality_score=score,
         quality_reasons=reasons,
+        is_v2=is_v2,
     )
 
 
@@ -309,16 +339,44 @@ def _parse_frontmatter(text: str) -> Dict[str, Any]:
         return {}
 
     data: Dict[str, Any] = {}
-    for raw_line in match.group(1).splitlines():
+    lines = match.group(1).splitlines()
+    index = 0
+    while index < len(lines):
+        raw_line = lines[index]
         if not raw_line or raw_line.startswith(" ") or ":" not in raw_line:
+            index += 1
             continue
         key, value = raw_line.split(":", 1)
         key = key.strip()
         value = value.strip()
-        if not key or value == "":
+        if not key:
+            index += 1
+            continue
+        if value == "":
+            items: List[Any] = []
+            cursor = index + 1
+            while cursor < len(lines) and lines[cursor].startswith("  - "):
+                items.append(_clean_scalar(lines[cursor][4:].strip()))
+                cursor += 1
+            data[key] = items
+            index = cursor
             continue
         data[key] = _clean_scalar(value)
+        index += 1
     return data
+
+
+def _extract_json_section(text: str, heading: str) -> Any:
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*\n+```(?:json)?\s*\n?(?P<body>.*?)\n```",
+        text,
+    )
+    if not match:
+        return None
+    try:
+        return json.loads(match.group("body"))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
 
 
 def _extract_narrative_evidence_excerpt(text: str) -> str:
@@ -339,7 +397,7 @@ def _extract_narrative_evidence_excerpt(text: str) -> str:
     return re.sub(r"\s+", " ", " ".join(lines)).strip()
 
 
-def _score_excerpt(excerpt: str, card_type: str) -> tuple[float, List[str]]:
+def _score_excerpt(excerpt: str) -> tuple[float, List[str]]:
     score = 5.0
     reasons: List[str] = []
     penalties: List[str] = []
@@ -373,10 +431,6 @@ def _score_excerpt(excerpt: str, card_type: str) -> tuple[float, List[str]]:
     if _is_complete_sentence(excerpt):
         score += 0.5
         reasons.append("complete_sentence")
-
-    if card_type in HIGH_VALUE_CARD_TYPES:
-        score += 1.0
-        reasons.append("card_type_bonus")
 
     # Penalties
     if _is_boilerplate(norm):
@@ -508,107 +562,75 @@ def _deduplicate_records(records: List[_CardRecord]) -> List[_CardRecord]:
         if not is_near_dup:
             kept.append(record)
 
-    # Return in deterministic order: quality desc, then card_id asc.
-    return sorted(kept, key=lambda r: (-r.quality_score, r.card_id))
+    return sorted(kept, key=_record_sort_key)
 
 
-def _select_records(
-    records: List[_CardRecord],
-    *,
-    max_cards: int,
-    per_type_limit: int,
-) -> List[_CardRecord]:
-    if max_cards <= 0 or not records:
-        return []
+def _record_identity_keys(record: _CardRecord) -> Set[str]:
+    card = record.card
+    keys = set()
+    card_id = str(card.get("card_id") or "").strip()
+    source_block_id = str(card.get("source_block_id") or "").strip()
+    if card_id:
+        keys.add(f"card:{card_id}")
+    if source_block_id:
+        keys.add(f"source:{source_block_id}")
+    return keys
 
-    type_priority = {t: i for i, t in enumerate(HIGH_VALUE_CARD_TYPES)}
-    for i, t in enumerate(OTHER_KNOWN_CARD_TYPES):
-        type_priority.setdefault(t, len(HIGH_VALUE_CARD_TYPES) + i)
-    type_priority.setdefault("uncategorized", len(HIGH_VALUE_CARD_TYPES) + len(OTHER_KNOWN_CARD_TYPES))
 
-    by_type: Dict[str, List[_CardRecord]] = {}
-    for r in records:
-        by_type.setdefault(r.card_type, []).append(r)
-
-    for group in by_type.values():
-        group.sort(key=lambda r: (-r.quality_score, r.card_id))
-
-    type_order = sorted(
-        by_type.keys(),
-        key=lambda t: (type_priority.get(t, 999), t),
+def _record_sort_key(record: _CardRecord) -> tuple[Any, ...]:
+    return (
+        record.argument_family,
+        -record.quality_score,
+        _natural_text_key(record.source_block_id),
+        tuple(str(item) for item in (record.card.get("source_unit_ids") or [])),
+        record.card_id,
+        record.path.name,
     )
 
-    selected: List[_CardRecord] = []
-    selected_counts: Dict[str, int] = {t: 0 for t in by_type}
-    selected_ids: Set[str] = set()
 
-    # Round 1: balanced round-robin up to per_type_limit.
-    while len(selected) < max_cards:
-        added_any = False
-        for card_type in type_order:
-            if selected_counts[card_type] >= per_type_limit:
-                continue
-            for record in by_type[card_type]:
-                if record.card_id in selected_ids:
-                    continue
-                selected.append(record)
-                selected_ids.add(record.card_id)
-                selected_counts[card_type] += 1
-                added_any = True
-                break
-            if len(selected) >= max_cards:
-                break
-        if not added_any:
-            break
-
-    # Round 2: fill remaining budget with highest-quality unselected cards.
-    if len(selected) < max_cards:
-        remaining = sorted(
-            [r for r in records if r.card_id not in selected_ids],
-            key=lambda r: (-r.quality_score, r.card_id),
-        )
-        selected.extend(remaining[: max_cards - len(selected)])
-
-    return selected
+def _natural_text_key(value: str) -> tuple[Any, ...]:
+    return tuple(
+        int(part) if part.isdigit() else part
+        for part in re.split(r"(\d+)", str(value))
+    )
 
 
-def _build_skipped_high_value(
-    records: List[_CardRecord],
-    selected: List[_CardRecord],
-    term_canonical: Dict[str, str],
-) -> List[Dict[str, str]]:
-    selected_ids = {r.card_id for r in selected}
-    skipped: List[Dict[str, str]] = []
+def _count_by_family(records: List[_CardRecord]) -> Dict[str, int]:
+    counts: Dict[str, int] = {}
     for record in records:
-        if record.card_id in selected_ids:
-            continue
-        norm = _normalize_text(record.excerpt)
-        for lower_term, canonical_term in term_canonical.items():
-            if lower_term in norm:
-                skipped.append({
-                    "term": canonical_term,
-                    "reason": "budget_exhausted",
-                    "card_id": record.card_id,
-                })
-                break
-    return skipped
+        family = record.argument_family or "unknown"
+        counts[family] = counts.get(family, 0) + 1
+    return counts
 
 
 def _record_to_dict(record: _CardRecord) -> Dict[str, Any]:
-    return {
+    payload = dict(record.card)
+    payload.update({
         "card_id": record.card_id,
-        "card_type": record.card_type,
         "title": record.title,
         "excerpt": record.excerpt,
-        "quality_score": record.quality_score,
-        "quality_reasons": record.quality_reasons,
+        "quality_score": (
+            record.card.get("quality_score")
+            if record.is_v2 and "quality_score" in record.card
+            else record.quality_score
+        ),
+        "quality_reasons": list(record.quality_reasons),
         "source_type": NARRATIVE_CARD_SOURCE_TYPE,
         "source_credit": record.source_credit,
         "synthesis_display_only": True,
         "report_year": record.report_year,
         "report_type": record.report_type,
         "source_block_id": record.source_block_id,
-    }
+    })
+    if record.is_v2:
+        payload["selection_diagnostics"] = dict(
+            record.card.get("selection_diagnostics") or {
+                "score_parts": record.card.get("score_parts") or {},
+                "selection_reason": record.card.get("selection_reason") or "",
+            }
+        )
+    payload.pop("card_type", None)
+    return payload
 
 
 def _clean_scalar(value: str) -> Any:

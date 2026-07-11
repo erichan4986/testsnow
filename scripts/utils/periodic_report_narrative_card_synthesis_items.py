@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional
@@ -22,25 +23,13 @@ else:
 
 NARRATIVE_CARD_SOURCE_TYPE = "periodic_report_narrative_evidence"
 
-_CARD_TYPE_TITLES = {
-    "business_model": "主营业务与产品",
-    "operation_update": "经营进展",
-    "management_market_view": "管理层市场判断",
-    "market_outlook": "市场前景判断",
-    "margin_competitiveness": "毛利率与竞争力",
-    "technology_platform": "技术平台与研发能力",
-    "rd_product_progress": "研发与产品进展",
-    "financial_note": "财务备注",
-}
-
-
 def load_periodic_narrative_card_synthesis_items(
     *,
     stock_name: str,
     base_dir: str | Path,
     max_cards: int = 12,
     use_pack: bool = False,
-    per_type_limit: int = 3,
+    **_legacy_options: Any,
 ) -> List[SynthesisItem]:
     """Read narrative-card Knowledge notes and convert them to display items.
 
@@ -53,17 +42,15 @@ def load_periodic_narrative_card_synthesis_items(
     deduplication, and card-type balancing. The legacy path (False) preserves
     filename ordering for compatibility.
     """
+    del _legacy_options
     if use_pack:
         try:
             pack = build_annual_report_material_pack(
                 stock_name=stock_name,
                 base_dir=base_dir,
-                max_cards=max_cards,
-                per_type_limit=per_type_limit,
             )
-            return selected_cards_to_synthesis_items(
-                pack["selected_narrative_cards"]
-            )
+            items = selected_cards_to_synthesis_items(pack["selected_narrative_cards"])
+            return items[: max(0, int(max_cards))]
         except Exception:
             return []
 
@@ -101,11 +88,51 @@ def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
     if not excerpt:
         return None
 
+    is_v2 = str(frontmatter.get("schema_version") or "") == (
+        "periodic_report_narrative_evidence_card.v2"
+    )
     card_type = str(frontmatter.get("card_type") or "").strip()
-    title = str(frontmatter.get("title") or _CARD_TYPE_TITLES.get(card_type) or "年报叙事卡片")
+    title = str(frontmatter.get("title") or "年报叙事卡片")
     report_year = str(frontmatter.get("report_year") or "").strip()
     report_type = str(frontmatter.get("report_type") or "").strip()
     source_credit = _as_int(frontmatter.get("source_credit"), 75)
+
+    extra = {
+        "source_type": NARRATIVE_CARD_SOURCE_TYPE,
+        "source_credit": source_credit,
+        "verification_status": "professional_analysis",
+        "claim_status": "professional_analysis",
+        "knowledge_eligible": False,
+        "report_eligible": False,
+        "synthesis_eligible": False,
+        "synthesis_display_only": True,
+        "experimental": True,
+        "card_id": str(frontmatter.get("card_id") or ""),
+        "source_block_id": str(frontmatter.get("source_block_id") or ""),
+        "report_year": _as_int(report_year, report_year),
+        "report_type": report_type,
+    }
+    if is_v2:
+        source_units = _extract_json_section(text, "Source Units")
+        diagnostics = _extract_json_section(text, "Selection Diagnostics")
+        if not isinstance(source_units, list) or not isinstance(diagnostics, dict):
+            return None
+        extra.update({
+            "argument_family": str(frontmatter.get("argument_family") or ""),
+            "argument_complete": frontmatter.get("argument_complete"),
+            "schema_version": frontmatter.get("schema_version"),
+            "selection_version": frontmatter.get("selection_version"),
+            "source_unit_ids": list(frontmatter.get("source_unit_ids") or []),
+            "source_units": source_units,
+            "fact_anchors": list(frontmatter.get("fact_anchors") or []),
+            "secondary_signals": list(frontmatter.get("secondary_signals") or []),
+            "score_parts": diagnostics.get("score_parts") or {},
+            "quality_score": frontmatter.get("quality_score"),
+            "selection_reason": diagnostics.get("selection_reason") or "",
+            "selection_diagnostics": diagnostics,
+        })
+    else:
+        extra["card_type"] = card_type
 
     return SynthesisItem(
         title=f"{report_year} {report_type} | {title}".strip(),
@@ -115,22 +142,7 @@ def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
         url="",
         publish_time=report_year,
         interaction_score=0,
-        extra={
-            "source_type": NARRATIVE_CARD_SOURCE_TYPE,
-            "source_credit": source_credit,
-            "verification_status": "professional_analysis",
-            "claim_status": "professional_analysis",
-            "knowledge_eligible": False,
-            "report_eligible": False,
-            "synthesis_eligible": False,
-            "synthesis_display_only": True,
-            "experimental": True,
-            "card_type": card_type,
-            "card_id": str(frontmatter.get("card_id") or ""),
-            "source_block_id": str(frontmatter.get("source_block_id") or ""),
-            "report_year": _as_int(report_year, report_year),
-            "report_type": report_type,
-        },
+        extra=extra,
     )
 
 
@@ -140,16 +152,44 @@ def _parse_frontmatter(text: str) -> Dict[str, Any]:
         return {}
 
     data: Dict[str, Any] = {}
-    for raw_line in match.group(1).splitlines():
+    lines = match.group(1).splitlines()
+    index = 0
+    while index < len(lines):
+        raw_line = lines[index]
         if not raw_line or raw_line.startswith(" ") or ":" not in raw_line:
+            index += 1
             continue
         key, value = raw_line.split(":", 1)
         key = key.strip()
         value = value.strip()
-        if not key or value == "":
+        if not key:
+            index += 1
+            continue
+        if value == "":
+            items: List[Any] = []
+            cursor = index + 1
+            while cursor < len(lines) and lines[cursor].startswith("  - "):
+                items.append(_clean_scalar(lines[cursor][4:].strip()))
+                cursor += 1
+            data[key] = items
+            index = cursor
             continue
         data[key] = _clean_scalar(value)
+        index += 1
     return data
+
+
+def _extract_json_section(text: str, heading: str) -> Any:
+    match = re.search(
+        rf"(?ms)^## {re.escape(heading)}\s*\n+```(?:json)?\s*\n?(?P<body>.*?)\n```",
+        text,
+    )
+    if not match:
+        return None
+    try:
+        return json.loads(match.group("body"))
+    except (TypeError, ValueError, json.JSONDecodeError):
+        return None
 
 
 def _extract_narrative_evidence_excerpt(text: str) -> str:

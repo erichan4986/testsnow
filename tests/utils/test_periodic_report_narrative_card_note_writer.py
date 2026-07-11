@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 import sys
 from pathlib import Path
@@ -55,6 +56,56 @@ def _pack(cards, **extra):
     return pack
 
 
+def _v2_card(**overrides):
+    first = "公司研发投入占比18%。"
+    second = "新产品完成客户验证。"
+    card = {
+        "schema_version": "periodic_report_narrative_evidence_card.v2",
+        "selection_version": "annual_argument_selection.v2",
+        "source_type": "periodic_report_narrative_evidence",
+        "card_id": "annual-argument:0123456789abcdef0123",
+        "stock_code": "300308",
+        "stock_name": "中际旭创",
+        "report_year": 2025,
+        "report_type": "annual",
+        "argument_family": "technology_product_progress",
+        "argument_complete": True,
+        "title": "技术与产品进展",
+        "source_block_id": "rd_product_progress-0",
+        "source_unit_ids": ["rd_product_progress-0:u0", "rd_product_progress-0:u1"],
+        "source_units": [
+            {
+                "unit_id": "rd_product_progress-0:u0",
+                "block_id": "rd_product_progress-0",
+                "ordinal": 0,
+                "start_pos": 0,
+                "end_pos": len(first),
+                "text": first,
+            },
+            {
+                "unit_id": "rd_product_progress-0:u1",
+                "block_id": "rd_product_progress-0",
+                "ordinal": 1,
+                "start_pos": len(first),
+                "end_pos": len(first) + len(second),
+                "text": second,
+            },
+        ],
+        "source_excerpt": first + second,
+        "fact_anchors": ["研发投入占比18%"],
+        "secondary_signals": ["operating_progress"],
+        "score_parts": {"anchored_fact": 1, "argument_complete": 4, "source_unit_count": 1},
+        "quality_score": 6,
+        "selection_reason": "signal:technology_product_progress",
+        "source_credit": 75,
+        "knowledge_eligible": False,
+        "synthesis_eligible": False,
+        "experimental": True,
+    }
+    card.update(overrides)
+    return card
+
+
 def _cards_dir(base: Path, stock_name: str = "中际旭创") -> Path:
     return base / "10-Stocks" / stock_name / "periodic_narrative_cards"
 
@@ -79,6 +130,33 @@ def test_writes_only_valid_narrative_cards_to_tmp_knowledge(tmp_path) -> None:
     assert "AI 数据中心" in text
     assert "market_demand_outlook-0" in text
     assert "periodic:300308:2025:annual:narrative:management_market_view:0" in text
+
+
+def test_writes_complete_v2_card_without_card_type_and_with_json_sections(tmp_path) -> None:
+    plan = write_periodic_report_narrative_card_notes(
+        stock_name="中际旭创",
+        stock_code="300308",
+        card_pack=_pack([_v2_card()]),
+        base_dir=tmp_path,
+        collected_at="2026-06-21",
+    )
+
+    path = Path(plan.written[0]["planned_path"])
+    assert path.name == "2025-annual-technology-product-progress-0.md"
+    text = path.read_text(encoding="utf-8")
+    assert "selection_version: annual_argument_selection.v2" in text
+    assert "argument_family: technology_product_progress" in text
+    assert "argument_complete: true" in text
+    assert "card_type:" not in text
+    assert "## Source Units" in text
+    assert "## Selection Diagnostics" in text
+    assert json.dumps(_v2_card()["source_units"], ensure_ascii=False, indent=2, sort_keys=True) in text
+    assert json.dumps(
+        {"score_parts": _v2_card()["score_parts"], "selection_reason": _v2_card()["selection_reason"]},
+        ensure_ascii=False,
+        indent=2,
+        sort_keys=True,
+    ) in text
 
 
 def test_filters_non_narrative_cards_and_missing_evidence(tmp_path) -> None:

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import sys
 from pathlib import Path
+import json
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
@@ -53,6 +54,36 @@ def _write_note(
         f"> {body_excerpt}\n\n"
         "## Source\n\n"
         "- source_credit: 75\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def _write_v2_note(base: Path, index: int) -> Path:
+    block_id = f"block-{index}"
+    unit_id = f"{block_id}:u0"
+    excerpt = f"产品 {index} 完成客户验证。"
+    path = _cards_dir(base) / f"2025-annual-family-{index}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "---\n"
+        "stock: 测试股\ncode: 000001\n"
+        "source_type: periodic_report_narrative_evidence\n"
+        f"card_id: annual-argument:{index:020d}\n"
+        "schema_version: periodic_report_narrative_evidence_card.v2\n"
+        "selection_version: annual_argument_selection.v2\n"
+        "argument_family: technology_product_progress\nargument_complete: true\n"
+        f"title: 产品进展 {index}\nreport_year: 2025\nreport_type: annual\n"
+        "source_credit: 75\n"
+        f"source_block_id: {block_id}\nsource_unit_ids:\n  - {unit_id}\n"
+        "fact_anchors:\n  - 客户验证\nsecondary_signals:\n  - operating_progress\n"
+        "quality_score: 6\nknowledge_fact_status: narrative_evidence\n"
+        "knowledge_eligible: false\nknowledge_persisted: true\nsynthesis_eligible: false\nexperimental: true\n---\n\n"
+        f"## Narrative Evidence\n\n> {excerpt}\n\n## Source Units\n\n```json\n"
+        + json.dumps([{"unit_id": unit_id, "block_id": block_id, "ordinal": 0, "start_pos": 0, "end_pos": len(excerpt), "text": excerpt}], ensure_ascii=False, indent=2, sort_keys=True)
+        + "\n```\n\n## Selection Diagnostics\n\n```json\n"
+        + json.dumps({"score_parts": {"anchored_fact": 1, "argument_complete": 4}, "selection_reason": "signal:technology_product_progress"}, ensure_ascii=False, indent=2, sort_keys=True)
+        + "\n```\n",
         encoding="utf-8",
     )
     return path
@@ -161,3 +192,20 @@ def test_reader_is_read_only_and_caps_order_deterministically(tmp_path: Path) ->
         for path in (older, newer)
     }
     assert after == before
+
+
+def test_pack_loader_builds_uncapped_pack_then_slices_display_items(tmp_path: Path) -> None:
+    for index in range(14):
+        _write_v2_note(tmp_path, index)
+
+    items = load_periodic_narrative_card_synthesis_items(
+        stock_name="测试股", base_dir=tmp_path, max_cards=3, use_pack=True, per_type_limit=1
+    )
+    assert len(items) == 3
+    assert [item.extra["card_id"] for item in items] == [
+        "annual-argument:00000000000000000000",
+        "annual-argument:00000000000000000001",
+        "annual-argument:00000000000000000002",
+    ]
+    assert items[0].extra["argument_family"] == "technology_product_progress"
+    assert items[0].extra["source_unit_ids"] == ["block-0:u0"]

@@ -9,6 +9,7 @@ only filters, sanitizes paths, and renders Markdown.
 from __future__ import annotations
 
 import hashlib
+import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -29,7 +30,22 @@ _REQUIRED_FIELDS: Tuple[str, ...] = (
     "source_excerpt",
 )
 
-_PLAIN_SCALAR_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_\-]*$")
+_V2_REQUIRED_FIELDS: Tuple[str, ...] = (
+    "card_id",
+    "schema_version",
+    "selection_version",
+    "argument_family",
+    "argument_complete",
+    "report_year",
+    "report_type",
+    "source_block_id",
+    "source_unit_ids",
+    "source_units",
+    "source_excerpt",
+)
+V2_CARD_SCHEMA_VERSION = "periodic_report_narrative_evidence_card.v2"
+
+_PLAIN_SCALAR_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_.\-]*$")
 
 
 @dataclass
@@ -143,15 +159,28 @@ def _card_index(card: Dict[str, Any], fallback: int) -> str:
 
 
 def _missing_required_field(card: Dict[str, Any]) -> Optional[str]:
-    for required in _REQUIRED_FIELDS:
+    required_fields = (
+        _V2_REQUIRED_FIELDS
+        if _is_v2_card(card)
+        else _REQUIRED_FIELDS
+    )
+    for required in required_fields:
         value = card.get(required)
-        if required == "evidence_refs":
+        if required in ("evidence_refs", "source_unit_ids", "source_units"):
             if not value or not isinstance(value, list):
                 return required
             continue
         if value is None or value == "":
             return required
     return None
+
+
+def _is_v2_card(card: Dict[str, Any]) -> bool:
+    return str(card.get("schema_version") or "") == V2_CARD_SCHEMA_VERSION
+
+
+def _json_fence(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, indent=2, sort_keys=True)
 
 
 def _render_note(
@@ -161,6 +190,14 @@ def _render_note(
     stock_name: str,
     stock_code: str,
 ) -> str:
+    if _is_v2_card(card):
+        return _render_v2_note(
+            card,
+            collected_at,
+            stock_name=stock_name,
+            stock_code=stock_code,
+        )
+
     report_year = card.get("report_year", "")
     report_type = str(card.get("report_type", ""))
     card_type = str(card.get("card_type", ""))
@@ -210,6 +247,98 @@ def _render_note(
         f"- card_id: {card.get('card_id', '')}",
         f"- source_block_id: {card.get('source_block_id', '')}",
         f"- evidence_refs: {', '.join(evidence_refs)}",
+        "- source_credit: 75",
+        "",
+        "## Guardrails",
+        "",
+        "- This note is original periodic-report narrative evidence, not a generated summary.",
+        "- It stays outside automated claim promotion and scoring paths.",
+        "",
+    ]
+    return "\n".join(body)
+
+
+def _render_v2_note(
+    card: Dict[str, Any],
+    collected_at: str,
+    *,
+    stock_name: str,
+    stock_code: str,
+) -> str:
+    report_year = card.get("report_year", "")
+    report_type = str(card.get("report_type", ""))
+    family = str(card.get("argument_family", ""))
+    source_excerpt = str(card.get("source_excerpt", "")).strip() or "（无摘录）"
+    source_excerpt_hash = str(
+        card.get("source_excerpt_hash") or _source_text_hash(source_excerpt)
+    )
+    source_block_hash = str(card.get("source_block_hash") or "")
+    source_unit_ids = [str(item) for item in (card.get("source_unit_ids") or [])]
+    fact_anchors = [str(item) for item in (card.get("fact_anchors") or [])]
+    secondary_signals = [str(item) for item in (card.get("secondary_signals") or [])]
+    source_units = card.get("source_units") or []
+    diagnostics = {
+        "score_parts": card.get("score_parts") or {},
+        "selection_reason": str(card.get("selection_reason") or ""),
+    }
+
+    frontmatter_entries = [
+        ("stock", stock_name),
+        ("code", stock_code),
+        ("source_type", NARRATIVE_CARD_SOURCE_TYPE),
+        ("card_id", str(card.get("card_id", ""))),
+        ("schema_version", str(card.get("schema_version", ""))),
+        ("selection_version", str(card.get("selection_version", ""))),
+        ("argument_family", family),
+        ("argument_complete", bool(card.get("argument_complete"))),
+        ("title", str(card.get("title", ""))),
+        ("report_year", _coerce_int(report_year)),
+        ("report_type", report_type),
+        ("source_credit", 75),
+        ("source_block_id", str(card.get("source_block_id", ""))),
+        ("source_unit_ids", source_unit_ids),
+        ("fact_anchors", fact_anchors),
+        ("secondary_signals", secondary_signals),
+        ("quality_score", card.get("quality_score", 0)),
+        ("source_excerpt_hash", source_excerpt_hash),
+        ("knowledge_fact_status", KNOWLEDGE_FACT_STATUS),
+        ("knowledge_eligible", False),
+        ("knowledge_persisted", True),
+        ("synthesis_eligible", False),
+        ("experimental", True),
+        ("collected_at", collected_at),
+    ]
+    if source_block_hash:
+        frontmatter_entries.insert(
+            next(i for i, entry in enumerate(frontmatter_entries) if entry[0] == "knowledge_fact_status"),
+            ("source_block_hash", source_block_hash),
+        )
+
+    body = [
+        _render_frontmatter(frontmatter_entries),
+        f"# {stock_name} {report_year} {report_type} {family}",
+        "",
+        "## Narrative Evidence",
+        "",
+        f"> {source_excerpt}",
+        "",
+        "## Source Units",
+        "",
+        "```json",
+        _json_fence(source_units),
+        "```",
+        "",
+        "## Selection Diagnostics",
+        "",
+        "```json",
+        _json_fence(diagnostics),
+        "```",
+        "",
+        "## Source",
+        "",
+        f"- card_id: {card.get('card_id', '')}",
+        f"- source_block_id: {card.get('source_block_id', '')}",
+        f"- source_unit_ids: {', '.join(source_unit_ids)}",
         "- source_credit: 75",
         "",
         "## Guardrails",
@@ -281,10 +410,15 @@ def write_periodic_report_narrative_card_notes(
             })
             continue
 
-        filename = "{year}-{rtype}-{ctype}-{idx}.md".format(
+        family_or_type = (
+            card.get("argument_family")
+            if _is_v2_card(card)
+            else card.get("card_type")
+        )
+        filename = "{year}-{rtype}-{family}-{idx}.md".format(
             year=_coerce_int(card.get("report_year")),
             rtype=_safe_filename_segment(str(card.get("report_type", ""))) or "unknown",
-            ctype=_safe_filename_segment(str(card.get("card_type", ""))) or "unknown",
+            family=_safe_filename_segment(str(family_or_type or "")) or "unknown",
             idx=_card_index(card, index),
         )
         target = cards_dir / filename
