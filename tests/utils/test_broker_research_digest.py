@@ -47,7 +47,7 @@ def test_digest_cards_include_selection_version() -> None:
     cards = build_broker_research_digest_cards(_research_item(), text, max_cards=5)
 
     assert len(cards) >= 1
-    assert all(card["selection_version"] == "broker_digest_v3_2" for card in cards)
+    assert all(card["selection_version"] == "broker_digest_v3_3" for card in cards)
 
 
 def test_digest_card_identity_hashes_final_selected_excerpt() -> None:
@@ -435,6 +435,62 @@ def test_digest_selector_rejects_five_cjk_gaps_but_keeps_four_line_wraps() -> No
     assert _candidate_score_parts(damaged)["ocr_penalty"] == 20
     assert _has_severe_ocr_damage(_candidate_score_parts(damaged))
     assert _select_excerpt_units(damaged, "broker_product_driver") == ""
+
+
+def test_digest_selector_keeps_clean_units_from_wrapped_multi_sentence_input() -> None:
+    from broker_research_digest import _select_excerpt_units
+
+    wrapped = (
+        "下游客户需求持续 扩张，产品订单明显 增长，产品结构加速 升级。"
+        "毛利率受规模效应 改善，产能建设有序 推进，客户交付继续 增长。"
+    )
+
+    excerpt = _select_excerpt_units(wrapped, "broker_product_driver")
+
+    assert "下游客户需求持续 扩张" in excerpt
+    assert "毛利率受规模效应 改善" in excerpt
+
+
+def test_generic_driver_fallback_rejects_globally_degraded_source() -> None:
+    from broker_research_digest import _generic_driver_block_excerpts
+
+    damaged = [
+        (
+            f"第{i}项业务观察显示，产品需求持续 扩张，客户订单明显 增长，"
+            "产能建设加速 推进，产品结构继续 优化，盈利能力逐步 改善。"
+        )
+        for i in range(8)
+    ]
+    clean = [
+        (
+            f"第{i}项业务观察显示，下游需求持续扩张，客户订单明显增长，"
+            "产能建设加速推进，产品结构继续优化，盈利能力逐步改善。"
+        )
+        for i in range(8, 16)
+    ]
+
+    assert _generic_driver_block_excerpts("\n\n".join(damaged + clean)) == []
+
+
+def test_generic_driver_fallback_keeps_source_with_isolated_damage() -> None:
+    from broker_research_digest import _generic_driver_block_excerpts
+
+    damaged = [
+        (
+            f"第{i}项业务观察显示，产品需求持续 扩张，客户订单明显 增长，"
+            "产能建设加速 推进，产品结构继续 优化，盈利能力逐步 改善。"
+        )
+        for i in range(7)
+    ]
+    clean = [
+        (
+            f"第{i}项业务观察显示，下游需求持续扩张，客户订单明显增长，"
+            "产能建设加速推进，产品结构继续优化，盈利能力逐步改善。"
+        )
+        for i in range(7, 16)
+    ]
+
+    assert _generic_driver_block_excerpts("\n\n".join(damaged + clean))
 
 
 def test_digest_selector_rejects_residual_chart_metadata() -> None:

@@ -270,3 +270,38 @@ Fresh verification results:
 - downstream Chapter 4 contracts: 283 passed;
 - runtime delta against Batch A: 242 additions, 167 deletions, net +75;
 - formal report generation still needs one new post-v3_2 acceptance run.
+
+## Third Report Acceptance Addendum
+
+The post-v3_2 formal rerun refreshed all notes and reduced the note count from
+seven to six, but manual acceptance still failed. The three original damaged
+西南证券 cards disappeared and were replaced by three different damaged blocks
+from the same PDF. The same run also lost the previously usable 国金证券 generic
+driver card.
+
+The failure exposed an admission-granularity error rather than another missing
+OCR phrase:
+
+- applying the penalty to an entire multi-sentence candidate accumulated normal
+  line-wrap gaps and rejected 国金 even though its individual sentences were
+  usable;
+- the 西南 PDF had 32 generic blocks, 20 of which were severely damaged, so the
+  selector kept moving to lower-penalty blocks from a globally degraded source;
+- some replacement blocks contained missing or transposed characters that a
+  whitespace penalty cannot detect reliably.
+
+The v3.3 fix moves severe OCR admission to complete source units and adds one
+generic-source health rule: reject the fallback pool when it contains at least
+eight severely damaged blocks and those blocks make up at least half the pool.
+This preserves sources with isolated damage and avoids stock-, institution-, or
+phrase-specific repair rules.
+
+Tests cover both sides of the boundary: clean units from a wrapped multi-sentence
+candidate remain selectable, an 8-of-16 damaged pool is rejected, and a 7-of-16
+pool remains eligible. Direct checks against the local PDFs restore one 国金
+generic excerpt and return zero 西南 generic excerpts.
+
+`SELECTION_VERSION` advances to `broker_digest_v3_3` so persisted v3.2 notes are
+rebuilt. Fresh verification results are 84 passed / 3 skipped for producer tests,
+283 downstream tests passed, and the cumulative Batch B runtime delta is net
++80 lines against Batch A. One new post-v3.3 formal report run remains required.

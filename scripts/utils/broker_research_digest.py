@@ -20,13 +20,14 @@ else:
 SOURCE_TYPE = "broker_research"
 SOURCE_CREDIT = 72
 SCHEMA_VERSION = "broker_research_digest_card.v1"
-SELECTION_VERSION = "broker_digest_v3_2"
+SELECTION_VERSION = "broker_digest_v3_3"
 
 SCORE_PART_KEYS = (
     "signal", "evidence", "completeness", "coherence",
     "ocr_penalty", "noise_penalty",
 )
 _EXCERPT_TERMINATORS = "。；;！？!?"
+_MIN_DAMAGED_GENERIC_BLOCKS = 8
 
 
 def _unit_roles(text: str) -> set[str]:
@@ -147,7 +148,9 @@ def _complete_source_units(text: str) -> List[str]:
         unit = clean_broker_research_excerpt_text(match.group(0).strip())
         if len(unit) < 14 or _looks_like_front_matter_noise(unit):
             continue
-        if _source_unit_damage_reason(unit):
+        if _source_unit_damage_reason(unit) or _has_severe_ocr_damage(
+            _candidate_score_parts(unit)
+        ):
             continue
         if _unit_roles(unit):
             units.append(unit)
@@ -156,6 +159,7 @@ def _complete_source_units(text: str) -> List[str]:
         14 <= len(tail) <= 180
         and not _looks_like_front_matter_noise(tail)
         and not _source_unit_damage_reason(tail)
+        and not _has_severe_ocr_damage(_candidate_score_parts(tail))
         and _unit_roles(tail)
     ):
         units.append(tail)
@@ -191,8 +195,6 @@ def _units_redundant(left: str, right: str) -> bool:
 def _select_excerpt_units(text: str, card_type: str, max_units: int = 5) -> str:
     text = str(text or "").strip()
     if not text:
-        return ""
-    if _has_severe_ocr_damage(_candidate_score_parts(text)):
         return ""
     if card_type == "broker_earnings_forecast" and _looks_like_financial_table_fragment(text):
         return ""
@@ -1082,8 +1084,11 @@ def _generic_driver_block_excerpt(text: str) -> str:
 
 def _generic_driver_block_excerpts(text: str, max_blocks: int = 3) -> List[str]:
     scored: List[Tuple[int, int, str]] = []
-    for order, block in enumerate(_iter_generic_driver_blocks(text)):
-        block = _clean_driver_excerpt(block)
+    blocks = [_clean_driver_excerpt(block) for block in _iter_generic_driver_blocks(text)]
+    damaged_count = sum(_has_severe_ocr_damage(_candidate_score_parts(block)) for block in blocks)
+    if damaged_count >= _MIN_DAMAGED_GENERIC_BLOCKS and damaged_count * 2 >= len(blocks):
+        return []
+    for order, block in enumerate(blocks):
         if _looks_like_financial_table_fragment(block):
             continue
         if _looks_like_rating_table_fragment(block):
