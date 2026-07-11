@@ -16,7 +16,6 @@ from deep_analysis_material_snapshot import (  # noqa: E402
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
     citation_identity,
-    classify_annual_render_role,
 )
 
 
@@ -41,6 +40,8 @@ def _ctx():
                         "internal_refs": ["annual:fact:revenue"],
                         "citation_refs": [1],
                         "source_ref_ids": ["annual-source:revenue"],
+                        "argument_family": "financial_quality_explanation",
+                        "argument_complete": False,
                     }
                 ],
                 "annual_report_explanation": [
@@ -50,6 +51,8 @@ def _ctx():
                         "internal_refs": ["annual:card:management"],
                         "citation_refs": [2],
                         "source_ref_ids": ["annual-source:management"],
+                        "argument_family": "business_structure",
+                        "argument_complete": True,
                     }
                 ],
                 "not_disclosed": [
@@ -250,12 +253,26 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
     external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:reasoning_cards:0")
     assert annual_row.title == "营业收入"
     assert annual_row.body == "营业收入 10 亿元"
-    assert annual_row.render_role == "financial_explanation"
+    assert annual_row.render_role == "financial_quality_explanation"
+    assert annual_row.argument_complete is False
     assert broker_row.render_role == "broker_assumption"
     assert broker_row.attribution == "测试证券"
     assert external_row.render_role == "external_variable"
     assert external_row.title == "外部变量"
     assert {k: v for k, v in ctx.items() if k != "recommendation_decision"} == before
+
+
+def test_incomplete_annual_rows_remain_visible_but_do_not_enter_price_path():
+    ctx = _ctx()
+    ctx["annual_report_memo"]["sections"]["annual_report_explanation"][0]["argument_complete"] = False
+
+    view_model = build_chapter4_view_model(
+        build_deep_analysis_material_snapshot(ctx),
+        {"profile": "formal_medium"},
+    )
+
+    assert view_model.section("4.1").rows
+    assert not any(row.source_layer == "annual" for row in view_model.section("4.4").rows)
 
 
 def test_snapshot_does_not_admit_stale_rows_from_absent_annual_or_broker_memo():
@@ -272,9 +289,6 @@ def test_snapshot_does_not_admit_stale_rows_from_absent_annual_or_broker_memo():
 
 
 def test_shared_material_classification_and_citation_identity_helpers():
-    assert classify_annual_render_role("营业收入") == "financial_explanation"
-    assert classify_annual_render_role("主营业务与产品") == "product_business"
-    assert classify_annual_render_role("任意标题", "management_view") == "management_view"
     assert citation_identity({"url": "https://example.com/a"}) == ("url", "https://example.com/a")
     assert citation_identity({"source": "研报", "author": "机构", "title": "正文"}) == (
         "meta",

@@ -1463,6 +1463,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["annual:card:business_model:0"],
             "citation_refs": [1],
             "source_ref_ids": ["periodic_report_narrative_evidence:business_model:0"],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "研发与产品进展",
@@ -1470,6 +1472,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["annual:card:rd_product_progress:0"],
             "citation_refs": [2],
             "source_ref_ids": ["periodic_report_narrative_evidence:rd_product_progress:0"],
+            "argument_family": "technology_product_progress",
+            "argument_complete": True,
         },
         {
             "title": "管理层市场判断",
@@ -1477,6 +1481,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["annual:card:management_market_view:0"],
             "citation_refs": [3],
             "source_ref_ids": ["periodic_report_narrative_evidence:management_market_view:0"],
+            "argument_family": "market_competition_outlook",
+            "argument_complete": True,
         },
         {
             "title": "营业收入",
@@ -1484,6 +1490,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["fact:营业收入"],
             "citation_refs": [4],
             "source_ref_ids": ["periodic_report_filing_fact:revenue"],
+            "argument_family": "financial_quality_explanation",
+            "argument_complete": False,
         },
     ]
     if forbidden_card:
@@ -2274,6 +2282,8 @@ def test_formal_medium_official_material_filters_disclosure_noise_for_portrait()
             "title": "主营业务与产品",
             "body": "报告期内公司从事的主要业务公司需遵守《深圳证券交易所上市公司自律监管指引第4号——创业板行业信息披露》中的通信相关业务披露要求，公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心、数据通信、5G无线网络、电信传输和固网接入等领域的客户。公司注重技术研发，并推动产品向高速率、小型化、低功耗、低成本方向发展。",
             "citation_refs": [1],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "主营业务与产品",
@@ -2294,6 +2304,8 @@ def test_formal_medium_official_material_filters_disclosure_noise_for_portrait()
             "title": "主营业务与产品",
             "body": "公司为云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
             "citation_refs": [1],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
     ]
     ctx = {
@@ -2329,21 +2341,29 @@ def test_formal_medium_official_material_keeps_financial_section_financial():
             "title": "主营业务与产品",
             "body": "公司主营业务为高端光通信收发模块的研发、生产及销售，产品服务于云计算数据中心和数据通信客户。",
             "citation_refs": [1],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "费用与研发",
             "body": "费用与研发投入说明：公司主营业务为高端光通信收发模块的研发、生产及销售，产品服务于云计算数据中心、数据通信。",
             "citation_refs": [1],
+            "argument_family": "financial_quality_explanation",
+            "argument_complete": False,
         },
         {
             "title": "营业收入",
             "body": "收入变化原因：主要系 800G 高速光模块销售增长及产品结构升级所致。",
             "citation_refs": [1],
+            "argument_family": "financial_quality_explanation",
+            "argument_complete": False,
         },
         {
             "title": "毛利率",
             "body": "毛利率变化原因：主要系产品结构改善及高端产品占比提升所致。",
             "citation_refs": [1],
+            "argument_family": "financial_quality_explanation",
+            "argument_complete": False,
         },
     ]
     ctx = {
@@ -2535,16 +2555,22 @@ def test_formal_thin_annual_memo_projects_to_readable_business_profile():
             "title": "主营业务与产品",
             "body": "公司建立 FPGA 芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集成电路测试服务等产品线，应用于通信、工业控制、人工智能和卫星通信。",
             "citation_refs": [1],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "主营业务与产品",
             "body": "FPGA 产品覆盖 PSoC、RFSoC、FPAI 等系列，逻辑资源从 50K 至 4000K，算力从 4TOPS 至 128TOPS。",
             "citation_refs": [2],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "管理层市场判断",
             "body": "2025 年半导体行业景气度结构性分化，FPGA 在通信、卫星通信、工业控制、人工智能及高可靠领域应用良好。",
             "citation_refs": [3],
+            "argument_family": "market_competition_outlook",
+            "argument_complete": True,
         },
     ]
     ctx = {
@@ -2582,21 +2608,29 @@ def test_formal_thin_annual_memo_prefers_company_portrait_over_narrow_product_li
             "title": "主营业务与产品",
             "body": "复旦微电的存储芯片产品线可提供多种接口、各型封装、全面容量的非挥发存储器产品。",
             "citation_refs": [1],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "主营业务与产品",
             "body": "1、主要业务 复旦微电是一家从事超大规模集成电路的设计、开发、测试，并为客户提供系统解决方案的专业公司，公司已建立FPGA芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集成电路测试服务等产品线。",
             "citation_refs": [2],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "主营业务与产品",
             "body": "2、主要产品及服务情况 2.1 FPGA芯片 FPGA是一种硬件可重构的集成电路芯片，适用于通信、人工智能和工业控制。",
             "citation_refs": [3],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "研发与产品进展",
             "body": "（FPGA）芯片 2、 报告期内获得的研发成果截至报告期末，公司拥有境内外发明专利225项。",
             "citation_refs": [4],
+            "argument_family": "technology_product_progress",
+            "argument_complete": True,
         },
     ]
     ctx = {
@@ -2883,6 +2917,8 @@ def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion(
             "title": "主营业务与产品",
             "body": "公司主营业务为高端光通信收发模块研发、生产及销售，面向云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
             "citation_refs": [1],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         }
     ]
     ctx = {
@@ -2956,11 +2992,15 @@ def test_formal_medium_price_path_prefers_business_evidence_over_financial_noise
             "title": "费用与研发",
             "body": "费用与研发投入说明：公司员工薪酬和研发费用有所增加。",
             "citation_refs": [1],
+            "argument_family": "financial_quality_explanation",
+            "argument_complete": False,
         },
         {
             "title": "主营业务与产品",
             "body": "公司主营业务为高端光通信收发模块研发、生产及销售，面向云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
             "citation_refs": [2],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
     ]
     ctx = {
@@ -3035,7 +3075,9 @@ def test_formal_medium_price_path_uses_material_titles_in_generic_sector():
                 "annual_report_explanation": [{
                     "title": "渠道扩张",
                     "body": "公司新增直营网点并覆盖更多区域客户。",
-                    "display_group": "operation_update",
+                    "display_group": "operating_progress",
+                    "argument_family": "operating_progress",
+                    "argument_complete": True,
                     "citation_refs": [1],
                 }],
                 "not_disclosed": [],

@@ -12,7 +12,6 @@ try:
         build_chapter4_view_model,
         build_deep_analysis_material_snapshot,
         citation_identity,
-        classify_annual_render_role,
     )
     from ...synthesis_credit import sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -26,7 +25,6 @@ except ImportError:
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
             citation_identity,
-            classify_annual_render_role,
         )
         from scripts.utils.synthesis_credit import sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -39,7 +37,6 @@ except ImportError:
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
             citation_identity,
-            classify_annual_render_role,
         )
         from utils.synthesis_credit import sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -888,7 +885,7 @@ class DeepAnalysisRenderer:
             if isinstance(r, dict) and not self._is_suspicious_zero_annual_row(r)
         ]
 
-        product_rows = self._annual_rows_by_group(explanation_rows, "product_business")
+        product_rows = self._annual_rows_by_group(explanation_rows, "business_structure")
         portrait_row = self._select_annual_portrait_row(product_rows) if product_rows else (confirmed_rows[0] if confirmed_rows else None)
         if portrait_row:
             refs = self._display_refs(portrait_row, citation_offset)
@@ -905,15 +902,15 @@ class DeepAnalysisRenderer:
             seen_business_keys.add(key)
             business_rows.append(row)
         financial_rows = [
-            row for row in self._annual_rows_by_group(explanation_rows, "financial_explanation")
+            row for row in self._annual_rows_by_group(explanation_rows, "financial_quality_explanation")
             if self._is_financial_explanation_row(row)
         ]
         if include_confirmed_financial_rows:
             financial_rows.extend(confirmed_rows)
         groups = (
             ("业务结构", business_rows),
-            ("经营变化", self._annual_rows_by_group(explanation_rows, "operation_update") + self._annual_rows_by_group(explanation_rows, "management_view")),
-            ("研发与产品进展", self._annual_rows_by_group(explanation_rows, "competitiveness_rd")),
+            ("经营变化", self._annual_rows_by_group(explanation_rows, "operating_progress") + self._annual_rows_by_group(explanation_rows, "market_competition_outlook")),
+            ("研发与产品进展", self._annual_rows_by_group(explanation_rows, "technology_product_progress")),
             (financial_label, financial_rows),
         )
         for label, rows in groups:
@@ -921,8 +918,7 @@ class DeepAnalysisRenderer:
             if not rows:
                 continue
             lines.append(f"**{label}**")
-            row_limit = 4 if label == financial_label else 2
-            for row in rows[:row_limit]:
+            for row in rows:
                 refs = self._display_refs(row, citation_offset)
                 used.update(refs)
                 body = self._annual_row_visible_body(row, include_title=(label == financial_label))
@@ -1041,10 +1037,7 @@ class DeepAnalysisRenderer:
     def _annual_rows_by_group(self, rows: List[Dict[str, Any]], group: str) -> List[Dict[str, Any]]:
         return [
             row for row in rows
-            if classify_annual_render_role(
-                str(row.get("title") or ""),
-                row.get("display_group"),
-            ) == group
+            if str(row.get("argument_family") or row.get("display_group") or "").strip() == group
         ]
 
     @staticmethod
@@ -1399,10 +1392,11 @@ class DeepAnalysisRenderer:
         if title not in generic_titles and len(title) <= 24:
             return title
         role_labels = {
-            "operation_update": "经营变化",
-            "management_view": "管理层判断",
-            "competitiveness_rd": "研发与竞争力",
-            "financial_explanation": "财务表现",
+            "business_structure": "业务覆盖 / 产品线",
+            "operating_progress": "经营变化",
+            "market_competition_outlook": "管理层判断与行业展望",
+            "technology_product_progress": "技术与产品进展",
+            "financial_quality_explanation": "财务质量",
             "broker_risk": "反方风险",
         }
         return role_labels.get(row.render_role, fallback)

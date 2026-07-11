@@ -31,6 +31,7 @@ class MaterialRow:
     title: str = ""
     body: str = ""
     render_role: str = ""
+    argument_complete: bool = False
     attribution: str = ""
     source_credit: str = ""
     diagnostics: Tuple[Tuple[str, str], ...] = ()
@@ -129,14 +130,14 @@ def build_chapter4_view_model(
         and not row.scoring_eligible
         and not row.risk_score_eligible
     )
+    complete_annual_rows = tuple(row for row in annual_rows if row.argument_complete)
     price_path_rows = tuple(
         row for row in (
-            _first_row_by_role(annual_rows, (
-                "product_business",
-                "operation_update",
-                "management_view",
-                "competitiveness_rd",
-                "financial_explanation",
+            _first_row_by_role(complete_annual_rows, (
+                "business_structure",
+                "operating_progress",
+                "market_competition_outlook",
+                "technology_product_progress",
             )),
             _first_row_by_role(broker_rows, ("broker_assumption", "broker_forecast")),
             external_rows[0] if external_rows else None,
@@ -205,7 +206,8 @@ def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
                 claim_status=claim_status,
                 section_hint="annual_memo",
                 title=title,
-                render_role=classify_annual_render_role(title, row.get("display_group")),
+                render_role=str(row.get("argument_family") or row.get("display_group") or "").strip(),
+                argument_complete=bool(row.get("argument_complete", False)),
                 source_credit="official",
             ))
     return result
@@ -301,6 +303,7 @@ def _adapt_material_row(
     title: str | None = None,
     body: str | None = None,
     render_role: str = "",
+    argument_complete: bool = False,
     attribution: str = "",
     source_credit: str = "",
 ) -> MaterialRow:
@@ -317,25 +320,10 @@ def _adapt_material_row(
         title=title,
         body=body,
         render_role=str(render_role or "").strip(),
+        argument_complete=bool(argument_complete),
         attribution=str(attribution or "").strip(),
         source_credit=str(source_credit or "").strip(),
         diagnostics=_row_diagnostics(source),
-    )
-
-
-def classify_annual_render_role(title: str, configured_group: Any = "") -> str:
-    configured = str(configured_group or "").strip()
-    if configured:
-        return configured
-    return next(
-        (role for role, terms in (
-            ("financial_explanation", ("收入", "利润", "费用", "现金流", "存货", "减值", "毛利率")),
-            ("competitiveness_rd", ("研发", "技术", "竞争")),
-            ("product_business", ("主营", "产品", "业务")),
-            ("operation_update", ("经营", "进展", "更新")),
-            ("management_view", ("管理层", "市场", "行业", "前景")),
-        ) if any(term in title for term in terms)),
-        "other",
     )
 
 
