@@ -590,3 +590,32 @@ def test_build_pack_quality_scores_analog_chip_company(tmp_path: Path) -> None:
     )
     assert selected["quality_score"] > 0
     assert any(r in ("product_term", "specific_metric", "application_name", "rd_term") for r in selected["quality_reasons"])
+
+
+def test_split_v2_source_units_cover_one_legacy_long_excerpt(tmp_path: Path) -> None:
+    legacy = "公司拥有38大类6800余款可供销售产品。信号链类模拟芯片覆盖各类运算放大器。"
+    _write_note(tmp_path, body_excerpt=legacy, filename="legacy.md")
+    _write_v2_note(
+        tmp_path, filename="v2.md", card_id="v2:products",
+        source_block_id="market_demand_outlook-0", source_excerpt=legacy,
+        source_units=[
+            {"unit_id": "market_demand_outlook-0:u0", "block_id": "market_demand_outlook-0", "ordinal": 0, "start_pos": 0, "end_pos": 21, "text": "公司拥有38大类6800余款可供销售产品。"},
+            {"unit_id": "market_demand_outlook-0:u1", "block_id": "market_demand_outlook-0", "ordinal": 1, "start_pos": 21, "end_pos": len(legacy), "text": "信号链类模拟芯片覆盖各类运算放大器。"},
+        ],
+    )
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    assert pack["diagnostics"]["v1_unit_covered_count"] == 1
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 0
+
+
+def test_missing_legacy_fact_remains_adapted_with_recovery_diagnostic(tmp_path: Path) -> None:
+    legacy = "公司主营业务为高端光通信收发模块的研发、生产及销售。"
+    _write_note(tmp_path, body_excerpt=legacy, filename="legacy.md")
+    _write_v2_note(tmp_path, filename="v2.md", card_id="v2:other",
+                   source_block_id="market_demand_outlook-0",
+                   source_excerpt="行业需求保持增长。")
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    assert pack["diagnostics"]["v1_needs_recovery_count"] == 1
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 1
+    assert "高端光通信收发模块" in pack["diagnostics"]["v1_recovery_examples"][0]["fragment"]
+    assert (_cards_dir(tmp_path) / "legacy.md").exists()

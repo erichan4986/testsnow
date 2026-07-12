@@ -13,10 +13,22 @@ from typing import Any, Dict, List, Optional, Set
 
 if __name__.startswith("utils."):
     from .source_adapter import SynthesisItem
-    from .annual_argument_schema import CARD_SCHEMA_VERSION, adapt_v1_card, validate_card_v2
+    from .annual_argument_schema import (
+        CARD_SCHEMA_VERSION,
+        adapt_v1_card,
+        has_concrete_annual_anchor,
+        normalize_annual_source_text,
+        validate_card_v2,
+    )
 else:
     from source_adapter import SynthesisItem
-    from annual_argument_schema import CARD_SCHEMA_VERSION, adapt_v1_card, validate_card_v2
+    from annual_argument_schema import (
+        CARD_SCHEMA_VERSION,
+        adapt_v1_card,
+        has_concrete_annual_anchor,
+        normalize_annual_source_text,
+        validate_card_v2,
+    )
 
 
 SCHEMA_VERSION = "annual_report_material_pack.v1"
@@ -148,24 +160,34 @@ def build_annual_report_material_pack(
 
     cards_seen = len(records)
     v2_records = [record for record in records if record.is_v2]
-    v2_shadow_keys = {
-        key
-        for record in v2_records
-        for key in _record_identity_keys(record)
-    }
     adapted_legacy: List[_CardRecord] = []
-    v1_adapter_use_count = 0
+    diagnostics_counts: Dict[str, int] = {
+        "v1_exact_shadowed_count": 0,
+        "v1_unit_covered_count": 0,
+        "v1_needs_recovery_count": 0,
+        "v1_adapter_use_count": 0,
+    }
+    v1_recovery_examples: List[Dict[str, Any]] = []
     for record in records:
         if record.is_v2:
             continue
-        if _record_identity_keys(record) & v2_shadow_keys:
+        classification, detail = _coverage_classification(record, v2_records)
+        if classification == "exact_shadowed":
+            diagnostics_counts["v1_exact_shadowed_count"] += 1
+            diagnostics_counts["v1_unit_covered_count"] += 1
             continue
+        if classification == "covered_by_v2_units":
+            diagnostics_counts["v1_unit_covered_count"] += 1
+            continue
+        diagnostics_counts["v1_needs_recovery_count"] += 1
+        for fragment in detail.get("fragments", [])[:2]:
+            v1_recovery_examples.append(fragment)
         try:
             adapted = adapt_v1_card(record.card)
         except (TypeError, ValueError):
             continue
         adapted_legacy.append(_record_from_card(record.path, adapted, is_v2=False))
-        v1_adapter_use_count += 1
+        diagnostics_counts["v1_adapter_use_count"] += 1
 
     # Canonical v2 cards are already source-unit-owned and must all survive.
     # Keep the historical duplicate filtering only for adapted v1 notes.
@@ -181,8 +203,8 @@ def build_annual_report_material_pack(
             "cards_selected": len(selected),
             "by_family_seen": _count_by_family(records),
             "by_family_selected": _count_by_family(selected),
-            "v1_adapter_use_count": v1_adapter_use_count,
-            "skipped": [],
+            "v1_recovery_examples": v1_recovery_examples,
+            **diagnostics_counts,
         },
     }
 
@@ -252,8 +274,11 @@ def _empty_pack(stock_name: str) -> Dict[str, Any]:
             "cards_selected": 0,
             "by_family_seen": {},
             "by_family_selected": {},
+            "v1_exact_shadowed_count": 0,
+            "v1_unit_covered_count": 0,
+            "v1_needs_recovery_count": 0,
             "v1_adapter_use_count": 0,
-            "skipped": [],
+            "v1_recovery_examples": [],
         },
     }
 
@@ -533,8 +558,8 @@ def _is_dangling(text: str) -> bool:
     return not _is_complete_sentence(text) and len(text) < 40
 
 
-def _normalize_text(text: str) -> str:
-    """Lowercase ASCII and replace punctuation with spaces."""
+def _normalize_for_similarity(text: str) -> str:
+    """Lowercase ASCII and replace punctuation with spaces for near-duplicate ranking."""
     lowered = text.lower()
     # Keep word characters (including CJK) and whitespace.
     normalized = re.sub(r"[^\w\s]", " ", lowered)
@@ -542,7 +567,7 @@ def _normalize_text(text: str) -> str:
 
 
 def _token_set(text: str) -> Set[str]:
-    return set(_normalize_text(text).split())
+    return set(_normalize_for_similarity(text).split())
 
 
 def _jaccard(a: Set[str], b: Set[str]) -> float:
@@ -564,7 +589,7 @@ def _deduplicate_records(records: List[_CardRecord]) -> List[_CardRecord]:
     seen_normalizations: Set[str] = set()
 
     for record in sorted_records:
-        normalized = _normalize_text(record.excerpt)
+        normalized = _normalize_for_similarity(record.excerpt)
         if normalized in seen_normalizations:
             continue
         seen_normalizations.add(normalized)
@@ -589,8 +614,124 @@ def _record_identity_keys(record: _CardRecord) -> Set[str]:
     if card_id:
         keys.add(f"card:{card_id}")
     if source_block_id:
-        keys.add(f"source:{source_block_id}:{_normalize_text(record.excerpt)}")
+        keys.add(f"source:{source_block_id}:{normalize_annual_source_text(record.excerpt)}")
     return keys
+
+
+def _v2_identity_keys(v2_records: List[_CardRecord]) -> Set[str]:
+    return {key for record in v2_records for key in _record_identity_keys(record)}
+
+
+def _coverage_classification(
+    legacy: _CardRecord, v2_records: List[_CardRecord]
+) -> Tuple[str, Dict[str, Any]]:
+    if _record_identity_keys(legacy) & _v2_identity_keys(v2_records):
+        return "exact_shadowed", {}
+    fragments = _meaningful_legacy_fragments(legacy.excerpt)
+    if not fragments:
+        return "needs_recovery", {"fragments": []}
+    proof = _cover_fragments_with_units(fragments, legacy.source_block_id, v2_records)
+    if proof is not None:
+        return "covered_by_v2_units", {"unit_ids": proof}
+    return "needs_recovery", {
+        "fragments": _uncovered_fragments(fragments, legacy.source_block_id, v2_records)
+    }
+
+
+def _meaningful_legacy_fragments(excerpt: str) -> List[str]:
+    normalized = normalize_annual_source_text(excerpt)
+    fragments = [
+        fragment.strip()
+        for fragment in re.split(r"[。；;！？!?]", normalized)
+        if fragment.strip()
+    ]
+    meaningful: List[str] = []
+    for fragment in fragments:
+        compact = re.sub(r"\s+", "", fragment)
+        if len(compact) < 5:
+            continue
+        if _is_fragment_boilerplate(fragment):
+            continue
+        if not has_concrete_annual_anchor(fragment):
+            continue
+        meaningful.append(fragment)
+    return meaningful
+
+
+def _is_fragment_boilerplate(fragment: str) -> bool:
+    if re.search(r"[□☑■√]\s*(?:不适用|适用)", fragment):
+        return True
+    if re.match(
+        r"^(?:释义项|目录|重要提示|第[一二三四五六七八九十]+节|"
+        r"(?:一|二|三|四|五|六|七|八|九|十)、)",
+        fragment,
+    ):
+        return True
+    return False
+
+
+def _sorted_v2_units_for_block(
+    source_block_id: str, v2_records: List[_CardRecord]
+) -> List[Dict[str, Any]]:
+    units: List[Dict[str, Any]] = []
+    for record in v2_records:
+        if record.source_block_id != source_block_id:
+            continue
+        units.extend(record.card.get("source_units", []) or [])
+    units.sort(key=lambda u: (u.get("ordinal", 0), u.get("start_pos", 0)))
+    return units
+
+
+def _cover_fragments_with_units(
+    fragments: List[str], source_block_id: str, v2_records: List[_CardRecord]
+) -> Optional[List[str]]:
+    units = _sorted_v2_units_for_block(source_block_id, v2_records)
+    if not units:
+        return None if fragments else []
+    texts = [normalize_annual_source_text(u.get("text", "")) for u in units]
+    proof_ids: List[str] = []
+    for fragment in fragments:
+        normalized_fragment = normalize_annual_source_text(fragment)
+        found = False
+        for i in range(len(units)):
+            accum = ""
+            for j in range(i, len(units)):
+                accum += texts[j]
+                if len(accum) >= len(normalized_fragment):
+                    if normalized_fragment in accum:
+                        proof_ids.extend(
+                            str(units[k].get("unit_id")) for k in range(i, j + 1)
+                        )
+                        found = True
+                        break
+            if found:
+                break
+        if not found:
+            return None
+    return list(dict.fromkeys(proof_ids))
+
+
+def _uncovered_fragments(
+    fragments: List[str], source_block_id: str, v2_records: List[_CardRecord]
+) -> List[Dict[str, str]]:
+    units = _sorted_v2_units_for_block(source_block_id, v2_records)
+    texts = [normalize_annual_source_text(u.get("text", "")) for u in units]
+    uncovered: List[Dict[str, str]] = []
+    for fragment in fragments:
+        normalized_fragment = normalize_annual_source_text(fragment)
+        covered = False
+        for i in range(len(units)):
+            accum = ""
+            for j in range(i, len(units)):
+                accum += texts[j]
+                if len(accum) >= len(normalized_fragment) and normalized_fragment in accum:
+                    covered = True
+                    break
+            if covered:
+                break
+        if not covered:
+            uncovered.append({"fragment": fragment})
+    return uncovered
 
 
 def _record_sort_key(record: _CardRecord) -> tuple[Any, ...]:
