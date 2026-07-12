@@ -3917,3 +3917,53 @@ def test_table_fragment_snippet_does_not_generate_narrative_card():
     )
 
     assert result["cards"] == []
+
+
+def test_a_share_checkbox_tail_keeps_one_complete_financial_source_substring():
+    pack = {"document_style": "a_share_annual", "blocks": [{
+        "id": "cash_flow_capex_table-0", "usage": "cash_flow_capex_table",
+        "text": "经营活动现金流量净额变动情况 √适用 □不适用 2025年第四季度客户付款形式由航信变动为电汇，主要系经营活动现金流量净额增加所致。",
+    }]}
+    cards = build_periodic_report_narrative_evidence_cards(
+        stock_code="300777", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack=pack,
+    )["cards"]
+    assert [card["source_excerpt"] for card in cards] == [
+        "2025年第四季度客户付款形式由航信变动为电汇，主要系经营活动现金流量净额增加所致。"
+    ]
+
+
+def test_a_share_multiple_marker_unit_remains_rejected():
+    pack = {"document_style": "a_share_annual", "blocks": [{
+        "id": "cash_flow_capex_table-0", "usage": "cash_flow_capex_table",
+        "text": "事项一 √适用 □不适用 事项二 √适用 □不适用 经营现金流增加所致。",
+    }]}
+    assert not build_periodic_report_narrative_evidence_cards(
+        stock_code="300777", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack=pack,
+    )["cards"]
+
+
+def test_hkex_implicit_subject_requires_anchor_predicate_and_style():
+    block = {"id": "hk_business_overview-0", "usage": "hk_business_overview",
+             "text": "SESAMEX机器人平台为智能汽车及机器人客户提供全栈自进化全脑智能解决方案。"}
+    hk = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533", stock_name="测试港股", report_year=2025,
+        report_type="annual", evidence_pack={"document_style": "hkex_annual", "blocks": [block]},
+    )["cards"]
+    unknown = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533", stock_name="测试港股", report_year=2025,
+        report_type="annual", evidence_pack={"document_style": "unknown", "blocks": [block]},
+    )["cards"]
+    assert len(hk) == 1 and hk[0]["argument_family"] == "business_structure"
+    assert unknown == []
+
+
+def test_hkex_standalone_platform_label_is_rejected():
+    block = {"id": "hk_business_overview-0", "usage": "hk_business_overview",
+             "text": "SESAMEX平台。"}
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533", stock_name="测试港股", report_year=2025,
+        report_type="annual", evidence_pack={"document_style": "hkex_annual", "blocks": [block]},
+    )
+    assert result["cards"] == []

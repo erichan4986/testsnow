@@ -18,6 +18,9 @@ from annual_argument_schema import (
     ENVELOPE_SCHEMA_VERSION,
     FAMILY_LABELS,
     SELECTION_VERSION,
+    canonical_family_for_usage,
+    has_concrete_annual_anchor,
+    normalize_annual_source_text,
     validate_card_v2,
 )
 
@@ -25,37 +28,11 @@ from annual_argument_schema import (
 SOURCE_TYPE = "periodic_report_narrative_evidence"
 SOURCE_CREDIT = 75
 
-_USAGE_FALLBACKS = {
-    "business_overview": "business_structure",
-    "business_model": "business_structure",
-    "product_capacity_profile": "business_structure",
-    "sales_certification_model": "business_structure",
-    "hk_business_overview": "business_structure",
-    "hk_customer_ecosystem": "business_structure",
-    "segment_table": "operating_progress",
-    "production_sales_inventory_table": "operating_progress",
-    "management_strategy": "operating_progress",
-    "management_market_view": "market_competition_outlook",
-    "industry_outlook": "market_competition_outlook",
-    "market_demand_outlook": "market_competition_outlook",
-    "competitive_position": "market_competition_outlook",
-    "future_strategy": "market_competition_outlook",
-    "hk_market_outlook": "market_competition_outlook",
-    "rd_product_progress": "technology_product_progress",
-    "rd_table": "technology_product_progress",
-    "rd_investment_table": "technology_product_progress",
-    "hk_product_progress": "technology_product_progress",
-    "profitability_commentary": "financial_quality_explanation",
-    "hk_financial_commentary": "financial_quality_explanation",
-    "cash_flow_capex_table": "financial_quality_explanation",
-    "asset_impairment_note": "financial_quality_explanation",
-    "ar_aging_note": "financial_quality_explanation",
-    "inventory_note": "financial_quality_explanation",
-    "audit_key_matters": "financial_quality_explanation",
-    "government_grant_note": "financial_quality_explanation",
-    "financial_assets_note": "financial_quality_explanation",
-    "goodwill_note": "financial_quality_explanation",
-}
+# One contiguous checkbox-marker run (A-share annual reports).
+# Examples: "√适用 □不适用", "□适用 √不适用", "适用 □不适用".
+_CHECKBOX_MARKER_RUN_RE = re.compile(
+    r"[□☑■√]\s*(?:不适用|适用)(?:\s*[□☑■√]\s*(?:不适用|适用))*"
+)
 
 _FINANCIAL_METRICS = (
     "毛利率", "毛利", "净利率", "净利润", "营业收入", "营业利润", "营业成本",
@@ -104,6 +81,11 @@ def build_periodic_report_narrative_evidence_cards(
     del raw_text, max_cards_per_type, max_total_cards
     blocks = evidence_pack.get("blocks") if isinstance(evidence_pack, dict) else []
     blocks = blocks or []
+    document_style = str(
+        evidence_pack.get("document_style", "unknown")
+        if isinstance(evidence_pack, dict)
+        else "unknown"
+    )
     diagnostics = _new_diagnostics()
     cards: list[dict] = []
     candidates: list[dict] = []
@@ -124,6 +106,11 @@ def build_periodic_report_narrative_evidence_cards(
 
         prepared_units = []
         for unit in units:
+            replacement = _extract_a_share_causal_tail(
+                unit, usage_hint, document_style, cleaned
+            )
+            if replacement is not None:
+                unit = replacement
             noise_reason = _noise_reason(unit["text"], source_block_text=cleaned)
             if noise_reason:
                 _reject(diagnostics, noise_reason)
@@ -142,7 +129,9 @@ def build_periodic_report_narrative_evidence_cards(
                 continue
             admission_families = eligible_signals or [fallback]
             if not any(
-                _is_self_contained_atomic_fact(unit["text"], family)
+                _is_self_contained_atomic_fact(
+                    unit["text"], family, document_style=document_style, usage_hint=usage_hint
+                )
                 for family in admission_families
             ):
                 _reject(diagnostics, "not_self_contained")
@@ -246,7 +235,7 @@ def build_periodic_report_narrative_evidence_cards(
 
 def _materialize_source_units(block_id: str, text: str) -> tuple[str, list[dict]]:
     """Normalize whitespace once and retain punctuation-preserving source offsets."""
-    cleaned = re.sub(r"\s+", " ", str(text or "")).strip()
+    cleaned = normalize_annual_source_text(text)
     units = []
     for ordinal, match in enumerate(re.finditer(r".+?(?:[。；;！？!?]|$)", cleaned)):
         value = match.group(0).strip()
@@ -301,10 +290,38 @@ def _primary_family(text: str, usage_hint: str, *, signals: set[str] | None = No
 
 
 def _usage_fallback_family(text: str, usage_hint: str) -> str | None:
-    fallback = _USAGE_FALLBACKS.get(usage_hint)
+    fallback = canonical_family_for_usage(usage_hint)
     if fallback == "technology_product_progress" and not _has_product_progress(text):
         return None
     return fallback if fallback and _has_atomic_anchor(text) else None
+
+
+def _extract_a_share_causal_tail(
+    unit: dict, usage_hint: str, document_style: str, cleaned_block: str
+) -> dict | None:
+    """Return a one-SourceUnit causal suffix after a single checkbox-marker run.
+
+    The replacement keeps the original block id and ordinal and recalculates
+    exact offsets inside the whitespace-normalized block. If no bounded causal
+    tail exists, the original unit proceeds to the normal rejection path.
+    """
+    if document_style != "a_share_annual":
+        return None
+    runs = list(_CHECKBOX_MARKER_RUN_RE.finditer(unit["text"]))
+    if len(runs) != 1:
+        return None
+    tail = unit["text"][runs[0].end():].strip()
+    family = canonical_family_for_usage(usage_hint)
+    if family not in {"operating_progress", "technology_product_progress", "financial_quality_explanation"}:
+        return None
+    if not tail or _CHECKBOX_MARKER_RUN_RE.search(tail):
+        return None
+    if not tail.endswith(("。", "；", ";", "！", "？", "!", "?")):
+        return None
+    if not has_concrete_annual_anchor(tail) or _noise_reason(tail, source_block_text=tail):
+        return None
+    start = cleaned_block.find(tail, unit["start_pos"], unit["end_pos"])
+    return None if start < 0 else {**unit, "start_pos": start, "end_pos": start + len(tail), "text": tail}
 
 
 def _is_primary_eligible_signal(family: str, text: str, signals: set[str]) -> bool:
@@ -745,11 +762,15 @@ def _market_subject_tokens(text: str) -> set[str]:
     return subjects
 
 
-def _is_self_contained_atomic_fact(text: str, family: str) -> bool:
+def _is_self_contained_atomic_fact(
+    text: str, family: str, *, document_style: str = "unknown", usage_hint: str = ""
+) -> bool:
     if len(_compact_text(text)) < 5:
         return False
     if family == "business_structure":
-        return _has_company_or_business_context(text)
+        if _has_company_or_business_context(text):
+            return True
+        return _is_hk_implicit_subject(text, document_style, usage_hint)
     if family == "technology_product_progress":
         return _has_product_progress(text) or bool(_matching_tokens(text, _TECH_TOKENS))
     if family == "operating_progress":
@@ -757,6 +778,34 @@ def _is_self_contained_atomic_fact(text: str, family: str) -> bool:
     if family == "market_competition_outlook":
         return bool(_matching_tokens(text, _MARKET_TOKENS))
     return bool(_matching_tokens(text, _FINANCIAL_METRICS))
+
+
+_HK_IMPLICIT_SUBJECT_USAGES = {
+    "hk_business_overview",
+    "hk_customer_ecosystem",
+    "hk_product_progress",
+}
+
+_HK_NAMED_ANCHOR_RE = re.compile(
+    r"[A-Za-z0-9]{3,}|(?:[一-鿿A-Za-z0-9]+(?:平台|產品|产品|解決方案|解决方案|生態|生态|系統|系统|方案))"
+)
+_HK_PREDICATE_TOKENS = (
+    "提供", "為", "为", "搭載", "搭载", "驗證", "验证", "量產", "量产", "客戶", "客户",
+    "市場", "市场", "應用", "应用", "能力", "方案", "解決方案", "解决方案", "智能",
+    "自動", "自动", "商業化", "商业化", "落地", "部署", "適配", "适配", "算法", "模型",
+    "升級", "升级", "更新", "推出", "發佈", "发布", "服務", "服务", "共同推動", "共同推动",
+    "進入", "进入", "實現", "实现", "完成", "導入", "导入", "定點", "定点", "送樣", "送样",
+)
+
+
+def _is_hk_implicit_subject(text: str, document_style: str, usage_hint: str) -> bool:
+    if document_style != "hkex_annual":
+        return False
+    if usage_hint not in _HK_IMPLICIT_SUBJECT_USAGES:
+        return False
+    if not _HK_NAMED_ANCHOR_RE.search(text):
+        return False
+    return any(token in text for token in _HK_PREDICATE_TOKENS)
 
 
 def _has_product_progress(text: str) -> bool:
