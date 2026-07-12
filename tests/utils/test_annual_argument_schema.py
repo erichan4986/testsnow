@@ -448,3 +448,65 @@ def test_source_unit_validation_requires_nonblank_identity_strings():
     for field, value in {"unit_id": 1, "block_id": " ", "text": 3}.items():
         invalid = dict(normal, **{field: value})
         assert "invalid_source_unit_text_field" in validate_source_unit(invalid)
+
+
+EXPECTED_USAGE_FAMILIES = {
+    "business_overview": "business_structure",
+    "business_model": "business_structure",
+    "product_capacity_profile": "business_structure",
+    "sales_certification_model": "business_structure",
+    "hk_business_overview": "business_structure",
+    "hk_customer_ecosystem": "business_structure",
+    "segment_table": "operating_progress",
+    "production_sales_inventory_table": "operating_progress",
+    "management_strategy": "operating_progress",
+    "management_market_view": "market_competition_outlook",
+    "industry_outlook": "market_competition_outlook",
+    "market_demand_outlook": "market_competition_outlook",
+    "competitive_position": "market_competition_outlook",
+    "future_strategy": "market_competition_outlook",
+    "hk_market_outlook": "market_competition_outlook",
+    "rd_product_progress": "technology_product_progress",
+    "rd_table": "technology_product_progress",
+    "rd_investment_table": "technology_product_progress",
+    "hk_product_progress": "technology_product_progress",
+    "profitability_commentary": "financial_quality_explanation",
+    "hk_financial_commentary": "financial_quality_explanation",
+    "cash_flow_capex_table": "financial_quality_explanation",
+    "asset_impairment_note": "financial_quality_explanation",
+    "ar_aging_note": "financial_quality_explanation",
+    "inventory_note": "financial_quality_explanation",
+    "audit_key_matters": "financial_quality_explanation",
+    "government_grant_note": "financial_quality_explanation",
+    "financial_assets_note": "financial_quality_explanation",
+    "goodwill_note": "financial_quality_explanation",
+}
+
+
+def test_usage_metadata_replaces_the_former_producer_fallback_map():
+    from annual_argument_schema import (
+        USAGE_FAMILY_METADATA,
+        canonical_family_for_usage,
+        is_high_value_narrative_usage,
+    )
+
+    assert {
+        usage: canonical_family_for_usage(usage)
+        for usage in EXPECTED_USAGE_FAMILIES
+    } == EXPECTED_USAGE_FAMILIES
+    assert set(USAGE_FAMILY_METADATA) == set(EXPECTED_USAGE_FAMILIES)
+    assert canonical_family_for_usage("unmapped_usage") is None
+    assert is_high_value_narrative_usage("business_overview")
+    assert not is_high_value_narrative_usage("segment_table")
+
+
+def test_shared_normalization_and_anchor_gate_are_deterministic():
+    from annual_argument_schema import (
+        has_concrete_annual_anchor,
+        normalize_annual_source_text,
+    )
+
+    assert normalize_annual_source_text("  2025 年\n客户付款形式变更。 ") == "2025 年 客户付款形式变更。"
+    assert has_concrete_annual_anchor("2025 年客户付款形式变更为电汇。")
+    assert has_concrete_annual_anchor("SESAMEX 平台提供机器人方案。")
+    assert not has_concrete_annual_anchor("持续提升核心竞争力。")

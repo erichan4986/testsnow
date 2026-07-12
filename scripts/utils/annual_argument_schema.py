@@ -92,6 +92,88 @@ _TEXT_CARD_FIELDS = (
     "report_type",
 )
 
+# Shared usage-to-family metadata. The producer and evidence pack must read from
+# this single table so the two layers cannot drift into separate taxonomies.
+_HIGH_VALUE_NARRATIVE_USAGES = frozenset({
+    "business_overview", "business_model", "product_capacity_profile",
+    "sales_certification_model", "hk_business_overview", "hk_customer_ecosystem",
+    "management_strategy", "management_market_view", "industry_outlook",
+    "market_demand_outlook", "competitive_position", "future_strategy",
+    "hk_market_outlook", "rd_product_progress", "hk_product_progress",
+    "profitability_commentary", "hk_financial_commentary",
+})
+
+USAGE_FAMILY_METADATA = {
+    "business_overview": {"family": "business_structure", "reserve": True},
+    "business_model": {"family": "business_structure", "reserve": True},
+    "product_capacity_profile": {"family": "business_structure", "reserve": True},
+    "sales_certification_model": {"family": "business_structure", "reserve": True},
+    "hk_business_overview": {"family": "business_structure", "reserve": True},
+    "hk_customer_ecosystem": {"family": "business_structure", "reserve": True},
+    "segment_table": {"family": "operating_progress", "reserve": False},
+    "production_sales_inventory_table": {"family": "operating_progress", "reserve": False},
+    "management_strategy": {"family": "operating_progress", "reserve": True},
+    "management_market_view": {"family": "market_competition_outlook", "reserve": True},
+    "industry_outlook": {"family": "market_competition_outlook", "reserve": True},
+    "market_demand_outlook": {"family": "market_competition_outlook", "reserve": True},
+    "competitive_position": {"family": "market_competition_outlook", "reserve": True},
+    "future_strategy": {"family": "market_competition_outlook", "reserve": True},
+    "hk_market_outlook": {"family": "market_competition_outlook", "reserve": True},
+    "rd_product_progress": {"family": "technology_product_progress", "reserve": True},
+    "rd_table": {"family": "technology_product_progress", "reserve": False},
+    "rd_investment_table": {"family": "technology_product_progress", "reserve": False},
+    "hk_product_progress": {"family": "technology_product_progress", "reserve": True},
+    "profitability_commentary": {"family": "financial_quality_explanation", "reserve": True},
+    "hk_financial_commentary": {"family": "financial_quality_explanation", "reserve": True},
+    "cash_flow_capex_table": {"family": "financial_quality_explanation", "reserve": False},
+    "asset_impairment_note": {"family": "financial_quality_explanation", "reserve": False},
+    "ar_aging_note": {"family": "financial_quality_explanation", "reserve": False},
+    "inventory_note": {"family": "financial_quality_explanation", "reserve": False},
+    "audit_key_matters": {"family": "financial_quality_explanation", "reserve": False},
+    "government_grant_note": {"family": "financial_quality_explanation", "reserve": False},
+    "financial_assets_note": {"family": "financial_quality_explanation", "reserve": False},
+    "goodwill_note": {"family": "financial_quality_explanation", "reserve": False},
+}
+
+_ANCHOR_DATE_RE = re.compile(r"20\d{2}年?|\d{4}年")
+_ANCHOR_METRIC_RE = re.compile(
+    r"\d+(?:\.\d+)?%|\d+(?:,\d{3})*(?:\.\d+)?(?:万|亿|千|百|元|美元|只|颗|台|套|个|件|kg|吨|公斤|噸)"
+)
+_ANCHOR_LATIN_ID_RE = re.compile(r"[A-Za-z]{2,}\d+[A-Za-z0-9.\-]*|[A-Za-z]{3,}")
+_ANCHOR_CONCRETE_TOKENS = (
+    "主营", "主營", "业务", "業務", "产品", "產品", "客户", "客戶", "供应商", "供應商",
+    "解决方案", "解決方案", "平台", "应用", "應用", "技术", "技術", "研发", "研發",
+    "项目", "項目", "收入", "營收", "营收", "毛利率", "现金流", "現金流", "销量", "銷量",
+    "产量", "產量", "产能", "產能", "订单", "訂單", "量产", "量產", "验证", "驗證",
+    "交付", "供货", "供貨", "芯片", "晶片", "模块", "機器人", "机器人", "智能", "電匯",
+    "电汇", "航信", "所致", "主要系", "由于", "由於", "受", "影响", "影響",
+)
+
+
+def canonical_family_for_usage(usage: str) -> str | None:
+    metadata = USAGE_FAMILY_METADATA.get(str(usage or "").strip())
+    return metadata["family"] if metadata else None
+
+
+def is_high_value_narrative_usage(usage: str) -> bool:
+    metadata = USAGE_FAMILY_METADATA.get(str(usage or "").strip())
+    return bool(metadata and metadata["reserve"])
+
+
+def normalize_annual_source_text(text: object) -> str:
+    return re.sub(r"\s+", " ", str(text or "")).strip()
+
+
+def has_concrete_annual_anchor(text: object) -> bool:
+    text = str(text or "")
+    if _ANCHOR_DATE_RE.search(text):
+        return True
+    if _ANCHOR_METRIC_RE.search(text):
+        return True
+    if _ANCHOR_LATIN_ID_RE.search(text):
+        return True
+    return any(token in text for token in _ANCHOR_CONCRETE_TOKENS)
+
 
 def validate_source_unit(unit: dict) -> tuple[str, ...]:
     """Return deterministic validation errors for one source-unit record."""
