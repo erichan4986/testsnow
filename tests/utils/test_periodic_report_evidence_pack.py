@@ -215,7 +215,7 @@ def test_extracts_related_party_litigation_subsequent_shareholder_pledge_commitm
 
 def test_caps_block_length_and_count():
     pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
-    assert len(pack["blocks"]) <= 30
+    assert len(pack["blocks"]) <= 48
     for block in pack["blocks"]:
         assert len(block["text"]) <= 2000
 
@@ -226,6 +226,49 @@ def test_stable_ids_for_same_input():
     ids1 = [b["id"] for b in pack1["blocks"]]
     ids2 = [b["id"] for b in pack2["blocks"]]
     assert ids1 == ids2
+
+
+def test_document_style_is_envelope_only_and_conservative():
+    assert build_periodic_report_evidence_pack(
+        "管理层讨论与分析\n公司主营业务为测试产品。", report_type="annual"
+    )["document_style"] == "a_share_annual"
+    assert build_periodic_report_evidence_pack(
+        "管理層討論及分析\n本集團業務回顧。", report_type="annual"
+    )["document_style"] == "hkex_annual"
+    assert build_periodic_report_evidence_pack(
+        "季度经营摘要。", report_type="quarterly"
+    )["document_style"] == "unknown"
+
+
+def test_family_reserve_keeps_low_priority_business_narrative():
+    from periodic_report_evidence_pack import _select_bounded_blocks
+
+    blocks = [
+        {"id": f"financial_summary_table-{i}", "usage": "financial_summary_table",
+         "section": "财务", "title": "财务",
+         "text": "营业收入 100 亿元，净利润 10 亿元。",
+         "source_span": {"start": i, "end": i + 1}}
+        for i in range(48)
+    ] + [{
+        "id": "business_overview-0", "usage": "business_overview",
+        "section": "主营业务", "title": "主营业务",
+        "text": "公司主要从事高端光通信收发模块的研发、生产及销售。",
+        "source_span": {"start": 99, "end": 100},
+    }]
+    selected = _select_bounded_blocks(blocks)
+    assert len(selected) == 48
+    assert any(block["id"] == "business_overview-0" for block in selected)
+    assert any(block["usage"] == "financial_summary_table" for block in selected)
+
+
+def test_structural_usage_cannot_consume_a_family_reserve_slot():
+    from periodic_report_evidence_pack import _reserved_narrative_blocks
+
+    blocks = [{"id": "segment_table-0", "usage": "segment_table",
+               "section": "表", "title": "表",
+               "text": "分产品 营业收入 营业成本 毛利率。",
+               "source_span": {"start": 0, "end": 1}}]
+    assert _reserved_narrative_blocks(blocks) == []
 
 
 def test_no_full_report_outside_bounded_blocks():

@@ -9,10 +9,23 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+if __name__.startswith("utils."):
+    from .annual_argument_schema import (
+        CANONICAL_FAMILIES,
+        canonical_family_for_usage,
+        is_high_value_narrative_usage,
+    )
+else:
+    from annual_argument_schema import (
+        CANONICAL_FAMILIES,
+        canonical_family_for_usage,
+        is_high_value_narrative_usage,
+    )
+
 
 SCHEMA_VERSION = "periodic_report_evidence_pack.v1"
 
-_MAX_BLOCKS = 30
+_MAX_BLOCKS = 48
 _MAX_CHARS_PER_BLOCK = 2000
 
 # Generic section headings mapped to usage labels.
@@ -350,13 +363,14 @@ def build_periodic_report_evidence_pack(
     blocks.extend(_extract_hk_narrative_blocks(cleaned))
     blocks.extend(_extract_table_blocks(cleaned))
     blocks = _dedupe_and_prioritize_blocks(blocks)
-    blocks = blocks[:_MAX_BLOCKS]
+    blocks = _select_bounded_blocks(blocks)
     blocks = [_trim_block_text(b, _MAX_CHARS_PER_BLOCK) for b in blocks]
 
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": detected_report_type,
         "audit_status": audit_status,
+        "document_style": _document_style(cleaned, detected_report_type),
         "blocks": blocks,
     }
 
@@ -1586,6 +1600,46 @@ def _trim_block_text(block: Dict[str, Any], max_chars: int) -> Dict[str, Any]:
     return block
 
 
+def _document_style(text: str, report_type: str) -> str:
+    if _looks_like_hk_report(text):
+        return "hkex_annual"
+    if report_type in {"annual", "annual_report"} and any(
+        token in text for token in ("管理层讨论与分析", "报告期内公司", "年度报告全文")
+    ):
+        return "a_share_annual"
+    return "unknown"
+
+
+def _has_complete_narrative_clause(text: str) -> bool:
+    compact = re.sub(r"\s+", "", str(text or ""))
+    if len(compact) < 24:
+        return False
+    return any(len(clause.strip()) >= 24 for clause in re.split(r"[。；;]", compact))
+
+
+def _reserved_narrative_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    reserved = []
+    for family in CANONICAL_FAMILIES:
+        for block in blocks:
+            if canonical_family_for_usage(block.get("usage")) != family:
+                continue
+            if not is_high_value_narrative_usage(block.get("usage")):
+                continue
+            if _has_complete_narrative_clause(block.get("text", "")):
+                reserved.append(block)
+                break
+    return reserved
+
+
+def _select_bounded_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    selected_ids = {block["id"] for block in _reserved_narrative_blocks(blocks)}
+    for block in blocks:
+        if len(selected_ids) >= _MAX_BLOCKS:
+            break
+        selected_ids.add(block["id"])
+    return [block for block in blocks if block["id"] in selected_ids]
+
+
 # ---------------------------------------------------------------------------
 # Text cleaning
 # ---------------------------------------------------------------------------
@@ -1641,5 +1695,6 @@ def _empty_pack(report_type: str) -> Dict[str, Any]:
         "schema_version": SCHEMA_VERSION,
         "report_type": report_type if report_type != "auto" else "unknown",
         "audit_status": "unknown",
+        "document_style": "unknown",
         "blocks": [],
     }
