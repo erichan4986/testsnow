@@ -1,7 +1,7 @@
 # Annual Producer v2 Coverage Repair Design
 
-**Status:** Proposed for Claude Round 1 read-only review  
-**Date:** 2026-07-12  
+**Status:** Revised after Claude Round 1; Claude Round 2 required
+**Date:** 2026-07-12
 **Scope:** Deterministic annual-report evidence-pack selection, source-unit admission, and v1-to-v2 migration coverage only.
 
 ## 1. Decision
@@ -87,17 +87,22 @@ Out of scope:
 
 ### 5.1 One shared usage-to-family resolver
 
-`annual_argument_schema.py` becomes the owner of a public deterministic usage
-metadata table and helper:
+`annual_argument_schema.py` becomes the sole owner of a public deterministic
+usage-metadata table and helpers:
 
 ```text
 canonical_family_for_usage(usage) -> canonical family | None
 is_high_value_narrative_usage(usage) -> bool
+has_concrete_annual_anchor(text) -> bool
 ```
 
 The table is the one owner of both values, rather than separate producer and
-evidence-pack lists. `is_high_value_narrative_usage` is true only for these
-generic usages:
+evidence-pack lists. It must first reproduce every `(usage, family)` pair in the
+current producer `_USAGE_FALLBACKS` table, including table usages whose reserve
+flag is false. A focused compatibility test locks that complete mapping before
+the local table is deleted.
+
+`is_high_value_narrative_usage` is true only for these generic usages:
 
 ```text
 business_structure:
@@ -114,11 +119,13 @@ financial_quality_explanation:
   profitability_commentary, hk_financial_commentary
 ```
 
-All table, statement, and structural usages are explicitly false. This moves the
-current usage fallback knowledge out of the producer so the evidence pack and
-producer cannot drift into two taxonomies. It is a hint for evidence allocation
-only; `resolve_argument_family(bundle, usage_hint)` remains the sole v2
-card-family resolver.
+All table, statement, and structural usages are explicitly false. The producer
+must import `canonical_family_for_usage` and delete `_USAGE_FALLBACKS`; it may
+not carry a local compatibility copy. This moves the current usage fallback
+knowledge out of the producer so the evidence pack and producer cannot drift
+into two taxonomies. It is a hint for evidence allocation only;
+`resolve_argument_family(bundle, usage_hint)` remains the sole v2 card-family
+resolver.
 
 The helper maps only generic usages such as `business_overview`,
 `product_capacity_profile`, `rd_product_progress`, `cash_flow_capex_table`,
@@ -137,7 +144,9 @@ The existing deterministic `_looks_like_hk_report()` determines `hkex_annual`.
 For non-HK annual reports the value is `a_share_annual`; all other cases are
 `unknown`. The producer reads this envelope field only to choose an admission
 policy and records it in envelope diagnostics. It is not added as a renderer
-field or a new card-schema field.
+field or a new card-schema field. This is an additive v1 envelope field, so
+`periodic_report_evidence_pack.v1` remains unchanged. A schema test must assert
+that `document_style` exists on the envelope and not on individual v2 cards.
 
 ### 5.3 Family-reserved 48-block allocator
 
@@ -164,34 +173,64 @@ priority behavior outside the one-per-populated-family reservation.
 
 ### 5.4 A-share form-marker source boundaries
 
-For `a_share_annual`, an otherwise useful evidence block containing an
-`applicable/not applicable` marker is not automatically admitted or rejected as
-a whole. The extraction layer will identify exact sentence/line spans after the
-marker and may emit a child narrative block only when all conditions hold:
+The evidence pack does not add child blocks for form-marker tails, because the
+same pack also feeds structured-financial extractors. Instead, the annual
+narrative producer applies one deterministic pre-admission transformation to an
+already materialized source unit:
 
-- the span is a direct contiguous substring of the cleaned block;
-- it contains a concrete causal, operating, product, or financial anchor;
-- it is not a table header, checkbox-only answer, or generic boilerplate; and
-- the parent usage is compatible with narrative explanation.
+```text
+extract_a_share_causal_tail(unit, usage) -> replacement unit | None
+```
 
-The original noisy structural fragment remains rejectable. This preserves the
-Zhongjian payment-method explanation without weakening the existing broad
-checkbox-noise tests.
+This helper runs only when `document_style == "a_share_annual"`. It must obey
+all of these boundaries:
+
+1. Inspect one materialized SourceUnit only. The source-unit boundary is the
+   only boundary: it never joins text from two units or blocks.
+2. Find exactly one contiguous checkbox-marker run in that unit, such as
+   `applicable/not applicable` symbols plus their adjacent answers. If the unit
+   has no run, multiple separate runs, or any marker after the selected run,
+   return `None`.
+3. Take only the direct suffix after the final marker in that run. The suffix
+   must end at the current SourceUnit's existing sentence terminator; no new
+   punctuation is inserted and no prefix is retained.
+4. Permit a replacement only when the usage resolves to
+   `operating_progress`, `technology_product_progress`, or
+   `financial_quality_explanation`; the suffix has a concrete family anchor;
+   and it independently passes the existing table/boilerplate/checkbox noise
+   guards when evaluated as its own text.
+5. The replacement unit keeps the original block id and ordinal, recalculates
+   exact offsets inside the whitespace-normalized block, and has text equal to
+   the selected source substring. One marker unit produces at most one
+   replacement unit.
+
+The original marker-bearing unit remains rejected if this extractor returns
+`None`. This preserves the Zhongjian payment-method explanation without
+weakening existing checkbox-noise behavior or changing the shared evidence pack
+for structured metrics.
 
 ### 5.5 HKEX implicit-subject admission
 
-For `hkex_annual`, an atomic paragraph from an HK management-discussion usage
-may be self-contained despite omitting an explicit `company/group/business`
-subject when it has a generic structural anchor:
+The producer reads `document_style` from the evidence-pack envelope and passes
+it plus `usage_hint` to atomic admission. For `hkex_annual` only, an atomic
+paragraph from an HK management-discussion usage may be self-contained despite
+omitting an explicit `company/group/business` subject when it has a generic
+structural anchor:
 
 - a named platform, product, solution, or ecosystem; and
 - an action, application, capability, customer/market context, or progress
   predicate in the same source unit.
 
-The acceptance is limited to HK narrative usages such as
-`hk_business_overview` and `hk_product_progress`. It does not admit arbitrary
-bullet labels, tables, or slogan-like text. Traditional Chinese source text and
-source offsets are retained exactly.
+The acceptance is limited to `hk_business_overview`, `hk_customer_ecosystem`,
+and `hk_product_progress`. A named anchor is a generic product/platform/
+solution/ecosystem form, including a three-or-more-character Latin identifier or
+a Chinese phrase carrying one of those structural suffixes. A predicate is a
+generic action, application, capability, customer/market-context, or progress
+verb in the same SourceUnit. A standalone label fails because it lacks the
+predicate. All non-HK styles retain the existing explicit-subject rule.
+
+Traditional Chinese source text and source offsets are retained exactly. The
+rule does not admit arbitrary bullet labels, tables, or slogan-like text.
 
 ### 5.6 Legacy-v1 migration coverage audit
 
@@ -204,9 +243,27 @@ v2 cards from the same `source_block_id`:
 | `covered_by_v2_units` | Every meaningful legacy fragment is an exact normalized substring of one v2 SourceUnit or an ordered contiguous v2 SourceUnit sequence from that block. | Do not adapt v1; record coverage proof. |
 | `needs_recovery` | At least one meaningful factual legacy fragment has no deterministic v2 source-unit proof. | Keep the v1 adapter active and record the missing fragments. |
 
-Meaningful fragments are complete sentence or semicolon-delimited source
-fragments with a concrete fact anchor. Checkbox-only noise, headings, empty
-fragments, and generic boilerplate do not create a recovery obligation.
+The producer and material pack share `normalize_annual_source_text(text)`, whose
+only transformation is `re.sub(r"\\s+", " ", text).strip()`. The producer uses
+this helper when materializing SourceUnits; the material pack uses it before any
+coverage comparison. They also share `has_concrete_annual_anchor(text)`.
+
+Meaningful fragments are complete sentence or semicolon-delimited spans from the
+normalized legacy excerpt. A fragment creates a recovery obligation only when it
+passes all of the following:
+
+- it is at least five non-whitespace characters;
+- it is not a heading, checkbox-only span, empty span, or generic boilerplate;
+- `has_concrete_annual_anchor(fragment)` is true: the schema-owned generic
+  helper recognizes a valid metric/date, named product/platform/project
+  identifier, or business/product/customer/application/technology/
+  financial-cause anchor.
+
+Coverage uses no fuzzy similarity or token-overlap threshold. Each meaningful
+fragment must be an exact normalized substring of one SourceUnit or of a
+monotonic contiguous sequence of SourceUnits from the same `source_block_id`.
+The coverage diagnostic records the unmatched fragment text for
+`needs_recovery` and the proving v2 unit ids for `covered_by_v2_units`.
 
 New diagnostics include at least:
 
@@ -257,6 +314,10 @@ Focused tests must cover:
 9. `argument_complete` and 4.4 admission behavior remain unchanged.
 10. Current formal-medium/formal-thin renderer and source-boundary focused tests
     remain green.
+11. The schema-owned usage metadata exactly replaces the former producer fallback
+    map; the producer contains no local `_USAGE_FALLBACKS` equivalent.
+12. `document_style` is present only on the evidence-pack envelope. Unknown
+    styles never receive the HK implicit-subject relaxation.
 
 Local-cache acceptance, after implementation, refreshes the same eight stocks
 without network access. It must show:
@@ -314,17 +375,46 @@ Rejected:
 - A separate sparse fallback or a separate HK selector. Both would duplicate
   selection semantics and undermine v2's single admission contract.
 
-## 10. Claude Round 1 Review Questions
+### Round 1 Design Delta
+
+Accepted:
+
+- **MF-01:** Make schema-owned usage metadata an exact compatibility replacement
+  for the producer fallback map, then delete the producer-local map.
+- **MF-02:** Move A-share marker-tail handling into a one-SourceUnit producer
+  helper. This prevents shared evidence-pack changes from perturbing structured
+  financial extractors.
+- **MF-03:** Pass envelope `document_style` to producer atomic admission and
+  make the HK implicit-subject predicate/usage boundary explicit.
+- **MF-04:** Share whitespace normalization and require exact source-unit
+  fragment coverage, not semantic or token-overlap similarity.
+- **NH-01 to NH-04:** Add the synthetic allocation, source-boundary,
+  `unknown`-style, and envelope-only regression tests.
+
+Rejected:
+
+- No reviewer item was rejected.
+
+Deferred:
+
+- Legacy-note archive/delete remains a later Batch B action after all configured
+  stocks have zero `v1_needs_recovery_count`.
+
+**Round 2 required:** yes. The changes tighten source-boundary and migration
+contracts, so a second read-only review must verify that no hidden selector or
+cross-consumer evidence-pack regression was introduced.
+
+## 10. Claude Round 2 Review Questions
 
 Review only this design. Do not modify code, tests, reports, or Knowledge notes.
 
-1. Does family reservation preserve the one-selector invariant and avoid an
-   accidental second taxonomy?
-2. Are the `a_share_annual` and `hkex_annual` admission boundaries strict enough
-   to avoid false positives while retaining the proven missing facts?
-3. Is the `covered_by_v2_units` proof strong enough to suppress duplicate v1
-   adaptation without hiding a lost factual fragment?
-4. Is the 48-block cap and the +100 runtime hard stop proportionate to the
-   observed cache distribution and implementation scope?
-5. Are the test and local-cache acceptance gates sufficient before Batch B
-   adapter removal is reconsidered?
+1. Does importing schema-owned metadata and deleting the producer-local fallback
+   table eliminate the duplicate-taxonomy path?
+2. Is the one-SourceUnit A-share tail rule sufficiently strict to retain a real
+   causal explanation without admitting checkbox/table noise?
+3. Is the HK style-gated implicit-subject predicate narrow enough for Black
+   Sesame-like narrative facts without becoming a generic relaxation?
+4. Does the shared-normalization fragment proof suppress only genuinely covered
+   v1 material and preserve true recovery cases?
+5. Is the 48-block cap, the +100 runtime hard stop, and the test/local-cache
+   acceptance matrix sufficient before Batch B adapter removal is reconsidered?
