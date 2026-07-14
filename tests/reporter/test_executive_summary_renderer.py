@@ -1,18 +1,167 @@
 """Tests for ExecutiveSummaryRenderer."""
 
+from types import SimpleNamespace
+
 import pytest
 from scripts.utils.reporter.sections import ExecutiveSummaryRenderer
 
 
+def _decision_fixture():
+    return SimpleNamespace(
+        render_header=lambda: "### 综合评分: 6.1/10 | EV: +8.00%（谨慎持有）",
+        recommendation_sentence="当前建议谨慎持有，并等待更好的入场条件。",
+        entry_constraint=SimpleNamespace(
+            display_note="当前入场质量不足。",
+            position_cap_note="建议仓位 5-10%。",
+        ),
+        risk=SimpleNamespace(
+            level="中等风险",
+            position_advice="控制仓位。",
+        ),
+    )
+
+
 def test_required_keys():
     renderer = ExecutiveSummaryRenderer()
-    assert renderer.required_keys() == ["stock_name", "synthesis"]
+    assert renderer.required_keys() == ["stock_name"]
+
+
+def test_render_without_synthesis_still_has_deterministic_summary(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda *args, **kwargs: [],
+    )
+    renderer = ExecutiveSummaryRenderer()
+
+    result = renderer.render({"stock_name": "测试股"})
+
+    assert "**基本面判断**：" in result
+    assert "**估值与业绩预期**：" in result
+    assert "**交易状态与风险**：" in result
+    assert "> **一句话结论**：" in result
+    assert "尚未形成可由高信用来源支撑的核心事实基座" in result
+
+
+def test_deterministic_summary_uses_supported_core_fact_and_structured_valuation(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda *args, **kwargs: [],
+    )
+    ctx = {
+        "stock_name": "测试股",
+        "synthesis": {},
+        "core_facts": [{
+            "fact": "2025年营业收入",
+            "data": "同比增长16.2%",
+            "provenance_status": "verified",
+        }],
+        "pillar": {
+            "valuation": 6.0,
+            "technical": 4.0,
+            "sentiment": 5.0,
+            "fundamental": 8.0,
+            "fundflow": 5.0,
+            "fwd_pe": 42.8,
+            "eps_growth": 65.5,
+        },
+        "recommendation_decision": _decision_fixture(),
+    }
+
+    result = ExecutiveSummaryRenderer().render(ctx)
+
+    assert "2025年营业收入：同比增长16.2%" in result
+    assert "Forward PE 42.8 倍" in result
+    assert "预期 EPS 增速 65.5%" in result
+    assert "当前入场质量不足" in result
+    assert "风险等级为中等风险。" in result
+    assert "当前建议谨慎持有，并等待更好的入场条件。" in result
+
+
+def test_summary_rounds_consensus_values_and_frames_unsupported_score():
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "中际旭创",
+        "pillar": {
+            "valuation": 7.0,
+            "technical": 4.7,
+            "sentiment": 3.0,
+            "fundamental": 10.0,
+            "fundflow": 5.0,
+            "fwd_pe": 45.7466,
+            "eps_growth": 65.4705,
+        },
+    })
+
+    assert "Forward PE 45.7 倍" in result
+    assert "预期 EPS 增速 65.5%" in result
+    assert "45.7466" not in result
+    assert "65.4705" not in result
+    assert "基本面评分为 10/10，该评分主要反映结构化盈利预期" in result
+    assert "不代表正式材料事实充分" in result
+
+
+def test_summary_deduplicates_entry_text_and_punctuates_risk_sentence():
+    decision = SimpleNamespace(
+        render_header=lambda: "### 综合评分: 5.9/10 | EV: +45.69%（风险控制优先）",
+        recommendation_sentence="风险控制优先。",
+        entry_constraint=SimpleNamespace(
+            state="risk_control",
+            display_note="技术方向偏空，以防守或观望为主。",
+            position_cap_note="技术方向偏空，以防守或观望为主，建议 0-5%",
+        ),
+        risk=SimpleNamespace(level="低风险"),
+    )
+
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "中际旭创",
+        "recommendation_decision": decision,
+    })
+
+    assert result.count("技术方向偏空，以防守或观望为主") == 1
+    assert "建议 0-5%。风险等级为低风险。" in result
+    assert "0-5%风险等级" not in result
+
+
+def test_summary_bridges_positive_consensus_and_constrained_entry():
+    decision = _decision_fixture()
+    decision.entry_constraint.state = "wait_for_entry"
+
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "pillar": {"fwd_pe": 42.8, "eps_growth": 20.0},
+        "recommendation_decision": decision,
+    })
+
+    assert "一致预期仍显示盈利增长空间" in result
+    assert "当前技术入场条件未满足，仓位继续受上述约束" in result
+
+
+def test_deterministic_summary_states_when_consensus_is_missing(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda *args, **kwargs: [],
+    )
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "synthesis": {},
+        "pillar": {
+            "valuation": 4.0,
+            "technical": 5.0,
+            "sentiment": 5.0,
+            "fundamental": 5.0,
+            "fundflow": 5.0,
+        },
+    })
+
+    assert "估值判断证据不足" in result
+    assert "暂按观望处理" in result
 
 
 def test_render_missing_keys_returns_empty():
     renderer = ExecutiveSummaryRenderer()
     assert renderer.render({}) == ""
-    assert renderer.render({"stock_name": "Test"}) == ""
+    result = renderer.render({"stock_name": "Test"})
+    assert "## 执行摘要" in result
+    assert "**基本面判断**：" in result
 
 
 def test_render_basic():
@@ -331,10 +480,6 @@ def test_render_prefers_synthesis_display(monkeypatch):
         "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
         spy_extract,
     )
-    monkeypatch.setattr(
-        "scripts.utils.reporter.sections.executive_summary_renderer._extract_conclusion",
-        lambda stock_name, text: "",
-    )
 
     renderer = ExecutiveSummaryRenderer()
     ctx = {
@@ -361,10 +506,6 @@ def test_render_falls_back_to_synthesis_when_no_display(monkeypatch):
     monkeypatch.setattr(
         "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
         lambda text, direction, claim_verification_summary=None: captured.append(text) or [],
-    )
-    monkeypatch.setattr(
-        "scripts.utils.reporter.sections.executive_summary_renderer._extract_conclusion",
-        lambda stock_name, text: "",
     )
 
     renderer = ExecutiveSummaryRenderer()

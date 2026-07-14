@@ -223,12 +223,11 @@ def _extract_thesis_points(
 
 
 def _extract_conclusion(stock_name: str, text: str) -> str:
-    """提取一句话结论。优先使用 LLM，失败时返回空字符串。"""
+    """保留旧测试与外部调用的兼容入口；摘要结论已改由结构化 decision 提供。"""
     if not text:
         return ""
     try:
-        llm_result = _llm_extract_thesis(text)
-        return llm_result.get("conclusion", "")
+        return _llm_extract_thesis(text).get("conclusion", "")
     except Exception:
         return ""
 
@@ -376,18 +375,92 @@ def _filter_unsupported_formal_thin_bullish_points(points: List[Dict], ctx: Dict
     ]
 
 
+def _number(value: Any) -> Optional[float]:
+    return float(value) if isinstance(value, (int, float)) and not isinstance(value, bool) else None
+
+
+def _sentence(text: Any) -> str:
+    text = str(text or "").strip()
+    return text if not text or text.endswith(("。", "！", "？")) else text + "。"
+
+
+def _fundamental_summary(ctx: Dict[str, Any]) -> str:
+    for fact in ctx.get("core_facts") or []:
+        if not isinstance(fact, dict):
+            continue
+        if str(fact.get("provenance_status") or "").lower() not in {"verified", "supported"}:
+            continue
+        name = sanitize_citation_markers(str(fact.get("fact") or "")).strip()
+        data = sanitize_citation_markers(str(fact.get("data") or "")).strip()
+        if not (name or data) or "0.00亿元" in data:
+            continue
+        return "：".join(part for part in (name, data) if part)
+    score = _number((ctx.get("pillar") or {}).get("fundamental"))
+    if score is not None:
+        return (
+            f"当前基本面评分为 {score:g}/10，该评分主要反映结构化盈利预期，"
+            "不代表正式材料事实充分；尚未形成可由高信用来源支撑的核心事实基座。"
+        )
+    return "尚未形成可由高信用来源支撑的核心事实基座。"
+
+
+def _valuation_summary(ctx: Dict[str, Any]) -> str:
+    pillar = ctx.get("pillar") or {}
+    parts = []
+    fwd_pe = _number(pillar.get("fwd_pe"))
+    eps_growth = _number(pillar.get("eps_growth"))
+    pe_ttm = _number((ctx.get("quote") or {}).get("pe_ttm"))
+    if fwd_pe is not None:
+        parts.append(f"Forward PE {fwd_pe:.1f} 倍")
+    elif pe_ttm is not None:
+        parts.append(f"PE(TTM) {pe_ttm:.1f} 倍")
+    if eps_growth is not None:
+        parts.append(f"预期 EPS 增速 {eps_growth:.1f}%")
+    return "，".join(parts) + "。" if parts else "当前缺少可复核的一致预期，估值判断证据不足。"
+
+
+def _trading_risk_summary(ctx: Dict[str, Any]) -> str:
+    decision = ctx.get("recommendation_decision")
+    if decision is not None:
+        entry = getattr(decision, "entry_constraint", None)
+        risk = getattr(decision, "risk", None)
+        display = str(getattr(entry, "display_note", "") or "").strip()
+        position = str(getattr(entry, "position_cap_note", "") or "").strip()
+        if display.rstrip("。") and position.startswith(display.rstrip("。")):
+            display = ""
+        parts = [display, position]
+        risk_level = str(getattr(risk, "level", "") or "").strip()
+        if risk_level:
+            parts.append(f"风险等级为{risk_level}")
+        growth = _number((ctx.get("pillar") or {}).get("eps_growth"))
+        if growth is not None and growth > 0 and getattr(entry, "state", "") not in {"", "ok"}:
+            parts.append("一致预期仍显示盈利增长空间，但当前技术入场条件未满足，仓位继续受上述约束")
+        rendered = "".join(_sentence(part) for part in parts if str(part).strip())
+        if rendered:
+            return rendered
+    score = _number((ctx.get("pillar") or {}).get("technical"))
+    prefix = f"当前技术面评分为 {score:g}/10；" if score is not None else ""
+    return prefix + "尚未形成统一入场约束，按保守口径处理。"
+
+
+def _deterministic_conclusion(ctx: Dict[str, Any]) -> str:
+    decision = ctx.get("recommendation_decision")
+    sentence = str(getattr(decision, "recommendation_sentence", "") or "").strip()
+    return sentence or "当前尚未形成统一推荐结论，暂按观望处理。"
+
+
 class ExecutiveSummaryRenderer:
     """执行摘要板块 — 综合评分标题 + 核心投资论点 + 一句话结论。"""
 
     @staticmethod
     def required_keys() -> List[str]:
-        return ["stock_name", "synthesis"]
+        return ["stock_name"]
 
     def render(self, ctx: Dict[str, Any]) -> str:
         stock_name = ctx.get("stock_name", "")
-        synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
-        if not stock_name or not synthesis:
+        if not stock_name:
             return ""
+        synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
 
         pillar = ctx.get("pillar")
         consensus = ctx.get("consensus")
@@ -434,6 +507,17 @@ class ExecutiveSummaryRenderer:
             "",
         ]
 
+        lines.extend([
+            f"**基本面判断**：{_fundamental_summary(ctx)}",
+            "",
+            f"**估值与业绩预期**：{_valuation_summary(ctx)}",
+            "",
+            f"**交易状态与风险**：{_trading_risk_summary(ctx)}",
+            "",
+            f"> **一句话结论**：{_deterministic_conclusion(ctx)}",
+            "",
+        ])
+
         debate_text = synthesis.get("valuation_debate", "")
         fund_text = synthesis.get("fundamentals", "")
         combined = sanitize_citation_markers(debate_text + "\n" + fund_text)
@@ -463,14 +547,6 @@ class ExecutiveSummaryRenderer:
             for pt in bearish_points[:4]:
                 star = "⭐" * pt.get("stars", 3)
                 lines.append(f"- {pt.get('text', '')} → {star}")
-            lines.append("")
-
-        conclusion = _extract_conclusion(stock_name, combined)
-        conclusion = _sanitize_pe_spread_in_text(conclusion, pe_facts, stock_name)
-        if _is_unsupported_formal_thin_bullish_text(conclusion, ctx):
-            conclusion = ""
-        if conclusion:
-            lines.append(f"> **一句话结论**：{conclusion}")
             lines.append("")
 
         chart_paths = ctx.get("chart_paths", ctx.get("_chart_paths", {}))

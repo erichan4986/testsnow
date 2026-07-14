@@ -38,7 +38,7 @@ else:
 
 BROKER_RESEARCH_SOURCE_TYPE = "broker_research"
 BROKER_RESEARCH_FACT_STATUS = "professional_analysis"
-BROKER_EXCERPT_CLEANER_VERSION = "broker_ocr_v2"
+BROKER_EXCERPT_CLEANER_VERSION = "broker_ocr_v3"
 
 
 @dataclass
