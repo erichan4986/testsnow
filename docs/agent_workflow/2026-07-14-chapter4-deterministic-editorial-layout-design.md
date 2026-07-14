@@ -43,7 +43,9 @@ formal-thin 在 annual display selection 之前构建 full MaterialSnapshot。�
 - `source_intake_enabled`：控制 intake 是否启用，不能用于仅隐藏正文；
 - `source_intake_render_details`：只控制明细子节，来源分层概览仍然显示。
 
-当前没有可复用的整节 display toggle。本批新增 `source_intake_render_section`：默认 `False`；只有显式设为 `True` 时才输出 Source Intake 正文章节。intake context、material items 和 sidecar 行为不变。
+当前没有可复用的整节 display toggle。本批新增 `source_intake_render_section`：默认 `False`；只有显式设为 `True` 时才输出 Source Intake 正文章节。正式入口可以通过 `source_intake_config.render_section` 恢复，顶层 `source_intake_render_section` 作为测试/preview 的显式 override，且优先级更高。intake context、material items 和 sidecar 行为不变。
+
+`periodic_report_fulltext_preview.py --source-intake-section` 是既有显式展示入口。它必须在构造 ctx 时写入顶层 `source_intake_render_section=True`，否则默认隐藏会破坏现有 preview 契约。
 
 ## 3. Architecture
 
@@ -76,15 +78,20 @@ MaterialSnapshot 是完整 read-model；Chapter4ViewModel 是 formal-medium 的�
 
 总预算最多 11 rows。它不是 producer、memo 或 snapshot 上限。
 
-同 role 的确定性排序依次比较：
+`business_structure` 的 3 个槽位中，如果存在合格业务画像，必须先保留最高分画像并标记 `editorial_slot="portrait"`，再填另外两个槽位。画像 predicate/score 从 renderer 的 `_select_annual_portrait_row()` 迁入 shared annual selector；renderer 删除该选择逻辑，只读取 `editorial_slot`。没有合格画像时不生成占位文本，三个槽位正常用于其他业务 rows。
+
+画像保留后，同 role 的确定性排序使用以下 tuple，降序比较，最后以原输入 index 升序打破平局：
 
 1. `argument_complete=True`；
 2. 有有效 citation；
-3. 含因果解释、报告期变化、具体数字单位、产品/客户动作等具体证据；
-4. 正文完整且不过度冗长；
-5. 原 source order，保证结果稳定。
+3. evidence signal count：因果词、报告期/同比环比、数字单位、产品/客户动作四类各计 1 分；
+4. compact body 长度在 24–320 字之间；
+5. 超过 320 字的长度惩罚；
+6. 原 source order，保证结果稳定。
 
-排序规则只使用通用文本结构，不添加股票、代码、行业或产品专用 hardcode。未入选 rows 只记录 `annual_hidden_by_editorial_budget` diagnostics。
+四类 evidence signals 只使用通用 token/regex：`主要系/由于/受益于/导致/所致`；`报告期/同比/环比/年度/20xx/Q1-Q4`；百分比及元/万元/亿元/倍等数字单位；`出货/量产/验证/导入/客户/推出/发布/订单/扩产`。不得添加股票、行业或具体产品词。
+
+现有 `annual_selected_count` 保持“admission + dedupe 后数量”的旧语义，避免静默破坏测试/诊断调用方。新增 `annual_display_count`、`annual_hidden_by_editorial_budget_count` 和 `annual_hidden_by_role`；未入选 rows 不从 snapshot 删除。
 
 ### 4.2 Broker rows
 
@@ -99,8 +106,11 @@ renderer 不再决定显示条数。
 
 以上预算只适用于 formal-medium ViewModel。formal-thin 继续使用既有 broker memo renderer，不新增另一套 broker selector 或重编号路径。
 
+“机构共识”不得由不同标题简单拼接得出。只有同一个非通用 exact normalized assumption title 被至少两个不同 attribution 支持时，才输出“机构共识”；否则标题必须降级为“机构关注重点”。normalized title 只折叠 whitespace、统一结尾标点；`机构核心观点/产业与产品判断/风险提示/反方约束` 等通用标题不参与共识计数。formal-thin 的 `forecast_ranges` 也必须经现有 attribution normalizer 输出 `某机构研报预计` 或至少 `研报预计`，不得裸写预测区间。
+
 ### 4.3 External rows
 
+- MaterialSnapshot 继续保留 narrative paragraphs、reasoning cards 和 topic groups 三套原始投影；display 只选一套，优先级固定为 `narrative_paragraphs` → `reasoning_cards` → `topic_groups`，避免把同一外部材料的替代视图当成独立观点重复展示；
 - 继续使用 citation-identity ref dedupe；
 - 仅做 exact body + citation identity 去重，不使用 fuzzy/token/embedding 相似度；
 - 不新增 hard row cap，不以 dead-number slice 丢弃彼此独立的外部变量；
@@ -109,9 +119,19 @@ renderer 不再决定显示条数。
 
 formal-medium 从 ViewModel 读取上述 rows；formal-thin 继续读取既有 curated external display，但必须移除 narrative/reasoning/topic-group 路径中的 `[:N]` 展示截断，并使用同一 exact body + citation identity 契约。不得借此改变 external citation offset。
 
+唯一 dedupe key helper 放在 `deep_analysis_material_snapshot.py`：`(normalized_exact_body, sorted_unique_citation_identities)`。body 只归一化 whitespace 和结尾标点；citation identity 复用现有 `citation_identity()`。只有完整 key 相同才删除 row：同源不同 body、同 body 不同来源都保留。formal-medium MaterialRows 与 formal-thin curated dict rows 必须复用这个 helper，不各写一套近似规则。
+
 ### 4.4 Price-path rows
 
-4.4 继续只取 annual / broker / external 各一条，并且只能从 4.1–4.3 已入选 display rows 中产生。不得 fallback 到 snapshot 中已隐藏 row，也不得修改目标价、评分、风险评分或最终推荐。
+4.4 继续只取 annual / broker / external 各一条，并且只能从 4.1–4.3 已入选 display rows 中产生。不得 fallback 到 snapshot 中已隐藏 row，也不得修改目标价、评分、风险评分或最终推荐。formal-thin 仍保持三段式，不新增 4.4。
+
+选取优先级固定为：
+
+- annual：`operating_progress` → `financial_quality_explanation` → `technology_product_progress` → `market_competition_outlook` → 非 portrait 的 `business_structure`；每层先取 `argument_complete=True`；
+- broker：`broker_assumption` → `broker_forecast`，要求 attribution；
+- external：去重后的 source order 第一条。
+
+4.4 不再复写 4.1–4.3 的完整 body。每个来源层只输出“来源层级 + row title/确定性 role label + inline citation + 上下行验证条件”一段；条件只能表达“若被正式证据验证/证伪则观点升级/降级”，不得重复长摘录或产生新的经营事实。
 
 ## 5. Renderer Contract
 
@@ -125,24 +145,24 @@ formal-medium 从 ViewModel 读取上述 rows；formal-thin 继续读取既有 c
 4. 研发与产品进展；
 5. 财务质量。
 
-每组输出一个短段落，不使用 Markdown table，不逐 row 生成 bullet。每个 row 保留原文和自己的 inline citation；renderer 只连接句子，不生成新的数字、主体、因果或“投研含义”。portrait row 不在业务段落重复。
+每组输出一个短段落，不使用 Markdown table，不逐 row 生成 bullet。每个 row 保留原文和自己的 inline citation；renderer 只连接句子，不生成新的数字、主体、因果或“投研含义”。带 `editorial_slot="portrait"` 的 row 输出为一句话画像且不在业务段落重复；renderer 不再自行搜索画像。
 
 ### 5.2 4.2 broker material
 
-- “机构共识”改为简短导语；
+- exact normalized title 被两个以上不同 attribution 支持时输出“机构共识”，否则使用“机构关注重点”；
 - 每个机构/假设用 attribution 明确的短段落表达；
 - 主要分歧/反方约束独立成段；
 - 删除通用重复验证话术，不改写机构事实或预测。
 
 ### 5.3 4.3 external Preview
 
-- 保持变量标题 + 完整外部论点段落；
+- 保持 `**变量标题**` + 下一段完整外部论点的固定 pair；观点段落必须带 inline footnote；
 - 不再重复每行验证模板；
 - 不进入 4.1，不参与任何评分路径。
 
 ### 5.4 4.4 conditions
 
-以三段短文本表示 `官方确认 / 机构假设 / 外部待验证`。只使用 view-model rows；确定性条件文案不得声称已发生，不生成新目标价。
+以三段短文本表示 `官方确认 / 机构假设 / 外部待验证`。只使用 view-model rows，不重复完整 evidence body；确定性条件文案不得声称已发生，不生成新目标价。
 
 ## 6. Citation and Layout Contract
 
@@ -155,16 +175,29 @@ formal-medium 从 ViewModel 读取上述 rows；formal-thin 继续读取既有 c
 
 formal-thin 必须以 full snapshot 计算 broker/external offset。测试必须覆盖“最高 annual ref 被 editorial budget 隐藏”场景，证明 broker/external 编号不漂移、不碰撞，无 missing/unused/orphan。
 
+删除局部来源表后，现有 `_check_curated_external_inline_footnotes()` 不能再以“存在本节引用来源”为前置条件。本批将 gate 改为同时支持：
+
+- legacy：沿用局部来源表 + body inline footnote 检查；
+- new layout：每个 `**变量标题**` 后的第一个非空观点段落必须包含完整 `[^n]`。
+
+“当前未取得足够外部观点材料”等 fallback 不视为观点段落。这样即使 `_visible_citations_only()` 同步移除了漏挂引用，也不能让无脚注的外部观点错误 PASS。
+
 ## 7. Source Intake Display Contract
 
-`SourceIntakeEvidenceRenderer.render()` 首先检查：
+`SourceIntakeEvidenceRenderer.render()` 先解析整节显示开关：
 
 ```text
-source_intake_enabled == True
-and source_intake_render_section == True
+if "source_intake_render_section" in ctx:
+    render_section = bool(ctx["source_intake_render_section"])
+else:
+    render_section = bool((ctx.get("source_intake_config") or {}).get("render_section", False))
+
+source_intake_enabled == True and render_section == True
 ```
 
 否则返回空字符串。`source_intake_render_details` 仍只控制整节启用后的明细内容，不改变语义。`ReportAssemblySkill.RENDERERS` 顺序保持不变，不在 assembly 新增特殊分支。
+
+正式报告默认不配置 `render_section`，因此隐藏；需要 debug 时可在 stock 的 `source_intake` config 中设置 `render_section: true`。`periodic_report_fulltext_preview.py --source-intake-section` 必须显式写顶层 override，以继续展示 preview。
 
 ## 8. Scope
 
@@ -173,18 +206,22 @@ and source_intake_render_section == True
 - `scripts/utils/deep_analysis_material_snapshot.py`
 - `scripts/utils/reporter/sections/deep_analysis_renderer.py`
 - `scripts/utils/reporter/sections/source_intake_evidence_renderer.py`
+- `scripts/utils/report_quality.py`（仅更新 external inline-footnote gate）
+- `scripts/previews/periodic_report_fulltext_preview.py`（仅传入显式 section override）
 
 允许修改 tests：
 
 - `tests/utils/test_deep_analysis_material_snapshot.py`
 - `tests/reporter/test_deep_analysis_renderer.py`
 - `tests/reporter/test_source_intake_evidence_renderer.py`
+- `tests/reporter/test_report_quality.py`
+- `tests/reporter/test_periodic_report_fulltext_preview_script.py`
 - 必要时仅为 assembly 行为断言修改 `tests/reporter/test_assembly_skills.py`
 
 禁止修改：
 
 - annual/broker/external producer、memo producer 和 knowledge notes；
-- `report_quality.py`、profile 判定和 citation allocator；
+- profile 判定和 citation allocator；
 - scoring、target、risk、technical、recommendation；
 - `KnowledgeSynthesizer` 或任何 LLM prompt；
 - data、knowledge、reports。
@@ -196,15 +233,20 @@ runtime 净增目标 `<= +80`，硬停止 `> +140`。tests/docs 不计入 runtim
 ### Read-model
 
 1. snapshot rows 数量和 citation map 在 selection 前后完全不变。
-2. annual 五个 role 按预算选取，排序稳定，未入选 rows 进入 diagnostics。
+2. annual 五个 role 按预算选取，排序 tuple 稳定；存在 portrait candidate 时保留并标记唯一 portrait slot，renderer 不再重选。
 3. 每个 role 候选不足时不填充其他 role，不生成占位 row。
-4. broker attribution diversity first-pass 生效，风险最多两条，renderer 不再 slice。
-5. formal-medium 与 formal-thin 的 external exact body + citation identity dedupe 生效；超过六条的独立 rows 仍全部保留，不被 hard cap 或 fuzzy 误删。
-6. 4.4 只来自已选 annual/broker/external rows。
+4. `annual_selected_count` 保持 admission/dedupe 旧语义；新增 display/hidden diagnostics 与实际 rows 对齐。
+5. broker attribution diversity first-pass 生效，风险最多两条，renderer 不再 slice。
+6. 两个不同 attribution 共享 exact normalized title 时才形成“机构共识”；否则显示“机构关注重点”。
+7. formal-thin forecast range 带 `研报预计` attribution。
+8. MaterialSnapshot 同时保留三套 external projections，但 display 固定优先 narrative → reasoning → topic，只展示一套。
+9. shared external dedupe key 被两条 profile 路径复用；同 key 去重，同源不同 body、同 body 不同来源均保留。
+10. formal-medium 与 formal-thin 超过六条的独立 external rows 全部保留，不被 hard cap 或 fuzzy 误删。
+11. 4.4 只来自已选 rows，按固定 role 优先级选取，排除 portrait，不复写完整 body。
 
 ### Renderer/profile
 
-1. formal-medium 4.1–4.4 使用短段落，不出现目标 table 或 bullet wall。
+1. formal-medium 4.1–4.4 使用短段落，不出现目标 table、bullet wall 或 4.1–4.3 长 body 在 4.4 的重复展开。
 2. formal-thin 通过同一个 `select_annual_display_rows()` 使用 annual editorial rows；4.2/4.3 保留既有来源层、offset 和标题，不要求构造完整 ViewModel。
 3. formal-rich legacy headings/body 不变。
 4. 4.2 所有机构事实/预测保留 attribution。
@@ -212,25 +254,34 @@ runtime 净增目标 `<= +80`，硬停止 `> +140`。tests/docs 不计入 runtim
 6. 新路径不出现 `本节引用来源`，全局来源完整。
 7. visible citations 无 missing、unused、unknown、malformed。
 8. formal-thin 最高 annual ref 被隐藏后，broker/external refs 与 full snapshot offset 保持一致。
+9. 新 external title/body pair 漏掉 inline footnote 时 `curated_external_missing_inline_footnotes` 报 error；正常 pair 与 legacy local-source layout 均通过。
 
 ### Source Intake
 
 1. `source_intake_enabled=True` 但未设置 section flag 时整节不显示。
-2. `source_intake_render_section=True` 时来源概览恢复。
-3. `source_intake_render_details` 仍只控制明细。
-4. assembly renderer order 不变，intake context 不被删除。
+2. `source_intake_config.render_section=True` 时来源概览恢复；顶层 `source_intake_render_section=False` 可以显式覆盖 nested config。
+3. 顶层 `source_intake_render_section=True` 时来源概览恢复。
+4. `source_intake_render_details` 仍只控制明细。
+5. `periodic_report_fulltext_preview.py --source-intake-section` 继续输出整节。
+6. assembly renderer order 不变，intake context 不被删除。
 
 ## 10. Failure Modes
 
 | Failure | Symptom | Gate |
 |---|---|---|
 | display budget 误删源材料 | snapshot/memo rows 数量下降 | snapshot immutability test |
+| business budget 挤掉画像 | 有业务 rows 但“一句话画像”缺失 | portrait reservation test |
 | renderer 仍有第二套 cap | view-model row 可见但成稿丢失 | exact row-to-render integration test |
+| `annual_selected_count` 被静默改义 | diagnostics 与历史契约不兼容 | diagnostics compatibility test |
 | formal-thin 用 selected refs 算 offset | broker/external refs 漂移或碰撞 | highest-hidden-annual-ref test |
 | 移除局部来源后全局来源缺失 | missing/unused/orphan footnotes | citation alignment tests |
+| 移除局部来源后 external 漏挂脚注却 PASS | 变量观点无 `[^n]` 且全局表同步消失 | new-layout inline-footnote gate |
 | broker attribution 丢失 | 机构观点写成官方确认 | attribution gate fixture |
+| 单一机构观点被写成共识 | “机构共识”无两个独立 attribution | exact-title consensus test |
+| 4.4 复写长摘录 | 4.1–4.3 body 在 4.4 再次展开 | no-body-repetition test |
 | external 泄漏 4.1 | 微信/知乎出现在官方区 | source-boundary test |
 | Source Intake 开关误关采集 | ctx/material items 消失 | renderer-only flag test |
+| Source Intake preview 被默认隐藏 | `--source-intake-section` 无正文 | preview regression test |
 | formal-rich 被新排版影响 | 旧标题或 local source list 消失 | formal-rich regression test |
 
 ## 11. Stop Conditions
@@ -259,8 +310,11 @@ runtime 净增目标 `<= +80`，硬停止 `> +140`。tests/docs 不计入 runtim
 Accepted：
 
 - 在现有 `Chapter4ViewModel` 中完成 display budgeting；
+- 在 shared annual selector 中保留并标记 portrait，删除 renderer 二次画像选择；
 - formal-thin offset 继续基于 full snapshot；
-- 新增独立 Source Intake section display flag；
+- external 两条 profile 路径复用 exact body + citation identity key，不设 hard cap；
+- 4.4 使用固定 selected-row priority，只展示变量与条件，不复写长摘录；
+- 新增独立 Source Intake section display flag，并保留正式 config 与 preview 的显式恢复路径；
 - 新路径移除重复局部来源表。
 
 Rejected：
