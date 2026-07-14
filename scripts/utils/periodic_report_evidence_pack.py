@@ -9,18 +9,10 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
-if __name__.startswith("utils."):
-    from .annual_argument_schema import (
-        CANONICAL_FAMILIES,
-        canonical_family_for_usage,
-        is_high_value_narrative_usage,
-    )
+if __package__:
+    from .annual_argument_schema import CANONICAL_FAMILIES, canonical_family_for_usage, is_high_value_narrative_usage
 else:
-    from annual_argument_schema import (
-        CANONICAL_FAMILIES,
-        canonical_family_for_usage,
-        is_high_value_narrative_usage,
-    )
+    from annual_argument_schema import CANONICAL_FAMILIES, canonical_family_for_usage, is_high_value_narrative_usage
 
 
 SCHEMA_VERSION = "periodic_report_evidence_pack.v1"
@@ -1125,7 +1117,7 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         "product_capacity_profile": 24,
         "sales_certification_model": 8,
         "market_demand_outlook": 14,
-        "competitive_position": 12,
+        "competitive_position": 20,
         "future_strategy": 16,
         "profitability_commentary": 18,
         "rd_product_progress": 16,
@@ -1603,32 +1595,15 @@ def _trim_block_text(block: Dict[str, Any], max_chars: int) -> Dict[str, Any]:
 def _document_style(text: str, report_type: str) -> str:
     if _looks_like_hk_report(text):
         return "hkex_annual"
-    if report_type in {"annual", "annual_report"} and any(
-        token in text for token in ("管理层讨论与分析", "报告期内公司", "年度报告全文")
-    ):
-        return "a_share_annual"
-    return "unknown"
+    return "a_share_annual" if report_type in {"annual", "annual_report"} and any(token in text for token in ("管理层讨论与分析", "报告期内公司", "年度报告全文")) else "unknown"
 
 
 def _has_complete_narrative_clause(text: str) -> bool:
-    compact = re.sub(r"\s+", "", str(text or ""))
-    if len(compact) < 24:
-        return False
-    return any(len(clause.strip()) >= 24 for clause in re.split(r"[。；;]", compact))
+    return any(len(clause.strip()) >= 24 for clause in re.split(r"[。；;]", re.sub(r"\s+", "", str(text or ""))))
 
 
 def _reserved_narrative_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    reserved = []
-    for family in CANONICAL_FAMILIES:
-        for block in blocks:
-            if canonical_family_for_usage(block.get("usage")) != family:
-                continue
-            if not is_high_value_narrative_usage(block.get("usage")):
-                continue
-            if _has_complete_narrative_clause(block.get("text", "")):
-                reserved.append(block)
-                break
-    return reserved
+    return [block for family in CANONICAL_FAMILIES if (block := next((block for block in blocks if canonical_family_for_usage(block.get("usage")) == family and is_high_value_narrative_usage(block.get("usage")) and _has_complete_narrative_clause(block.get("text", ""))), None)) is not None]
 
 
 def _select_bounded_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:

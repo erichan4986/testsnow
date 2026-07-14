@@ -41,6 +41,76 @@ def test_minimal_quality_report_passes():
     assert result.issues == []
 
 
+def test_deep_report_empty_executive_summary_body_fails():
+    text = """# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+
+### 核心投资论点
+
+**基本面判断**：
+
+**估值与业绩预期**：
+
+**交易状态与风险**：
+
+> **一句话结论**：
+
+### 多空论点对比
+
+![多空图](chart.png)
+
+## 一、综合评分与推荐
+"""
+    result = check_report_text(text)
+    issue = next(i for i in result.issues if i.code == "empty_executive_summary_body")
+    assert issue.severity == "error"
+
+
+def test_deep_report_missing_executive_summary_fails():
+    text = """# 测试股 舆情深度报告
+
+## 一、综合评分与推荐
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+"""
+    result = check_report_text(text)
+    issue = next(i for i in result.issues if i.code == "empty_executive_summary_body")
+    assert issue.severity == "error"
+
+
+def test_deep_report_deterministic_executive_summary_body_passes_gate():
+    text = """# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+
+### 核心投资论点
+
+**基本面判断**：当前基本面评分为 6/10。
+
+## 一、综合评分与推荐
+"""
+    result = check_report_text(text)
+    assert "empty_executive_summary_body" not in {i.code for i in result.issues}
+
+
+def test_lightweight_report_is_outside_executive_summary_body_contract():
+    text = """# 测试股
+
+## 执行摘要
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+
+## 技术面分析
+"""
+    result = check_report_text(text)
+    assert "empty_executive_summary_body" not in {i.code for i in result.issues}
+
+
 def test_material_snapshot_unresolved_ref_fails():
     fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
     result = check_report_text(
@@ -225,6 +295,10 @@ def test_weak_trend_high_score_contradiction_fails():
 def test_blocked_entry_strong_recommendation_warns():
     text = """
 # 圣邦股份 舆情深度报告
+
+## 执行摘要
+
+**基本面判断**：当前基本面评分为 6/10。
 
 ## 一、综合评分与推荐
 

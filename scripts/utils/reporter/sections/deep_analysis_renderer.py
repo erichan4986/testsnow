@@ -12,6 +12,7 @@ try:
         build_chapter4_view_model,
         build_deep_analysis_material_snapshot,
         citation_identity,
+        select_annual_display_rows,
     )
     from ...synthesis_credit import sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -25,6 +26,7 @@ except ImportError:
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
             citation_identity,
+            select_annual_display_rows,
         )
         from scripts.utils.synthesis_credit import sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -37,6 +39,7 @@ except ImportError:
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
             citation_identity,
+            select_annual_display_rows,
         )
         from utils.synthesis_credit import sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -129,6 +132,8 @@ class DeepAnalysisRenderer:
         material_snapshot = None
         annual_memo = {}
         broker_memo = {}
+        annual_material_rows = ()
+        annual_material_citations = {}
         annual_citation_offset = chapter4_citation_offset
         broker_citation_offset = chapter4_citation_offset
         external_citation_offset = chapter4_citation_offset
@@ -145,6 +150,10 @@ class DeepAnalysisRenderer:
             annual_memo = ctx.get("annual_report_memo") or {}
             broker_memo = ctx.get("broker_research_memo") or {}
             material_snapshot = self._material_snapshot(ctx, True)
+            annual_material_rows, _ = select_annual_display_rows(
+                row for row in material_snapshot.rows if row.source_layer == "annual"
+            )
+            annual_material_citations = material_snapshot.citations
             broker_citation_offset = annual_citation_offset + self._max_snapshot_ref(material_snapshot, {"annual"})
             external_citation_offset = annual_citation_offset + self._max_snapshot_ref(
                 material_snapshot,
@@ -161,6 +170,8 @@ class DeepAnalysisRenderer:
             annual_citation_offset=annual_citation_offset,
             broker_citation_offset=broker_citation_offset,
             external_citation_offset=external_citation_offset,
+            annual_material_rows=annual_material_rows,
+            annual_material_citations=annual_material_citations,
         )
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), ctx.get("stock_name", ""))
         deep_md = _sanitize_pe_spread_in_text(deep_md, pe_facts, ctx.get("stock_name", ""))
@@ -317,6 +328,8 @@ class DeepAnalysisRenderer:
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
         external_citation_offset: int = 0,
+        annual_material_rows: tuple[MaterialRow, ...] = (),
+        annual_material_citations: Dict[int, Any] | None = None,
     ) -> str:
         """
         深度分析板块：根据 evidence profile 渲染不同布局。
@@ -350,6 +363,8 @@ class DeepAnalysisRenderer:
                 annual_citation_offset=annual_citation_offset,
                 broker_citation_offset=broker_citation_offset,
                 external_citation_offset=external_citation_offset,
+                annual_material_rows=annual_material_rows,
+                annual_material_citations=annual_material_citations or {},
             ))
         else:
             lines.extend(self._thin_all_body(ctx))
@@ -466,10 +481,13 @@ class DeepAnalysisRenderer:
         citations = view_model.citations
 
         lines.extend(["### 4.1 官方材料确认：业务与财务基座", ""])
-        lines.extend(self._formal_medium_official_material_section(
+        lines.extend(self._annual_material_profile_section(
             view_model.section("4.1").rows,
             citations,
             citation_offset,
+            fallback="当前未取得足够官方材料，无法形成业务与财务基座。",
+            include_confirmed_financial_rows=True,
+            financial_label="财务基座",
         ))
 
         lines.extend(["### 4.2 机构观点与盈利假设", ""])
@@ -505,13 +523,17 @@ class DeepAnalysisRenderer:
         ))
         return lines
 
-    def _formal_medium_official_material_section(
+    def _annual_material_profile_section(
         self,
         material_rows: tuple[MaterialRow, ...],
         citations: Dict[int, Any],
         citation_offset: int = 0,
+        *,
+        fallback: str,
+        include_confirmed_financial_rows: bool = True,
+        financial_label: str = "财务变化原因",
     ) -> List[str]:
-        """Render official materials without dumping raw excerpts verbatim."""
+        """Format already-selected annual MaterialRows for Chapter 4.1."""
         sections = {"confirmed": [], "annual_report_explanation": []}
         for material_row in material_rows:
             row = {
@@ -519,15 +541,16 @@ class DeepAnalysisRenderer:
                 "body": material_row.body,
                 "display_group": material_row.render_role,
                 "citation_refs": list(material_row.citation_refs),
+                "argument_complete": material_row.argument_complete,
             }
             section = "confirmed" if material_row.claim_status == "formal_fact" else "annual_report_explanation"
             sections[section].append(row)
         return self._annual_report_business_profile_section(
             {"status": "ready" if material_rows else "absent", "sections": sections, "citations": citations},
             citation_offset,
-            fallback="当前未取得足够官方材料，无法形成业务与财务基座。",
-            include_confirmed_financial_rows=True,
-            financial_label="财务基座",
+            fallback=fallback,
+            include_confirmed_financial_rows=include_confirmed_financial_rows,
+            financial_label=financial_label,
         )
 
     def _formal_medium_broker_assumption_section(
@@ -641,13 +664,7 @@ class DeepAnalysisRenderer:
         annual_row = next((row for row in material_rows if row.source_layer == "annual"), None)
         if annual_row:
             refs = [ref + citation_offset for ref in annual_row.citation_refs]
-            cleaned = self._clean_formal_medium_official_row({
-                "title": annual_row.title,
-                "body": annual_row.body,
-                "display_group": annual_row.render_role,
-                "citation_refs": list(annual_row.citation_refs),
-            })
-            text = str((cleaned or {}).get("body") or annual_row.body)
+            text = annual_row.body
             used.update(refs)
             variable = self._material_key_variable(annual_row, "业务覆盖 / 产品线")
             evidence = attach_refs_to_sentence(self._compact_annual_text(text, 150), refs)
@@ -729,15 +746,21 @@ class DeepAnalysisRenderer:
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
         external_citation_offset: int | None = None,
+        annual_material_rows: tuple[MaterialRow, ...] = (),
+        annual_material_citations: Dict[int, Any] | None = None,
     ) -> List[str]:
         """Render formal-thin layout: annual memo + broker placeholder + external map + checklist."""
         lines: List[str] = []
         profile = ctx.get("deep_analysis_evidence_profile") or {}
 
         if profile.get("formal_thin_layout_variant") == "annual_broker_external_checklist":
-            memo = ctx.get("annual_report_memo") or {}
             lines.extend(["### 4.1 年报经营摘要", ""])
-            lines.extend(self._annual_report_memo_section(memo, annual_citation_offset))
+            lines.extend(self._annual_material_profile_section(
+                annual_material_rows,
+                annual_material_citations,
+                annual_citation_offset,
+                fallback="当前未取得足够年报材料，无法形成年报经营摘要。",
+            ))
             lines.extend(["### 4.2 研报观点与假设", ""])
             broker_memo = ctx.get("broker_research_memo") or {}
             lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
@@ -847,14 +870,6 @@ class DeepAnalysisRenderer:
         ])
         return lines
 
-    def _annual_report_memo_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
-        """Render annual memo subsections: confirmed, explanation, not_disclosed, inconclusive."""
-        return self._annual_report_business_profile_section(
-            memo,
-            citation_offset,
-            fallback="当前未取得足够年报材料，无法形成年报经营摘要。",
-        )
-
     def _annual_report_business_profile_section(
         self,
         memo: Dict[str, Any],
@@ -873,12 +888,9 @@ class DeepAnalysisRenderer:
             return [fallback, ""]
 
         explanation_rows = [
-            row for row in (
-                self._clean_formal_medium_official_row(r)
-                for r in (secs.get("annual_report_explanation") or [])
-                if isinstance(r, dict)
-            )
-            if row
+            dict(row)
+            for row in (secs.get("annual_report_explanation") or [])
+            if isinstance(row, dict) and str(row.get("body") or "").strip()
         ]
         confirmed_rows = [
             r for r in (secs.get("confirmed") or [])
@@ -886,21 +898,18 @@ class DeepAnalysisRenderer:
         ]
 
         product_rows = self._annual_rows_by_group(explanation_rows, "business_structure")
-        portrait_row = self._select_annual_portrait_row(product_rows) if product_rows else (confirmed_rows[0] if confirmed_rows else None)
+        operating_rows = self._annual_rows_by_group(explanation_rows, "operating_progress")
+        technology_rows = self._annual_rows_by_group(explanation_rows, "technology_product_progress")
+        portrait_row = self._select_annual_portrait_row(product_rows) or self._select_annual_portrait_row(operating_rows)
+        portrait_row = portrait_row or self._select_annual_portrait_row(technology_rows)
         if portrait_row:
             refs = self._display_refs(portrait_row, citation_offset)
             used.update(refs)
             portrait = self._compact_annual_text(str(portrait_row.get("body") or ""), 140)
             lines.extend(["**一句话画像**", f"- {attach_refs_to_sentence(portrait, refs)}", ""])
 
-        seen_business_keys = {self._annual_row_text_key(portrait_row)} if portrait_row else set()
-        business_rows: List[Dict[str, Any]] = []
-        for row in product_rows:
-            key = self._annual_row_text_key(row)
-            if key in seen_business_keys:
-                continue
-            seen_business_keys.add(key)
-            business_rows.append(row)
+        portrait_key = self._annual_row_text_key(portrait_row) if portrait_row else ""
+        seen_display_keys = {portrait_key} if portrait_key else set()
         financial_rows = [
             row for row in self._annual_rows_by_group(explanation_rows, "financial_quality_explanation")
             if self._is_financial_explanation_row(row)
@@ -908,13 +917,20 @@ class DeepAnalysisRenderer:
         if include_confirmed_financial_rows:
             financial_rows.extend(confirmed_rows)
         groups = (
-            ("业务结构", business_rows),
-            ("经营变化", self._annual_rows_by_group(explanation_rows, "operating_progress") + self._annual_rows_by_group(explanation_rows, "market_competition_outlook")),
-            ("研发与产品进展", self._annual_rows_by_group(explanation_rows, "technology_product_progress")),
+            ("业务结构", product_rows),
+            ("经营变化", operating_rows + self._annual_rows_by_group(explanation_rows, "market_competition_outlook")),
+            ("研发与产品进展", technology_rows),
             (financial_label, financial_rows),
         )
         for label, rows in groups:
-            rows = [row for row in rows if str(row.get("body") or "").strip()]
+            visible_rows = []
+            for row in rows:
+                key = self._annual_row_text_key(row)
+                if not key or key in seen_display_keys:
+                    continue
+                seen_display_keys.add(key)
+                visible_rows.append(row)
+            rows = visible_rows
             if not rows:
                 continue
             lines.append(f"**{label}**")
@@ -1044,7 +1060,7 @@ class DeepAnalysisRenderer:
     def _annual_row_text_key(row: Dict[str, Any] | None) -> str:
         if not isinstance(row, dict):
             return ""
-        return re.sub(r"\s+", "", str(row.get("body") or ""))[:80]
+        return re.sub(r"\s+", "", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))
 
     @staticmethod
     def _is_financial_explanation_row(row: Dict[str, Any]) -> bool:
@@ -1067,11 +1083,12 @@ class DeepAnalysisRenderer:
 
     @staticmethod
     def _select_annual_portrait_row(rows: List[Dict[str, Any]]) -> Dict[str, Any] | None:
+        rows = [row for row in rows if (re.search(r"[。！？；;]$", str(row.get("body") or "").strip()) or re.search(r"(?:客户|市场|领域|需求|解决方案|产品线|业务)$", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))) and re.search(r"(?:主营业务|主要业务|增长主线|是一家从事|公司.{0,12}(?:从事|建立|开发)|报告期内，公司)", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))]
         if not rows:
             return None
 
         def score(row: Dict[str, Any]) -> int:
-            body = str(row.get("body") or "")
+            body = DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or ""))
             value = 0
             if "公司" in body:
                 value += 3
@@ -1121,7 +1138,7 @@ class DeepAnalysisRenderer:
             break
         if kept:
             return kept.strip(" ；;。")
-        return cleaned[:limit].rstrip(" ，,；;。")
+        return chunks[0].strip(" ；;。") if chunks else cleaned
 
     @staticmethod
     def _compact_external_text(text: str, limit: int = 380) -> str:
@@ -1148,37 +1165,6 @@ class DeepAnalysisRenderer:
             self._frame_external_claim(self._compact_external_text(text, limit)),
             refs,
         )
-
-    @staticmethod
-    def _clean_formal_medium_official_row(row: Dict[str, Any]) -> Dict[str, Any] | None:
-        body = str(row.get("body") or "").strip()
-        if not body:
-            return None
-        body = re.sub(r"公司需遵守《[^》]+》[^。；，,]*披露要求[，,。；]*", "", body)
-        body = re.sub(r"需遵守《[^》]+》[^。；，,]*披露要求[，,。；]*", "", body)
-        body = re.sub(r"公司需遵守[^。；，,]*披露要求[，,。；]*", "", body)
-        body = body.replace("报告期内公司从事的主要业务公司主营业务", "公司主营业务")
-        body = body.replace("报告期内公司从事的主要业务", "")
-        body = re.sub(r"^\d+[、.]\s*(?:主要业务|主要产品及服务情况)\s*", "", body)
-        body = re.sub(r"^\d+(?:\.\d+)+\s*[^，。；;]{1,20}\s*", "", body)
-        body = re.sub(r"^（?[^）]{1,20}）?芯片\s*\d+[、.]\s*", "", body)
-        body = body.replace("报告期内获得的研发成果截至", "截至")
-        body = re.sub(r"\s+", " ", body).strip(" ，,；;。")
-        if not body:
-            return None
-        if any(term in body for term in ("采购模式", "经营模式", "直接销售模式", "代理销售")):
-            prefix = re.split(r"采购模式|经营模式|直接销售模式|代理销售", body, maxsplit=1)[0]
-            prefix = prefix.strip(" ，,；;。")
-            business_signals = (
-                "主营业务", "产品", "设备", "客户", "研发", "生产", "制造", "销售", "提供", "服务", "产品线",
-            )
-            if len(prefix) >= 12 and any(term in prefix for term in business_signals):
-                body = prefix
-            else:
-                return None
-        cleaned = dict(row)
-        cleaned["body"] = body
-        return cleaned
 
     def _formal_summary_section(self, ctx: Dict[str, Any]) -> List[str]:
         """Build 4.1 formal-only summary blocks."""

@@ -108,6 +108,135 @@ def build_deep_analysis_material_snapshot(ctx: Mapping[str, Any]) -> MaterialSna
     )
 
 
+def select_annual_display_rows(
+    rows: Iterable[MaterialRow],
+) -> tuple[Tuple[MaterialRow, ...], Dict[str, Any]]:
+    """Project complete annual rows into the Chapter 4 display subset."""
+    candidates = tuple(row for row in rows if row.source_layer == "annual" and row.claim_status in {"formal_fact", "formal_explanation"})
+    selected = []
+    rejected: Dict[str, int] = {}
+    for row in candidates:
+        projected, reason = _project_annual_display_row(row)
+        if projected is None:
+            rejected[reason] = rejected.get(reason, 0) + 1
+            continue
+        selected.append(projected)
+
+    deduped, deduped_count, dedupe_reasons = _dedupe_annual_display_rows(selected)
+    for reason, count in dedupe_reasons.items():
+        rejected[reason] = rejected.get(reason, 0) + count
+    return deduped, {
+        "annual_candidates_count": len(candidates),
+        "annual_selected_count": len(deduped),
+        "annual_rejected_by_reason": rejected,
+        "annual_deduped_count": deduped_count,
+    }
+
+
+def _project_annual_display_row(row: MaterialRow) -> tuple[MaterialRow | None, str]:
+    if not row.body or not row.citation_refs:
+        return None, "empty"
+    kept = []
+    reasons = []
+    for segment in re.split(r"(?<=[。！？；;])", row.body):
+        segment = re.sub(r"^(?:\d+[、.]\s*(?:主要业务|主要产品及服务情况)\s*|\d+(?:\.\d+)+\s*[^，。；;\d]{1,20}\s+(?=\S)|（?[^）]{1,20}）?芯片\s*\d+[、.]\s*|(?:报告期内公司从事的主要业务)?公司需遵守《[^》]+》[^。；，,]*披露要求[，,]*(?=公司(?:主营|主要业务|产品)))", "", segment)
+        if not segment:
+            reasons.append("disclosure_or_governance")
+            continue
+        routine_marker = next((term for term in ("采购模式", "生产模式", "经营模式", "销售模式", "代理销售", "认证程序", "生产流程") if term in segment), None)
+        if routine_marker:
+            prefix = segment.split(routine_marker, 1)[0].strip(" ，,；;。")
+            if prefix and any(term in prefix for term in ("主营业务", "产品", "客户", "设备", "服务", "研发")):
+                segment = prefix
+        reason = _annual_segment_rejection_reason(segment, row.render_role)
+        is_titled_financial_fact = (
+            row.claim_status == "formal_fact"
+            and re.fullmatch(r"\d[\d,，.]*(?:%|％|亿元|万元|亿|万)", re.sub(r"\s+", "", segment))
+            and any(term in row.title for term in ("收入", "营收", "利润", "毛利率", "费用", "现金流", "存货"))
+        )
+        if reason and not is_titled_financial_fact:
+            reasons.append(reason)
+            continue
+        if re.sub(r"\s+", "", segment) not in {re.sub(r"\s+", "", part) for part in kept}:
+            kept.append(segment)
+    if not kept:
+        return None, reasons[0] if reasons else "role_mismatch"
+    projected_body = "".join(part if not index or kept[index - 1][-1:] in "。！？；;" else f"。{part}" for index, part in enumerate(kept)).strip()
+    if not projected_body:
+        return None, "empty"
+    if projected_body == row.body:
+        return row, ""
+    return replace(row, body=projected_body, text=f"{row.title}：{projected_body}" if row.title else projected_body), ""
+
+
+def _annual_segment_rejection_reason(segment: str, role: str) -> str:
+    compact = re.sub(r"\s+", "", segment)
+    if not compact:
+        return "empty"
+    if "我们认为" in compact and "财务报表" in compact and "公允反映" in compact:
+        return "audit_boilerplate"
+    if (
+        "公司需遵守" in compact
+        or "披露要求" in compact
+        or "机构独立情况" in compact
+        or any(term in compact for term in ("供应商遴选", "本承诺函", "同业竞争", "保证独立性", "自主经营能力", "香港联交所", "无从事与本公司相同或相近的业务"))
+        or (any(term in compact for term in ("同业竞争", "关联交易", "资金占用")) and "承诺" in compact)
+    ):
+        return "disclosure_or_governance"
+    if compact.startswith(">") or "|" in compact or "年度报告全文" in compact or "http://" in compact or "https://" in compact or re.match(r"^\d+[、.]\s*.{0,24}(?:风险|关税政策变化)", compact):
+        return "document_or_heading_noise"
+    if compact.endswith(("、", ":", "：", "…", "...")) or compact.startswith(("方面，", "其中，", "此外，", "核心竞争力，", "并在", "与世界")) or ("知识产权列表" in compact and "申请数" in compact):
+        return "document_or_heading_noise"
+    if len(compact) <= 16 and not any(term in compact for term in ("公司", "产品", "客户", "收入", "增长", "研发")):
+        return "document_or_heading_noise"
+
+    progress = ("报告期内", "实现", "增长", "下降", "出货", "导入", "进入", "量产", "拓展", "提升", "改善", "推出", "发布", "验证", "新增", "覆盖")
+    linked = ("公司", "本集团", "管理层", "报告期内", "营收", "出货", "销量", "客户导入", "销售增长", "销售下滑")
+    if any(term in compact for term in ("采购模式", "生产模式", "经营模式", "销售模式", "代理销售", "认证程序", "生产流程")):
+        if "没有发生变化" in compact or not any(term in compact for term in progress + ("竞争优势", "财务", "利润", "毛利率")):
+            return "routine_process"
+    if any(term in compact for term in ("供应商认证", "客户认证", "供应商选择", "采购控制程序", "产品代码")) and not any(term in compact for term in progress):
+        return "routine_process"
+
+    spec_tokens = re.findall(r"(?:IEEE|MSA|QSFP|OSFP|CMIS|\b\d+(?:\.\d+)?[GMTK]?\b)", segment)
+    if len(spec_tokens) >= 3 and not any(term in compact for term in progress + ("客户", "应用", "技术路线")):
+        return "catalog_without_business_value"
+
+    generic_industry = ("预测", "市场规模", "年均复合", "行业发展", "技术门槛", "技术壁垒", "全球市场", "全球宏观经济", "中国半导体", "海关总署", "国内互联网厂商", "国内芯片设计企业", "中国企业")
+    if (role == "market_competition_outlook" or any(term in compact for term in generic_industry)) and not any(term in compact for term in linked):
+        return "generic_industry_context"
+
+    terms = {
+        "business_structure": ("公司", "主营", "主要业务", "产品", "客户", "应用", "服务于", "从事", "平台", "增长"),
+        "operating_progress": progress,
+        "market_competition_outlook": ("公司", "管理层", "竞争", "战略", "需求", "行业地位", "市场份额", "产品", "应用"),
+        "technology_product_progress": ("研发", "推出", "发布", "量产", "验证", "技术", "平台", "产品", "投入", "迭代"),
+        "financial_quality_explanation": ("收入", "营收", "利润", "毛利率", "费用", "现金流", "存货", "主要系", "变化原因", "所致"),
+    }.get(str(role or ""), linked + ("收入", "营收", "利润", "毛利率", "费用", "现金流", "存货"))
+    return "" if any(term in compact for term in terms) else "role_mismatch"
+
+
+def _dedupe_annual_display_rows(
+    rows: Iterable[MaterialRow],
+) -> tuple[Tuple[MaterialRow, ...], int, Dict[str, int]]:
+    kept = []
+    reasons: Dict[str, int] = {}
+    for row in rows:
+        body_key = re.sub(r"\s+", "", row.body).strip("。；;")
+        for index, previous in enumerate(kept):
+            previous_key = re.sub(r"\s+", "", previous.body).strip("。；;")
+            if not body_key or not (body_key == previous_key or (previous.render_role == row.render_role and (body_key in previous_key or previous_key in body_key))):
+                continue
+            reason = "duplicate_exact" if body_key == previous_key else "duplicate_contained"
+            reasons[reason] = reasons.get(reason, 0) + 1
+            if len(body_key) > len(previous_key):
+                kept[index] = row
+            break
+        else:
+            kept.append(row)
+    return tuple(kept), sum(reasons.values()), reasons
+
+
 def build_chapter4_view_model(
     snapshot: MaterialSnapshot,
     profile: Mapping[str, Any] | str,
@@ -118,10 +247,7 @@ def build_chapter4_view_model(
         raise ValueError(f"Chapter4ViewModel V1 only supports formal_medium, got {profile_name!r}")
 
     usable_rows = tuple(row for row in snapshot.rows if row.text and row.citation_refs)
-    annual_rows = tuple(
-        row for row in usable_rows
-        if row.source_layer == "annual" and row.claim_status in {"formal_fact", "formal_explanation"}
-    )
+    annual_rows, annual_selection_diagnostics = select_annual_display_rows(usable_rows)
     broker_rows = tuple(row for row in usable_rows if row.source_layer == "broker" and row.attribution)
     external_rows = tuple(
         _dedupe_row_refs_by_citation_identity(row, snapshot.citations)
@@ -131,14 +257,18 @@ def build_chapter4_view_model(
         and not row.risk_score_eligible
     )
     complete_annual_rows = tuple(row for row in annual_rows if row.argument_complete)
+    annual_roles = (
+            "business_structure",
+            "operating_progress",
+            "market_competition_outlook",
+            "technology_product_progress",
+            "financial_quality_explanation",
+        )
+    annual_price_row = _first_row_by_role(complete_annual_rows, annual_roles, fallback=False)
+    annual_price_row = annual_price_row or _first_row_by_role(annual_rows, annual_roles, fallback=False)
     price_path_rows = tuple(
         row for row in (
-            _first_row_by_role(complete_annual_rows, (
-                "business_structure",
-                "operating_progress",
-                "market_competition_outlook",
-                "technology_product_progress",
-            )),
+            annual_price_row,
             _first_row_by_role(broker_rows, ("broker_assumption", "broker_forecast")),
             external_rows[0] if external_rows else None,
         )
@@ -172,11 +302,10 @@ def build_chapter4_view_model(
         if ref in snapshot.citations
     }
     diagnostics = dict(snapshot.diagnostics)
-    diagnostics.update({
-        "profile": profile_name,
-        "visible_rows_count": sum(len(section.rows) for section in sections[:3]),
-        "visible_citation_count": len(citations),
-    })
+    diagnostics.update(annual_selection_diagnostics,
+                       profile=profile_name,
+                       visible_rows_count=sum(len(section.rows) for section in sections[:3]),
+                       visible_citation_count=len(citations))
     return Chapter4ViewModel(profile_name, sections, citations, diagnostics)
 
 
@@ -349,12 +478,15 @@ def _row_diagnostics(row: Mapping[str, Any]) -> Tuple[Tuple[str, str], ...]:
     return tuple((key, str(row.get(key))) for key in keys if row.get(key) not in (None, ""))
 
 
-def _first_row_by_role(rows: Iterable[MaterialRow], roles: Iterable[str]) -> MaterialRow | None:
+def _first_row_by_role(
+    rows: Iterable[MaterialRow],
+    roles: Iterable[str],
+    *,
+    fallback: bool = True,
+) -> MaterialRow | None:
     row_list = tuple(rows)
-    return next(
-        (row for role in roles for row in row_list if row.render_role == role),
-        row_list[0] if row_list else None,
-    )
+    match = next((row for role in roles for row in row_list if row.render_role == role), None)
+    return match or (row_list[0] if fallback and row_list else None)
 
 
 def _dedupe_row_refs_by_citation_identity(

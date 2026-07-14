@@ -11,28 +11,19 @@ import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
-if __name__.startswith("utils."):
+if __package__:
     from .source_adapter import SynthesisItem
-    from .annual_argument_schema import (
-        CARD_SCHEMA_VERSION,
-        adapt_v1_card,
-        has_concrete_annual_anchor,
-        normalize_annual_source_text,
-        validate_card_v2,
-    )
+    from .annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail, validate_card_v2
+    from .annual_argument_schema import has_concrete_annual_anchor, normalize_annual_source_text
 else:
     from source_adapter import SynthesisItem
-    from annual_argument_schema import (
-        CARD_SCHEMA_VERSION,
-        adapt_v1_card,
-        has_concrete_annual_anchor,
-        normalize_annual_source_text,
-        validate_card_v2,
-    )
+    from annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail, validate_card_v2
+    from annual_argument_schema import has_concrete_annual_anchor, normalize_annual_source_text
 
 
 SCHEMA_VERSION = "annual_report_material_pack.v1"
 NARRATIVE_CARD_SOURCE_TYPE = "periodic_report_narrative_evidence"
+_V1_DIAGNOSTIC_KEYS = ("v1_exact_shadowed_count", "v1_unit_covered_count", "v1_needs_recovery_count", "v1_adapter_use_count", "v1_covered_fragment_count", "v1_actionable_needs_recovery_count", "v1_invalid_legacy_fragment_count", "v1_duplicate_legacy_fragment_count")
 
 # Default high-interest terms for diagnostics. These are examples / cross-domain
 # signals, not a company-specific whitelist or dominant ranking feature.
@@ -160,30 +151,46 @@ def build_annual_report_material_pack(
 
     cards_seen = len(records)
     v2_records = [record for record in records if record.is_v2]
+    v2_identity_keys = {key for record in v2_records for key in _record_identity_keys(record)}
     adapted_legacy: List[_CardRecord] = []
-    diagnostics_counts: Dict[str, int] = {
-        "v1_exact_shadowed_count": 0,
-        "v1_unit_covered_count": 0,
-        "v1_needs_recovery_count": 0,
-        "v1_adapter_use_count": 0,
-    }
+    diagnostics_counts = dict.fromkeys(_V1_DIAGNOSTIC_KEYS, 0)
     v1_recovery_examples: List[Dict[str, Any]] = []
+    seen_actionable_fragments: Set[str] = set()
     for record in records:
         if record.is_v2:
             continue
-        classification, detail = _coverage_classification(record, v2_records)
-        if classification == "exact_shadowed":
+        if _record_identity_keys(record) & v2_identity_keys:
             diagnostics_counts["v1_exact_shadowed_count"] += 1
             diagnostics_counts["v1_unit_covered_count"] += 1
             continue
-        if classification == "covered_by_v2_units":
-            diagnostics_counts["v1_unit_covered_count"] += 1
+        fragments = _classify_legacy_fragments(record.excerpt, record.source_block_id, v2_records)
+        actionable = []
+        for fragment in fragments:
+            status = fragment["status"]
+            if status == "covered":
+                diagnostics_counts["v1_covered_fragment_count"] += 1
+                continue
+            if status == "invalid_legacy":
+                diagnostics_counts["v1_invalid_legacy_fragment_count"] += 1
+                continue
+            key = f"{record.source_block_id}\0{fragment['normalized']}"
+            if key in seen_actionable_fragments:
+                diagnostics_counts["v1_duplicate_legacy_fragment_count"] += 1
+                continue
+            seen_actionable_fragments.add(key)
+            actionable.append(fragment)
+        if not actionable:
+            diagnostics_counts["v1_unit_covered_count"] += int(any(
+                fragment["status"] == "covered" for fragment in fragments
+            ))
             continue
-        diagnostics_counts["v1_needs_recovery_count"] += 1
-        for fragment in detail.get("fragments", [])[:2]:
-            v1_recovery_examples.append(fragment)
+        diagnostics_counts["v1_actionable_needs_recovery_count"] += len(actionable)
+        diagnostics_counts["v1_needs_recovery_count"] += len(actionable)
+        v1_recovery_examples.append({"fragment": actionable[0]["original"]})
         try:
-            adapted = adapt_v1_card(record.card)
+            legacy_card = dict(record.card)
+            legacy_card["source_excerpt"] = "".join(fragment["original"] for fragment in actionable)
+            adapted = adapt_v1_card(legacy_card)
         except (TypeError, ValueError):
             continue
         adapted_legacy.append(_record_from_card(record.path, adapted, is_v2=False))
@@ -274,10 +281,7 @@ def _empty_pack(stock_name: str) -> Dict[str, Any]:
             "cards_selected": 0,
             "by_family_seen": {},
             "by_family_selected": {},
-            "v1_exact_shadowed_count": 0,
-            "v1_unit_covered_count": 0,
-            "v1_needs_recovery_count": 0,
-            "v1_adapter_use_count": 0,
+            **dict.fromkeys(_V1_DIAGNOSTIC_KEYS, 0),
             "v1_recovery_examples": [],
         },
     }
@@ -607,131 +611,85 @@ def _deduplicate_records(records: List[_CardRecord]) -> List[_CardRecord]:
 
 
 def _record_identity_keys(record: _CardRecord) -> Set[str]:
-    card = record.card
-    keys = set()
-    card_id = str(card.get("card_id") or "").strip()
-    source_block_id = str(card.get("source_block_id") or "").strip()
-    if card_id:
-        keys.add(f"card:{card_id}")
-    if source_block_id:
-        keys.add(f"source:{source_block_id}:{normalize_annual_source_text(record.excerpt)}")
-    return keys
+    card_id = str(record.card.get("card_id") or "").strip()
+    return {f"card:{card_id}"} if card_id else set()
 
 
-def _v2_identity_keys(v2_records: List[_CardRecord]) -> Set[str]:
-    return {key for record in v2_records for key in _record_identity_keys(record)}
+_ACTIONABLE_SHORT_RELATIONS = (
+    "量产", "量產", "验证", "驗證", "认证", "認證", "交付", "供货", "供貨", "导入", "導入",
+    "定点", "定點", "发布", "發佈", "签订合同", "簽訂合同", "回款", "采购", "採購", "销售", "銷售",
+    "出货", "出貨", "投产", "主要系", "由于", "由於", "所致", "因此", "从而",
+)
+_TABLE_HEADERS = ("项目", "单位", "变动比例", "研发人员", "期初", "期末", "学历", "年龄构成", "资本化")
+_FRAGMENT_ENDINGS = ("及", "和", "或", "、", "，", ":", "：", "项目", "方面", "比例")
 
 
-def _coverage_classification(
-    legacy: _CardRecord, v2_records: List[_CardRecord]
-) -> Tuple[str, Dict[str, Any]]:
-    if _record_identity_keys(legacy) & _v2_identity_keys(v2_records):
-        return "exact_shadowed", {}
-    fragments = _meaningful_legacy_fragments(legacy.excerpt)
-    if not fragments:
-        return "needs_recovery", {"fragments": []}
-    proof = _cover_fragments_with_units(fragments, legacy.source_block_id, v2_records)
-    if proof is not None:
-        return "covered_by_v2_units", {"unit_ids": proof}
-    return "needs_recovery", {
-        "fragments": _uncovered_fragments(fragments, legacy.source_block_id, v2_records)
-    }
+def _classify_legacy_fragments(excerpt: str, source_block_id: str, v2_records: List[_CardRecord]) -> List[Dict[str, Any]]:
+    text = normalize_annual_source_text(excerpt)
+    tail = annual_source_tail(text)
+    fragments = [tail] if tail else [match.group(0).strip() for match in re.finditer(r".+?(?:[。；;！？!?]|$)", text)]
+    result = []
+    for raw_fragment in filter(None, fragments):
+        fragment = annual_source_tail(raw_fragment) or raw_fragment
+        normalized = normalize_annual_source_text(fragment)
+        reason = _invalid_legacy_reason(fragment)
+        proof = [] if reason else _proof_unit_ids(normalized, source_block_id, v2_records)
+        result.append({"original": fragment, "normalized": normalized, "status": "covered" if proof else "invalid_legacy" if reason else "actionable_uncovered", "proof_unit_ids": proof, "reason": "exact_source_units" if proof else reason or "uncovered_anchor"})
+    return result
 
 
-def _meaningful_legacy_fragments(excerpt: str) -> List[str]:
-    normalized = normalize_annual_source_text(excerpt)
-    fragments = [
-        fragment.strip()
-        for fragment in re.split(r"[。；;！？!?]", normalized)
-        if fragment.strip()
-    ]
-    meaningful: List[str] = []
-    for fragment in fragments:
-        compact = re.sub(r"\s+", "", fragment)
-        if len(compact) < 5:
-            continue
-        if _is_fragment_boilerplate(fragment):
-            continue
-        if not has_concrete_annual_anchor(fragment):
-            continue
-        meaningful.append(fragment)
-    return meaningful
+def _proof_unit_ids(fragment: str, source_block_id: str, v2_records: List[_CardRecord]) -> List[str]:
+    source, units, previous = "", [], None
+    for unit in sorted((unit for record in v2_records if record.source_block_id == source_block_id for unit in record.card.get("source_units", []) or []), key=lambda unit: (unit.get("ordinal", 0), unit.get("start_pos", 0))):
+        if previous is not None and unit["ordinal"] != previous + 1:
+            source, units = "", []
+        previous = unit["ordinal"]
+        text = normalize_annual_source_text(unit.get("text", ""))
+        source += text
+        units.append((str(unit.get("unit_id") or ""), len(text)))
+        start = source.find(fragment)
+        if start >= 0:
+            end, offset, proof = start + len(fragment), 0, []
+            for unit_id, length in units:
+                if offset < end and offset + length > start:
+                    proof.append(unit_id)
+                offset += length
+            return proof
+    return []
 
 
-def _is_fragment_boilerplate(fragment: str) -> bool:
-    if re.search(r"[□☑■√]\s*(?:不适用|适用)", fragment):
-        return True
-    if re.match(
-        r"^(?:释义项|目录|重要提示|第[一二三四五六七八九十]+节|"
-        r"(?:一|二|三|四|五|六|七|八|九|十)、)",
-        fragment,
+def _invalid_legacy_reason(fragment: str) -> str | None:
+    compact = re.sub(r"\s+", "", fragment)
+    terminal = fragment.endswith(("。", "；", ";", "！", "？", "!", "?"))
+    if not compact or (ANNUAL_CHECKBOX_MARKER_RUN_RE.search(fragment) and not annual_source_tail(fragment)):
+        return "incomplete_checkbox"
+    if re.match(r"^年\d{1,2}\s*月", fragment) or "…" in fragment or (
+        not terminal and not _actionable_short_clause(compact)
     ):
-        return True
-    return False
-
-
-def _sorted_v2_units_for_block(
-    source_block_id: str, v2_records: List[_CardRecord]
-) -> List[Dict[str, Any]]:
-    units: List[Dict[str, Any]] = []
-    for record in v2_records:
-        if record.source_block_id != source_block_id:
-            continue
-        units.extend(record.card.get("source_units", []) or [])
-    units.sort(key=lambda u: (u.get("ordinal", 0), u.get("start_pos", 0)))
-    return units
-
-
-def _cover_fragments_with_units(
-    fragments: List[str], source_block_id: str, v2_records: List[_CardRecord]
-) -> Optional[List[str]]:
-    units = _sorted_v2_units_for_block(source_block_id, v2_records)
-    if not units:
-        return None if fragments else []
-    texts = [normalize_annual_source_text(u.get("text", "")) for u in units]
-    proof_ids: List[str] = []
-    for fragment in fragments:
-        normalized_fragment = normalize_annual_source_text(fragment)
-        found = False
-        for i in range(len(units)):
-            accum = ""
-            for j in range(i, len(units)):
-                accum += texts[j]
-                if len(accum) >= len(normalized_fragment):
-                    if normalized_fragment in accum:
-                        proof_ids.extend(
-                            str(units[k].get("unit_id")) for k in range(i, j + 1)
-                        )
-                        found = True
-                        break
-            if found:
-                break
-        if not found:
-            return None
-    return list(dict.fromkeys(proof_ids))
-
-
-def _uncovered_fragments(
-    fragments: List[str], source_block_id: str, v2_records: List[_CardRecord]
-) -> List[Dict[str, str]]:
-    units = _sorted_v2_units_for_block(source_block_id, v2_records)
-    texts = [normalize_annual_source_text(u.get("text", "")) for u in units]
-    uncovered: List[Dict[str, str]] = []
-    for fragment in fragments:
-        normalized_fragment = normalize_annual_source_text(fragment)
-        covered = False
-        for i in range(len(units)):
-            accum = ""
-            for j in range(i, len(units)):
-                accum += texts[j]
-                if len(accum) >= len(normalized_fragment) and normalized_fragment in accum:
-                    covered = True
-                    break
-            if covered:
-                break
-        if not covered:
-            uncovered.append({"fragment": fragment})
-    return uncovered
+        return "truncated_fragment"
+    if re.fullmatch(r"\d+[、.．][^，,；;:：]{2,30}[。.]?", compact):
+        return "section_label"
+    if re.search(r"年度报告(?:全文)?障", compact):
+        return "ocr_splice"
+    seams = len(re.findall(r"[一-鿿]\s+[一-鿿]", fragment))
+    if seams >= 4 and seams / max(len(compact), 1) > 0.05:
+        return "table_fragment"
+    latin = re.findall(r"[A-Z]{2,}", fragment)
+    if seams >= 2 and len(latin) != len(set(latin)) and re.search(r"(?:系列产品及型|的等产品)", compact):
+        return "table_fragment"
+    if sum(header in fragment for header in _TABLE_HEADERS) >= 3 and len(re.findall(r"\d+(?:[,.]\d+)*", fragment)) >= 6:
+        return "table_fragment"
+    if re.match(r"^[，、:：;；和及或但]", compact) and not (re.search(r"(?:公司|本公司|集团|集團|[A-Za-z]{1,3}\d{2,}|\d(?:\.\d)?[GT])", compact) or _has_metric(compact)):
+        return "dangling_lead"
+    if not fragment.endswith(("。", "；", ";", "！", "？", "!", "?")) and compact.endswith(_FRAGMENT_ENDINGS) and not _actionable_short_clause(compact):
+        return "dangling_tail"
+    if len(compact) < 12 and not _actionable_short_clause(compact):
+        return "underspecified_short"
+    return None if has_concrete_annual_anchor(compact) else "no_concrete_anchor"
+def _actionable_short_clause(text: str) -> bool:
+    relation = any(token in text for token in _ACTIONABLE_SHORT_RELATIONS)
+    named_product = any(pattern.search(text) for pattern in _PRODUCT_PATTERNS)
+    return relation and (named_product or (_has_metric(text) and any(token in text for token in ("主要系", "由于", "由於", "所致"))) or ("公司" in text or "客户" in text))
 
 
 def _record_sort_key(record: _CardRecord) -> tuple[Any, ...]:

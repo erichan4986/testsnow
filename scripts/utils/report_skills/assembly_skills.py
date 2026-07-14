@@ -38,7 +38,6 @@ class ReportAssemblySkill(BaseSkill):
         ("composite_score", "utils.reporter.sections.composite_score_renderer", "CompositeScoreRenderer"),
         ("valuation", "utils.reporter.sections.valuation_renderer", "ValuationRenderer"),
         ("technical", "utils.reporter.sections.technical_renderer", "TechnicalRenderer"),
-        ("price_target", "utils.reporter.sections.price_target_renderer", "PriceTargetRenderer"),
         ("deep_analysis", "utils.reporter.sections.deep_analysis_renderer", "DeepAnalysisRenderer"),
         ("source_intake_evidence", "utils.reporter.sections.source_intake_evidence_renderer", "SourceIntakeEvidenceRenderer"),
         ("curated_external_analysis", "utils.reporter.sections.curated_external_analysis_renderer", "CuratedExternalAnalysisRenderer"),

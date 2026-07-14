@@ -2,6 +2,7 @@
 
 import hashlib
 import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -18,6 +19,24 @@ from periodic_report_narrative_evidence_cards import (
     _materialize_source_units,
     build_periodic_report_narrative_evidence_cards,
 )
+
+
+def test_formal_report_package_import_path_loads_annual_modules():
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import scripts.utils.periodic_report_narrative_evidence_cards; "
+            "import scripts.utils.periodic_report_evidence_pack; "
+            "import scripts.utils.annual_report_material_pack",
+        ],
+        cwd=Path(__file__).parents[2],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
 
 
 def _build_v2_cards(text: str, usage: str) -> dict:
@@ -54,8 +73,207 @@ def test_ambiguous_progress_emits_one_family_with_secondary_signal():
     )
     assert len(result["cards"]) == 1
     card = result["cards"][0]
-    assert card["argument_family"] == "technology_product_progress"
-    assert "business_structure" in card["secondary_signals"]
+    assert card["argument_family"] == "business_structure"
+    assert "technology_product_progress" in card["secondary_signals"]
+
+
+def test_mapped_usage_stays_primary_when_product_signal_is_stronger():
+    result = _build_v2_cards(
+        "公司主营车规芯片，A2000已通过认证并进入客户验证阶段。",
+        "product_capacity_profile",
+    )
+    assert result["cards"][0]["argument_family"] == "business_structure"
+    assert "technology_product_progress" in result["cards"][0]["secondary_signals"]
+
+
+def test_seed_keeps_adjacent_context_dependent_continuation():
+    text = (
+        "公司发布A2000芯片并完成客户验证。"
+        "该产品覆盖具身智能领域，扩大客户与场景覆盖范围。"
+    )
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="测试港股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={
+            "document_style": "hkex_annual",
+            "blocks": [{
+                "id": "hk_product_progress-0",
+                "usage": "hk_product_progress",
+                "text": text,
+            }],
+        },
+    )
+    cards = result["cards"]
+    assert len(cards) == 1
+    assert cards[0]["source_excerpt"] == text
+    assert cards[0]["source_unit_ids"] == [
+        "hk_product_progress-0:u0",
+        "hk_product_progress-0:u1",
+    ]
+
+
+@pytest.mark.parametrize(
+    ("usage", "text", "expected_excerpts"),
+    (
+        (
+            "rd_product_progress",
+            "A2000芯片已通过客户验证。该产品面向具身智能场景并进入量产准备。",
+            ["A2000芯片已通过客户验证。该产品面向具身智能场景并进入量产准备。"],
+        ),
+        (
+            "rd_product_progress",
+            "A2000芯片已通过客户验证。C1200芯片完成车规认证。",
+            ["A2000芯片已通过客户验证。", "C1200芯片完成车规认证。"],
+        ),
+        (
+            "segment_table",
+            "报告期内高速模块出货同比增长。增长主要来自800G产品占比提升。",
+            ["报告期内高速模块出货同比增长。增长主要来自800G产品占比提升。"],
+        ),
+        (
+            "segment_table",
+            "报告期内高速模块出货同比增长。报告期内库存同比上升。",
+            ["报告期内高速模块出货同比增长。", "报告期内库存同比上升。"],
+        ),
+        (
+            "profitability_commentary",
+            "经营现金流同比增长342.37%。主要因客户付款方式由航信变为电汇。",
+            ["经营现金流同比增长342.37%。主要因客户付款方式由航信变为电汇。"],
+        ),
+        (
+            "profitability_commentary",
+            "经营现金流同比增长342.37%。毛利率同比提升2个百分点，主要因产品结构改善。",
+            ["经营现金流同比增长342.37%。", "毛利率同比提升2个百分点，主要因产品结构改善。"],
+        ),
+    ),
+)
+def test_bundle_boundaries_keep_continuations_and_split_independent_arguments(
+    usage, text, expected_excerpts
+):
+    result = _build_v2_cards(text, usage)
+    cards = result["cards"]
+
+    assert [card["source_excerpt"] for card in cards] == expected_excerpts
+    unit_ids = [unit_id for card in cards for unit_id in card["source_unit_ids"]]
+    assert len(unit_ids) == len(set(unit_ids))
+
+
+def test_hk_market_usage_keeps_commercial_progress_bundle():
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="测试港股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={
+            "document_style": "hkex_annual",
+            "blocks": [{
+                "id": "hk_market_outlook-0",
+                "usage": "hk_market_outlook",
+                "text": (
+                    "2025年，本公司的智能影像解决方案持续迭代升级，在端侧AI影像领域取得商业化进展。"
+                    "年内与理想汽车达成合作，为其首款AI眼镜Livis提供定制化影像算法，产品已进入量产阶段。"
+                ),
+            }],
+        },
+    )
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == "market_competition_outlook"
+    assert "理想汽车" in result["cards"][0]["source_excerpt"]
+
+
+def test_continuation_after_noise_does_not_cross_broken_bundle():
+    result = _build_v2_cards(
+        "公司发布A2000芯片并完成客户验证。"
+        "项目 进展 预计目标 研发投入 2025 2024。"
+        "该产品扩大客户与场景覆盖范围。",
+        "rd_product_progress",
+    )
+    assert len(result["cards"]) == 1
+    assert "项目 进展" not in result["cards"][0]["source_excerpt"]
+
+
+@pytest.mark.parametrize(
+    ("stock_code", "stock_name", "document_style", "blocks", "needles"),
+    (
+        (
+            "02533",
+            "黑芝麻智能",
+            "hkex_annual",
+            [{
+                "id": "hk_product_progress-0",
+                "usage": "hk_product_progress",
+                "text": "A2000芯片取得关键突破。具身智能领域扩大客户与场景覆盖范围。",
+            }],
+            ("A2000", "具身智能", "客户"),
+        ),
+        (
+            "300777",
+            "中简科技",
+            "a_share_annual",
+            [{
+                "id": "cash_flow_capex_table-0",
+                "usage": "cash_flow_capex_table",
+                "text": "2025年四季度客户付款形式由航信变动为电汇支付，回款现金增多，致使经营活动现金流入大幅增长。",
+            }],
+            ("航信", "电汇", "现金流"),
+        ),
+        (
+            "300661",
+            "圣邦股份",
+            "a_share_annual",
+            [{
+                "id": "rd_product_progress-0",
+                "usage": "rd_product_progress",
+                "text": "报告期内，公司各研发项目进展顺利，共推出近900款拥有完全自主知识产权的新产品，研发费用支出104,519.49万元，占营业收入的26.81%。",
+            }],
+            ("900款", "研发费用", "26.81%"),
+        ),
+        (
+            "688018",
+            "乐鑫科技",
+            "a_share_annual",
+            [{
+                "id": "business_model-0",
+                "usage": "business_model",
+                "text": "乐鑫科技采用B2D2B商业模式。当客户产品进入量产后，通常在市场上持续销售5至10年。",
+            }, {
+                "id": "market_demand_outlook-0",
+                "usage": "market_demand_outlook",
+                "text": "IDC预计，2029年中国物联网投资约为2515.1亿美元，2025年至2029年的复合年增长率为11.5%。",
+            }],
+            ("B2D2B", "量产", "2515.1亿美元", "11.5%"),
+        ),
+        (
+            "300308",
+            "中际旭创",
+            "a_share_annual",
+            [{
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "text": "公司主营高端光通信收发模块的研发、生产及销售，服务云计算数据中心客户。",
+            }, {
+                "id": "competitive_position-0",
+                "usage": "competitive_position",
+                "text": "光模块头部厂商凭借领先研发实力及交付能力，竞争优势进一步强化。",
+            }],
+            ("高端光通信收发模块", "竞争优势"),
+        ),
+    ),
+)
+def test_affected_stock_facts_survive_source_only_admission(
+    stock_code, stock_name, document_style, blocks, needles
+):
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"document_style": document_style, "blocks": blocks},
+    )
+    excerpts = " ".join(card["source_excerpt"] for card in result["cards"])
+    assert all(needle in excerpts for needle in needles)
 
 
 def test_atomic_fact_is_kept_but_not_complete():
@@ -234,7 +452,7 @@ def test_ambiguous_unit_uses_one_post_bundle_primary_family_resolution(monkeypat
     result = _build_v2_cards(text, "product_capacity_profile")
 
     assert [(card["argument_family"], card["source_excerpt"]) for card in result["cards"]] == [
-        ("technology_product_progress", text),
+        ("business_structure", text),
     ]
     assert calls == [(text, "product_capacity_profile")]
 
@@ -344,7 +562,10 @@ def test_business_model_card_from_company_description_block():
     card = cards[0]
     assert card["argument_family"] == "business_structure"
     assert card["source_block_id"] == "business_overview-0"
-    assert card["source_unit_ids"] == ["business_overview-0:u0"]
+    assert card["source_unit_ids"] == [
+        "business_overview-0:u0",
+        "business_overview-0:u1",
+    ]
     assert "高性能碳纤维" in card["source_excerpt"]
 
 
@@ -2415,7 +2636,7 @@ def test_source_order_keeps_all_admitted_market_arguments_when_legacy_limit_is_s
     assert "国产替代" in _all_excerpts(cards)
 
 
-def test_glossary_definitions_do_not_override_source_contained_market_evidence():
+def test_glossary_definitions_are_rejected_while_exact_market_blocks_survive():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
         "blocks": [
@@ -2459,9 +2680,11 @@ def test_glossary_definitions_do_not_override_source_contained_market_evidence()
     )
 
     cards = [c for c in result["cards"] if c["argument_family"] == "market_competition_outlook"]
-    assert len(cards) == 1
-    assert cards[0]["source_block_id"] == "industry_outlook-0"
-    assert "PDK" not in cards[0]["source_excerpt"]
+    assert [card["source_block_id"] for card in cards] == [
+        "industry_outlook-0", "future_strategy-0",
+    ]
+    assert not any(card["source_block_id"] == "glossary-0" for card in result["cards"])
+    assert len(_all_unit_ids(cards)) == len(set(_all_unit_ids(cards)))
 
 
 def test_raw_text_is_ignored_and_source_evidence_order_is_stable():
@@ -2601,7 +2824,7 @@ def test_definition_like_body_terms_are_rejected_without_reordering_strategy_tex
     assert "CPO" not in cards[0]["source_excerpt"]
 
 
-def test_near_duplicate_business_model_cards_are_deduplicated_across_blocks():
+def test_near_duplicate_business_model_blocks_keep_their_exact_source_units():
     duplicated_text = (
         "公司客户主要为国内大型航空航天企业集团，客户明确且集中度高。"
         "公司采用直接销售方式，销售产品主要为高性能碳纤维及碳纤维织物，"
@@ -2637,8 +2860,10 @@ def test_near_duplicate_business_model_cards_are_deduplicated_across_blocks():
 
     cards = [c for c in result["cards"] if c["argument_family"] == "business_structure"]
     assert len(cards) == 2
-    assert {card["source_block_id"] for card in cards} == {"sales_certification_model-0"}
-    assert result["diagnostics"]["rejection_counts"]["duplicate"] == 2
+    assert {card["source_block_id"] for card in cards} == {
+        "sales_certification_model-0", "business_model-0",
+    }
+    assert len(_all_unit_ids(cards)) == len(set(_all_unit_ids(cards)))
 
 
 def test_risk_disclosure_blocks_do_not_generate_narrative_cards():
@@ -3332,6 +3557,7 @@ def test_legacy_limit_parameters_are_ignored_and_admitted_order_is_deterministic
     assert [card["source_block_id"] for card in cards] == [
         "business_overview-0",
         "industry_outlook-0",
+        "industry_outlook-0",
         "rd_table-0",
         "rd_table-0",
         "asset_impairment_note-0",
@@ -3385,7 +3611,7 @@ def test_candidate_cards_reflect_the_uncapped_canonical_admitted_set():
         max_total_cards=1,
     )
 
-    assert len(result["cards"]) == 3
+    assert len(result["cards"]) == 4
     assert result["candidate_cards"] == result["cards"]
     candidate_types = {card["argument_family"] for card in result["candidate_cards"]}
     assert "financial_quality_explanation" in candidate_types
@@ -3754,7 +3980,7 @@ def test_hk_business_overview_block_maps_to_business_model_card():
     assert "business_structure" in card_types
 
 
-def test_hk_near_duplicate_customer_ecosystem_cards_collapse_to_one_business_model():
+def test_hk_near_duplicate_customer_ecosystem_blocks_keep_exact_source_units():
     blocks = [
         {
             "id": "hk_customer_ecosystem-0",
@@ -3793,7 +4019,11 @@ def test_hk_near_duplicate_customer_ecosystem_cards_collapse_to_one_business_mod
     result = _build_hk_cards(blocks)
 
     business_cards = [card for card in result["cards"] if card["argument_family"] == "business_structure"]
-    assert len(business_cards) == 1
+    assert len(business_cards) == 3
+    assert {card["source_block_id"] for card in business_cards} == {
+        "hk_customer_ecosystem-0", "hk_customer_ecosystem-1", "hk_customer_ecosystem-2",
+    }
+    assert len(_all_unit_ids(business_cards)) == len(set(_all_unit_ids(business_cards)))
 
 
 def test_hk_bond_and_deferred_income_table_line_does_not_generate_financial_cards():
@@ -3966,4 +4196,196 @@ def test_hkex_standalone_platform_label_is_rejected():
         stock_code="02533", stock_name="测试港股", report_year=2025,
         report_type="annual", evidence_pack={"document_style": "hkex_annual", "blocks": [block]},
     )
+    assert result["cards"] == []
+
+
+def test_hkex_pure_year_is_not_a_named_structural_anchor():
+    block = {
+        "id": "hk_business_overview-0",
+        "usage": "hk_business_overview",
+        "text": "2025年为客户提供智能服务。",
+    }
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="测试港股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"document_style": "hkex_annual", "blocks": [block]},
+    )
+
+    assert result["cards"] == []
+
+
+def test_sgt_talent_risk_and_mitigation_forms_one_market_card():
+    text = (
+        "化的激励措施来稳定和扩大人才队伍，但由于市场竞争加剧，进入模拟集成电路设计行业的门槛较高，"
+        "加剧了对该行业的人才争夺，所以公司仍然存在技术人员流失的风险。"
+        "面对这一风险，公司一方面将扩大招贤纳士力度，积极从外部引进各层次人才，"
+        "同时加强内部培训，完善培训机制，使技术人员业务水平不断提升。"
+        "另一方面公司将不断加强企业文化建设，增加企业凝聚力。"
+    )
+    result = _build_v2_cards(text, "management_market_view")
+    cards = [card for card in result["cards"] if card["argument_family"] == "market_competition_outlook"]
+    assert len(cards) == 1
+    assert cards[0]["source_unit_ids"] == [
+        "management_market_view-0:u0",
+        "management_market_view-0:u1",
+        "management_market_view-0:u2",
+    ]
+
+
+def test_espressif_inventory_risk_forms_one_financial_card():
+    text = (
+        "存货跌价和周转率下降风险 公司根据已有客户订单需求以及对市场未来的预测情况制定采购和生产计划。"
+        "随着公司业务规模的不断扩大，公司存货绝对金额随之上升，进而可能导致公司存货周转率下降。"
+    )
+    result = _build_v2_cards(text, "inventory_note")
+    cards = [card for card in result["cards"] if card["argument_family"] == "financial_quality_explanation"]
+    assert len(cards) == 1
+    assert cards[0]["source_unit_ids"] == [
+        "inventory_note-0:u0",
+        "inventory_note-0:u1",
+    ]
+
+
+def test_generic_market_risk_produces_zero_cards():
+    result = _build_v2_cards(
+        "如果市场需求下滑，公司将面临产品竞争力下降的风险。",
+        "industry_outlook",
+    )
+    assert result["cards"] == []
+
+
+def test_espressif_product_application_routes_to_business_not_financial():
+    text = "带动了我们的整体成长。乐鑫的产品应用于泛IoT领域，着眼于长期的数字化升级，而非依赖某个行业或客户的短期爆发性增长。"
+    result = _build_v2_cards(text, "profitability_commentary")
+    business_cards = [card for card in result["cards"] if card["argument_family"] == "business_structure"]
+    financial_cards = [card for card in result["cards"] if card["argument_family"] == "financial_quality_explanation"]
+    assert len(business_cards) == 1
+    assert "乐鑫的产品应用于泛IoT领域" in business_cards[0]["source_excerpt"]
+    assert all(
+        "乐鑫的产品应用于泛IoT领域" not in card["source_excerpt"]
+        for card in financial_cards
+    )
+
+
+def test_business_section_label_produces_zero_cards():
+    result = _build_v2_cards(
+        "(1). 主营业务分行业、分产品、分地区、分销售模式情况",
+        "profitability_commentary",
+    )
+    assert result["cards"] == []
+
+
+def test_regulatory_disclosure_produces_zero_cards():
+    result = _build_v2_cards(
+        "公司需遵守《深圳证券交易所上市公司自律监管指引第4号——创业板行业信息披露》中的“集成电路业务”的披露要求:",
+        "rd_investment_table",
+    )
+    assert result["cards"] == []
+
+
+def _all_unit_ids(cards: list[dict]) -> list[str]:
+    return [unit_id for card in cards for unit_id in card["source_unit_ids"]]
+
+
+def test_cross_block_similar_market_facts_are_not_semantically_deduplicated():
+    result = _build_v2_cards(
+        "光模块行业竞争优势进一步强化，行业集中度有望持续提升。",
+        "competitive_position",
+    )
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025, report_type="annual",
+        evidence_pack={"blocks": [
+            {"id": "competitive_position-0", "usage": "competitive_position", "text": "光模块行业竞争优势进一步强化，行业集中度有望持续提升。"},
+            {"id": "competitive_position-1", "usage": "competitive_position", "text": "光模块行业竞争优势进一步强化，行业集中度有望持续提升，客户覆盖继续扩大。"},
+        ]},
+    )
+
+    assert len(result["cards"]) == 2
+    assert {card["source_block_id"] for card in result["cards"]} == {
+        "competitive_position-0", "competitive_position-1"
+    }
+
+
+def test_hk_release_and_stable_margin_units_are_admitted():
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="测试港股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={
+            "document_style": "hkex_annual",
+            "blocks": [
+                {
+                    "id": "hk_customer_ecosystem-0",
+                    "usage": "hk_customer_ecosystem",
+                    "text": "2025 年，本公司通過發佈 SesameX 平台，完成了從智能駕駛領軍者向端側 AI 全棧芯片供應商的跨越。",
+                },
+                {
+                    "id": "hk_financial_commentary-0",
+                    "usage": "hk_financial_commentary",
+                    "text": "我們智能影像解決方案業務的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至2025 年12 月31 日止年度分別為 85.4% 與84.7%。",
+                },
+            ],
+        },
+    )
+
+    by_block = {card["source_block_id"]: card for card in result["cards"]}
+    assert by_block["hk_customer_ecosystem-0"]["argument_family"] == "business_structure"
+    assert by_block["hk_financial_commentary-0"]["argument_family"] == "financial_quality_explanation"
+
+
+@pytest.mark.parametrize("text", (
+    "电源管理类模拟芯片包括LDO、系统监测电路、DC/DC降压转换器等；",
+    "公司向客户提供的碳纤维织物按照编织方式分为平纹布、单向布和缎纹布。",
+    "如果客户采购公司碳纤维后需进一步加工为碳纤维织物，则客户倾向于从公司直接采购碳纤维织物；",
+    "如果客 户采购公司碳纤维后直接制作碳纤维预浸料，则从公司直接采购碳纤维。",
+    "公司通过开放的平台、完善的软件工具以及全球开发者社区，与开发者建立联系，并将开发者采用转化为长期企业客户关系。",
+    "2、生产模式 因公司产品主要用于航空航天领域，产品性能参数在客户型号定型时即已确定。",
+))
+def test_complete_business_relations_are_admitted(text):
+    result = _build_v2_cards(text, "product_capacity_profile")
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == "business_structure"
+
+
+@pytest.mark.parametrize("text", (
+    "本期价格策略没有显著变化，成本端因采购量上升获得规模效应，毛利率整体稳中有升。",
+    "公司现金流依靠往期回款维持。",
+))
+def test_complete_financial_relations_are_admitted(text):
+    result = _build_v2_cards(text, "profitability_commentary")
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == "financial_quality_explanation"
+
+
+def test_long_rd_narrative_is_not_misclassified_as_interleaved_table():
+    text = (
+        "报告期内，公司投资建设年产2,000吨高性能碳纤维及配套产品项目，扩大碳纤维及其织物的生产规模。\n"
+        "航空航天领域对材料的考核极为严苛，一款碳纤维产品从实验室研发到最终 批量装机，往往需要经历十年以上的验证周期。\n"
+        "公司 ZT7 系列等主力产品在航空航天领域已实现多年稳定批量应用，积累 了丰富的服役数据。\n"
+        "以 ZT9H 为代表的新一代碳纤维产品凭借优异的综合性能与批次稳定 性，市场表现持续向好，进一步拓展民用航空市场。\n"
+        "一方面，围绕新增的结构材料与功能材料业务板块，业务团队依托在预浸料研发、结构功能一体化设计等领域的积累，为子公司业务提供支撑。"
+    )
+    result = _build_v2_cards(text, "rd_product_progress")
+    excerpts = _all_excerpts(result["cards"])
+
+    assert not narrative_cards._looks_like_interleaved_rd_table(text)
+    assert "ZT7 系列" in excerpts
+    assert "ZT9H" in excerpts
+
+
+def test_interleaved_rd_columns_remain_rejected():
+    text = (
+        "部 分产品系列，如霍尔 高灵敏度磁传感器系 角度位置编码器、线 器、线性位置编码\n"
+        "分产品处于小批量生 传感器、TMR传感 列产品 性位置编码器、磁阻 器、磁阻开关传感器\n"
+        "产验证及送样阶段； 器、车规级磁传感器 开关传感器、线性霍 系列产品的研发和产"
+    )
+    result = _build_v2_cards(text, "rd_product_progress")
+
+    assert narrative_cards._looks_like_interleaved_rd_table(text)
     assert result["cards"] == []

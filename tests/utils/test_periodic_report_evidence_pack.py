@@ -653,6 +653,35 @@ def test_competitive_position_window_keeps_preceding_subject_line():
     assert not competitive_text.lstrip().startswith("主要的国内供应商")
 
 
+def test_competitive_position_window_keeps_both_wrapped_zhongji_sentences():
+    wrapped_lines = [
+        "光模块头部厂商凭借领先的研发实力及交付能力，竞争优势进一步强化，行业集中度有望持续提升。",
+        "公司持续推进高速光模块产品迭代并强化客户交付能力。",
+        "相关产品已在多个数据中心场景完成验证和导入。",
+        "公司持续完善生产组织和质量管理体系。",
+        "客户需求保持旺盛，订单交付节奏稳定。",
+        "公司继续加大研发投入，提升产品性能和可靠性。",
+        "行业龙头厂商持续加强技术储备和供应链协同。",
+        "公司将持续关注下一代光互连技术的产业化进展。",
+        "海外客户对高速率光模块的需求继续提升。",
+        "行业竞争格局仍处于动态变化过程中。",
+        "公司凭借规模化交付能力保持竞争优势。",
+        "相关产品的客户覆盖范围进一步扩大。",
+        "公司持续优化产品结构和客户结构。",
+        "市场对高速互连产品的技术要求不断提高。",
+        "另一方面，随着 Scale-up、Scale-across 网络快速兴起，硅光等下一代光互连技术需求显著提升，行业面临更复杂的技术挑战。",
+    ]
+    pack = build_periodic_report_evidence_pack("\n".join(wrapped_lines))
+    competitive_text = "\n".join(
+        block["text"] for block in pack["blocks"] if block["usage"] == "competitive_position"
+    )
+
+    assert "光模块头部厂商凭借领先的研发实力及交付能力，竞争优势进一步强化，行业集中度有望持续提升。" in competitive_text
+    assert "另一方面，随着 Scale-up、Scale-across 网络快速兴起，硅光等下一代光互连技术需求显著提升，行业面临更复杂的技术挑战。" in competitive_text
+    assert len(pack["blocks"]) <= 48
+    assert all(len(block["text"]) <= 2000 for block in pack["blocks"])
+
+
 def test_market_demand_window_keeps_wrapped_year_subject_line():
     report = """
 第三节 管理层讨论与分析

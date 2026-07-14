@@ -1,8 +1,9 @@
 from __future__ import annotations
-
 import sys
 from pathlib import Path
 import json
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
@@ -10,6 +11,7 @@ from annual_report_material_pack import (
     build_annual_report_material_pack,
     selected_cards_to_synthesis_items,
 )
+from periodic_report_narrative_evidence_cards import build_periodic_report_narrative_evidence_cards
 
 
 def _cards_dir(base: Path, stock_name: str = "测试股") -> Path:
@@ -28,6 +30,7 @@ def _write_note(
     source_type: str = "periodic_report_narrative_evidence",
     report_year: str = "2025",
     report_type: str = "annual",
+    source_block_id: str = "market_demand_outlook-0",
 ) -> Path:
     path = _cards_dir(base, stock_name) / filename
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -45,9 +48,9 @@ def _write_note(
         f"report_year: {report_year}\n"
         f"report_type: {report_type}\n"
         "source_credit: 75\n"
-        "source_block_id: market_demand_outlook-0\n"
+        f"source_block_id: {source_block_id}\n"
         "evidence_refs:\n"
-        "  - market_demand_outlook-0\n"
+        f"  - {source_block_id}\n"
         "source_excerpt_hash: \"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\"\n"
         "knowledge_fact_status: narrative_evidence\n"
         "knowledge_eligible: false\n"
@@ -141,6 +144,21 @@ def _write_v2_note(
         encoding="utf-8",
     )
     return path
+
+
+def _write_producer_cards(base: Path, result: dict) -> None:
+    for index, card in enumerate(result["cards"]):
+        _write_v2_note(
+            base,
+            filename=f"producer-{index}.md",
+            card_id=card["card_id"],
+            family=card["argument_family"],
+            complete=card["argument_complete"],
+            source_block_id=card["source_block_id"],
+            source_excerpt=card["source_excerpt"],
+            source_units=card["source_units"],
+            quality_score=card["quality_score"],
+        )
 
 
 def test_build_pack_reads_excerpt_from_body_blockquote(tmp_path: Path) -> None:
@@ -286,7 +304,7 @@ def test_v2_empty_signal_list_roundtrips_and_malformed_units_are_rejected(tmp_pa
 
 
 def test_same_block_different_excerpt_does_not_shadow_v1(tmp_path: Path) -> None:
-    _write_note(tmp_path, card_id="legacy:same-block", body_excerpt="旧版摘录保留。")
+    _write_note(tmp_path, card_id="legacy:same-block", body_excerpt="公司主营高速光模块并服务云计算客户。")
     _write_v2_note(
         tmp_path,
         filename="2025-annual-market-competition-outlook-different.md",
@@ -307,7 +325,7 @@ def test_build_pack_quality_prefers_specific_product_metric_cards(tmp_path: Path
         card_type="business_model",
         title="主营业务与产品",
         card_id="periodic:000001:2025:annual:narrative:business_model:0",
-        body_excerpt="公司坚持高质量发展，持续提升核心竞争力。",
+        body_excerpt="公司主营高速光模块并服务云计算客户。",
     )
     _write_note(
         tmp_path,
@@ -392,7 +410,7 @@ def test_build_pack_type_balance_prevents_single_type_domination(tmp_path: Path)
             card_type="business_model",
             title="主营业务与产品",
             card_id=f"periodic:000001:2025:annual:narrative:business_model:{i}",
-            body_excerpt=f"业务模式摘录 {i}。",
+            body_excerpt=f"公司主营业务模式产品线{i}并服务云计算客户。",
         )
     for i in range(2):
         _write_note(
@@ -461,7 +479,7 @@ def test_build_pack_uncategorized_participates_after_typed(tmp_path: Path) -> No
         card_type="business_model",
         title="其他内容",
         card_id="periodic:000001:2025:annual:narrative:business_model:0",
-        body_excerpt="一段补充描述。",
+        body_excerpt="公司主营独立补充产品并服务客户。",
     )
 
     pack_one = build_annual_report_material_pack(
@@ -597,13 +615,15 @@ def test_split_v2_source_units_cover_one_legacy_long_excerpt(tmp_path: Path) -> 
     _write_note(tmp_path, body_excerpt=legacy, filename="legacy.md")
     _write_v2_note(
         tmp_path, filename="v2.md", card_id="v2:products",
-        source_block_id="market_demand_outlook-0", source_excerpt=legacy,
+        source_block_id="market_demand_outlook-0", source_excerpt=f"{legacy}附加说明。",
         source_units=[
             {"unit_id": "market_demand_outlook-0:u0", "block_id": "market_demand_outlook-0", "ordinal": 0, "start_pos": 0, "end_pos": 21, "text": "公司拥有38大类6800余款可供销售产品。"},
             {"unit_id": "market_demand_outlook-0:u1", "block_id": "market_demand_outlook-0", "ordinal": 1, "start_pos": 21, "end_pos": len(legacy), "text": "信号链类模拟芯片覆盖各类运算放大器。"},
+            {"unit_id": "market_demand_outlook-0:u2", "block_id": "market_demand_outlook-0", "ordinal": 2, "start_pos": len(legacy), "end_pos": len(legacy) + len("附加说明。"), "text": "附加说明。"},
         ],
     )
     pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    assert pack["diagnostics"]["v1_needs_recovery_count"] == 0
     assert pack["diagnostics"]["v1_unit_covered_count"] == 1
     assert pack["diagnostics"]["v1_adapter_use_count"] == 0
 
@@ -619,3 +639,197 @@ def test_missing_legacy_fact_remains_adapted_with_recovery_diagnostic(tmp_path: 
     assert pack["diagnostics"]["v1_adapter_use_count"] == 1
     assert "高端光通信收发模块" in pack["diagnostics"]["v1_recovery_examples"][0]["fragment"]
     assert (_cards_dir(tmp_path) / "legacy.md").exists()
+
+
+def test_noncontiguous_v2_units_do_not_prove_one_legacy_fragment(tmp_path: Path) -> None:
+    legacy = "公司产品覆盖高速光模块应用领域。"
+    _write_note(tmp_path, body_excerpt=legacy, filename="legacy.md")
+    _write_v2_note(
+        tmp_path,
+        filename="v2.md",
+        card_id="v2:gapped",
+        source_block_id="market_demand_outlook-0",
+        source_excerpt=f"{legacy}附加说明。",
+        source_units=[
+            {
+                "unit_id": "market_demand_outlook-0:u0",
+                "block_id": "market_demand_outlook-0",
+                "ordinal": 0,
+                "start_pos": 0,
+                "end_pos": 8,
+                "text": "公司产品覆盖高速",
+            },
+            {
+                "unit_id": "market_demand_outlook-0:u2",
+                "block_id": "market_demand_outlook-0",
+                "ordinal": 2,
+                "start_pos": 8,
+                "end_pos": len(legacy),
+                "text": "光模块应用领域。",
+            },
+            {
+                "unit_id": "market_demand_outlook-0:u3",
+                "block_id": "market_demand_outlook-0",
+                "ordinal": 3,
+                "start_pos": len(legacy),
+                "end_pos": len(legacy) + len("附加说明。"),
+                "text": "附加说明。",
+            },
+        ],
+    )
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+
+    assert pack["diagnostics"]["v1_needs_recovery_count"] == 1
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 1
+
+
+def test_checkbox_prefix_is_covered_by_the_v2_complete_tail(tmp_path: Path) -> None:
+    legacy = (
+        "现金流变动情况 √适用 □不适用 2025年客户付款形式变更为电汇，"
+        "主要系经营活动现金流增加所致。"
+    )
+    tail = "2025年客户付款形式变更为电汇，主要系经营活动现金流增加所致。"
+    _write_note(tmp_path, body_excerpt=legacy, filename="legacy.md")
+    _write_v2_note(
+        tmp_path, filename="v2.md", card_id="v2:cash", family="financial_quality_explanation",
+        source_block_id="market_demand_outlook-0", source_excerpt=tail,
+        source_units=[{
+            "unit_id": "market_demand_outlook-0:u0", "block_id": "market_demand_outlook-0",
+            "ordinal": 0, "start_pos": 0, "end_pos": len(tail), "text": tail,
+        }],
+    )
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+
+    assert pack["diagnostics"]["v1_covered_fragment_count"] == 1
+    assert pack["diagnostics"]["v1_actionable_needs_recovery_count"] == 0
+    assert pack["diagnostics"]["v1_needs_recovery_count"] == 0
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 0
+
+
+def test_invalid_legacy_fragments_do_not_trigger_the_adapter(tmp_path: Path) -> None:
+    _write_note(tmp_path, body_excerpt="产品已实现量产", filename="legacy.md")
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+
+    assert pack["diagnostics"]["v1_invalid_legacy_fragment_count"] == 1
+    assert pack["diagnostics"]["v1_actionable_needs_recovery_count"] == 0
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 0
+
+
+def test_adapter_keeps_only_actionable_fragments_from_a_mixed_legacy_note(tmp_path: Path) -> None:
+    actionable = "A2000芯片已进入客户验证阶段。"
+    invalid = "产品已实现量产"
+    _write_note(tmp_path, body_excerpt=actionable + invalid, filename="legacy.md")
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    adapted = next(card for card in pack["selected_narrative_cards"] if card["card_id"] == "periodic:000001:2025:annual:narrative:management_market_view:0")
+
+    assert adapted["source_excerpt"] == actionable
+    assert invalid not in adapted["source_excerpt"]
+    assert pack["diagnostics"]["v1_actionable_needs_recovery_count"] == 1
+    assert pack["diagnostics"]["v1_invalid_legacy_fragment_count"] == 1
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 1
+
+
+def test_duplicate_actionable_legacy_fragment_is_adapted_once(tmp_path: Path) -> None:
+    excerpt = "A2000芯片已进入客户验证阶段。"
+    _write_note(tmp_path, filename="legacy-0.md", card_id="legacy:0", body_excerpt=excerpt)
+    _write_note(tmp_path, filename="legacy-1.md", card_id="legacy:1", body_excerpt=excerpt)
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+
+    assert pack["diagnostics"]["v1_actionable_needs_recovery_count"] == 1
+    assert pack["diagnostics"]["v1_duplicate_legacy_fragment_count"] == 1
+    assert pack["diagnostics"]["v1_adapter_use_count"] == 1
+
+
+def test_annual_coverage_boundary_uses_real_producer_output(tmp_path: Path) -> None:
+    tail = "2025年四季度客户付款形式由航信变动为电汇支付，导致两者存在较大差异。"
+    legacy = (
+        "报告期内公司经营活动产生的现金净流量与本年度净利润存在重大差异的原因说明 "
+        + tail
+    )
+    _write_note(
+        tmp_path,
+        filename="legacy.md",
+        source_block_id="cash_flow_capex_table-0",
+        body_excerpt=legacy,
+    )
+    producer_result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000777",
+        stock_name="中简科技",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"document_style": "a_share_annual", "blocks": [{
+            "id": "cash_flow_capex_table-0",
+            "usage": "cash_flow_capex_table",
+            "text": legacy,
+        }]},
+    )
+    _write_producer_cards(tmp_path, producer_result)
+
+    diagnostics = build_annual_report_material_pack(
+        stock_name="测试股", base_dir=tmp_path
+    )["diagnostics"]
+
+    assert any(
+        unit["text"] == tail
+        for card in producer_result["cards"]
+        for unit in card["source_units"]
+    )
+    assert diagnostics["v1_covered_fragment_count"] == 1
+    assert diagnostics["v1_actionable_needs_recovery_count"] == 0
+    assert diagnostics["v1_adapter_use_count"] == 0
+
+
+@pytest.mark.parametrize("excerpt", (
+    "我们辅助驾驶产品的毛利率保持稳定，截至2025",
+    "报告期内，公司投资建设年产2,000吨高性能材料项目，扩大生产规模并保障现有",
+    "3、历经长周期验证的品质与品牌优势。",
+    "部 分产品系列，如霍尔 高灵敏度磁传感器系 角度位置编码器、线 器、线性位置编码 分产品处于小批量生 传感器、TMR传感 列产品 性位置编码器、磁阻 器、磁阻开关传感器 产验证及送样阶段；",
+    "EEPROM及DIMM EEPROM系列产品及 型、具有不同容量的 等产品已实现量产；",
+    "某某股份有限公司2025年年度报告 障现有产品性能优化的同时增加新产品线研发，缩短成果转化周期。",
+))
+def test_malformed_legacy_fragments_do_not_trigger_recovery(tmp_path: Path, excerpt: str) -> None:
+    _write_note(tmp_path, body_excerpt=excerpt, filename="legacy.md")
+
+    diagnostics = build_annual_report_material_pack(
+        stock_name="测试股", base_dir=tmp_path
+    )["diagnostics"]
+
+    assert diagnostics["v1_invalid_legacy_fragment_count"] == 1
+    assert diagnostics["v1_actionable_needs_recovery_count"] == 0
+    assert diagnostics["v1_adapter_use_count"] == 0
+
+
+def test_each_legacy_fragment_uses_the_same_annual_source_tail_boundary(tmp_path: Path) -> None:
+    tail = "因公司产品主要用于航空航天领域，产品性能参数在客户型号定型时即已确定。"
+    _write_note(
+        tmp_path,
+        body_excerpt="2、生产模式 " + tail + "公",
+        source_block_id="product_capacity_profile-0",
+        filename="legacy.md",
+    )
+    producer_result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000777",
+        stock_name="测试股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"document_style": "a_share_annual", "blocks": [{
+            "id": "product_capacity_profile-0",
+            "usage": "product_capacity_profile",
+            "text": "2、生产模式 " + tail,
+        }]},
+    )
+    _write_producer_cards(tmp_path, producer_result)
+
+    diagnostics = build_annual_report_material_pack(
+        stock_name="测试股", base_dir=tmp_path
+    )["diagnostics"]
+
+    assert diagnostics["v1_covered_fragment_count"] == 1
+    assert diagnostics["v1_invalid_legacy_fragment_count"] == 1
+    assert diagnostics["v1_actionable_needs_recovery_count"] == 0
+    assert diagnostics["v1_adapter_use_count"] == 0

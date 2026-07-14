@@ -7,6 +7,10 @@ from utils.skill_pipeline import SkillContext
 from utils.report_skills.assembly_skills import ReportAssemblySkill
 
 
+def test_formal_assembly_does_not_register_legacy_price_target_renderer():
+    assert all(name != "price_target" for name, *_ in ReportAssemblySkill.RENDERERS)
+
+
 def test_assembly_writes_agent_reach_audit_json(tmp_path):
     skill = ReportAssemblySkill()
     summary = {

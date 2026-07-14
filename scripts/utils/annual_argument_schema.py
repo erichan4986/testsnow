@@ -92,85 +92,50 @@ _TEXT_CARD_FIELDS = (
     "report_type",
 )
 
-# Shared usage-to-family metadata. The producer and evidence pack must read from
-# this single table so the two layers cannot drift into separate taxonomies.
-_HIGH_VALUE_NARRATIVE_USAGES = frozenset({
-    "business_overview", "business_model", "product_capacity_profile",
-    "sales_certification_model", "hk_business_overview", "hk_customer_ecosystem",
-    "management_strategy", "management_market_view", "industry_outlook",
-    "market_demand_outlook", "competitive_position", "future_strategy",
-    "hk_market_outlook", "rd_product_progress", "hk_product_progress",
-    "profitability_commentary", "hk_financial_commentary",
-})
-
-USAGE_FAMILY_METADATA = {
-    "business_overview": {"family": "business_structure", "reserve": True},
-    "business_model": {"family": "business_structure", "reserve": True},
-    "product_capacity_profile": {"family": "business_structure", "reserve": True},
-    "sales_certification_model": {"family": "business_structure", "reserve": True},
-    "hk_business_overview": {"family": "business_structure", "reserve": True},
-    "hk_customer_ecosystem": {"family": "business_structure", "reserve": True},
-    "segment_table": {"family": "operating_progress", "reserve": False},
-    "production_sales_inventory_table": {"family": "operating_progress", "reserve": False},
-    "management_strategy": {"family": "operating_progress", "reserve": True},
-    "management_market_view": {"family": "market_competition_outlook", "reserve": True},
-    "industry_outlook": {"family": "market_competition_outlook", "reserve": True},
-    "market_demand_outlook": {"family": "market_competition_outlook", "reserve": True},
-    "competitive_position": {"family": "market_competition_outlook", "reserve": True},
-    "future_strategy": {"family": "market_competition_outlook", "reserve": True},
-    "hk_market_outlook": {"family": "market_competition_outlook", "reserve": True},
-    "rd_product_progress": {"family": "technology_product_progress", "reserve": True},
-    "rd_table": {"family": "technology_product_progress", "reserve": False},
-    "rd_investment_table": {"family": "technology_product_progress", "reserve": False},
-    "hk_product_progress": {"family": "technology_product_progress", "reserve": True},
-    "profitability_commentary": {"family": "financial_quality_explanation", "reserve": True},
-    "hk_financial_commentary": {"family": "financial_quality_explanation", "reserve": True},
-    "cash_flow_capex_table": {"family": "financial_quality_explanation", "reserve": False},
-    "asset_impairment_note": {"family": "financial_quality_explanation", "reserve": False},
-    "ar_aging_note": {"family": "financial_quality_explanation", "reserve": False},
-    "inventory_note": {"family": "financial_quality_explanation", "reserve": False},
-    "audit_key_matters": {"family": "financial_quality_explanation", "reserve": False},
-    "government_grant_note": {"family": "financial_quality_explanation", "reserve": False},
-    "financial_assets_note": {"family": "financial_quality_explanation", "reserve": False},
-    "goodwill_note": {"family": "financial_quality_explanation", "reserve": False},
-}
+USAGE_FAMILY_METADATA = {**dict.fromkeys(("business_overview", "business_model", "product_capacity_profile", "sales_certification_model", "hk_business_overview", "hk_customer_ecosystem"), ("business_structure", True)), **dict.fromkeys(("management_strategy",), ("operating_progress", True)), **dict.fromkeys(("segment_table", "production_sales_inventory_table"), ("operating_progress", False)), **dict.fromkeys(("management_market_view", "industry_outlook", "market_demand_outlook", "competitive_position", "future_strategy", "hk_market_outlook"), ("market_competition_outlook", True)), **dict.fromkeys(("rd_product_progress", "hk_product_progress"), ("technology_product_progress", True)), **dict.fromkeys(("rd_table", "rd_investment_table"), ("technology_product_progress", False)), **dict.fromkeys(("profitability_commentary", "hk_financial_commentary"), ("financial_quality_explanation", True)), **dict.fromkeys(("cash_flow_capex_table", "asset_impairment_note", "ar_aging_note", "inventory_note", "audit_key_matters", "government_grant_note", "financial_assets_note", "goodwill_note"), ("financial_quality_explanation", False))}
 
 _ANCHOR_DATE_RE = re.compile(r"20\d{2}年?|\d{4}年")
-_ANCHOR_METRIC_RE = re.compile(
-    r"\d+(?:\.\d+)?%|\d+(?:,\d{3})*(?:\.\d+)?(?:万|亿|千|百|元|美元|只|颗|台|套|个|件|kg|吨|公斤|噸)"
-)
-_ANCHOR_LATIN_ID_RE = re.compile(r"[A-Za-z]{2,}\d+[A-Za-z0-9.\-]*|[A-Za-z]{3,}")
-_ANCHOR_CONCRETE_TOKENS = (
-    "主营", "主營", "业务", "業務", "产品", "產品", "客户", "客戶", "供应商", "供應商",
-    "解决方案", "解決方案", "平台", "应用", "應用", "技术", "技術", "研发", "研發",
-    "项目", "項目", "收入", "營收", "营收", "毛利率", "现金流", "現金流", "销量", "銷量",
-    "产量", "產量", "产能", "產能", "订单", "訂單", "量产", "量產", "验证", "驗證",
-    "交付", "供货", "供貨", "芯片", "晶片", "模块", "機器人", "机器人", "智能", "電匯",
-    "电汇", "航信", "所致", "主要系", "由于", "由於", "受", "影响", "影響",
-)
+_ANCHOR_METRIC_RE = re.compile(r"\d+(?:\.\d+)?%|\d+(?:,\d{3})*(?:\.\d+)?(?:万|亿|千|百|元|美元|只|颗|台|套|个|件|kg|吨|公斤|噸)")
+_ANCHOR_LATIN_ID_RE = re.compile(r"[A-Za-z][A-Za-z0-9.\-]{2,}")
+_ANCHOR_PATTERNS = (_ANCHOR_DATE_RE, _ANCHOR_METRIC_RE, _ANCHOR_LATIN_ID_RE)
+ANNUAL_CHECKBOX_MARKER_RUN_RE = re.compile(r"[□☑■√]\s*(?:不适用|适用)(?:\s*[□☑■√]\s*(?:不适用|适用))*")
+_ANCHOR_CONCRETE_TOKENS = ("主营", "主營", "业务", "業務", "产品", "產品", "客户", "客戶", "平台", "应用", "應用", "技术", "技術", "项目", "項目", "营收", "營收", "毛利率", "现金流", "現金流", "订单", "訂單", "量产", "量產", "验证", "驗證", "交付", "供货", "供貨", "电汇", "電匯", "航信", "所致", "主要系", "由于", "由於")
 
 
 def canonical_family_for_usage(usage: str) -> str | None:
-    metadata = USAGE_FAMILY_METADATA.get(str(usage or "").strip())
-    return metadata["family"] if metadata else None
+    return metadata[0] if (metadata := USAGE_FAMILY_METADATA.get(str(usage or "").strip())) else None
 
 
 def is_high_value_narrative_usage(usage: str) -> bool:
     metadata = USAGE_FAMILY_METADATA.get(str(usage or "").strip())
-    return bool(metadata and metadata["reserve"])
+    return bool(metadata and metadata[1])
 
 
 def normalize_annual_source_text(text: object) -> str:
     return re.sub(r"\s+", " ", str(text or "")).strip()
 
 
+_ANNUAL_SOURCE_PREFIX_RE = re.compile(r"^(?:(?:\d{1,4}\s*(?:/\s*\d{1,4})?\s+[^。；;！？!?]{0,80}?20\d{2}\s*年\s*年度报告(?:全文)?\s*)(?:\d{1,3}[、．.]\s*[\u4e00-\u9fffA-Za-z]{1,20}模式\s+)?|\d{1,3}[、．.]\s*[\u4e00-\u9fffA-Za-z]{1,20}模式\s+\d{1,3}\s+[^。；;！？!?]{1,120}?20\d{2}\s*年\s*年度报告(?:全文)?\s+|\d{1,3}/\s+(?=(?:当|客户|公司|本公司))|\d{1,3}[、．.]\s*[\u4e00-\u9fffA-Za-z]{1,20}模式\s+|[^。；;！？!?]{1,120}(?:原因说明|情况说明)\s+(?=20\d{2}\s*年))")
+
+
+def annual_source_tail(text: object) -> str | None:
+    """Return an exact factual tail after one supported annual-report prefix."""
+    normalized = normalize_annual_source_text(text)
+    marker_runs = list(ANNUAL_CHECKBOX_MARKER_RUN_RE.finditer(normalized))
+    if marker_runs and len(marker_runs) != 1:
+        return None
+    if marker_runs:
+        end = marker_runs[0].end()
+    elif match := _ANNUAL_SOURCE_PREFIX_RE.match(normalized):
+        end = match.end()
+    else:
+        return None
+    tail = normalized[end:].strip()
+    return tail if tail and not ANNUAL_CHECKBOX_MARKER_RUN_RE.search(tail) and not _ANNUAL_SOURCE_PREFIX_RE.match(tail) and tail.endswith(("。", "；", ";", "！", "？", "!", "?")) and normalized.find(tail) >= 0 else None
+
 def has_concrete_annual_anchor(text: object) -> bool:
-    text = str(text or "")
-    if _ANCHOR_DATE_RE.search(text):
-        return True
-    if _ANCHOR_METRIC_RE.search(text):
-        return True
-    if _ANCHOR_LATIN_ID_RE.search(text):
+    text = normalize_annual_source_text(text)
+    if any(pattern.search(text) for pattern in _ANCHOR_PATTERNS):
         return True
     return any(token in text for token in _ANCHOR_CONCRETE_TOKENS)
 

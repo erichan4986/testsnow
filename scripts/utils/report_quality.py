@@ -214,6 +214,7 @@ def check_report_text(
 
     issues.extend(_check_required_signals(normalized))
     issues.extend(_check_contradictions(normalized, profile))
+    issues.extend(_check_empty_executive_summary_body(text))
     issues.extend(_check_curated_external_inline_footnotes(text, profile))
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
@@ -841,6 +842,25 @@ def _check_financial_profit_direction_contradictions(text: str) -> Iterable[Qual
             message="报告同时出现净利同比下滑信号与正式章节利润高增/增长表述，需统一财务口径或显式解释差异。",
             evidence=f"negative={negative_profit_signal.group(0)}; positive={positive_profit_wording.group(0)}",
         )
+
+
+def _check_empty_executive_summary_body(text: str) -> Iterable[QualityIssue]:
+    if "## 一、综合评分与推荐" not in text:
+        return
+    section = _extract_markdown_section(text, "执行摘要")
+    body_patterns = (
+        r"\*\*基本面判断\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+        r"\*\*估值与业绩预期\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+        r"\*\*交易状态与风险\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+        r">[ \t]*\*\*一句话结论\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+    )
+    if any(re.search(pattern, section) for pattern in body_patterns):
+        return
+    yield QualityIssue(
+        code="empty_executive_summary_body",
+        severity="error",
+        message="深度报告执行摘要只有评分、标题或图表，缺少可读正文。",
+    )
 
 
 def _check_header_config_missing(text: str) -> Iterable[QualityIssue]:

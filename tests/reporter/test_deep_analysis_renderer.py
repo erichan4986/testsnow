@@ -4,8 +4,10 @@ import re
 
 import pytest
 from scripts.utils.deep_analysis_material_snapshot import (
+    MaterialRow,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
+    select_annual_display_rows,
 )
 from scripts.utils.reporter.sections import DeepAnalysisRenderer
 
@@ -19,6 +21,76 @@ def test_render_missing_keys():
     renderer = DeepAnalysisRenderer()
     assert renderer.render({}) == ""
     assert renderer.render({"stock_name": "Test"}) == ""
+
+
+def test_annual_portrait_prefers_a_complete_sentence():
+    renderer = DeepAnalysisRenderer()
+    rows = [
+        {"body": "公司主营业务为高端光通信收发模块，为客户提供低成"},
+        {"body": "公司主营业务为高端光通信收发模块，服务云计算数据中心客户"},
+    ]
+
+    assert renderer._select_annual_portrait_row(rows) == rows[1]
+
+
+def test_annual_portrait_requires_company_scope():
+    renderer = DeepAnalysisRenderer()
+    narrow = {"body": "公司NFC产品广泛应用于金融POS、智能门锁和门禁等市场。"}
+    company = {"body": "公司主营业务为芯片设计，并为多个行业客户提供产品与系统解决方案。"}
+
+    assert renderer._select_annual_portrait_row([narrow]) is None
+    assert renderer._select_annual_portrait_row([narrow, company]) == company
+
+
+def test_annual_portrait_accepts_company_product_matrix_without_terminal_punctuation():
+    renderer = DeepAnalysisRenderer()
+    matrix = {
+        "body": "在子系列产品基础上，公司开发了FPGA、RF-FPGA、PSoC、RFSoC、FPAI等多个系列产品类型，逻辑资源从50K至4000K，算力从4TOPS至128TOPS，广泛应用于工业控制、测试测量、电力能源、消费电子、音视频、人工智能、卫星通信以及高可靠等领域，为客户提供低成本、低功耗、高性能、高可靠性的多元产品矩阵，全面匹配多样化应用需求。安全与识别产品线拥有多个芯片方向，是国内领先供应商",
+    }
+
+    assert renderer._select_annual_portrait_row([matrix]) == matrix
+
+
+def test_annual_portrait_falls_back_after_an_ineligible_business_pool():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow("annual:narrow", "公司NFC产品广泛应用于门禁市场。", "annual", "formal_explanation", (1,), ("annual:narrow",), body="公司NFC产品广泛应用于门禁市场。", render_role="business_structure"),
+        MaterialRow("annual:operating", "报告期内，公司主营业务覆盖芯片设计、测试及系统解决方案。", "annual", "formal_explanation", (2,), ("annual:operating",), body="报告期内，公司主营业务覆盖芯片设计、测试及系统解决方案。", render_role="operating_progress"),
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(
+        rows,
+        {1: {"source": "公司年报"}, 2: {"source": "公司年报"}},
+        fallback="无材料",
+    ))
+    portrait = rendered.split("**一句话画像**", 1)[1].split("**业务结构**", 1)[0]
+
+    assert "主营业务覆盖芯片设计、测试及系统解决方案" in portrait
+
+
+def test_compact_annual_text_never_cuts_an_over_limit_sentence():
+    sentence = "公司主营业务为高端光通信收发模块的研发、生产及销售，" + "产品服务于云计算数据中心、数据通信和电信传输客户，" * 5 + "形成稳定合作关系。"
+
+    assert len(sentence) > 140
+    assert DeepAnalysisRenderer._compact_annual_text(sentence, 140) == sentence.rstrip("。")
+
+
+def test_annual_profile_dedupes_rows_that_compact_to_the_same_visible_sentence():
+    renderer = DeepAnalysisRenderer()
+    sentence = "公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心客户。"
+    long_tail = "同时，公司持续布局下一代高速产品并扩大研发投入，" + "推进产品验证、客户导入、产能建设、供应链协同和海外交付能力提升，" * 4 + "形成长期竞争力。"
+    rows = (
+        MaterialRow("annual:business", sentence, "annual", "formal_explanation", (1,), ("annual:business",), title="业务结构", body=sentence, render_role="business_structure", source_credit="official"),
+        MaterialRow("annual:market", sentence + long_tail, "annual", "formal_explanation", (2,), ("annual:market",), title="经营变化", body=sentence + long_tail, render_role="market_competition_outlook", source_credit="official"),
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(
+        rows,
+        {1: {"source": "公司年报", "title": "业务"}, 2: {"source": "公司年报", "title": "经营"}},
+        fallback="无材料",
+    ))
+
+    assert rendered.count(sentence.rstrip("。")) == 1
 
 
 def test_render_basic():
@@ -1378,6 +1450,208 @@ def test_annual_broker_layout_merges_external_map_and_checklist():
     assert "**待验证证据**" not in result
 
 
+def test_formal_medium_4_1_renders_selected_material_rows_only():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"].extend([
+        {
+            "title": "审计意见",
+            "body": "我们认为，后附的公司财务报表在所有重大方面公允反映了公司财务状况。",
+            "citation_refs": [5],
+            "source_ref_ids": ["annual:audit"],
+            "argument_family": "business_structure",
+        },
+        {
+            "title": "生产模式",
+            "body": "在生产模式上，公司主要采取以销定产的生产模式，并按订单编制生产计划。",
+            "citation_refs": [6],
+            "source_ref_ids": ["annual:routine"],
+            "argument_family": "business_structure",
+        },
+    ])
+    memo["citations"].update({
+        5: {"source": "公司年报", "title": "审计意见"},
+        6: {"source": "公司年报", "title": "生产模式"},
+    })
+    ctx = {
+        "stock_name": "中际旭创",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
+
+    assert "公司增长主线来自 FPGA" in section41
+    assert "后附的公司财务报表" not in section41
+    assert "以销定产" not in section41
+
+
+def test_formal_thin_4_1_uses_the_same_annual_selector():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"].extend([
+        {
+            "title": "审计意见",
+            "body": "我们认为，后附的公司财务报表在所有重大方面公允反映了公司财务状况。",
+            "citation_refs": [5],
+            "source_ref_ids": ["annual:audit"],
+            "argument_family": "business_structure",
+        },
+        {
+            "title": "生产模式",
+            "body": "在生产模式上，公司主要采取以销定产的生产模式，并按订单编制生产计划。",
+            "citation_refs": [6],
+            "source_ref_ids": ["annual:routine"],
+            "argument_family": "business_structure",
+        },
+    ])
+    memo["citations"].update({
+        5: {"source": "公司年报", "title": "审计意见"},
+        6: {"source": "公司年报", "title": "生产模式"},
+    })
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
+
+    assert "公司增长主线来自 FPGA" in section41
+    assert "后附的公司财务报表" not in section41
+    assert "以销定产" not in section41
+
+
+def test_annual_portrait_never_falls_back_to_financial_or_generic_industry_row():
+    renderer = DeepAnalysisRenderer()
+    memo = _annual_memo_fixture()
+    memo["sections"]["annual_report_explanation"] = [
+        {
+            "title": "行业预测",
+            "body": "根据第三方预测，2026年全球市场规模将达到228亿美元。",
+            "citation_refs": [2],
+            "source_ref_ids": ["annual:industry"],
+            "argument_family": "market_competition_outlook",
+        },
+        {
+            "title": "经营进展",
+            "body": "报告期内，公司完成客户导入并实现批量出货。",
+            "citation_refs": [3],
+            "source_ref_ids": ["annual:operating"],
+            "argument_family": "operating_progress",
+        },
+    ]
+    memo["citations"].update({
+        2: {"source": "公司年报", "title": "行业预测"},
+        3: {"source": "公司年报", "title": "经营进展"},
+    })
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": memo,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
+
+    assert "**一句话画像**" in section41
+    assert "报告期内，公司完成客户导入并实现批量出货" in section41
+    assert "营业收入：营业收入 39.82 亿元" not in section41
+    assert "全球市场规模将达到228亿美元" not in section41
+
+
+def test_formal_thin_rejected_highest_annual_ref_does_not_shift_broker_or_external_refs():
+    renderer = DeepAnalysisRenderer()
+    annual = _annual_memo_fixture()
+    annual["sections"]["confirmed"] = []
+    annual["sections"]["annual_report_explanation"] = [
+        {
+            "title": "主营业务",
+            "body": "公司主营业务为芯片设计并服务于汽车电子客户。",
+            "citation_refs": [1],
+            "source_ref_ids": ["annual:business"],
+            "argument_family": "business_structure",
+        },
+        {
+            "title": "审计意见",
+            "body": "我们认为，后附的公司财务报表在所有重大方面公允反映了公司财务状况。",
+            "citation_refs": [2],
+            "source_ref_ids": ["annual:audit"],
+            "argument_family": "business_structure",
+        },
+    ]
+    annual["citations"] = {
+        1: {"source": "公司年报", "title": "主营业务"},
+        2: {"source": "公司年报", "title": "审计意见"},
+    }
+    broker = {
+        "status": "ready",
+        "sections": [{"title": "机构观点", "body": "测试证券认为产品需求改善。", "citation_refs": [1]}],
+        "forecast_ranges": [],
+        "risks": [],
+        "citations": {1: {"source": "券商研报", "title": "机构观点"}},
+    }
+    external = {
+        "citations": {
+            1: {
+                "source": "微信公众号精选观察",
+                "title": "外部观点",
+                "source_type": "curated_external_analysis_evidence",
+            }
+        },
+        "_curated_external_reasoning_cards": [{"claim": "外部材料提示需求变化。", "citation_refs": [1]}],
+    }
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {
+            "industry_logic": "基线事实[^1]",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "公告", "title": "基线"}},
+        },
+        "annual_report_memo": annual,
+        "broker_research_memo": broker,
+        "deep_analysis_display": external,
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    body, citation_table = result.split("## 引用来源", 1)
+    body_refs = {int(ref) for ref in re.findall(r"\[\^(\d+)\]", body)}
+    table_refs = {int(ref) for ref in re.findall(r"\[\^(\d+)\]", citation_table)}
+
+    assert body_refs == table_refs
+    assert {2, 4, 5} <= body_refs
+    assert 3 not in body_refs
+    assert "未知" not in citation_table
+
+
 def test_suspicious_zero_financial_core_facts_are_not_visible():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -2597,7 +2871,7 @@ def test_formal_thin_annual_memo_projects_to_readable_business_profile():
     assert "**年报经营线索**" not in section41
     assert section41.count("主营业务与产品") <= 1
     assert "FPGA 产品覆盖" in section41
-    assert "2025 年半导体行业景气度结构性分化" in section41
+    assert "2025 年半导体行业景气度结构性分化" not in section41
 
 
 def test_formal_thin_annual_memo_prefers_company_portrait_over_narrow_product_line():
@@ -3043,16 +3317,24 @@ def test_broker_consensus_uses_assumption_titles_for_generic_sector():
     assert consensus == "研报关注点集中在产能利用率、海外渠道。"
 
 
-def test_official_row_cleaner_preserves_generic_business_prefix_before_mode_noise():
-    renderer = DeepAnalysisRenderer()
+def test_annual_selector_preserves_business_prefix_before_mode_noise():
+    row = MaterialRow(
+        row_id="annual:business-mode",
+        text="主营业务与产品：公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
+        source_layer="annual",
+        claim_status="formal_explanation",
+        citation_refs=(1,),
+        source_ref_ids=("annual:business-mode",),
+        title="主营业务与产品",
+        body="公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
+        render_role="business_structure",
+        source_credit="official",
+    )
 
-    cleaned = renderer._clean_formal_medium_official_row({
-        "title": "主营业务与产品",
-        "body": "公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
-    })
+    selected, _ = select_annual_display_rows((row,))
 
-    assert cleaned is not None
-    assert cleaned["body"] == "公司提供工业控制设备并服务大型制造客户"
+    assert len(selected) == 1
+    assert selected[0].body == "公司提供工业控制设备并服务大型制造客户"
 
 
 def test_formal_medium_price_path_uses_material_titles_in_generic_sector():

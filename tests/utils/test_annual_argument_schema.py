@@ -10,13 +10,17 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import annual_argument_schema as schema
+
 from annual_argument_schema import (
+    ANNUAL_CHECKBOX_MARKER_RUN_RE,
     CANONICAL_FAMILIES,
     CARD_SCHEMA_VERSION,
     ENVELOPE_SCHEMA_VERSION,
     FAMILY_LABELS,
     SELECTION_VERSION,
     adapt_v1_card,
+    annual_source_tail,
     is_v1_card,
     validate_card_v2,
     validate_source_unit,
@@ -510,3 +514,65 @@ def test_shared_normalization_and_anchor_gate_are_deterministic():
     assert has_concrete_annual_anchor("2025 年客户付款形式变更为电汇。")
     assert has_concrete_annual_anchor("SESAMEX 平台提供机器人方案。")
     assert not has_concrete_annual_anchor("持续提升核心竞争力。")
+
+
+def test_annual_source_tail_accepts_one_complete_checkbox_tail_only():
+    complete = (
+        "现金流变动情况 √适用 □不适用 2025年客户付款形式变更为电汇，"
+        "主要系经营活动现金流增加所致。"
+    )
+
+    assert ANNUAL_CHECKBOX_MARKER_RUN_RE.search(complete)
+    assert annual_source_tail(complete) == (
+        "2025年客户付款形式变更为电汇，主要系经营活动现金流增加所致。"
+    )
+    assert annual_source_tail("事项一 √适用 □不适用 事项二 √适用 □不适用 现金流增加。") is None
+    assert annual_source_tail("事项 √适用 □不适用 现金流增加") is None
+
+
+@pytest.mark.parametrize(
+    "text, expected",
+    (
+        (
+            "现金流变动情况 √适用 □不适用 2025年客户付款形式变更为电汇，主要系经营活动现金流增加所致。",
+            "2025年客户付款形式变更为电汇，主要系经营活动现金流增加所致。",
+        ),
+        (
+            "17/258 中简科技股份有限公司 2025年年度报告全文 2、生产模式 因公司产品主要用于航空航天领域，性能参数不会发生改变。",
+            "因公司产品主要用于航空航天领域，性能参数不会发生改变。",
+        ),
+        (
+            "2、生产模式 因公司产品主要用于航空航天领域，性能参数不会发生改变。",
+            "因公司产品主要用于航空航天领域，性能参数不会发生改变。",
+        ),
+        (
+            "2、生产模式 9 中简科技股份有限公司2025年年度报告全文 因公司产品主要用于航空航天领域，性能参数不会发生改变。",
+            "因公司产品主要用于航空航天领域，性能参数不会发生改变。",
+        ),
+        (
+            "报告期内公司经营活动产生的现金净流量与本年度净利润存在重大差异的原因说明 2025年四季度客户付款形式由航信变动为电汇支付，导致两者存在较大差异。",
+            "2025年四季度客户付款形式由航信变动为电汇支付，导致两者存在较大差异。",
+        ),
+    ),
+)
+def test_annual_source_tail_recognizes_only_locked_structural_prefixes(text, expected):
+    normalized = schema.normalize_annual_source_text(text)
+    tail = schema.annual_source_tail(text)
+
+    assert tail == expected
+    assert normalized.find(tail) >= 0
+    assert tail.endswith(("。", "；", ";", "！", "？", "!", "?"))
+
+
+@pytest.mark.parametrize(
+    "text",
+    (
+        "任意前缀 2025年客户付款形式变更为电汇支付。",
+        "事项一 √适用 □不适用 事项二 √适用 □不适用 现金流增加。",
+        "现金流变动情况 √适用 □不适用 2025年客户付款形式变更为电汇支付",
+        "2、生产模式 因公司产品主要用于航空航天领域，性能参数不会发生改变",
+        "2、生产模式 3、销售模式 公司产品直接面向客户销售。",
+    ),
+)
+def test_annual_source_tail_rejects_unlocked_or_incomplete_prefixes(text):
+    assert schema.annual_source_tail(text) is None
