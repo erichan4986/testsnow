@@ -26,6 +26,11 @@ except ImportError:
         sys.path.insert(0, str(utils_dir))
     from wind_kline_loader import load_wind_package
 
+try:
+    from reporter.technical_state_machine import ensure_technical_judgment
+except ImportError:
+    from utils.reporter.technical_state_machine import ensure_technical_judgment
+
 
 MAX_LOCAL_WIND_STALENESS_DAYS = 7
 
@@ -161,6 +166,16 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
     def _set_technical_outputs(tech_data: dict | None, unavailable_reason: str = "") -> None:
         if tech_data:
             indicators = tech_data.get("indicators", {})
+            resonance = indicators.get("_resonance", {}) if isinstance(indicators, dict) else {}
+            if isinstance(indicators, dict) and isinstance(resonance, dict):
+                resonance["judgment"] = ensure_technical_judgment(
+                    resonance.get("judgment"), resonance=resonance,
+                    price_target=tech_data.get("price_target"),
+                    indicators=indicators,
+                    daily_data=tech_data.get("daily_data"),
+                    market=tech_data.get("market"),
+                )
+                indicators["_resonance"] = resonance
             daily_data = _extract_daily_data(tech_data, indicators)
             stock_raw["technical"] = tech_data
             _bridge_technical_fund_flow(stock_raw, tech_data)
@@ -208,7 +223,12 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
         else:
             df_daily = wind_pkg["daily"]
             tech_collector = TechnicalCollector()
-            indicators = tech_collector.compute_indicators(df_daily, code=code)
+            technical_payload = tech_collector.build_technical_payload(
+                df_daily, code=code, market=market,
+            )
+            if not isinstance(technical_payload, dict):
+                indicators = tech_collector.compute_indicators(df_daily, code=code, market=market)
+                technical_payload = {"indicators": indicators, "price_target": None}
 
             daily_data = _df_to_daily_data(df_daily)
 
@@ -218,14 +238,14 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
                     benchmark_data[name] = _df_to_daily_data(df_bench)
 
             tech_data = {
-                "indicators": indicators,
+                "indicators": technical_payload.get("indicators", {}),
                 "daily_data": daily_data,
                 "benchmark_data": benchmark_data,
                 "data_source": "wind_excel",
                 "adjustment": "raw",
                 "code": code,
                 "market": market,
-                "price_target": None,
+                "price_target": technical_payload.get("price_target"),
             }
             _set_technical_outputs(tech_data)
             return ctx

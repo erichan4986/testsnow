@@ -1,9 +1,137 @@
 import pandas as pd
 import numpy as np
+import pytest
 import sys
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-from price_target import zigzag, fib_extension, fib_targets_with_convergence, pattern_target, extract_pattern_info, synthesize_targets, profit_risk_filter, confidence_score, confidence_level, estimate_time, analyze_price_target
+from price_target import (
+    zigzag,
+    fib_extension,
+    fib_targets_with_convergence,
+    pattern_target,
+    extract_pattern_info,
+    synthesize_targets,
+    profit_risk_filter,
+    confidence_score,
+    confidence_level,
+    estimate_time,
+    analyze_price_target,
+    _opposing_macd_expanding,
+)
+from technical_state_machine import build_technical_judgment
+
+
+def _ohlcv_frame(rows: int) -> pd.DataFrame:
+    close = np.linspace(10.0, 12.0, rows)
+    return pd.DataFrame({
+        "open": close - 0.1,
+        "high": close + 0.2,
+        "low": close - 0.2,
+        "close": close,
+        "volume": np.full(rows, 1000.0),
+    })
+
+
+def test_analyze_price_target_insufficient_data_has_stable_status_codes():
+    daily = _ohlcv_frame(30)
+    weekly = _ohlcv_frame(10)
+
+    daily_result = analyze_price_target(daily.iloc[:29], weekly, current_price=11.0)
+    weekly_result = analyze_price_target(daily, weekly.iloc[:9], current_price=11.0)
+
+    assert daily_result["status"] == "unavailable"
+    assert daily_result["reason_code"] == "insufficient_daily_data"
+    assert weekly_result["status"] == "unavailable"
+    assert weekly_result["reason_code"] == "insufficient_weekly_data"
+
+
+def test_analyze_price_target_weekly_range_is_observation(monkeypatch):
+    daily = _ohlcv_frame(30)
+    weekly = _ohlcv_frame(10)
+    monkeypatch.setattr(
+        "price_target.weekly_trend_analysis",
+        lambda _weekly: {"is_ranging": True, "direction": "震荡", "adx": 12.0},
+    )
+
+    result = analyze_price_target(daily, weekly, current_price=11.0)
+
+    assert result["status"] == "observe"
+    assert result["reason_code"] == "weekly_range"
+    assert result["direction"] == "neutral"
+    assert result["structure_confidence"] == "observation"
+
+    judgment = build_technical_judgment({
+        "analysis_confidence": {"level": "高"},
+        "price_data_lineage": {"effective_adjustment": "raw", "price_adjustment_applied": False},
+    }, result)
+    assert judgment["target"]["execution_state"] == "observe"
+    assert judgment["target"]["display_mode"] == "levels_only"
+    assert judgment["action"]["state"] == "wait_for_confirmation"
+
+
+def test_analyze_price_target_timeframe_conflict_is_invalid(monkeypatch):
+    daily = _ohlcv_frame(30)
+    weekly = _ohlcv_frame(10)
+    monkeypatch.setattr(
+        "price_target.weekly_trend_analysis",
+        lambda _weekly: {"is_ranging": False, "direction": "多头", "adx": 30.0},
+    )
+    monkeypatch.setattr("price_target._daily_trend_from_indicators", lambda _indicators: "空头")
+
+    result = analyze_price_target(daily, weekly, current_price=11.0)
+
+    assert result["status"] == "invalid"
+    assert result["reason_code"] == "timeframe_direction_conflict"
+
+
+def test_fib_only_target_is_observation_before_reward_risk(monkeypatch):
+    daily = _ohlcv_frame(30)
+    weekly = _ohlcv_frame(10)
+    monkeypatch.setattr(
+        "price_target.weekly_trend_analysis",
+        lambda _weekly: {"is_ranging": False, "direction": "多头", "adx": 30.0},
+    )
+    monkeypatch.setattr("price_target._daily_trend_from_indicators", lambda _indicators: "震荡")
+    monkeypatch.setattr("technical_analyzer.detect_double_bottom", lambda _close: None)
+    monkeypatch.setattr("technical_analyzer.detect_double_top", lambda _close: None)
+    monkeypatch.setattr(
+        "price_target.zigzag",
+        lambda _close, min_pct: [
+            {"idx": 0, "price": 10.0, "type": "valley"},
+            {"idx": 1, "price": 12.0, "type": "peak"},
+        ],
+    )
+    monkeypatch.setattr(
+        "price_target.fib_targets_with_convergence",
+        lambda *_args, **_kwargs: [{"price": 14.0, "band_idx": 0, "in_convergence": False}],
+    )
+
+    result = analyze_price_target(daily, weekly, current_price=11.0)
+
+    assert result["status"] == "observe"
+    assert result["reason_code"] == "structure_observation"
+    assert result["structure_evidence"]["method_family"] == "fib_only"
+
+
+@pytest.mark.parametrize(
+    ("direction", "hist", "line", "signal", "expected"),
+    [
+        ("bullish", [-1.0, -2.0, -3.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0], True),
+        ("bearish", [1.0, 2.0, 3.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0], True),
+        ("bullish", [1.0, 2.0, 3.0], [1.0, 1.0, 1.0], [0.0, 0.0, 0.0], False),
+        ("bearish", [-1.0, -2.0, -3.0], [0.0, 0.0, 0.0], [1.0, 1.0, 1.0], False),
+    ],
+)
+def test_opposing_macd_expanding_is_direction_aware(
+    monkeypatch, direction, hist, line, signal, expected
+):
+    monkeypatch.setattr(
+        "price_target._macd",
+        lambda _close: (pd.Series(line), pd.Series(signal), pd.Series(hist)),
+    )
+    close = pd.Series([10.0, 10.1, 10.2])
+
+    assert _opposing_macd_expanding(close, direction) is expected
 
 
 def test_zigzag_basic():
@@ -422,3 +550,56 @@ def test_analyze_price_target_minimal():
     assert "conservative" in result
     assert "base" in result
     assert "aggressive" in result
+
+
+def test_ready_target_uses_fixed_adx_trigger_text(monkeypatch):
+    daily = _ohlcv_frame(70)
+    weekly = _ohlcv_frame(30)
+    pattern = {"pattern": "双底", "bottom1": 10.0, "bottom2": 10.1, "peak": 11.0}
+    monkeypatch.setattr(
+        "price_target.weekly_trend_analysis",
+        lambda _weekly: {
+            "is_ranging": False,
+            "direction": "多头",
+            "adx": 47.4,
+            "adx_score": 10,
+            "plus_di": 30.0,
+            "minus_di": 10.0,
+        },
+    )
+    monkeypatch.setattr("price_target._daily_trend_from_indicators", lambda _value: "多头")
+    monkeypatch.setattr("technical_analyzer.detect_double_bottom", lambda _close: pattern)
+    monkeypatch.setattr("technical_analyzer.detect_double_top", lambda _close: None)
+    monkeypatch.setattr("price_target._opposing_macd_expanding", lambda *_args: False)
+    monkeypatch.setattr(
+        "price_target.synthesize_targets",
+        lambda *_args, **_kwargs: {
+            "conservative": 12.0,
+            "base": 13.0,
+            "aggressive": 14.0,
+            "aggressive_raw": 14.0,
+            "is_far_target": False,
+            "method": "双周期形态",
+        },
+    )
+    monkeypatch.setattr(
+        "price_target.profit_risk_filter",
+        lambda **_kwargs: {
+            "pass": True,
+            "ratio": 2.0,
+            "trigger_price": 11.1,
+            "stop_price": 10.0,
+            "potential_gain": 0.9,
+            "initial_risk": 1.1,
+            "neckline": 11.0,
+            "daily_atr": 0.5,
+            "direction": "bullish",
+        },
+    )
+
+    result = analyze_price_target(daily, weekly, current_price=12.0)
+
+    assert result["status"] == "ready"
+    assert result["reason_code"] == "target_ready"
+    assert result["trigger_conditions"]["trend"] == "周线ADX>=25且+DI>-DI"
+    assert "47.4" not in result["trigger_conditions"]["trend"]

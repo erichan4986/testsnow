@@ -1,5 +1,8 @@
+import os
+import subprocess
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter" / "sections"))
 
 from technical_renderer import TechnicalRenderer
@@ -117,3 +120,88 @@ def test_string_daily_structure_does_not_break_rendering():
 
     assert "中期趋势提醒" in output
     assert "日线沿20日均线上行" in output
+
+
+def test_unavailable_judgment_suppresses_legacy_precision_targets():
+    renderer = TechnicalRenderer()
+    ctx = _make_ctx(with_new_fields=True, mode="compact")
+    tech = ctx["stock_raw"]["technical"]
+    tech["price_target"] = {
+        "status": "ready", "direction": "bullish", "conservative": 110.0,
+        "base": 115.0, "aggressive": 120.0, "stop_loss": "97.0",
+        "trigger_conditions": {"price": "旧触发条件"},
+        "failure_conditions": ["旧失效条件"],
+        "time_estimate": {"base": "10日"},
+    }
+    tech["indicators"]["_resonance"]["judgment"] = {
+        "schema": "technical_judgment.v1",
+        "trend": {"state": "unknown"},
+        "target": {
+            "direction": "neutral", "producer_status": "unavailable",
+            "reason_code": "untrusted_or_malformed_judgment",
+            "structure_confidence": "unavailable",
+            "effective_confidence": "unavailable", "execution_state": "unavailable",
+            "display_mode": "unavailable",
+        },
+        "action": {"state": "unavailable"},
+    }
+
+    output = renderer.render(ctx)
+
+    assert "| 目标 | 价格 |" not in output
+    assert "止损" not in output
+    assert "旧触发条件" not in output
+    assert "旧失效条件" not in output
+    assert "时间预期" not in output
+
+
+def test_contradictory_cached_judgment_cannot_render_precision_targets():
+    renderer = TechnicalRenderer()
+    ctx = _make_ctx(with_new_fields=True, mode="compact")
+    tech = ctx["stock_raw"]["technical"]
+    tech["price_target"] = {
+        "status": "ready", "direction": "bullish", "conservative": 110.0,
+        "base": 115.0, "aggressive": 120.0,
+    }
+    tech["indicators"]["_resonance"]["judgment"] = {
+        "schema": "technical_judgment.v1",
+        "trend": {"state": "unknown"},
+        "target": {
+            "direction": "neutral", "producer_status": "unavailable",
+            "reason_code": "stale_cache", "structure_confidence": "unavailable",
+            "effective_confidence": "unavailable", "execution_state": "unavailable",
+            "display_mode": "full_targets",
+            "trigger_checks": {
+                name: {"status": "pass"}
+                for name in ("price", "trend", "volume", "momentum")
+            },
+        },
+        "action": {"state": "follow"},
+    }
+
+    output = renderer.render(ctx)
+
+    assert "| 目标 | 价格 |" not in output
+    assert "110.0" not in output
+    assert "120.0" not in output
+
+
+def test_renderer_resolves_judgment_inside_utils_package_context(tmp_path):
+    script = """
+from utils.reporter.sections.technical_renderer import TechnicalRenderer
+ctx = {"stock_name": "测试股", "stock_raw": {"technical": {"price_target": {}, "indicators": {
+    "_resonance": {
+        "trend_state": {"primary_state": "上升趋势", "stage": "主升期"},
+        "trend_health": {"score": 72, "grade": "健康"},
+        "analysis_confidence": {"level": "高"},
+    }
+}}}}
+assert "## 技术面分析" in TechnicalRenderer().render(ctx)
+"""
+    env = dict(os.environ, PYTHONPATH=str(Path(__file__).parents[2] / "scripts"))
+    result = subprocess.run(
+        [sys.executable, "-c", script], cwd=tmp_path, env=env,
+        capture_output=True, text=True,
+    )
+
+    assert result.returncode == 0, result.stderr

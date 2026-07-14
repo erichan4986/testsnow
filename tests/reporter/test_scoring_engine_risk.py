@@ -4,8 +4,9 @@ import re
 
 import pytest
 from scripts.utils.report_quality import STRONG_RECOMMENDATION_PATTERNS
+from scripts.utils.reporter.recommendation_decision import EntryConstraint
 from scripts.utils.reporter.scoring_engine import (
-    _entry_quality_guardrail,
+    build_risk_assessment,
     industry_specific_risk_table,
     risk_score_section,
 )
@@ -427,29 +428,8 @@ def _matches_strong_recommendation(text: str) -> list:
 
 
 # ---------------------------------------------------------------------------
-# Entry quality guardrail tests
+# Entry quality constraint tests
 # ---------------------------------------------------------------------------
-
-
-def test_entry_quality_guardrail_detects_price_target_blocked_entry():
-    guardrail = _entry_quality_guardrail(
-        _make_entry_quality_stock_raw(
-            price_target={"error": "关注/不操作", "reason": "形态存在但盈亏比不足（1.06:1）"}
-        )
-    )
-
-    assert guardrail["level"] == "entry_blocked"
-
-
-def test_entry_quality_guardrail_detects_overheated_bias_only():
-    guardrail = _entry_quality_guardrail(_make_entry_quality_stock_raw(bias_5_extreme_high=True))
-
-    assert guardrail["level"] == "overheated_entry"
-
-
-def test_entry_quality_guardrail_missing_fields_returns_none():
-    assert _entry_quality_guardrail({}) is None
-    assert _entry_quality_guardrail({"technical": {"indicators": {}}}) is None
 
 
 def test_entry_blocked_adds_current_trading_risk_and_caps_aggressive_position():
@@ -538,6 +518,67 @@ def test_severe_technical_guardrail_takes_precedence_over_entry_quality():
     )
 
     assert _advice_from(result) == "趋势破坏期，以观望或防守仓位为主，建议 0-5%"
+
+
+def test_risk_control_judgment_caps_position_at_zero_to_five():
+    constraint = EntryConstraint(
+        state="risk_control",
+        label_suffix="",
+        display_note="技术方向偏空，以防守或观望为主",
+        position_cap_note="技术方向偏空，以防守或观望为主，建议 0-5%",
+        source="technical_judgment",
+        raw_reason="bearish",
+    )
+    signals = [{
+        "name": "竞争格局恶化",
+        "score": 1.5,
+        "confidence": 80,
+        "source": "claim_verification",
+        "evidence_text": "价格战压力",
+        "matched_terms": ["价格战"],
+        "status": "verified",
+    }]
+    assessment = build_risk_assessment(
+        stock_name="测试股",
+        posts=[],
+        stock_raw={
+            "technical": {
+                "indicators": {"close": 10.0, "ma_20": 15.0, "avg_amount_yi": 2.0}
+            }
+        },
+        quote=None,
+        consensus=None,
+        industry_fwd_pe=None,
+        structured_risk_signals=signals,
+        entry_constraint=constraint,
+    )
+
+    assert assessment.score == 3.5
+    assert assessment.level == "中等风险"
+    assert assessment.position_advice == constraint.position_cap_note
+    assert constraint.display_note in assessment.formal_notes
+
+
+def test_wait_for_confirmation_caps_medium_risk_position_at_five_to_ten():
+    constraint = EntryConstraint(
+        state="wait_for_confirmation", label_suffix="", display_note="技术信号尚待确认",
+        position_cap_note="技术信号尚待确认，建议仓位 5-10%",
+        source="technical_judgment", raw_reason="pending",
+    )
+    assessment = build_risk_assessment(
+        stock_name="测试股", posts=[],
+        stock_raw={"technical": {"indicators": {"close": 10.0, "ma_20": 15.0, "avg_amount_yi": 2.0}}},
+        quote=None, consensus=None, industry_fwd_pe=None,
+        structured_risk_signals=[{
+            "name": "竞争格局恶化", "score": 1.5, "confidence": 80,
+            "source": "claim_verification", "evidence_text": "价格战压力",
+            "matched_terms": ["价格战"], "status": "verified",
+        }],
+        entry_constraint=constraint,
+    )
+
+    assert assessment.score == 3.5
+    assert assessment.position_advice == constraint.position_cap_note
 
 
 def test_severe_guardrail_overrides_aggressive_advice():

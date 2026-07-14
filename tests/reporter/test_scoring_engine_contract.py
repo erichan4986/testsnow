@@ -175,10 +175,10 @@ def test_entry_blocked_tempers_strong_composite_recommendation_without_changing_
     assert "EV: +10.25%" in md
     assert "看多但等待入场" in md
     assert "强烈看多" not in md
-    assert "技术面提示当前不适合追高，需等待回调或盈亏比改善" in md
+    assert "技术面提示关注/不操作或追高风险" in md
 
 
-def test_overheated_bias_alone_keeps_composite_label():
+def test_overheated_bias_alone_uses_canonical_composite_label():
     stock_raw = {
         "technical": {
             "indicators": {"bias_5_extreme_high": True},
@@ -195,5 +195,5 @@ def test_overheated_bias_alone_keeps_composite_label():
         pillar=_strong_buy_pillar(),
     )
 
-    assert "强烈看多" in md
-    assert "看多但等待入场" not in md
+    assert "看多但避免追高" in md
+    assert "强烈看多" not in md

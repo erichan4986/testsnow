@@ -338,7 +338,7 @@ class TechnicalCollector:
 
         return df
 
-    def compute_indicators(self, df: pd.DataFrame, code: str | None = None) -> Dict:
+    def _compute_indicators_legacy(self, df: pd.DataFrame, code: str | None = None) -> Dict:
         """
         计算技术指标（优先使用 technical_analyzer，回退到 stockstats）。
         Args:
@@ -347,43 +347,7 @@ class TechnicalCollector:
         Returns:
             Dict with latest indicator values + resonance + patterns + levels
         """
-        # 优先使用纯 pandas 增强版分析器
-        ta_analyze = None
-        try:
-            from .reporter.technical_analyzer import analyze as ta_analyze
-        except ImportError:
-            try:
-                from reporter.technical_analyzer import analyze as ta_analyze
-            except ImportError:
-                import sys
-                from pathlib import Path
-                reporter_dir = Path(__file__).parent / "reporter"
-                if str(reporter_dir) not in sys.path:
-                    sys.path.insert(0, str(reporter_dir))
-                try:
-                    from technical_analyzer import analyze as ta_analyze
-                except ImportError:
-                    pass
-
-        if ta_analyze is not None:
-            try:
-                quote = {
-                    "code": code or df.attrs.get("code"),
-                    "adjustment": df.attrs.get("adjustment", "raw"),
-                    "data_source": df.attrs.get("data_source", "unknown"),
-                }
-                result = ta_analyze(df, df_weekly=None, quote=quote)
-                if result and result.get("indicators"):
-                    # 保持向后兼容：返回扁平化的 indicators 同时保留完整结果
-                    flat = dict(result["indicators"])
-                    flat["_resonance"] = result.get("resonance", {})
-                    flat["_patterns"] = result.get("patterns", [])
-                    flat["_levels"] = result.get("levels", {})
-                    return flat
-            except Exception as e:
-                logger.warning(f"technical_analyzer 失败，回退到 stockstats: {e}")
-
-        # 回退：stockstats
+        # 仅保留 stockstats 兼容回退，避免在主 analyzer 失败后再次计算目标价。
         if stockstats is None:
             logger.error("stockstats 未安装")
             return {}
@@ -448,29 +412,93 @@ class TechnicalCollector:
             logger.error(f"计算技术指标失败: {e}")
             return {}
 
+    def _run_technical_analyzer(self, df_daily, df_weekly=None, code=None, market=None):
+        try:
+            from .reporter.technical_analyzer import analyze
+        except ImportError:
+            from reporter.technical_analyzer import analyze
+        quote = {
+            "code": code or getattr(df_daily, "attrs", {}).get("code"),
+            "market": market,
+            "is_hk": market == "hk",
+            "adjustment": getattr(df_daily, "attrs", {}).get("adjustment", "raw"),
+            "data_source": getattr(df_daily, "attrs", {}).get("data_source", "unknown"),
+        }
+        return analyze(df_daily, df_weekly=df_weekly, quote=quote)
+
+    def build_technical_payload(
+        self,
+        df_daily: pd.DataFrame,
+        df_weekly: pd.DataFrame | None = None,
+        code: str | None = None,
+        market: int | str | None = None,
+    ) -> Dict:
+        """Build the sole technical payload and calculate the target once."""
+        if df_daily is None or df_daily.empty:
+            return {}
+        try:
+            result = self._run_technical_analyzer(df_daily, df_weekly, code, market)
+        except Exception as exc:
+            logger.warning(f"technical_analyzer 失败，回退到 stockstats: {exc}")
+            result = {}
+        if not result or not result.get("indicators"):
+            indicators = self._compute_indicators_legacy(df_daily, code=code)
+            return {
+                "indicators": indicators,
+                "price_target": None,
+                "patterns": [],
+                "levels": {},
+            }
+
+        indicators = dict(result.get("indicators", {}))
+        resonance = dict(result.get("resonance", {}) or {})
+        target = result.get("price_target")
+        try:
+            from .reporter.technical_state_machine import ensure_technical_judgment
+        except ImportError:
+            from reporter.technical_state_machine import ensure_technical_judgment
+        resonance["judgment"] = ensure_technical_judgment(
+            resonance.get("judgment"), resonance=resonance,
+            price_target=target, indicators=indicators,
+            daily_data=df_daily, market=market,
+        )
+        indicators["_resonance"] = resonance
+        indicators["_patterns"] = result.get("patterns", [])
+        indicators["_levels"] = result.get("levels", {})
+        return {
+            "indicators": indicators,
+            "price_target": target,
+            "patterns": result.get("patterns", []),
+            "levels": result.get("levels", {}),
+            "market": market,
+            "code": code,
+        }
+
+    def compute_indicators(self, df: pd.DataFrame, code: str | None = None, market: int | str | None = None) -> Dict:
+        """Compatibility wrapper returning only the builder's flat indicators."""
+        payload = self.build_technical_payload(df, code=code, market=market)
+        return payload.get("indicators", {})
+
     def collect(self, code: str, market: int | str = 0, days: int = 120, adjustment: str | None = None) -> Dict:
         """一键采集技术指标（含日线+周线+价格目标）"""
         df_daily = self.fetch_kline(code, market, days, adjustment=adjustment)
         if df_daily is None or df_daily.empty:
             return {}
-        indicators = self.compute_indicators(df_daily, code=code)
-
-        # --- 新增：周线 + 价格目标 ---
-        price_target_result = None
+        # --- 周线、指标、判断与价格目标统一由一个 builder 完成 ---
         try:
             df_weekly = self.fetch_weekly_kline(code, market, weeks=72)
-            if df_weekly is not None and not df_weekly.empty:
-                try:
-                    from .reporter.price_target import analyze_price_target
-                except ImportError:
-                    from reporter.price_target import analyze_price_target
-                current_price = float(df_daily["close"].iloc[-1])
-                price_target_result = analyze_price_target(
-                    df_daily, df_weekly, current_price=current_price,
-                    daily_indicators=indicators,
-                )
+        except Exception as e:
+            logger.warning(f"周线数据获取失败，保留日线分析: {e}")
+            df_weekly = None
+        try:
+            technical_payload = self.build_technical_payload(
+                df_daily, df_weekly=df_weekly, code=code, market=market,
+            )
         except Exception as e:
             logger.warning(f"价格目标分析失败: {e}")
+            technical_payload = {}
+
+        indicators = technical_payload.get("indicators", {})
 
         # --- 新增：资金流向 + 概念板块（百度PAE，零鉴权） ---
         fund_flow = _baidu_fund_flow_history(code, days=5)
@@ -483,7 +511,9 @@ class TechnicalCollector:
             "adjustment": df_daily.attrs.get("adjustment", "raw"),
             "data_source": df_daily.attrs.get("data_source", "unknown"),
             "indicators": indicators,
-            "price_target": price_target_result,
+            "price_target": technical_payload.get("price_target"),
+            "daily_data": df_daily.to_dict(orient="list"),
+            "technical": technical_payload,
             "fund_flow": fund_flow,
             "concept_blocks": concept_blocks,
             "fetched_at": datetime.now().isoformat(),

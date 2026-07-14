@@ -295,15 +295,29 @@ def profit_risk_filter(
         trigger_price = neckline - 0.3 * daily_atr
         stop_price = neckline + 1.5 * daily_atr
     initial_risk = abs(trigger_price - stop_price)
+    direction = "bullish" if is_bullish else "bearish"
 
     if initial_risk <= 0:
-        return {"pass": False, "ratio": 0.0, "trigger_price": trigger_price, "stop_price": stop_price}
+        return {
+            "pass": False,
+            "ratio": 0.0,
+            "direction": direction,
+            "neckline": round(neckline, 2),
+            "daily_atr": round(daily_atr, 2),
+            "trigger_price": round(trigger_price, 2),
+            "stop_price": round(stop_price, 2),
+            "potential_gain": 0.0,
+            "initial_risk": 0.0,
+        }
 
     # 方向校验：做多时保守目标必须高于触发价，反之亦然
     if is_bullish and conservative_target <= trigger_price:
         return {
             "pass": False,
             "ratio": 0.0,
+            "direction": direction,
+            "neckline": round(neckline, 2),
+            "daily_atr": round(daily_atr, 2),
             "trigger_price": round(trigger_price, 2),
             "stop_price": round(stop_price, 2),
             "potential_gain": 0.0,
@@ -313,6 +327,9 @@ def profit_risk_filter(
         return {
             "pass": False,
             "ratio": 0.0,
+            "direction": direction,
+            "neckline": round(neckline, 2),
+            "daily_atr": round(daily_atr, 2),
             "trigger_price": round(trigger_price, 2),
             "stop_price": round(stop_price, 2),
             "potential_gain": 0.0,
@@ -324,6 +341,9 @@ def profit_risk_filter(
     return {
         "pass": ratio >= min_ratio,
         "ratio": round(ratio, 2),
+        "direction": direction,
+        "neckline": round(neckline, 2),
+        "daily_atr": round(daily_atr, 2),
         "trigger_price": round(trigger_price, 2),
         "stop_price": round(stop_price, 2),
         "potential_gain": round(potential_gain, 2),
@@ -412,22 +432,140 @@ def _daily_trend_from_indicators(indicators: Dict) -> str:
     return "震荡"
 
 
-def _macd_dead_expanding(daily_close: pd.Series) -> bool:
-    """MACD死叉且柱线扩张（否决信号）。"""
-    try:
-        from .technical_analyzer import _macd
-    except ImportError:
-        from technical_analyzer import _macd
+def _opposing_macd_expanding(daily_close: pd.Series, direction: str) -> bool:
+    """Return whether MACD is expanding against the proposed direction."""
     macd_line, macd_sig, macd_hist = _macd(daily_close)
-    if macd_line.iloc[-1] >= macd_sig.iloc[-1]:
+    if len(macd_hist) < 3:
         return False
-    if macd_hist.iloc[-1] >= 0:
-        return False
-    # 柱线最近3天持续变负（扩张）才否决；稳定或收缩不否决
+
     recent = macd_hist.tail(3)
-    if len(recent) < 3:
-        return False
-    return bool(recent.iloc[-1] < recent.iloc[0])
+    expanding_negative = bool(
+        macd_line.iloc[-1] < macd_sig.iloc[-1]
+        and recent.iloc[-1] < 0
+        and all(recent.iloc[i] < recent.iloc[i - 1] for i in range(1, len(recent)))
+    )
+    expanding_positive = bool(
+        macd_line.iloc[-1] > macd_sig.iloc[-1]
+        and recent.iloc[-1] > 0
+        and all(recent.iloc[i] > recent.iloc[i - 1] for i in range(1, len(recent)))
+    )
+    if direction == "bullish":
+        return expanding_negative
+    if direction == "bearish":
+        return expanding_positive
+    return False
+
+
+def _target_with_status(
+    status: str,
+    reason_code: str,
+    common: Optional[Dict] = None,
+    **payload: object,
+) -> Dict:
+    result = {"status": status, "reason_code": reason_code}
+    if common:
+        result.update(common)
+    result.update(payload)
+    return result
+
+
+def _first_pattern(close: pd.Series) -> Optional[Dict]:
+    """Return the first supported pattern, preserving bottom-before-top order."""
+    try:
+        from .technical_analyzer import detect_double_top, detect_double_bottom
+    except ImportError:
+        from technical_analyzer import detect_double_top, detect_double_bottom
+    return detect_double_bottom(close) or detect_double_top(close)
+
+
+def _fib_projection(bands: List[Dict]) -> Tuple[Dict, Dict, bool]:
+    """Build uncompressed candidates, display values and convergence metadata."""
+    levels = (("1.0", 1.0), ("1.272", 1.272), ("1.618", 1.618))
+    candidates, compressed = {}, {}
+    for name, level in levels:
+        values = fib_targets_with_convergence(bands, level=level) if bands else []
+        candidates[name] = values
+        converged = [item["price"] for item in values if item["in_convergence"]]
+        compressed[name] = sum(converged) / len(converged) if converged else (values[-1]["price"] if values else None)
+    return candidates, compressed, any(item["in_convergence"] for values in candidates.values() for item in values)
+
+
+def _structure_summary(
+    daily_pattern_info: Optional[Dict],
+    weekly_pattern_info: Optional[Dict],
+    weekly_direction: str,
+    fib_convergence: bool,
+    has_bands: bool,
+) -> Dict:
+    patterns_aligned = None
+    if daily_pattern_info and weekly_pattern_info:
+        patterns_aligned = daily_pattern_info["is_bullish"] == weekly_pattern_info["is_bullish"]
+    is_bullish = daily_pattern_info["is_bullish"] if daily_pattern_info else (
+        weekly_pattern_info["is_bullish"] if weekly_pattern_info else weekly_direction != "空头"
+    )
+    direction = "bullish" if is_bullish else "bearish"
+    weekly_direction_aligned = None
+    if weekly_direction in ("多头", "空头"):
+        weekly_direction_aligned = (
+            (direction == "bullish" and weekly_direction == "多头")
+            or (direction == "bearish" and weekly_direction == "空头")
+        )
+    method_family = (
+        "dual_pattern" if daily_pattern_info and weekly_pattern_info
+        else "single_pattern" if daily_pattern_info or weekly_pattern_info
+        else "fib_only" if has_bands else "unavailable"
+    )
+    structure_evidence = _structure_evidence(
+        daily_pattern_info, weekly_pattern_info, patterns_aligned,
+        weekly_direction_aligned, fib_convergence, method_family,
+    )
+    confidence = "unavailable" if method_family == "unavailable" else _structure_confidence(
+        daily_pattern_info is not None,
+        weekly_pattern_info is not None,
+        weekly_direction_aligned,
+        fib_convergence,
+    )
+    return {
+        "direction": direction,
+        "patterns_aligned": patterns_aligned,
+        "weekly_direction_aligned": weekly_direction_aligned,
+        "method_family": method_family,
+        "structure_evidence": structure_evidence,
+        "structure_confidence": confidence,
+    }
+
+
+def _structure_evidence(
+    daily_pattern_info: Optional[Dict],
+    weekly_pattern_info: Optional[Dict],
+    patterns_aligned: Optional[bool],
+    weekly_direction_aligned: Optional[bool],
+    fib_convergence: bool,
+    method_family: str,
+) -> Dict:
+    daily_pattern = daily_pattern_info is not None
+    weekly_pattern = weekly_pattern_info is not None
+    return {
+        "daily_pattern": daily_pattern,
+        "weekly_pattern": weekly_pattern,
+        "patterns_aligned": patterns_aligned,
+        "weekly_direction_aligned": weekly_direction_aligned,
+        "fib_convergence": bool(fib_convergence),
+        "method_family": method_family,
+    }
+
+
+def _structure_confidence(
+    daily_pattern: bool,
+    weekly_pattern: bool,
+    weekly_direction_aligned: Optional[bool],
+    fib_convergence: bool,
+) -> str:
+    if not daily_pattern and not weekly_pattern:
+        return "observation"
+    if daily_pattern and weekly_pattern:
+        return "high" if fib_convergence or weekly_direction_aligned is True else "medium"
+    return "medium" if fib_convergence or weekly_direction_aligned is True else "low"
 
 
 def analyze_price_target(
@@ -453,14 +591,30 @@ def analyze_price_target(
         完整的分析结果字典，可直接用于报告渲染。
     """
     if df_daily is None or len(df_daily) < 30:
-        return {"error": "日线数据不足"}
+        return _target_with_status(
+            "unavailable",
+            "insufficient_daily_data",
+            error="日线数据不足",
+        )
     if df_weekly is None or len(df_weekly) < 10:
-        return {"error": "周线数据不足"}
+        return _target_with_status(
+            "unavailable",
+            "insufficient_weekly_data",
+            error="周线数据不足",
+        )
 
     # --- 1. 周线趋势 ---
     weekly_trend = weekly_trend_analysis(df_weekly)
     if weekly_trend.get("is_ranging"):
-        return {"error": "震荡格局，暂不做目标", "weekly_trend": weekly_trend}
+        return _target_with_status(
+            "observe",
+            "weekly_range",
+            error="震荡格局，暂不做目标",
+            direction="neutral",
+            structure_confidence="observation",
+            structure_evidence=_structure_evidence(None, None, None, None, False, "range_observation"),
+            weekly_trend=weekly_trend,
+        )
 
     # --- 1b. 日线趋势 + 方向冲突检测 ---
     daily_indicators = daily_indicators or {}
@@ -469,76 +623,23 @@ def analyze_price_target(
 
     if daily_trend in ("多头", "空头") and weekly_direction in ("多头", "空头"):
         if daily_trend != weekly_direction:
-            return {
-                "error": "观望",
-                "reason": f"日线/周线方向冲突：日线{daily_trend} vs 周线{weekly_direction}",
-                "weekly_trend": weekly_trend,
-                "daily_trend": daily_trend,
-            }
-
-    # --- 1c. MACD死叉扩张否决 ---
-    try:
-        from .technical_analyzer import _macd as _macd_local
-    except ImportError:
-        from technical_analyzer import _macd as _macd_local
-    macd_line, macd_sig, macd_hist = _macd_local(df_daily["close"])
-    if _macd_dead_expanding(df_daily["close"]):
-        latest_hist = float(macd_hist.iloc[-1])
-        prev_hist = float(macd_hist.iloc[-2]) if len(macd_hist) >= 2 else 0.0
-        first_hist = float(macd_hist.iloc[-3]) if len(macd_hist) >= 3 else 0.0
-        return {
-            "error": "关注/不操作",
-            "reason": "MACD死叉扩张，不满足触发条件",
-            "weekly_trend": weekly_trend,
-            "daily_trend": daily_trend,
-            "diagnostics": {
-                "macd_line": round(float(macd_line.iloc[-1]), 2),
-                "macd_signal": round(float(macd_sig.iloc[-1]), 2),
-                "macd_hist": round(latest_hist, 2),
-                "hist_trend": (
-                    f"柱线从{first_hist:.3f}→{prev_hist:.3f}→{latest_hist:.3f}（持续负向扩张）"
-                    if len(macd_hist) >= 3 else "柱线持续负向扩张"
-                ),
-                "threshold_to_trigger": "MACD线上穿信号线（金叉），且柱线由负转正或至少停止扩张",
-            },
-        }
+            return _target_with_status(
+                "invalid",
+                "timeframe_direction_conflict",
+                error="观望",
+                reason=f"日线/周线方向冲突：日线{daily_trend} vs 周线{weekly_direction}",
+                weekly_trend=weekly_trend,
+                daily_trend=daily_trend,
+            )
 
     # --- 2. 日线/周线形态识别（复用 technical_analyzer） ---
-    try:
-        from .technical_analyzer import detect_double_top, detect_double_bottom
-    except ImportError:
-        from technical_analyzer import detect_double_top, detect_double_bottom
-
     daily_close = df_daily["close"]
     weekly_close = df_weekly["close"]
 
-    daily_patterns = []
-    dp = detect_double_bottom(daily_close)
-    if dp:
-        daily_patterns.append(dp)
-    dt = detect_double_top(daily_close)
-    if dt:
-        daily_patterns.append(dt)
-
-    weekly_patterns = []
-    wp = detect_double_bottom(weekly_close)
-    if wp:
-        weekly_patterns.append(wp)
-    wt = detect_double_top(weekly_close)
-    if wt:
-        weekly_patterns.append(wt)
-
-    daily_pattern_info = extract_pattern_info(daily_patterns[0]) if daily_patterns else None
-    weekly_pattern_info = extract_pattern_info(weekly_patterns[0]) if weekly_patterns else None
-
-    # 判断方向（简化：以第一个形态方向为准，或默认 bullish）
-    is_bullish = True
-    if daily_pattern_info:
-        is_bullish = daily_pattern_info["is_bullish"]
-    elif weekly_pattern_info:
-        is_bullish = weekly_pattern_info["is_bullish"]
-    elif weekly_direction == "空头":
-        is_bullish = False
+    daily_pattern = _first_pattern(daily_close)
+    weekly_pattern = _first_pattern(weekly_close)
+    daily_pattern_info = extract_pattern_info(daily_pattern) if daily_pattern else None
+    weekly_pattern_info = extract_pattern_info(weekly_pattern) if weekly_pattern else None
 
     # --- 3. Zigzag + 斐波那契 ---
     daily_zigzag = zigzag(daily_close, min_pct=0.05)
@@ -559,25 +660,98 @@ def analyze_price_target(
     daily_bands = _bands_from_zigzag(daily_zigzag, 3)
     weekly_bands = _bands_from_zigzag(weekly_zigzag, 3)
 
-    # 取各档斐波那契目标（用weekly为主）
-    weekly_fib = {}
-    for level_name, level in [("1.0", 1.0), ("1.272", 1.272), ("1.618", 1.618)]:
-        targets = fib_targets_with_convergence(weekly_bands, level=level) if weekly_bands else []
-        if targets:
-            # 用汇聚区的均值，无汇聚用最后一个
-            conv = [t["price"] for t in targets if t["in_convergence"]]
-            weekly_fib[level_name] = sum(conv) / len(conv) if conv else targets[-1]["price"]
-        else:
-            weekly_fib[level_name] = None
+    # Keep uncompressed candidate sets for structure evidence and compressed values for targets.
+    daily_fib_candidates, daily_fib, daily_convergence = _fib_projection(daily_bands)
+    weekly_fib_candidates, weekly_fib, weekly_convergence = _fib_projection(weekly_bands)
 
-    daily_fib = {}
-    for level_name, level in [("1.0", 1.0), ("1.272", 1.272), ("1.618", 1.618)]:
-        targets = fib_targets_with_convergence(daily_bands, level=level) if daily_bands else []
-        if targets:
-            conv = [t["price"] for t in targets if t["in_convergence"]]
-            daily_fib[level_name] = sum(conv) / len(conv) if conv else targets[-1]["price"]
-        else:
-            daily_fib[level_name] = None
+    if daily_pattern_info and weekly_pattern_info:
+        if daily_pattern_info["is_bullish"] != weekly_pattern_info["is_bullish"]:
+            return _target_with_status(
+                "invalid",
+                "pattern_direction_conflict",
+                error="观望",
+                reason="日线与周线形态方向冲突，暂不合成目标",
+                weekly_trend=weekly_trend,
+                daily_trend=daily_trend,
+                direction="neutral",
+                structure_evidence=_structure_evidence(
+                    daily_pattern_info, weekly_pattern_info, False, None, False,
+                    "dual_pattern",
+                ),
+                structure_confidence="unavailable",
+            )
+
+    fib_convergence = daily_convergence or weekly_convergence
+    structure = _structure_summary(
+        daily_pattern_info, weekly_pattern_info, weekly_direction, fib_convergence,
+        bool(daily_bands or weekly_bands),
+    )
+    direction_code = structure["direction"]
+    is_bullish = direction_code == "bullish"
+    method_family = structure["method_family"]
+    structure_evidence = structure["structure_evidence"]
+    structure_confidence = structure["structure_confidence"]
+    common = {
+        "weekly_trend": weekly_trend,
+        "daily_trend": daily_trend,
+        "direction": direction_code,
+        "structure_evidence": structure_evidence,
+        "structure_confidence": structure_confidence,
+    }
+
+    if method_family == "unavailable":
+        return _target_with_status(
+            "unavailable",
+            "structure_unavailable",
+            common=common,
+            error="暂无可用目标结构",
+            structure_confidence="unavailable",
+        )
+
+    if structure_confidence == "observation":
+        observation_targets = synthesize_targets(
+            daily_pattern_info, weekly_pattern_info,
+            daily_fib, weekly_fib, current_price, is_bullish,
+        )
+        return _target_with_status(
+            "observe",
+            "structure_observation",
+            common=common,
+            error="观望",
+            reason="仅有斐波那契/波段推导，不形成可执行目标",
+            confidence="观望",
+            confidence_score=0.0,
+            conservative=observation_targets.get("conservative"),
+            base=observation_targets.get("base"),
+            aggressive=observation_targets.get("aggressive"),
+            method=observation_targets.get("method"),
+            targets=observation_targets,
+        )
+
+    # --- 1c. MACD 方向化阻断 ---
+    macd_line, macd_sig, macd_hist = _macd(df_daily["close"])
+    if _opposing_macd_expanding(df_daily["close"], direction_code):
+        latest_hist = float(macd_hist.iloc[-1])
+        prev_hist = float(macd_hist.iloc[-2]) if len(macd_hist) >= 2 else 0.0
+        first_hist = float(macd_hist.iloc[-3]) if len(macd_hist) >= 3 else 0.0
+        expansion_label = "负向" if is_bullish else "正向"
+        return _target_with_status(
+            "blocked",
+            "opposing_macd_expansion",
+            common=common,
+            error="关注/不操作",
+            reason=f"MACD{expansion_label}柱线扩张，不满足触发条件",
+            diagnostics={
+                "macd_line": round(float(macd_line.iloc[-1]), 2),
+                "macd_signal": round(float(macd_sig.iloc[-1]), 2),
+                "macd_hist": round(latest_hist, 2),
+                "hist_trend": (
+                    f"柱线从{first_hist:.3f}→{prev_hist:.3f}→{latest_hist:.3f}（持续{expansion_label}扩张）"
+                    if len(macd_hist) >= 3 else f"柱线持续{expansion_label}扩张"
+                ),
+                "threshold_to_trigger": "MACD回到目标方向，且柱线停止反向扩张",
+            },
+        )
 
     # --- 4. 目标合成 ---
     targets = synthesize_targets(
@@ -586,11 +760,7 @@ def analyze_price_target(
     )
 
     # --- 5. 盈亏比过滤 ---
-    neckline = None
-    if daily_pattern_info:
-        neckline = daily_pattern_info["neckline"]
-    elif weekly_pattern_info:
-        neckline = weekly_pattern_info["neckline"]
+    neckline = (daily_pattern_info or weekly_pattern_info or {}).get("neckline")
 
     # 无形态时用最近波段低点近似
     if neckline is None and weekly_zigzag:
@@ -604,9 +774,17 @@ def analyze_price_target(
     except ImportError:
         from technical_analyzer import _atr
     daily_atr = float(_atr(df_daily).iloc[-1])
+    if not np.isfinite(daily_atr) or daily_atr <= 0:
+        return _target_with_status(
+            "unavailable",
+            "invalid_atr",
+            common=common,
+            error="无法构造风险计划",
+            targets=targets,
+        )
 
     pr_filter = None
-    if neckline and targets.get("conservative"):
+    if neckline is not None and targets.get("conservative") is not None:
         pr_filter = profit_risk_filter(
             conservative_target=targets["conservative"],
             neckline=neckline,
@@ -614,20 +792,31 @@ def analyze_price_target(
             is_bullish=is_bullish,
         )
 
+    if pr_filter is None:
+        return _target_with_status(
+            "observe",
+            "risk_plan_unavailable",
+            common=common,
+            error="无法构造风险计划",
+            targets=targets,
+        )
+
     if pr_filter and not pr_filter["pass"]:
-        return {
-            "error": "关注/不操作",
-            "reason": f"形态存在但盈亏比不足（{pr_filter['ratio']}:1），等待更好的入场点",
-            "weekly_trend": weekly_trend,
-            "targets": targets,
-            "profit_risk": pr_filter,
-        }
+        return _target_with_status(
+            "blocked",
+            "risk_reward_below_minimum",
+            common=common,
+            error="关注/不操作",
+            reason=f"形态存在但盈亏比不足（{pr_filter['ratio']}:1），等待更好的入场点",
+            targets=targets,
+            profit_risk=pr_filter,
+        )
 
     # --- 6. 动量评估（用于置信度和时间修正） ---
     try:
-        from .technical_analyzer import _macd, _rsi, _sma
+        from .technical_analyzer import _rsi
     except ImportError:
-        from technical_analyzer import _macd, _rsi, _sma
+        from technical_analyzer import _rsi
 
     macd_line, macd_sig, macd_hist = _macd(daily_close)
     # 判定前3日柱线趋势（shift(1)取突破前数据）
@@ -703,43 +892,44 @@ def analyze_price_target(
     ) if targets.get("aggressive") else (0, 0)
 
     # --- 9. 止损/失效条件文本 ---
-    stop_loss_text = ""
     if neckline:
         entry_stop = max(pr_filter["stop_price"], neckline - 1.5 * daily_atr) if pr_filter else neckline - 1.5 * daily_atr
         stop_loss_text = f"初始止损{entry_stop:.1f}（预估）/ 跟踪止损：最高收盘价回撤2×ATR"
     else:
         stop_loss_text = f"跟踪止损：最高收盘价回撤{2*daily_atr:.1f}（{2*daily_atr/current_price*100:.1f}%）"
 
-    return {
-        "direction": targets["direction"],
-        "confidence": conf_level,
-        "confidence_score": conf_score,
-        "profit_risk_ratio": pr_filter["ratio"] if pr_filter else None,
-        "conservative": targets["conservative"],
-        "base": targets["base"],
-        "aggressive": targets["aggressive"],
-        "aggressive_raw": targets.get("aggressive_raw"),
-        "is_far_target": targets.get("is_far_target", False),
-        "method": targets["method"],
-        "trigger_conditions": {
+    return _target_with_status(
+        "ready",
+        "target_ready",
+        common=common,
+        confidence=conf_level,
+        confidence_score=conf_score,
+        profit_risk_ratio=pr_filter["ratio"] if pr_filter else None,
+        conservative=targets["conservative"],
+        base=targets["base"],
+        aggressive=targets["aggressive"],
+        aggressive_raw=targets.get("aggressive_raw"),
+        is_far_target=targets.get("is_far_target", False),
+        method=targets["method"],
+        trigger_conditions={
             "price": f"收盘价站稳{neckline:.1f}+实体完全在颈线上方+实体≥0.3×ATR" if neckline else "等待形态确认",
-            "trend": f"周线ADX>{weekly_trend['adx']}且+DI>-DI" if weekly_trend.get("adx") else "",
+            "trend": "周线ADX>=25且+DI>-DI" if weekly_trend.get("adx") is not None else "",
             "volume": "量比>1.5且金额≥1亿" if not is_hk else "量比>1.3且金额≥3000万港币",
             "momentum": "MACD非死叉 + RSI健康区间",  # simplified for now
         },
-        "stop_loss": stop_loss_text,
-        "failure_conditions": [
+        stop_loss=stop_loss_text,
+        failure_conditions=[
             f"周线ADX从峰值回落>10且+DI下穿-DI",
             "创20日新高但OBV未同步创新高",
             "连续5日低于20MA均量且跌破10日线",
         ],
-        "time_estimate": {
+        time_estimate={
             "conservative": f"约{time_conservative[0]:.0f}-{time_conservative[1]:.0f}个交易日",
             "base": f"约{time_base[0]:.0f}-{time_base[1]:.0f}个交易日",
             "aggressive": f"约{time_aggressive[0]:.0f}-{time_aggressive[1]:.0f}个交易日",
         },
-        "momentum_status": f"MACD {macd_momentum} | RSI {rsi_val:.0f} | {'MA多头排列' if ma_bull else 'MA非多头'}",
-        "weekly_trend": weekly_trend,
-        "daily_pattern": daily_patterns[0] if daily_patterns else None,
-        "weekly_pattern": weekly_patterns[0] if weekly_patterns else None,
-    }
+        momentum_status=f"MACD {macd_momentum} | RSI {rsi_val:.0f} | {'MA多头排列' if ma_bull else 'MA非多头'}",
+        daily_pattern=daily_pattern,
+        weekly_pattern=weekly_pattern,
+        profit_risk=pr_filter,
+    )

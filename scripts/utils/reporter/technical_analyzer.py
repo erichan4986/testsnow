@@ -48,6 +48,7 @@ try:
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
         evaluate_bias_extreme, evaluate_sell_three_factors,
+        build_technical_judgment,
         detect_false_rebound, detect_false_breakout,
     )
 except ImportError:
@@ -55,6 +56,7 @@ except ImportError:
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
         evaluate_bias_extreme, evaluate_sell_three_factors,
+        build_technical_judgment,
         detect_false_rebound, detect_false_breakout,
     )
 
@@ -918,10 +920,19 @@ def advanced_medium_term_resonance(
                 df_daily=df_daily,
                 df_weekly=df_weekly,
                 current_price=indicators.get("close", 0),
+                is_hk=bool((quote or {}).get("is_hk")),
                 daily_indicators=indicators,
             )
         except Exception:
             pass
+
+    _resonance["judgment"] = build_technical_judgment(
+        resonance=_resonance,
+        price_target=price_target_result,
+        indicators=indicators,
+        daily_data=df_daily,
+        market=(quote or {}).get("market"),
+    )
 
     return {
         "indicators": indicators,

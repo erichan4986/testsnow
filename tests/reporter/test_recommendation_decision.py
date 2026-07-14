@@ -41,6 +41,26 @@ def _pillar(**overrides):
     return defaults
 
 
+def _complete_judgment(action="wait_for_confirmation", trend="strong_up"):
+    execution = "triggered" if action == "follow" else "pending"
+    display = "full_targets" if action == "follow" else "core_targets"
+    statuses = {name: "pass" for name in ("price", "trend", "volume", "momentum")}
+    if action != "follow":
+        statuses["price"] = "pending"
+    return {
+        "schema": "technical_judgment.v1",
+        "trend": {"state": trend},
+        "target": {
+            "direction": "bullish", "producer_status": "ready",
+            "reason_code": "target_ready", "structure_confidence": "high",
+            "effective_confidence": "high", "execution_state": execution,
+            "display_mode": display,
+            "trigger_checks": {name: {"status": status} for name, status in statuses.items()},
+        },
+        "action": {"state": action},
+    }
+
+
 def test_missing_ev_renders_na_without_percent():
     decision = build_recommendation_decision(
         stock_name="黑芝麻智能",
@@ -123,6 +143,57 @@ def test_macd_blocked_entry_any_reason_triggers_wait():
     assert decision.entry_constraint.state == "wait_for_entry"
     assert decision.display_recommendation == "看多但等待入场"
     assert decision.recommendation_sentence != ""
+
+
+def test_legal_judgment_overrides_legacy_target_error_text():
+    stock_raw = {
+        "technical": {
+            "price_target": {"error": "关注/不操作", "reason": "旧中文文案"},
+            "indicators": {"_resonance": {"judgment": _complete_judgment()}},
+        }
+    }
+    decision = build_recommendation_decision(
+        stock_name="中际旭创", posts=[], stock_raw=stock_raw,
+        quote={"price": 100.0}, consensus={"eps_current": 5.0, "eps_next": 6.0},
+        industry_fwd_pe=20.0, pillar=_pillar(),
+    )
+
+    assert decision.entry_constraint.state == "wait_for_confirmation"
+    assert decision.display_recommendation == "看多但等待确认"
+
+
+def test_malformed_judgment_cannot_bypass_severe_legacy_trend():
+    malformed = _complete_judgment(action="follow", trend="unknown")
+    stock_raw = {"technical": {"indicators": {"_resonance": {
+        "judgment": malformed,
+        "trend_state": {"stage": "破坏期", "primary_state": "下降趋势"},
+        "trend_health": {"score": 20, "grade": "趋势失效"},
+    }}}}
+
+    decision = build_recommendation_decision(
+        stock_name="测试股", posts=[], stock_raw=stock_raw,
+        quote={"price": 100.0}, consensus={"eps_current": 5.0, "eps_next": 6.0},
+        industry_fwd_pe=20.0, pillar=_pillar(),
+    )
+
+    assert decision.entry_constraint.state == "severe_technical"
+
+
+def test_follow_judgment_still_applies_bias_overheat_guardrail():
+    stock_raw = {"technical": {"indicators": {
+        "bias_5_extreme_high": True,
+        "bias_10_extreme_high": False,
+        "_resonance": {"judgment": _complete_judgment(action="follow")},
+    }}}
+
+    decision = build_recommendation_decision(
+        stock_name="测试股", posts=[], stock_raw=stock_raw,
+        quote={"price": 100.0}, consensus={"eps_current": 5.0, "eps_next": 6.0},
+        industry_fwd_pe=20.0, pillar=_pillar(),
+    )
+
+    assert decision.entry_constraint.state == "overheated"
+    assert decision.display_recommendation == "看多但避免追高"
 
 
 def test_overheated_bias_downgrades_label():

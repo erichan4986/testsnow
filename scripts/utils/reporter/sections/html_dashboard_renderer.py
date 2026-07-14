@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..technical_state_machine import is_valid_technical_judgment
+
 
 class HTMLDashboardRenderer:
     """单页 HTML Dashboard（视觉速览）。"""
@@ -92,10 +94,17 @@ class HTMLDashboardRenderer:
             ev_pct_str = "N/A"
             ev_color = "text-gray-600"
 
-        # 价格目标 / 盈亏比
-        pt = stock_raw.get("price_target")
+        # 价格目标 / 盈亏比与技术判断都位于嵌套 technical payload。
+        technical = stock_raw.get("technical", {}) if isinstance(stock_raw, dict) else {}
+        pt = technical.get("price_target", {}) if isinstance(technical, dict) else {}
         pr_ratio = pt.get("profit_risk_ratio") if pt else None
         pr_text = f"{pr_ratio}:1" if pr_ratio else "N/A"
+        resonance = technical.get("indicators", {}).get("_resonance", {}) if isinstance(technical, dict) else {}
+        judgment = resonance.get("judgment", {}) if isinstance(resonance, dict) else {}
+        judgment = judgment if is_valid_technical_judgment(judgment) else {}
+        target_judgment = judgment.get("target", {}) if isinstance(judgment, dict) else {}
+        action_judgment = judgment.get("action", {}) if isinstance(judgment, dict) else {}
+        technical_text = f"{action_judgment.get('state', 'unavailable')}（{target_judgment.get('effective_label', '不可用')}）"
 
         # AI 推荐
         ai_rec = "关注/不操作"
@@ -234,6 +243,7 @@ class HTMLDashboardRenderer:
                 {_card("AI推荐", ai_rec, "green" if "积极" in ai_rec or "关注" in ai_rec else "yellow")}
                 {_card("EV", ev_pct_str, "green" if ev_pct and ev_pct > 0 else "red" if ev_pct and ev_pct < 0 else "yellow")}
                 {_card("盈亏比", pr_text, "blue")}
+                {_card("技术判断", technical_text, "blue")}
                 {_card("操作建议", op_rec, "green" if "积极" in op_rec or "关注" in op_rec else "yellow" if "观望" in op_rec else "red")}
             </div>
         </div>

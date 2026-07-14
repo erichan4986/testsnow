@@ -1,6 +1,17 @@
 """技术面分析板块渲染器 — 支持中期趋势新版 + 旧版降级。"""
 
+import sys
+from pathlib import Path
 from typing import Any, Dict
+
+
+def _technical_judgment(resonance: Dict, price_target: Dict, indicators: Dict) -> Dict:
+    try:
+        from ..technical_state_machine import ensure_technical_judgment
+    except ImportError:
+        sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
+        from technical_state_machine import ensure_technical_judgment
+    return ensure_technical_judgment(resonance.get("judgment"), resonance=resonance, price_target=price_target, indicators=indicators)
 
 
 class TechnicalRenderer:
@@ -356,106 +367,8 @@ class TechnicalRenderer:
             lines.append(f"- 处置：{div.get('action', '观望')}")
             lines.append("")
 
-        # 价格目标分析
         price_target = tech_raw.get("price_target")
-        if price_target and not price_target.get("error"):
-            pt_conf = price_target.get("confidence", "未知")
-            pt_score = price_target.get("confidence_score", 0)
-            pt_dir = price_target.get("direction", "")
-            dir_label = "看涨" if pt_dir == "bullish" else ("看跌" if pt_dir == "bearish" else "观望")
-            lines.append(f"**价格目标分析**（置信度：{pt_conf}，评分：{pt_score}/10，方向：{dir_label}）")
-            lines.append("")
-
-            # 目标价表格
-            targets_table = []
-            for level, label in [("conservative", "保守"), ("base", "基准"), ("aggressive", "激进")]:
-                val = price_target.get(level)
-                if val is not None:
-                    targets_table.append(f"| {label} | {val:.2f} |")
-            if targets_table:
-                lines.append("| 目标 | 价格 |")
-                lines.append("|------|------|")
-                lines.extend(targets_table)
-                lines.append("")
-
-            # 触发条件
-            trig = price_target.get("trigger_conditions", {})
-            if trig:
-                lines.append("**触发条件**")
-                for k, v in trig.items():
-                    if v:
-                        lines.append(f"- {k}：{v}")
-                lines.append("")
-
-            # 止损
-            if price_target.get("stop_loss"):
-                lines.append(f"**止损**：{price_target['stop_loss']}")
-                lines.append("")
-
-            # 失效条件
-            failures = price_target.get("failure_conditions", [])
-            if failures:
-                lines.append("**失效条件**")
-                for f in failures:
-                    lines.append(f"- {f}")
-                lines.append("")
-
-            # 时间预期
-            te = price_target.get("time_estimate", {})
-            if te:
-                parts = []
-                for level, label in [("conservative", "保守"), ("base", "基准"), ("aggressive", "激进")]:
-                    if te.get(level):
-                        parts.append(f"{label}{te[level]}")
-                if parts:
-                    lines.append(f"**时间预期**：{' / '.join(parts)}")
-                    lines.append("")
-
-        elif price_target and price_target.get("error"):
-            error_text = price_target.get("error", "关注")
-            reason = price_target.get("reason", "")
-            lines.append("**价格目标分析**")
-            lines.append("")
-            lines.append(f"> **当前状态**：{error_text}（{reason}）")
-            lines.append("")
-
-            # 诊断信息：为什么不满足
-            diagnostics = price_target.get("diagnostics")
-            if diagnostics:
-                lines.append("**为什么不满足条件**")
-                for k, v in diagnostics.items():
-                    lines.append(f"- {k}：{v}")
-                lines.append("")
-
-            # 盈亏比不足的详细数据
-            profit_risk = price_target.get("profit_risk")
-            if profit_risk:
-                lines.append("**形态测算结果**（因盈亏比不足暂不建议）")
-                lines.append(f"- 触发价：{profit_risk.get('trigger_price', 'N/A')}")
-                lines.append(f"- 止损价：{profit_risk.get('stop_price', 'N/A')}")
-                lines.append(f"- 盈亏比：{profit_risk.get('ratio', 'N/A')}:1（要求≥1.5:1）")
-                lines.append(f"- 潜在收益：{profit_risk.get('potential_gain', 'N/A')}")
-                lines.append(f"- 初始风险：{profit_risk.get('initial_risk', 'N/A')}")
-                lines.append("")
-
-            # 当前趋势参考
-            weekly_trend = price_target.get("weekly_trend")
-            if weekly_trend:
-                lines.append("**当前趋势参考**")
-                lines.append(f"- 周线方向：{weekly_trend.get('direction', '未知')}（ADX={weekly_trend.get('adx', 'N/A')}）")
-                lines.append("")
-
-            # 满足条件后的预期
-            targets = price_target.get("targets")
-            if targets and isinstance(targets, dict):
-                lines.append("**一旦满足条件，预期目标**")
-                for level, label in [("conservative", "保守"), ("base", "基准"), ("aggressive", "激进")]:
-                    val = targets.get(level)
-                    if val is not None:
-                        lines.append(f"- {label}：{val:.2f}")
-                if targets.get("method"):
-                    lines.append(f"- 测算方法：{targets['method']}")
-                lines.append("")
+        lines.extend(self._render_target_judgment(resonance, price_target, tech_raw.get("indicators", {})))
 
         chart_paths = ctx.get("chart_paths", {})
         tech_chart = chart_paths.get("technical")
@@ -466,6 +379,45 @@ class TechnicalRenderer:
             lines.append("")
 
         return "\n".join(lines)
+
+    def _render_target_judgment(self, resonance: Dict, price_target: Any, indicators: Dict) -> list[str]:
+        if not isinstance(price_target, dict) and not resonance.get("judgment"):
+            return []
+        raw_target = price_target if isinstance(price_target, dict) else {}
+        judgment = _technical_judgment(resonance, raw_target, indicators)
+        target = judgment["target"]
+        mode = target["display_mode"]
+        lines = ["**价格目标分析**", ""]
+        if mode == "unavailable":
+            return lines + ["> 当前技术证据不足，暂不展示目标价。", ""]
+        if mode == "blocked":
+            return lines + [f"> 当前目标被阻断：{target['reason_code']}。等待阻断条件消除后重新评估。", ""]
+        if mode == "levels_only":
+            return lines + ["> 当前仅展示支撑、压力与失效条件，不展示精确目标价。", ""]
+
+        values = raw_target.get("targets") if isinstance(raw_target.get("targets"), dict) else raw_target
+        labels = [("conservative", "保守"), ("base", "基准")]
+        if mode == "full_targets":
+            labels.append(("aggressive", "激进"))
+        rows = []
+        for key, label in labels:
+            value = values.get(key)
+            if isinstance(value, (int, float)):
+                rows.append(f"| {label} | {value:.2f} |")
+        if mode == "conditional_range":
+            return lines + ([f"> 条件测算区间：{rows[0].split('|')[2].strip()} 至 {rows[-1].split('|')[2].strip()}，尚待触发确认。", ""] if len(rows) >= 2 else ["> 当前结构仅支持条件观察。", ""])
+        if rows:
+            lines.extend(["| 目标 | 价格 |", "|------|------|", *rows, ""])
+        checks = target.get("trigger_checks", {})
+        if checks:
+            lines.append("**触发检查**")
+            for name, check in checks.items():
+                if isinstance(check, dict):
+                    lines.append(f"- {name}：{check.get('status', 'unknown')}（{check.get('detail', '数据不足')}）")
+            lines.append("")
+        if raw_target.get("stop_loss"):
+            lines.extend([f"**止损**：{raw_target['stop_loss']}", ""])
+        return lines
 
     def _render_full(self, resonance: Dict, stock_name: str, ctx: Dict) -> str:
         """完整版渲染，包含更多细节。"""
