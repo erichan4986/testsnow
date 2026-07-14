@@ -335,10 +335,17 @@ Only after that refresh succeeds may a report-generation acceptance begin.
 
 ## 8. Complexity Budget and Stop Conditions
 
-Target runtime delta is at most +80 lines, with a hard stop at +100 net lines.
-The implementation must replace the current final cap slice and exact-only
-legacy shadow logic rather than layer a parallel allocator or migration system
-alongside them. It may add tests and design notes beyond this runtime budget.
+The initial +80/+100 budget proved incompatible with the approved four-part
+coverage contract. After a code-size audit, this repair has a target runtime
+delta of at most +200 lines and a hard stop at +220 net lines. This exception
+applies only to the annual coverage repair, not to later producer work.
+
+The implementation must still replace the current final cap slice and
+exact-only legacy shadow logic rather than layer a parallel allocator or
+migration system alongside them. Before local-cache acceptance it must compact
+the metadata representation, merge duplicated coverage scans, and remove
+unused compatibility constants. It may add tests and design notes beyond this
+runtime budget.
 
 Stop implementation and return to design if any of these occur:
 
@@ -348,7 +355,7 @@ Stop implementation and return to design if any of these occur:
 - evidence-pack output cannot be kept at or below 48 blocks;
 - a configured stock still has `v1_needs_recovery_count > 0` after the proposed
   repair;
-- runtime net growth exceeds +100 lines;
+- runtime net growth exceeds +220 lines;
 - any path reaches scoring, target, risk, technical, recommendation, LLM, or
   collection logic.
 
@@ -403,6 +410,23 @@ Deferred:
 **Round 2 required:** yes. The changes tighten source-boundary and migration
 contracts, so a second read-only review must verify that no hidden selector or
 cross-consumer evidence-pack regression was introduced.
+
+### Runtime Budget Delta
+
+Accepted after implementation audit:
+
+- The previous +100 hard stop is replaced by a +220 hard stop for this repair
+  only, with a +200 target after consolidation.
+- The consolidation is behavior-preserving: compact the schema metadata table,
+  merge material-pack covered/uncovered scans, and remove unused constants.
+- Correctness regressions found during the audit must be fixed before
+  acceptance: SourceUnit coverage must require ordinal adjacency, and an HK
+  named anchor must contain at least one Latin letter rather than a pure year.
+
+Deferred:
+
+- Eight-stock refresh and every Batch B decision remain blocked until the
+  compacted implementation is at or below +220 and its focused tests pass.
 
 ## 10. Claude Round 2 Review Questions
 

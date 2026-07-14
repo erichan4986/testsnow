@@ -28,7 +28,7 @@ Allowed test files:
 
 Do not modify scoring, target price, risk, technical analysis, recommendation, `KnowledgeSynthesizer`, renderer wording, profile routing, collection, config, or prompts. Do not delete/archive legacy Knowledge notes. Do not access network, Xueqiu, Chrome, or CDP.
 
-Measure combined runtime delta against commit `aa7bdd9`. The target is at most +80 net lines. Stop at +100 net lines; tests, docs, and generated local notes do not count.
+Measure combined runtime delta against commit `aa7bdd9`. The target is at most +200 net lines. Stop at +220 net lines; tests, docs, and generated local notes do not count.
 
 ## File Responsibilities
 
@@ -461,7 +461,7 @@ git diff --numstat aa7bdd9 -- \
   scripts/utils/annual_report_material_pack.py
 ```
 
-Sum additions minus deletions. If above +100, stop and return to design without refreshing notes or generating reports.
+Sum additions minus deletions. If above +220, stop and return to design without refreshing notes or generating reports.
 
 - [ ] **Step 3: Refresh local annual cards only**
 
