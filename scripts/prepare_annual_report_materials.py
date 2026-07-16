@@ -12,8 +12,12 @@ from typing import Any, Dict, Optional
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 UTILS_DIR = PROJECT_ROOT / "scripts" / "utils"
-if str(UTILS_DIR) not in sys.path:
-    sys.path.insert(0, str(UTILS_DIR))
+PREVIEWS_DIR = PROJECT_ROOT / "scripts" / "previews"
+if str(UTILS_DIR) in sys.path:
+    sys.path.remove(str(UTILS_DIR))
+sys.path.insert(0, str(UTILS_DIR))
+if str(PREVIEWS_DIR) not in sys.path:
+    sys.path.insert(0, str(PREVIEWS_DIR))
 
 from periodic_report_cache import (  # noqa: E402
     PeriodicReportCacheResult,
@@ -25,6 +29,9 @@ from periodic_report_cache import (  # noqa: E402
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack  # noqa: E402
 from periodic_report_narrative_card_note_writer import (  # noqa: E402
     write_periodic_report_narrative_card_notes,
+)
+from periodic_report_narrative_pack_store import (  # noqa: E402
+    write_periodic_report_narrative_pack,
 )
 from periodic_report_narrative_cards_preview import (  # noqa: E402
     _safe_filename,
@@ -220,7 +227,14 @@ def prepare_annual_report_materials(
 
     # 4. Optionally write knowledge notes
     knowledge_written_count = 0
+    knowledge_outputs: Dict[str, Any] = {}
     if write_knowledge:
+        pack_result = write_periodic_report_narrative_pack(
+            stock_name=stock_name,
+            stock_code=stock_code,
+            card_pack=cards_pack,
+            base_dir=base_dir,
+        )
         write_plan = write_periodic_report_narrative_card_notes(
             stock_name=stock_name,
             stock_code=stock_code,
@@ -230,6 +244,14 @@ def prepare_annual_report_materials(
             refresh_existing=True,
         )
         knowledge_written_count = len(write_plan.written) + len(write_plan.refreshed)
+        knowledge_outputs = {
+            "legacy_note_count": knowledge_written_count,
+            "periodic_narrative_pack": {
+                "state": pack_result.state,
+                "pack_path": str(pack_result.pack_path),
+                "manifest_path": str(pack_result.manifest_path),
+            },
+        }
 
     return {
         "stock_name": stock_name,
@@ -244,6 +266,7 @@ def prepare_annual_report_materials(
         "cards_count": len(cards_pack.get("cards") or []),
         "wrote_knowledge": write_knowledge,
         "knowledge_written_count": knowledge_written_count,
+        "knowledge_outputs": knowledge_outputs,
     }
 
 

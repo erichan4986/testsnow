@@ -3,13 +3,16 @@
 from __future__ import annotations
 
 import json
+import re
 from pathlib import Path
 from typing import Any, Dict
 
 try:
     from .curated_external_display_lint import lint_curated_external_display_text
+    from .synthesis_credit import citation_identity
 except ImportError:
     from curated_external_display_lint import lint_curated_external_display_text
+    from synthesis_credit import citation_identity
 
 
 SYNTHESIS_KEYS = [
@@ -40,10 +43,19 @@ GENERIC_REASONING_MARKERS = ("外部材料提出该增量变量", "交叉验证"
 GENERIC_ASSUMPTION_MARKERS = ("仍属外部观察", "未获官方确认")
 GENERIC_COUNTERPOINT_MARKERS = ("下游需求", "交付节奏", "可能失效")
 GENERIC_VERIFICATION_MARKERS = ("跟踪后续公告", "订单或行业数据", "验证该论断")
+_FOREIGN_COMPANY_SUFFIXES = ("股份", "科技", "电子", "微电", "智能", "集团")
+_PEER_CONTEXT_TERMS = ("同业", "竞品", "行业", "产业链", "市场")
 
 
-def build_curated_external_narrative_display(narrative_json: str | Path | None) -> dict:
+def build_curated_external_narrative_display(
+    narrative_json: str | Path | None,
+    *,
+    expected_stock_name: str,
+) -> dict:
     """Build a 4.4-only display object from cached external narrative JSON."""
+    expected_stock_name = str(expected_stock_name or "").strip()
+    if not expected_stock_name:
+        return _result("missing_stock_identity")
     if not narrative_json:
         return _result(
             "missing_config",
@@ -59,15 +71,24 @@ def build_curated_external_narrative_display(narrative_json: str | Path | None) 
     stats = narrative.get("stats") or {}
     if status != "ok":
         return _result(status, stats=stats)
+    if str(narrative.get("stock_name") or "").strip() != expected_stock_name:
+        return _result("stock_identity_mismatch", stats=stats)
 
     paragraphs = [p for p in narrative.get("paragraphs") or [] if isinstance(p, dict)]
-    citations = normalize_viewpoint_narrative_citations(narrative.get("citations") or {})
-    paragraphs = hydrate_viewpoint_narrative_citation_refs(paragraphs, citations)
+    citations, citation_ref_map = _dedupe_viewpoint_narrative_citations(
+        normalize_viewpoint_narrative_citations(narrative.get("citations") or {})
+    )
+    paragraphs = hydrate_viewpoint_narrative_citation_refs(
+        paragraphs, citations, citation_ref_map,
+    )
     reasoning_cards = normalize_viewpoint_narrative_reasoning_cards(
         narrative.get("reasoning_cards") or [],
-        citations,
+        citations, citation_ref_map,
     )
-    if not paragraphs or not citations:
+    paragraphs, reasoning_cards, citations = _filter_external_entity_scope(
+        paragraphs, reasoning_cards, citations, expected_stock_name,
+    )
+    if not citations or not (paragraphs or reasoning_cards):
         return _result("empty", stats=stats)
 
     display = {
@@ -82,7 +103,7 @@ def build_curated_external_narrative_display(narrative_json: str | Path | None) 
         "_curated_external_narrative_paragraphs": paragraphs,
         "_curated_external_reasoning_cards": reasoning_cards,
         "_curated_external_taxonomy_version": "external_viewpoint.v1",
-        "_items_count": len(paragraphs),
+        "_items_count": len(paragraphs) + len(reasoning_cards),
         "_sources": list(citations.values()),
     }
     lint = lint_curated_external_display_text(display)
@@ -96,6 +117,36 @@ def build_curated_external_narrative_display(narrative_json: str | Path | None) 
         display=display,
         synthesis_text=flatten_synthesis_text(display),
     )
+
+
+def classify_external_source_title(title: Any, expected_stock_name: str) -> str:
+    """Classify only source-title scope; ambiguous titles remain Preview-safe."""
+    normalized_title = _compact_text(title)
+    expected = _compact_text(expected_stock_name)
+    if expected and expected in normalized_title:
+        return "target"
+    prefix = re.split(r"[:：]", normalized_title, maxsplit=1)[0]
+    if re.match(r"^.{1,24}[（(]\d{6}[）)]", normalized_title):
+        return "foreign_company"
+    if ":" in normalized_title or "：" in normalized_title:
+        if prefix.endswith(_FOREIGN_COMPANY_SUFFIXES):
+            return "foreign_company"
+    return "ambiguous"
+
+
+def resolve_viewpoint_claim_id(claim_ref: Any, claim_ids: set[str]) -> str | None:
+    """Resolve exact claim IDs, allowing only an unambiguous suffix fallback."""
+    claim_ref = str(claim_ref or "").strip()
+    if not claim_ref:
+        return None
+    if claim_ref in claim_ids:
+        return claim_ref
+    suffix = claim_ref.rsplit(":", 1)[-1]
+    matches = [
+        claim_id for claim_id in claim_ids
+        if claim_id.rsplit(":", 1)[-1] == suffix
+    ]
+    return matches[0] if len(matches) == 1 else None
 
 
 def normalize_viewpoint_narrative_citations(citations: Dict[Any, Any]) -> Dict[int, dict]:
@@ -115,19 +166,69 @@ def normalize_viewpoint_narrative_citations(citations: Dict[Any, Any]) -> Dict[i
     return normalized
 
 
+def _dedupe_viewpoint_narrative_citations(
+    citations: Dict[int, dict],
+) -> tuple[Dict[int, dict], Dict[int, int]]:
+    canonical_by_identity: Dict[tuple, int] = {}
+    deduped: Dict[int, dict] = {}
+    ref_map: Dict[int, int] = {}
+    for ref_id in sorted(citations):
+        meta = citations[ref_id]
+        identity = citation_identity(meta, fallback_ref=ref_id)
+        canonical_ref = canonical_by_identity.get(identity) if identity[:1] == ("url",) else None
+        if canonical_ref is None:
+            canonical_ref = ref_id
+            if identity[:1] == ("url",):
+                canonical_by_identity[identity] = canonical_ref
+            deduped[canonical_ref] = dict(meta)
+        ref_map[ref_id] = canonical_ref
+        claim_ids = deduped[canonical_ref].setdefault("claim_ids", [])
+        for claim_id in _citation_claim_ids(meta):
+            if claim_id not in claim_ids:
+                claim_ids.append(claim_id)
+    return deduped, ref_map
+
+
+def _citation_claim_ids(meta: dict) -> list[str]:
+    claim_ids = meta.get("claim_ids") or []
+    if not isinstance(claim_ids, list):
+        claim_ids = [claim_ids]
+    claim_id = str(meta.get("claim_id") or "").strip()
+    return [str(value).strip() for value in [*claim_ids, claim_id] if str(value).strip()]
+
+
+def _compact_text(value: Any) -> str:
+    return re.sub(r"\s+", "", str(value or "").strip())
+
+
+def _remap_citation_refs(
+    refs: list,
+    citations: Dict[int, dict],
+    citation_ref_map: Dict[int, int] | None,
+) -> list[int]:
+    remapped = []
+    for ref in refs or []:
+        try:
+            ref_id = int(ref)
+        except (TypeError, ValueError):
+            continue
+        ref_id = (citation_ref_map or {}).get(ref_id, ref_id)
+        if ref_id in citations and ref_id not in remapped:
+            remapped.append(ref_id)
+    return remapped
+
+
 def hydrate_viewpoint_narrative_citation_refs(
     paragraphs: list,
     citations: Dict[int, dict],
+    citation_ref_map: Dict[int, int] | None = None,
 ) -> list:
     """Fill missing paragraph citation refs from claim_refs and citation metadata."""
     claim_to_ref: Dict[str, int] = {}
-    suffix_to_ref: Dict[str, int] = {}
     for ref_id, meta in citations.items():
-        claim_id = str(meta.get("claim_id") or "").strip()
-        if not claim_id:
-            continue
-        claim_to_ref[claim_id] = ref_id
-        suffix_to_ref[claim_id.rsplit(":", 1)[-1]] = ref_id
+        for claim_id in _citation_claim_ids(meta):
+            claim_to_ref[claim_id] = ref_id
+    claim_ids = set(claim_to_ref)
 
     hydrated = []
     for paragraph in paragraphs:
@@ -135,45 +236,42 @@ def hydrate_viewpoint_narrative_citation_refs(
             continue
         existing_refs = paragraph.get("citation_refs") or []
         if existing_refs:
-            hydrated.append(paragraph)
-            continue
+            refs = _remap_citation_refs(existing_refs, citations, citation_ref_map)
+            if refs:
+                hydrated.append({**paragraph, "citation_refs": refs})
+                continue
         refs = []
         seen = set()
         for claim_ref in paragraph.get("claim_refs") or []:
-            claim_key = str(claim_ref or "").strip()
-            ref_id = claim_to_ref.get(claim_key)
-            if ref_id is None:
-                ref_id = suffix_to_ref.get(claim_key.rsplit(":", 1)[-1])
+            claim_id = resolve_viewpoint_claim_id(claim_ref, claim_ids)
+            ref_id = claim_to_ref.get(claim_id or "")
             if ref_id is None or ref_id in seen:
                 continue
             seen.add(ref_id)
             refs.append(ref_id)
-        hydrated.append({**paragraph, "citation_refs": refs} if refs else paragraph)
+        hydrated.append({**paragraph, "citation_refs": refs} if refs or existing_refs else paragraph)
     return hydrated
 
 
 def normalize_viewpoint_narrative_reasoning_cards(
     cards: list,
     citations: Dict[int, dict],
+    citation_ref_map: Dict[int, int] | None = None,
 ) -> list:
     claim_to_ref = {
-        str(meta.get("claim_id") or "").strip(): ref_id
+        claim_id: ref_id
         for ref_id, meta in citations.items()
-        if str(meta.get("claim_id") or "").strip()
+        for claim_id in _citation_claim_ids(meta)
     }
+    claim_ids = set(claim_to_ref)
     normalized = []
     for card in cards or []:
         if not isinstance(card, dict):
             continue
-        claim_id = str(card.get("claim_id") or "").strip()
-        refs = []
-        for ref in card.get("citation_refs") or []:
-            try:
-                ref_id = int(ref)
-            except (TypeError, ValueError):
-                continue
-            if ref_id in citations and ref_id not in refs:
-                refs.append(ref_id)
+        claim_id = resolve_viewpoint_claim_id(card.get("claim_id"), claim_ids)
+        if not claim_id:
+            continue
+        refs = _remap_citation_refs(card.get("citation_refs") or [], citations, citation_ref_map)
         if not refs and claim_id in claim_to_ref:
             refs = [claim_to_ref[claim_id]]
         if not refs:
@@ -182,6 +280,7 @@ def normalize_viewpoint_narrative_reasoning_cards(
         excerpt, truncated = truncate_curated_source_excerpt(card.get("source_excerpt", ""))
         normalized.append({
             "claim_id": claim_id,
+            "heading": str(card.get("heading") or "").strip(),
             "display_topic": str(card.get("display_topic") or ""),
             "claim": str(card.get("claim") or "").strip(),
             "source_excerpt": excerpt,
@@ -274,6 +373,100 @@ def truncate_curated_source_excerpt(value: Any) -> tuple[str, bool]:
         return text, False
     prefix_len = max(0, SOURCE_EXCERPT_MAX_CHARS - 3)
     return text[:prefix_len].rstrip("，。；;、") + "...", True
+
+
+def _filter_external_entity_scope(
+    paragraphs: list,
+    cards: list,
+    citations: Dict[int, dict],
+    expected_stock_name: str,
+) -> tuple[list, list, Dict[int, dict]]:
+    refs_by_claim: Dict[str, set[int]] = {}
+    for ref_id, meta in citations.items():
+        for claim_id in _citation_claim_ids(meta):
+            refs_by_claim.setdefault(claim_id, set()).add(ref_id)
+    claim_ids = set(refs_by_claim)
+
+    def item_claim_ids(item: dict) -> set[str]:
+        raw_refs = [item.get("claim_id"), *(item.get("claim_refs") or [])]
+        return {
+            claim_id for ref in raw_refs
+            if (claim_id := resolve_viewpoint_claim_id(ref, claim_ids))
+        }
+
+    rejected = set()
+    for item in [*cards, *paragraphs]:
+        texts = [str(item.get(key) or "") for key in ("claim", "source_excerpt", "display_topic", "heading", "text")]
+        for claim_id in item_claim_ids(item):
+            titles = [citations[ref].get("title") for ref in refs_by_claim[claim_id]]
+            if is_foreign_only_target_claim(texts, titles, expected_stock_name):
+                rejected.add(claim_id)
+
+    filtered_paragraphs = [
+        _with_peer_context(item, citations, expected_stock_name)
+        for item in paragraphs if not item_claim_ids(item) & rejected
+    ]
+    filtered_cards = [
+        _with_peer_context(item, citations, expected_stock_name)
+        for item in cards if not item_claim_ids(item) & rejected
+    ]
+
+    used_refs = {
+        ref
+        for item in [*filtered_paragraphs, *filtered_cards]
+        for ref in item.get("citation_refs") or []
+        if ref in citations
+    }
+    kept_citations = {ref: meta for ref, meta in citations.items() if ref in used_refs}
+    return filtered_paragraphs, filtered_cards, kept_citations
+
+
+def is_foreign_only_target_claim(
+    texts: list[str],
+    source_titles: list[Any],
+    expected_stock_name: str,
+) -> bool:
+    target = _compact_text(expected_stock_name)
+    evidence = "".join(_compact_text(text) for text in texts)
+    return bool(target and target in evidence and source_titles and all(
+        classify_external_source_title(title, expected_stock_name) == "foreign_company"
+        for title in source_titles
+    ))
+
+
+def filter_external_viewpoint_claims(
+    claims: list[dict], expected_stock_name: str,
+) -> tuple[list[dict], list[str]]:
+    """Drop foreign-only target facts and label standalone peer context."""
+    kept, rejected, target = [], [], _compact_text(expected_stock_name)
+    for claim in claims:
+        texts = [str(claim.get(key) or "") for key in ("claim", "source_quote", "heading", "topic")]
+        title = claim.get("source_title") or claim.get("title") or ""
+        if is_foreign_only_target_claim(texts, [title], expected_stock_name):
+            claim_id = str(claim.get("claim_id") or "")
+            if claim_id:
+                rejected.append(claim_id)
+            continue
+        if target not in _compact_text(" ".join(texts)) and classify_external_source_title(
+            title, expected_stock_name,
+        ) == "foreign_company":
+            claim = {**claim, "entity_context": "peer_or_industry_context", "heading": "同业/行业背景（Preview）"}
+        kept.append(claim)
+    return kept, rejected
+
+
+def _with_peer_context(item: dict, citations: Dict[int, dict], expected_stock_name: str) -> dict:
+    text = " ".join(str(item.get(key) or "") for key in ("heading", "claim", "source_excerpt", "text"))
+    refs = [ref for ref in item.get("citation_refs") or [] if ref in citations]
+    has_target = _compact_text(expected_stock_name) in _compact_text(text)
+    foreign_only = bool(refs) and all(
+        classify_external_source_title(citations[ref].get("title"), expected_stock_name)
+        == "foreign_company"
+        for ref in refs
+    )
+    if not has_target and (foreign_only or any(term in text for term in _PEER_CONTEXT_TERMS)):
+        return {**item, "entity_context": "peer_or_industry_context", "heading": "同业/行业背景（Preview）"}
+    return item
 
 
 def flatten_viewpoint_narrative_paragraphs(paragraphs: list) -> str:

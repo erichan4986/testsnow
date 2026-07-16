@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "9b1b9dff7ab3799f87f7bcb4572525f1da76ba3f5878d795988cf149e83942ff",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "bb0ad364096c04ebca3c1f8c3e8b218acf29dd8ac71ecf1bc4b762b0f6cba7dd",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "937e01612ceb925f37b237e0ce20f81da138efd323a3e30f9f4216a3baa8db22",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "300661",
+  "stock_name": "圣邦股份"
+}

@@ -71,7 +71,7 @@ def test_build_preview_markdown_can_include_json_block(tmp_path):
     assert "```json" in markdown
     payload = markdown.split("```json", 1)[1].split("```", 1)[0]
     data = json.loads(payload)
-    assert data["schema_version"] == "periodic_report_narrative_evidence_cards.v1"
+    assert data["schema_version"] == "periodic_report_narrative_evidence_cards.v2"
     assert data["cards"]
 
 
@@ -164,24 +164,48 @@ def test_cli_knowledge_base_dir_defaults_to_dry_run(tmp_path):
     assert not list(knowledge_dir.rglob("*.md"))
 
 
+def test_preview_write_knowledge_dual_writes_pack_and_notes(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    knowledge_dir = tmp_path / "knowledge"
+
+    build_preview_markdown(
+        stock_code="000001",
+        stock_name="测试股",
+        cache_dir=cache_dir,
+        report_type="annual",
+        knowledge_base_dir=knowledge_dir,
+        write_knowledge=True,
+    )
+
+    stock_root = knowledge_dir / "10-Stocks" / "测试股"
+    assert list((stock_root / "periodic_narrative_cards").glob("*.md"))
+    assert (stock_root / "periodic_narrative_packs" / "2025-annual.json").exists()
+    assert (stock_root / "periodic_narrative_pack_manifest.json").exists()
+
+
 def test_build_preview_markdown_existing_only_refresh_plan(tmp_path):
     cache_dir = tmp_path / "periodic_reports"
     cache_dir.mkdir()
     (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
     knowledge_dir = tmp_path / "knowledge"
+    build_preview_markdown(
+        stock_code="000001",
+        stock_name="测试股",
+        cache_dir=cache_dir,
+        report_type="annual",
+        knowledge_base_dir=knowledge_dir,
+        write_knowledge=True,
+    )
     existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
-    existing_dir.mkdir(parents=True)
-    existing_note = existing_dir / "2025-annual-management-market-view-0.md"
+    generated_notes = sorted(existing_dir.glob("*.md"))
+    existing_note = next(path for path in generated_notes if not path.stem.endswith("-0"))
+    for path in generated_notes:
+        if path != existing_note:
+            path.unlink()
     existing_note.write_text(
-        "---\n"
-        "source_type: periodic_report_narrative_evidence\n"
-        "card_id: \"periodic:000001:2025:annual:narrative:management_market_view:0\"\n"
-        "knowledge_fact_status: narrative_evidence\n"
-        "---\n"
-        "\n"
-        "## Manual Note\n"
-        "\n"
-        "保留人工补充。\n",
+        existing_note.read_text(encoding="utf-8") + "\n## Manual Note\n\n保留人工补充。\n",
         encoding="utf-8",
     )
 
@@ -211,10 +235,20 @@ def test_build_preview_markdown_renders_knowledge_maintenance_summary(tmp_path):
     cache_dir.mkdir()
     (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
     knowledge_dir = tmp_path / "knowledge"
+    build_preview_markdown(
+        stock_code="000001",
+        stock_name="测试股",
+        cache_dir=cache_dir,
+        report_type="annual",
+        knowledge_base_dir=knowledge_dir,
+        write_knowledge=True,
+    )
     existing_dir = knowledge_dir / "10-Stocks" / "测试股" / "periodic_narrative_cards"
-    existing_dir.mkdir(parents=True)
-    matching_note = existing_dir / "2025-annual-management-market-view-0.md"
-    matching_note.write_text("---\nsource_type: periodic_report_narrative_evidence\n---\n", encoding="utf-8")
+    generated_notes = sorted(existing_dir.glob("*.md"))
+    matching_note = next(path for path in generated_notes if not path.stem.endswith("-0"))
+    for path in generated_notes:
+        if path != matching_note:
+            path.unlink()
     dangling_note = existing_dir / "2025-annual-rd-product-progress-99.md"
     dangling_note.write_text("---\nsource_type: periodic_report_narrative_evidence\n---\n", encoding="utf-8")
 

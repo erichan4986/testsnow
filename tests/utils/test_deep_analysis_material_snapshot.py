@@ -12,11 +12,13 @@ from deep_analysis_material_snapshot import (  # noqa: E402
     _CitationAllocator,
     _adapt_material_row,
     Chapter4ViewModel,
+    MaterialSnapshot,
     MaterialRow,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
     citation_identity,
     select_annual_display_rows,
+    select_incremental_external_display_rows,
 )
 
 
@@ -300,7 +302,7 @@ def test_select_annual_display_rows_keeps_retained_source_text_verbatim():
     assert [row.body for row in selected] == [body]
 
 
-def test_select_annual_display_rows_has_no_family_or_global_cap():
+def test_select_annual_display_rows_applies_role_budget_without_rewriting_admission_count():
     rows = [
         _annual_display_row(
             f"报告期内，公司产品{i}完成客户导入并实现批量出货。",
@@ -313,8 +315,250 @@ def test_select_annual_display_rows_has_no_family_or_global_cap():
 
     selected, diagnostics = select_annual_display_rows(rows)
 
-    assert len(selected) == 16
+    assert len(selected) == 2
     assert diagnostics["annual_selected_count"] == 16
+    assert diagnostics["annual_hidden_count"] == 14
+    assert diagnostics["annual_hidden_by_role"] == {"operating_progress": 14}
+
+
+def test_formal_medium_view_model_assigns_portrait_slot_and_uses_one_external_projection():
+    annual_rows = (
+        _annual_display_row(
+            "公司主营业务为高速互连产品研发，产品服务于云计算客户。",
+            role="business_structure",
+            ref=1,
+            row_id="annual:portrait",
+        ),
+        _annual_display_row(
+            "报告期内，公司完成下一代产品验证并导入重点客户。",
+            role="operating_progress",
+            ref=2,
+            row_id="annual:operating",
+        ),
+    )
+    external_rows = (
+        MaterialRow(
+            "external:reasoning_cards:0", "供应链变量", "external", "external_observation", (3,), ("external:reasoning",),
+            title="供应链观察", body="外部材料称上游供给节奏仍需验证。", render_role="external_variable",
+        ),
+        MaterialRow(
+            "external:narrative_paragraphs:0", "客户变量", "external", "external_observation", (4,), ("external:narrative",),
+            title="客户验证", body="外部材料称重点客户验证节奏仍需观察。", render_role="external_variable",
+        ),
+    )
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1",
+        annual_rows + external_rows,
+        {
+            1: {"source": "公司年报"}, 2: {"source": "公司年报"},
+            3: {"source": "微信公众号精选观察"}, 4: {"source": "微信公众号精选观察"},
+        },
+        {},
+    )
+
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    annual = view_model.section("4.1").rows
+    external = view_model.section("4.3").rows
+    assert next(row for row in annual if row.row_id == "annual:portrait").editorial_slot == "portrait"
+    assert [row.row_id for row in external] == ["external:narrative_paragraphs:0"]
+
+
+def test_incremental_external_selector_keeps_owner_superset_with_new_event_delta():
+    owner = MaterialRow(
+        "annual:owner", "官方材料", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司800G产品已进入批量交付阶段。", render_role="operating_progress",
+    )
+    external = MaterialRow(
+        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        title="交付变化", body="外部材料称公司800G产品已进入批量交付阶段，光芯片短缺可能导致后续交付延期。",
+        render_role="external_variable",
+    )
+
+    selected, diagnostics = select_incremental_external_display_rows(
+        (external,), {2: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert [row.row_id for row in selected] == [external.row_id]
+    assert dict(selected[0].diagnostics)["external_incremental_reason"] == "new_event_variable"
+    assert diagnostics["external_incremental_selected_count"] == 1
+
+
+def test_incremental_external_selector_rejects_owner_theme_without_delta():
+    owner = MaterialRow(
+        "broker:owner", "机构观点", "broker", "professional_analysis", (1,), ("broker:owner",),
+        body="800G产品主要面向数据中心客户。", render_role="broker_assumption", attribution="测试证券",
+    )
+    external = MaterialRow(
+        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        title="产品观察", body="外部文章认为数据中心客户正在使用800G产品。", render_role="external_variable",
+    )
+
+    selected, diagnostics = select_incremental_external_display_rows(
+        (external,), {2: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert selected == ()
+    assert diagnostics["external_incremental_rejected_by_reason"] == {"owner_theme_without_delta": 1}
+
+
+def test_incremental_external_selector_rejects_rephrased_existing_event():
+    owner = MaterialRow(
+        "annual:owner", "官方材料", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司800G产品交付节奏保持稳定。", render_role="operating_progress",
+    )
+    external = MaterialRow(
+        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        body="外部文章指出800G产品维持稳定交付节奏。", render_role="external_variable",
+    )
+
+    selected, diagnostics = select_incremental_external_display_rows(
+        (external,), {2: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert selected == ()
+    assert diagnostics["external_incremental_rejected_by_reason"] == {"owner_theme_without_delta": 1}
+
+
+def test_incremental_external_selector_keeps_new_event_without_numeric_anchor():
+    owner = MaterialRow(
+        "annual:owner", "官方材料", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司订单已覆盖核心客户。", render_role="operating_progress",
+    )
+    external = MaterialRow(
+        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        body="外部材料称订单仍需通过客户认证。", render_role="external_variable",
+    )
+
+    selected, _ = select_incremental_external_display_rows(
+        (external,), {2: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert dict(selected[0].diagnostics)["external_incremental_reason"] == "new_event_variable"
+
+
+def test_incremental_external_selector_falls_through_rejected_narrative_bucket():
+    owner = MaterialRow(
+        "annual:owner", "官方材料", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司800G产品已进入客户验证阶段。", render_role="technology_product_progress",
+    )
+    rows = (
+        MaterialRow(
+            "external:narrative_paragraphs:0", "重复观察", "external", "external_observation", (2,), ("external:0",),
+            title="客户验证", body="外部材料称公司800G产品已进入客户验证阶段。", render_role="external_variable",
+        ),
+        MaterialRow(
+            "external:reasoning_cards:0", "增量观察", "external", "external_observation", (3,), ("external:1",),
+            title="量产节奏", body="外部材料称800G产品量产时间由2026Q4延期至2027Q1。", render_role="external_variable",
+        ),
+    )
+
+    selected, diagnostics = select_incremental_external_display_rows(
+        rows, {2: {"source": "外部观察"}, 3: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert [row.row_id for row in selected] == ["external:reasoning_cards:0"]
+    assert diagnostics["external_incremental_rejected_by_reason"] == {"owner_text_duplicate": 1}
+
+
+def test_incremental_external_selector_keeps_uncovered_context_without_anchor():
+    owner = MaterialRow(
+        "annual:owner", "官方材料", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司主营业务为芯片设计。", render_role="business_structure",
+    )
+    external = MaterialRow(
+        "external:topic_groups:market:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        title="渠道库存", body="渠道库存变化仍值得持续观察。", render_role="external_variable",
+    )
+
+    selected, _ = select_incremental_external_display_rows(
+        (external,), {2: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert dict(selected[0].diagnostics)["external_incremental_reason"] == "new_topic_context"
+
+
+def test_incremental_external_selector_recognizes_new_units_and_acronym_anchors():
+    owner = MaterialRow(
+        "annual:owner", "官方材料", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司CPO与800G产品处于客户导入阶段。", render_role="technology_product_progress",
+    )
+    rows = (
+        MaterialRow(
+            "external:narrative_paragraphs:0", "交付观察", "external", "external_observation", (2,), ("external:0",),
+            body="外部材料称800G交付计划由1500万下调至1200万。", render_role="external_variable",
+        ),
+        MaterialRow(
+            "external:narrative_paragraphs:1", "路线观察", "external", "external_observation", (3,), ("external:1",),
+            body="外部材料称NPO与XPO路线可能在2027Q1进入验证。", render_role="external_variable",
+        ),
+    )
+
+    selected, _ = select_incremental_external_display_rows(
+        rows, {2: {"source": "外部观察"}, 3: {"source": "外部观察"}}, (owner,),
+    )
+
+    assert [dict(row.diagnostics)["external_incremental_reason"] for row in selected] == [
+        "new_concrete_anchor", "new_concrete_anchor",
+    ]
+
+
+def test_formal_medium_rejected_external_row_stays_out_of_4_3_and_4_4():
+    rows = (
+        _annual_display_row(
+            "公司CPO产品已进入客户验证阶段。", role="technology_product_progress",
+            ref=1, row_id="annual:technology",
+        ),
+        MaterialRow(
+            "external:narrative_paragraphs:0", "重复观察", "external", "external_observation", (2,), ("external:0",),
+            title="客户验证", body="外部材料称公司CPO产品已进入客户验证阶段。", render_role="external_variable",
+        ),
+    )
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", rows,
+        {1: {"source": "公司年报"}, 2: {"source": "外部观察"}}, {},
+    )
+
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    assert not view_model.section("4.3").rows
+    assert all(row.source_layer != "external" for row in view_model.section("4.4").rows)
+    assert view_model.diagnostics["external_incremental_rejected_by_reason"] == {"owner_text_duplicate": 1}
+
+
+def test_formal_medium_price_path_falls_back_to_cited_generic_broker_assumption():
+    rows = (
+        MaterialRow("annual:generic", "业务", "annual", "formal_explanation", (1,), ("annual:generic",), title="财务质量与变化原因", body="公司主营业务为芯片设计并服务工业客户。", render_role="business_structure", argument_complete=True),
+        MaterialRow("broker:generic", "观点", "broker", "professional_analysis", (2,), ("broker:generic",), title="券商核心观点", body="研报认为产品放量支撑增长。", render_role="broker_assumption", attribution="测试证券"),
+        MaterialRow("external:generic", "观察", "external", "external_observation", (3,), ("external:generic",), title="反方风险", body="外部材料称供应链需要验证。", render_role="external_variable"),
+    )
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", rows,
+        {1: {"source": "公司年报"}, 2: {"source": "券商研报"}, 3: {"source": "微信公众号精选观察"}}, {},
+    )
+
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    price_path_rows = view_model.section("4.4").rows
+    broker = next(row for row in price_path_rows if row.source_layer == "broker")
+    assert broker.row_id == "broker:generic"
+    assert broker.title == "测试证券研报核心假设"
+    assert broker.body == "研报认为产品放量支撑增长。"
+
+
+def test_formal_medium_price_path_generic_broker_fallback_never_uses_risk_row():
+    rows = (
+        MaterialRow("annual:generic", "业务", "annual", "formal_explanation", (1,), ("annual:generic",), title="财务质量与变化原因", body="公司主营业务为芯片设计并服务工业客户。", render_role="business_structure", argument_complete=True),
+        MaterialRow("broker:risk", "风险", "broker", "professional_analysis", (2,), ("broker:risk",), title="风险提示", body="研报提示需求不及预期。", render_role="broker_risk", attribution="测试证券"),
+    )
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", rows,
+        {1: {"source": "公司年报"}, 2: {"source": "券商研报"}}, {},
+    )
+
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    assert all(row.source_layer != "broker" for row in view_model.section("4.4").rows)
 
 
 def test_select_annual_display_rows_dedupes_exact_and_containment_only():
@@ -460,7 +704,7 @@ def test_formal_medium_price_path_uses_strict_selected_role_priority():
 
     price_path_annual = [row for row in view_model.section("4.4").rows if row.source_layer == "annual"]
     assert price_path_annual
-    assert price_path_annual[0].row_id == "annual:annual_report_explanation:1"
+    assert price_path_annual[0].row_id == "annual:confirmed:0"
 
 
 def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations():
@@ -540,7 +784,7 @@ def test_formal_medium_view_model_unifies_source_layers_and_visible_citations():
     assert {row.source_layer for row in view_model.section("4.1").rows} == {"annual"}
     assert {row.source_layer for row in view_model.section("4.2").rows} == {"broker"}
     assert {row.source_layer for row in view_model.section("4.3").rows} == {"external"}
-    assert {row.source_layer for row in view_model.section("4.4").rows} == {"annual", "broker", "external"}
+    assert {row.source_layer for row in view_model.section("4.4").rows} == {"annual", "broker"}
     assert all(row.attribution for row in view_model.section("4.2").rows)
     assert all(row.source_credit == "official" for row in view_model.section("4.1").rows)
     assert all(row.source_credit == "professional" for row in view_model.section("4.2").rows)

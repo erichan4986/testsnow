@@ -51,6 +51,122 @@ def _digest(claims: list[dict]) -> dict:
     }
 
 
+def test_narrative_citation_keeps_explicit_date_and_boundary_metadata():
+    claim = _claim("dated", "外部材料提示客户订单与交付节奏仍需跟踪。")
+    claim.update(
+        {
+            "topic": "客户订单与交付",
+            "published_at": "2026-07-01",
+        }
+    )
+
+    result = build_viewpoint_narrative(
+        _digest([claim]),
+        "baseline synthesis",
+        composer=lambda *_: {
+            "paragraphs": [
+                {
+                    "heading": "订单变量",
+                    "text": "外部材料提示客户订单与交付节奏仍需跟踪。",
+                    "claim_refs": ["dated"],
+                }
+            ]
+        },
+        stock_name="测试股",
+    )
+
+    assert result["status"] == "ok", result["stats"]["drop_reasons"]
+    assert result["citations"]["1"]["date"] == "2026-07-01"
+    assert result["citations"]["1"]["synthesis_display_only"] is True
+    assert result["citations"]["1"]["quality_action"] == "preview_only"
+    assert result["paragraphs"][0]["topic_keys"] == ["order_customer"]
+    assert result["paragraphs"][0]["paragraph_index"] == 0
+
+
+def test_fresh_narrative_rejects_foreign_company_source_for_target_fact_before_composer():
+    foreign = _claim(
+        "foreign",
+        "复旦微电子EEPROM产品已经进入客户供应链。",
+        "聚辰股份: EEPROM产品导入进展",
+    )
+    safe = _claim(
+        "safe",
+        "复旦微电子新产品认证节奏仍需验证，并需要与后续订单和公告交叉验证。",
+        "复旦微电: 新产品认证观察",
+    )
+    for claim in (foreign, safe):
+        claim["stock_name"] = "复旦微电"
+    digest = _digest([foreign, safe])
+    digest["stock_name"] = "复旦微电"
+    composed_claim_ids = []
+
+    def composer(claims, _baseline, _stock):
+        composed_claim_ids.extend(claim["claim_id"] for claim in claims)
+        return {
+            "paragraphs": [{
+                "heading": "认证变量",
+                "text": safe["claim"],
+                "claim_refs": ["safe"],
+            }]
+        }
+
+    result = build_viewpoint_narrative(
+        digest,
+        "baseline synthesis",
+        composer=composer,
+        stock_name="复旦微电",
+    )
+
+    assert result["status"] == "ok", result["stats"]["drop_reasons"]
+    assert composed_claim_ids == ["safe"]
+
+
+def test_fresh_narrative_rejects_mismatched_digest_stock_identity_before_composer():
+    digest = _digest([_claim("c1", "外部材料提示客户认证节奏仍需跟踪。")])
+    digest["stock_name"] = "聚辰股份"
+    called = []
+
+    result = build_viewpoint_narrative(
+        digest,
+        "baseline synthesis",
+        composer=lambda *_: called.append(True),
+        stock_name="复旦微电",
+    )
+
+    assert result["status"] == "stock_identity_mismatch"
+    assert not called
+
+
+def test_fresh_narrative_keeps_safe_card_citation_when_lint_drops_its_paragraph():
+    claim = _claim("safe", "复旦微电产品认证节奏仍需验证，并需要与后续订单和公告交叉验证。", "复旦微电: 产品认证观察")
+    claim["stock_name"] = "复旦微电"
+    digest = _digest([claim])
+    digest["stock_name"] = "复旦微电"
+
+    result = build_viewpoint_narrative(
+        digest,
+        "baseline synthesis",
+        composer=lambda *_: {
+            "paragraphs": [{
+                "heading": "不安全表述",
+                "text": "复旦微电产品认证已经确认，且已经进入客户供应体系并形成稳定交付能力。",
+                "claim_refs": ["safe"],
+            }],
+            "reasoning_cards": [{
+                "claim_id": "safe",
+                "claim": claim["claim"],
+                "source_excerpt": claim["source_quote"],
+            }],
+        },
+        stock_name="复旦微电",
+    )
+
+    assert result["status"] == "ok", result["stats"]["drop_reasons"]
+    assert result["paragraphs"] == []
+    assert [card["claim_id"] for card in result["reasoning_cards"]] == ["safe"]
+    assert set(result["citations"]) == {"1"}
+
+
 def test_build_viewpoint_narrative_from_fake_llm_paragraphs():
     claims = [
         _claim("c1", "市场传言800G交付计划下调，公司否认但供给变量仍需跟踪。", "上游材料预付款暴涨10倍"),
@@ -88,6 +204,66 @@ def test_build_viewpoint_narrative_from_fake_llm_paragraphs():
     assert "供给约束先影响交付弹性" in result["preview_markdown"]
     assert "[^1][^2]" in result["preview_markdown"]
     assert "不参与评分、风险评分或最终建议" in result["preview_markdown"]
+
+
+def test_build_viewpoint_narrative_reuses_citation_for_exact_same_url():
+    claims = [
+        _claim("c1", "外部材料提示海外客户认证节奏仍需跟踪，并可能影响后续出货安排。"),
+        _claim("c2", "外部材料提示海外客户认证需要同时观察交付节奏和验证结果。"),
+    ]
+    claims[1]["source_ref"] = claims[0]["source_ref"]
+
+    result = build_viewpoint_narrative(
+        _digest(claims),
+        "baseline synthesis",
+        composer=lambda *_: {
+            "paragraphs": [
+                {
+                    "heading": "认证节奏",
+                    "text": claims[0]["claim"],
+                    "claim_refs": ["c1"],
+                },
+                {
+                    "heading": "交付验证",
+                    "text": claims[1]["claim"],
+                    "claim_refs": ["c2"],
+                },
+            ]
+        },
+        stock_name="测试股",
+    )
+
+    assert result["status"] == "ok"
+    assert list(result["citations"]) == ["1"]
+    assert [paragraph["citation_refs"] for paragraph in result["paragraphs"]] == [[1], [1]]
+    assert [paragraph["claim_refs"] for paragraph in result["paragraphs"]] == [["c1"], ["c2"]]
+    assert {card["claim_id"] for card in result["reasoning_cards"]} == {"c1", "c2"}
+
+
+def test_build_viewpoint_narrative_keeps_claim_citations_distinct_without_url():
+    claims = [
+        _claim("c1", "外部材料提示客户认证节奏仍需跟踪，并可能影响后续出货安排。"),
+        _claim("c2", "外部材料提示客户认证需要同时观察交付节奏和验证结果。"),
+    ]
+    for claim in claims:
+        claim["source_ref"] = ""
+        claim["source_url"] = ""
+
+    result = build_viewpoint_narrative(
+        _digest(claims),
+        "baseline synthesis",
+        composer=lambda *_: {
+            "paragraphs": [
+                {"heading": "认证节奏", "text": claims[0]["claim"], "claim_refs": ["c1"]},
+                {"heading": "交付验证", "text": claims[1]["claim"], "claim_refs": ["c2"]},
+            ]
+        },
+        stock_name="测试股",
+    )
+
+    assert result["status"] == "ok"
+    assert list(result["citations"]) == ["1", "2"]
+    assert [paragraph["citation_refs"] for paragraph in result["paragraphs"]] == [[1], [2]]
 
 
 def test_build_viewpoint_narrative_falls_back_when_composer_parse_fails():
@@ -542,6 +718,9 @@ def test_build_viewpoint_narrative_allows_supported_quantitative_claims():
 
 def test_build_viewpoint_narrative_allows_model_like_stock_name():
     claims = [_claim("c1", "外部文章提示客户车型放量仍需跟踪。")]
+    claims[0]["stock_name"] = "TEST123"
+    digest = _digest(claims)
+    digest["stock_name"] = "TEST123"
 
     def composer(_claims, _baseline, _stock):
         return {
@@ -555,7 +734,7 @@ def test_build_viewpoint_narrative_allows_model_like_stock_name():
         }
 
     result = build_viewpoint_narrative(
-        _digest(claims),
+        digest,
         "baseline synthesis",
         composer=composer,
         stock_name="TEST123",

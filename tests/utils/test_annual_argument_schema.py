@@ -19,6 +19,7 @@ from annual_argument_schema import (
     ENVELOPE_SCHEMA_VERSION,
     FAMILY_LABELS,
     SELECTION_VERSION,
+    SOURCE_UNIT_DECISIONS_VERSION,
     adapt_v1_card,
     annual_source_tail,
     is_v1_card,
@@ -46,6 +47,7 @@ def test_versions_families_and_labels_are_locked():
     assert CARD_SCHEMA_VERSION == "periodic_report_narrative_evidence_card.v2"
     assert ENVELOPE_SCHEMA_VERSION == "periodic_report_narrative_evidence_cards.v2"
     assert SELECTION_VERSION == "annual_argument_selection.v2"
+    assert SOURCE_UNIT_DECISIONS_VERSION == "annual_source_unit_decisions.v1"
     assert CANONICAL_FAMILIES == (
         "business_structure",
         "operating_progress",

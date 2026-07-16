@@ -32,6 +32,7 @@ def _make_ctx(
     demote_items=None,
     fulltext_items=None,
     render_details=True,
+    render_section=True,
 ) -> SkillContext:
     return SkillContext(input={
         "stock_name": "测试股",
@@ -43,6 +44,7 @@ def _make_ctx(
         "periodic_report_fulltext_items": fulltext_items or [],
         "source_intake_summary": {"status": status, "count": len(items or [])},
         "source_intake_render_details": render_details,
+        "source_intake_render_section": render_section,
     })
 
 
@@ -50,6 +52,13 @@ def test_disabled_returns_empty():
     renderer = SourceIntakeEvidenceRenderer()
     ctx = _make_ctx(enabled=False)
     assert renderer.render(ctx) == ""
+
+
+def test_enabled_source_intake_requires_explicit_render_section_gate():
+    item = _make_item(title="年报", extra={"source_type": "exchange_announcement", "source_credit": 95})
+    ctx = _make_ctx(items=[item], render_section=False)
+
+    assert SourceIntakeEvidenceRenderer().render(ctx) == ""
 
 
 def test_enabled_but_empty_returns_empty():
@@ -218,6 +227,7 @@ def test_source_intake_defaults_to_compact_overview():
     )
     ctx = SkillContext(input={
         "source_intake_enabled": True,
+        "source_intake_render_section": True,
         "source_intake_status": "ok",
         "source_intake_items": [item],
         "periodic_report_fulltext_items": [],

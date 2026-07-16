@@ -15,10 +15,14 @@ if __package__:
     from .source_adapter import SynthesisItem
     from .annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail, validate_card_v2
     from .annual_argument_schema import has_concrete_annual_anchor, normalize_annual_source_text
+    from .periodic_report_narrative_card_note_writer import narrative_card_note_path
+    from .periodic_report_narrative_pack_store import MANIFEST_FILENAME, PACK_DIRNAME, PeriodicNarrativePackStorageError, load_validated_periodic_narrative_pack_set, normalized_source_excerpt_hash, v2_note_card_fingerprint
 else:
     from source_adapter import SynthesisItem
     from annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail, validate_card_v2
     from annual_argument_schema import has_concrete_annual_anchor, normalize_annual_source_text
+    from periodic_report_narrative_card_note_writer import narrative_card_note_path
+    from periodic_report_narrative_pack_store import MANIFEST_FILENAME, PACK_DIRNAME, PeriodicNarrativePackStorageError, load_validated_periodic_narrative_pack_set, normalized_source_excerpt_hash, v2_note_card_fingerprint
 
 
 SCHEMA_VERSION = "annual_report_material_pack.v1"
@@ -120,6 +124,7 @@ def build_annual_report_material_pack(
     *,
     stock_name: str,
     base_dir: str | Path,
+    stock_code: str = "",
     **_legacy_options: Any,
 ) -> Dict[str, Any]:
     """Build a deterministic, display-only annual-report material pack.
@@ -129,12 +134,32 @@ def build_annual_report_material_pack(
     """
     del _legacy_options
 
-    notes_dir = (
-        Path(base_dir)
-        / "10-Stocks"
-        / _safe_dir_segment(stock_name)
-        / "periodic_narrative_cards"
-    )
+    if stock_code and _has_pack_storage(stock_name, base_dir):
+        try:
+            result = build_annual_report_material_pack_from_pack_shadow(
+                stock_name=stock_name,
+                stock_code=stock_code,
+                base_dir=base_dir,
+            )
+            result["diagnostics"]["storage_mode"] = "pack_first"
+            return result
+        except PeriodicNarrativePackStorageError as exc:
+            if not _has_v2_note_projections(stock_name, base_dir):
+                raise
+            fallback = _build_legacy_material_pack(stock_name, base_dir)
+            fallback["diagnostics"].update({
+                "storage_mode": "legacy_fallback",
+                "pack_validation_errors": [exc.code],
+            })
+            return fallback
+
+    return _build_legacy_material_pack(stock_name, base_dir)
+
+
+def _build_legacy_material_pack(stock_name: str, base_dir: str | Path) -> Dict[str, Any]:
+    """Read legacy Markdown projections when no validated pack is available."""
+
+    notes_dir = _narrative_cards_dir(stock_name, base_dir)
 
     if not notes_dir.exists():
         return _empty_pack(stock_name)
@@ -146,8 +171,194 @@ def build_annual_report_material_pack(
             continue
         records.append(record)
 
+    return _build_material_pack_from_records(stock_name, records)
+
+
+def _has_pack_storage(stock_name: str, base_dir: str | Path) -> bool:
+    root = _narrative_cards_dir(stock_name, base_dir).parent
+    return (root / MANIFEST_FILENAME).exists() or (root / PACK_DIRNAME).exists()
+
+
+def _has_v2_note_projections(stock_name: str, base_dir: str | Path) -> bool:
+    notes_dir = _narrative_cards_dir(stock_name, base_dir)
+    return any(_is_v2_note_projection(path) for path in notes_dir.glob("*.md")) if notes_dir.exists() else False
+
+
+def build_annual_report_material_pack_from_pack_shadow(
+    *, stock_name: str, stock_code: str, base_dir: str | Path,
+) -> Dict[str, Any]:
+    """Build a read-only migration shadow from validated packs plus legacy v1 notes."""
+    loaded = load_validated_periodic_narrative_pack_set(
+        stock_name=stock_name, stock_code=stock_code, base_dir=base_dir,
+    )
+    records = [
+        _record_from_card(Path(f"pack-{index}.json"), card, is_v2=True)
+        for index, card in enumerate(loaded["cards"])
+    ]
+    notes_dir = _narrative_cards_dir(stock_name, base_dir)
+    for path in sorted(notes_dir.glob("*.md")) if notes_dir.exists() else []:
+        record = _read_note_as_record(path, adapt_legacy=False)
+        if record is not None and not record.is_v2:
+            records.append(record)
+    result = _build_material_pack_from_records(stock_name, records, storage_mode="pack_shadow")
+    pack_count = len(loaded["packs"])
+    result["diagnostics"].update({
+        "packs_seen": pack_count, "packs_loaded": pack_count,
+        "v2_markdown_ignored_count": sum(
+            1 for path in notes_dir.glob("*.md") if _is_v2_note_projection(path)
+        ) if notes_dir.exists() else 0,
+    })
+    return result
+
+
+def classify_periodic_narrative_v2_notes(
+    *, stock_name: str, producer_cards: List[Dict[str, Any]], base_dir: str | Path,
+    source_unit_decisions: Optional[List[Dict[str, Any]]] = None,
+) -> Dict[str, Any]:
+    """Classify persisted v2 note projections against canonical producer cards."""
+    expected = {str(card.get("card_id") or ""): card for card in producer_cards}
+    current_cards_by_unit: Dict[str, Set[str]] = {}
+    for card in producer_cards:
+        card_id = str(card.get("card_id") or "")
+        for unit_id in card.get("source_unit_ids") or []:
+            if isinstance(unit_id, str) and unit_id and card_id:
+                current_cards_by_unit.setdefault(unit_id, set()).add(card_id)
+    matches: Dict[str, List[tuple[Path, Dict[str, Any]]]] = {}
+    states = (
+        "active_v2", "stale_duplicate", "stale_reindexed", "stale_source_covered", "stale_orphan", "stale_invalid",
+        "stale_resolved_selected", "stale_resolved_structural", "stale_resolved_mixed", "stale_recovery_required", "stale_source_missing", "stale_source_ambiguous",
+    )
+    result: Dict[str, Any] = {key: [] for key in states}
+    notes_dir = _narrative_cards_dir(stock_name, base_dir)
+    for path in sorted(notes_dir.glob("*.md")) if notes_dir.exists() else []:
+        if not _is_v2_note_projection(path):
+            continue
+        record = _read_note_as_record(path, adapt_legacy=False)
+        if record is None:
+            result["stale_invalid"].append(_classification_item(path))
+            continue
+        card = record.card
+        card_id = str(card.get("card_id") or "")
+        canonical = expected.get(card_id)
+        if canonical is None:
+            covered_by = _covering_current_card_ids(card, current_cards_by_unit)
+            if covered_by:
+                result["stale_source_covered"].append(_classification_item(path, card_id, covered_by))
+            elif source_unit_decisions is None:
+                result["stale_orphan"].append(_classification_item(path, card_id))
+            else:
+                target, details = _resolve_stale_source_units(card, source_unit_decisions)
+                result[target].append(_classification_item(path, card_id, details=details))
+        elif v2_note_card_fingerprint(card) != v2_note_card_fingerprint(canonical):
+            result["stale_reindexed"].append(_classification_item(path, card_id))
+        else:
+            matches.setdefault(card_id, []).append((path, card))
+
+    for index, card in enumerate(producer_cards):
+        card_id = str(card.get("card_id") or "")
+        candidates = matches.get(card_id) or []
+        if not candidates:
+            continue
+        expected_path = narrative_card_note_path(
+            stock_name=stock_name, card=card, base_dir=base_dir, index=index,
+        )
+        candidates.sort(key=lambda item: (item[0] != expected_path, str(item[0])))
+        active_path, _active_card = candidates[0]
+        result["active_v2"].append(_classification_item(active_path, card_id))
+        result["stale_duplicate"].extend(
+            _classification_item(path, card_id) for path, _card in candidates[1:]
+        )
+    active_ids = {item["card_id"] for item in result["active_v2"]}
+    result["missing_active_card_ids"] = [str(card.get("card_id") or "") for card in producer_cards
+                                         if str(card.get("card_id") or "") not in active_ids]
+    return result
+
+
+def _covering_current_card_ids(
+    card: Dict[str, Any], current_cards_by_unit: Dict[str, Set[str]],
+) -> List[str]:
+    """Return current cards only when every persisted source unit still exists."""
+    unit_ids = card.get("source_unit_ids") or []
+    if not unit_ids or any(unit_id not in current_cards_by_unit for unit_id in unit_ids):
+        return []
+    return sorted({card_id for unit_id in unit_ids for card_id in current_cards_by_unit[unit_id]})
+
+
+_ARCHIVE_SAFE_REASONS = frozenset({"section_label", "regulatory_disclosure", "audit_procedure", "accounting_policy_definition", "checkbox_or_page_marker", "definition_or_hash"})
+
+
+def _resolve_stale_source_units(card: Dict[str, Any], decisions: List[Dict[str, Any]]) -> tuple[str, Dict[str, Any]]:
+    old_units = card.get("source_units") or []
+    hashes = [normalized_source_excerpt_hash(unit.get("text")) for unit in old_units if isinstance(unit, dict)]
+    if not hashes or len(hashes) != len(old_units):
+        return "stale_source_missing", {}
+    exact = []
+    for unit, text_hash in zip(old_units, hashes):
+        matches = [item for item in decisions if item.get("source_block_id") == unit.get("block_id")
+                   and item.get("source_unit_id") == unit.get("unit_id") and item.get("source_text_hash") == text_hash]
+        if len(matches) != 1:
+            exact = []
+            break
+        exact.append(matches[0])
+    candidates = [exact] if exact else []
+    if not candidates:
+        by_block: Dict[str, List[Dict[str, Any]]] = {}
+        for item in decisions:
+            by_block.setdefault(str(item.get("source_block_id") or ""), []).append(item)
+        for block_items in by_block.values():
+            ordered = sorted(block_items, key=lambda item: int(item.get("source_order") or 0))
+            candidates.extend(ordered[index:index + len(hashes)] for index in range(len(ordered) - len(hashes) + 1)
+                              if [item.get("source_text_hash") for item in ordered[index:index + len(hashes)]] == hashes)
+        same_block = [items for items in candidates if items[0].get("source_block_id") == old_units[0].get("block_id")]
+        candidates = same_block or candidates
+    if len(candidates) != 1:
+        return ("stale_source_ambiguous" if candidates else "stale_source_missing"), {}
+    mapped = candidates[0]
+    reasons = [str(item.get("reason") or "") for item in mapped if item.get("disposition") != "selected"]
+    details = {
+        "mapped_source_unit_ids": [str(item.get("source_unit_id") or "") for item in mapped], "archive_safe_reasons": reasons,
+        "covered_by_card_ids": sorted({card_id for item in mapped for card_id in item.get("selected_by_card_ids") or []}), "source_unit_resolutions": [
+            {key: item.get(key) for key in ("source_unit_id", "disposition", "reason", "selected_by_card_ids")} for item in mapped],
+    }
+    if any(reason not in _ARCHIVE_SAFE_REASONS for reason in reasons):
+        return "stale_recovery_required", details
+    selected = sum(item.get("disposition") == "selected" for item in mapped)
+    return ("stale_resolved_selected" if selected == len(mapped)
+            else "stale_resolved_structural" if not selected else "stale_resolved_mixed"), details
+
+
+def _narrative_cards_dir(stock_name: str, base_dir: str | Path) -> Path:
+    return Path(base_dir) / "10-Stocks" / _safe_dir_segment(stock_name) / "periodic_narrative_cards"
+
+
+def _is_v2_note_projection(path: Path) -> bool:
+    try:
+        frontmatter = _parse_frontmatter(path.read_text(encoding="utf-8"))
+    except OSError:
+        return False
+    return (frontmatter.get("source_type") == NARRATIVE_CARD_SOURCE_TYPE
+            and str(frontmatter.get("schema_version") or "") == CARD_SCHEMA_VERSION)
+
+
+def _classification_item(
+    path: Path, card_id: str = "", covered_by_card_ids: Optional[List[str]] = None,
+    details: Optional[Dict[str, Any]] = None,
+) -> Dict[str, Any]:
+    item: Dict[str, Any] = {"path": str(path), "card_id": card_id}
+    if covered_by_card_ids:
+        item["covered_by_card_ids"] = covered_by_card_ids
+    item.update(details or {})
+    return item
+
+
+def _build_material_pack_from_records(
+    stock_name: str, records: List[_CardRecord], *, storage_mode: str = "",
+) -> Dict[str, Any]:
     if not records:
-        return _empty_pack(stock_name)
+        result = _empty_pack(stock_name)
+        if storage_mode:
+            result["diagnostics"]["storage_mode"] = storage_mode
+        return result
 
     cards_seen = len(records)
     v2_records = [record for record in records if record.is_v2]
@@ -201,7 +412,7 @@ def build_annual_report_material_pack(
     selected = v2_records + _deduplicate_records(adapted_legacy)
     selected.sort(key=_record_sort_key)
 
-    return {
+    result = {
         "schema_version": SCHEMA_VERSION,
         "stock_name": stock_name,
         "selected_narrative_cards": [_record_to_dict(r) for r in selected],
@@ -214,6 +425,9 @@ def build_annual_report_material_pack(
             **diagnostics_counts,
         },
     }
+    if storage_mode:
+        result["diagnostics"]["storage_mode"] = storage_mode
+    return result
 
 
 def selected_cards_to_synthesis_items(
@@ -331,6 +545,12 @@ def _read_note_as_record(
         except (TypeError, ValueError):
             return None
     return _record_from_card(path, card, is_v2=False)
+
+
+def read_periodic_narrative_card_note(path: str | Path) -> Optional[Dict[str, Any]]:
+    """Parse one valid persisted narrative note without adapting legacy fields."""
+    record = _read_note_as_record(Path(path), adapt_legacy=False)
+    return dict(record.card) if record is not None else None
 
 
 def _record_from_card(path: Path, card: Dict[str, Any], *, is_v2: bool) -> _CardRecord:
@@ -761,7 +981,7 @@ def _clean_scalar(value: str) -> Any:
         (value.startswith('"') and value.endswith('"'))
         or (value.startswith("'") and value.endswith("'"))
     ):
-        value = value[1:-1]
+        return value[1:-1]
     if re.fullmatch(r"-?\d+", value):
         try:
             return int(value)

@@ -11,10 +11,12 @@ try:
         MaterialRow,
         build_chapter4_view_model,
         build_deep_analysis_material_snapshot,
-        citation_identity,
+        external_display_key,
+        is_informative_variable_title,
         select_annual_display_rows,
+        select_incremental_external_display_rows,
     )
-    from ...synthesis_credit import sanitize_citation_markers
+    from ...synthesis_credit import citation_identity, sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
     from .executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 except ImportError:
@@ -25,10 +27,12 @@ except ImportError:
             MaterialRow,
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
-            citation_identity,
+            external_display_key,
+            is_informative_variable_title,
             select_annual_display_rows,
+            select_incremental_external_display_rows,
         )
-        from scripts.utils.synthesis_credit import sanitize_citation_markers
+        from scripts.utils.synthesis_credit import citation_identity, sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
         from scripts.utils.reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
     except ImportError:
@@ -38,10 +42,12 @@ except ImportError:
             MaterialRow,
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
-            citation_identity,
+            external_display_key,
+            is_informative_variable_title,
             select_annual_display_rows,
+            select_incremental_external_display_rows,
         )
-        from utils.synthesis_credit import sanitize_citation_markers
+        from utils.synthesis_credit import citation_identity, sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
         from reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 
@@ -133,6 +139,7 @@ class DeepAnalysisRenderer:
         annual_memo = {}
         broker_memo = {}
         annual_material_rows = ()
+        external_material_rows = ()
         annual_material_citations = {}
         annual_citation_offset = chapter4_citation_offset
         broker_citation_offset = chapter4_citation_offset
@@ -154,6 +161,15 @@ class DeepAnalysisRenderer:
                 row for row in material_snapshot.rows if row.source_layer == "annual"
             )
             annual_material_citations = material_snapshot.citations
+            broker_owner_rows = tuple(
+                row for row in material_snapshot.rows
+                if row.source_layer == "broker" and row.body and row.attribution
+            )
+            external_material_rows, _ = select_incremental_external_display_rows(
+                material_snapshot.rows,
+                material_snapshot.citations,
+                (*annual_material_rows, *broker_owner_rows),
+            )
             broker_citation_offset = annual_citation_offset + self._max_snapshot_ref(material_snapshot, {"annual"})
             external_citation_offset = annual_citation_offset + self._max_snapshot_ref(
                 material_snapshot,
@@ -169,14 +185,16 @@ class DeepAnalysisRenderer:
             curated_citation_offset=external_citation_offset,
             annual_citation_offset=annual_citation_offset,
             broker_citation_offset=broker_citation_offset,
-            external_citation_offset=external_citation_offset,
             annual_material_rows=annual_material_rows,
             annual_material_citations=annual_material_citations,
+            external_material_rows=external_material_rows,
         )
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), ctx.get("stock_name", ""))
         deep_md = _sanitize_pe_spread_in_text(deep_md, pe_facts, ctx.get("stock_name", ""))
+        deep_line_index = None
         if deep_md:
             lines.append(deep_md)
+            deep_line_index = len(lines) - 1
 
         # 全局引用：baseline → deep-analysis material snapshot.
         # Snapshot citations contain only rows that are admitted into the
@@ -206,7 +224,14 @@ class DeepAnalysisRenderer:
                 citations,
                 external_citations,
             )
-        citations = self._visible_citations_only(citations, "\n".join(lines))
+        freshness_candidate = ((ctx.get("evidence_freshness") or {}).get("summary_candidate") or {})
+        reserved_refs = tuple(int(ref) for ref in freshness_candidate.get("citation_refs") or () if str(ref).isdigit())
+        reserved_citations = {ref: citations[ref] for ref in reserved_refs if ref in citations}
+        if deep_line_index is not None and reserved_citations:
+            lines[deep_line_index] = self._alias_reserved_citations(
+                lines[deep_line_index], citations, reserved_citations
+            )
+        citations = self._visible_citations_only(citations, "\n".join(lines), reserved_refs=reserved_refs)
         if citations:
             lines.append(self._citations_section("引用来源", citations))
 
@@ -327,9 +352,9 @@ class DeepAnalysisRenderer:
         curated_citation_offset: int = 0,
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
-        external_citation_offset: int = 0,
         annual_material_rows: tuple[MaterialRow, ...] = (),
         annual_material_citations: Dict[int, Any] | None = None,
+        external_material_rows: tuple[MaterialRow, ...] = (),
     ) -> str:
         """
         深度分析板块：根据 evidence profile 渲染不同布局。
@@ -356,15 +381,16 @@ class DeepAnalysisRenderer:
             lines.extend(self._formal_medium_source_layer_body(
                 chapter4_view_model,
                 citation_offset=chapter4_citation_offset,
+                preface=bool((ctx.get("evidence_freshness") or {}).get("preface")),
             ))
         elif profile_name == "formal_thin_external_rich":
             lines.extend(self._formal_thin_external_rich_body(
                 ctx, curated_external_display,
                 annual_citation_offset=annual_citation_offset,
                 broker_citation_offset=broker_citation_offset,
-                external_citation_offset=external_citation_offset,
                 annual_material_rows=annual_material_rows,
                 annual_material_citations=annual_material_citations or {},
+                external_material_rows=external_material_rows,
             ))
         else:
             lines.extend(self._thin_all_body(ctx))
@@ -475,6 +501,7 @@ class DeepAnalysisRenderer:
         self,
         view_model: Chapter4ViewModel,
         citation_offset: int = 0,
+        preface: bool = False,
     ) -> List[str]:
         """Render formal-medium reports as source-layer-first analysis."""
         lines: List[str] = []
@@ -488,6 +515,7 @@ class DeepAnalysisRenderer:
             fallback="当前未取得足够官方材料，无法形成业务与财务基座。",
             include_confirmed_financial_rows=True,
             financial_label="财务基座",
+            include_section_citations=False,
         ))
 
         lines.extend(["### 4.2 机构观点与盈利假设", ""])
@@ -503,13 +531,14 @@ class DeepAnalysisRenderer:
             citations,
             citation_offset,
             external_section.disclaimer,
+            preface=preface,
         )
         lines.extend(external_map or [
             "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
             "",
             "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
             "",
-            "当前未取得足够外部观点材料。",
+            "当前外部材料未提供相对正式材料或研报的新增待验证变量。",
             "",
         ])
 
@@ -532,6 +561,7 @@ class DeepAnalysisRenderer:
         fallback: str,
         include_confirmed_financial_rows: bool = True,
         financial_label: str = "财务变化原因",
+        include_section_citations: bool = True,
     ) -> List[str]:
         """Format already-selected annual MaterialRows for Chapter 4.1."""
         sections = {"confirmed": [], "annual_report_explanation": []}
@@ -542,6 +572,7 @@ class DeepAnalysisRenderer:
                 "display_group": material_row.render_role,
                 "citation_refs": list(material_row.citation_refs),
                 "argument_complete": material_row.argument_complete,
+                "editorial_slot": material_row.editorial_slot,
             }
             section = "confirmed" if material_row.claim_status == "formal_fact" else "annual_report_explanation"
             sections[section].append(row)
@@ -551,6 +582,7 @@ class DeepAnalysisRenderer:
             fallback=fallback,
             include_confirmed_financial_rows=include_confirmed_financial_rows,
             financial_label=financial_label,
+            include_section_citations=include_section_citations,
         )
 
     def _formal_medium_broker_assumption_section(
@@ -583,18 +615,13 @@ class DeepAnalysisRenderer:
             })
 
         lines: List[str] = []
-        consensus = self._broker_consensus_sentence(rows)
-        if consensus:
-            lines.extend(["**机构共识**", f"- {consensus}", ""])
-
-        lines.extend([
-            "**关键盈利假设**",
-        ])
-        used: set[int] = set()
+        focus_titles = [row["assumption"] for row in rows if is_informative_variable_title(row["assumption"])]
+        if focus_titles:
+            lines.extend(["**机构关注重点**", f"- 研报重点关注{'、'.join(dict.fromkeys(focus_titles))}。", ""])
+        lines.append("**关键盈利假设**")
         assumption_rows = [row for row in rows if row["assumption"] != "反方约束"]
-        for row in assumption_rows[:6]:
+        for row in assumption_rows:
             refs = row["refs"]
-            used.update(refs)
             view = attach_refs_to_sentence(self._compact_annual_text(row["view"], 320), refs)
             lines.append(f"- **{row['assumption']}**：{view}。")
         if not assumption_rows:
@@ -603,13 +630,10 @@ class DeepAnalysisRenderer:
         risk_rows = [row for row in rows if row["assumption"] == "反方约束"]
         if risk_rows:
             lines.extend(["**主要分歧 / 反方风险**"])
-            for row in risk_rows[:2]:
+            for row in risk_rows:
                 refs = row["refs"]
-                used.update(refs)
                 lines.append(f"- {attach_refs_to_sentence(self._compact_annual_text(row['view'], 180), refs)}")
             lines.append("")
-        if used:
-            self._append_section_citations(lines, used, self._offset_citations(citations, citation_offset))
         return lines
 
     def _formal_medium_external_variable_map(
@@ -618,21 +642,26 @@ class DeepAnalysisRenderer:
         citations: Dict[int, Any],
         citation_offset: int = 0,
         disclaimer: str = "",
+        preface: bool = False,
+        heading: str = "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
     ) -> List[str]:
         """Render curated external material as a compact variable map."""
         if not material_rows:
             return []
 
         lines = [
-            "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
+            heading,
             "",
             f"> {disclaimer}",
             "",
         ]
-        used: set[int] = set()
-        for row in material_rows[:6]:
+        if preface:
+            lines.extend([
+                "正式材料的时间点较早，以下近期外部观察仅补充订单、交付、成本、需求或产品验证等变量；不替代官方确认，不参与评分、风险评分或目标价。",
+                "",
+            ])
+        for row in material_rows:
             refs = [ref + citation_offset for ref in row.citation_refs]
-            used.update(refs)
             variable = row.title if row.title and row.title != "外部变量" else (
                 self._short_heading(row.body) or "外部变量"
             )
@@ -642,8 +671,6 @@ class DeepAnalysisRenderer:
                 self._external_claim_sentence(row.body, refs),
             )
         lines.append("")
-        if used:
-            self._append_section_citations(lines, used, self._offset_citations(citations, citation_offset))
         return lines
 
     def _formal_medium_price_path_section(
@@ -658,19 +685,15 @@ class DeepAnalysisRenderer:
             f"> {disclaimer}",
             "",
         ]
-        used: set[int] = set()
         entry_count = 0
 
         annual_row = next((row for row in material_rows if row.source_layer == "annual"), None)
         if annual_row:
             refs = [ref + citation_offset for ref in annual_row.citation_refs]
-            text = annual_row.body
-            used.update(refs)
-            variable = self._material_key_variable(annual_row, "业务覆盖 / 产品线")
-            evidence = attach_refs_to_sentence(self._compact_annual_text(text, 150), refs)
+            variable = annual_row.title
             lines.extend([
-                f"**官方确认：{variable}**",
-                f"- {evidence}。若年报/公告确认的产品线、经营变化和财务解释继续兑现，当前股价更容易获得基本面支撑；若增长线索不能延续，或毛利率、现金流、费用率恶化，则估值支撑减弱。",
+                f"**官方确认：{variable}**{''.join(f'[^{ref}]' for ref in refs)}",
+                "- 若官方材料中的该变量持续改善，基本面支撑增强；若增长线索不能延续或财务质量恶化，估值支撑减弱。",
                 "",
             ])
             entry_count += 1
@@ -678,40 +701,27 @@ class DeepAnalysisRenderer:
         broker_row = next((row for row in material_rows if row.source_layer == "broker"), None)
         if broker_row:
             refs = [ref + citation_offset for ref in broker_row.citation_refs]
-            used.update(refs)
-            text = self._normalize_broker_attribution(
-                broker_row.body,
-                default_prefix="研报认为",
-                author="" if broker_row.attribution == "研报" else broker_row.attribution,
-            )
-            text = self._project_broker_assumption_view(text)
-            variable = self._material_key_variable(broker_row, "产品放量 / 盈利弹性")
-            evidence = attach_refs_to_sentence(self._compact_annual_text(text, 170), refs)
+            variable = broker_row.title
             lines.extend([
-                f"**机构假设：{variable}**",
-                f"- {evidence}。若券商关于需求、产品放量或盈利弹性的假设兑现，当前估值可由业绩增长消化；若机构假设落空，盈利预测或估值溢价面临下修。",
+                f"**机构假设：{variable}**{''.join(f'[^{ref}]' for ref in refs)}",
+                "- 若机构关于需求、产品放量或盈利弹性的假设兑现，估值可由业绩增长消化；若假设落空，盈利预测或估值溢价面临下修。",
                 "",
             ])
             entry_count += 1
 
         external_row = next((row for row in material_rows if row.source_layer == "external"), None)
         if external_row:
-            text = external_row.body
             refs = [ref + citation_offset for ref in external_row.citation_refs]
-            used.update(refs)
-            variable = self._material_key_variable(external_row, "供应链 / 技术路线")
-            evidence = self._external_claim_sentence(text, refs, limit=280)
+            variable = external_row.title
             lines.extend([
-                f"**外部待验证：{variable}**",
-                f"- {evidence}。若该变量被公告、订单或行业数据验证，可提升市场置信度；若被证伪或长期无正式证据，则只作为情绪噪音处理。",
+                f"**外部待验证：{variable}**{''.join(f'[^{ref}]' for ref in refs)}",
+                "- 若该变量获得公告、订单或行业数据验证，可提升市场置信度；若被证伪或长期缺乏正式证据，则只作为情绪噪音处理。",
                 "",
             ])
             entry_count += 1
 
         if entry_count == 0:
-            lines.extend(["- 当前可验证变量不足，暂不形成上行/下行推演。", ""])
-        if used:
-            self._append_section_citations(lines, used, self._offset_citations(citations, citation_offset))
+            lines.extend(["当前已选材料缺少可用于条件推演的具体变量标题，本节不形成方向推演。", ""])
         return lines
 
     def _append_section_citations(
@@ -745,9 +755,9 @@ class DeepAnalysisRenderer:
         curated_display: Dict[str, Any] | None,
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
-        external_citation_offset: int | None = None,
         annual_material_rows: tuple[MaterialRow, ...] = (),
         annual_material_citations: Dict[int, Any] | None = None,
+        external_material_rows: tuple[MaterialRow, ...] = (),
     ) -> List[str]:
         """Render formal-thin layout: annual memo + broker placeholder + external map + checklist."""
         lines: List[str] = []
@@ -760,21 +770,25 @@ class DeepAnalysisRenderer:
                 annual_material_citations,
                 annual_citation_offset,
                 fallback="当前未取得足够年报材料，无法形成年报经营摘要。",
+                include_section_citations=False,
             ))
             lines.extend(["### 4.2 研报观点与假设", ""])
             broker_memo = ctx.get("broker_research_memo") or {}
-            lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
-            external_offset = (
-                external_citation_offset
-                if external_citation_offset is not None
-                else broker_citation_offset + self._max_citation_id((broker_memo or {}).get("citations", {}))
-            )
-            map_md = self._external_viewpoint_map_section(
-                curated_display,
-                citation_offset=external_offset,
+            lines.extend(self._broker_research_memo_section(
+                broker_memo, broker_citation_offset, include_section_citations=False,
+            ))
+            map_md = self._formal_medium_external_variable_map(
+                external_material_rows,
+                annual_material_citations or {},
+                citation_offset=annual_citation_offset,
+                disclaimer="以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
                 heading="### 4.3 外部观点与待验证变量（Preview，不参与评分）",
+                preface=bool((ctx.get("evidence_freshness") or {}).get("preface")),
             )
-            lines.extend(map_md or ["### 4.3 外部观点与待验证变量（Preview，不参与评分）", "", "当前未取得足够外部观点材料。", ""])
+            lines.extend(map_md or [
+                "### 4.3 外部观点与待验证变量（Preview，不参与评分）", "",
+                "当前外部材料未提供相对正式材料或研报的新增待验证变量。", "",
+            ])
         else:
             # 4.1 正式材料要点
             lines.extend(["### 4.1 正式材料要点", ""])
@@ -807,7 +821,13 @@ class DeepAnalysisRenderer:
             refs.extend(int(ref) for ref in getattr(row, "citation_refs", ()) or ())
         return max(refs) if refs else 0
 
-    def _broker_research_memo_section(self, memo: Dict[str, Any], citation_offset: int = 0) -> List[str]:
+    def _broker_research_memo_section(
+        self,
+        memo: Dict[str, Any],
+        citation_offset: int = 0,
+        *,
+        include_section_citations: bool = True,
+    ) -> List[str]:
         """Render broker memo as attributed professional assumptions."""
         if (memo or {}).get("status") not in {"ready", "single_institution"}:
             return ["当前未取得足够可用研报 digest，不展开研报观点与假设。", ""]
@@ -836,7 +856,9 @@ class DeepAnalysisRenderer:
             text = " ".join(str(row.get(k) or "").strip() for k in ("metric", "period", "range") if row.get(k))
             refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
             if text:
-                lines.append(f"- {attach_refs_to_sentence(text, refs)}")
+                author = self._broker_row_author(row, memo)
+                prefix = f"{author}研报预计" if author else "研报预计"
+                lines.append(f"- {attach_refs_to_sentence(f'{prefix}：{text}', refs)}")
                 used.update(refs)
         for row in (memo.get("risks") or []):
             if not isinstance(row, dict):
@@ -852,7 +874,7 @@ class DeepAnalysisRenderer:
                 lines.append(f"- {attach_refs_to_sentence(text, refs)}")
                 used.update(refs)
         lines.append("")
-        if used:
+        if used and include_section_citations:
             self._append_section_citations(lines, used, self._offset_citations(memo.get("citations", {}), citation_offset))
         return lines
 
@@ -877,6 +899,7 @@ class DeepAnalysisRenderer:
         fallback: str = "当前未取得足够年报材料，无法形成业务画像。",
         include_confirmed_financial_rows: bool = True,
         financial_label: str = "财务变化原因",
+        include_section_citations: bool = True,
     ) -> List[str]:
         """Project annual memo rows into a compact business profile."""
         lines: List[str] = []
@@ -900,8 +923,10 @@ class DeepAnalysisRenderer:
         product_rows = self._annual_rows_by_group(explanation_rows, "business_structure")
         operating_rows = self._annual_rows_by_group(explanation_rows, "operating_progress")
         technology_rows = self._annual_rows_by_group(explanation_rows, "technology_product_progress")
-        portrait_row = self._select_annual_portrait_row(product_rows) or self._select_annual_portrait_row(operating_rows)
-        portrait_row = portrait_row or self._select_annual_portrait_row(technology_rows)
+        portrait_row = next((row for row in explanation_rows if row.get("editorial_slot") == "portrait"), None)
+        if portrait_row is None:
+            portrait_row = self._select_annual_portrait_row(product_rows) or self._select_annual_portrait_row(operating_rows)
+            portrait_row = portrait_row or self._select_annual_portrait_row(technology_rows)
         if portrait_row:
             refs = self._display_refs(portrait_row, citation_offset)
             used.update(refs)
@@ -942,7 +967,7 @@ class DeepAnalysisRenderer:
             lines.append("")
         if not lines and not (confirmed_rows or explanation_rows):
             lines.extend([fallback, ""])
-        if used:
+        if used and include_section_citations:
             self._append_section_citations(lines, used, self._offset_citations(cits, citation_offset))
         return lines
 
@@ -994,21 +1019,6 @@ class DeepAnalysisRenderer:
         if author and default_prefix.startswith("研报"):
             return f"{broker_prefix}{default_prefix.removeprefix('研报')}：{value}"
         return f"{default_prefix}：{value}"
-
-    @staticmethod
-    def _broker_consensus_sentence(rows: List[Dict[str, Any]]) -> str:
-        generic_titles = {"", "机构核心观点", "产业与产品判断", "反方约束", "风险提示"}
-        themes: List[str] = []
-        for row in rows:
-            title = str(row.get("assumption") or "").strip()
-            if title in generic_titles or title in themes:
-                continue
-            themes.append(title)
-        if themes:
-            return "研报关注点集中在" + "、".join(themes[:4]) + "。"
-        if rows:
-            return "研报观点主要围绕需求、产品放量、盈利弹性与反方风险。"
-        return ""
 
     @staticmethod
     def _project_broker_assumption_view(text: str) -> str:
@@ -1200,17 +1210,11 @@ class DeepAnalysisRenderer:
         curated_display: Dict[str, Any] | None,
         citation_offset: int = 0,
         heading: str | None = None,
+        preface: bool = False,
     ) -> List[str]:
         """Build 4.2/4.3 external viewpoint map from curated external display."""
         if not curated_display or not self._has_curated_external_citation(curated_display):
             return []
-
-        narrative_paragraphs = [
-            paragraph for paragraph in (curated_display.get("_curated_external_narrative_paragraphs") or [])
-            if isinstance(paragraph, dict)
-        ]
-        reasoning_cards = curated_display.get("_curated_external_reasoning_cards") or []
-        topic_groups = curated_display.get("_curated_external_topic_groups") or {}
 
         lines: List[str] = [
             heading or ("### 4.3 外部观点地图（Preview，不参与评分）" if citation_offset else "### 4.2 外部观点地图（Preview，不参与评分）"),
@@ -1218,56 +1222,67 @@ class DeepAnalysisRenderer:
             "> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。",
             "",
         ]
+        if preface:
+            lines.extend([
+                "正式材料的时间点较早，以下近期外部观察仅补充订单、交付、成本、需求或产品验证等变量；不替代官方确认，不参与评分、风险评分或目标价。",
+                "",
+            ])
 
-        if narrative_paragraphs:
-            for paragraph in narrative_paragraphs[:6]:
-                text = str(paragraph.get("text") or "").strip()
-                display_refs = self._display_refs(paragraph, citation_offset)
-                if not text or not display_refs:
-                    continue
-                rendered = self._external_claim_sentence(text, display_refs)
-                self._append_external_variable_paragraph(
-                    lines,
-                    str(paragraph.get("heading") or self._short_heading(text) or "外部变量"),
-                    rendered,
-                )
-        elif reasoning_cards:
-            for card in reasoning_cards[:6]:
-                if not isinstance(card, dict):
-                    continue
-                claim = str(card.get("claim") or "").strip()
-                display_refs = self._display_refs(card, citation_offset)
-                if not claim or not display_refs:
-                    continue
-                rendered_claim = self._external_claim_sentence(claim, display_refs)
-                self._append_external_variable_paragraph(
-                    lines,
-                    self._short_heading(claim) or "外部变量",
-                    rendered_claim,
-                )
-        elif topic_groups:
-            for topic_key, label in CURATED_EXTERNAL_TOPIC_LABELS:
-                rows = topic_groups.get(topic_key) or []
-                rows = [r for r in rows if isinstance(r, dict)]
-                if not rows:
-                    continue
-                for row in rows[:3]:
-                    text = str(row.get("text") or "").strip()
-                    display_refs = self._display_refs(row, citation_offset)
-                    if not text or not display_refs:
-                        continue
-                    rendered = self._external_claim_sentence(text, display_refs)
-                    if rendered:
-                        self._append_external_variable_paragraph(
-                            lines,
-                            label,
-                            rendered,
-                        )
+        for variable, text, display_refs in self._curated_external_display_projection(curated_display, citation_offset):
+            rendered = self._external_claim_sentence(text, display_refs)
+            if rendered:
+                self._append_external_variable_paragraph(lines, variable, rendered)
 
         if len(lines) == 4:
-            lines.append("- 当前外部材料不足以形成可展示变量。")
+            lines.append("当前外部材料不足以形成可展示变量。")
         lines.append("")
         return lines
+
+    def _curated_external_display_projection(
+        self,
+        curated_display: Dict[str, Any], citation_offset: int,
+    ) -> List[tuple[str, str, List[int]]]:
+        citations = curated_display.get("citations", {}) or {}
+        buckets: List[List[tuple[str, Dict[str, Any], str]]] = [
+            [
+                (str(row.get("heading") or "外部变量"), row, str(row.get("text") or ""))
+                for row in (curated_display.get("_curated_external_narrative_paragraphs") or [])
+                if isinstance(row, dict)
+            ],
+            [
+                (str(row.get("heading") or "外部变量"), row, str(row.get("claim") or row.get("verification_need") or ""))
+                for row in (curated_display.get("_curated_external_reasoning_cards") or [])
+                if isinstance(row, dict)
+            ],
+        ]
+        topic_rows: List[tuple[str, Dict[str, Any], str]] = []
+        labels = dict(CURATED_EXTERNAL_TOPIC_LABELS)
+        for topic, rows in (curated_display.get("_curated_external_topic_groups") or {}).items():
+            for row in rows if isinstance(rows, list) else ():
+                if isinstance(row, dict):
+                    topic_rows.append((str(row.get("heading") or labels.get(topic) or "外部变量"), row, str(row.get("text") or "")))
+        buckets.append(topic_rows)
+        for bucket in buckets:
+            selected: List[tuple[str, str, List[int]]] = []
+            seen = set()
+            for index, (variable, row, text) in enumerate(bucket):
+                local_refs = [int(ref) for ref in row.get("citation_refs") or () if str(ref).isdigit()]
+                if not text.strip() or not local_refs or not any(citations.get(ref) for ref in local_refs):
+                    continue
+                if not variable or variable == "外部变量":
+                    variable = self._short_heading(self._frame_external_claim(text)) or "外部变量"
+                material_row = MaterialRow(
+                    f"external:curated:{index}", text, "external", "external_observation", tuple(local_refs), (),
+                    title=variable, body=text, render_role="external_variable",
+                )
+                key = external_display_key(material_row, citations)
+                if key in seen:
+                    continue
+                seen.add(key)
+                selected.append((variable, text, [ref + citation_offset for ref in local_refs]))
+            if selected:
+                return selected
+        return []
 
     def _verification_checklist_section(self, curated_display: Dict[str, Any] | None, citation_offset: int = 0) -> List[str]:
         """Build 4.4/4.3 verification checklist table from reasoning cards."""
@@ -1327,7 +1342,7 @@ class DeepAnalysisRenderer:
     @staticmethod
     def _short_heading(text: str) -> str:
         heading = str(text or "").split("。", 1)[0].split("；", 1)[0].strip()
-        return heading[:40] + "..." if len(heading) > 40 else heading
+        return heading
 
     @staticmethod
     def _frame_external_claim(text: str) -> str:
@@ -1358,8 +1373,50 @@ class DeepAnalysisRenderer:
         if not claim_text:
             return
         lines.append(f"**{variable}**")
-        lines.append(f"- {claim_text}")
+        for block in DeepAnalysisRenderer._external_claim_blocks(claim_text):
+            lines.extend(["", block])
         lines.append("")
+
+    @staticmethod
+    def _external_claim_blocks(claim_text: str) -> List[str]:
+        marker_match = re.search(r"(?P<markers>(?:\[\^\d+\])+)(?P<terminal>[。！？]?)$", claim_text)
+        markers = marker_match.group("markers") if marker_match else ""
+        terminal = marker_match.group("terminal") if marker_match else ""
+        body = (claim_text[:marker_match.start()] + terminal).strip() if marker_match else claim_text
+        prefix = "外部材料称：" if body.startswith("外部材料称：") else ""
+        source_body = body[len(prefix):] if prefix else body
+        clauses = re.findall(r"[^。！？；]+[。！？；]|[^。！？；]+$", source_body)
+        seen = set()
+        sentences = []
+        pending = []
+        for clause in clauses:
+            normalized = re.sub(r"[\s，,。！？；;]+", "", clause)
+            if normalized and normalized not in seen:
+                seen.add(normalized)
+                pending.append(clause)
+                if clause.endswith(("。", "！", "？")):
+                    sentences.append("".join(pending))
+                    pending = []
+        if pending:
+            sentences.append("".join(pending))
+        if not sentences:
+            return [claim_text]
+        blocks = []
+        pending = []
+        for sentence in sentences:
+            if sentence.count("；") >= 2:
+                if pending:
+                    blocks.append("".join(pending).strip())
+                    pending = []
+                blocks.append(sentence.strip())
+                continue
+            pending.append(sentence)
+            if len(pending) == 2:
+                blocks.append("".join(pending).strip())
+                pending = []
+        if pending:
+            blocks.append("".join(pending).strip())
+        return [(prefix + block if prefix else block) + markers for block in blocks if block]
 
     @staticmethod
     def _soften_external_unverified_terms(text: str) -> str:
@@ -1368,24 +1425,6 @@ class DeepAnalysisRenderer:
         softened = softened.replace("订单落地情况", "订单进展")
         softened = softened.replace("订单落地", "订单进展")
         return softened
-
-    @staticmethod
-    def _material_key_variable(row: MaterialRow, fallback: str) -> str:
-        title = re.sub(r"\s+", " ", str(row.title or "")).strip(" ：:，,；;。")
-        generic_titles = {
-            "", "外部变量", "主营业务与产品", "产业与产品判断", "机构核心观点", "反方约束",
-        }
-        if title not in generic_titles and len(title) <= 24:
-            return title
-        role_labels = {
-            "business_structure": "业务覆盖 / 产品线",
-            "operating_progress": "经营变化",
-            "market_competition_outlook": "管理层判断与行业展望",
-            "technology_product_progress": "技术与产品进展",
-            "financial_quality_explanation": "财务质量",
-            "broker_risk": "反方风险",
-        }
-        return role_labels.get(row.render_role, fallback)
 
     @staticmethod
     def _source_credit_label(citations: Dict[int, Any], refs: List[Any]) -> str:
@@ -1649,18 +1688,34 @@ class DeepAnalysisRenderer:
         return shifted
 
     @staticmethod
-    def _visible_citations_only(citations: Dict, body_text: str) -> Dict:
+    def _visible_citations_only(citations: Dict, body_text: str, reserved_refs=()) -> Dict:
         if not citations:
             return {}
         visible_refs = {
             int(ref)
             for ref in re.findall(r"\[\^(\d+)\]", body_text or "")
         }
+        visible_refs.update(int(ref) for ref in reserved_refs if str(ref).isdigit())
         return {
             ref_id: meta
             for ref_id, meta in (citations or {}).items()
             if isinstance(ref_id, int) and ref_id in visible_refs
         }
+
+    @staticmethod
+    def _alias_reserved_citations(body_text: str, citations: Dict, reserved_citations: Dict) -> str:
+        identity_to_reserved = {
+            citation_identity(meta, fallback_ref=ref): ref
+            for ref, meta in reserved_citations.items()
+        }
+
+        def replace(match):
+            ref = int(match.group(1))
+            meta = citations.get(ref)
+            target = identity_to_reserved.get(citation_identity(meta, fallback_ref=ref))
+            return f"[^{target}]" if target is not None else match.group(0)
+
+        return re.sub(r"\[\^(\d+)\]", replace, body_text or "")
 
     @staticmethod
     def _citation_key(key: Any) -> Any:

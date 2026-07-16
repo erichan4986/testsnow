@@ -2,31 +2,37 @@
 
 from __future__ import annotations
 
-import json
-import re
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any, List, Optional
 
 if __name__.startswith("utils."):
     from .source_adapter import SynthesisItem
     from .annual_report_material_pack import (
         build_annual_report_material_pack,
+        read_periodic_narrative_card_note,
         selected_cards_to_synthesis_items,
     )
+    from .periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
+    from .periodic_report_narrative_card_note_writer import narrative_cards_dir
 else:
     from source_adapter import SynthesisItem
     from annual_report_material_pack import (
         build_annual_report_material_pack,
+        read_periodic_narrative_card_note,
         selected_cards_to_synthesis_items,
     )
+    from periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
+    from periodic_report_narrative_card_note_writer import narrative_cards_dir
 
 
 NARRATIVE_CARD_SOURCE_TYPE = "periodic_report_narrative_evidence"
+
 
 def load_periodic_narrative_card_synthesis_items(
     *,
     stock_name: str,
     base_dir: str | Path,
+    stock_code: str = "",
     max_cards: int = 12,
     use_pack: bool = False,
     **_legacy_options: Any,
@@ -47,19 +53,17 @@ def load_periodic_narrative_card_synthesis_items(
         try:
             pack = build_annual_report_material_pack(
                 stock_name=stock_name,
+                stock_code=stock_code,
                 base_dir=base_dir,
             )
             items = selected_cards_to_synthesis_items(pack["selected_narrative_cards"])
             return items[: max(0, int(max_cards))]
+        except PeriodicNarrativePackStorageError:
+            raise
         except Exception:
             return []
 
-    notes_dir = (
-        Path(base_dir)
-        / "10-Stocks"
-        / _safe_dir_segment(stock_name)
-        / "periodic_narrative_cards"
-    )
+    notes_dir = narrative_cards_dir(stock_name=stock_name, base_dir=base_dir)
     if not notes_dir.exists():
         return []
 
@@ -75,27 +79,18 @@ def load_periodic_narrative_card_synthesis_items(
 
 
 def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
-    try:
-        text = path.read_text(encoding="utf-8")
-    except OSError:
+    card = read_periodic_narrative_card_note(path)
+    if card is None:
         return None
 
-    frontmatter = _parse_frontmatter(text)
-    if frontmatter.get("source_type") != NARRATIVE_CARD_SOURCE_TYPE:
-        return None
-
-    excerpt = _extract_narrative_evidence_excerpt(text)
-    if not excerpt:
-        return None
-
-    is_v2 = str(frontmatter.get("schema_version") or "") == (
+    is_v2 = str(card.get("schema_version") or "") == (
         "periodic_report_narrative_evidence_card.v2"
     )
-    card_type = str(frontmatter.get("card_type") or "").strip()
-    title = str(frontmatter.get("title") or "年报叙事卡片")
-    report_year = str(frontmatter.get("report_year") or "").strip()
-    report_type = str(frontmatter.get("report_type") or "").strip()
-    source_credit = _as_int(frontmatter.get("source_credit"), 75)
+    card_type = str(card.get("card_type") or "").strip()
+    title = str(card.get("title") or "年报叙事卡片")
+    report_year = str(card.get("report_year") or "").strip()
+    report_type = str(card.get("report_type") or "").strip()
+    source_credit = _as_int(card.get("source_credit"), 75)
 
     extra = {
         "source_type": NARRATIVE_CARD_SOURCE_TYPE,
@@ -107,36 +102,35 @@ def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
         "synthesis_eligible": False,
         "synthesis_display_only": True,
         "experimental": True,
-        "card_id": str(frontmatter.get("card_id") or ""),
-        "source_block_id": str(frontmatter.get("source_block_id") or ""),
+        "card_id": str(card.get("card_id") or ""),
+        "source_block_id": str(card.get("source_block_id") or ""),
         "report_year": _as_int(report_year, report_year),
         "report_type": report_type,
     }
     if is_v2:
-        source_units = _extract_json_section(text, "Source Units")
-        diagnostics = _extract_json_section(text, "Selection Diagnostics")
-        if not isinstance(source_units, list) or not isinstance(diagnostics, dict):
-            return None
         extra.update({
-            "argument_family": str(frontmatter.get("argument_family") or ""),
-            "argument_complete": frontmatter.get("argument_complete"),
-            "schema_version": frontmatter.get("schema_version"),
-            "selection_version": frontmatter.get("selection_version"),
-            "source_unit_ids": list(frontmatter.get("source_unit_ids") or []),
-            "source_units": source_units,
-            "fact_anchors": list(frontmatter.get("fact_anchors") or []),
-            "secondary_signals": list(frontmatter.get("secondary_signals") or []),
-            "score_parts": diagnostics.get("score_parts") or {},
-            "quality_score": frontmatter.get("quality_score"),
-            "selection_reason": diagnostics.get("selection_reason") or "",
-            "selection_diagnostics": diagnostics,
+            "argument_family": str(card.get("argument_family") or ""),
+            "argument_complete": card.get("argument_complete"),
+            "schema_version": card.get("schema_version"),
+            "selection_version": card.get("selection_version"),
+            "source_unit_ids": list(card.get("source_unit_ids") or []),
+            "source_units": list(card.get("source_units") or []),
+            "fact_anchors": list(card.get("fact_anchors") or []),
+            "secondary_signals": list(card.get("secondary_signals") or []),
+            "score_parts": card.get("score_parts") or {},
+            "quality_score": card.get("quality_score"),
+            "selection_reason": card.get("selection_reason") or "",
+            "selection_diagnostics": card.get("selection_diagnostics") or {
+                "score_parts": card.get("score_parts") or {},
+                "selection_reason": card.get("selection_reason") or "",
+            },
         })
     else:
         extra["card_type"] = card_type
 
     return SynthesisItem(
         title=f"{report_year} {report_type} | {title}".strip(),
-        content=excerpt,
+        content=str(card.get("source_excerpt") or ""),
         author="公司年报",
         source_platform="定期报告叙事卡片",
         url="",
@@ -146,99 +140,8 @@ def _read_note_as_item(path: Path) -> Optional[SynthesisItem]:
     )
 
 
-def _parse_frontmatter(text: str) -> Dict[str, Any]:
-    match = re.match(r"\A---\n(.*?)\n---\n", text, flags=re.DOTALL)
-    if not match:
-        return {}
-
-    data: Dict[str, Any] = {}
-    lines = match.group(1).splitlines()
-    index = 0
-    while index < len(lines):
-        raw_line = lines[index]
-        if not raw_line or raw_line.startswith(" ") or ":" not in raw_line:
-            index += 1
-            continue
-        key, value = raw_line.split(":", 1)
-        key = key.strip()
-        value = value.strip()
-        if not key:
-            index += 1
-            continue
-        if value == "":
-            items: List[Any] = []
-            cursor = index + 1
-            while cursor < len(lines) and lines[cursor].startswith("  - "):
-                items.append(_clean_scalar(lines[cursor][4:].strip()))
-                cursor += 1
-            data[key] = items
-            index = cursor
-            continue
-        data[key] = _clean_scalar(value)
-        index += 1
-    return data
-
-
-def _extract_json_section(text: str, heading: str) -> Any:
-    match = re.search(
-        rf"(?ms)^## {re.escape(heading)}\s*\n+```(?:json)?\s*\n?(?P<body>.*?)\n```",
-        text,
-    )
-    if not match:
-        return None
-    try:
-        return json.loads(match.group("body"))
-    except (TypeError, ValueError, json.JSONDecodeError):
-        return None
-
-
-def _extract_narrative_evidence_excerpt(text: str) -> str:
-    match = re.search(
-        r"(?ms)^## Narrative Evidence\s*\n+(?P<body>.*?)(?:\n## |\Z)",
-        text,
-    )
-    if not match:
-        return ""
-
-    lines = []
-    for line in match.group("body").splitlines():
-        stripped = line.strip()
-        if stripped.startswith(">"):
-            lines.append(stripped.lstrip(">").strip())
-        elif lines and stripped:
-            break
-    return re.sub(r"\s+", " ", " ".join(lines)).strip()
-
-
-def _clean_scalar(value: str) -> Any:
-    if value == "[]":
-        return []
-    if value == "{}":
-        return {}
-    if value.lower() == "true":
-        return True
-    if value.lower() == "false":
-        return False
-    if (
-        (value.startswith('"') and value.endswith('"'))
-        or (value.startswith("'") and value.endswith("'"))
-    ):
-        value = value[1:-1]
-    if re.fullmatch(r"-?\d+", value):
-        try:
-            return int(value)
-        except ValueError:
-            return value
-    return value
-
-
 def _as_int(value: Any, default: Any) -> Any:
     try:
         return int(value)
     except (TypeError, ValueError):
         return default
-
-
-def _safe_dir_segment(value: str) -> str:
-    cleaned = re.sub(r"[\\/:\*\?\"<>\|\r\n\t]+", "_", str(value or "")).strip(" ._")
-    return cleaned or "unknown"

@@ -398,10 +398,30 @@ def _fundamental_summary(ctx: Dict[str, Any]) -> str:
     score = _number((ctx.get("pillar") or {}).get("fundamental"))
     if score is not None:
         return (
-            f"当前基本面评分为 {score:g}/10，该评分主要反映结构化盈利预期，"
-            "不代表正式材料事实充分；尚未形成可由高信用来源支撑的核心事实基座。"
+            f"当前基本面评分为 {score:g}/10，反映结构化基本面输入；"
+            "高信用核心事实基座尚未完整形成，因此该评分不构成正式材料确认。"
         )
     return "尚未形成可由高信用来源支撑的核心事实基座。"
+
+
+def _freshness_candidate_line(ctx: Dict[str, Any]) -> str:
+    candidate = ((ctx.get("evidence_freshness") or {}).get("summary_candidate") or {})
+    claim = sanitize_citation_markers(str(candidate.get("claim") or "")).strip()
+    refs = []
+    for ref in candidate.get("citation_refs") or ():
+        try:
+            refs.append(int(ref))
+        except (TypeError, ValueError):
+            return ""
+    if not claim or not refs:
+        return ""
+    claim = re.sub(r"^外部材料称[：:，,]?\s*", "", claim)
+    markers = "".join("[^" + str(ref) + "]" for ref in refs)
+    return (
+        "**近期待验证变量**：外部材料称，"
+        f"{claim}{markers}"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
 
 
 def _valuation_summary(ctx: Dict[str, Any]) -> str:
@@ -510,6 +530,11 @@ class ExecutiveSummaryRenderer:
         lines.extend([
             f"**基本面判断**：{_fundamental_summary(ctx)}",
             "",
+        ])
+        freshness_line = _freshness_candidate_line(ctx)
+        if freshness_line:
+            lines.extend([freshness_line, ""])
+        lines.extend([
             f"**估值与业绩预期**：{_valuation_summary(ctx)}",
             "",
             f"**交易状态与风险**：{_trading_risk_summary(ctx)}",

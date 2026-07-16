@@ -5,10 +5,13 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "previews"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
+import periodic_report_narrative_cards_acceptance as acceptance_module  # noqa: E402
 from periodic_report_narrative_cards_acceptance import (  # noqa: E402
     analyze_cards_pack,
     build_acceptance_markdown,
 )
+from periodic_report_narrative_card_note_writer import write_periodic_report_narrative_card_notes
+from periodic_report_narrative_pack_store import write_periodic_report_narrative_pack
 
 
 SAMPLE_REPORT = """
@@ -77,6 +80,22 @@ def test_analyze_cards_pack_counts_distribution_and_quality_flags():
     assert summary["maintenance"]["moved_or_reindexed_notes"] == 1
 
 
+def test_analyze_cards_pack_uses_v2_argument_family_for_distribution():
+    summary = analyze_cards_pack(
+        stock_code="000001",
+        stock_name="测试股",
+        cards_pack={
+            "cards": [{
+                "schema_version": "periodic_report_narrative_evidence_card.v2",
+                "argument_family": "business_structure",
+                "source_excerpt": "公司主营业务覆盖航空航天和新能源客户。",
+            }],
+        },
+    )
+
+    assert summary["card_type_counts"] == {"business_structure": 1}
+
+
 def test_analyze_cards_pack_does_not_flag_valid_temporal_sentence_starters():
     cards_pack = {
         "cards": [
@@ -110,7 +129,7 @@ def test_build_acceptance_markdown_from_local_cache(tmp_path):
     assert "测试股" in markdown
     assert "card_type distribution" in markdown
     assert "quality flags" in markdown
-    assert "business_model" in markdown
+    assert "business_structure" in markdown
 
 
 def test_cli_writes_acceptance_markdown_without_touching_knowledge(tmp_path):
@@ -149,4 +168,121 @@ def test_cli_writes_acceptance_markdown_without_touching_knowledge(tmp_path):
     assert str(output) in result.stdout
     assert output.exists()
     assert "dry_run_only：true" in output.read_text(encoding="utf-8")
+    assert "pack shadow" not in output.read_text(encoding="utf-8")
     assert not list(knowledge_dir.rglob("*.md"))
+
+
+def test_analyze_pack_shadow_reports_exact_parity(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    from periodic_report_evidence_pack import build_periodic_report_evidence_pack
+    from periodic_report_narrative_evidence_cards import build_periodic_report_narrative_evidence_cards
+
+    evidence = build_periodic_report_evidence_pack(SAMPLE_REPORT, report_type="annual")
+    cards_pack = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001",
+        stock_name="测试股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence,
+        raw_text=SAMPLE_REPORT,
+    )
+    write_periodic_report_narrative_pack(
+        stock_name="测试股", stock_code="000001", card_pack=cards_pack, base_dir=tmp_path,
+    )
+    write_periodic_report_narrative_card_notes(
+        "测试股", "000001", cards_pack, tmp_path,
+    )
+
+    result = acceptance_module.analyze_pack_shadow(
+        stock_code="000001",
+        stock_name="测试股",
+        cards_pack=cards_pack,
+        knowledge_base_dir=tmp_path,
+    )
+
+    assert result["producer_pack_parity"] is True
+    assert result["active_v2_parity"] is True
+    assert result["selected_material_parity"] is True
+    assert result["synthesis_items_parity"] is True
+    assert result["v1_diagnostics_parity"] is True
+    assert result["classification_counts"]["active_v2"] == len(cards_pack["cards"])
+    assert result["classification_counts"]["stale_source_covered"] == 0
+    assert len(result["classifications"]["active_v2"]) == len(cards_pack["cards"])
+
+    markdown = build_acceptance_markdown(
+        stocks=[("000001", "测试股")],
+        cache_dir=cache_dir,
+        report_type="annual",
+        report_year=2025,
+        knowledge_base_dir=tmp_path,
+        pack_shadow=True,
+    )
+    assert "### pack shadow" in markdown
+    assert "- producer_pack_parity: True" in markdown
+    assert "- synthesis_items_parity: True" in markdown
+    assert "- stale_source_covered: 0" in markdown
+    assert "- legacy_only_selected_records: []" in markdown
+    assert "- pack_only_selected_records: []" in markdown
+
+
+def test_pack_shadow_resolves_reindexed_note_but_keeps_actual_output_drift(tmp_path):
+    from periodic_report_evidence_pack import build_periodic_report_evidence_pack
+    from periodic_report_narrative_evidence_cards import build_periodic_report_narrative_evidence_cards
+
+    cards_pack = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025, report_type="annual",
+        evidence_pack=build_periodic_report_evidence_pack(SAMPLE_REPORT, report_type="annual"),
+        raw_text=SAMPLE_REPORT,
+    )
+    write_periodic_report_narrative_pack(
+        stock_name="测试股", stock_code="000001", card_pack=cards_pack, base_dir=tmp_path,
+    )
+    write_periodic_report_narrative_card_notes("测试股", "000001", cards_pack, tmp_path)
+    stale = dict(cards_pack["cards"][0])
+    stale["card_id"] = "periodic:000001:2025:annual:narrative:999"
+    stale["source_units"] = [dict(unit, unit_id=f"{unit['block_id']}:u{index + 99}", ordinal=index + 99) for index, unit in enumerate(stale["source_units"])]
+    stale["source_unit_ids"] = [unit["unit_id"] for unit in stale["source_units"]]
+    write_periodic_report_narrative_card_notes(
+        "测试股", "000001", {"cards": [stale]}, tmp_path,
+    )
+
+    result = acceptance_module.analyze_pack_shadow(
+        stock_code="000001", stock_name="测试股", cards_pack=cards_pack,
+        knowledge_base_dir=tmp_path,
+    )
+
+    assert result["classification_counts"]["stale_resolved_selected"] == 1, result
+    assert result["classification_counts"]["stale_orphan"] == 0
+    assert result["selected_material_parity"] is False
+    assert [item["card_id"] for item in result["legacy_only_selected_records"]] == [stale["card_id"]]
+    assert result["legacy_only_selected_records"][0]["stale_classification"] == "stale_resolved_selected"
+    assert result["pack_only_selected_records"] == []
+
+
+def test_pack_shadow_reports_one_extra_identical_legacy_projection(tmp_path):
+    from periodic_report_evidence_pack import build_periodic_report_evidence_pack
+    from periodic_report_narrative_evidence_cards import build_periodic_report_narrative_evidence_cards
+
+    cards_pack = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025, report_type="annual",
+        evidence_pack=build_periodic_report_evidence_pack(SAMPLE_REPORT, report_type="annual"),
+        raw_text=SAMPLE_REPORT,
+    )
+    write_periodic_report_narrative_pack(
+        stock_name="测试股", stock_code="000001", card_pack=cards_pack, base_dir=tmp_path,
+    )
+    write_periodic_report_narrative_card_notes("测试股", "000001", cards_pack, tmp_path)
+    notes_dir = tmp_path / "10-Stocks" / "测试股" / "periodic_narrative_cards"
+    source = next(notes_dir.glob("*.md"))
+    (notes_dir / "duplicate.md").write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+
+    result = acceptance_module.analyze_pack_shadow(
+        stock_code="000001", stock_name="测试股", cards_pack=cards_pack,
+        knowledge_base_dir=tmp_path,
+    )
+
+    assert result["selected_material_parity"] is False
+    assert len(result["legacy_only_selected_records"]) == 1
+    assert result["legacy_only_selected_records"][0]["stale_classification"] == "stale_duplicate"

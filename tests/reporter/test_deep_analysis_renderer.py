@@ -9,7 +9,7 @@ from scripts.utils.deep_analysis_material_snapshot import (
     build_deep_analysis_material_snapshot,
     select_annual_display_rows,
 )
-from scripts.utils.reporter.sections import DeepAnalysisRenderer
+from scripts.utils.reporter.sections import DeepAnalysisRenderer, ExecutiveSummaryRenderer
 
 
 def test_required_keys():
@@ -21,6 +21,47 @@ def test_render_missing_keys():
     renderer = DeepAnalysisRenderer()
     assert renderer.render({}) == ""
     assert renderer.render({"stock_name": "Test"}) == ""
+
+
+def test_visible_citations_keep_reserved_executive_summary_refs():
+    citations = {
+        1: {"source": "年报"},
+        2: {"source": "外部观察"},
+        3: {"source": "未使用"},
+    }
+    visible = DeepAnalysisRenderer._visible_citations_only(
+        citations, "正文[^1]", reserved_refs=(2,)
+    )
+    assert set(visible) == {1, 2}
+
+
+def test_alias_offset_citation_by_identity_only():
+    renderer = DeepAnalysisRenderer()
+    text = "外部变量[^12]；其他材料[^13]"
+    aliases = {
+        12: {"source": "外部观察", "url": "https://example.com/a"},
+        13: {"source": "其他", "url": "https://example.com/b"},
+    }
+    reserved = {
+        4: {"source": "外部观察", "url": "https://example.com/a"},
+    }
+    assert renderer._alias_reserved_citations(text, aliases, reserved) == "外部变量[^4]；其他材料[^13]"
+
+
+def test_external_variable_preface_is_only_added_when_freshness_gate_allows_it():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "external:1", "外部材料称订单节奏需跟踪。", "external", "external_observation",
+        (1,), (), title="订单变量", body="外部材料称订单节奏需跟踪。", render_role="external_variable",
+    )
+    with_preface = renderer._formal_medium_external_variable_map(
+        (row,), {1: {"source": "微信公众号精选观察"}}, preface=True,
+    )
+    without_preface = renderer._formal_medium_external_variable_map(
+        (row,), {1: {"source": "微信公众号精选观察"}}, preface=False,
+    )
+    assert any("正式材料的时间点较早" in line for line in with_preface)
+    assert not any("正式材料的时间点较早" in line for line in without_preface)
 
 
 def test_annual_portrait_prefers_a_complete_sentence():
@@ -1652,6 +1693,72 @@ def test_formal_thin_rejected_highest_annual_ref_does_not_shift_broker_or_extern
     assert "未知" not in citation_table
 
 
+def test_formal_thin_freshness_summary_keeps_snapshot_offset_and_global_citation_alignment():
+    renderer = DeepAnalysisRenderer()
+    annual = _annual_memo_fixture()
+    annual["sections"]["confirmed"] = []
+    annual["sections"]["annual_report_explanation"] = [{
+        "title": "主营业务",
+        "body": "公司主营业务为芯片设计并服务于汽车电子客户。",
+        "citation_refs": [1],
+        "source_ref_ids": ["annual:business"],
+        "argument_family": "business_structure",
+    }]
+    annual["citations"] = {1: {"source": "公司年报", "title": "主营业务"}}
+    external_meta = {
+        "source": "微信公众号精选观察",
+        "title": "订单观察",
+        "url": "https://example.com/order",
+        "source_type": "curated_external_analysis_evidence",
+    }
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {
+            "industry_logic": "基线事实[^1]",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {1: {"source": "公告", "title": "基线"}, 2: external_meta},
+        },
+        "annual_report_memo": annual,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "citations": {1: external_meta},
+            "_curated_external_narrative_paragraphs": [{
+                "heading": "订单节奏",
+                "text": "外部材料称客户订单节奏出现变化，需等待正式材料验证。",
+                "topic_keys": ["order_customer"],
+                "citation_refs": [1],
+            }],
+        },
+        "evidence_freshness": {
+            "preface": True,
+            "summary_candidate": {
+                "claim": "客户订单节奏出现变化，需等待正式材料验证。",
+                "citation_refs": [2],
+            },
+        },
+        "core_facts": [],
+    }
+
+    summary = ExecutiveSummaryRenderer().render(ctx)
+    deep_analysis = renderer.render(ctx)
+    body, citation_table = deep_analysis.split("## 引用来源", 1)
+    body_refs = {int(ref) for ref in re.findall(r"\[\^(\d+)\]", summary + body)}
+    table_refs = {int(ref) for ref in re.findall(r"\[\^(\d+)\]", citation_table)}
+
+    assert "近期待验证变量" in summary
+    assert "[^2]" in summary
+    assert "[^2]" in body
+    assert body_refs == table_refs
+    assert citation_table.count("https://example.com/order") == 1
+
+
 def test_suspicious_zero_financial_core_facts_are_not_visible():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -2011,7 +2118,7 @@ def test_formal_thin_external_map_preserves_citations_after_compaction():
 
     result = renderer.render(ctx)
     section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-    claim_lines = [line for line in section43.splitlines() if line.startswith("- 外部材料称：")]
+    claim_lines = [line for line in section43.splitlines() if line.startswith("外部材料称：")]
 
     assert len(claim_lines) == 2
     assert all(re.search(r"\[\^\d+\]", row) for row in claim_lines)
@@ -2060,9 +2167,9 @@ def test_formal_thin_global_citations_exclude_unrendered_external_cards():
     result = renderer.render(ctx)
 
     assert "外部材料称：观点6" in result
-    assert "外部材料称：观点7" not in result
+    assert "外部材料称：观点7" in result
     assert "外部材料6" in result
-    assert "外部材料7" not in result
+    assert "外部材料7" in result
 
 
 def test_formal_thin_snapshot_preserves_external_ref_numbers_when_filtering_unused_refs():
@@ -2147,7 +2254,7 @@ def test_annual_memo_rows_render_citation_refs():
     result = renderer.render(ctx)
     assert "[^1]" in result
     assert "[^4]" in result
-    assert "- [^1] 公司年报" in result or "- [^4] 公司年报" in result
+    assert "- [^1] | **公司年报**" in result or "- [^4] | **公司年报**" in result
 
 
 def test_annual_memo_validation_warnings_use_single_heading():
@@ -2305,18 +2412,17 @@ def test_formal_medium_uses_source_layer_headings_with_medium_badge():
     assert "外部材料称：供应链约束影响交付弹性" in result
     assert "外部材料称：外部材料提示" not in result
     assert "官方确认" in result
-    assert "机构假设" in result
-    assert "外部待验证" in result
+    assert "**关键盈利假设**" in result
     section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
     assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" not in section44
     assert "**推演结论**" not in section44
     assert "**官方确认：" in section44
-    assert "**机构假设：" in section44
-    assert "**外部待验证：" in section44
-    assert "外部材料称：供应链约束影响交付弹性" in section44
-    assert "外部材料提示供应链约束影响交付弹性" not in section44
+    assert "**机构假设：测试证券研报核心假设**" in section44
+    assert "风险提示" not in section44
+    assert "**外部待验证：" not in section44
+    assert "外部材料称：供应链约束影响交付弹性" not in section44
     assert "未知" not in section44
-    assert "券商研报 | 作者: 测试证券 | 《核心观点》" in section44
+    assert "**券商研报** | 作者: 测试证券 | 《核心观点》" in result
     assert "当前可用于深度基本面分析的正式材料不足" not in result
 
 
@@ -2437,7 +2543,7 @@ def test_formal_medium_global_citations_include_visible_4_4_refs():
     assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
     section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
     assert "外部待验证" in section44
-    assert "外部材料称：供应链约束会影响交付弹性[^2]" in section44
+    assert "**外部待验证：供应链观察**[^2]" in section44
     assert "未知" not in section44
     assert "- [^2] | **微信公众号精选观察** | 作者: 测试账号 | 《外部深度文章》" in global_refs
 
@@ -2482,8 +2588,8 @@ def test_formal_medium_external_refs_dedupe_same_source_in_4_3_and_4_4():
     assert "[^5][^6][^7]" not in section44
     assert "[^5][^7]" in section43
     assert "[^5][^7]" in section44
-    assert section43.count("半导体产业纵横") == 1
-    assert section44.count("半导体产业纵横") == 1
+    assert section43.count("半导体产业纵横") == 0
+    assert section44.count("半导体产业纵横") == 0
 
 
 def test_external_variable_map_cleans_source_intro_prefixes():
@@ -3107,7 +3213,7 @@ def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes
             "schema": "broker_research_memo.v1",
             "status": "ready",
             "sections": [
-                {"title": "产业与产品判断", "body": "国金证券认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长。", "citation_refs": [1]},
+                {"title": "券商核心观点", "body": "国金证券认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长。", "citation_refs": [1]},
                 {"title": "盈利预测", "body": "西南证券认为：毛利率改善和产品结构升级推动盈利弹性。", "citation_refs": [2]},
             ],
             "forecast_ranges": [],
@@ -3125,7 +3231,8 @@ def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes
     result = renderer.render(ctx)
     section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
 
-    assert "**机构共识**" in section42
+    assert "**机构共识**" not in section42
+    assert "**机构关注重点**" not in section42
     assert "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |" not in section42
     assert "**主要分歧 / 反方风险**" in section42
     assert "券商认为：国金证券认为" not in section42
@@ -3209,7 +3316,7 @@ def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion(
             "citations": {1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"}},
         },
         "deep_analysis_display": {
-            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
+            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察", "source_type": "curated_external_analysis_evidence"}},
             "_curated_external_reasoning_cards": [{"claim": "外部材料提示供应链紧张影响800G交付节奏", "citation_refs": [1]}],
         },
         "core_facts": [],
@@ -3221,14 +3328,14 @@ def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion(
     assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" not in section44
     assert "**推演结论**" not in section44
     assert "不直接修改目标价、评分、风险评分或最终推荐" in section44
-    assert "**官方确认：业务覆盖 / 产品线**" in section44
+    assert "**官方确认：营业收入**" in section44
     assert "**机构假设：产品放量**" in section44
-    assert "**外部待验证：供应链 / 技术路线**" in section44
+    assert "**外部待验证：" not in section44
     assert "**官方确认：高速光模块放量**" not in section44
     assert "**外部待验证：高速光模块放量**" not in section44
-    assert "若年报/公告确认的产品线、经营变化和财务解释继续兑现" in section44
-    assert "若机构假设落空" in section44
-    assert "若被证伪或长期无正式证据" in section44
+    assert "若官方材料中的该变量持续改善" in section44
+    assert "若假设落空" in section44
+    assert "若被证伪或长期缺乏正式证据" not in section44
 
 
 def test_formal_medium_price_path_external_evidence_is_not_hard_truncated():
@@ -3251,11 +3358,11 @@ def test_formal_medium_price_path_external_evidence_is_not_hard_truncated():
         "core_facts": [],
     }
     result = renderer.render(ctx)
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
+    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
 
-    assert "磷化铟衬底、光芯片等核心物料供给缺口" in section44
-    assert "光芯片等核..." not in section44
-    assert "..." not in section44
+    assert "磷化铟衬底、光芯片等核心物料供给缺口" in section43
+    assert "光芯片等核..." not in section43
+    assert "..." not in section43
 
 
 def test_formal_medium_price_path_prefers_business_evidence_over_financial_noise():
@@ -3290,7 +3397,7 @@ def test_formal_medium_price_path_prefers_business_evidence_over_financial_noise
     result = renderer.render(ctx)
     section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
 
-    assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section44
+    assert "公司主营业务为高端光通信收发模块研发、生产及销售" not in section44
     assert "费用与研发投入说明" not in section44
 
 
@@ -3304,17 +3411,6 @@ def test_annual_portrait_selection_uses_generic_company_scope_not_chip_keywords(
     portrait = renderer._select_annual_portrait_row(rows)
 
     assert portrait["body"].startswith("公司从事精密设备")
-
-
-def test_broker_consensus_uses_assumption_titles_for_generic_sector():
-    renderer = DeepAnalysisRenderer()
-
-    consensus = renderer._broker_consensus_sentence([
-        {"assumption": "产能利用率", "view": "研报认为产能利用率改善。"},
-        {"assumption": "海外渠道", "view": "研报认为海外渠道扩张。"},
-    ])
-
-    assert consensus == "研报关注点集中在产能利用率、海外渠道。"
 
 
 def test_annual_selector_preserves_business_prefix_before_mode_noise():
@@ -3395,3 +3491,288 @@ def test_formal_medium_price_path_uses_material_titles_in_generic_sector():
     assert "**官方确认：渠道扩张**" in section44
     assert "**机构假设：产能利用率**" in section44
     assert "**外部待验证：海外认证**" in section44
+
+
+def test_source_layer_editorial_layout_uses_global_citations_and_paragraph_external_map():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "status": "ready",
+            "sections": [{"title": "高端产品", "body": "券商认为高端产品放量支撑增长。", "citation_refs": [1]}],
+            "forecast_ranges": [], "risks": [],
+            "citations": {1: {"source": "券商研报", "author": "测试证券", "title": "核心观点"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [{"heading": "供应链观察", "text": "外部文章指出，上游供给节奏仍可能影响交付弹性。", "citation_refs": [1]}],
+            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察", "source_type": "curated_external_analysis_evidence"}},
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
+    section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
+    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
+
+    assert "**本节引用来源：**" not in section41
+    assert "**本节引用来源：**" not in section42
+    assert "**本节引用来源：**" not in section43
+    assert "**供应链观察**\n\n外部材料称：上游供给节奏仍可能影响交付弹性[^" in section43
+    assert "**供应链观察**\n- " not in section43
+
+
+def test_formal_thin_editorial_external_map_keeps_full_snapshot_offsets_without_local_sources():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "status": "ready", "sections": [{"title": "产品放量", "body": "研报认为产品放量支撑增长。", "citation_refs": [1]}],
+            "forecast_ranges": [], "risks": [], "citations": {1: {"source": "券商研报", "title": "核心观点"}},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [{"heading": "技术路线", "text": "外部材料称技术路线仍需验证。", "citation_refs": [1]}],
+            "_curated_external_reasoning_cards": [{"claim": "外部材料称不应混入。", "citation_refs": [2]}],
+            "citations": {1: {"source": "微信公众号精选观察", "title": "技术路线", "source_type": "curated_external_analysis_evidence"}, 2: {"source": "知乎精选观察", "title": "不应混入", "source_type": "curated_external_analysis_evidence"}},
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+    global_refs = result.split("## 引用来源", 1)[1]
+
+    assert "不应混入" not in section43
+    assert "**本节引用来源：**" not in section43
+    assert re.search(r"技术路线[^\n]*\n\n外部材料称：技术路线仍需验证\[\^\d+\]", section43)
+    assert "微信公众号精选观察" in global_refs
+
+
+def test_formal_thin_snapshot_external_refs_add_only_chapter_baseline_offset():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {
+            "industry_logic": "基线材料[^5]", "fundamentals": "", "valuation_debate": "",
+            "funding_sentiment": "", "events_catalysts": "",
+            "citations": {5: {"source": "基线来源", "title": "基线"}},
+        },
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "status": "ready",
+            "sections": [
+                {"title": f"观点{i}", "body": f"机构观点{i}包含独立经营假设。", "citation_refs": [i]}
+                for i in range(1, 8)
+            ],
+            "forecast_ranges": [], "risks": [],
+            "citations": {i: {"source": "券商研报", "title": f"研报{i}"} for i in range(1, 8)},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [
+                {"heading": "未使用", "text": "这条材料不应显示。", "citation_refs": [1]},
+                {"heading": "供应链", "text": "外部材料称光芯片短缺可能导致交付延期。", "citation_refs": [2]},
+            ],
+            "citations": {
+                1: {"source": "外部观察", "title": "未使用"},
+                2: {"source": "外部观察", "title": "供应链"},
+            },
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+
+    # Snapshot ref 13 (annual 1-4, broker 5-11, external local ref 2 -> 13)
+    # receives only the chapter baseline offset 5. Adding the old local external
+    # offset again would incorrectly produce ref 29.
+    assert "[^18]" in section43
+    assert "[^29]" not in result
+    assert "- [^18] | **外部观察** | 《供应链》" in result
+
+
+def test_formal_thin_incremental_ownership_includes_all_rendered_broker_rows():
+    renderer = DeepAnalysisRenderer()
+    broker_sections = [
+        {"title": f"观点{i}", "body": f"机构观点{i}包含独立经营假设。", "citation_refs": [i]}
+        for i in range(1, 7)
+    ] + [{"title": "客户认证", "body": "客户认证节奏仍需观察。", "citation_refs": [7]}]
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "status": "ready", "sections": broker_sections, "forecast_ranges": [], "risks": [],
+            "citations": {i: {"source": "券商研报", "title": f"研报{i}"} for i in range(1, 8)},
+        },
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [
+                {"heading": "客户认证", "text": "外部材料称客户认证节奏仍需观察。", "citation_refs": [1]},
+            ],
+            "citations": {1: {"source": "外部观察", "title": "客户认证"}},
+        },
+        "core_facts": [],
+    }
+
+    result = renderer.render(ctx)
+    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
+
+    assert "当前外部材料未提供相对正式材料或研报的新增待验证变量" in section43
+    assert "外部材料称客户认证节奏仍需观察" not in section43
+
+
+def test_formal_medium_empty_incremental_external_map_uses_distinct_copy():
+    snapshot = build_deep_analysis_material_snapshot({
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [
+                {"heading": "客户验证", "text": "外部材料称新一代FPGA进入客户验证阶段。", "citation_refs": [1]},
+            ],
+            "citations": {1: {"source": "外部观察", "title": "客户验证"}},
+        },
+    })
+    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
+
+    result = "\n".join(DeepAnalysisRenderer()._formal_medium_source_layer_body(view_model))
+
+    assert "当前外部材料未提供相对正式材料或研报的新增待验证变量" in result
+    assert "当前未取得足够外部观点材料" not in result
+
+
+def test_formal_thin_global_citations_keep_one_source_for_narrative_claims_with_same_url():
+    renderer = DeepAnalysisRenderer()
+    external_meta = {
+        "source": "微信公众号精选观察",
+        "title": "认证观察",
+        "url": "https://example.com/shared-source",
+        "source_type": "curated_external_analysis_evidence",
+    }
+
+    result = renderer.render({
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [
+                {
+                    "heading": "认证节奏",
+                    "text": "外部材料提示客户认证节奏仍需跟踪，并可能影响后续出货安排。",
+                    "citation_refs": [1],
+                },
+                {
+                    "heading": "交付验证",
+                    "text": "外部材料提示交付验证需要同时观察客户认证和订单节奏。",
+                    "citation_refs": [1],
+                },
+            ],
+            "citations": {1: external_meta},
+        },
+        "core_facts": [],
+    })
+    section43, citation_table = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)
+
+    refs = re.findall(r"\[\^(\d+)\]", section43)
+    assert len(refs) == 2
+    assert len(set(refs)) == 1
+    assert citation_table.count("https://example.com/shared-source") == 1
+
+
+def test_external_claim_blocks_keep_all_boundary_units_and_citations():
+    lines = []
+    claim = "外部材料称：第一句。第二句；第三句。第四句；第五句。[^4][^5]"
+
+    DeepAnalysisRenderer._append_external_variable_paragraph(lines, "变量", claim)
+
+    blocks = [line for line in lines if "[^4][^5]" in line]
+    assert blocks == [
+        "外部材料称：第一句。第二句；第三句。[^4][^5]",
+        "外部材料称：第四句；第五句。[^4][^5]",
+    ]
+    assert all(block.startswith("外部材料称：") for block in blocks)
+    assert "".join(block.replace("外部材料称：", "").replace("[^4][^5]", "") for block in blocks) == claim.replace("外部材料称：", "").replace("[^4][^5]", "")
+
+
+def test_external_claim_blocks_drop_only_exact_duplicate_boundary_units():
+    lines = []
+    claim = "外部材料称：相同判断。独立证据；相同判断。进一步验证。[^9]"
+
+    DeepAnalysisRenderer._append_external_variable_paragraph(lines, "变量", claim)
+
+    blocks = [line for line in lines if "[^9]" in line]
+    rendered = "".join(block.replace("外部材料称：", "").replace("[^9]", "") for block in blocks)
+    assert blocks == [
+        "外部材料称：相同判断。独立证据；进一步验证。[^9]",
+    ]
+    assert rendered.count("相同判断") == 1
+    assert "独立证据；" in rendered
+    assert "进一步验证。" in rendered
+
+
+def test_external_claim_blocks_keep_no_boundary_claim_as_one_cited_paragraph():
+    lines = []
+    claim = "外部材料称：一段没有句读边界的完整观察[^3]"
+
+    DeepAnalysisRenderer._append_external_variable_paragraph(lines, "变量", claim)
+
+    assert [line for line in lines if "[^3]" in line] == [claim]
+
+
+def test_formal_thin_external_block_projection_keeps_global_citation_alignment():
+    renderer = DeepAnalysisRenderer()
+    external_meta = {
+        "source": "微信公众号精选观察",
+        "title": "长段落观察",
+        "url": "https://example.com/long-observation",
+        "source_type": "curated_external_analysis_evidence",
+    }
+    result = renderer.render({
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {
+            "profile": "formal_thin_external_rich",
+            "formal_thin_layout_variant": "annual_broker_external_checklist",
+        },
+        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [{
+                "heading": "长段落观察",
+                "text": "外部材料称：第一句。第二句；第三句。第四句；第五句。",
+                "citation_refs": [1],
+            }],
+            "citations": {1: external_meta},
+        },
+        "core_facts": [],
+    })
+    section43, citation_table = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)
+    blocks = [line for line in section43.splitlines() if "[^" in line]
+
+    assert "第一句。第二句；第三句。" in section43
+    assert "第四句；第五句[^" in section43
+    assert len(blocks) == 2
+    assert all("外部材料称：" in block for block in blocks)
+    assert all(re.search(r"\[\^\d+\]$", block) for block in blocks)
+    assert len(set(re.findall(r"\[\^(\d+)\]", "\n".join(blocks)))) == 1
+    assert citation_table.count("https://example.com/long-observation") == 1
+    assert "**本节引用来源：**" not in section43

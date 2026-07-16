@@ -1,0 +1,4887 @@
+{
+  "cards": [
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:b3fa51cd0230b9b41962",
+      "fact_anchors": [
+        "工艺",
+        "研发",
+        "升级"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "2、报告期内的主要研发成果 报告期内 ，公司坚持以技术创新驱动发展 ，持续加大研发投入与技术攻关力度 ，在核心技术 、 产品升级、工艺优化等方面取得多项重要突破与创新成果，研发体系效能稳步提升，为公司产品 竞争力提升、市场拓展及长远发展提供了坚实的技术支撑。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-0",
+          "end_pos": 129,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2、报告期内的主要研发成果 报告期内 ，公司坚持以技术创新驱动发展 ，持续加大研发投入与技术攻关力度 ，在核心技术 、 产品升级、工艺优化等方面取得多项重要突破与创新成果，研发体系效能稳步提升，为公司产品 竞争力提升、市场拓展及长远发展提供了坚实的技术支撑。",
+          "unit_id": "rd_product_progress-0:u0"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:3311ffe0a75a8c31b781",
+      "fact_anchors": [
+        "TIM1",
+        "芯片"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "（1）半导体芯片散热用热界面材料 报告期内 ，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计 ，适用于智能手机 、平 板电脑、可穿戴设备及高性能计算模块等对热管理要求严苛的应用场景。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-0",
+          "end_pos": 227,
+          "ordinal": 1,
+          "start_pos": 130,
+          "text": "（1）半导体芯片散热用热界面材料 报告期内 ，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计 ，适用于智能手机 、平 板电脑、可穿戴设备及高性能计算模块等对热管理要求严苛的应用场景。",
+          "unit_id": "rd_product_progress-0:u1"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:afb67093963306df6e86",
+      "fact_anchors": [
+        "营业收入",
+        "现金流",
+        "主要系"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "经营活动产生的现金流量净额 -100,634,402.08 378,978,438.28 -126.55 投资活动产生的现金流量净额 -91,700,379.37 -179,992,014.32 不适用 筹资活动产生的现金流量净额 97,799,119.33 -87,453,908.91 不适用 营业收入变动原因说明： 主要系公司深耕主业，通过技术创新、市场开拓及产品升级优化等多种 举措，在巩固既有优势的同时，积极布局新兴应用场景，持续拓展业务发展新空间。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "cash_flow_capex_table-0",
+          "end_pos": 230,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "经营活动产生的现金流量净额 -100,634,402.08 378,978,438.28 -126.55 投资活动产生的现金流量净额 -91,700,379.37 -179,992,014.32 不适用 筹资活动产生的现金流量净额 97,799,119.33 -87,453,908.91 不适用 营业收入变动原因说明： 主要系公司深耕主业，通过技术创新、市场开拓及产品升级优化等多种 举措，在巩固既有优势的同时，积极布局新兴应用场景，持续拓展业务发展新空间。",
+          "unit_id": "cash_flow_capex_table-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:52614cace231e07b741c",
+      "fact_anchors": [
+        "营业收入",
+        "营业成本",
+        "主要系"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "营业成本变动原因说明： 主要系随营业收入增长影响，营业成本随之发生变动。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "cash_flow_capex_table-0",
+          "end_pos": 267,
+          "ordinal": 1,
+          "start_pos": 231,
+          "text": "营业成本变动原因说明： 主要系随营业收入增长影响，营业成本随之发生变动。",
+          "unit_id": "cash_flow_capex_table-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:3e703683431c051d0872",
+      "fact_anchors": [
+        "销售费用",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "销售费用变动原因说明： 主要系本报告期公司积极开拓市场，人员薪酬和业务费用增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "cash_flow_capex_table-0",
+          "end_pos": 310,
+          "ordinal": 2,
+          "start_pos": 268,
+          "text": "销售费用变动原因说明： 主要系本报告期公司积极开拓市场，人员薪酬和业务费用增加所致。",
+          "unit_id": "cash_flow_capex_table-0:u2"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f68ac95a613eb285ce54",
+      "fact_anchors": [
+        "管理费用",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "管理费用变动原因说明： 主要系本报告期公司因业务规模扩增 ,人员薪酬和业务费用增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "cash_flow_capex_table-0",
+          "end_pos": 355,
+          "ordinal": 3,
+          "start_pos": 311,
+          "text": "管理费用变动原因说明： 主要系本报告期公司因业务规模扩增 ,人员薪酬和业务费用增加所致。",
+          "unit_id": "cash_flow_capex_table-0:u3"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:3ca645182930dae86246",
+      "fact_anchors": [
+        "财务费用",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "财务费用变动原因说明： 主要系本报告期公司闲置资金理财利息收入减少所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "cash_flow_capex_table-0",
+          "end_pos": 392,
+          "ordinal": 4,
+          "start_pos": 356,
+          "text": "财务费用变动原因说明： 主要系本报告期公司闲置资金理财利息收入减少所致。",
+          "unit_id": "cash_flow_capex_table-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:5c8fee2774f2c8779444",
+      "fact_anchors": [
+        "现金流",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "经营活动产生的现金流量净额 变动原因说明： 主要系报告期内，公司票据托收及贴现减少，以及 购买商品、接受劳务支付的现金增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "cash_flow_capex_table-0",
+          "end_pos": 457,
+          "ordinal": 5,
+          "start_pos": 393,
+          "text": "经营活动产生的现金流量净额 变动原因说明： 主要系报告期内，公司票据托收及贴现减少，以及 购买商品、接受劳务支付的现金增加所致。",
+          "unit_id": "cash_flow_capex_table-0:u5"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:7dae12c2c858bd22874b",
+      "fact_anchors": [
+        "业务",
+        "产品",
+        "服务"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "(一) 主要业务、主要产品或 服务 情况 1、集成电路封装材料 集成电路封装材料是半导体产业链中连接芯片与外部电路的关键支撑材料，其性能直接影响 了芯片的电性能、热管理效率、机械可靠性及长期使用寿命。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 100,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "(一) 主要业务、主要产品或 服务 情况 1、集成电路封装材料 集成电路封装材料是半导体产业链中连接芯片与外部电路的关键支撑材料，其性能直接影响 了芯片的电性能、热管理效率、机械可靠性及长期使用寿命。",
+          "unit_id": "product_capacity_profile-0:u0"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:b4c54ce7a330177d17fd",
+      "fact_anchors": [
+        "产品",
+        "应用",
+        "服务"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "公司产品体系覆盖了从晶圆加工、 芯片级封装到模组集成的全流程关键材料，包括晶圆 UV 膜、固晶材料、底部填充胶、导热界面 材料及芯片级散热盖粘接胶等，可满足高密度、异构集成等先进封装需求。 随着 AI 服务器架构的快速迭代 、新能源汽车智驾系统的持续升级 、机器人软硬件系统的持续 优化等高算力需求的涌现，芯片制程的升级已无法满足终端应用对算力高速增长的需求，后摩尔 时代带来的是先进封装（如 HBM 、CoWoS ）需求的爆发。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u1",
+        "product_capacity_profile-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 194,
+          "ordinal": 1,
+          "start_pos": 100,
+          "text": "公司产品体系覆盖了从晶圆加工、 芯片级封装到模组集成的全流程关键材料，包括晶圆 UV 膜、固晶材料、底部填充胶、导热界面 材料及芯片级散热盖粘接胶等，可满足高密度、异构集成等先进封装需求。",
+          "unit_id": "product_capacity_profile-0:u1"
+        },
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 315,
+          "ordinal": 2,
+          "start_pos": 195,
+          "text": "随着 AI 服务器架构的快速迭代 、新能源汽车智驾系统的持续升级 、机器人软硬件系统的持续 优化等高算力需求的涌现，芯片制程的升级已无法满足终端应用对算力高速增长的需求，后摩尔 时代带来的是先进封装（如 HBM 、CoWoS ）需求的爆发。",
+          "unit_id": "product_capacity_profile-0:u2"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:aa4afc82dedd35c2cff3",
+      "fact_anchors": [
+        "研发",
+        "验证",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "国内产业链已在塑封料、引线框架、部分固晶及导热材料等领域实现较高自 给率 ，并正依托持续研发投入 ，在 ABF 载板材料 、高性能底部填充胶 、高端键合材料等关键环节 加速技术突破与客户验证，整体呈现从 “中低端替代 ”向“高端突破 ”的演进态势。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 465,
+          "ordinal": 4,
+          "start_pos": 341,
+          "text": "国内产业链已在塑封料、引线框架、部分固晶及导热材料等领域实现较高自 给率 ，并正依托持续研发投入 ，在 ABF 载板材料 、高性能底部填充胶 、高端键合材料等关键环节 加速技术突破与客户验证，整体呈现从 “中低端替代 ”向“高端突破 ”的演进态势。",
+          "unit_id": "product_capacity_profile-0:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:22a95dbd857a5e788a98",
+      "fact_anchors": [
+        "产品",
+        "应用"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-1",
+      "source_credit": 75,
+      "source_excerpt": "主要产品包括 集成电路封装材料、智能终端封装材料、新能源应用材料、高端装备应用材料四大类别。产品形 态为电子级粘合剂和功能性薄膜材料，广泛应用于半导体、消费电子、动力电池、光伏等新兴行 业领域。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-1:u1",
+        "product_capacity_profile-1:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 81,
+          "ordinal": 1,
+          "start_pos": 35,
+          "text": "主要产品包括 集成电路封装材料、智能终端封装材料、新能源应用材料、高端装备应用材料四大类别。",
+          "unit_id": "product_capacity_profile-1:u1"
+        },
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 132,
+          "ordinal": 2,
+          "start_pos": 81,
+          "text": "产品形 态为电子级粘合剂和功能性薄膜材料，广泛应用于半导体、消费电子、动力电池、光伏等新兴行 业领域。",
+          "unit_id": "product_capacity_profile-1:u2"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:f6d1ff675080aff60a43",
+      "fact_anchors": [
+        "2025",
+        "战略"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-1",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，面对复杂多变的外部经营环境，公司始终坚持 “技术创新，突破增长，高效运营 ， 国际拓展 ”的核心战略，扎实推进高质量发展。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-1:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 274,
+          "ordinal": 4,
+          "start_pos": 206,
+          "text": "2025 年，面对复杂多变的外部经营环境，公司始终坚持 “技术创新，突破增长，高效运营 ， 国际拓展 ”的核心战略，扎实推进高质量发展。",
+          "unit_id": "product_capacity_profile-1:u4"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:9fb12aef8fe52665bbd7",
+      "fact_anchors": [
+        "产品",
+        "服务"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-1",
+      "source_credit": 75,
+      "source_excerpt": "在产品和市场方面，公司围绕主业构建全层级产品体系，深度服务行业标杆企业，通过差异化市 场策略持续提升渗透率；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-1:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 374,
+          "ordinal": 6,
+          "start_pos": 320,
+          "text": "在产品和市场方面，公司围绕主业构建全层级产品体系，深度服务行业标杆企业，通过差异化市 场策略持续提升渗透率；",
+          "unit_id": "product_capacity_profile-1:u6"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:d01842a06a6b2f7d469c",
+      "fact_anchors": [
+        "服务"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-1",
+      "source_credit": 75,
+      "source_excerpt": "在产能布局方面，公司国内多基地协同产能体系稳固，泰国合资 公司生产基地顺利竣工，全球化服务能力持续升级；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-1:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 472,
+          "ordinal": 8,
+          "start_pos": 420,
+          "text": "在产能布局方面，公司国内多基地协同产能体系稳固，泰国合资 公司生产基地顺利竣工，全球化服务能力持续升级；",
+          "unit_id": "product_capacity_profile-1:u8"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:7e69f4db973529c9325a",
+      "fact_anchors": [
+        "未来，先进封装占比将逐步超越传统封装，先进封装技"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "未来，先进封装占比将逐步超越传统封装，先进封装技术成为延续摩尔定律的重要方向；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-0",
+          "end_pos": 208,
+          "ordinal": 3,
+          "start_pos": 169,
+          "text": "未来，先进封装占比将逐步超越传统封装，先进封装技术成为延续摩尔定律的重要方向；",
+          "unit_id": "market_demand_outlook-0:u3"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:658f9c902541ad90f7a3",
+      "fact_anchors": [
+        "市场",
+        "竞争",
+        "份额"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "国产替代从单 点突破迈向全产业链系统性突破，产业向垂直一体化整合深化，中国集成电路企业全球竞争力与 市场份额将持续稳步提升。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-0:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-0",
+          "end_pos": 308,
+          "ordinal": 5,
+          "start_pos": 246,
+          "text": "国产替代从单 点突破迈向全产业链系统性突破，产业向垂直一体化整合深化，中国集成电路企业全球竞争力与 市场份额将持续稳步提升。",
+          "unit_id": "market_demand_outlook-0:u5"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:dccfeb2154087e4e0589",
+      "fact_anchors": [
+        "2025",
+        "行业",
+        "需求"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，集成电路封装材料行业在 AI 、HPC 、智能汽车等终端需求的强力驱动下，进入高速 增长通道。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-1:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-1",
+          "end_pos": 54,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2025 年，集成电路封装材料行业在 AI 、HPC 、智能汽车等终端需求的强力驱动下，进入高速 增长通道。",
+          "unit_id": "market_demand_outlook-1:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:ae9a3f0cb9093b4b3e1a",
+      "fact_anchors": [
+        "2026",
+        "2032",
+        "15%",
+        "行业",
+        "市场",
+        "需求"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "据《 2026-2032 年全球半导体封装材料市场需求与竞争格局调研报告》，全球市场规 模预计达到约 270 亿美元 ，中国市场增速更为突出 ，规模突破 850 亿元人民币 ，同比增长超 15% ， 行业整体已迈入 “高速增长与结构升级并行 ”的关键发展阶段。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-1:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-1",
+          "end_pos": 184,
+          "ordinal": 1,
+          "start_pos": 54,
+          "text": "据《 2026-2032 年全球半导体封装材料市场需求与竞争格局调研报告》，全球市场规 模预计达到约 270 亿美元 ，中国市场增速更为突出 ，规模突破 850 亿元人民币 ，同比增长超 15% ， 行业整体已迈入 “高速增长与结构升级并行 ”的关键发展阶段。",
+          "unit_id": "market_demand_outlook-1:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:1013ffed891aa9bba07d",
+      "fact_anchors": [
+        "51%",
+        "市场",
+        "需求"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "从结构来看，增长动能已显著转 向先进封装，其在全球封装市场中的占比预计首次超越传统封装，达到 51% ，Chiplet 异构集成 、 2.5D/3D 封装 、HBM 存储器封装等技术路径成为主流 ，带动 TSV 材料 、ABF 载板 、高导热界面材料 等高端品类需求激增；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-1:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-1",
+          "end_pos": 320,
+          "ordinal": 2,
+          "start_pos": 184,
+          "text": "从结构来看，增长动能已显著转 向先进封装，其在全球封装市场中的占比预计首次超越传统封装，达到 51% ，Chiplet 异构集成 、 2.5D/3D 封装 、HBM 存储器封装等技术路径成为主流 ，带动 TSV 材料 、ABF 载板 、高导热界面材料 等高端品类需求激增；",
+          "unit_id": "market_demand_outlook-1:u2"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:6f6255a45b471967e86c",
+      "fact_anchors": [
+        "战略"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "future_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "公司以 “成为全球高端封装材料引领者 ”为愿景，围绕 “技术创新，突破增长，高效运营， 国际拓展 ”四个战略主题，持续为客户、员工、股东与社会创造长期价值。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "future_strategy-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "future_strategy-0",
+          "end_pos": 98,
+          "ordinal": 0,
+          "start_pos": 20,
+          "text": "公司以 “成为全球高端封装材料引领者 ”为愿景，围绕 “技术创新，突破增长，高效运营， 国际拓展 ”四个战略主题，持续为客户、员工、股东与社会创造长期价值。",
+          "unit_id": "future_strategy-0:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:7ac44fec5b5eff2d856f",
+      "fact_anchors": [
+        "需求",
+        "竞争",
+        "战略"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "future_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "当前，地缘博弈深化、全球经济复苏乏力、供应链重构与科技竞争白热化交织叠加，在这样 的“变”境中，公司将以国家 “十五五 ”规划为导引，保持战略定力，分析人工智能算力、绿色 智能需求带来的深层次机遇，以 “产品力 ”、“技术力 ”驱动科技创新，以供应链韧性锻造、数 字化赋能转型夯实发展基础，以 “有机增长、投资并购、海外拓展 ”为抓手，培育增长极， 厚植 公司竞争核心优势。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "future_strategy-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "future_strategy-0",
+          "end_pos": 286,
+          "ordinal": 1,
+          "start_pos": 99,
+          "text": "当前，地缘博弈深化、全球经济复苏乏力、供应链重构与科技竞争白热化交织叠加，在这样 的“变”境中，公司将以国家 “十五五 ”规划为导引，保持战略定力，分析人工智能算力、绿色 智能需求带来的深层次机遇，以 “产品力 ”、“技术力 ”驱动科技创新，以供应链韧性锻造、数 字化赋能转型夯实发展基础，以 “有机增长、投资并购、海外拓展 ”为抓手，培育增长极， 厚植 公司竞争核心优势。",
+          "unit_id": "future_strategy-0:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:18ee07eb61b2f34e4fb1",
+      "fact_anchors": [
+        "48.16%",
+        "营收"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "（ 2）智能终端封装材料：依托核心头部客户群优势，公司在巩 固提升老产品市场份额的同时，加大产品创新及市场开拓力度，在智能穿戴、新型显示等应用场 景开辟了新的增长空间 ，全年实现营收 38,325.99 万元 ，同比增长 48.16% 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-0",
+          "end_pos": 272,
+          "ordinal": 1,
+          "start_pos": 153,
+          "text": "（ 2）智能终端封装材料：依托核心头部客户群优势，公司在巩 固提升老产品市场份额的同时，加大产品创新及市场开拓力度，在智能穿戴、新型显示等应用场 景开辟了新的增长空间 ，全年实现营收 38,325.99 万元 ，同比增长 48.16% 。",
+          "unit_id": "profitability_commentary-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:00082eec70ab1f0b2e4c",
+      "fact_anchors": [
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "受供应链价格波动等 因素影响，毛利率同比小幅降低；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-0",
+          "end_pos": 297,
+          "ordinal": 2,
+          "start_pos": 272,
+          "text": "受供应链价格波动等 因素影响，毛利率同比小幅降低；",
+          "unit_id": "profitability_commentary-0:u2"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:48c66422854655eb7aaa",
+      "fact_anchors": [
+        "18.06%",
+        "营收"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "（ 3）新能源应用材料：在下游新能源装机 /出货量持续稳定增 长的驱动下，公司新产线投产，产能释放，收入规模持续扩大，全年实现营收 80,884.65 万元， 同比增长 18.06% 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-0",
+          "end_pos": 390,
+          "ordinal": 3,
+          "start_pos": 297,
+          "text": "（ 3）新能源应用材料：在下游新能源装机 /出货量持续稳定增 长的驱动下，公司新产线投产，产能释放，收入规模持续扩大，全年实现营收 80,884.65 万元， 同比增长 18.06% 。",
+          "unit_id": "profitability_commentary-0:u3"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:08ab5096127f36a741d5",
+      "fact_anchors": [
+        "毛利"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内客户降价导致利润空间进一步收窄 ，公司通过供应链降本与产品设计 优化等举措，传导消化了一部分降价压力，但仍有部分降价没有传导消化，导致该业务板块平均 毛利同比下降 3.66 个百分点；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-0",
+          "end_pos": 486,
+          "ordinal": 4,
+          "start_pos": 390,
+          "text": "报告期内客户降价导致利润空间进一步收窄 ，公司通过供应链降本与产品设计 优化等举措，传导消化了一部分降价压力，但仍有部分降价没有传导消化，导致该业务板块平均 毛利同比下降 3.66 个百分点；",
+          "unit_id": "profitability_commentary-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:d9e2ed91a3620f7f3e58",
+      "fact_anchors": [
+        "20.03%",
+        "毛利率",
+        "毛利",
+        "营收"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "（ 4）高端装备应用材料：公司在汽车轻量化、复合材料粘接等细 分领域市场份额稳定增长，在汽车电机领域覆盖率全面提升，在驱动电机用新型磁性粘接材料实 现突破，该板块全年营收同比增长 20.03% ，毛利率基本持平。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-1:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-1",
+          "end_pos": 166,
+          "ordinal": 1,
+          "start_pos": 60,
+          "text": "（ 4）高端装备应用材料：公司在汽车轻量化、复合材料粘接等细 分领域市场份额稳定增长，在汽车电机领域覆盖率全面提升，在驱动电机用新型磁性粘接材料实 现突破，该板块全年营收同比增长 20.03% ，毛利率基本持平。",
+          "unit_id": "profitability_commentary-1:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "operating_progress",
+      "card_id": "annual-argument:a5d92d36d2d4180805f0",
+      "fact_anchors": [
+        "报告期",
+        "收入",
+        "增长"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:operating_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "报告期内，公司华东、华南及国内各区域收入均实现不同程度的增长；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-1:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-1",
+          "end_pos": 198,
+          "ordinal": 2,
+          "start_pos": 167,
+          "text": "报告期内，公司华东、华南及国内各区域收入均实现不同程度的增长；",
+          "unit_id": "profitability_commentary-1:u2"
+        }
+      ],
+      "title": "经营变化"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:c81ee7a7123369301319",
+      "fact_anchors": [
+        "25.64%",
+        "营收",
+        "受",
+        "影响"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "海外市场受地缘政治 等因素影响出口额降低，营收同比下降 25.64% 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-1:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-1",
+          "end_pos": 234,
+          "ordinal": 3,
+          "start_pos": 198,
+          "text": "海外市场受地缘政治 等因素影响出口额降低，营收同比下降 25.64% 。",
+          "unit_id": "profitability_commentary-1:u3"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:5eda4383e9feed86acdc",
+      "fact_anchors": [
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "受部分客户 价格小幅波动，以及产品结构微调因素影响，毛利率呈现小幅涨跌波动。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-1:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-1",
+          "end_pos": 308,
+          "ordinal": 5,
+          "start_pos": 270,
+          "text": "受部分客户 价格小幅波动，以及产品结构微调因素影响，毛利率呈现小幅涨跌波动。",
+          "unit_id": "profitability_commentary-1:u5"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "operating_progress",
+      "card_id": "annual-argument:e6faf9bf3fac21809c32",
+      "fact_anchors": [
+        "450.91%",
+        "89.84%",
+        "报告期",
+        "销量",
+        "产量"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:operating_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "主要产品 单位 生产量 销售量 库存量 生产量比 上年增减 （%） 销售量比 上年增减 （%） 库存量比 上年增减 （%） 集 成 电 路 封装材料 吨 769.10 737.95 35.77 466.89 450.91 674.21 智 能 终 端 封装材料 吨 1,359.64 1,344.99 84.80 85.31 89.84 20.89 新 能 源 应 用材料 吨 35,213.73 34,772.56 3,466.69 37.99 42.96 14.58 高 端 装 备 应用材料 吨 1,946.90 1,844.09 196.24 52.81 48.18 110.04 总计 39,289.37 38,699.58 3,783.51 42.03 46.53 18.47 产销量情况说明 报告期内，公司各板块产销量均实现不同程度的增长，其中集成电路封装材料和智能终端封 装材料销量增幅显著，分别实现同比 450.91% 和 89.84% 的大幅增长。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-1:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-1",
+          "end_pos": 767,
+          "ordinal": 6,
+          "start_pos": 333,
+          "text": "主要产品 单位 生产量 销售量 库存量 生产量比 上年增减 （%） 销售量比 上年增减 （%） 库存量比 上年增减 （%） 集 成 电 路 封装材料 吨 769.10 737.95 35.77 466.89 450.91 674.21 智 能 终 端 封装材料 吨 1,359.64 1,344.99 84.80 85.31 89.84 20.89 新 能 源 应 用材料 吨 35,213.73 34,772.56 3,466.69 37.99 42.96 14.58 高 端 装 备 应用材料 吨 1,946.90 1,844.09 196.24 52.81 48.18 110.04 总计 39,289.37 38,699.58 3,783.51 42.03 46.53 18.47 产销量情况说明 报告期内，公司各板块产销量均实现不同程度的增长，其中集成电路封装材料和智能终端封 装材料销量增幅显著，分别实现同比 450.91% 和 89.84% 的大幅增长。",
+          "unit_id": "profitability_commentary-1:u6"
+        }
+      ],
+      "title": "经营变化"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f5c89d97af9d2646446b",
+      "fact_anchors": [
+        "32.65%",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "segment_table-0",
+      "source_credit": 75,
+      "source_excerpt": "毛利率比上 年增减（ %） 经销 682,251,912.42 419,728,676.42 38.48 43.42 49.16 减少 2.3 6 个百分点 直销 863,201,302.84 701,477,745.79 18.74 25.22 24.62 增加 0.3 9 个百分点 总计 1,545,453,215.26 1,121,206,422.21 27.45 32.65 32.80 减少 0.0 8 个百分点 主营业务分行业 、分产品、分地区 、分销售模式 情况的说明 报告期内，公司主营业务收入整体实现同比增长 32.65% ，其中：（ 1）集成电路封装材料：",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "segment_table-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "segment_table-0",
+          "end_pos": 289,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "毛利率比上 年增减（ %） 经销 682,251,912.42 419,728,676.42 38.48 43.42 49.16 减少 2.3 6 个百分点 直销 863,201,302.84 701,477,745.79 18.74 25.22 24.62 增加 0.3 9 个百分点 总计 1,545,453,215.26 1,121,206,422.21 27.45 32.65 32.80 减少 0.0 8 个百分点 主营业务分行业 、分产品、分地区 、分销售模式 情况的说明 报告期内，公司主营业务收入整体实现同比增长 32.65% ，其中：（ 1）集成电路封装材料：",
+          "unit_id": "segment_table-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:a7d9bbb8e38da07ec07f",
+      "fact_anchors": [
+        "如果国家有关高新 技术企业等税收优惠的法律、法规"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "如果国家有关高新 技术企业等税收优惠的法律、法规、政策发生重大调整，或者由于公司未来不能持续取得国家高 新技术企业资格等原因而无法获得税收优惠，将对公司经营业绩造成不利影响。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 556,
+          "ordinal": 6,
+          "start_pos": 469,
+          "text": "如果国家有关高新 技术企业等税收优惠的法律、法规、政策发生重大调整，或者由于公司未来不能持续取得国家高 新技术企业资格等原因而无法获得税收优惠，将对公司经营业绩造成不利影响。",
+          "unit_id": "ar_aging_note-0:u6"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:3185a4abde370e52a235",
+      "fact_anchors": [
+        "产品",
+        "应用"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "经营模式、行业情况说明 公司专注于高端电子封装材料的研发及产业化 ，产品形态为电子级粘合剂和功能性薄膜材料 ， 可实现结构粘接、导电、导热、绝缘、保护、电磁屏蔽等复合功能，是一种关键的封装装联功能 性材料，广泛应用于晶圆加工、芯片级封装、功率器件封装、板级封装、模组及系统集成封装等 不同封装工艺环节和应用场景。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 156,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "经营模式、行业情况说明 公司专注于高端电子封装材料的研发及产业化 ，产品形态为电子级粘合剂和功能性薄膜材料 ， 可实现结构粘接、导电、导热、绝缘、保护、电磁屏蔽等复合功能，是一种关键的封装装联功能 性材料，广泛应用于晶圆加工、芯片级封装、功率器件封装、板级封装、模组及系统集成封装等 不同封装工艺环节和应用场景。",
+          "unit_id": "business_model-0:u0"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:185177899678e6edbffe",
+      "fact_anchors": [
+        "产品",
+        "应用"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "公司产品分类为集成电路封装材料、智能终端封装材料、新能源 应用材料、高端装备应用材料四大类别。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 203,
+          "ordinal": 1,
+          "start_pos": 156,
+          "text": "公司产品分类为集成电路封装材料、智能终端封装材料、新能源 应用材料、高端装备应用材料四大类别。",
+          "unit_id": "business_model-0:u1"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:3e3afd911010dee77f4f",
+      "fact_anchors": [
+        "行业"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "行业情况说明 公司专注于高端电子封装材料的研发及产业化 ，产品形态为电子级粘合剂和功能性薄膜材料 ， 可实现结构粘接、导电、导热、绝缘、保护、电磁屏蔽等复合功能，是一种关键的封装装联功能 性材料，广泛应用于晶圆加工、芯片级封装、功率器件封装、板级封装、模组及系统集成封装等 不同封装工艺环节和应用场景。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 151,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "行业情况说明 公司专注于高端电子封装材料的研发及产业化 ，产品形态为电子级粘合剂和功能性薄膜材料 ， 可实现结构粘接、导电、导热、绝缘、保护、电磁屏蔽等复合功能，是一种关键的封装装联功能 性材料，广泛应用于晶圆加工、芯片级封装、功率器件封装、板级封装、模组及系统集成封装等 不同封装工艺环节和应用场景。",
+          "unit_id": "industry_outlook-0:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:277d4ee2662ab406318a",
+      "fact_anchors": [
+        "产品",
+        "应用"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "公司产品分类为集成电路封装材料、智能终端封装材料、新能源 应用材料、高端装备应用材料四大类别。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 198,
+          "ordinal": 1,
+          "start_pos": 151,
+          "text": "公司产品分类为集成电路封装材料、智能终端封装材料、新能源 应用材料、高端装备应用材料四大类别。",
+          "unit_id": "industry_outlook-0:u1"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:99f6a52acc89009e9b6d",
+      "fact_anchors": [
+        "需求",
+        "战略"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "shareholder_structure-0",
+      "source_credit": 75,
+      "source_excerpt": "上述 安排系结合公司现阶段经营发展需求及实际控制人管理专长作出，有助于提升决策与执行效率， 符合公司当前发展战略及经营管理需要。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "shareholder_structure-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "shareholder_structure-0",
+          "end_pos": 182,
+          "ordinal": 1,
+          "start_pos": 118,
+          "text": "上述 安排系结合公司现阶段经营发展需求及实际控制人管理专长作出，有助于提升决策与执行效率， 符合公司当前发展战略及经营管理需要。",
+          "unit_id": "shareholder_structure-0:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    }
+  ],
+  "integrity": {
+    "card_count": 38,
+    "cards_sha256": "78f73cb751f098f6152b64cc4cc42f6809c720bef6ebcdea702f49cb6bcdad1f",
+    "payload_sha256": "d5c6f2e83845483f29927676cce61c847afc4c92ef54085ed6b1f2cb1e2911bc",
+    "producer_diagnostics_sha256": "af38cc3e12a5519ad473b3cdccaac6a2310f122f9fda13f6378d89baf03e0ead",
+    "source_unit_count": 40
+  },
+  "producer_diagnostics": {
+    "admission_invariant_violation": false,
+    "admitted_by_family": {
+      "business_structure": 8,
+      "financial_quality_explanation": 14,
+      "market_competition_outlook": 11,
+      "operating_progress": 2,
+      "technology_product_progress": 3
+    },
+    "argument_complete_counts": {
+      "atomic": 26,
+      "complete": 12
+    },
+    "candidate_explosion": false,
+    "candidate_explosion_block_ids": [],
+    "candidates_by_family": {
+      "business_structure": 8,
+      "financial_quality_explanation": 14,
+      "market_competition_outlook": 11,
+      "operating_progress": 2,
+      "technology_product_progress": 3
+    },
+    "cards": [
+      {
+        "card_id": "annual-argument:b3fa51cd0230b9b41962",
+        "fact_anchors": [
+          "工艺",
+          "研发",
+          "升级"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3311ffe0a75a8c31b781",
+        "fact_anchors": [
+          "TIM1",
+          "芯片"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:afb67093963306df6e86",
+        "fact_anchors": [
+          "营业收入",
+          "现金流",
+          "主要系"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "cash_flow_capex_table-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:52614cace231e07b741c",
+        "fact_anchors": [
+          "营业收入",
+          "营业成本",
+          "主要系"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "cash_flow_capex_table-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3e703683431c051d0872",
+        "fact_anchors": [
+          "销售费用",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "cash_flow_capex_table-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f68ac95a613eb285ce54",
+        "fact_anchors": [
+          "管理费用",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "cash_flow_capex_table-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3ca645182930dae86246",
+        "fact_anchors": [
+          "财务费用",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "cash_flow_capex_table-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5c8fee2774f2c8779444",
+        "fact_anchors": [
+          "现金流",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "cash_flow_capex_table-0:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:7dae12c2c858bd22874b",
+        "fact_anchors": [
+          "业务",
+          "产品",
+          "服务"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:b4c54ce7a330177d17fd",
+        "fact_anchors": [
+          "产品",
+          "应用",
+          "服务"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u1",
+          "product_capacity_profile-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:aa4afc82dedd35c2cff3",
+        "fact_anchors": [
+          "研发",
+          "验证",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:22a95dbd857a5e788a98",
+        "fact_anchors": [
+          "产品",
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-1:u1",
+          "product_capacity_profile-1:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f6d1ff675080aff60a43",
+        "fact_anchors": [
+          "2025",
+          "战略"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "product_capacity_profile-1:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:9fb12aef8fe52665bbd7",
+        "fact_anchors": [
+          "产品",
+          "服务"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-1:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:d01842a06a6b2f7d469c",
+        "fact_anchors": [
+          "服务"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-1:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:7e69f4db973529c9325a",
+        "fact_anchors": [
+          "未来，先进封装占比将逐步超越传统封装，先进封装技"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "market_demand_outlook-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:658f9c902541ad90f7a3",
+        "fact_anchors": [
+          "市场",
+          "竞争",
+          "份额"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "market_demand_outlook-0:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:dccfeb2154087e4e0589",
+        "fact_anchors": [
+          "2025",
+          "行业",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "market_demand_outlook-1:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:ae9a3f0cb9093b4b3e1a",
+        "fact_anchors": [
+          "2026",
+          "2032",
+          "15%",
+          "行业",
+          "市场",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "market_demand_outlook-1:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:1013ffed891aa9bba07d",
+        "fact_anchors": [
+          "51%",
+          "市场",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "market_demand_outlook-1:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:6f6255a45b471967e86c",
+        "fact_anchors": [
+          "战略"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "future_strategy-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:7ac44fec5b5eff2d856f",
+        "fact_anchors": [
+          "需求",
+          "竞争",
+          "战略"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "future_strategy-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:18ee07eb61b2f34e4fb1",
+        "fact_anchors": [
+          "48.16%",
+          "营收"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:00082eec70ab1f0b2e4c",
+        "fact_anchors": [
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:48c66422854655eb7aaa",
+        "fact_anchors": [
+          "18.06%",
+          "营收"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:08ab5096127f36a741d5",
+        "fact_anchors": [
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:d9e2ed91a3620f7f3e58",
+        "fact_anchors": [
+          "20.03%",
+          "毛利率",
+          "毛利",
+          "营收"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-1:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a5d92d36d2d4180805f0",
+        "fact_anchors": [
+          "报告期",
+          "收入",
+          "增长"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:operating_progress",
+        "source_unit_ids": [
+          "profitability_commentary-1:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c81ee7a7123369301319",
+        "fact_anchors": [
+          "25.64%",
+          "营收",
+          "受",
+          "影响"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-1:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5eda4383e9feed86acdc",
+        "fact_anchors": [
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-1:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e6faf9bf3fac21809c32",
+        "fact_anchors": [
+          "450.91%",
+          "89.84%",
+          "报告期",
+          "销量",
+          "产量"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:operating_progress",
+        "source_unit_ids": [
+          "profitability_commentary-1:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f5c89d97af9d2646446b",
+        "fact_anchors": [
+          "32.65%",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "segment_table-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a7d9bbb8e38da07ec07f",
+        "fact_anchors": [
+          "如果国家有关高新 技术企业等税收优惠的法律、法规"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "ar_aging_note-0:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3185a4abde370e52a235",
+        "fact_anchors": [
+          "产品",
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_model-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:185177899678e6edbffe",
+        "fact_anchors": [
+          "产品",
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_model-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3e3afd911010dee77f4f",
+        "fact_anchors": [
+          "行业"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "industry_outlook-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:277d4ee2662ab406318a",
+        "fact_anchors": [
+          "产品",
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "industry_outlook-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:99f6a52acc89009e9b6d",
+        "fact_anchors": [
+          "需求",
+          "战略"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "shareholder_structure-0:u1"
+        ]
+      }
+    ],
+    "missing_families": [],
+    "rejection_counts": {
+      "boilerplate": 119,
+      "incomplete": 21,
+      "invalid_unit": 0,
+      "no_anchor": 45,
+      "ocr_damage": 32,
+      "reused_source_units": 0,
+      "table_noise": 18
+    },
+    "source_blocks_seen": 48,
+    "source_unit_decisions": [
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "financial_summary_table-0",
+        "source_order": 0,
+        "source_text_hash": "7591ef46ddfe2ee01705e61b0c55e19436fe2f964f05f88f0a85b3ca724e8618",
+        "source_unit_id": "financial_summary_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "segment_margin_table-0",
+        "source_order": 0,
+        "source_text_hash": "9e241ba647565d56a9ac6fb1b2d7e2cbd5a0e4dfc75ce3250429c6db0c9b733a",
+        "source_unit_id": "segment_margin_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "customer_supplier_table-0",
+        "source_order": 0,
+        "source_text_hash": "53f236d5737f02c395336767a986f75a99c2960255e7cc72cecdd847cac57a01",
+        "source_unit_id": "customer_supplier_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "customer_supplier_table-0",
+        "source_order": 1,
+        "source_text_hash": "6237e2eabc553edaff663c37769ecb9fce026b30e4a6215346538a4947deaa4b",
+        "source_unit_id": "customer_supplier_table-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "customer_supplier_table-0",
+        "source_order": 2,
+        "source_text_hash": "da6eaa73f15caa22a8d274bbaf0b29e0a6b0ec9bbe08acdc3b6e2cff11ac6e9a",
+        "source_unit_id": "customer_supplier_table-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "supplier_concentration_table-0",
+        "source_order": 0,
+        "source_text_hash": "41e1aa1411775f27801e5cce2fa6444f793e360efa1f898583e55e423d516cf9",
+        "source_unit_id": "supplier_concentration_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "supplier_concentration_table-0",
+        "source_order": 1,
+        "source_text_hash": "045ffdc6d534d72161f3fd269f2840c5cb455313145fb9dd41a6b3dfde0760de",
+        "source_unit_id": "supplier_concentration_table-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "production_sales_inventory_table-0",
+        "source_order": 0,
+        "source_text_hash": "1db5164c9c53a0850ffef1f0c80a3dfbc69ce2682663422e444adee09e34c6d5",
+        "source_unit_id": "production_sales_inventory_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_investment_table-0",
+        "source_order": 0,
+        "source_text_hash": "6bffe17f4d87ee3a98d530eeaf705f1a240602a5524bd3ab9235e68aa2430e8c",
+        "source_unit_id": "rd_investment_table-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b3fa51cd0230b9b41962"
+        ],
+        "source_block_id": "rd_product_progress-0",
+        "source_order": 0,
+        "source_text_hash": "3f023e1febc2f0cabf0b326b6499da992af916fb6351becdb0513b0e6bdf5523",
+        "source_unit_id": "rd_product_progress-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3311ffe0a75a8c31b781"
+        ],
+        "source_block_id": "rd_product_progress-0",
+        "source_order": 1,
+        "source_text_hash": "e4ea35b5ac38ea25a94d91e6f02670748f816d9f9b29b99f6b2f3b9fa64f7f06",
+        "source_unit_id": "rd_product_progress-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-0",
+        "source_order": 2,
+        "source_text_hash": "bfbe78d46c3f306779671a07f49170c6c6c8912671f27e4676077024a04d4faa",
+        "source_unit_id": "rd_product_progress-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-1",
+        "source_order": 0,
+        "source_text_hash": "cea9bb527b1caa5242138919986684b4a0090001c0906a86f1dda0318f8d2078",
+        "source_unit_id": "rd_product_progress-1:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-1",
+        "source_order": 1,
+        "source_text_hash": "92a489bc90b3f7795be7538319415493726daae055a82833131766ffa2d35089",
+        "source_unit_id": "rd_product_progress-1:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-1",
+        "source_order": 2,
+        "source_text_hash": "dd02f4ce7abdaad491d9886cefdcf040ec70e588cbefdb5fd0bab418fcfe9102",
+        "source_unit_id": "rd_product_progress-1:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-2",
+        "source_order": 0,
+        "source_text_hash": "a12eb273399413cd7096df72ff68b3fb51ba6a80bc35235001078fb1baf622ca",
+        "source_unit_id": "rd_product_progress-2:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-2",
+        "source_order": 1,
+        "source_text_hash": "9b099209453e9347c187b9f41cbf1e51943e00482e2869d3cb6067cc6a2d0f4d",
+        "source_unit_id": "rd_product_progress-2:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-2",
+        "source_order": 2,
+        "source_text_hash": "efa97f1a7eed5d80ddccc71b4df70d9a3267b701e02b7892964bb7423f21129d",
+        "source_unit_id": "rd_product_progress-2:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-2",
+        "source_order": 3,
+        "source_text_hash": "9c5c4ad54631faa96ac98697fd3e45b6dae82a117a1bd5465c24806247ef119b",
+        "source_unit_id": "rd_product_progress-2:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-2",
+        "source_order": 4,
+        "source_text_hash": "6b8de36f5b9cbf13adecffdf1ad7ab2ba970df4d815fdf9e92ab96801ba4facb",
+        "source_unit_id": "rd_product_progress-2:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "rd_product_progress-2",
+        "source_order": 5,
+        "source_text_hash": "db44336f00bb0eff1971ef79bffed85fc51c962a07982f65750ea21ce17403e4",
+        "source_unit_id": "rd_product_progress-2:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:afb67093963306df6e86"
+        ],
+        "source_block_id": "cash_flow_capex_table-0",
+        "source_order": 0,
+        "source_text_hash": "950fe6283979515c8dfbc674102bdbe157b4f552083719a61d0062ffc28c5689",
+        "source_unit_id": "cash_flow_capex_table-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:52614cace231e07b741c"
+        ],
+        "source_block_id": "cash_flow_capex_table-0",
+        "source_order": 1,
+        "source_text_hash": "28cb599d555c98a567e118d218b628a28c710d617792a6c2bd3326d1bed9d037",
+        "source_unit_id": "cash_flow_capex_table-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3e703683431c051d0872"
+        ],
+        "source_block_id": "cash_flow_capex_table-0",
+        "source_order": 2,
+        "source_text_hash": "3adfdbf9b314e1571e5709c7fc839cad2e5dd8b6cf9957e80ac519b32995e8a3",
+        "source_unit_id": "cash_flow_capex_table-0:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f68ac95a613eb285ce54"
+        ],
+        "source_block_id": "cash_flow_capex_table-0",
+        "source_order": 3,
+        "source_text_hash": "fc76506f98df7501bd12b435e1f46dd3c7d548762526dd1321a5caec6b6e20de",
+        "source_unit_id": "cash_flow_capex_table-0:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3ca645182930dae86246"
+        ],
+        "source_block_id": "cash_flow_capex_table-0",
+        "source_order": 4,
+        "source_text_hash": "60fbf5f9139e71ed128af45db4c66eacc115927398af9f32c750bdd955ef758c",
+        "source_unit_id": "cash_flow_capex_table-0:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5c8fee2774f2c8779444"
+        ],
+        "source_block_id": "cash_flow_capex_table-0",
+        "source_order": 5,
+        "source_text_hash": "0aeadd6123327904cc9f00d11aa188c2765816990f3d5d5bf385d31fbf18e815",
+        "source_unit_id": "cash_flow_capex_table-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "asset_impairment_note-0",
+        "source_order": 0,
+        "source_text_hash": "c40495470e7a5d08c638c540407b58fb88765ea62aa1d06bb57e8677ac8dca3d",
+        "source_unit_id": "asset_impairment_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "audit_key_matters-0",
+        "source_order": 0,
+        "source_text_hash": "861eab30a8a30324c93fe531b5a9f6781428d99303d9b49ce01f7fb6310ab524",
+        "source_unit_id": "audit_key_matters-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "audit_key_matters-0",
+        "source_order": 1,
+        "source_text_hash": "06ca5edd0a2bfbf76c2e50e9dd4d33f696282061dfe4e6664e6b9dceaada0265",
+        "source_unit_id": "audit_key_matters-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "audit_key_matters-0",
+        "source_order": 2,
+        "source_text_hash": "67bf99bfe5ee670f1d6834fbe3359346e842e7e57ec55945722fa604ccb72bd7",
+        "source_unit_id": "audit_key_matters-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "governance_dissent-0",
+        "source_order": 0,
+        "source_text_hash": "03a626e97b99a5292f91ac3e5d8f8991691acba6b7d26f375528807c57c8bf57",
+        "source_unit_id": "governance_dissent-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:7dae12c2c858bd22874b"
+        ],
+        "source_block_id": "product_capacity_profile-0",
+        "source_order": 0,
+        "source_text_hash": "ca2c15806e119d6bb3391d602d4c13e8c542b93e192e47089cd925cd9609b93a",
+        "source_unit_id": "product_capacity_profile-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b4c54ce7a330177d17fd"
+        ],
+        "source_block_id": "product_capacity_profile-0",
+        "source_order": 1,
+        "source_text_hash": "6c24d3b6a5b4da627ebebd2f8f6f3f29d08e709b688139dce8d43e4e2a4d996e",
+        "source_unit_id": "product_capacity_profile-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b4c54ce7a330177d17fd"
+        ],
+        "source_block_id": "product_capacity_profile-0",
+        "source_order": 2,
+        "source_text_hash": "b9f7609e5dce1340cc8aa5e3637971722782bb451f60cd8ae05c133483f50140",
+        "source_unit_id": "product_capacity_profile-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-0",
+        "source_order": 3,
+        "source_text_hash": "ffe2483f4fbb82465306b420b885681f1aca4b56f97f8e91a50964e994e9a3c3",
+        "source_unit_id": "product_capacity_profile-0:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:aa4afc82dedd35c2cff3"
+        ],
+        "source_block_id": "product_capacity_profile-0",
+        "source_order": 4,
+        "source_text_hash": "fd8ea3db26d733cedab6dd41436be7640b918a83afe769be3d5d86e0c9f3abb9",
+        "source_unit_id": "product_capacity_profile-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 0,
+        "source_text_hash": "6c7336401e866a708b1a645ecd5e0ff198c1d6d64637f86760082d9ac08fb5ae",
+        "source_unit_id": "product_capacity_profile-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:22a95dbd857a5e788a98"
+        ],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 1,
+        "source_text_hash": "a8361b6b00a66eccd5694e57b18673a6eb8c14d719456a08e4e5993803da3dc0",
+        "source_unit_id": "product_capacity_profile-1:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:22a95dbd857a5e788a98"
+        ],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 2,
+        "source_text_hash": "658a7b7f44cf36e4a3e9a412238d7ea3eef8e509dbb5ba67428a09c6602aa62e",
+        "source_unit_id": "product_capacity_profile-1:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 3,
+        "source_text_hash": "03834cb20acf79523e6dbb1290ebe01056ce506bc60c030125ed892cb202c62c",
+        "source_unit_id": "product_capacity_profile-1:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f6d1ff675080aff60a43"
+        ],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 4,
+        "source_text_hash": "5014ffc180bbab7c74978ae9c11301d682cbe10b46bf56c4c7084d6790d8bec9",
+        "source_unit_id": "product_capacity_profile-1:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 5,
+        "source_text_hash": "1ee04ad8185e0c53ef4fc2fe8adec7287eaf482b46ef860857f4bfa88ae1d8c9",
+        "source_unit_id": "product_capacity_profile-1:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:9fb12aef8fe52665bbd7"
+        ],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 6,
+        "source_text_hash": "efd0d18ea2ebbefbc350088754e44b4390a316203f21593a76b814017ad41d9c",
+        "source_unit_id": "product_capacity_profile-1:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 7,
+        "source_text_hash": "540c010836ebb64a404ef529462579dee63e9c6851049d5fc1b539cbd69ba73a",
+        "source_unit_id": "product_capacity_profile-1:u7"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:d01842a06a6b2f7d469c"
+        ],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 8,
+        "source_text_hash": "eefd9efe4ad734eb0a8719f8dcfcd62d25fa86b88175e06ba54d4d006204ee11",
+        "source_unit_id": "product_capacity_profile-1:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-1",
+        "source_order": 9,
+        "source_text_hash": "786829cc27041dec07714c4554d26ce39b36aa5d90baf45b309b3921ff51c4d3",
+        "source_unit_id": "product_capacity_profile-1:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "product_capacity_profile-2",
+        "source_order": 0,
+        "source_text_hash": "6ef395b4a51ee0e18a251d8d3a50a96b41fc25dac5a0f4397bbea44ddeb7e6f1",
+        "source_unit_id": "product_capacity_profile-2:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_market_view-0",
+        "source_order": 0,
+        "source_text_hash": "b92f7d17230b030e3ec11f3364b1762f5b7aa7e5c0ff47a9d8b1cf0d78db8e6a",
+        "source_unit_id": "management_market_view-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_market_view-0",
+        "source_order": 1,
+        "source_text_hash": "0d8ad2fa5642ac4e5a38feb398a1eee3c03af9a3f4df981ce9ae452345bbb138",
+        "source_unit_id": "management_market_view-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "market_demand_outlook-0",
+        "source_order": 0,
+        "source_text_hash": "e1804a66fdf7389f040681248ee3c8cb99a247fe5ee52c65dcef478485e5e14d",
+        "source_unit_id": "market_demand_outlook-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "market_demand_outlook-0",
+        "source_order": 1,
+        "source_text_hash": "98cb1b640dec6fa3d5d8005610738707793cabae5d6a75af0d339d619a1074e1",
+        "source_unit_id": "market_demand_outlook-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "market_demand_outlook-0",
+        "source_order": 2,
+        "source_text_hash": "be84d188b50e414aa4d50cfe397fbff03b22baa9a5ebe529682e8af269e18573",
+        "source_unit_id": "market_demand_outlook-0:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:7e69f4db973529c9325a"
+        ],
+        "source_block_id": "market_demand_outlook-0",
+        "source_order": 3,
+        "source_text_hash": "786e37e70d6bb8abdc78e02bb39563d20c3923f0973378190eb46aa6209b3d3e",
+        "source_unit_id": "market_demand_outlook-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "market_demand_outlook-0",
+        "source_order": 4,
+        "source_text_hash": "98892b4c0104cc2661ecf975ab2339782995078604843fc61c60c4614a4dc60f",
+        "source_unit_id": "market_demand_outlook-0:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:658f9c902541ad90f7a3"
+        ],
+        "source_block_id": "market_demand_outlook-0",
+        "source_order": 5,
+        "source_text_hash": "d904a416147fa16b7765df93aacb3441e7f22a5cbfedd64ab0bfeb7d233353fb",
+        "source_unit_id": "market_demand_outlook-0:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:dccfeb2154087e4e0589"
+        ],
+        "source_block_id": "market_demand_outlook-1",
+        "source_order": 0,
+        "source_text_hash": "7f5b3c16415a50324f0bc9590c674e568364288af4fbe31b49f914ebe8e89235",
+        "source_unit_id": "market_demand_outlook-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:ae9a3f0cb9093b4b3e1a"
+        ],
+        "source_block_id": "market_demand_outlook-1",
+        "source_order": 1,
+        "source_text_hash": "24242591ddebe5d1199afb4fd3c341163636b2d6b3089065a795342e4e193777",
+        "source_unit_id": "market_demand_outlook-1:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:1013ffed891aa9bba07d"
+        ],
+        "source_block_id": "market_demand_outlook-1",
+        "source_order": 2,
+        "source_text_hash": "8792f10aeac6e48e446e79ad32187b5b1b420f72d2c138e33676d6451e85fa48",
+        "source_unit_id": "market_demand_outlook-1:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "market_demand_outlook-1",
+        "source_order": 3,
+        "source_text_hash": "3b6ef9b682b0a7c2c0ddedec27be39705929bb0624129ec91d1fa1a8d88dc4c3",
+        "source_unit_id": "market_demand_outlook-1:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "competitive_position-0",
+        "source_order": 0,
+        "source_text_hash": "9b9f6df3cdc025025c75d5c07b9ae5a5e0a35f26fc0db38428bd2f3f4b5cb0ce",
+        "source_unit_id": "competitive_position-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "competitive_position-0",
+        "source_order": 1,
+        "source_text_hash": "efa97f1a7eed5d80ddccc71b4df70d9a3267b701e02b7892964bb7423f21129d",
+        "source_unit_id": "competitive_position-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "competitive_position-0",
+        "source_order": 2,
+        "source_text_hash": "9c5c4ad54631faa96ac98697fd3e45b6dae82a117a1bd5465c24806247ef119b",
+        "source_unit_id": "competitive_position-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "competitive_position-0",
+        "source_order": 3,
+        "source_text_hash": "6b8de36f5b9cbf13adecffdf1ad7ab2ba970df4d815fdf9e92ab96801ba4facb",
+        "source_unit_id": "competitive_position-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "competitive_position-0",
+        "source_order": 4,
+        "source_text_hash": "db44336f00bb0eff1971ef79bffed85fc51c962a07982f65750ea21ce17403e4",
+        "source_unit_id": "competitive_position-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "competitive_position-0",
+        "source_order": 5,
+        "source_text_hash": "1527682f2e9a1ba152e72cbce45fbe1136d391f7bf74633da3a92de85edb0189",
+        "source_unit_id": "competitive_position-0:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:6f6255a45b471967e86c"
+        ],
+        "source_block_id": "future_strategy-0",
+        "source_order": 0,
+        "source_text_hash": "90dbd7f59ddf187090d1b2e759a1fdea0babe6f76543463ebf8532a7467a660c",
+        "source_unit_id": "future_strategy-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:7ac44fec5b5eff2d856f"
+        ],
+        "source_block_id": "future_strategy-0",
+        "source_order": 1,
+        "source_text_hash": "2f45508955eedcb442c375d815f9cac0914364275d37cb844f8cc47e09e62171",
+        "source_unit_id": "future_strategy-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "profitability_commentary-0",
+        "source_order": 0,
+        "source_text_hash": "f604bb9482401073a899532ff62012d814aca3d91e88f0003e33b86cbfde1650",
+        "source_unit_id": "profitability_commentary-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:18ee07eb61b2f34e4fb1"
+        ],
+        "source_block_id": "profitability_commentary-0",
+        "source_order": 1,
+        "source_text_hash": "b679b3157f52ae9cf5e026656bedb52322a0b724e2472d9a64ad49c29fbfc229",
+        "source_unit_id": "profitability_commentary-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:00082eec70ab1f0b2e4c"
+        ],
+        "source_block_id": "profitability_commentary-0",
+        "source_order": 2,
+        "source_text_hash": "2aa5a995f2564d91bebd610dd4ef74707ce172dcf925258bcb6fe9d2c6f9a222",
+        "source_unit_id": "profitability_commentary-0:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:48c66422854655eb7aaa"
+        ],
+        "source_block_id": "profitability_commentary-0",
+        "source_order": 3,
+        "source_text_hash": "9987f30de681d45fe9e1e91592f7a910597adf9c5b482927c999663e9932329f",
+        "source_unit_id": "profitability_commentary-0:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:08ab5096127f36a741d5"
+        ],
+        "source_block_id": "profitability_commentary-0",
+        "source_order": 4,
+        "source_text_hash": "5dbbe01f187edaada39927d82a6a34027bb5629a451e9c7c9f452ff1b3ccfe85",
+        "source_unit_id": "profitability_commentary-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 0,
+        "source_text_hash": "e083904ba53fbb48868105bdd5d14c3428be8e2a3faf97662f7c7ffdb3403f99",
+        "source_unit_id": "profitability_commentary-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:d9e2ed91a3620f7f3e58"
+        ],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 1,
+        "source_text_hash": "cbeb142ceea9ee4f5d061b98e17f14d12df2839ee8171173571efa0ed37f448c",
+        "source_unit_id": "profitability_commentary-1:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a5d92d36d2d4180805f0"
+        ],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 2,
+        "source_text_hash": "98cbaaa82c9be87f27435c803f3689045555fd13f3ae6e9e801bb3da1c766481",
+        "source_unit_id": "profitability_commentary-1:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c81ee7a7123369301319"
+        ],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 3,
+        "source_text_hash": "362a641f3f286300ab42e75a2f23999c0fb98113e473cea60eb9775dd0e1fcf7",
+        "source_unit_id": "profitability_commentary-1:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 4,
+        "source_text_hash": "279b1aea03ab8230ef88dc3d2e1af9f0a2bd927bddf044c7205aabf5ffd7686d",
+        "source_unit_id": "profitability_commentary-1:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5eda4383e9feed86acdc"
+        ],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 5,
+        "source_text_hash": "3579538c245a7ce86e0d84d2ec7fe630221b7e8f94daaaaf040551dcd48677fa",
+        "source_unit_id": "profitability_commentary-1:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e6faf9bf3fac21809c32"
+        ],
+        "source_block_id": "profitability_commentary-1",
+        "source_order": 6,
+        "source_text_hash": "1db5164c9c53a0850ffef1f0c80a3dfbc69ce2682663422e444adee09e34c6d5",
+        "source_unit_id": "profitability_commentary-1:u6"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f5c89d97af9d2646446b"
+        ],
+        "source_block_id": "segment_table-0",
+        "source_order": 0,
+        "source_text_hash": "2bd0acc8a5782bbc134f86a145814d95d130c75f689a11a3fc0baaa1351fea51",
+        "source_unit_id": "segment_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "region_table-0",
+        "source_order": 0,
+        "source_text_hash": "b40b276912db79d4211b6d4c87c8b595fdc3894c739585ea3705688fe99dec29",
+        "source_unit_id": "region_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 0,
+        "source_text_hash": "ae5339d6728976b5356ccdc9f824cd43d96fda7e414a40110de0f40f6e895ebb",
+        "source_unit_id": "ar_aging_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 1,
+        "source_text_hash": "e465b86e2f273e38d9d22dd7fa8a75c1afc9718a12eb3579c3cfc2f4630068b7",
+        "source_unit_id": "ar_aging_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 2,
+        "source_text_hash": "bcd11159e7b73cca500d00854eae1f15e0c8f6b73510af5b2a7a72a6b5cf4b57",
+        "source_unit_id": "ar_aging_note-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 3,
+        "source_text_hash": "fa69357600ab93e36fecc51e024418db3638276963da24c3f113d7e7955d7af6",
+        "source_unit_id": "ar_aging_note-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 4,
+        "source_text_hash": "eb12e31d9a4e6d23c410e588a35730f41a9980ac6046bb2c42e07c520bfbd4e5",
+        "source_unit_id": "ar_aging_note-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 5,
+        "source_text_hash": "b823ecb6f4e3fcfe63d5c577d49aaa0c0f861d70948cb4c8c69ed01b2ce9ca19",
+        "source_unit_id": "ar_aging_note-0:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a7d9bbb8e38da07ec07f"
+        ],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 6,
+        "source_text_hash": "5a44d9c203c2ac82e7597f0799701a5b4d5da3b350121eefcd5910605fa0736d",
+        "source_unit_id": "ar_aging_note-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 7,
+        "source_text_hash": "9158adb35e8f3e8c58eb02320bd7ee741198497cdb0f896e114b80bbec09ac81",
+        "source_unit_id": "ar_aging_note-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 8,
+        "source_text_hash": "a98690d1b108eb46fa771d317821ea29769dad9a8650cb753aca6ccfcd096b0d",
+        "source_unit_id": "ar_aging_note-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 9,
+        "source_text_hash": "4def8fea731ad5f1bcd49d0470a5d4874e1785ee2debde53f53380badcf41836",
+        "source_unit_id": "ar_aging_note-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 10,
+        "source_text_hash": "b2214c6939e905b324b988fedc1d0f98137090139bc2e241c1926cf473099296",
+        "source_unit_id": "ar_aging_note-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 11,
+        "source_text_hash": "3a6783301325a41030b87b8a70eac85570197274446bd87bdc46e4842d2b76ff",
+        "source_unit_id": "ar_aging_note-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 12,
+        "source_text_hash": "b21585abe74b024458f6146dcd6032fde943d13fcec6ca53f30f71ae1c9ed38e",
+        "source_unit_id": "ar_aging_note-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "ar_aging_note-0",
+        "source_order": 13,
+        "source_text_hash": "8dc232056721276ba136621cf2e2cb2ce5072a3e1b71d01187ee53f70d4040dd",
+        "source_unit_id": "ar_aging_note-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "bills_receivable_note-0",
+        "source_order": 0,
+        "source_text_hash": "be403f2cd62638da3c92ba0dde6371170deb24bc02a959b33cb1b9a1ac404e43",
+        "source_unit_id": "bills_receivable_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 0,
+        "source_text_hash": "cd416289c187adca8d0c006bc05fded245194644acd21239e1a59a80f86c01b6",
+        "source_unit_id": "inventory_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 1,
+        "source_text_hash": "be429df4fcaf0ed5f03a940efccda3eaa8cbbae368aef7641928533f63806fde",
+        "source_unit_id": "inventory_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 2,
+        "source_text_hash": "009508c8785a4165dfacfc29b978980a17d0ad1b3cee7355554ff9f0e94c4a85",
+        "source_unit_id": "inventory_note-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 3,
+        "source_text_hash": "73302371ab3094b9fb50a9bdc256808a37afe0e30cb827b0a82e97bc8ad2eff9",
+        "source_unit_id": "inventory_note-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 4,
+        "source_text_hash": "de0ee22384837227af941512fc9c6d185693c1c9438230ca7b8273b1bfe51797",
+        "source_unit_id": "inventory_note-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 5,
+        "source_text_hash": "fb3a8c0cf534193bcab36e44ab2430a85a8da2d661519602fbf65a97c6899696",
+        "source_unit_id": "inventory_note-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 6,
+        "source_text_hash": "3b99b4621724a355cd285a138be49428020c40007d0d3580f8a83f93237f627b",
+        "source_unit_id": "inventory_note-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 7,
+        "source_text_hash": "84c57dce74aa259abb5938f2bd18378ca0d20e5083a977bc14fe689c245b575b",
+        "source_unit_id": "inventory_note-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "definition_or_hash",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 8,
+        "source_text_hash": "f0ee30bfb18a2cfdbc17b319bf9d8e2528c103f5d5c2b2a70c7c6ea3d6076e75",
+        "source_unit_id": "inventory_note-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "definition_or_hash",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 9,
+        "source_text_hash": "aff8074557964bbd8058403654abdca7b9513f8fc27cbacf8c38b5ed5bad3f30",
+        "source_unit_id": "inventory_note-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 10,
+        "source_text_hash": "abc60cccb9d7982fe3d2b0e5c415602dfb20311f699fdf5c60ffecde8aaf5238",
+        "source_unit_id": "inventory_note-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 11,
+        "source_text_hash": "89f1b6f9e95852127fdbda277cc2d594394703b825d9631125dd7b1b8bc5d79f",
+        "source_unit_id": "inventory_note-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 12,
+        "source_text_hash": "59c91e4a749ee0a6941ae259770ee25f47561831dff937673fed8e53571a6c70",
+        "source_unit_id": "inventory_note-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 13,
+        "source_text_hash": "2c0a2613a7d4554261e6eeca563fac9a644272850a79800f14503362997c4b4e",
+        "source_unit_id": "inventory_note-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 14,
+        "source_text_hash": "59c91e4a749ee0a6941ae259770ee25f47561831dff937673fed8e53571a6c70",
+        "source_unit_id": "inventory_note-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 15,
+        "source_text_hash": "f77209ef968fba884631cf2c471b6be916de7bb73026330558ac6e4554aeb750",
+        "source_unit_id": "inventory_note-0:u15"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 16,
+        "source_text_hash": "e857556a86d6b6ce4ef920c12e5d1166359b54abebc0a3d93e868e456a29b17b",
+        "source_unit_id": "inventory_note-0:u16"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 17,
+        "source_text_hash": "59c91e4a749ee0a6941ae259770ee25f47561831dff937673fed8e53571a6c70",
+        "source_unit_id": "inventory_note-0:u17"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 18,
+        "source_text_hash": "bcebebdb70dddea979c5a360c6857a8582aee461e17e56efef1de8cfbfc5f949",
+        "source_unit_id": "inventory_note-0:u18"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 19,
+        "source_text_hash": "ff499249701c56d3f7f9ee1dc1defcc01bbf575925dbd39569308f550a4ee98a",
+        "source_unit_id": "inventory_note-0:u19"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 20,
+        "source_text_hash": "5f0725cf86bff005e6c900681f84b8d700d8ddd7ceafa55f1f10c52f8f55d1d8",
+        "source_unit_id": "inventory_note-0:u20"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "inventory_note-0",
+        "source_order": 21,
+        "source_text_hash": "933be6bfa78c25a32843bd690d08a55625fb954917dcdc35237b44decda382a5",
+        "source_unit_id": "inventory_note-0:u21"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 0,
+        "source_text_hash": "370200214473c4dd1674017e5997edd39f032b730d3200a55b870430a8589c5c",
+        "source_unit_id": "capex_cip_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 1,
+        "source_text_hash": "289fe2da4a85515b774bd8006763fd8ba696ecbeaca86a583714089aa56c833a",
+        "source_unit_id": "capex_cip_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 2,
+        "source_text_hash": "447cb74c37503a70416257dc1b1e9c94b88b9f871450f17480209cf26f128b59",
+        "source_unit_id": "capex_cip_note-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 3,
+        "source_text_hash": "aa03c4579ba629ac2d80ee56c64152221e3d8555eea44b3e2d97eb5a53de775f",
+        "source_unit_id": "capex_cip_note-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 4,
+        "source_text_hash": "99c833f0e88ff3e7b7edcb1734a6a0816cfb55b59adb0507a40f88a6d53c058e",
+        "source_unit_id": "capex_cip_note-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 5,
+        "source_text_hash": "dfaca58aed565d0bb41a9a6c64b896415c2a5aaee9a6e4ce3d3b4ef1052b1a83",
+        "source_unit_id": "capex_cip_note-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 6,
+        "source_text_hash": "cacb0fd7dcb9bf241a9f8c86329518877a7a90bbcc7ca6bbe2cde3c46d86946e",
+        "source_unit_id": "capex_cip_note-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 7,
+        "source_text_hash": "b3af62e2c14a59df9de2d193325c8f20106173cd40a1adea497ad1a314477b30",
+        "source_unit_id": "capex_cip_note-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 8,
+        "source_text_hash": "36fb667d86b20fe8eb423b4b79f295a2c63fe76c9194ca66350a0dcd80cbfbf2",
+        "source_unit_id": "capex_cip_note-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 9,
+        "source_text_hash": "d53b51f4be92799fe71f092f31d2c689b3dca6d8ce2c350fd7118ed2f08d3b5e",
+        "source_unit_id": "capex_cip_note-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 10,
+        "source_text_hash": "f9aa4223ccc5545a99d37d3d4b313439ba0c832557a08d5e7d3f96d0afc31d7b",
+        "source_unit_id": "capex_cip_note-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 11,
+        "source_text_hash": "27cdc48e890b2ea89d4349cfff98e152145e00944ffe60cc477615ceb43792b6",
+        "source_unit_id": "capex_cip_note-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 12,
+        "source_text_hash": "c57420d221c58787a8e6b7afc58f65638b38169ba9838a6306f8e6bf67881fb0",
+        "source_unit_id": "capex_cip_note-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 13,
+        "source_text_hash": "a8e57055cb57455f63684eb6e9c71556563394eec56605a33a8ed13fcf655cc4",
+        "source_unit_id": "capex_cip_note-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 14,
+        "source_text_hash": "a522be4fbeb822ac2f59a18c3542fa3a4ddae6718333c65e161247c0aae6ae8a",
+        "source_unit_id": "capex_cip_note-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "capex_cip_note-0",
+        "source_order": 15,
+        "source_text_hash": "63bb0d8fe6634d3362dafe8240c4cc78c78e059fbbb94df867f5aee642fed70a",
+        "source_unit_id": "capex_cip_note-0:u15"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "financial_assets_note-0",
+        "source_order": 0,
+        "source_text_hash": "8e434f4978604824597a90b069cd9d8276cf12bc047d79b1cfc60bd5b8e0916d",
+        "source_unit_id": "financial_assets_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "restricted_assets_note-0",
+        "source_order": 0,
+        "source_text_hash": "bf0cdb62331e460b4932a8fb50ca1e6eac23742956de3b6f3e4ae4fd3294db47",
+        "source_unit_id": "restricted_assets_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "restricted_assets_note-0",
+        "source_order": 1,
+        "source_text_hash": "71ef02ebb78c917d52da6dc66fb999352bad1618a0600a4d170f28ddf8c01cfc",
+        "source_unit_id": "restricted_assets_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "related_party_transactions-0",
+        "source_order": 0,
+        "source_text_hash": "061d8a68d58f4de85b452e0262edd4b153ebd28fa486c230dccabf86f4eef091",
+        "source_unit_id": "related_party_transactions-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "related_party_transactions-0",
+        "source_order": 1,
+        "source_text_hash": "4cbeb21cedfb5367bd555b3070a3287a27913b66fbb3257ce6f6343338746631",
+        "source_unit_id": "related_party_transactions-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 0,
+        "source_text_hash": "33f6952c453f39c36142a040b838c21731e5c1d2ea0e3f2ef7f6b466a217f42b",
+        "source_unit_id": "contingencies_litigation-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 1,
+        "source_text_hash": "933650d88b71b304ff79bbdf9e362fbb2797f3c184b71f8d8ee7aa7620238150",
+        "source_unit_id": "contingencies_litigation-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 2,
+        "source_text_hash": "e8964cfd07e8d7d16b84abd4b2bc0be8e0fa7682b633c8e35ae49a804de88d6b",
+        "source_unit_id": "contingencies_litigation-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 0,
+        "source_text_hash": "9777e746f3e6176ba9b81ea4f4f05aaf93382b18a6c991b8c4511916c223a0f3",
+        "source_unit_id": "subsequent_events-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 1,
+        "source_text_hash": "16b0e7467e4acfa962bc149fead21ffe115a2cba8cba42b56f28f1897b3417a4",
+        "source_unit_id": "subsequent_events-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 2,
+        "source_text_hash": "ae7764058797d881d7008de8ca25c5fd6c879aaec1ce60b0a7f126eda0187777",
+        "source_unit_id": "subsequent_events-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 3,
+        "source_text_hash": "a85184a97ba724d550d024e8dccba2da2db95e90bf4d1d5f80fe96e17ea2fecf",
+        "source_unit_id": "subsequent_events-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 4,
+        "source_text_hash": "354523cd627dd57031d2ef6600fdcdf17919175e3f18c72b14e8556f3a0252b3",
+        "source_unit_id": "subsequent_events-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 5,
+        "source_text_hash": "81dd62c1d548647161a962e3107d9934cc1bb5f2b61100937899961f6bd35832",
+        "source_unit_id": "subsequent_events-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "subsequent_events-0",
+        "source_order": 6,
+        "source_text_hash": "11d0e9aaa61999efc16b9545cedc3e01ee6962fc272af2048821878674753fcd",
+        "source_unit_id": "subsequent_events-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "goodwill_note-0",
+        "source_order": 0,
+        "source_text_hash": "588ab37044be7fc799cc86ae0cd409164c204390ba2784607398fbee5cb2c465",
+        "source_unit_id": "goodwill_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "goodwill_note-0",
+        "source_order": 1,
+        "source_text_hash": "b2214c6939e905b324b988fedc1d0f98137090139bc2e241c1926cf473099296",
+        "source_unit_id": "goodwill_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "goodwill_note-0",
+        "source_order": 2,
+        "source_text_hash": "3a6783301325a41030b87b8a70eac85570197274446bd87bdc46e4842d2b76ff",
+        "source_unit_id": "goodwill_note-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "goodwill_note-0",
+        "source_order": 3,
+        "source_text_hash": "b21585abe74b024458f6146dcd6032fde943d13fcec6ca53f30f71ae1c9ed38e",
+        "source_unit_id": "goodwill_note-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "goodwill_note-0",
+        "source_order": 4,
+        "source_text_hash": "8dc232056721276ba136621cf2e2cb2ce5072a3e1b71d01187ee53f70d4040dd",
+        "source_unit_id": "goodwill_note-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 0,
+        "source_text_hash": "dfdacff9bd43737181e8692bbb62fe4b2e474066474e2f1aa951b9b7e1c121a1",
+        "source_unit_id": "government_grant_note-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 1,
+        "source_text_hash": "933650d88b71b304ff79bbdf9e362fbb2797f3c184b71f8d8ee7aa7620238150",
+        "source_unit_id": "government_grant_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 2,
+        "source_text_hash": "e8964cfd07e8d7d16b84abd4b2bc0be8e0fa7682b633c8e35ae49a804de88d6b",
+        "source_unit_id": "government_grant_note-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 0,
+        "source_text_hash": "e3667b14041cee5a93557c90bc4b404b8c9607e106529b77b694786d6931c0ca",
+        "source_unit_id": "business_overview-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 1,
+        "source_text_hash": "28cb599d555c98a567e118d218b628a28c710d617792a6c2bd3326d1bed9d037",
+        "source_unit_id": "business_overview-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 2,
+        "source_text_hash": "3adfdbf9b314e1571e5709c7fc839cad2e5dd8b6cf9957e80ac519b32995e8a3",
+        "source_unit_id": "business_overview-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 3,
+        "source_text_hash": "fc76506f98df7501bd12b435e1f46dd3c7d548762526dd1321a5caec6b6e20de",
+        "source_unit_id": "business_overview-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 4,
+        "source_text_hash": "60fbf5f9139e71ed128af45db4c66eacc115927398af9f32c750bdd955ef758c",
+        "source_unit_id": "business_overview-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 5,
+        "source_text_hash": "0aeadd6123327904cc9f00d11aa188c2765816990f3d5d5bf385d31fbf18e815",
+        "source_unit_id": "business_overview-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 6,
+        "source_text_hash": "06313185cbe403014f9f232e32dd3539f6fdbba2ecff56561f5e3fe8b7cbbf21",
+        "source_unit_id": "business_overview-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 7,
+        "source_text_hash": "8656a70dd448f04d9a96f14619e38e34e627f532ea0acc9515fca12dc1b126bf",
+        "source_unit_id": "business_overview-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 8,
+        "source_text_hash": "86f805470265c72562f1003cee4766f7cc76c67742416bedc36bb3b2025c6a56",
+        "source_unit_id": "business_overview-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 9,
+        "source_text_hash": "f98e7fac1fbae7177b76905e634f4761a8be306b6f039d958ed3c7fb984d15a1",
+        "source_unit_id": "business_overview-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 10,
+        "source_text_hash": "23b634c56ff3965dacae8b5bb54b8dcf512c2bc1184d1bf7d5694c41901a491e",
+        "source_unit_id": "business_overview-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "section_label",
+        "selected_by_card_ids": [],
+        "source_block_id": "business_overview-0",
+        "source_order": 11,
+        "source_text_hash": "5db97fa27357e702b079fb314e37cae90a3ae9b8dd60277991a6db336abb0b8b",
+        "source_unit_id": "business_overview-0:u11"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3185a4abde370e52a235"
+        ],
+        "source_block_id": "business_model-0",
+        "source_order": 0,
+        "source_text_hash": "7d3967141623fb21e8c30f3f492c480486c0db8d2ae4f42ca2a7d7997458c9ba",
+        "source_unit_id": "business_model-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:185177899678e6edbffe"
+        ],
+        "source_block_id": "business_model-0",
+        "source_order": 1,
+        "source_text_hash": "b427b00c9c6a31c8032e7d5b6a6ca1dca12cdaee6e71930c955b0b45bd12e1e3",
+        "source_unit_id": "business_model-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3e3afd911010dee77f4f"
+        ],
+        "source_block_id": "industry_outlook-0",
+        "source_order": 0,
+        "source_text_hash": "a5ad05493af0b0d7a7b5e3d29ba07a2734e1d6d3fe4b06ede8ca73d2ac299c97",
+        "source_unit_id": "industry_outlook-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:277d4ee2662ab406318a"
+        ],
+        "source_block_id": "industry_outlook-0",
+        "source_order": 1,
+        "source_text_hash": "b427b00c9c6a31c8032e7d5b6a6ca1dca12cdaee6e71930c955b0b45bd12e1e3",
+        "source_unit_id": "industry_outlook-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 0,
+        "source_text_hash": "7b83a02691156319120cd2eeb532f6234d4e3f7c792582230047242052a8e7bf",
+        "source_unit_id": "management_strategy-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 1,
+        "source_text_hash": "3f97293af26b10237f5f3006623a3e533b1ce0fb219eed3073f96645f7e6dcbc",
+        "source_unit_id": "management_strategy-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 2,
+        "source_text_hash": "e13822f7fba9e869f47a733a4e30ec4f4c288f3916aede0e32e50ed6b9343d57",
+        "source_unit_id": "management_strategy-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 3,
+        "source_text_hash": "8737cc89c5d34dd9b22e5d84f3e2961f8bebf04de62bb9024b1642fcb74283a2",
+        "source_unit_id": "management_strategy-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 4,
+        "source_text_hash": "3f0c3108b61ba3aa2e518a4d343f45f8241b3e33866338db74b4897214331753",
+        "source_unit_id": "management_strategy-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 5,
+        "source_text_hash": "198b19f57e4bc064de36c57a5f1b9453944f87cd6f10c70b7afe4cd00766b29c",
+        "source_unit_id": "management_strategy-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 6,
+        "source_text_hash": "e9758f75108ca6aee34fd07da9ddca1276227473c0ead79bc9171a1b92d82a3d",
+        "source_unit_id": "management_strategy-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 7,
+        "source_text_hash": "9b099209453e9347c187b9f41cbf1e51943e00482e2869d3cb6067cc6a2d0f4d",
+        "source_unit_id": "management_strategy-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 8,
+        "source_text_hash": "efa97f1a7eed5d80ddccc71b4df70d9a3267b701e02b7892964bb7423f21129d",
+        "source_unit_id": "management_strategy-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 9,
+        "source_text_hash": "9c5c4ad54631faa96ac98697fd3e45b6dae82a117a1bd5465c24806247ef119b",
+        "source_unit_id": "management_strategy-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 10,
+        "source_text_hash": "6b8de36f5b9cbf13adecffdf1ad7ab2ba970df4d815fdf9e92ab96801ba4facb",
+        "source_unit_id": "management_strategy-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 11,
+        "source_text_hash": "db44336f00bb0eff1971ef79bffed85fc51c962a07982f65750ea21ce17403e4",
+        "source_unit_id": "management_strategy-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 12,
+        "source_text_hash": "1527682f2e9a1ba152e72cbce45fbe1136d391f7bf74633da3a92de85edb0189",
+        "source_unit_id": "management_strategy-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 13,
+        "source_text_hash": "df455e39924c3f2363a498dad23ad7b5498356964bafeb8e9fd2a273d698731f",
+        "source_unit_id": "management_strategy-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 14,
+        "source_text_hash": "52410dcf81d6804d8b5ed294a1e314b30646ba3f66a3885045ae5f6d64acaeb8",
+        "source_unit_id": "management_strategy-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 15,
+        "source_text_hash": "19e46d60bfcb0ff05d8bd24a0275c8c47bd0980999cb1d060e7d0a651abc9c82",
+        "source_unit_id": "management_strategy-0:u15"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 16,
+        "source_text_hash": "d41e8220ee55563c4bd772f238ddfa2f6c0b83522e3210c7ba2a740a8fc5f65c",
+        "source_unit_id": "management_strategy-0:u16"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 17,
+        "source_text_hash": "59c5fc329a895a497420a4057015e5a1f39fbc77ba0aab9ff7ac896e2d8a094a",
+        "source_unit_id": "management_strategy-0:u17"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 18,
+        "source_text_hash": "70f7712ac8655a6fb74327892d62973b87fef620917a23e5600bd328fc914829",
+        "source_unit_id": "management_strategy-0:u18"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 19,
+        "source_text_hash": "c935f66a25ecfd29b50f9f3596b6fea7157a35e2b5d906d36795326b2ca741c3",
+        "source_unit_id": "management_strategy-0:u19"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 20,
+        "source_text_hash": "8cd35ffe3216b09e04d5f5f7d38b93efb26e7381c4c71db8e9562581d0bf18e4",
+        "source_unit_id": "management_strategy-0:u20"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 21,
+        "source_text_hash": "cfdb61e09b922159970a26d5913a6da60078aea62ef245b1684bb34318544b89",
+        "source_unit_id": "management_strategy-0:u21"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 22,
+        "source_text_hash": "f775da4f6ad02d40eb6fd8b1fb26ef74cf36f5276e034ecec0a9100806243d65",
+        "source_unit_id": "management_strategy-0:u22"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 23,
+        "source_text_hash": "2c631db23ce73ab0ef9d9c15592f72d6e000636ed79770dfbd3f99409a8f078b",
+        "source_unit_id": "management_strategy-0:u23"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 24,
+        "source_text_hash": "a3801bd6748979dfa15d7336700c003bd8836d464740eed888e97d63ea19f4a1",
+        "source_unit_id": "management_strategy-0:u24"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 25,
+        "source_text_hash": "353bba7e2e62245225250bcef43039be16585590b524e778ae6a08459090b6e4",
+        "source_unit_id": "management_strategy-0:u25"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 26,
+        "source_text_hash": "7f98d4d41f6dbe341524156c7c3b5829664dd054572c18ca40261d4d375ddbea",
+        "source_unit_id": "management_strategy-0:u26"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 27,
+        "source_text_hash": "3fac729c195677d399b61f1515f41aee9cced661f579badcc63498b96671863c",
+        "source_unit_id": "management_strategy-0:u27"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 28,
+        "source_text_hash": "467e2aaaff78a514191261cb61d852f629d74d3efa882ab7b626872078943eae",
+        "source_unit_id": "management_strategy-0:u28"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 29,
+        "source_text_hash": "40642a323b4d14751f8d628cd6ed2031533eb6d1fc296655630ee67e24088c11",
+        "source_unit_id": "management_strategy-0:u29"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "management_strategy-0",
+        "source_order": 30,
+        "source_text_hash": "900a66634e668a13744d7273a982137bf61db12ca0bbc078690762218d3e65c7",
+        "source_unit_id": "management_strategy-0:u30"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "risk_disclosure-0",
+        "source_order": 0,
+        "source_text_hash": "db63c5beb4efcedce1c4aa9e815c83e8a2eea4ab9601fcb306ca021f284bf7ad",
+        "source_unit_id": "risk_disclosure-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 0,
+        "source_text_hash": "bcfa313978254109a44f1e68491c4c2b043dcbda9a95c0ead23aca9774bbf4a8",
+        "source_unit_id": "shareholder_structure-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:99f6a52acc89009e9b6d"
+        ],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 1,
+        "source_text_hash": "464ad335e155f9e29394f8aa4b8b574eaca33f07bf5377907852a5063ee3fb07",
+        "source_unit_id": "shareholder_structure-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 2,
+        "source_text_hash": "6454f703c8c20db1fb646a368b186cc41eee647630ce1eba941d914b23470541",
+        "source_unit_id": "shareholder_structure-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 3,
+        "source_text_hash": "a52254d8a92faabfa549696999a29b842b19e067b6d6ced527a256f5ab0de653",
+        "source_unit_id": "shareholder_structure-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 4,
+        "source_text_hash": "168fb56a01cc78ff59e0ae604becd29a9a12192c2dd1071777d0501c8e0c61a9",
+        "source_unit_id": "shareholder_structure-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 5,
+        "source_text_hash": "45d1f280dab787e829e18892d23ad17e7d0da1af340c20207acfd66f715115ac",
+        "source_unit_id": "shareholder_structure-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 6,
+        "source_text_hash": "b1d3d4cba81eed16801d4684facea022743e7bf4cc6c9cce4c6af81343cc486d",
+        "source_unit_id": "shareholder_structure-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "shareholder_structure-0",
+        "source_order": 7,
+        "source_text_hash": "4cbeb21cedfb5367bd555b3070a3287a27913b66fbb3257ce6f6343338746631",
+        "source_unit_id": "shareholder_structure-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "pledge-0",
+        "source_order": 0,
+        "source_text_hash": "c467932ca32c47fedd7e3df9d06934a83ceaa64872491be758e15042547d1221",
+        "source_unit_id": "pledge-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "pledge-0",
+        "source_order": 1,
+        "source_text_hash": "aeb1c356c4cf73470377fbf30a2dd12e6cd6a6a37835874087ee759c8d7acc5a",
+        "source_unit_id": "pledge-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "pledge-0",
+        "source_order": 2,
+        "source_text_hash": "252fa10424cdf0b277111742506e340ca37754280cdc6632ba3f6e21f80b450e",
+        "source_unit_id": "pledge-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "pledge-0",
+        "source_order": 3,
+        "source_text_hash": "ebb22958099bb7c72abc050c610288b9cdffb4d1748000e3ed6bd389fec80667",
+        "source_unit_id": "pledge-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "commitments-0",
+        "source_order": 0,
+        "source_text_hash": "41dbf473b18163396de99f25688f2bba8d35d8dc7fa44aa87ca1175ce14215fc",
+        "source_unit_id": "commitments-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "audit_opinion-0",
+        "source_order": 0,
+        "source_text_hash": "c2e08d43afdd6926fb9b68a831be660abc3d84a963851b6cf19285b32b542533",
+        "source_unit_id": "audit_opinion-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 0,
+        "source_text_hash": "8c501e27352938608c83b059b6496c47ba50edf7108f86505765f6ba921ece54",
+        "source_unit_id": "income_statement-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 1,
+        "source_text_hash": "b1af0953e177589438fb9b7d4738e97e3746a170b51ac71ddcbe90d32e0f0f3a",
+        "source_unit_id": "income_statement-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 2,
+        "source_text_hash": "61baed9128b38498b3efbe66d811f863f5db63765f6327d9e756d27e0f2be33c",
+        "source_unit_id": "income_statement-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 3,
+        "source_text_hash": "557af2c0070b09fdb5cc4f164279fc95f05d592d102ff19a8b84c7b9b51a64d7",
+        "source_unit_id": "income_statement-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "accounting_policy_definition",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 4,
+        "source_text_hash": "d78c845385521ccde3f8d35b5b199483992726a9282bb75e37b0a7f805738567",
+        "source_unit_id": "income_statement-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 5,
+        "source_text_hash": "7f061ddcdbb8c4f581b3d18b9dbaf75bc2a9a880bf7c7827e929bcb0bfe7ac2f",
+        "source_unit_id": "income_statement-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 6,
+        "source_text_hash": "96ccc3d477e82c108b0caf7ce154d6c73f661b3cede7c001ab0d036fea8a508c",
+        "source_unit_id": "income_statement-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 7,
+        "source_text_hash": "110090a90fc185b838e9e987a3e1b8454d6629425d203d713041b8a3c10f9a1b",
+        "source_unit_id": "income_statement-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 8,
+        "source_text_hash": "bb89b29e7dbb7cfd965f6de007d4b1115ae5bcde2a9fe979e256b4d0326efe17",
+        "source_unit_id": "income_statement-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 9,
+        "source_text_hash": "e149a9684bae87cb1ae00d3eaad9800c5f32bcc264904ad07c9a20799d9892be",
+        "source_unit_id": "income_statement-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 10,
+        "source_text_hash": "d315e2d8ac8635cc60e13bd389e243347a117226547a231e8537acaa29296db4",
+        "source_unit_id": "income_statement-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 11,
+        "source_text_hash": "585c4451ae4ae26ad333dc818718243544c86ecd62d6b10d37413e81bbdf1121",
+        "source_unit_id": "income_statement-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 12,
+        "source_text_hash": "615034b4905ec582a06f159bd1e57b9b6ad5d8ace9419087cab39fe2839102ea",
+        "source_unit_id": "income_statement-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "accounting_policy_definition",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 13,
+        "source_text_hash": "87fcee23391e5cca7995981128de92beafcb46ae38f1c1bb2ee5af27a310a6a7",
+        "source_unit_id": "income_statement-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 14,
+        "source_text_hash": "2a30cd40501ae77ed3ef9840c5f7a66171baea2777777c85f04e729a1e2f0727",
+        "source_unit_id": "income_statement-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 15,
+        "source_text_hash": "b6397386f864a1b149b49d97d52bf6bb1c0f01f3fa43a9ed2260f762761cbdb6",
+        "source_unit_id": "income_statement-0:u15"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 16,
+        "source_text_hash": "fb1c8e632218598cddfdca73e12da8b0cea7360a3c4021cf510b3c032212696d",
+        "source_unit_id": "income_statement-0:u16"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 17,
+        "source_text_hash": "d57128cd45059e3b4f5168b251ee071d7571e08c113889b187abf7921eebafa1",
+        "source_unit_id": "income_statement-0:u17"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 18,
+        "source_text_hash": "5c73c331589bae1d6940ed8c5df24eabf1e4b320784f1f991b93f65b1318c53b",
+        "source_unit_id": "income_statement-0:u18"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 19,
+        "source_text_hash": "07d8ea36003e646546ec62547051c9dfc6cf7dc9a1586c27f3277f0c6f15fd1d",
+        "source_unit_id": "income_statement-0:u19"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 20,
+        "source_text_hash": "4309c020b5e0774c8b19cd7a630819c0dd747102b4de7b9a99fa20942102c177",
+        "source_unit_id": "income_statement-0:u20"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 21,
+        "source_text_hash": "fae483ee2d20bd8974886106f3d4aeedf44cedc94a5387569aad5c5753af9bb8",
+        "source_unit_id": "income_statement-0:u21"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 22,
+        "source_text_hash": "9773349d4e04592346037020b87763a65ba3b5ece6d93b3ed00115faa9a130cf",
+        "source_unit_id": "income_statement-0:u22"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 23,
+        "source_text_hash": "d507a032853b0617a7503f87fd0b7bd182cb531c832b8edb9c3f3dc963a6ce1d",
+        "source_unit_id": "income_statement-0:u23"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 24,
+        "source_text_hash": "c507d4839b8627c80ce15aa8c56ebfa8fa981c1367a1811ad04b6e0c701f470a",
+        "source_unit_id": "income_statement-0:u24"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 25,
+        "source_text_hash": "410e75718ed652748e031dfcd171eb940b9f9d98ac4b041f1dd3704fa2a4eb16",
+        "source_unit_id": "income_statement-0:u25"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "income_statement-0",
+        "source_order": 26,
+        "source_text_hash": "a70d5236040d660fce951bb0b980feed9b4bd7d202d0518b972e58b7ffca3422",
+        "source_unit_id": "income_statement-0:u26"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "balance_sheet-0",
+        "source_order": 0,
+        "source_text_hash": "a26964e3c141186ec89aa4b7e7aa0a4b57d7ebfe5a73f6ca49165e468b0758f1",
+        "source_unit_id": "balance_sheet-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 0,
+        "source_text_hash": "e662146006783abb7c8e41fd08dd2e6008ac5dff3c1dc2dfcc2862a6ca6a8645",
+        "source_unit_id": "cash_flow-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 1,
+        "source_text_hash": "b1af0953e177589438fb9b7d4738e97e3746a170b51ac71ddcbe90d32e0f0f3a",
+        "source_unit_id": "cash_flow-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 2,
+        "source_text_hash": "61baed9128b38498b3efbe66d811f863f5db63765f6327d9e756d27e0f2be33c",
+        "source_unit_id": "cash_flow-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 3,
+        "source_text_hash": "557af2c0070b09fdb5cc4f164279fc95f05d592d102ff19a8b84c7b9b51a64d7",
+        "source_unit_id": "cash_flow-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "accounting_policy_definition",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 4,
+        "source_text_hash": "d78c845385521ccde3f8d35b5b199483992726a9282bb75e37b0a7f805738567",
+        "source_unit_id": "cash_flow-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 5,
+        "source_text_hash": "7f061ddcdbb8c4f581b3d18b9dbaf75bc2a9a880bf7c7827e929bcb0bfe7ac2f",
+        "source_unit_id": "cash_flow-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 6,
+        "source_text_hash": "96ccc3d477e82c108b0caf7ce154d6c73f661b3cede7c001ab0d036fea8a508c",
+        "source_unit_id": "cash_flow-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 7,
+        "source_text_hash": "110090a90fc185b838e9e987a3e1b8454d6629425d203d713041b8a3c10f9a1b",
+        "source_unit_id": "cash_flow-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 8,
+        "source_text_hash": "bb89b29e7dbb7cfd965f6de007d4b1115ae5bcde2a9fe979e256b4d0326efe17",
+        "source_unit_id": "cash_flow-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 9,
+        "source_text_hash": "e149a9684bae87cb1ae00d3eaad9800c5f32bcc264904ad07c9a20799d9892be",
+        "source_unit_id": "cash_flow-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 10,
+        "source_text_hash": "d315e2d8ac8635cc60e13bd389e243347a117226547a231e8537acaa29296db4",
+        "source_unit_id": "cash_flow-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 11,
+        "source_text_hash": "585c4451ae4ae26ad333dc818718243544c86ecd62d6b10d37413e81bbdf1121",
+        "source_unit_id": "cash_flow-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 12,
+        "source_text_hash": "615034b4905ec582a06f159bd1e57b9b6ad5d8ace9419087cab39fe2839102ea",
+        "source_unit_id": "cash_flow-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "accounting_policy_definition",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 13,
+        "source_text_hash": "87fcee23391e5cca7995981128de92beafcb46ae38f1c1bb2ee5af27a310a6a7",
+        "source_unit_id": "cash_flow-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 14,
+        "source_text_hash": "2a30cd40501ae77ed3ef9840c5f7a66171baea2777777c85f04e729a1e2f0727",
+        "source_unit_id": "cash_flow-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 15,
+        "source_text_hash": "b6397386f864a1b149b49d97d52bf6bb1c0f01f3fa43a9ed2260f762761cbdb6",
+        "source_unit_id": "cash_flow-0:u15"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 16,
+        "source_text_hash": "fb1c8e632218598cddfdca73e12da8b0cea7360a3c4021cf510b3c032212696d",
+        "source_unit_id": "cash_flow-0:u16"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 17,
+        "source_text_hash": "d57128cd45059e3b4f5168b251ee071d7571e08c113889b187abf7921eebafa1",
+        "source_unit_id": "cash_flow-0:u17"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 18,
+        "source_text_hash": "5c73c331589bae1d6940ed8c5df24eabf1e4b320784f1f991b93f65b1318c53b",
+        "source_unit_id": "cash_flow-0:u18"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 19,
+        "source_text_hash": "07d8ea36003e646546ec62547051c9dfc6cf7dc9a1586c27f3277f0c6f15fd1d",
+        "source_unit_id": "cash_flow-0:u19"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 20,
+        "source_text_hash": "4309c020b5e0774c8b19cd7a630819c0dd747102b4de7b9a99fa20942102c177",
+        "source_unit_id": "cash_flow-0:u20"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 21,
+        "source_text_hash": "fae483ee2d20bd8974886106f3d4aeedf44cedc94a5387569aad5c5753af9bb8",
+        "source_unit_id": "cash_flow-0:u21"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 22,
+        "source_text_hash": "9773349d4e04592346037020b87763a65ba3b5ece6d93b3ed00115faa9a130cf",
+        "source_unit_id": "cash_flow-0:u22"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "checkbox_or_page_marker",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 23,
+        "source_text_hash": "d507a032853b0617a7503f87fd0b7bd182cb531c832b8edb9c3f3dc963a6ce1d",
+        "source_unit_id": "cash_flow-0:u23"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 24,
+        "source_text_hash": "c507d4839b8627c80ce15aa8c56ebfa8fa981c1367a1811ad04b6e0c701f470a",
+        "source_unit_id": "cash_flow-0:u24"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 25,
+        "source_text_hash": "410e75718ed652748e031dfcd171eb940b9f9d98ac4b041f1dd3704fa2a4eb16",
+        "source_unit_id": "cash_flow-0:u25"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "audit_or_policy",
+        "selected_by_card_ids": [],
+        "source_block_id": "cash_flow-0",
+        "source_order": 26,
+        "source_text_hash": "b4976cd7cda0001851e558c2f02c42ea2b259bb3005a2dce00482f4f42d7e021",
+        "source_unit_id": "cash_flow-0:u26"
+      }
+    ],
+    "source_unit_decisions_version": "annual_source_unit_decisions.v1",
+    "source_units_seen": 275,
+    "usable_units": 56,
+    "v1_adapter_use_count": 0
+  },
+  "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",
+  "report_type": "annual",
+  "report_year": 2025,
+  "schema_version": "periodic_report_narrative_material_pack.v1",
+  "selection_version": "annual_argument_selection.v2",
+  "stock_code": "688035",
+  "stock_name": "德邦科技"
+}

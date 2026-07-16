@@ -13,6 +13,7 @@ from typing import Any
 CARD_SCHEMA_VERSION = "periodic_report_narrative_evidence_card.v2"
 ENVELOPE_SCHEMA_VERSION = "periodic_report_narrative_evidence_cards.v2"
 SELECTION_VERSION = "annual_argument_selection.v2"
+SOURCE_UNIT_DECISIONS_VERSION = "annual_source_unit_decisions.v1"
 
 CANONICAL_FAMILIES = (
     "business_structure",

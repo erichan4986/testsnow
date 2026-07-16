@@ -31,8 +31,11 @@ Annual Producer v2 与 Chapter 4 annual display selector 已把主要问题从�
 
 - Batch 1 已完成，checkpoint：`3ae8c86`；
 - Batch 2 已完成，checkpoint：`4f84fd2`；
-- 当前进入 Batch 3；
-- Batch 4–6 必须按顺序独立设计、实现和复跑，不得合并成一次大改。
+- Batch 3–5 已完成并通过各自 focused / report 验收；
+- 当前进入 Batch 6 Level 3 设计审查，设计文件：
+  `2026-07-15-knowledge-persistence-slimming-design.md`；
+- Batch 6 拆为 6A pack store、6B human projection、6C migration/slimming，必须按
+  顺序独立实现和验收，不得跳过兼容 gate 直接删除 notes。
 
 ### Batch 1: Executive Summary Completeness
 

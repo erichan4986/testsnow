@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "4fc1b81044db3a3186e370766bb46e0ca344ecc14c3f8b2d0a45dbdc0ee0e5cc",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "2dee85d530230867ade1581cc6cab12013aa7f450136d347e8ca54954347d921",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "d3af3b2f1ebfdfc198aeedff4b1714664b16f2e5db970306646eeaed41c3bd61",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "002050",
+  "stock_name": "三花智控"
+}

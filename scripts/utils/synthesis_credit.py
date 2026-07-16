@@ -5,7 +5,7 @@ SynthesisSkill prompt path.  No network, LLM, or browser calls.
 """
 
 import re
-from typing import Any, Dict, Union
+from typing import Any, Dict, Mapping, Union
 
 try:
     from .source_adapter import SynthesisItem
@@ -120,6 +120,19 @@ def sanitize_citation_markers(text: str) -> str:
     text = re.sub(r"\[\^(?!\d+\])[^\]]*\]", "", text)
     text = re.sub(r"\[(?!\d+\])[a-zA-Z_]+\]", "", text)
     return text
+
+
+def citation_identity(meta: Any, fallback_ref: Any = None) -> tuple:
+    """Return the stable exact-source identity used across display layers."""
+    if not isinstance(meta, Mapping):
+        return ("ref", fallback_ref) if fallback_ref is not None else ()
+    url = str(meta.get("url") or "").strip()
+    if url:
+        return ("url", url)
+    fields = tuple(str(meta.get(key) or "").strip() for key in ("source", "author", "title"))
+    if any(fields):
+        return ("meta",) + fields
+    return ("ref", fallback_ref) if fallback_ref is not None else ()
 
 
 def _normalize_source_platform(platform: str) -> str:

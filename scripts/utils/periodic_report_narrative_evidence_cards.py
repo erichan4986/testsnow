@@ -16,6 +16,7 @@ if __package__:
     from .annual_argument_schema import (
         annual_source_tail, CANONICAL_FAMILIES, CARD_SCHEMA_VERSION,
         ENVELOPE_SCHEMA_VERSION, FAMILY_LABELS, SELECTION_VERSION,
+        SOURCE_UNIT_DECISIONS_VERSION,
         canonical_family_for_usage, has_concrete_annual_anchor,
         normalize_annual_source_text, validate_card_v2,
     )
@@ -23,6 +24,7 @@ else:
     from annual_argument_schema import (
         annual_source_tail, CANONICAL_FAMILIES, CARD_SCHEMA_VERSION,
         ENVELOPE_SCHEMA_VERSION, FAMILY_LABELS, SELECTION_VERSION,
+        SOURCE_UNIT_DECISIONS_VERSION,
         canonical_family_for_usage, has_concrete_annual_anchor,
         normalize_annual_source_text, validate_card_v2,
     )
@@ -32,7 +34,7 @@ SOURCE_TYPE = "periodic_report_narrative_evidence"
 SOURCE_CREDIT = 75
 
 _FINANCIAL_METRICS = (
-    "毛利率", "毛利", "净利率", "净利润", "营业收入", "营业利润", "营业成本",
+    "毛利率", "毛利", "净利率", "净利润", "营业收入", "营业利润", "营业成本", "其他收益",
     "营收", "现金流", "应收账款", "存货", "资产减值", "减值损失", "费用率",
     "期间费用", "利润总额", "每股收益", "坏账准备", "可变现净值",
     "销售费用", "管理费用", "财务费用", "研发费用",
@@ -81,6 +83,7 @@ def build_periodic_report_narrative_evidence_cards(
     blocks = blocks or []
     document_style = str(evidence_pack.get("document_style", "unknown")) if isinstance(evidence_pack, dict) else "unknown"
     diagnostics = _new_diagnostics()
+    decisions_by_unit: dict[str, dict] = {}
     cards: list[dict] = []
     candidates: list[dict] = []
     for block in blocks:
@@ -104,11 +107,15 @@ def build_periodic_report_narrative_evidence_cards(
             )
             if replacement is not None:
                 unit = replacement
+            decision = _new_source_unit_decision(unit)
+            diagnostics["source_unit_decisions"].append(decision)
+            decisions_by_unit[unit["unit_id"]] = decision
             noise_reason = _noise_reason(
                 unit["text"], source_block_text=block_text, usage_hint=usage_hint
             )
             if noise_reason:
                 _reject(diagnostics, noise_reason)
+                decision["reason"] = _archive_safe_noise_reason(unit["text"]) or noise_reason
                 prepared_units.append(None)
                 continue
             signals = _family_signals(unit["text"])
@@ -118,12 +125,16 @@ def build_periodic_report_narrative_evidence_cards(
             ) and not _has_technology_capability(unit["text"]):
                 family = canonical_family_for_usage(usage_hint)
             if family is None:
-                _reject(
-                    diagnostics,
+                rejection_reason = (
                     "no_anchor"
                     if canonical_family_for_usage(usage_hint) == "technology_product_progress"
-                    else "no_family_signal",
+                    else "no_family_signal"
                 )
+                _reject(
+                    diagnostics,
+                    rejection_reason,
+                )
+                decision["reason"] = rejection_reason
                 prepared_units.append(None)
                 continue
             if _is_self_contained_atomic_fact(
@@ -137,6 +148,7 @@ def build_periodic_report_narrative_evidence_cards(
                 state = "continuation"
             else:
                 _reject(diagnostics, "not_self_contained")
+                decision["reason"] = "not_self_contained"
                 prepared_units.append(None)
                 continue
             diagnostics["usable_units"] += 1
@@ -173,6 +185,7 @@ def build_periodic_report_narrative_evidence_cards(
             )
             if family is None:
                 _reject(diagnostics, "no_family_signal")
+                _mark_unit_decisions(decisions_by_unit, bundle, "no_family_signal")
                 unit_index = next_index
                 continue
             complete = _is_complete_argument(source_excerpt, family)
@@ -195,8 +208,10 @@ def build_periodic_report_narrative_evidence_cards(
             errors = validate_card_v2(candidate)
             if errors:
                 _reject(diagnostics, "invalid_candidate")
+                _mark_unit_decisions(decisions_by_unit, bundle, "invalid_candidate")
                 continue
             cards.append(candidate)
+            _mark_unit_decisions(decisions_by_unit, bundle, "selected", candidate["card_id"])
             diagnostics["admitted_by_family"][family] += 1
             diagnostics["argument_complete_counts"]["complete" if complete else "atomic"] += 1
 
@@ -211,6 +226,10 @@ def build_periodic_report_narrative_evidence_cards(
         cards = []
         diagnostics["admitted_by_family"] = _family_counter()
         diagnostics["argument_complete_counts"] = {"complete": 0, "atomic": 0}
+        for decision in diagnostics["source_unit_decisions"]:
+            if decision["disposition"] == "selected":
+                decision.update(disposition="rejected", reason="admission_invariant_violation",
+                                selected_by_card_ids=[])
 
     diagnostics["missing_families"] = [
         family for family in CANONICAL_FAMILIES if not diagnostics["admitted_by_family"][family]
@@ -443,6 +462,8 @@ def _new_diagnostics() -> dict:
     return {
         "source_blocks_seen": 0,
         "source_units_seen": 0,
+        "source_unit_decisions_version": SOURCE_UNIT_DECISIONS_VERSION,
+        "source_unit_decisions": [],
         "usable_units": 0,
         "candidates_by_family": _family_counter(),
         "admitted_by_family": _family_counter(),
@@ -486,6 +507,27 @@ def _reject(diagnostics: dict, reason: str) -> None:
         "invalid_candidate": "invalid_unit",
     }.get(reason, reason)
     counts[stable_reason] = counts.get(stable_reason, 0) + 1
+
+
+def _new_source_unit_decision(unit: dict) -> dict:
+    return {
+        "source_block_id": str(unit.get("block_id") or ""),
+        "source_unit_id": str(unit.get("unit_id") or ""),
+        "source_text_hash": hashlib.sha256(normalize_annual_source_text(
+            unit.get("text")).encode("utf-8")).hexdigest(),
+        "source_order": int(unit.get("ordinal") or 0),
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+    }
+
+
+def _mark_unit_decisions(decisions: dict[str, dict], units: Sequence[dict], reason: str, card_id: str = "") -> None:
+    for unit in units:
+        decision = decisions[unit["unit_id"]]
+        decision["reason"] = reason
+        if card_id:
+            decision.update(disposition="selected", selected_by_card_ids=[card_id])
 
 
 def _candidate_explosion_block_ids(candidates: Iterable[dict]) -> list[str]:
@@ -551,12 +593,16 @@ def _noise_reason(
 
 
 def _looks_like_structural_unit(text: str) -> bool:
+    return _direct_structural_unit_reason(text) is not None
+
+
+def _direct_structural_unit_reason(text: str) -> str | None:
     compact = _compact_text(text)
     tokens = ("分行业", "分產品", "分产品", "分地区", "分地區", "分销售模式", "分銷售模式")
     label = re.split(r"情况|說明|说明", compact, maxsplit=1)[0]
     section_label = bool(re.match(r"^(?:\(\d+\)\.?)?主营业务分", compact)) and len(label) < len(compact) and sum(token in label for token in tokens) >= 2
     regulation = compact.startswith(("公司需遵守", "本公司需遵守")) and any(token in compact for token in ("自律监管指引", "自律監管指引", "行业信息披露", "行業信息披露", "披露要求"))
-    return section_label or regulation
+    return "section_label" if section_label else "regulatory_disclosure" if regulation else None
 
 
 def _looks_like_industry_barrier_block(text: str) -> bool:
@@ -582,14 +628,25 @@ def _looks_like_checkbox_or_page_marker(text: str) -> bool:
 
 
 def _looks_like_audit_or_policy(text: str) -> bool:
+    return _direct_audit_policy_reason(text) is not None
+
+
+def _direct_audit_policy_reason(text: str) -> str | None:
     compact = _compact_text(text)
     if any(token in text for token in _POLICY_TOKENS) and not any(token in text for token in _CAUSAL_TOKENS):
-        return True
+        return "accounting_policy_definition"
     audit_tokens = ("关键审计事项", "關鍵審計事項", "审计程序", "審計程序", "我们实施", "我們實施", "审计应对", "審計應對")
     if sum(token in compact for token in audit_tokens) >= 2:
-        return True
+        return "audit_procedure"
     policy_patterns = ("成本法核算", "权益法核算", "權益法核算", "持有待售", "借款费用资本化", "借款費用資本化")
-    return sum(token in compact for token in policy_patterns) >= 2
+    return "accounting_policy_definition" if sum(token in compact for token in policy_patterns) >= 2 else None
+
+
+def _archive_safe_noise_reason(text: str) -> str | None:
+    return (_direct_structural_unit_reason(text)
+            or ("checkbox_or_page_marker" if _looks_like_checkbox_or_page_marker(text) else None)
+            or _direct_audit_policy_reason(text)
+            or ("definition_or_hash" if _looks_like_definition_or_hash_fragment(text) else None))
 
 
 def _looks_like_table_fragment(text: str) -> bool:
@@ -769,6 +826,8 @@ def _continues_same_argument(
     following_family: str, following_state: str,
 ) -> bool:
     """Return whether the next unit extends, rather than restarts, the argument."""
+    if following_family != family:
+        return False
     previous_text = bundle[-1]["text"]
     following_text = following["text"]
     if family == "financial_quality_explanation":
@@ -790,8 +849,6 @@ def _continues_same_argument(
         extends = not following_text.startswith(("公司", "本公司", "集團", "集团"))
     if not extends or following_state != "seed":
         return extends
-    if following_family != family:
-        return False
     if family == "market_competition_outlook" and _market_argument_continues("", following_text):
         return True
     following_subjects = _bundle_subject_tokens((following,), family)

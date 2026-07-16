@@ -11,6 +11,13 @@ from dataclasses import dataclass, replace
 import re
 from typing import Any, Dict, Iterable, Mapping, Tuple
 
+try:
+    from .deep_analysis_topic_ownership import matching_topic_families
+    from .synthesis_credit import citation_identity
+except ImportError:
+    from deep_analysis_topic_ownership import matching_topic_families
+    from synthesis_credit import citation_identity
+
 
 SCHEMA = "deep_analysis_material_snapshot.v1"
 DEEP_ANALYSIS_SCOPE = ("deep_analysis",)
@@ -34,6 +41,7 @@ class MaterialRow:
     argument_complete: bool = False
     attribution: str = ""
     source_credit: str = ""
+    editorial_slot: str = ""
     diagnostics: Tuple[Tuple[str, str], ...] = ()
 
 @dataclass(frozen=True)
@@ -125,12 +133,90 @@ def select_annual_display_rows(
     deduped, deduped_count, dedupe_reasons = _dedupe_annual_display_rows(selected)
     for reason, count in dedupe_reasons.items():
         rejected[reason] = rejected.get(reason, 0) + count
-    return deduped, {
+    editorial_rows, hidden_by_role = _select_annual_editorial_rows(deduped)
+    return editorial_rows, {
         "annual_candidates_count": len(candidates),
         "annual_selected_count": len(deduped),
         "annual_rejected_by_reason": rejected,
         "annual_deduped_count": deduped_count,
+        "annual_display_count": len(editorial_rows),
+        "annual_hidden_count": len(deduped) - len(editorial_rows),
+        "annual_hidden_by_role": hidden_by_role,
     }
+
+
+_ANNUAL_ROLE_BUDGETS = {
+    "business_structure": 3,
+    "operating_progress": 2,
+    "market_competition_outlook": 1,
+    "technology_product_progress": 2,
+    "financial_quality_explanation": 3,
+}
+_ANNUAL_ROLE_ORDER = tuple(_ANNUAL_ROLE_BUDGETS)
+_PORTRAIT_ROLES = ("business_structure", "operating_progress", "technology_product_progress")
+_EVIDENCE_SIGNAL_TERMS = (
+    "主要系", "所致", "同比", "环比", "报告期内", "客户", "订单", "量产", "导入",
+    "推出", "发布", "验证", "研发", "收入", "营收", "利润", "毛利率", "现金流",
+)
+
+
+def _select_annual_editorial_rows(rows: Iterable[MaterialRow]) -> tuple[Tuple[MaterialRow, ...], Dict[str, int]]:
+    row_list = tuple(rows)
+    portrait = _select_annual_portrait(row_list)
+    selected_ids = {portrait.row_id} if portrait else set()
+    selected = [replace(portrait, editorial_slot="portrait")] if portrait else []
+    hidden_by_role: Dict[str, int] = {}
+    for role in _ANNUAL_ROLE_ORDER:
+        ranked = _rank_annual_rows(row for row in row_list if row.render_role == role)
+        visible = [row for row in ranked if row.row_id not in selected_ids][:_ANNUAL_ROLE_BUDGETS[role] - int(portrait is not None and portrait.render_role == role)]
+        selected.extend(visible)
+        selected_ids.update(row.row_id for row in visible)
+        hidden = len(ranked) - len(visible) - int(portrait is not None and portrait.render_role == role)
+        if hidden > 0:
+            hidden_by_role[role] = hidden
+    return tuple(selected), hidden_by_role
+
+
+def _select_annual_portrait(rows: Iterable[MaterialRow]) -> MaterialRow | None:
+    candidates = [row for row in rows if row.render_role in _PORTRAIT_ROLES and _is_portrait_candidate(row.body)]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda row: _portrait_score(row.body))
+
+
+def _is_portrait_candidate(body: str) -> bool:
+    compact = re.sub(r"\s+", "", body)
+    has_scope = bool(re.search(r"(?:主营业务|主要业务|增长主线|是一家从事|公司.{0,12}(?:从事|建立|开发)|报告期内，公司)", compact))
+    complete = bool(re.search(r"[。！？；;]$", compact) or re.search(r"(?:客户|市场|领域|需求|解决方案|产品线|业务)$", compact))
+    return has_scope and complete
+
+
+def _portrait_score(body: str) -> int:
+    compact = re.sub(r"\s+", "", body)
+    weighted = {"主营业务": 5, "从事": 4, "公司": 3, "产品线": 2, "客户": 2, "应用": 2, "行业": 2, "市场": 2}
+    score = sum(weight for term, weight in weighted.items() if term in compact)
+    score += min(5, sum(term in compact for term in ("设计", "开发", "研发", "制造", "生产", "测试", "系统解决方案")))
+    return score - (3 if "介绍" in compact and len(compact) < 60 else 0)
+
+
+def _rank_annual_rows(rows: Iterable[MaterialRow]) -> list[MaterialRow]:
+    return [row for _, row in sorted(enumerate(rows), key=lambda pair: (
+        -int(pair[1].argument_complete),
+        -int(bool(pair[1].citation_refs)),
+        -_annual_evidence_signal_score(pair[1].body),
+        _annual_length_penalty(pair[1].body),
+        pair[0],
+    ))]
+
+
+def _annual_evidence_signal_score(body: str) -> int:
+    compact = re.sub(r"\s+", "", body)
+    return sum(term in compact for term in _EVIDENCE_SIGNAL_TERMS) + int(bool(re.search(r"\d", compact)))
+
+
+def _annual_length_penalty(body: str) -> int:
+    length = len(re.sub(r"\s+", "", body))
+    return 0 if 24 <= length <= 320 else abs(min(max(length, 24), 320) - length)
 
 
 def _project_annual_display_row(row: MaterialRow) -> tuple[MaterialRow | None, str]:
@@ -248,32 +334,13 @@ def build_chapter4_view_model(
 
     usable_rows = tuple(row for row in snapshot.rows if row.text and row.citation_refs)
     annual_rows, annual_selection_diagnostics = select_annual_display_rows(usable_rows)
-    broker_rows = tuple(row for row in usable_rows if row.source_layer == "broker" and row.attribution)
-    external_rows = tuple(
-        _dedupe_row_refs_by_citation_identity(row, snapshot.citations)
-        for row in usable_rows
-        if row.source_layer == "external"
-        and not row.scoring_eligible
-        and not row.risk_score_eligible
+    broker_rows = _select_broker_display_rows(usable_rows)
+    external_rows, external_selection_diagnostics = select_incremental_external_display_rows(
+        usable_rows,
+        snapshot.citations,
+        (*annual_rows, *broker_rows),
     )
-    complete_annual_rows = tuple(row for row in annual_rows if row.argument_complete)
-    annual_roles = (
-            "business_structure",
-            "operating_progress",
-            "market_competition_outlook",
-            "technology_product_progress",
-            "financial_quality_explanation",
-        )
-    annual_price_row = _first_row_by_role(complete_annual_rows, annual_roles, fallback=False)
-    annual_price_row = annual_price_row or _first_row_by_role(annual_rows, annual_roles, fallback=False)
-    price_path_rows = tuple(
-        row for row in (
-            annual_price_row,
-            _first_row_by_role(broker_rows, ("broker_assumption", "broker_forecast")),
-            external_rows[0] if external_rows else None,
-        )
-        if row is not None
-    )
+    price_path_rows = _select_price_path_rows(annual_rows, broker_rows, external_rows)
     sections = (
         Chapter4Section("4.1", "官方材料确认：业务与财务基座", annual_rows),
         Chapter4Section("4.2", "机构观点与盈利假设", broker_rows),
@@ -303,10 +370,211 @@ def build_chapter4_view_model(
     }
     diagnostics = dict(snapshot.diagnostics)
     diagnostics.update(annual_selection_diagnostics,
+                       **external_selection_diagnostics,
                        profile=profile_name,
                        visible_rows_count=sum(len(section.rows) for section in sections[:3]),
                        visible_citation_count=len(citations))
     return Chapter4ViewModel(profile_name, sections, citations, diagnostics)
+
+
+def _select_broker_display_rows(rows: Iterable[MaterialRow]) -> Tuple[MaterialRow, ...]:
+    candidates = _dedupe_exact_body(row for row in rows if row.source_layer == "broker" and row.attribution)
+    non_risk = [row for row in candidates if row.render_role != "broker_risk"]
+    risk = [row for row in candidates if row.render_role == "broker_risk"]
+    selected = []
+    seen_attribution = set()
+    for row in non_risk:
+        if row.attribution in seen_attribution:
+            continue
+        selected.append(row)
+        seen_attribution.add(row.attribution)
+        if len(selected) == 5:
+            break
+    if len(selected) < 5:
+        selected.extend(row for row in non_risk if row not in selected)
+    return tuple(selected[:5] + risk[:2])
+
+
+def _dedupe_exact_body(rows: Iterable[MaterialRow]) -> list[MaterialRow]:
+    seen = set()
+    selected = []
+    for row in rows:
+        key = re.sub(r"\s+", "", row.body).strip("。；;")
+        if not key or key in seen:
+            continue
+        seen.add(key)
+        selected.append(row)
+    return selected
+
+
+_EXTERNAL_ATTRIBUTION_RE = re.compile(r"^(?:外部材料|外部文章|外部信息|外部观点|文章|材料)(?:称|认为|指出|显示|提示|讨论)?[：:,，\s]*")
+_CONCRETE_ANCHOR_RE = re.compile(
+    r"(?i:20\d{2}(?:Q[1-4])?|\d+(?:\.\d+)?(?:%|个百分点|亿元|万元|万|亿|元|倍|万片|万只|万台|台|片|套|项|家|个月|月|年)|[A-Z]+\d+(?:\.\d+)?|\d+(?:\.\d+)?[A-Z]+)|(?<![A-Z])[A-Z]{2,8}(?![A-Z])"
+)
+_EXTERNAL_EVENT_TERMS = (
+    "传言", "否认", "回应", "下调", "上调", "短缺", "紧张", "瓶颈", "缺口", "供应链", "交付", "订单",
+    "认证", "验证", "量产", "制裁", "政策", "停产", "延期", "延后", "提前", "调整", "替代", "降价", "涨价", "分歧", "唯一", "首家", "率先",
+)
+
+
+def select_incremental_external_display_rows(
+    rows: Iterable[MaterialRow],
+    citations: Mapping[int, Any],
+    owner_rows: Iterable[MaterialRow],
+) -> tuple[Tuple[MaterialRow, ...], Dict[str, Any]]:
+    """Select external rows that add a visible, testable variable to owner rows."""
+    candidates = [
+        _dedupe_row_refs_by_citation_identity(row, citations)
+        for row in rows
+        if row.source_layer == "external" and _is_external_display_eligible(row, citations)
+    ]
+    owners = tuple(row for row in owner_rows if row.body)
+    rejected: Dict[str, int] = {}
+    for bucket in ("narrative_paragraphs", "reasoning_cards", "topic_groups"):
+        projection = [row for row in candidates if _external_bucket(row) == bucket]
+        deduped = _dedupe_external_display_rows(projection, citations)
+        selected = []
+        for row in deduped:
+            reason = _external_incremental_reason(row, owners)
+            if not reason:
+                rejected["owner_theme_without_delta"] = rejected.get("owner_theme_without_delta", 0) + 1
+                continue
+            if reason == "owner_text_duplicate":
+                rejected[reason] = rejected.get(reason, 0) + 1
+                continue
+            selected.append(replace(
+                row,
+                diagnostics=(*row.diagnostics, ("external_incremental_reason", reason)),
+            ))
+        if selected:
+            return tuple(selected), _external_selection_diagnostics(candidates, selected, rejected)
+    return (), _external_selection_diagnostics(candidates, (), rejected)
+
+
+def _external_selection_diagnostics(candidates, selected, rejected) -> Dict[str, Any]:
+    return {
+        "external_incremental_candidates_count": len(candidates),
+        "external_incremental_selected_count": len(selected),
+        "external_incremental_rejected_by_reason": dict(rejected),
+    }
+
+
+def _external_incremental_reason(row: MaterialRow, owners: Tuple[MaterialRow, ...]) -> str:
+    external_body = _normalized_claim_body(row.body)
+    owner_bodies = tuple(_normalized_claim_body(owner.body) for owner in owners)
+    if any(
+        external_body == owner_body
+        or (len(external_body) >= 24 and external_body in owner_body)
+        for owner_body in owner_bodies
+        if owner_body
+    ):
+        return "owner_text_duplicate"
+
+    external_families = _topic_family_names(row.body)
+    external_anchors = _concrete_anchors(row.body)
+    comparable = tuple(
+        owner for owner in owners
+        if external_families & _topic_family_names(owner.body)
+        or external_anchors & _concrete_anchors(owner.body)
+    )
+    if not comparable:
+        return "new_topic_context"
+    owner_anchors = set().union(*(_concrete_anchors(owner.body) for owner in comparable))
+    if external_anchors - owner_anchors:
+        return "new_concrete_anchor"
+    owner_event_text = "".join(_normalized_claim_body(owner.body) for owner in comparable)
+    if any(term in external_body and term not in owner_event_text for term in _EXTERNAL_EVENT_TERMS):
+        return "new_event_variable"
+    return ""
+
+
+def _normalized_claim_body(text: str) -> str:
+    body = re.sub(r"\[\^\d+\]", "", str(text or "").strip())
+    body = _EXTERNAL_ATTRIBUTION_RE.sub("", body)
+    return re.sub(r"\s+", "", body).strip("。；;，,：:！!？?").lower()
+
+
+def _topic_family_names(text: str) -> set[str]:
+    return {str(family.get("family")) for family in matching_topic_families(text or "")}
+
+
+def _concrete_anchors(text: str) -> set[str]:
+    return {
+        re.sub(r"\s+", "", match.group(0)).lower()
+        for match in _CONCRETE_ANCHOR_RE.finditer(str(text or ""))
+    }
+
+
+def _is_external_display_eligible(row: MaterialRow, citations: Mapping[int, Any]) -> bool:
+    return bool(row.body and row.citation_refs and not row.scoring_eligible and not row.risk_score_eligible and any(citations.get(ref) for ref in row.citation_refs))
+
+
+def _external_bucket(row: MaterialRow) -> str:
+    if ":narrative_paragraphs:" in row.row_id:
+        return "narrative_paragraphs"
+    if ":reasoning_cards:" in row.row_id:
+        return "reasoning_cards"
+    return "topic_groups"
+
+
+def external_display_key(row: MaterialRow, citations: Mapping[int, Any]) -> tuple:
+    return (
+        re.sub(r"\s+", "", row.body).strip("。；;"),
+        tuple(sorted({citation_identity(citations.get(ref), fallback_ref=ref) for ref in row.citation_refs})),
+    )
+
+
+def _dedupe_external_display_rows(rows: Iterable[MaterialRow], citations: Mapping[int, Any]) -> list[MaterialRow]:
+    seen = set()
+    selected = []
+    for row in rows:
+        key = external_display_key(row, citations)
+        if not key[0] or key in seen:
+            continue
+        seen.add(key)
+        selected.append(row)
+    return selected
+
+
+_NON_INFORMATIVE_VARIABLE_TITLES = {
+    "", "外部变量", "外部观察", "主营业务与产品", "产业与产品判断", "机构核心观点", "券商核心观点", "盈利预测", "盈利预测与估值假设", "反方约束", "反方风险", "风险提示", "业务覆盖 / 产品线", "经营变化", "市场与竞争", "管理层判断与行业展望", "研发与产品进展", "技术与产品进展", "财务质量", "财务质量与变化原因", "产品放量 / 盈利弹性", "供应链 / 技术路线",
+}
+
+def is_informative_variable_title(title: str) -> bool:
+    normalized = re.sub(r"\s+", " ", str(title or "")).strip(" ：:，,；;。")
+    return normalized not in _NON_INFORMATIVE_VARIABLE_TITLES
+
+
+def _select_price_path_rows(
+    annual_rows: Iterable[MaterialRow],
+    broker_rows: Iterable[MaterialRow],
+    external_rows: Iterable[MaterialRow],
+) -> Tuple[MaterialRow, ...]:
+    annual = _select_price_row(annual_rows, ("operating_progress", "financial_quality_explanation", "technology_product_progress", "market_competition_outlook", "business_structure"), exclude_portrait=True)
+    broker = _select_price_row(broker_rows, ("broker_assumption", "broker_forecast"))
+    if broker is None:
+        broker = _generic_broker_price_row(broker_rows)
+    external = next((row for row in external_rows if is_informative_variable_title(row.title)), None)
+    return tuple(row for row in (annual, broker, external) if row is not None)
+
+
+def _select_price_row(rows: Iterable[MaterialRow], roles: Iterable[str], *, exclude_portrait: bool = False) -> MaterialRow | None:
+    filtered = [row for row in rows if is_informative_variable_title(row.title) and not (exclude_portrait and row.editorial_slot == "portrait")]
+    for role in roles:
+        matches = [row for row in filtered if row.render_role == role]
+        complete = next((row for row in matches if row.argument_complete), None)
+        if complete or matches:
+            return complete or matches[0]
+    return None
+
+
+def _generic_broker_price_row(rows: Iterable[MaterialRow]) -> MaterialRow | None:
+    eligible = tuple(row for row in rows if row.body and row.citation_refs)
+    row = next((row for role in ("broker_assumption", "broker_forecast") for row in eligible if row.render_role == role), None)
+    if row is None:
+        return None
+    attribution = row.attribution if row.attribution and row.attribution != "研报" else ""
+    return replace(row, title=f"{attribution}研报核心假设")
 
 
 def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list[MaterialRow]:
@@ -335,11 +603,23 @@ def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
                 claim_status=claim_status,
                 section_hint="annual_memo",
                 title=title,
-                render_role=str(row.get("argument_family") or row.get("display_group") or "").strip(),
+                render_role=_annual_render_role(section, row),
                 argument_complete=bool(row.get("argument_complete", False)),
                 source_credit="official",
             ))
     return result
+
+
+def _annual_render_role(section: str, row: Mapping[str, Any]) -> str:
+    role = str(row.get("argument_family") or row.get("display_group") or "").strip()
+    if role:
+        return role
+    text = f"{row.get('title') or ''}{row.get('body') or ''}"
+    if any(term in text for term in ("主营", "产品", "客户", "应用", "业务")):
+        return "business_structure"
+    if section == "confirmed" or any(term in text for term in ("收入", "营收", "利润", "毛利率", "现金流", "费用", "存货")):
+        return "financial_quality_explanation"
+    return "operating_progress"
 
 
 def _broker_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list[MaterialRow]:
@@ -478,17 +758,6 @@ def _row_diagnostics(row: Mapping[str, Any]) -> Tuple[Tuple[str, str], ...]:
     return tuple((key, str(row.get(key))) for key in keys if row.get(key) not in (None, ""))
 
 
-def _first_row_by_role(
-    rows: Iterable[MaterialRow],
-    roles: Iterable[str],
-    *,
-    fallback: bool = True,
-) -> MaterialRow | None:
-    row_list = tuple(rows)
-    match = next((row for role in roles for row in row_list if row.render_role == role), None)
-    return match or (row_list[0] if fallback and row_list else None)
-
-
 def _dedupe_row_refs_by_citation_identity(
     row: MaterialRow,
     citations: Mapping[int, Any],
@@ -503,21 +772,6 @@ def _dedupe_row_refs_by_citation_identity(
         seen.add(identity)
         refs.append(ref)
     return replace(row, citation_refs=tuple(refs))
-
-
-def citation_identity(meta: Any, fallback_ref: int | None = None) -> tuple:
-    if not isinstance(meta, Mapping):
-        return ("ref", fallback_ref) if fallback_ref is not None else ()
-    url = str(meta.get("url") or "").strip()
-    if url:
-        return ("url", url)
-    identity = tuple(
-        str(meta.get(key) or "").strip()
-        for key in ("source", "author", "title")
-    )
-    if any(identity):
-        return ("meta",) + identity
-    return ("ref", fallback_ref) if fallback_ref is not None else ()
 
 
 def _diagnostics(ctx: Mapping[str, Any], rows: list[MaterialRow]) -> Dict[str, Any]:

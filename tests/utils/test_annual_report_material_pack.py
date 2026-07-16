@@ -1,9 +1,12 @@
 from __future__ import annotations
+import hashlib
 import sys
 from pathlib import Path
 import json
 
 import pytest
+
+import annual_report_material_pack as material_pack_module
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
@@ -12,6 +15,7 @@ from annual_report_material_pack import (
     selected_cards_to_synthesis_items,
 )
 from periodic_report_narrative_evidence_cards import build_periodic_report_narrative_evidence_cards
+from periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError, write_periodic_report_narrative_pack
 
 
 def _cards_dir(base: Path, stock_name: str = "测试股") -> Path:
@@ -144,6 +148,102 @@ def _write_v2_note(
         encoding="utf-8",
     )
     return path
+
+
+def _unit_decision(block_id: str, unit_id: str, text: str, *, disposition="selected", reason="selected", card_id="current:1"):
+    return {
+        "source_block_id": block_id,
+        "source_unit_id": unit_id,
+        "source_text_hash": hashlib.sha256(" ".join(text.split()).encode("utf-8")).hexdigest(),
+        "source_order": int(unit_id.rsplit("u", 1)[-1]) if ":u" in unit_id else 0,
+        "disposition": disposition,
+        "reason": reason,
+        "selected_by_card_ids": [card_id] if disposition == "selected" else [],
+    }
+
+
+def test_classify_orphan_resolves_unique_reindexed_source_sequence(tmp_path):
+    text = "A2000芯片已完成客户验证。"
+    _write_v2_note(
+        tmp_path,
+        filename="old.md",
+        card_id="old:1",
+        source_block_id="old-block",
+        source_units=[{
+            "unit_id": "old-block:u9", "block_id": "old-block", "ordinal": 9,
+            "start_pos": 0, "end_pos": len(text), "text": text,
+        }],
+    )
+
+    result = material_pack_module.classify_periodic_narrative_v2_notes(
+        stock_name="测试股",
+        producer_cards=[{"card_id": "current:1", "source_unit_ids": ["new-block:u0"]}],
+        source_unit_decisions=[_unit_decision("new-block", "new-block:u0", text)],
+        base_dir=tmp_path,
+    )
+
+    assert result["stale_resolved_selected"][0]["mapped_source_unit_ids"] == ["new-block:u0"]
+    assert result["stale_resolved_selected"][0]["source_unit_resolutions"] == [{
+        "source_unit_id": "new-block:u0", "disposition": "selected",
+        "reason": "selected", "selected_by_card_ids": ["current:1"],
+    }]
+    assert result["stale_source_ambiguous"] == []
+
+
+def test_classify_orphan_fails_closed_on_ambiguous_source_sequence(tmp_path):
+    text = "A2000芯片已完成客户验证。"
+    _write_v2_note(
+        tmp_path,
+        filename="old.md",
+        card_id="old:1",
+        source_block_id="old-block",
+        source_units=[{
+            "unit_id": "old-block:u9", "block_id": "old-block", "ordinal": 9,
+            "start_pos": 0, "end_pos": len(text), "text": text,
+        }],
+    )
+    decisions = [
+        _unit_decision("new-a", "new-a:u0", text, card_id="current:a"),
+        _unit_decision("new-b", "new-b:u0", text, card_id="current:b"),
+    ]
+
+    result = material_pack_module.classify_periodic_narrative_v2_notes(
+        stock_name="测试股", producer_cards=[], source_unit_decisions=decisions,
+        base_dir=tmp_path,
+    )
+
+    assert [item["card_id"] for item in result["stale_source_ambiguous"]] == ["old:1"]
+
+
+def test_classify_orphan_only_resolves_direct_archive_safe_rejection(tmp_path):
+    text = "公司需遵守自律监管指引中的行业信息披露要求。"
+    _write_v2_note(
+        tmp_path,
+        filename="old.md",
+        card_id="old:1",
+        source_block_id="regulatory",
+        source_units=[{
+            "unit_id": "regulatory:u0", "block_id": "regulatory", "ordinal": 0,
+            "start_pos": 0, "end_pos": len(text), "text": text,
+        }],
+    )
+    decision = _unit_decision(
+        "regulatory", "regulatory:u0", text,
+        disposition="rejected", reason="regulatory_disclosure", card_id="",
+    )
+
+    resolved = material_pack_module.classify_periodic_narrative_v2_notes(
+        stock_name="测试股", producer_cards=[], source_unit_decisions=[decision],
+        base_dir=tmp_path,
+    )
+    decision["reason"] = "audit_or_policy"
+    blocked = material_pack_module.classify_periodic_narrative_v2_notes(
+        stock_name="测试股", producer_cards=[], source_unit_decisions=[decision],
+        base_dir=tmp_path,
+    )
+
+    assert [item["card_id"] for item in resolved["stale_resolved_structural"]] == ["old:1"]
+    assert [item["card_id"] for item in blocked["stale_recovery_required"]] == ["old:1"]
 
 
 def _write_producer_cards(base: Path, result: dict) -> None:
@@ -574,6 +674,270 @@ def test_selected_cards_to_synthesis_items_preserves_display_only_metadata(tmp_p
     assert item.extra["synthesis_display_only"] is True
     assert item.extra["experimental"] is True
     assert item.extra["argument_family"] == "technology_product_progress"
+
+
+def test_public_note_reader_returns_the_validated_v2_card(tmp_path: Path) -> None:
+    path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:0123456789abcdef0123",
+    )
+
+    card = material_pack_module.read_periodic_narrative_card_note(path)
+
+    assert card is not None
+    assert card["card_id"] == "annual-argument:0123456789abcdef0123"
+    assert card["source_excerpt"] == "产品 annual-argument:0123456789abcdef0123 完成客户验证。"
+
+
+def test_public_note_reader_preserves_quoted_numeric_anchor_as_string(tmp_path: Path) -> None:
+    path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:numeric-anchor",
+    )
+    text = path.read_text(encoding="utf-8").replace(
+        "fact_anchors:\n  - 客户验证\n", 'fact_anchors:\n  - "2025"\n',
+    )
+    path.write_text(text, encoding="utf-8")
+
+    card = material_pack_module.read_periodic_narrative_card_note(path)
+
+    assert card is not None
+    assert card["fact_anchors"] == ["2025"]
+
+
+def _producer_pack(card: dict) -> dict:
+    return {
+        "schema_version": "periodic_report_narrative_evidence_cards.v2",
+        "selection_version": "annual_argument_selection.v2",
+        "stock_code": "000001",
+        "stock_name": "测试股",
+        "report_year": 2025,
+        "report_type": "annual",
+        "cards": [card],
+        "candidate_cards": [card],
+        "diagnostics": {"source_units_seen": len(card["source_units"])},
+    }
+
+
+def test_classify_v2_notes_uses_fingerprint_and_writer_path_tiebreaker(tmp_path: Path) -> None:
+    active_path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:classification",
+    )
+    card = material_pack_module.read_periodic_narrative_card_note(active_path)
+    assert card is not None
+    _write_v2_note(
+        tmp_path,
+        filename="duplicate.md",
+        card_id="annual-argument:classification",
+    )
+    _write_v2_note(
+        tmp_path,
+        filename="reindexed.md",
+        card_id="annual-argument:classification",
+        quality_score=9,
+    )
+    _write_v2_note(
+        tmp_path,
+        filename="orphan.md",
+        card_id="annual-argument:orphan",
+        source_block_id="retired-source-0",
+    )
+    invalid_path = _cards_dir(tmp_path) / "invalid.md"
+    invalid_path.write_text(
+        "---\nsource_type: periodic_report_narrative_evidence\n"
+        "schema_version: periodic_report_narrative_evidence_card.v2\n---\n",
+        encoding="utf-8",
+    )
+
+    result = material_pack_module.classify_periodic_narrative_v2_notes(
+        stock_name="测试股",
+        producer_cards=[card],
+        base_dir=tmp_path,
+    )
+
+    assert [Path(item["path"]).name for item in result["active_v2"]] == [active_path.name]
+    assert [Path(item["path"]).name for item in result["stale_duplicate"]] == ["duplicate.md"]
+    assert [Path(item["path"]).name for item in result["stale_reindexed"]] == ["reindexed.md"]
+    assert [Path(item["path"]).name for item in result["stale_orphan"]] == ["orphan.md"]
+    assert [Path(item["path"]).name for item in result["stale_invalid"]] == ["invalid.md"]
+    assert result["missing_active_card_ids"] == []
+
+
+def test_classify_v2_notes_marks_orphan_as_source_covered_when_units_survive(tmp_path: Path) -> None:
+    units = [
+        {
+            "unit_id": "competitive_position-0:u3",
+            "block_id": "competitive_position-0",
+            "ordinal": 3,
+            "start_pos": 0,
+            "end_pos": len("产品矩阵。"),
+            "text": "产品矩阵。",
+        },
+        {
+            "unit_id": "competitive_position-0:u4",
+            "block_id": "competitive_position-0",
+            "ordinal": 4,
+            "start_pos": len("产品矩阵。"),
+            "end_pos": len("产品矩阵。客户覆盖。"),
+            "text": "客户覆盖。",
+        },
+    ]
+    canonical_path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-market-competition-outlook-0.md",
+        card_id="annual-argument:11111111111111111111",
+        family="market_competition_outlook",
+        source_block_id="competitive_position-0",
+        source_units=units,
+    )
+    canonical = material_pack_module.read_periodic_narrative_card_note(canonical_path)
+    assert canonical is not None
+    _write_v2_note(
+        tmp_path,
+        filename="covered-orphan.md",
+        card_id="annual-argument:22222222222222222222",
+        family="business_structure",
+        source_block_id="competitive_position-0",
+        source_units=[units[0]],
+    )
+    missing_unit = {**units[0], "unit_id": "competitive_position-0:u9", "ordinal": 9}
+    _write_v2_note(
+        tmp_path,
+        filename="uncovered-orphan.md",
+        card_id="annual-argument:33333333333333333333",
+        source_block_id="competitive_position-0",
+        source_units=[missing_unit],
+    )
+
+    result = material_pack_module.classify_periodic_narrative_v2_notes(
+        stock_name="测试股",
+        producer_cards=[canonical],
+        base_dir=tmp_path,
+    )
+
+    assert [Path(item["path"]).name for item in result["stale_source_covered"]] == ["covered-orphan.md"]
+    assert result["stale_source_covered"][0]["covered_by_card_ids"] == ["annual-argument:11111111111111111111"]
+    assert [Path(item["path"]).name for item in result["stale_orphan"]] == ["uncovered-orphan.md"]
+
+
+def test_pack_shadow_reuses_material_selection_and_v1_diagnostics(tmp_path: Path) -> None:
+    path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:shadow",
+    )
+    card = material_pack_module.read_periodic_narrative_card_note(path)
+    assert card is not None
+    _write_note(
+        tmp_path,
+        filename="legacy.md",
+        card_id="legacy:uncovered",
+        body_excerpt="公司主营业务为高端光通信收发模块的研发、生产及销售。",
+    )
+    write_periodic_report_narrative_pack(
+        stock_name="测试股",
+        stock_code="000001",
+        card_pack=_producer_pack(card),
+        base_dir=tmp_path,
+    )
+
+    legacy = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+    shadow = material_pack_module.build_annual_report_material_pack_from_pack_shadow(
+        stock_name="测试股",
+        stock_code="000001",
+        base_dir=tmp_path,
+    )
+
+    assert shadow["selected_narrative_cards"] == legacy["selected_narrative_cards"]
+    assert shadow["diagnostics"]["storage_mode"] == "pack_shadow"
+    for key in material_pack_module._V1_DIAGNOSTIC_KEYS:
+        assert shadow["diagnostics"][key] == legacy["diagnostics"][key]
+
+
+def test_default_loader_prefers_validated_pack_over_v2_note_projections(tmp_path: Path) -> None:
+    canonical_path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:canonical",
+    )
+    canonical = material_pack_module.read_periodic_narrative_card_note(canonical_path)
+    assert canonical is not None
+    _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-stale.md",
+        card_id="annual-argument:stale",
+    )
+    write_periodic_report_narrative_pack(
+        stock_name="测试股",
+        stock_code="000001",
+        card_pack=_producer_pack(canonical),
+        base_dir=tmp_path,
+    )
+
+    pack = build_annual_report_material_pack(
+        stock_name="测试股", stock_code="000001", base_dir=tmp_path
+    )
+
+    assert pack["diagnostics"]["storage_mode"] == "pack_first"
+    assert [card["card_id"] for card in pack["selected_narrative_cards"]] == [
+        "annual-argument:canonical"
+    ]
+
+
+def test_default_loader_without_stock_code_keeps_legacy_v2_compatibility(tmp_path: Path) -> None:
+    canonical_path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:canonical",
+    )
+    canonical = material_pack_module.read_periodic_narrative_card_note(canonical_path)
+    assert canonical is not None
+    _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-stale.md",
+        card_id="annual-argument:stale",
+    )
+    write_periodic_report_narrative_pack(
+        stock_name="测试股",
+        stock_code="000001",
+        card_pack=_producer_pack(canonical),
+        base_dir=tmp_path,
+    )
+
+    pack = build_annual_report_material_pack(stock_name="测试股", base_dir=tmp_path)
+
+    assert pack["diagnostics"].get("storage_mode") != "pack_first"
+    assert {card["card_id"] for card in pack["selected_narrative_cards"]} == {
+        "annual-argument:canonical", "annual-argument:stale"
+    }
+
+
+def test_pack_first_fails_closed_after_v2_projections_are_archived(tmp_path: Path) -> None:
+    canonical_path = _write_v2_note(
+        tmp_path,
+        filename="2025-annual-technology-product-progress-0.md",
+        card_id="annual-argument:canonical",
+    )
+    canonical = material_pack_module.read_periodic_narrative_card_note(canonical_path)
+    assert canonical is not None
+    write_periodic_report_narrative_pack(
+        stock_name="测试股",
+        stock_code="000001",
+        card_pack=_producer_pack(canonical),
+        base_dir=tmp_path,
+    )
+    canonical_path.unlink()
+    pack_path = tmp_path / "10-Stocks" / "测试股" / "periodic_narrative_packs" / "2025-annual.json"
+    pack_path.write_text("{", encoding="utf-8")
+
+    with pytest.raises(PeriodicNarrativePackStorageError, match="invalid_json"):
+        build_annual_report_material_pack(
+            stock_name="测试股", stock_code="000001", base_dir=tmp_path
+        )
 
 
 def test_build_pack_quality_scores_analog_chip_company(tmp_path: Path) -> None:

@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -11,6 +12,7 @@ if __name__.startswith("utils."):
     from ..knowledge_synthesizer import KnowledgeSynthesizer
     from ..source_adapter import adapt_all
     from ..synthesis_credit import (
+        citation_identity,
         credit_usage_rules_text,
         derive_synthesis_usage,
         format_synthesis_source_line,
@@ -32,16 +34,22 @@ if __name__.startswith("utils."):
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
     from ..curated_external_display_lint import lint_curated_external_display_text
-    from ..curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
+    from ..curated_external_display import build_curated_external_narrative_display, filter_external_viewpoint_claims, flatten_synthesis_text
     from ..industry_news_relevance import build_industry_relevance_manifest
     from ..peer_comparison_material import build_peer_comparison_material
     from ..fundflow_material import build_fundflow_material_pack
-    from ..annual_report_material_pack import build_annual_report_material_pack
+    from ..annual_report_material_pack import (
+        build_annual_report_material_pack,
+        selected_cards_to_synthesis_items,
+    )
+    from ..periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
+    from ..evidence_freshness import build_freshness_overlay, parse_explicit_date
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
     from source_adapter import adapt_all
     from synthesis_credit import (
+        citation_identity,
         credit_usage_rules_text,
         derive_synthesis_usage,
         format_synthesis_source_line,
@@ -63,11 +71,16 @@ else:
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
     from curated_external_display_lint import lint_curated_external_display_text
-    from curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
+    from curated_external_display import build_curated_external_narrative_display, filter_external_viewpoint_claims, flatten_synthesis_text
     from industry_news_relevance import build_industry_relevance_manifest
     from peer_comparison_material import build_peer_comparison_material
     from fundflow_material import build_fundflow_material_pack
-    from annual_report_material_pack import build_annual_report_material_pack
+    from annual_report_material_pack import (
+        build_annual_report_material_pack,
+        selected_cards_to_synthesis_items,
+    )
+    from periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
+    from evidence_freshness import build_freshness_overlay, parse_explicit_date
 
 
 SYNTHESIS_KEYS = [
@@ -140,11 +153,15 @@ class SynthesisSkill(BaseSkill):
         stock_name_for_annual = ctx.get("stock_name")
         if stock_name_for_annual:
             base_dir = ctx.get("knowledge_base_dir") or Path(__file__).resolve().parents[3] / "knowledge"
+            stock_code_for_annual = str((ctx.get("stock_codes") or {}).get(stock_name_for_annual) or "").strip()
             try:
                 annual_material_pack = build_annual_report_material_pack(
                     stock_name=stock_name_for_annual,
+                    stock_code=stock_code_for_annual,
                     base_dir=base_dir,
                 )
+            except PeriodicNarrativePackStorageError:
+                raise
             except Exception:
                 pass
         if annual_material_pack:
@@ -174,6 +191,10 @@ class SynthesisSkill(BaseSkill):
             if ctx is not None and formal_first_insufficient:
                 ctx.set("formal_first_sources_insufficient", True)
             baseline = self._empty_baseline_synthesis(stock_raw, items, source_policy=source_policy, formal_first_insufficient=formal_first_insufficient)
+        external_display = ctx.get("deep_analysis_display") or {}
+        freshness = self._build_evidence_freshness_overlay(ctx, profile, external_display)
+        self._reserve_freshness_citations(baseline, freshness, external_display)
+        ctx.set("evidence_freshness", freshness)
         ctx.set("synthesis", baseline)
         core_facts = self._select_core_facts(
             baseline.get("core_facts", []),
@@ -228,6 +249,51 @@ class SynthesisSkill(BaseSkill):
 
         return ctx
 
+    def _build_evidence_freshness_overlay(self, ctx: SkillContext, profile: dict, external_display: dict) -> dict:
+        as_of = parse_explicit_date(ctx.get("report_as_of_date")) or date.today()
+        official_types = {"exchange_announcement", "company_ir", "company_official", "announcement", "official", "confirmed_fact", "periodic_report_excerpt"}
+        official = list(self._eligible_periodic_report_fulltext_items(ctx))
+        official.extend(item for item in (ctx.get("source_intake_items") or []) if (getattr(item, "extra", {}) or {}).get("source_type") in official_types)
+        broker = ctx.get("broker_research_digest_items")
+        if broker is None:
+            broker = self._eligible_broker_research_digest_items(ctx)
+        broker = [item for item in (broker or []) if (getattr(item, "extra", {}) or {}).get("card_type") != "broker_risk_note"]
+        return build_freshness_overlay(
+            profile=str(profile.get("profile") or ""), as_of_date=as_of,
+            official_items=official, broker_items=broker, external_display=external_display or {},
+        )
+
+    @staticmethod
+    def _reserve_freshness_citations(baseline: dict, overlay: dict, external_display: dict) -> None:
+        candidate = (overlay or {}).get("summary_candidate")
+        if not candidate:
+            return
+        source_citations = (external_display or {}).get("citations") or {}
+        citations = baseline.setdefault("citations", {})
+        normalized = {}
+        for key, meta in citations.items():
+            try:
+                normalized[citation_identity(meta, fallback_ref=int(key))] = int(key)
+            except (TypeError, ValueError):
+                continue
+        refs = []
+        for raw_ref in candidate.get("citation_refs") or []:
+            meta = source_citations.get(raw_ref) or source_citations.get(str(raw_ref))
+            if not isinstance(meta, dict):
+                continue
+            identity = citation_identity(meta, fallback_ref=raw_ref)
+            ref_id = normalized.get(identity)
+            if ref_id is None:
+                ref_id = max((int(key) for key in citations if str(key).isdigit()), default=0) + 1
+                citations[ref_id] = dict(meta)
+                normalized[identity] = ref_id
+            refs.append(ref_id)
+        candidate["citation_refs"] = list(dict.fromkeys(refs))
+        candidate["citation_identities"] = [citation_identity(citations[ref], fallback_ref=ref) for ref in candidate["citation_refs"]]
+        if not candidate["citation_refs"]:
+            overlay["summary_candidate"] = None
+            overlay["preface"] = False
+
     @staticmethod
     def _select_core_facts(baseline_core_facts: list, filing_core_facts: list) -> list:
         """Prefer baseline core facts only when at least one is renderable."""
@@ -263,24 +329,33 @@ class SynthesisSkill(BaseSkill):
     @staticmethod
     def _eligible_periodic_narrative_card_items(ctx: SkillContext) -> list:
         """Load persisted periodic-report narrative cards as display-only items."""
+        try:
+            max_cards = max(
+                0,
+                int(ctx.get("periodic_narrative_cards_max_display_items", 12)),
+            )
+        except (TypeError, ValueError):
+            max_cards = 12
+        material_pack = ctx.get("annual_report_material_pack") or {}
+        selected_cards = material_pack.get("selected_narrative_cards")
+        if isinstance(selected_cards, list):
+            return selected_cards_to_synthesis_items(selected_cards)[:max_cards]
         stock_name = ctx.get("stock_name")
         if not stock_name:
             return []
         base_dir = ctx.get("knowledge_base_dir")
         if not base_dir:
             base_dir = Path(__file__).resolve().parents[3] / "knowledge"
-        max_cards = ctx.get("periodic_narrative_cards_max_display_items", 12)
-        try:
-            max_cards = int(max_cards)
-        except (TypeError, ValueError):
-            max_cards = 12
         try:
             return load_periodic_narrative_card_synthesis_items(
                 stock_name=stock_name,
+                stock_code=str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip(),
                 base_dir=base_dir,
                 max_cards=max_cards,
                 use_pack=True,
             )
+        except PeriodicNarrativePackStorageError:
+            raise
         except Exception:
             return []
 
@@ -873,7 +948,10 @@ class SynthesisSkill(BaseSkill):
             )
             return
 
-        result = build_curated_external_narrative_display(narrative_json)
+        result = build_curated_external_narrative_display(
+            narrative_json,
+            expected_stock_name=str(ctx.get("stock_name") or "").strip(),
+        )
         ctx.set("curated_external_viewpoint_narrative_status", result.get("status"))
         ctx.set("curated_external_viewpoint_narrative_stats", result.get("stats") or {})
         if result.get("lint"):
@@ -916,17 +994,25 @@ class SynthesisSkill(BaseSkill):
         ctx.set("curated_external_viewpoint_digest_stats", digest.get("stats") or {})
         if status != "ok":
             return
+        stock_name = str(ctx.get("stock_name") or "").strip()
+        identity_status = "missing_stock_identity" if not stock_name else (
+            "ok" if str(digest.get("stock_name") or "").strip() == stock_name else "stock_identity_mismatch"
+        )
+        if identity_status != "ok":
+            ctx.set("curated_external_viewpoint_digest_status", identity_status)
+            return
 
         claims = [
             claim for claim in (digest.get("claims") or [])
             if self._is_safe_curated_external_viewpoint_claim(claim)
         ]
+        claims, _ = filter_external_viewpoint_claims(claims, stock_name)
         if not claims:
             ctx.set("curated_external_viewpoint_digest_status", "empty")
             return
 
         claims = self._dedupe_viewpoint_digest_claims_for_display(claims)
-        display = self._deterministic_viewpoint_digest_display(ctx.get("stock_name"), claims)
+        display = self._deterministic_viewpoint_digest_display(stock_name, claims)
         lint = lint_curated_external_display_text(display)
         ctx.set("curated_external_viewpoint_digest_lint", lint)
         if not lint.get("ok"):
@@ -1088,21 +1174,19 @@ class SynthesisSkill(BaseSkill):
         grouped = {
             "industry_logic": [],
             "fundamentals": [],
-            "valuation_debate": [],
-            "funding_sentiment": [],
             "events_catalysts": [],
         }
         topic_groups = {}
         citations = {}
 
         for ref_id, claim in enumerate(claims, start=1):
-            line = self._format_viewpoint_digest_observation(claim, ref_id)
+            row = self._viewpoint_digest_topic_row(claim, ref_id)
+            title = claim.get("source_title") or claim.get("title") or "外部观点"
+            line = f"《{' '.join(str(title).split())[:80]}》观察到：{row['text'].rstrip('。')}[^{ref_id}]"
             bucket = self._viewpoint_digest_bucket(claim)
             grouped[bucket].append(line)
             topic_key = self._external_viewpoint_topic_key(claim)
-            topic_groups.setdefault(topic_key, []).append(
-                self._viewpoint_digest_topic_row(claim, ref_id)
-            )
+            topic_groups.setdefault(topic_key, []).append(row)
             citations[ref_id] = self._viewpoint_digest_citation(claim)
 
         return {
@@ -1207,7 +1291,9 @@ class SynthesisSkill(BaseSkill):
 
     @classmethod
     def _viewpoint_digest_topic_row(cls, claim: Dict[str, Any], ref_id: int) -> dict:
-        title = " ".join(str(claim.get("source_title") or claim.get("title") or "外部观点").split())[:80]
+        title = claim.get("heading") or " ".join(
+            str(claim.get("source_title") or claim.get("title") or "外部观点").split()
+        )[:80]
         claim_text = str(claim.get("claim") or "").strip().rstrip("。")
         why = str(claim.get("why_incremental") or "").strip().rstrip("。")
         suffix = f"（{why}）" if why else ""
@@ -1218,14 +1304,6 @@ class SynthesisSkill(BaseSkill):
             "claim_id": claim.get("claim_id", ""),
             "topic": cls._external_viewpoint_topic_key(claim),
         }
-
-    @staticmethod
-    def _format_viewpoint_digest_observation(claim: Dict[str, Any], ref_id: int) -> str:
-        title = " ".join(str(claim.get("source_title") or claim.get("title") or "外部观点").split())[:80]
-        claim_text = str(claim.get("claim") or "").strip().rstrip("。")
-        why = str(claim.get("why_incremental") or "").strip().rstrip("。")
-        suffix = f"（{why}）" if why else ""
-        return f"《{title}》观察到：{claim_text}{suffix}[^{ref_id}]"
 
     @staticmethod
     def _viewpoint_digest_citation(claim: Dict[str, Any]) -> dict:
@@ -1240,16 +1318,6 @@ class SynthesisSkill(BaseSkill):
             "claim_id": claim.get("claim_id", ""),
             "source_quote_hash": claim.get("source_quote_hash", ""),
         }
-
-    @staticmethod
-    def _is_template_fallback_synthesis(synthesis: dict) -> bool:
-        """Detect the generic non-LLM template so curated cards can still render."""
-        if not isinstance(synthesis, dict):
-            return True
-        if synthesis.get("citations"):
-            return False
-        text = "\n".join(str(synthesis.get(key, "")) for key in SYNTHESIS_KEYS)
-        return "LLM 合成未启用或未产生有效输出" in text
 
     @staticmethod
     def _join_curated_external_observations(stock_name: str, label: str, lines: list) -> str:

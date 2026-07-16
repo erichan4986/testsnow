@@ -98,6 +98,64 @@ def test_deep_report_deterministic_executive_summary_body_passes_gate():
     assert "empty_executive_summary_body" not in {i.code for i in result.issues}
 
 
+def test_freshness_summary_line_requires_preview_boundary_and_resolved_refs():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    line = (
+        "**近期待验证变量**：外部材料称，客户订单节奏出现变化[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
+    text = fixture.read_text(encoding="utf-8").replace(
+        "## 技术面分析：中期趋势提醒", f"{line}\n\n## 技术面分析：中期趋势提醒", 1,
+    ) + "\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+    result = check_report_text(text)
+    assert "freshness_summary_boundary" not in {issue.code for issue in result.issues}
+
+
+def test_freshness_summary_line_rejects_confirmation_language():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    line = (
+        "**近期待验证变量**：外部材料称，订单已落地[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
+    text = fixture.read_text(encoding="utf-8").replace(
+        "## 技术面分析：中期趋势提醒", f"{line}\n\n## 技术面分析：中期趋势提醒", 1,
+    ) + "\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+    result = check_report_text(text)
+    assert "freshness_summary_unverified_confirmation" in {issue.code for issue in result.issues}
+
+
+def test_freshness_summary_line_outside_executive_summary_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + (
+        "\n**近期待验证变量**：外部材料称，客户订单节奏出现变化[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。\n"
+        "\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+    )
+
+    result = check_report_text(text)
+
+    assert "freshness_summary_outside_executive_summary" in {
+        issue.code for issue in result.issues
+    }
+
+
+def test_freshness_summary_line_repeated_outside_executive_summary_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    line = (
+        "**近期待验证变量**：外部材料称，客户订单节奏出现变化[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
+    text = fixture.read_text(encoding="utf-8").replace(
+        "## 技术面分析：中期趋势提醒", f"{line}\n\n## 技术面分析：中期趋势提醒", 1,
+    ) + f"\n{line}\n\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+
+    result = check_report_text(text)
+
+    assert "freshness_summary_outside_executive_summary" in {
+        issue.code for issue in result.issues
+    }
+
+
 def test_lightweight_report_is_outside_executive_summary_body_contract():
     text = """# 测试股
 
@@ -2618,3 +2676,75 @@ def test_annual_broker_4_3_display_only_risk_without_explanation_warns():
 """
     codes = {issue.code for issue in check_report_text(text).issues}
     assert "display_only_risk_without_explanation" in codes
+
+
+def test_new_external_variable_map_requires_inline_footnote_per_visible_variable():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+年报经营摘要[^1]。
+
+### 4.2 研报观点与假设
+
+研报预计盈利改善[^2]。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部材料称上游供给节奏仍需验证。
+
+**客户验证**
+
+外部材料称客户验证节奏仍需观察。[^10]
+
+## 引用来源
+
+- [^1] 公司年报 | 《年度报告》
+- [^2] 券商研报 | 《跟踪报告》
+- [^10] 微信公众号精选观察 | 《客户观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "curated_external_missing_inline_footnotes" in codes
+
+
+def test_new_external_variable_map_accepts_multi_digit_inline_footnote_without_local_source_list():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+年报经营摘要[^1]。
+
+### 4.2 研报观点与假设
+
+研报预计盈利改善[^2]。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部材料称上游供给节奏仍需验证。[^10]
+
+## 引用来源
+
+- [^1] 公司年报 | 《年度报告》
+- [^2] 券商研报 | 《跟踪报告》
+- [^10] 微信公众号精选观察 | 《供应链观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "curated_external_missing_inline_footnotes" not in codes

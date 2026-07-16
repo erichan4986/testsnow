@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "5d055e22c7c2991fd8e89e9c1e796553380171c7a022d34cf172e2f0b1885e3b",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "caffefce1390921f9a941f9e4d43f3ec87fbd338045d94a3599526fdc037fe1a",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "93790a2f091c4efbecd31c7c082d5de35022c969b3a734eb0f5fd80eeca3158c",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "000661",
+  "stock_name": "长春高新"
+}

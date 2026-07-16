@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from periodic_report_narrative_card_synthesis_items import (
     load_periodic_narrative_card_synthesis_items,
 )
+from periodic_report_narrative_pack_store import write_periodic_report_narrative_pack
 
 
 def _cards_dir(base: Path, stock_name: str = "测试股") -> Path:
@@ -209,3 +210,53 @@ def test_pack_loader_builds_uncapped_pack_then_slices_display_items(tmp_path: Pa
     ]
     assert items[0].extra["argument_family"] == "technology_product_progress"
     assert items[0].extra["source_unit_ids"] == ["block-0:u0"]
+
+
+def test_pack_loader_uses_validated_pack_when_stock_code_is_available(tmp_path: Path) -> None:
+    _write_v2_note(tmp_path, 0)
+    _write_v2_note(tmp_path, 1)
+    card = {
+        "schema_version": "periodic_report_narrative_evidence_card.v2",
+        "selection_version": "annual_argument_selection.v2",
+        "source_type": "periodic_report_narrative_evidence",
+        "card_id": "annual-argument:00000000000000000000",
+        "argument_family": "technology_product_progress",
+        "argument_complete": True,
+        "title": "产品进展 0",
+        "report_year": 2025,
+        "report_type": "annual",
+        "source_block_id": "block-0",
+        "source_unit_ids": ["block-0:u0"],
+        "fact_anchors": ["客户验证"],
+        "secondary_signals": ["operating_progress"],
+        "source_excerpt": "产品 0 完成客户验证。",
+        "source_credit": 75,
+        "quality_score": 6,
+        "source_units": [{"unit_id": "block-0:u0", "block_id": "block-0", "ordinal": 0, "start_pos": 0, "end_pos": 11, "text": "产品 0 完成客户验证。"}],
+        "score_parts": {"anchored_fact": 1, "argument_complete": 4},
+        "selection_reason": "signal:technology_product_progress",
+    }
+    write_periodic_report_narrative_pack(
+        stock_name="测试股",
+        stock_code="000001",
+        card_pack={
+            "schema_version": "periodic_report_narrative_evidence_cards.v2",
+            "selection_version": "annual_argument_selection.v2",
+            "stock_code": "000001",
+            "stock_name": "测试股",
+            "report_year": 2025,
+            "report_type": "annual",
+            "cards": [card],
+            "candidate_cards": [card],
+            "diagnostics": {},
+        },
+        base_dir=tmp_path,
+    )
+
+    items = load_periodic_narrative_card_synthesis_items(
+        stock_name="测试股", stock_code="000001", base_dir=tmp_path, use_pack=True
+    )
+
+    assert [item.extra["card_id"] for item in items] == [
+        "annual-argument:00000000000000000000"
+    ]

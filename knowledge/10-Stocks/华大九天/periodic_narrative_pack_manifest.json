@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "9f944a2eb9752682432b0576f2395f0440d06c7b78ec0193bbf2ea14e6a6622d",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "f41e17b96437a3f958908ae0c71d5a230733df7f8c04f052432ce5fc14de3be8",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "99bcb546b92da10cd7e1b1d063f5995ce32fa93f9f61e510e9c0ca2854ea8eca",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "301269",
+  "stock_name": "华大九天"
+}

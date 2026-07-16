@@ -15,8 +15,10 @@ from typing import Any, Iterable, List
 
 try:
     from .source_direct_relevance import OPERATING_VARIABLE_TERMS
+    from .evidence_freshness import has_unnegated_strong_confirmation
 except ImportError:
     from source_direct_relevance import OPERATING_VARIABLE_TERMS
+    from evidence_freshness import has_unnegated_strong_confirmation
 
 
 @dataclass
@@ -215,6 +217,7 @@ def check_report_text(
     issues.extend(_check_required_signals(normalized))
     issues.extend(_check_contradictions(normalized, profile))
     issues.extend(_check_empty_executive_summary_body(text))
+    issues.extend(_check_freshness_summary_line(text))
     issues.extend(_check_curated_external_inline_footnotes(text, profile))
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
@@ -247,6 +250,42 @@ def _check_malformed_citation_markers(text: str) -> List[QualityIssue]:
             evidence=", ".join(sorted(set(malformed))[:5]),
         )
     ]
+
+
+def _check_freshness_summary_line(text: str) -> List[QualityIssue]:
+    summary = _extract_markdown_section(text, "执行摘要")
+    lines = [line.strip() for line in summary.splitlines() if "**近期待验证变量**" in line]
+    total_count = str(text or "").count("**近期待验证变量**")
+    issues: List[QualityIssue] = []
+    if total_count > len(lines):
+        issues.append(QualityIssue(
+            code="freshness_summary_outside_executive_summary",
+            severity="error",
+            message="近期待验证变量只能出现在执行摘要中。",
+        ))
+    if len(lines) > 1:
+        issues.append(QualityIssue(
+            code="freshness_summary_multiple",
+            severity="error",
+            message="执行摘要最多只能有一条近期待验证变量。",
+        ))
+    for line in lines[:1]:
+        refs = re.findall(r"\[\^(\d+)\]", line)
+        missing = [term for term in ("外部待验证", "不替代官方确认", "不参与评分", "风险评分", "目标价") if term not in line]
+        if not refs or missing:
+            issues.append(QualityIssue(
+                code="freshness_summary_boundary",
+                severity="error",
+                message="执行摘要近期待验证变量缺少完整 citation 或 display-only 边界免责声明。",
+                evidence=f"missing={missing}; refs={refs}",
+            ))
+        if has_unnegated_strong_confirmation(line):
+            issues.append(QualityIssue(
+                code="freshness_summary_unverified_confirmation",
+                severity="error",
+                message="执行摘要外部待验证变量使用了未被否定的强确认表述。",
+            ))
+    return issues
 
 
 def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[QualityIssue]:
@@ -572,18 +611,29 @@ def _check_curated_external_inline_footnotes(text: str, profile: dict | None = N
     if not section:
         return
 
-    if "本节引用来源" not in section or not re.search(r"(?m)^-\s*\[\^\d+\]", section):
+    if "本节引用来源" in section and re.search(r"(?m)^-\s*\[\^\d+\]", section):
+        body = section.split("本节引用来源", 1)[0]
+        if not re.search(r"\[\^\d+\]", body):
+            yield QualityIssue(
+                code="curated_external_missing_inline_footnotes",
+                severity="error",
+                message=f"{section_id} 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
+            )
         return
 
-    body = section.split("本节引用来源", 1)[0]
-    if re.search(r"\[\^\d+\]", body):
-        return
-
-    yield QualityIssue(
-        code="curated_external_missing_inline_footnotes",
-        severity="error",
-        message=f"{section_id} 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
-    )
+    body = section.split("## 引用来源", 1)[0]
+    for match in re.finditer(r"(?m)^\*\*([^*\n]+)\*\*\s*$", body):
+        tail = body[match.end():]
+        paragraph = next((line.strip() for line in tail.splitlines() if line.strip()), "")
+        if not paragraph:
+            continue
+        if paragraph.startswith(("#", ">", "- ", "* ", "|", "**")) or not re.search(r"\[\^\d+\]", paragraph):
+            yield QualityIssue(
+                code="curated_external_missing_inline_footnotes",
+                severity="error",
+                message=f"{section_id} 外部变量“{match.group(1)}”缺少正文 inline footnote，引用不可追溯。",
+            )
+            return
 
 
 _INDUSTRY_CHAIN_TRIGGER_TERMS = [

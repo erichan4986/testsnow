@@ -12,7 +12,7 @@ import curated_external_viewpoint_narrative_preview as _preview_module
 from curated_external_viewpoint_narrative_preview import main
 
 
-def _make_digest(tmp_path: Path) -> Path:
+def _make_digest(tmp_path: Path, *, stock_name: str = "测试股") -> Path:
     sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
     from curated_external_full_body_viewpoint_claims import normalized_hash
 
@@ -20,7 +20,7 @@ def _make_digest(tmp_path: Path) -> Path:
     digest = {
         "schema_version": "curated_external_viewpoint_digest.v1",
         "status": "ok",
-        "stock_name": "测试股",
+        "stock_name": stock_name,
         "claims": [
             {
                 "schema_version": "curated_external_viewpoint_claim.v1",
@@ -58,9 +58,9 @@ def _make_baseline(tmp_path: Path) -> Path:
 
 
 def test_cli_heuristic_writes_preview_under_tmp(tmp_path: Path, capsys):
-    digest_path = _make_digest(tmp_path)
-    baseline_path = _make_baseline(tmp_path)
     stock = f"narrative_{uuid.uuid4().hex[:8]}"
+    digest_path = _make_digest(tmp_path, stock_name=stock)
+    baseline_path = _make_baseline(tmp_path)
 
     try:
         rc = main(
@@ -152,7 +152,7 @@ def test_cli_fake_llm_factory_success(tmp_path: Path, capsys, monkeypatch):
         rc = main(
             [
                 "--digest-json",
-                str(_make_digest(tmp_path)),
+                str(_make_digest(tmp_path, stock_name=stock)),
                 "--baseline-synthesis-file",
                 str(_make_baseline(tmp_path)),
                 "--stock",

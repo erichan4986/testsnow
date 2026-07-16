@@ -8,7 +8,19 @@ from pathlib import Path
 from typing import Any, Callable, Dict, List
 
 from curated_external_display_lint import lint_curated_external_display_text
-from curated_external_display import attach_refs_to_sentence, truncate_curated_source_excerpt
+from curated_external_display import (
+    attach_refs_to_sentence,
+    filter_external_viewpoint_claims,
+    resolve_viewpoint_claim_id,
+    truncate_curated_source_excerpt,
+)
+
+try:
+    from .evidence_freshness import canonical_dynamic_topic
+    from .synthesis_credit import citation_identity
+except ImportError:
+    from evidence_freshness import canonical_dynamic_topic
+    from synthesis_credit import citation_identity
 
 
 NARRATIVE_SCHEMA_VERSION = "curated_external_viewpoint_narrative.v1"
@@ -55,8 +67,17 @@ def build_viewpoint_narrative(
     stock_name: str = "",
 ) -> Dict[str, Any]:
     """Build a cited 4.4-style narrative from a validated viewpoint digest."""
-    stock = stock_name or str(digest.get("stock_name") or "")
+    stock = str(stock_name or "").strip()
     base = _empty_result(stock)
+    digest_stock = str(digest.get("stock_name") or "").strip()
+    identity_status = "missing_stock_identity" if not stock else (
+        "stock_identity_mismatch" if digest_stock and digest_stock != stock else "ok"
+    )
+    if identity_status != "ok":
+        base["status"] = identity_status
+        reason = "missing configured stock name" if not stock else "digest stock_name does not match configured stock name"
+        base["stats"]["drop_reasons"].append(reason)
+        return base
 
     if digest.get("status") != "ok":
         base["status"] = "source_digest_not_ok"
@@ -64,6 +85,13 @@ def build_viewpoint_narrative(
         return base
 
     claims = [claim for claim in digest.get("claims") or [] if _is_safe_claim(claim)]
+    claims, rejected_claim_ids = filter_external_viewpoint_claims(claims, stock)
+    if rejected_claim_ids:
+        base["stats"]["drop_reasons"].extend(
+            f"foreign_company_target_claim:{claim_id}"
+            for claim_id in rejected_claim_ids
+            if claim_id
+        )
     if not claims:
         base["status"] = "no_safe_claims"
         base["stats"]["drop_reasons"].append("no safe display-only claims")
@@ -95,14 +123,6 @@ def build_viewpoint_narrative(
 
     paragraphs, citations, lint_drop_stats = _drop_overclaim_paragraphs(paragraphs, citations)
     base["stats"].update(lint_drop_stats)
-    if not paragraphs:
-        base["status"] = "lint_failed"
-        base["stats"]["drop_reasons"].extend(
-            f"overclaim:{item.get('term')}"
-            for dropped in lint_drop_stats.get("final_overclaim_dropped", [])
-            for item in dropped.get("violations", [])
-        )
-        return base
     base["stats"]["lint"] = lint_curated_external_display_text(
         _display_synthesis_from_paragraphs(paragraphs, citations)
     )
@@ -118,6 +138,17 @@ def build_viewpoint_narrative(
         reasoning_cards = _normalize_reasoning_cards(generated_cards, citations, claims_by_id)
         if reasoning_cards:
             base["stats"]["reasoning_cards_enriched"] = True
+    paragraphs, reasoning_cards, citations = _compact_display_citations(
+        paragraphs, reasoning_cards, citations,
+    )
+    if not paragraphs and not reasoning_cards:
+        base["status"] = "lint_failed"
+        base["stats"]["drop_reasons"].extend(
+            f"overclaim:{item.get('term')}"
+            for dropped in lint_drop_stats.get("final_overclaim_dropped", [])
+            for item in dropped.get("violations", [])
+        )
+        return base
     markdown = render_narrative_markdown(stock, paragraphs, citations)
     return {
         **base,
@@ -160,24 +191,23 @@ def _drop_overclaim_paragraphs(
             }
         )
 
-    kept, citations = _compact_citations(kept, citations)
     return kept, citations, {
         "final_overclaim_dropped_count": len(dropped),
         "final_overclaim_dropped": dropped,
     }
 
 
-def _compact_citations(
+def _compact_display_citations(
     paragraphs: List[Dict[str, Any]],
+    cards: List[Dict[str, Any]],
     citations: Dict[int, Dict[str, Any]],
-) -> tuple[List[Dict[str, Any]], Dict[int, Dict[str, Any]]]:
+) -> tuple[List[Dict[str, Any]], List[Dict[str, Any]], Dict[int, Dict[str, Any]]]:
     old_to_new: Dict[int, int] = {}
     compacted_citations: Dict[int, Dict[str, Any]] = {}
-    compacted_paragraphs: List[Dict[str, Any]] = []
-
-    for paragraph in paragraphs:
-        compacted_refs: List[int] = []
-        for old_ref in paragraph.get("citation_refs", []):
+    compacted_items = []
+    for item in [*paragraphs, *cards]:
+        compacted_refs = []
+        for old_ref in item.get("citation_refs", []):
             if old_ref not in citations:
                 continue
             if old_ref not in old_to_new:
@@ -185,9 +215,13 @@ def _compact_citations(
                 old_to_new[old_ref] = new_ref
                 compacted_citations[new_ref] = citations[old_ref]
             compacted_refs.append(old_to_new[old_ref])
-        compacted_paragraphs.append({**paragraph, "citation_refs": compacted_refs})
+        compacted_items.append({**item, "citation_refs": compacted_refs})
 
-    return compacted_paragraphs, compacted_citations
+    return (
+        compacted_items[:len(paragraphs)],
+        compacted_items[len(paragraphs):],
+        compacted_citations,
+    )
 
 
 def heuristic_narrative_composer(
@@ -370,7 +404,7 @@ def _validate_paragraphs(
 
     paragraphs: List[Dict[str, Any]] = []
     citations: Dict[int, Dict[str, Any]] = {}
-    claim_to_ref: Dict[str, int] = {}
+    citation_ref_by_identity: Dict[tuple[str, str], int] = {}
     reasons: List[str] = []
     claim_ref_repairs: List[Dict[str, str]] = []
 
@@ -397,20 +431,39 @@ def _validate_paragraphs(
                 continue
             if repair:
                 claim_ref_repairs.append(repair)
-            if claim_id not in claim_to_ref:
-                ref_id = len(claim_to_ref) + 1
-                claim_to_ref[claim_id] = ref_id
+            identity = citation_identity(
+                {"url": claim.get("source_ref") or claim.get("source_url") or ""},
+                fallback_ref=claim_id,
+            )
+            ref_id = citation_ref_by_identity.get(identity)
+            if ref_id is None:
+                ref_id = len(citations) + 1
+                citation_ref_by_identity[identity] = ref_id
                 citations[ref_id] = _citation_from_claim(claim)
-            citation_refs.append(claim_to_ref[claim_id])
+            else:
+                claim_ids = citations[ref_id].setdefault(
+                    "claim_ids", [str(citations[ref_id].get("claim_id") or "")]
+                )
+                if claim_id not in claim_ids:
+                    claim_ids.append(claim_id)
+            citation_refs.append(ref_id)
             resolved_claim_refs.append(claim_id)
         if reasons:
             continue
+        topic_keys = []
+        for claim_id in resolved_claim_refs:
+            claim = claims_by_id.get(claim_id) or {}
+            topic_key = canonical_dynamic_topic(claim.get("topic") or claim.get("primary_topic"))
+            if topic_key not in topic_keys:
+                topic_keys.append(topic_key)
         paragraphs.append(
             {
                 "heading": _clean_text(raw.get("heading"))[:60],
                 "text": text,
                 "claim_refs": resolved_claim_refs,
                 "citation_refs": citation_refs,
+                "paragraph_index": len(paragraphs),
+                "topic_keys": topic_keys,
             }
         )
     return paragraphs, citations, reasons, claim_ref_repairs
@@ -423,21 +476,15 @@ def _resolve_claim_ref(
     claim_ref = str(raw_claim_ref or "").strip()
     if not claim_ref:
         return "", {}, {}, "unresolved claim_ref: "
-    exact = claims_by_id.get(claim_ref)
-    if exact:
-        return claim_ref, exact, {}, ""
-
-    matches = [
-        claim_id
-        for claim_id in claims_by_id
-        if claim_id.rsplit(":", 1)[-1] == claim_ref or claim_id.endswith(f":{claim_ref}")
-    ]
-    if len(matches) == 1:
-        repaired = matches[0]
-        return repaired, claims_by_id[repaired], {"from": claim_ref, "to": repaired}, ""
-    if len(matches) > 1:
-        return "", {}, {}, f"ambiguous claim_ref: {claim_ref}"
-    return "", {}, {}, f"unresolved claim_ref: {claim_ref}"
+    repaired = resolve_viewpoint_claim_id(claim_ref, set(claims_by_id))
+    if repaired:
+        repair = {} if repaired == claim_ref else {"from": claim_ref, "to": repaired}
+        return repaired, claims_by_id[repaired], repair, ""
+    suffix_matches = sum(
+        claim_id.rsplit(":", 1)[-1] == claim_ref for claim_id in claims_by_id
+    )
+    reason = "ambiguous" if suffix_matches > 1 else "unresolved"
+    return "", {}, {}, f"{reason} claim_ref: {claim_ref}"
 
 
 def _display_synthesis_from_paragraphs(
@@ -465,11 +512,12 @@ def _normalize_reasoning_cards(
 ) -> List[Dict[str, Any]]:
     if not isinstance(raw_cards, list):
         return []
-    claim_to_ref = {
-        str(meta.get("claim_id") or "").strip(): ref_id
-        for ref_id, meta in citations.items()
-        if str(meta.get("claim_id") or "").strip()
-    }
+    claim_to_ref = {}
+    for ref_id, meta in citations.items():
+        for claim_id in (meta.get("claim_id"), *(meta.get("claim_ids") or [])):
+            normalized_claim_id = str(claim_id or "").strip()
+            if normalized_claim_id:
+                claim_to_ref[normalized_claim_id] = ref_id
     cards: List[Dict[str, Any]] = []
     for raw in raw_cards:
         if not isinstance(raw, dict):
@@ -661,7 +709,7 @@ def _normalize_quantity_token(token: str) -> str:
 
 
 def _citation_from_claim(claim: Dict[str, Any]) -> Dict[str, Any]:
-    return {
+    citation = {
         "source": _source_label_from_claim(claim),
         "author": claim.get("source_account") or claim.get("account") or "",
         "title": claim.get("source_title") or claim.get("title") or "外部观点",
@@ -672,6 +720,14 @@ def _citation_from_claim(claim: Dict[str, Any]) -> Dict[str, Any]:
         "claim_id": claim.get("claim_id", ""),
         "source_quote_hash": claim.get("source_quote_hash", ""),
     }
+    for date_key in ("published_at", "publish_time", "announcement_date", "report_date", "date"):
+        if claim.get(date_key):
+            citation["date"] = claim[date_key]
+            break
+    for key in ("synthesis_display_only", "scoring_eligible", "risk_score_eligible", "quality_action"):
+        if key in claim:
+            citation[key] = claim[key]
+    return citation
 
 
 def _source_label_from_claim(claim: Dict[str, Any]) -> str:

@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "9a5f4b628479a881fee86c0751d9e652cbbfde0defd0e08cfff0f529de7fd9db",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "77a78a35ef6173cd7802a841ff3b4869ec925d7ed6b5fa68f6c9956cc2e5aa94",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "6445eb2874d831749ed56171d25906492eafce90ad9a5b82f45b3e924033f666",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "300308",
+  "stock_name": "中际旭创"
+}

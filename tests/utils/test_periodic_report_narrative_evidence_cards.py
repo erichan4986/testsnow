@@ -160,6 +160,45 @@ def test_bundle_boundaries_keep_continuations_and_split_independent_arguments(
     assert len(unit_ids) == len(set(unit_ids))
 
 
+def test_cash_flow_block_splits_technology_progress_from_other_income_explanation():
+    text = (
+        "车规级EEPROM芯片产品已完成客户验证。"
+        "其他收益变动原因说明：主要系本期政府补助增加500万元所致。"
+    )
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="688385",
+        stock_name="复旦微电",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"blocks": [{
+            "id": "cash_flow_capex_table-0",
+            "usage": "cash_flow_capex_table",
+            "text": text,
+        }]},
+    )
+
+    cards = result["cards"]
+    assert [card["argument_family"] for card in cards] == [
+        "technology_product_progress",
+        "financial_quality_explanation",
+    ], result["diagnostics"]["source_unit_decisions"]
+    assert [card["source_unit_ids"] for card in cards] == [
+        ["cash_flow_capex_table-0:u0"],
+        ["cash_flow_capex_table-0:u1"],
+    ]
+    assert set(cards[0]["source_unit_ids"]).isdisjoint(cards[1]["source_unit_ids"])
+
+
+def test_argument_continuation_never_crosses_resolved_family():
+    assert not narrative_cards._continues_same_argument(
+        [{"text": "车规级EEPROM芯片产品已完成客户验证。"}],
+        {"text": "主要系本期政府补助增加500万元所致。"},
+        "technology_product_progress",
+        "financial_quality_explanation",
+        "continuation",
+    )
+
+
 def test_hk_market_usage_keeps_commercial_progress_bundle():
     result = build_periodic_report_narrative_evidence_cards(
         stock_code="02533",
@@ -473,6 +512,50 @@ def test_diagnostics_and_candidate_invariant_contract_are_stable():
     )
     assert "candidate_count_exceeds_usable_units" in errors
     assert "reused_source_units" in errors
+
+
+def test_source_unit_decisions_cover_selected_and_archive_safe_rejected_units():
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001",
+        stock_name="测试股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"blocks": [
+            {
+                "id": "business_overview-0",
+                "usage": "business_overview",
+                "text": "公司主营高速光模块并服务云数据中心客户。",
+            },
+            {
+                "id": "regulatory-0",
+                "usage": "business_overview",
+                "text": "公司需遵守深圳证券交易所自律监管指引中的行业信息披露要求。",
+            },
+        ]},
+    )
+
+    diagnostics = result["diagnostics"]
+    assert diagnostics["source_unit_decisions_version"] == "annual_source_unit_decisions.v1"
+    assert len(diagnostics["source_unit_decisions"]) == diagnostics["source_units_seen"] == 2
+    selected, rejected = diagnostics["source_unit_decisions"]
+    assert selected["disposition"] == "selected"
+    assert selected["reason"] == "selected"
+    assert selected["selected_by_card_ids"] == [result["cards"][0]["card_id"]]
+    assert rejected["disposition"] == "rejected"
+    assert rejected["reason"] == "regulatory_disclosure"
+    assert rejected["selected_by_card_ids"] == []
+    assert len(rejected["source_text_hash"]) == 64
+
+
+def test_industry_barrier_block_is_not_marked_archive_safe():
+    result = _build_v2_cards(
+        "行业技术壁垒较高，客户验证周期长，新进入者难以快速打开市场。",
+        "management_market_view",
+    )
+
+    decision = result["diagnostics"]["source_unit_decisions"][0]
+    assert decision["disposition"] == "rejected"
+    assert decision["reason"] == "audit_or_policy"
 
 
 def test_producer_fails_closed_and_reports_blocks_for_reused_source_units(monkeypatch):

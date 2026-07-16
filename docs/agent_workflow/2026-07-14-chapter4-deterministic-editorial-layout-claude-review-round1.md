@@ -22,11 +22,11 @@
 1. formal-medium 的 `Chapter4ViewModel` 是否是全部 display rows 的正确 owner；formal-thin 仅复用 shared annual selector、保留既有 broker/external adapters 的受控 split 是否更安全；renderer 是否仍存在第二套 annual selection。
 2. annual role budgets 与排序是否确定、可测试，会不会误改完整 snapshot/memo。
 3. portrait reservation + `editorial_slot` 是否能删除 renderer `_select_annual_portrait_row()` 而不丢失画像；diagnostics 旧 key 语义是否保持。
-4. broker attribution diversity 和 exact-title consensus 是否会误写共识；formal-thin forecast range 是否始终有 attribution。
-5. external 三套替代投影是否保持 snapshot 完整、display 只按 narrative → reasoning → topic 选一套；shared dedupe key 是否严格为 exact body + canonical citation identities；formal-medium/formal-thin 不设 hard cap 时 renderer 是否仍残留 `[:N]`。
+4. broker attribution diversity 是否生效；固定 family title 是否只形成“机构关注重点”而绝不写成“机构共识”；全部 title 通用时是否省略摘要块；formal-thin forecast range 是否始终有 attribution。
+5. external 三套替代投影是否保持 snapshot 完整；是否先分别执行正文/citation eligibility 与 exact dedupe，再选择第一个非空的 narrative → reasoning → topic；raw narrative 不可展示时能否 fallback reasoning；shared dedupe key 是否严格为 exact body + canonical citation identities；formal-medium/formal-thin 不设 hard cap 时 renderer 是否仍残留 `[:N]`。
 6. formal-thin 的 annual/broker/external offset 公式是否严格基于 full snapshot；隐藏最高 annual ref 后是否仍安全。
-7. 删除新版路径的 `本节引用来源` 后，全局 `_visible_citations_only()` 是否足以保证无 missing/unused/orphan；更新后的 external title/body inline-footnote gate 是否能阻止“正文和全局表同时漏引用”而不误杀 fallback/legacy。
-8. 4.4 固定 role priority、排除 portrait 和“不复写完整 body”是否确定且不产生新事实。
+7. 删除新版路径的 `本节引用来源` 后，全局 `_visible_citations_only()` 是否足以保证无 missing/unused/orphan；更新后的 external gate 是否逐一检查 4.3 Preview 的 standalone title + 普通段落 pair，拦截缺脚注和 bullet/table/heading 伪段落，同时不误杀 fallback/legacy 或正常 `[^10]`。
+8. 4.4 是否先执行 informative-title filter、再按固定 role/source-order priority 选取；唯一 exact title deny-list 是否覆盖 annual/broker/external 的真实默认标题与 role fallback；泛标题在前、具体标题在后时是否仍选择具体 row；三层均无合格 title 时是否只输出固定 fallback。
 9. `source_intake_render_section` 的 top-level override / nested config 优先级是否只隐藏整节；periodic preview 显式恢复是否完整。
 10. formal-rich legacy 是否真正不受影响。
 11. runtime `+80` 目标、`+140` hard stop 是否可信，哪些旧 renderer 逻辑必须删除而非叠加。

@@ -2,6 +2,7 @@
 
 import pytest
 from scripts.utils.synthesis_credit import (
+    citation_identity,
     credit_usage_rules_text,
     derive_synthesis_usage,
     format_synthesis_source_line,
@@ -37,6 +38,20 @@ def test_sanitize_citation_markers_preserves_numeric_refs():
     assert sanitize_citation_markers("增长[^1]超预期") == "增长[^1]超预期"
     assert sanitize_citation_markers("增长[^23]超预期[^2]") == "增长[^23]超预期[^2]"
     assert sanitize_citation_markers("增长[^1][^supported]") == "增长[^1]"
+
+
+def test_citation_identity_prefers_exact_url_then_metadata_then_ref():
+    assert citation_identity({"url": "https://example.com/a"}, fallback_ref=9) == (
+        "url",
+        "https://example.com/a",
+    )
+    assert citation_identity({"source": "研报", "author": "机构", "title": "正文"}) == (
+        "meta",
+        "研报",
+        "机构",
+        "正文",
+    )
+    assert citation_identity({}, fallback_ref="claim:c1") == ("ref", "claim:c1")
 
 
 def test_credit_usage_rules_text_forbids_status_markers():

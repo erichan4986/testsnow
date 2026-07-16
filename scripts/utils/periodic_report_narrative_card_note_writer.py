@@ -8,12 +8,16 @@ only filters, sanitizes paths, and renders Markdown.
 
 from __future__ import annotations
 
-import hashlib
 import json
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple, Union
+
+try:
+    from .periodic_report_narrative_pack_store import normalized_source_excerpt_hash
+except ImportError:  # pragma: no cover - script-style imports
+    from periodic_report_narrative_pack_store import normalized_source_excerpt_hash
 
 
 NARRATIVE_CARD_SOURCE_TYPE = "periodic_report_narrative_evidence"
@@ -108,8 +112,7 @@ def _render_frontmatter(entries: List[Tuple[str, Any]]) -> str:
 
 
 def _source_text_hash(text: str) -> str:
-    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
-    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
+    return normalized_source_excerpt_hash(text)
 
 
 def _refresh_frontmatter_hashes(
@@ -156,6 +159,24 @@ def _card_index(card: Dict[str, Any], fallback: int) -> str:
     if re.fullmatch(r"\d+", tail):
         return tail
     return str(fallback)
+
+
+def narrative_card_note_path(
+    *, stock_name: str, card: Dict[str, Any], base_dir: Union[str, Path], index: int,
+) -> Path:
+    """Return the current writer path for one card without touching the filesystem."""
+    family_or_type = card.get("argument_family") if _is_v2_card(card) else card.get("card_type")
+    filename = "{year}-{rtype}-{family}-{idx}.md".format(
+        year=_coerce_int(card.get("report_year")),
+        rtype=_safe_filename_segment(str(card.get("report_type", ""))) or "unknown",
+        family=_safe_filename_segment(str(family_or_type or "")) or "unknown",
+        idx=_card_index(card, index),
+    )
+    return narrative_cards_dir(stock_name=stock_name, base_dir=base_dir) / filename
+
+
+def narrative_cards_dir(*, stock_name: str, base_dir: Union[str, Path]) -> Path:
+    return Path(base_dir) / "10-Stocks" / _safe_dir_segment(stock_name) / "periodic_narrative_cards"
 
 
 def _missing_required_field(card: Dict[str, Any]) -> Optional[str]:
@@ -359,6 +380,7 @@ def write_periodic_report_narrative_card_notes(
     dry_run: bool = False,
     refresh_existing: bool = False,
     refresh_frontmatter_only: bool = False,
+    existing_only: bool = False,
 ) -> NarrativeCardWritePlan:
     """Write narrative evidence cards to Knowledge notes.
 
@@ -368,12 +390,7 @@ def write_periodic_report_narrative_card_notes(
     plan = NarrativeCardWritePlan()
     collected = collected_at or ""
 
-    cards_dir = (
-        Path(base_dir)
-        / "10-Stocks"
-        / _safe_dir_segment(stock_name)
-        / "periodic_narrative_cards"
-    )
+    cards_dir = narrative_cards_dir(stock_name=stock_name, base_dir=base_dir)
     cards_dir_resolved = cards_dir.resolve()
 
     cards = card_pack.get("cards") or []
@@ -410,18 +427,9 @@ def write_periodic_report_narrative_card_notes(
             })
             continue
 
-        family_or_type = (
-            card.get("argument_family")
-            if _is_v2_card(card)
-            else card.get("card_type")
+        target = narrative_card_note_path(
+            stock_name=stock_name, card=card, base_dir=base_dir, index=index
         )
-        filename = "{year}-{rtype}-{family}-{idx}.md".format(
-            year=_coerce_int(card.get("report_year")),
-            rtype=_safe_filename_segment(str(card.get("report_type", ""))) or "unknown",
-            family=_safe_filename_segment(str(family_or_type or "")) or "unknown",
-            idx=_card_index(card, index),
-        )
-        target = cards_dir / filename
 
         if target.resolve().parent != cards_dir_resolved:
             plan.filtered.append({
@@ -431,6 +439,9 @@ def write_periodic_report_narrative_card_notes(
             continue
 
         meta = {"card_id": card_id, "planned_path": str(target)}
+
+        if existing_only and not target.exists():
+            continue
 
         if target.exists():
             if not refresh_existing:

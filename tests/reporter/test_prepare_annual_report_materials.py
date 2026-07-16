@@ -336,6 +336,11 @@ def test_prepare_with_write_knowledge(tmp_path: Path) -> None:
         (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").rglob("*.md")
     )
     assert len(notes) == result["knowledge_written_count"]
+    pack_output = result["knowledge_outputs"]["periodic_narrative_pack"]
+    assert pack_output["state"] == "bootstrap"
+    assert Path(pack_output["pack_path"]).exists()
+    assert Path(pack_output["manifest_path"]).exists()
+    assert result["knowledge_outputs"]["legacy_note_count"] == result["knowledge_written_count"]
 
 
 def test_prepare_with_write_knowledge_refreshes_existing_notes(tmp_path: Path) -> None:

@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "78f73cb751f098f6152b64cc4cc42f6809c720bef6ebcdea702f49cb6bcdad1f",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "d5c6f2e83845483f29927676cce61c847afc4c92ef54085ed6b1f2cb1e2911bc",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "3c47638aa505a02c919a88d7fddd834335c06eb8526dd5a7fa3b6446044b84f7",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "688035",
+  "stock_name": "德邦科技"
+}

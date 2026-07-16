@@ -74,6 +74,7 @@ def build_preview_markdown(
         ctx = SkillContext(input={
             "stock_name": title_name,
             "source_intake_enabled": True,
+            "source_intake_render_section": True,
             "source_intake_status": "ok",
             "source_intake_items": [],
             "external_evidence_keep_items": [],

@@ -18,6 +18,8 @@ from typing import Iterable, Optional, Sequence, Tuple, Union
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 UTILS_DIR = PROJECT_ROOT / "scripts" / "utils"
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 if str(UTILS_DIR) not in sys.path:
     sys.path.insert(0, str(UTILS_DIR))
 
@@ -29,6 +31,17 @@ from periodic_report_narrative_cards_preview import (  # noqa: E402
     DEFAULT_CACHE_DIR,
     _build_knowledge_maintenance_summary,
     _find_cache_file,
+)
+from annual_report_material_pack import (  # noqa: E402
+    _V1_DIAGNOSTIC_KEYS,
+    build_annual_report_material_pack,
+    build_annual_report_material_pack_from_pack_shadow,
+    classify_periodic_narrative_v2_notes,
+    selected_cards_to_synthesis_items,
+)
+from periodic_report_narrative_pack_store import (  # noqa: E402
+    PeriodicNarrativePackStorageError,
+    load_validated_periodic_narrative_pack_set,
 )
 
 
@@ -42,6 +55,7 @@ _DANGLING_START_PREFIXES = (
     "安全规范、",
 )
 _TABLE_FRAGMENT_TOKENS = ("□适用", "适用", "□不适用", "不适用", "产品名称", "适用 不适用")
+_MATERIAL_PARITY_FIELDS = ("card_id", "argument_family", "excerpt", "source_unit_ids", "source_units", "report_year", "report_type", "selection_reason", "quality_score")
 
 
 def analyze_cards_pack(
@@ -58,7 +72,10 @@ def analyze_cards_pack(
         for card in (cards_pack.get("candidate_cards") or cards)
         if isinstance(card, dict)
     ]
-    card_type_counts = Counter(str(card.get("card_type") or "unknown") for card in cards)
+    card_type_counts = Counter(
+        str(card.get("argument_family") or card.get("card_type") or "unknown")
+        for card in cards
+    )
     excerpt_hash_counts = Counter(
         str(card.get("source_excerpt_hash") or "")
         for card in cards
@@ -90,6 +107,68 @@ def analyze_cards_pack(
     }
 
 
+def analyze_pack_shadow(
+    *, stock_code: str, stock_name: str, cards_pack: dict,
+    knowledge_base_dir: Union[str, Path],
+) -> dict:
+    """Compare one producer period and persisted notes with the validated pack shadow."""
+    loaded = load_validated_periodic_narrative_pack_set(
+        stock_name=stock_name, stock_code=stock_code, base_dir=knowledge_base_dir,
+    )
+    year, kind = cards_pack.get("report_year"), cards_pack.get("report_type")
+    current = [
+        pack for pack in loaded["packs"]
+        if pack.get("report_year") == year and pack.get("report_type") == kind
+    ]
+    decisions = [item for pack in loaded["packs"] for item in pack["producer_diagnostics"].get("source_unit_decisions", [])]
+    classification = classify_periodic_narrative_v2_notes(
+        stock_name=stock_name, producer_cards=loaded["cards"], base_dir=knowledge_base_dir,
+        source_unit_decisions=decisions,
+    )
+    legacy = build_annual_report_material_pack(stock_name=stock_name, base_dir=knowledge_base_dir)
+    shadow = build_annual_report_material_pack_from_pack_shadow(
+        stock_name=stock_name, stock_code=stock_code, base_dir=knowledge_base_dir,
+    )
+    counts = {
+        key: len(classification[key])
+        for key in (
+            "active_v2", "stale_duplicate", "stale_reindexed", "stale_source_covered",
+            "stale_orphan", "stale_invalid", "stale_resolved_selected", "stale_resolved_structural",
+            "stale_resolved_mixed", "stale_recovery_required", "stale_source_missing", "stale_source_ambiguous",
+        )
+    }
+    legacy_cards = legacy["selected_narrative_cards"]
+    shadow_cards = shadow["selected_narrative_cards"]
+    legacy_projection = [{key: card.get(key) for key in _MATERIAL_PARITY_FIELDS} for card in legacy_cards]
+    shadow_projection = [{key: card.get(key) for key in _MATERIAL_PARITY_FIELDS} for card in shadow_cards]
+    stale_states = {item["card_id"]: state for state, items in classification.items() if state.startswith("stale_") for item in items}
+    remaining_shadow, legacy_only = list(shadow_projection), []
+    for item in legacy_projection:
+        remaining_shadow.remove(item) if item in remaining_shadow else legacy_only.append(item | {"stale_classification": stale_states.get(item["card_id"], "")})
+    return {
+        "producer_pack_parity": len(current) == 1
+        and current[0]["cards"] == (cards_pack.get("cards") or [])
+        and current[0]["producer_diagnostics"] == (cards_pack.get("diagnostics") or {}),
+        "active_v2_parity": not classification["missing_active_card_ids"]
+        and len(classification["active_v2"]) == len(loaded["cards"]),
+        "selected_material_parity": legacy_projection == shadow_projection,
+        "synthesis_items_parity": (
+            selected_cards_to_synthesis_items(legacy_cards)
+            == selected_cards_to_synthesis_items(shadow_cards)
+        ),
+        "v1_diagnostics_parity": all(
+            legacy["diagnostics"].get(key) == shadow["diagnostics"].get(key)
+            for key in _V1_DIAGNOSTIC_KEYS
+        ),
+        "classification_counts": counts,
+        "classifications": {key: classification[key] for key in counts},
+        "legacy_only_selected_records": legacy_only,
+        "pack_only_selected_records": remaining_shadow,
+        "missing_active_card_ids": classification["missing_active_card_ids"],
+        "pack_count": len(loaded["packs"]),
+    }
+
+
 def build_acceptance_markdown(
     *,
     stocks: Sequence[Tuple[str, str]],
@@ -97,6 +176,7 @@ def build_acceptance_markdown(
     report_type: str = "annual",
     report_year: int = 2025,
     knowledge_base_dir: Optional[Union[str, Path]] = None,
+    pack_shadow: bool = False,
 ) -> str:
     """Build acceptance Markdown for a stock list from local caches."""
     summaries = []
@@ -155,6 +235,16 @@ def build_acceptance_markdown(
         )
         summary["cache_path"] = str(cache_path)
         summary["evidence_blocks"] = len(evidence_pack.get("blocks") or [])
+        if pack_shadow and knowledge_base_dir:
+            try:
+                summary["pack_shadow"] = analyze_pack_shadow(
+                    stock_code=stock_code,
+                    stock_name=stock_name or stock_code,
+                    cards_pack=cards_pack,
+                    knowledge_base_dir=knowledge_base_dir,
+                )
+            except PeriodicNarrativePackStorageError as exc:
+                summary["pack_shadow"] = {"storage_error": exc.code}
         summaries.append(summary)
 
     lines.extend(_render_overview_table(summaries))
@@ -236,6 +326,22 @@ def _render_stock_summary(summary: dict) -> list[str]:
             f"- dangling_notes: {maintenance.get('dangling_notes', 0)}",
             f"- new_candidate_notes: {maintenance.get('new_candidate_notes', 0)}",
         ])
+    shadow = summary.get("pack_shadow") or {}
+    if shadow:
+        lines.extend(["", "### pack shadow", ""])
+        if shadow.get("storage_error"):
+            lines.append(f"- storage_error: {shadow['storage_error']}")
+        else:
+            for key in (
+                "producer_pack_parity", "active_v2_parity", "selected_material_parity",
+                "synthesis_items_parity", "v1_diagnostics_parity", "pack_count",
+            ):
+                lines.append(f"- {key}: {shadow.get(key)}")
+            for key, value in (shadow.get("classification_counts") or {}).items():
+                lines.append(f"- {key}: {value}")
+            for key in ("legacy_only_selected_records", "pack_only_selected_records"):
+                lines.append(f"- {key}: {shadow.get(key) or []}")
+            lines.append(f"- missing_active_card_ids: {len(shadow.get('missing_active_card_ids') or [])}")
     lines.append("")
     return lines
 
@@ -255,6 +361,7 @@ def _parse_args(argv: Optional[Iterable[str]] = None) -> argparse.Namespace:
     parser.add_argument("--report-type", default="annual")
     parser.add_argument("--report-year", type=int, default=2025)
     parser.add_argument("--output", default=str(DEFAULT_OUTPUT))
+    parser.add_argument("--pack-shadow", action="store_true", help="Run read-only pack/note migration parity audit")
     return parser.parse_args(list(argv) if argv is not None else None)
 
 
@@ -270,6 +377,7 @@ def main(argv: Optional[Iterable[str]] = None) -> int:
         report_type=args.report_type,
         report_year=args.report_year,
         knowledge_base_dir=args.knowledge_base_dir or None,
+        pack_shadow=args.pack_shadow,
     )
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

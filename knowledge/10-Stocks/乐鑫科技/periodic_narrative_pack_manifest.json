@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "ef287b3a33d447671ff47892d06598120d48979db34d0950303df63e37376765",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "41940bddcbd86eb986955d2c6bff02f8acb097d93817780c9e0f814a0534ad38",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "2108f199158f58e5d6603241ec261c71ab6baefec3a3d36aa5540794921dcfb0",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "688018",
+  "stock_name": "乐鑫科技"
+}

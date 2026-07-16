@@ -9,7 +9,6 @@ or knowledge/.
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import sys
@@ -28,7 +27,13 @@ from periodic_report_narrative_evidence_cards import (  # noqa: E402
     build_periodic_report_narrative_evidence_cards,
 )
 from periodic_report_narrative_card_note_writer import (  # noqa: E402
+    narrative_card_note_path,
+    narrative_cards_dir,
     write_periodic_report_narrative_card_notes,
+)
+from periodic_report_narrative_pack_store import (  # noqa: E402
+    normalized_source_excerpt_hash,
+    write_periodic_report_narrative_pack,
 )
 
 
@@ -91,6 +96,7 @@ def build_preview_markdown(
         raw_text=raw_text,
     )
     write_plan = None
+    pack_result = None
     maintenance_summary = None
     if knowledge_base_dir:
         maintenance_summary = _build_knowledge_maintenance_summary(
@@ -98,26 +104,22 @@ def build_preview_markdown(
             knowledge_base_dir=knowledge_base_dir,
             stock_name=title_name,
         )
-        write_cards_pack = cards_pack
-        if existing_only:
-            existing_cards = [
-                card
-                for card in (cards_pack.get("cards") or [])
-                if _card_note_path(
-                    knowledge_base_dir=knowledge_base_dir,
-                    stock_name=title_name,
-                    card=card,
-                ).exists()
-            ]
-            write_cards_pack = {**cards_pack, "cards": existing_cards}
+        if write_knowledge:
+            pack_result = write_periodic_report_narrative_pack(
+                stock_name=title_name,
+                stock_code=stock_code,
+                card_pack=cards_pack,
+                base_dir=knowledge_base_dir,
+            )
         write_plan = write_periodic_report_narrative_card_notes(
             title_name,
             stock_code,
-            write_cards_pack,
+            cards_pack,
             knowledge_base_dir,
             dry_run=not write_knowledge,
             refresh_existing=refresh_existing,
             refresh_frontmatter_only=refresh_frontmatter_only,
+            existing_only=existing_only,
         )
 
     lines = header + [
@@ -137,6 +139,12 @@ def build_preview_markdown(
             refresh_frontmatter_only=refresh_frontmatter_only,
             existing_only=existing_only,
         ))
+        if pack_result is not None:
+            lines.extend([
+                f"- periodic_narrative_pack：`{pack_result.pack_path}` ({pack_result.state})",
+                f"- periodic_narrative_manifest：`{pack_result.manifest_path}`",
+                "",
+            ])
     if not cards_pack.get("cards"):
         lines.extend(["未抽取到 narrative evidence cards。", ""])
     for idx, card in enumerate(cards_pack.get("cards") or [], 1):
@@ -186,10 +194,11 @@ def _build_knowledge_maintenance_summary(
             knowledge_base_dir=knowledge_base_dir,
             stock_name=stock_name,
             card=card,
+            index=index,
         )
-        for card in note_candidate_cards
+        for index, card in enumerate(note_candidate_cards)
     }
-    notes_dir = Path(knowledge_base_dir) / "10-Stocks" / _safe_dir_segment(stock_name) / "periodic_narrative_cards"
+    notes_dir = narrative_cards_dir(stock_name=stock_name, base_dir=knowledge_base_dir)
     existing_paths = set(notes_dir.glob("*.md")) if notes_dir.exists() else set()
 
     refreshable_paths = sorted(existing_paths & generated_paths)
@@ -253,7 +262,7 @@ def _read_note_source_excerpt_hash(path: Path) -> str:
         return match.group(1)
     legacy_excerpt = _extract_legacy_note_excerpt(text)
     if legacy_excerpt:
-        return _source_text_hash(legacy_excerpt)
+        return normalized_source_excerpt_hash(legacy_excerpt)
     return ""
 
 
@@ -272,11 +281,6 @@ def _extract_legacy_note_excerpt(text: str) -> str:
         if stripped.startswith(">"):
             lines.append(stripped.lstrip("> ").strip())
     return " ".join(lines).strip()
-
-
-def _source_text_hash(text: str) -> str:
-    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
-    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
 def _render_knowledge_plan(
@@ -313,22 +317,10 @@ def _card_note_path(
     knowledge_base_dir: Union[str, Path],
     stock_name: str,
     card: dict,
+    index: int,
 ) -> Path:
-    card_id = str(card.get("card_id", ""))
-    tail = card_id.rsplit(":", 1)[-1]
-    index = tail if tail.isdigit() else "0"
-    filename = "{year}-{rtype}-{ctype}-{idx}.md".format(
-        year=card.get("report_year", ""),
-        rtype=_safe_filename_segment(str(card.get("report_type", ""))) or "unknown",
-        ctype=_safe_filename_segment(str(card.get("card_type", ""))) or "unknown",
-        idx=index,
-    )
-    return (
-        Path(knowledge_base_dir)
-        / "10-Stocks"
-        / _safe_dir_segment(stock_name)
-        / "periodic_narrative_cards"
-        / filename
+    return narrative_card_note_path(
+        stock_name=stock_name, card=card, base_dir=knowledge_base_dir, index=index
     )
 
 
@@ -368,29 +360,6 @@ def _safe_filename(value: str) -> str:
     if not text:
         return "unknown"
     return "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in text)
-
-
-def _safe_filename_segment(segment: str) -> str:
-    if not segment:
-        return ""
-    segment = str(segment).lower()
-    segment = "".join(ch if ch.isalnum() or ch == "-" else "-" for ch in segment)
-    while "--" in segment:
-        segment = segment.replace("--", "-")
-    return segment.strip("-")
-
-
-def _safe_dir_segment(segment: str, *, fallback: str = "unknown") -> str:
-    seg = str(segment or "").replace("\x00", "")
-    for char in ("\\", "/"):
-        seg = seg.replace(char, "-")
-    while ".." in seg:
-        seg = seg.replace("..", "-")
-    seg = "-".join(seg.split())
-    while "--" in seg:
-        seg = seg.replace("--", "-")
-    seg = seg.strip("-. ")
-    return seg or fallback
 
 
 def main(argv: list[str] | None = None) -> int:

@@ -106,11 +106,11 @@ renderer 不再决定显示条数。
 
 以上预算只适用于 formal-medium ViewModel。formal-thin 继续使用既有 broker memo renderer，不新增另一套 broker selector 或重编号路径。
 
-“机构共识”不得由不同标题简单拼接得出。只有同一个非通用 exact normalized assumption title 被至少两个不同 attribution 支持时，才输出“机构共识”；否则标题必须降级为“机构关注重点”。normalized title 只折叠 whitespace、统一结尾标点；`机构核心观点/产业与产品判断/风险提示/反方约束` 等通用标题不参与共识计数。formal-thin 的 `forecast_ranges` 也必须经现有 attribution normalizer 输出 `某机构研报预计` 或至少 `研报预计`，不得裸写预测区间。
+本批不输出“机构共识”：producer 的 title 来自固定 family map，标题相同只能证明关注主题相同，不能证明观点方向、盈利区间或论据一致。renderer 删除 `_broker_consensus_sentence()`；只允许输出“机构关注重点”。关注重点从已选 display rows 的 title 中按 source order 去重，排除空标题及 `券商观点/券商核心观点/机构核心观点/产业与产品判断/盈利预测/盈利预测与估值假设/风险提示/反方约束/估值方法` 等固定 family title；没有非通用 title 时省略该摘要块，直接输出逐机构 attribution 段落。formal-thin 的 `forecast_ranges` 也必须经现有 attribution normalizer 输出 `某机构研报预计` 或至少 `研报预计`，不得裸写预测区间。
 
 ### 4.3 External rows
 
-- MaterialSnapshot 继续保留 narrative paragraphs、reasoning cards 和 topic groups 三套原始投影；display 只选一套，优先级固定为 `narrative_paragraphs` → `reasoning_cards` → `topic_groups`，避免把同一外部材料的替代视图当成独立观点重复展示；
+- MaterialSnapshot 继续保留 narrative paragraphs、reasoning cards 和 topic groups 三套原始投影；display 先分别完成可见性准入与 exact dedupe，再选择第一个非空投影，优先级固定为 `narrative_paragraphs` → `reasoning_cards` → `topic_groups`，避免把同一外部材料的替代视图当成独立观点重复展示；
 - 继续使用 citation-identity ref dedupe；
 - 仅做 exact body + citation identity 去重，不使用 fuzzy/token/embedding 相似度；
 - 不新增 hard row cap，不以 dead-number slice 丢弃彼此独立的外部变量；
@@ -121,17 +121,25 @@ formal-medium 从 ViewModel 读取上述 rows；formal-thin 继续读取既有 c
 
 唯一 dedupe key helper 放在 `deep_analysis_material_snapshot.py`：`(normalized_exact_body, sorted_unique_citation_identities)`。body 只归一化 whitespace 和结尾标点；citation identity 复用现有 `citation_identity()`。只有完整 key 相同才删除 row：同源不同 body、同 body 不同来源都保留。formal-medium MaterialRows 与 formal-thin curated dict rows 必须复用这个 helper，不各写一套近似规则。
 
+external projection 的 eligible 条件固定为：正文非空、至少一个 citation ref 能映射到 citation metadata、且不进入 scoring/risk 路径。三套 projection 必须先各自过滤并按 shared key 去重，再调用同一个“first non-empty projection” helper。raw narrative list 存在但全部缺正文或有效引用时，必须继续 fallback 到 eligible reasoning cards；reasoning 同样为空时再 fallback topic groups。不得因为 raw collection 非空就提前停止，也不得混合两套 projection。
+
 ### 4.4 Price-path rows
 
 4.4 继续只取 annual / broker / external 各一条，并且只能从 4.1–4.3 已入选 display rows 中产生。不得 fallback 到 snapshot 中已隐藏 row，也不得修改目标价、评分、风险评分或最终推荐。formal-thin 仍保持三段式，不新增 4.4。
 
-选取优先级固定为：
+每个来源层必须先从 4.1–4.3 visible rows 中过滤 `_is_informative_variable_title(row.title)=True` 的候选，再应用选取优先级：
 
-- annual：`operating_progress` → `financial_quality_explanation` → `technology_product_progress` → `market_competition_outlook` → 非 portrait 的 `business_structure`；每层先取 `argument_complete=True`；
+- annual：先排除 portrait，再按 `operating_progress` → `financial_quality_explanation` → `technology_product_progress` → `market_competition_outlook` → `business_structure`；每个 role 内先取 `argument_complete=True`；
 - broker：`broker_assumption` → `broker_forecast`，要求 attribution；
 - external：去重后的 source order 第一条。
 
-4.4 不再复写 4.1–4.3 的完整 body。每个来源层只输出“来源层级 + row title/确定性 role label + inline citation + 上下行验证条件”一段；条件只能表达“若被正式证据验证/证伪则观点升级/降级”，不得重复长摘录或产生新的经营事实。
+title filter 必须发生在 role/source-order selection 之前。某层第一条 visible row 是泛标题时，不能直接省略该层；只要同层后续 visible row 有合格 title，就继续按上述优先级选择该 row。仍不得读取 snapshot hidden rows。
+
+4.4 不再复写 4.1–4.3 的完整 body。每个来源层只输出“来源层级 + `_is_informative_variable_title(row.title)` 验证通过的 title + inline citation + 上下行验证条件”一段；条件只能表达“若被正式证据验证/证伪则观点升级/降级”，不得重复长摘录或产生新的经营事实。
+
+`_is_informative_variable_title()` 只折叠 whitespace、移除结尾标点，然后对以下完整 exact deny-list 判断，不使用 fuzzy/token/semantic 规则：空字符串、`外部变量`、`外部观察`、`主营业务与产品`、`产业与产品判断`、`机构核心观点`、`盈利预测`、`反方约束`、`风险提示`、`业务覆盖 / 产品线`、`经营变化`、`市场与竞争`、`管理层判断与行业展望`、`研发与产品进展`、`技术与产品进展`、`财务质量`、`产品放量 / 盈利弹性`、`供应链 / 技术路线`、`反方风险`。只有非空且不在 deny-list 中的原 row title 才返回 True。
+
+4.4 不能用 role fallback 把空泛变量凑成三段。没有合格 title 的层级直接省略，不得回退到 snapshot hidden row、不得截取 evidence body 另造标题，也不得使用泛标签输出模板化条件句。因此 4.4 可以输出一至三段；三层均无合格 title 时只输出固定 fallback：`当前已选材料缺少可用于条件推演的具体变量标题，本节不形成方向推演。`，不附加新事实或引用。
 
 ## 5. Renderer Contract
 
@@ -149,20 +157,20 @@ formal-medium 从 ViewModel 读取上述 rows；formal-thin 继续读取既有 c
 
 ### 5.2 4.2 broker material
 
-- exact normalized title 被两个以上不同 attribution 支持时输出“机构共识”，否则使用“机构关注重点”；
+- 不输出“机构共识”；有非通用 title 时输出“机构关注重点”，否则省略摘要块；
 - 每个机构/假设用 attribution 明确的短段落表达；
 - 主要分歧/反方约束独立成段；
 - 删除通用重复验证话术，不改写机构事实或预测。
 
 ### 5.3 4.3 external Preview
 
-- 保持 `**变量标题**` + 下一段完整外部论点的固定 pair；观点段落必须带 inline footnote；
+- 新 layout 的固定语法是独立一行 `**变量标题**`，其后跳过空行的第一行必须是普通观点段落；不得是 heading、table、blockquote 或 list bullet。该段必须带 inline footnote；
 - 不再重复每行验证模板；
 - 不进入 4.1，不参与任何评分路径。
 
 ### 5.4 4.4 conditions
 
-以三段短文本表示 `官方确认 / 机构假设 / 外部待验证`。只使用 view-model rows，不重复完整 evidence body；确定性条件文案不得声称已发生，不生成新目标价。
+以最多三段短文本表示 `官方确认 / 机构假设 / 外部待验证`。只使用有具体变量标题的 view-model rows，不重复完整 evidence body；确定性条件文案不得声称已发生，不生成新目标价。没有任何合格 row 时使用 4.4 固定 fallback。
 
 ## 6. Citation and Layout Contract
 
@@ -178,9 +186,9 @@ formal-thin 必须以 full snapshot 计算 broker/external offset。测试必须
 删除局部来源表后，现有 `_check_curated_external_inline_footnotes()` 不能再以“存在本节引用来源”为前置条件。本批将 gate 改为同时支持：
 
 - legacy：沿用局部来源表 + body inline footnote 检查；
-- new layout：每个 `**变量标题**` 后的第一个非空观点段落必须包含完整 `[^n]`。
+- new layout：只在 4.3 external Preview section 的 body（不含全局 `## 引用来源`）扫描所有 standalone `**变量标题**`。每个 title 后跳过空行的第一行必须是普通观点段落，并且必须包含完整 `[^n]`。任一 pair 缺段、使用 list/table/heading 代替段落、或缺 footnote，均报 `curated_external_missing_inline_footnotes`。
 
-“当前未取得足够外部观点材料”等 fallback 不视为观点段落。这样即使 `_visible_citations_only()` 同步移除了漏挂引用，也不能让无脚注的外部观点错误 PASS。
+“当前未取得足够外部观点材料”等 fallback 不含变量标题，故不视为观点段落。gate 必须逐 pair 扫描，不能只验证第一条；正常多位数 `[^10]` 仍是有效 footnote。这样即使 `_visible_citations_only()` 同步移除了漏挂引用，也不能让无脚注的外部观点错误 PASS。
 
 ## 7. Source Intake Display Contract
 
@@ -237,12 +245,12 @@ runtime 净增目标 `<= +80`，硬停止 `> +140`。tests/docs 不计入 runtim
 3. 每个 role 候选不足时不填充其他 role，不生成占位 row。
 4. `annual_selected_count` 保持 admission/dedupe 旧语义；新增 display/hidden diagnostics 与实际 rows 对齐。
 5. broker attribution diversity first-pass 生效，风险最多两条，renderer 不再 slice。
-6. 两个不同 attribution 共享 exact normalized title 时才形成“机构共识”；否则显示“机构关注重点”。
+6. 无论多少 attribution 共享固定 family title，都不得输出“机构共识”；非通用 title 去重后可输出“机构关注重点”，全部为通用 title 时省略摘要块。
 7. formal-thin forecast range 带 `研报预计` attribution。
-8. MaterialSnapshot 同时保留三套 external projections，但 display 固定优先 narrative → reasoning → topic，只展示一套。
+8. MaterialSnapshot 同时保留三套 external projections，但 display 在各 projection 完成 eligible 过滤和 exact dedupe 后，固定选择第一个非空的 narrative → reasoning → topic，只展示一套；raw narrative 不可展示时必须 fallback reasoning。
 9. shared external dedupe key 被两条 profile 路径复用；同 key 去重，同源不同 body、同 body 不同来源均保留。
 10. formal-medium 与 formal-thin 超过六条的独立 external rows 全部保留，不被 hard cap 或 fuzzy 误删。
-11. 4.4 只来自已选 rows，按固定 role 优先级选取，排除 portrait，不复写完整 body。
+11. 4.4 只来自已选 rows，先执行 informative-title filter，再按固定 role/source-order 优先级选取，排除 portrait且不复写完整 body；测试覆盖 annual/broker/external 各层“泛标题在前、具体标题在后”仍选择具体 row。4.4 可输出一至三段，全部被拒绝时只输出固定 fallback。
 
 ### Renderer/profile
 
@@ -254,7 +262,7 @@ runtime 净增目标 `<= +80`，硬停止 `> +140`。tests/docs 不计入 runtim
 6. 新路径不出现 `本节引用来源`，全局来源完整。
 7. visible citations 无 missing、unused、unknown、malformed。
 8. formal-thin 最高 annual ref 被隐藏后，broker/external refs 与 full snapshot offset 保持一致。
-9. 新 external title/body pair 漏掉 inline footnote 时 `curated_external_missing_inline_footnotes` 报 error；正常 pair 与 legacy local-source layout 均通过。
+9. 新 external title/body pair 漏掉 inline footnote、第二个或后续 pair 漏 footnote、或以 bullet/table/heading 代替普通段落时，`curated_external_missing_inline_footnotes` 报 error；正常多位数 footnote 与 legacy local-source layout 均通过。
 
 ### Source Intake
 
@@ -277,8 +285,11 @@ runtime 净增目标 `<= +80`，硬停止 `> +140`。tests/docs 不计入 runtim
 | 移除局部来源后全局来源缺失 | missing/unused/orphan footnotes | citation alignment tests |
 | 移除局部来源后 external 漏挂脚注却 PASS | 变量观点无 `[^n]` 且全局表同步消失 | new-layout inline-footnote gate |
 | broker attribution 丢失 | 机构观点写成官方确认 | attribution gate fixture |
-| 单一机构观点被写成共识 | “机构共识”无两个独立 attribution | exact-title consensus test |
+| 固定 family title 被误写成共识 | 不同机构共享 producer 分类标题却被声称观点一致 | no-title-only-consensus test |
 | 4.4 复写长摘录 | 4.1–4.3 body 在 4.4 再次展开 | no-body-repetition test |
+| 4.4 泛标题生成模板化推演 | `外部变量/机构核心观点` 等默认标题进入条件段 | informative-title deny-list tests |
+| 4.4 泛标题遮蔽后续具体变量 | 第一条标题被拒后整层消失，后续具体 row 未被选择 | filter-before-priority tests |
+| raw narrative 阻断有效 fallback | narrative 存在但不可展示，reasoning 有效却输出空地图 | first-eligible-projection test |
 | external 泄漏 4.1 | 微信/知乎出现在官方区 | source-boundary test |
 | Source Intake 开关误关采集 | ctx/material items 消失 | renderer-only flag test |
 | Source Intake preview 被默认隐藏 | `--source-intake-section` 无正文 | preview regression test |
@@ -312,8 +323,9 @@ Accepted：
 - 在现有 `Chapter4ViewModel` 中完成 display budgeting；
 - 在 shared annual selector 中保留并标记 portrait，删除 renderer 二次画像选择；
 - formal-thin offset 继续基于 full snapshot；
-- external 两条 profile 路径复用 exact body + citation identity key，不设 hard cap；
-- 4.4 使用固定 selected-row priority，只展示变量与条件，不复写长摘录；
+- broker 只输出“机构关注重点”，删除无法由固定 family title 证明的“机构共识”；
+- external 两条 profile 路径复用 exact body + citation identity key，按首个 eligible 非空投影选择且不设 hard cap；
+- 4.4 先执行 exact informative-title gate，再按固定 selected-row priority 选择，只展示具体变量与条件，不复写长摘录；
 - 新增独立 Source Intake section display flag，并保留正式 config 与 preview 的显式恢复路径；
 - 新路径移除重复局部来源表。
 

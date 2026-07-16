@@ -2,11 +2,13 @@ import hashlib
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from skill_pipeline import SkillContext
+import report_skills.synthesis_skills as synthesis_skills_module
 from report_skills.synthesis_skills import SynthesisSkill
 from source_adapter import SynthesisItem
 
@@ -1409,14 +1411,14 @@ def _normalized_hash(text: str) -> str:
     return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
 
 
-def _write_viewpoint_digest_json(tmp_path, claims, status="ok"):
+def _write_viewpoint_digest_json(tmp_path, claims, status="ok", stock_name="测试股"):
     path = tmp_path / "viewpoint_digest.json"
     path.write_text(
         _json.dumps(
             {
                 "schema_version": "curated_external_viewpoint_digest.v1",
                 "status": status,
-                "stock_name": "测试股",
+                "stock_name": stock_name,
                 "claims": claims,
                 "claims_count": len(claims),
                 "stats": {
@@ -1436,14 +1438,14 @@ def _write_viewpoint_digest_json(tmp_path, claims, status="ok"):
     return path
 
 
-def _write_viewpoint_narrative_json(tmp_path, paragraphs, citations, status="ok"):
+def _write_viewpoint_narrative_json(tmp_path, paragraphs, citations, status="ok", stock_name="测试股"):
     path = tmp_path / "viewpoint_narrative.json"
     path.write_text(
         _json.dumps(
             {
                 "schema_version": "curated_external_viewpoint_narrative.v1",
                 "status": status,
-                "stock_name": "测试股",
+                "stock_name": stock_name,
                 "paragraphs": paragraphs,
                 "paragraphs_count": len(paragraphs),
                 "citations": citations,
@@ -1595,6 +1597,57 @@ def test_curated_external_viewpoint_digest_enabled_sets_deep_analysis_display(tm
     assert ctx.output.get("wrote_knowledge") is None
 
 
+def test_curated_external_viewpoint_digest_rejects_mismatched_stock_identity(tmp_path):
+    digest_path = _write_viewpoint_digest_json(
+        tmp_path, [_make_viewpoint_claim()], stock_name="聚辰股份",
+    )
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert ctx.output.get("deep_analysis_display") is None
+    assert ctx.output.get("curated_external_viewpoint_digest_status") == "stock_identity_mismatch"
+
+
+def test_curated_external_viewpoint_digest_drops_foreign_only_target_claim(tmp_path):
+    foreign = _make_viewpoint_claim_with_text(
+        "foreign", "复旦微电子EEPROM业务已经进入客户供应链。",
+        title="聚辰股份: EEPROM产品导入进展",
+    )
+    safe = _make_viewpoint_claim_with_text(
+        "safe", "复旦微电子新产品认证节奏仍需验证。",
+        title="复旦微电: 新产品认证观察",
+    )
+    digest_path = _write_viewpoint_digest_json(
+        tmp_path, [foreign, safe], stock_name="复旦微电",
+    )
+    skill = SynthesisSkill()
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
+        "curated_external_viewpoint_digest_json": str(digest_path),
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    display = ctx.output["deep_analysis_display"]
+    display_text = "\n".join(str(display.get(key) or "") for key in (
+        "industry_logic", "fundamentals", "events_catalysts",
+    ))
+    assert "进入客户供应链" not in display_text
+    assert "新产品认证节奏" in display_text
+    assert len(display["citations"]) == 1
+
+
 def test_curated_external_viewpoint_narrative_enabled_sets_deep_analysis_display(tmp_path):
     narrative_path = _write_viewpoint_narrative_json(
         tmp_path,
@@ -1650,6 +1703,7 @@ def test_curated_external_viewpoint_narrative_hydrates_refs_from_claim_ids(tmp_p
                 "claim_id": "fudan-xq-val-001",
             }
         },
+        stock_name="复旦微电",
     )
 
     skill = SynthesisSkill()
@@ -1975,6 +2029,135 @@ def _make_fulltext_item():
             "experimental": True,
         },
     )
+
+
+def test_synthesis_skill_reserves_freshness_refs_without_mutating_baseline_text():
+    old_fulltext = _make_fulltext_item()
+    old_fulltext.publish_time = "2026-01-01"
+    display = {
+        "_curated_external_narrative_paragraphs": [
+            {
+                "paragraph_index": 0,
+                "text": "外部材料称客户订单节奏出现变化，需等待正式材料验证。",
+                "topic_keys": ["order_customer"],
+                "citation_refs": [1],
+            }
+        ],
+        "citations": {
+            "1": {
+                "source": "微信公众号精选观察",
+                "title": "订单观察",
+                "url": "https://example.com/order",
+                "date": "2026-07-01",
+                "source_credit": 60,
+                "synthesis_display_only": True,
+                "scoring_eligible": False,
+                "risk_score_eligible": False,
+                "quality_action": "preview_only",
+                "verification_status": "professional_observation",
+            }
+        },
+    }
+    ctx = SkillContext(input={
+        "report_as_of_date": "2026-07-14",
+        "periodic_report_fulltext_items": [old_fulltext],
+        "broker_research_digest_items": [],
+        "source_intake_items": [],
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+    })
+    skill = SynthesisSkill()
+    overlay = skill._build_evidence_freshness_overlay(
+        ctx, ctx.get("deep_analysis_evidence_profile"), display
+    )
+    baseline = {"industry_logic": "baseline", "citations": {}}
+    skill._reserve_freshness_citations(baseline, overlay, display)
+
+    assert baseline["industry_logic"] == "baseline"
+    assert overlay["summary_candidate"]["citation_refs"] == [1]
+    assert baseline["citations"][1]["synthesis_display_only"] is True
+
+
+def test_freshness_overlay_uses_today_when_report_as_of_date_is_missing():
+    class FixedToday(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 7, 14)
+
+    old_fulltext = _make_fulltext_item()
+    old_fulltext.publish_time = "2026-01-01"
+    display = {
+        "_curated_external_narrative_paragraphs": [{
+            "paragraph_index": 0,
+            "text": "外部材料称客户订单节奏出现变化，需等待正式材料验证。",
+            "topic_keys": ["order_customer"],
+            "citation_refs": [1],
+        }],
+        "citations": {1: {
+            "source": "微信公众号精选观察",
+            "url": "https://example.com/order",
+            "date": "2026-07-01",
+            "source_credit": 60,
+            "synthesis_display_only": True,
+            "scoring_eligible": False,
+            "risk_score_eligible": False,
+            "quality_action": "preview_only",
+            "verification_status": "professional_observation",
+        }},
+    }
+    ctx = SkillContext(input={
+        "collected_at": "2024-01-01",
+        "periodic_report_fulltext_items": [old_fulltext],
+        "broker_research_digest_items": [],
+        "source_intake_items": [],
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+    })
+
+    with patch.object(synthesis_skills_module, "date", FixedToday):
+        overlay = SynthesisSkill()._build_evidence_freshness_overlay(
+            ctx, ctx.get("deep_analysis_evidence_profile"), display,
+        )
+
+    assert overlay["as_of_date"] == "2026-07-14"
+    assert overlay["summary_candidate"]["citation_refs"] == [1]
+
+
+def test_synthesis_skill_run_builds_freshness_overlay_from_context_display():
+    old_fulltext = _make_fulltext_item()
+    old_fulltext.publish_time = "2026-01-01"
+    skill = SynthesisSkill()
+    skill._build_evidence_profile = lambda *_args: {"profile": "formal_medium"}
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "report_as_of_date": "2026-07-14",
+        "periodic_report_fulltext_items": [old_fulltext],
+        "broker_research_digest_items": [],
+        "source_intake_items": [],
+        "deep_analysis_display": {
+            "_curated_external_narrative_paragraphs": [{
+                "paragraph_index": 0,
+                "text": "外部材料称客户订单节奏出现变化，需等待正式材料验证。",
+                "topic_keys": ["order_customer"],
+                "citation_refs": [1],
+            }],
+            "citations": {1: {
+                "source": "微信公众号精选观察",
+                "url": "https://example.com/order",
+                "date": "2026-07-01",
+                "source_credit": 60,
+                "synthesis_display_only": True,
+                "scoring_eligible": False,
+                "risk_score_eligible": False,
+                "quality_action": "preview_only",
+                "verification_status": "professional_observation",
+            }},
+        },
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert ctx.get("evidence_freshness")["summary_candidate"] is not None
 
 
 class DualSynthesizer:
@@ -2361,6 +2544,64 @@ def test_periodic_narrative_cards_synthesis_display_keeps_baseline_invariants(tm
     knowledge_input = "\n".join(str(v) for v in ctx.get("synthesis").values())
     assert "客户流失" not in knowledge_input
     assert "narrative cards" not in knowledge_input
+
+
+def test_periodic_narrative_display_reuses_context_material_pack(monkeypatch):
+    card = {
+        "card_id": "annual-argument:cached",
+        "title": "已缓存年报材料",
+        "excerpt": "公司产品完成客户验证。",
+        "report_year": 2025,
+        "report_type": "annual",
+        "source_type": "periodic_report_narrative_evidence",
+        "source_credit": 75,
+        "argument_family": "technology_product_progress",
+        "argument_complete": True,
+        "source_unit_ids": ["rd-0:u0"],
+        "source_units": [],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "annual_report_material_pack": {"selected_narrative_cards": [card]},
+        "periodic_narrative_cards_max_display_items": 1,
+    })
+
+    def fail_if_reloaded(**_kwargs):
+        raise AssertionError("should reuse the context material pack")
+
+    monkeypatch.setattr(
+        synthesis_skills_module,
+        "load_periodic_narrative_card_synthesis_items",
+        fail_if_reloaded,
+    )
+
+    items = SynthesisSkill._eligible_periodic_narrative_card_items(ctx)
+
+    assert [item.extra["card_id"] for item in items] == ["annual-argument:cached"]
+
+
+def test_periodic_narrative_display_keeps_default_limit_for_invalid_context_value():
+    cards = [
+        {
+            "card_id": f"annual-argument:{index}",
+            "title": f"已缓存年报材料 {index}",
+            "excerpt": f"公司产品 {index} 完成客户验证。",
+            "report_year": 2025,
+            "report_type": "annual",
+            "source_type": "periodic_report_narrative_evidence",
+            "source_credit": 75,
+        }
+        for index in range(13)
+    ]
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "annual_report_material_pack": {"selected_narrative_cards": cards},
+        "periodic_narrative_cards_max_display_items": "invalid",
+    })
+
+    items = SynthesisSkill._eligible_periodic_narrative_card_items(ctx)
+
+    assert len(items) == 12
 
 
 def test_periodic_narrative_cards_and_fulltext_share_one_display_synthesis(tmp_path):

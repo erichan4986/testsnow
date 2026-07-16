@@ -95,8 +95,35 @@ def test_summary_rounds_consensus_values_and_frames_unsupported_score():
     assert "预期 EPS 增速 65.5%" in result
     assert "45.7466" not in result
     assert "65.4705" not in result
-    assert "基本面评分为 10/10，该评分主要反映结构化盈利预期" in result
-    assert "不代表正式材料事实充分" in result
+    assert (
+        "当前基本面评分为 10/10，反映结构化基本面输入；"
+        "高信用核心事实基座尚未完整形成，因此该评分不构成正式材料确认。"
+    ) in result
+
+
+def test_summary_renders_one_framed_freshness_candidate_after_fundamental_judgment():
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "synthesis": {},
+        "evidence_freshness": {
+            "summary_candidate": {
+                "claim": "外部材料称客户订单节奏出现变化，需等待正式材料验证。",
+                "citation_refs": [4, 5],
+            }
+        },
+    })
+
+    assert "**近期待验证变量**：外部材料称，客户订单节奏出现变化，需等待正式材料验证。[^4][^5]（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。" in result
+    assert result.count("**近期待验证变量**") == 1
+
+
+def test_summary_omits_freshness_candidate_when_overlay_is_empty():
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "synthesis": {},
+        "evidence_freshness": {"summary_candidate": None},
+    })
+    assert "**近期待验证变量**" not in result
 
 
 def test_summary_deduplicates_entry_text_and_punctuates_risk_sentence():

@@ -136,7 +136,12 @@ class SourceIntakeEvidenceRenderer:
 
     def render(self, ctx: Dict[str, Any]) -> str:
         enabled = bool(ctx.get("source_intake_enabled", False))
-        if not enabled:
+        render_flag = ctx.get("source_intake_render_section", None)
+        if render_flag is not None:
+            render_section = bool(render_flag)
+        else:
+            render_section = bool((ctx.get("source_intake_config") or {}).get("render_section", False))
+        if not enabled or not render_section:
             return ""
 
         status = ctx.get("source_intake_status", "")

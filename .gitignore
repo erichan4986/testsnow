@@ -51,6 +51,7 @@ cache/
 /reports/*.html
 /reports/*.pdf
 /reports/*.png
+/reports/*_peer_comparison_material.json
 /reports/charts/*.png
 /reports/*_agent_reach*.json
 /reports/*_technical.png

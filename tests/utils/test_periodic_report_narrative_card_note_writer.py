@@ -8,6 +8,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import periodic_report_narrative_card_note_writer as note_writer
 from periodic_report_narrative_card_note_writer import (
     NarrativeCardWritePlan,
     write_periodic_report_narrative_card_notes,
@@ -157,6 +158,19 @@ def test_writes_complete_v2_card_without_card_type_and_with_json_sections(tmp_pa
         indent=2,
         sort_keys=True,
     ) in text
+
+
+def test_note_writer_uses_shared_excerpt_hash_helper(monkeypatch, tmp_path) -> None:
+    monkeypatch.setattr(note_writer, "normalized_source_excerpt_hash", lambda text: "shared-hash")
+
+    plan = write_periodic_report_narrative_card_notes(
+        stock_name="中际旭创",
+        stock_code="300308",
+        card_pack=_pack([_v2_card(source_excerpt_hash="")]),
+        base_dir=tmp_path,
+    )
+
+    assert "source_excerpt_hash: shared-hash" in Path(plan.written[0]["planned_path"]).read_text(encoding="utf-8")
 
 
 def test_filters_non_narrative_cards_and_missing_evidence(tmp_path) -> None:
