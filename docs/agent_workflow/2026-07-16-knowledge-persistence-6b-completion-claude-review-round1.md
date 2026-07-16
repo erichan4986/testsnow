@@ -39,7 +39,11 @@ legacy card-note writer，可能重新制造 N 个冗余文件。
 4. view 的 family cap、排序、exact hash 去重是否会误伤完整材料（仅限展示层）；
 5. atomicity、错误传播、manifest/period 边界、v1 recovery 和 formal-thin citation 是否有回归风险；
 6. 是否有隐藏 scope 扩张、重复逻辑或不必要的大实现；
-7. target `+110`/hard stop `+150` runtime line budget 是否可信。
+7. target `+40`/hard stop `+100` runtime line budget 与 replacement ledger 是否可信。
+8. pure `build_*` 与 atomic `write_*` 的边界、stable error codes 和 exact output schema 是否
+   足以避免实现者临场添加兼容分支。
+9. loader 返回 aligned manifest entries、`--pack-shadow` 兼容 alias，以及 11-stock view
+   backfill gate 是否完整且不会制造新机器真源。
 
 不要修改任何源码、测试、配置、knowledge、data 或 reports；不要联网、不要生成报告、不要提交。
 

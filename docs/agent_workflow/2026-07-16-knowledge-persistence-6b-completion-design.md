@@ -63,23 +63,53 @@ must neither import nor invoke it.
 
 Create `scripts/utils/periodic_report_narrative_view_writer.py`.
 
-Public entrypoint:
+The writer must first call `load_validated_periodic_narrative_pack_set()` and select exactly
+one envelope with the requested `(report_year, report_type)`. It must not accept a raw
+`cards_pack`, raw text, or arbitrary card list. Missing/duplicate periods and invalid packs
+raise a stable projection error; a corrupted pack cannot be rendered into a reassuring view.
+
+The module exposes two functions, both of which load the same persisted validated pack set:
 
 ```python
+build_periodic_report_narrative_view(
+    *, stock_name: str, stock_code: str, report_year: int,
+    report_type: str, base_dir: str | Path,
+) -> PeriodicNarrativeViewProjection
+
 write_periodic_report_narrative_view(
     *, stock_name: str, stock_code: str, report_year: int,
     report_type: str, base_dir: str | Path,
 ) -> PeriodicNarrativeViewWriteResult
 ```
 
-The writer must first call `load_validated_periodic_narrative_pack_set()` and select exactly
-one envelope with the requested `(report_year, report_type)`. It must not accept a raw
-`cards_pack`, raw text, or arbitrary card list. Missing/duplicate periods and invalid packs
-raise a stable projection error; a corrupted pack cannot be rendered into a reassuring view.
+`build_*` is pure with respect to the filesystem: it reads and validates the pack set and
+returns rendered Markdown plus metadata, but writes nothing. Acceptance uses this function.
+`write_*` calls `build_*`, then performs the atomic write. Neither function accepts raw cards.
 
-`periodic_report_narrative_pack_store.py` may expose one small public stock-root/path helper
-so pack and view paths share sanitisation. No second manifest parser or card validator may be
-introduced.
+`load_validated_periodic_narrative_pack_set()` is extended additively to return validated
+manifest `entries`, aligned by index with `packs`. Existing `packs` and `cards` outputs remain
+unchanged. The view uses the matched entry's `pack_path`; it must not reconstruct that path
+from year/type.
+
+`PeriodicNarrativeViewProjection` contains `markdown`, `view_path`, `pack_relative_path`,
+`cards_sha256`, `total_cards`, `displayed_cards` and family count metadata.
+`PeriodicNarrativeViewWriteResult` contains the same non-Markdown metadata plus `state`, whose
+only values are `created`, `updated`, and `unchanged`.
+
+Create `PeriodicNarrativeViewError(code)` with stable codes:
+
+- `view_period_not_found`
+- `view_period_ambiguous`
+- `view_write_failed`
+
+`PeriodicNarrativePackStorageError` propagates unchanged from `build_*`; the view layer must not
+wrap or translate machine-storage failures. `view_write_failed` retains the original `OSError`
+as its exception cause.
+
+`periodic_report_narrative_pack_store.py` must expose a public
+`periodic_narrative_stock_root(base_dir, stock_name)` helper, replacing internal use of
+`_root`, so pack and view paths share sanitisation. No second manifest parser, period
+normalizer, stock-name sanitizer or card validator may be introduced.
 
 ### 4.2 Path And Atomicity
 
@@ -90,21 +120,26 @@ knowledge/10-Stocks/<stock>/periodic_narrative_views/<year>-<report-type>.md
 ```
 
 Write via same-directory temporary file plus `Path.replace()`. A failed render/write leaves
-the prior view untouched. The machine pack is never rolled back or altered by view writing.
+the prior view untouched and removes the temporary file. The machine pack is never rolled back
+or altered by view writing.
 
 ### 4.3 Content
 
-The view contains YAML frontmatter with at least:
+The view contains deterministic YAML frontmatter with these exact scalar keys:
 
 - `generated_projection: true`
-- stock identity, report year/type
-- pack-relative path
-- pack `cards_sha256`
-- `total_cards`
-- `displayed_cards`
-- per-family total/displayed counts
+- `stock_name`, `stock_code`, `report_year`, `report_type`
+- `pack_path` (relative to the stock root)
+- `cards_sha256`
+- `total_cards`, `displayed_cards`
+- `family_<canonical-family>_total` and
+  `family_<canonical-family>_displayed` for every canonical family
 
-It then emits the five canonical families, in schema order:
+Strings are JSON-quoted scalars, integers remain integers and booleans remain booleans. No
+general YAML dependency or second frontmatter helper is introduced.
+
+It imports `CANONICAL_FAMILIES` and `FAMILY_LABELS` from
+`annual_argument_schema.py` and emits those five families in schema order:
 
 1. 业务结构
 2. 经营变化
@@ -125,11 +160,17 @@ Within a family, sort deterministically by:
 4. original pack card order;
 5. `card_id` lexicographically.
 
-Deduplicate only exact `normalized_source_excerpt_hash()` matches within the same family.
-Keep the earlier sorted card. Never semantic-deduplicate, rewrite, compress, or truncate an
-excerpt. Each rendered item includes title, `card_id`, `source_block_id`, `source_unit_ids`,
-the full exact `source_excerpt`, and no producer diagnostics/source-unit JSON/guardrail
-template.
+Deduplicate only matching `normalized_source_excerpt_hash()` values within the same family.
+That shared hash intentionally treats whitespace-only variants as the same excerpt; this exact
+normalization behavior is covered by a test. Keep the earlier sorted card. Never
+semantic-deduplicate, rewrite, compress, or truncate an excerpt. Each rendered item includes
+title, `card_id`, `source_block_id`, `source_unit_ids`, the full exact `source_excerpt`, and no
+producer diagnostics/source-unit JSON/guardrail template. The excerpt is rendered as a
+Markdown blockquote by prefixing each existing line; no source character is removed and
+existing line boundaries are preserved.
+
+An empty but valid pack produces a valid view with all five `0 / 0` family sections and matching
+zero counts; it is not a projection error.
 
 ### 4.4 Determinism
 
@@ -151,31 +192,83 @@ Under `write_knowledge=True`:
 deprecated count of legacy card notes, not a count of all knowledge artifacts. Add a separate
 structured `knowledge_outputs` entry for the pack and view; do not overload the old count.
 
+The exact successful shape is:
+
+```python
+{
+    "knowledge_written_count": 0,
+    "knowledge_outputs": {
+        "legacy_note_count": 0,
+        "periodic_narrative_pack": {
+            "state": "bootstrap|upsert",
+            "pack_path": "...",
+            "manifest_path": "...",
+        },
+        "periodic_narrative_view": {
+            "state": "created|updated|unchanged",
+            "view_path": "...",
+            "total_cards": 0,
+            "displayed_cards": 0,
+            "cards_sha256": "...",
+        },
+    },
+}
+```
+
+When `write_knowledge=False`, both `knowledge_outputs` and the legacy count retain their current
+empty/zero shape.
+
 The CLI help changes from “write narrative card notes” to “write validated pack and human
 projection.”
 
 ### 5.2 `periodic_report_narrative_cards_preview.py`
 
-The preview remains a local producer inspection tool. With `knowledge_base_dir` it may show
-pack/view status, but it must not compute a card-note maintenance plan or invoke the legacy
-note writer. With `write_knowledge=True`, it writes pack then view with the same contract as
-preparation.
+The preview remains a local producer inspection tool. `write_knowledge=False` never loads or
+writes knowledge artifacts, even when `knowledge_base_dir` is supplied; it renders producer
+cards and a `knowledge_write_mode: disabled` line only. `write_knowledge=True` requires
+`knowledge_base_dir`, then writes pack and view with the same contract as preparation. Missing
+base dir raises `knowledge_base_dir_required` before any write.
 
 The existing `--refresh-existing`, `--refresh-frontmatter-only`, and `--existing-only` options
 are legacy-card-note options. Keep them temporarily only to produce a stable
 `legacy_note_options_removed` error when non-default; do not silently ignore them and do not
-add a normal CLI switch that regenerates N card notes. Explicit migration code can still call
-the retained writer directly.
+add a normal CLI switch that regenerates N card notes. The Python function raises
+`ValueError("legacy_note_options_removed")`; the CLI converts it to argparse exit code `2`
+without a traceback. Explicit migration code can still call the retained writer directly.
 
 ### 5.3 Acceptance CLI
 
-`periodic_report_narrative_cards_acceptance.py` is re-baselined for pack-first:
+`periodic_report_narrative_cards_acceptance.py` replaces `analyze_pack_shadow()` and its old
+active-v2 Markdown parity fields with `analyze_pack_projection()`:
 
 - it validates persisted packs and verifies the selected period equals the producer envelope;
-- it verifies a generated view derives from the validated pack, is deterministic, and does not
-  change pack bytes/hashes;
-- it reports legacy v1 recovery diagnostics separately;
+- it calls pure `build_periodic_report_narrative_view()` twice and verifies byte identity;
+- it snapshots pack and manifest bytes before/after the pure build and verifies no change;
+- it reports legacy v1 recovery diagnostics from
+  `build_annual_report_material_pack(..., stock_code=stock_code)` separately;
 - it no longer requires active v2 Markdown card-note parity.
+
+The new result has exact booleans/values:
+
+- `producer_pack_parity`
+- `projection_deterministic`
+- `pack_bytes_unchanged`
+- `manifest_bytes_unchanged`
+- `projection_cards_sha256_matches`
+- `projection_total_cards`
+- `projection_displayed_cards`
+- `v1_actionable_needs_recovery_count`
+- `v1_adapter_use_count`
+
+Delete acceptance output/tests for `active_v2_parity`, `selected_material_parity`,
+`synthesis_items_parity`, v2 note classifications, and note-maintenance counts. Their migration
+purpose ended with the approved pack-first reset; retaining them would require recreating the
+deleted projections.
+
+Keep the existing `--pack-shadow` CLI option as a deprecated compatibility alias for running
+the new pack-projection analysis. It must not restore the old fields or write notes. Acceptance
+Markdown labels the section `pack projection`, while a new `--pack-projection` option is the
+preferred spelling; passing either or both is equivalent.
 
 It must not import a human view as a report/material-loader input. Existing pack-first loader
 tests add a sentinel view file and prove it is ignored.
@@ -196,7 +289,7 @@ tests add a sentinel view file and prove it is ignored.
 Runtime files:
 
 - create `scripts/utils/periodic_report_narrative_view_writer.py`
-- optionally narrow-export a shared stock-root/path helper from
+- narrow-export the shared stock-root/path helper from
   `scripts/utils/periodic_report_narrative_pack_store.py`
 - `scripts/prepare_annual_report_materials.py`
 - `scripts/previews/periodic_report_narrative_cards_preview.py`
@@ -218,16 +311,22 @@ Workflow documents under `docs/agent_workflow/` are allowed. Everything else is 
 | Failure mode | Required behavior | Test |
 | --- | --- | --- |
 | Invalid/missing target pack | typed projection failure; existing view untouched | malformed/missing period fixtures |
+| Acceptance renders a view | pure build performs zero writes | before/after tree and byte fixture |
 | View tries raw producer input | no public raw-card write API | writer API and call-site tests |
 | Same pack rerun changes Markdown | byte-identical view | idempotence fixture |
-| Exact duplicate excerpt | only one display row in that family | hash-dedup fixture |
+| Matching normalized excerpt hash | only one display row in that family | hash-dedup fixture |
+| Whitespace-only excerpt variant | treated as the same shared normalized hash | normalization fixture |
 | Similar but non-identical excerpts | both may display | no semantic-dedup fixture |
 | Long/high-value excerpt | full exact text remains visible | exact-excerpt fixture |
 | One family dominates | at most four displayed there; other family slots remain available | family cap fixture |
 | Normal `--write-knowledge` recreates cards dir | must not occur | fresh temporary base-dir integration fixture |
 | Legacy refresh flags ignored | stable explicit error | preview CLI/function fixture |
+| `write_knowledge=True` lacks base dir | fail before any write | preview function/CLI fixture |
 | View is accidentally loader input | material pack remains unchanged with sentinel view Markdown | loader regression |
 | View write fails mid-write | prior view bytes remain | atomic-write failure fixture |
+| View write leaves a temp file | cleanup before raising typed write error | temp-cleanup fixture |
+| Valid empty pack | write five empty family sections with zero counts | empty-pack fixture |
+| Manifest path spelling differs from a naive year/type join | use aligned validated entry path | aligned-entry fixture |
 
 ## 9. Acceptance Gates
 
@@ -241,6 +340,12 @@ Before a formal report run:
    network access;
 5. pack bytes and integrity hashes are unchanged before/after view generation;
 6. pack-first loader and its v1 recovery diagnostics remain unchanged when a view exists.
+
+After code review approves 6B, perform a separate local backfill using the public writer for
+every period in the 11 committed manifests. The backfill may add only
+`periodic_narrative_views/*.md`; it must not modify pack/manifest bytes or create v2 card notes.
+Record per-stock period/view counts and `git status` in acceptance notes. This backfill is the
+completion gate for existing knowledge, not part of the implementation-model task.
 
 Only then may local report validation regenerate one formal-medium and one formal-thin sample
 and check citation/source-boundary/report-quality gates. This implementation batch itself must
@@ -256,7 +361,10 @@ Stop and return to design if any of the following becomes necessary:
 4. v1 recovery, profile, scoring, target, risk, technical, citation or LLM behavior changes;
 5. pack corruption becomes repairable by silently scanning files;
 6. a stock/industry-specific display rule is proposed;
-7. runtime delta exceeds target `+110` or hard stop `+150` lines, excluding tests/docs.
+7. runtime delta across the allowed runtime files exceeds target `+40` or hard stop `+100`
+   net lines relative to commit `c20af7f`, excluding tests/docs. Deleting obsolete note-plan and
+   pack-shadow acceptance code counts toward the net budget; layering new code without deleting
+   those paths is a stop condition.
 
 ## 11. Review Questions
 
@@ -267,3 +375,40 @@ The Round 1 reviewer should specifically challenge:
 3. Whether retaining legacy CLI flags as explicit errors is safer than silently accepting them;
 4. Whether the re-baselined gate proves safety without resurrecting deleted v2 projections;
 5. Whether any formal-thin citation/report path is accidentally touched (it must not be).
+
+## 12. Self-Review Round 1 Delta
+
+Accepted and fixed:
+
+- split pure `build_*` from atomic `write_*`, so acceptance stays genuinely read-only;
+- defined result objects, states and stable projection error codes;
+- replaced optional path reuse with one required pack-store stock-root owner;
+- required schema-owned family order/labels instead of a copied taxonomy;
+- made frontmatter, blockquote preservation and `knowledge_outputs` exact;
+- made preview no-write behavior and legacy flag failure explicit;
+- replaced obsolete v2-note parity outputs with pack/projection integrity outputs;
+- anchored the runtime budget to `c20af7f` and required deletion of superseded paths.
+
+## 13. Self-Review Round 2 Delta
+
+Accepted and fixed:
+
+- made pack-store manifest entries an additive loader result, preventing a second path builder;
+- preserved pack storage errors unchanged; defined valid-empty-pack behavior and
+  whitespace-normalized dedup semantics;
+- retained `--pack-shadow` only as a deprecated alias to the new read-only projection audit;
+- added a post-review backfill gate for all 11 current manifests, so 6B covers existing as well
+  as future knowledge;
+- tightened the runtime target to `+40` and hard stop to `+100`, relying on deletion of obsolete
+  preview maintenance and acceptance parity code rather than permanent parallel paths.
+
+Replacement ledger used for budget review:
+
+| Area | Expected runtime delta |
+| --- | ---: |
+| New view writer | `+110` to `+150` |
+| Pack-store aligned entries/root export | `+5` to `+15` |
+| Prepare integration | `-5` to `+10` |
+| Delete preview card-note plan/maintenance; add pack/view status | `-80` to `-130` |
+| Replace old acceptance note parity with projection integrity | `-50` to `-100` |
+| Expected net | `-120` to `+25` |
