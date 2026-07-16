@@ -146,3 +146,18 @@ human projection；旧 v2 writer/parser 已删除，legacy v1 notes 已在兼容
 - 需要新增股票名、股票代码或行业专用 hardcode；
 - focused tests 或既有质量门出现无法解释的跨模块回归；
 - 正式报告无法证明为修改后的新产物。
+
+## 6. Post-Batch-6 Delivery Order
+
+Batch 6 收口后，后续工作不直接叠加新的报告功能，先经过一个基础设施稳定门：
+
+1. **Pipeline Stabilization**：恢复默认离线 `pytest` 全绿，并统一三个 annual-material
+   顶层 CLI 的最小路径 bootstrap。设计见
+   `docs/agent_workflow/2026-07-16-pipeline-stabilization-design.md`。
+2. **External Producer v2**：在稳定测试基线之上，改善精选外部材料的论点、论据、
+   来源边界和同源去重；不得把外部材料升级为官方确认。
+3. **Technical Analysis Phase 2**：在现有技术判断 state machine 与正式报告验收基础上，
+   再处理更高阶结构判断和展示质量，不与 External Producer 改动混批。
+
+Pipeline Stabilization 是进入后两项的前置 gate，但只修 import/path 与陈旧测试契约，
+不改变报告业务行为，也不替代后续正式报告复跑。
