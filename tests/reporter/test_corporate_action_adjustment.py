@@ -36,6 +36,14 @@ def _make_exrights_df(days=130, exrights_date="2026-06-05", split_ratio=1.4):
     return df
 
 
+def _disable_market_fetch(monkeypatch, analyzer_module):
+    monkeypatch.setattr(
+        analyzer_module,
+        "_fetch_index_kline",
+        lambda *args, **kwargs: None,
+    )
+
+
 def test_corporate_action_lowers_confidence(monkeypatch):
     import sys as _sys
     from pathlib import Path
@@ -47,6 +55,7 @@ def test_corporate_action_lowers_confidence(monkeypatch):
     monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", lambda df, *a, **k: None)
     # Also disable gap-based approximation so no repair happens at all
     monkeypatch.setattr(ta_mod, "_apply_gap_based_qfq_approximation", lambda df, *a, **k: df.copy())
+    _disable_market_fetch(monkeypatch, ta_mod)
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(
@@ -61,11 +70,14 @@ def test_corporate_action_lowers_confidence(monkeypatch):
     assert resonance["price_data_lineage"]["price_adjustment_applied"] is False
 
 
-def test_qfq_maintains_medium_confidence():
+def test_qfq_maintains_medium_confidence(monkeypatch):
     import sys as _sys
     from pathlib import Path
     _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    import technical_analyzer as ta_mod
     from technical_analyzer import advanced_medium_term_resonance
+
+    _disable_market_fetch(monkeypatch, ta_mod)
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(
@@ -95,6 +107,7 @@ def test_raw_gap_local_repair_caps_confidence(monkeypatch):
         return df.copy()
 
     monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", fake_repair)
+    _disable_market_fetch(monkeypatch, ta_mod)
 
     result = advanced_medium_term_resonance(
         df_daily=df,
@@ -198,32 +211,3 @@ def test_renderer_shows_corporate_action_warning():
     assert "数据提醒" in output
     assert "除权断点" in output
     assert "本地近似复权" in output
-
-
-def test_collector_attrs_carry_adjustment():
-    import pandas as pd
-
-    # Verify df.attrs pattern works end-to-end
-    fake_df = pd.DataFrame({
-        "date": ["2026-01-01"],
-        "open": [100.0], "high": [101.0], "low": [99.0],
-        "close": [100.5], "volume": [10000],
-    })
-    fake_df.attrs["adjustment"] = "qfq"
-    fake_df.attrs["data_source"] = "akshare"
-    assert fake_df.attrs["adjustment"] == "qfq"
-    assert fake_df.attrs["data_source"] == "akshare"
-
-    fake_df2 = pd.DataFrame({
-        "date": ["2026-01-01"],
-        "open": [100.0], "high": [101.0], "low": [99.0],
-        "close": [100.5], "volume": [10000],
-    })
-    fake_df2.attrs["adjustment"] = "raw"
-    fake_df2.attrs["data_source"] = "mootdx"
-    assert fake_df2.attrs["adjustment"] == "raw"
-    assert fake_df2.attrs["data_source"] == "mootdx"
-
-    # Verify attrs don't pollute columns
-    assert "adjustment" not in fake_df.columns
-    assert "data_source" not in fake_df.columns
