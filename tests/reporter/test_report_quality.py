@@ -741,6 +741,72 @@ def test_formal_thin_external_variable_narrative_does_not_warn():
     assert "external_viewpoint_overcompressed" not in codes
 
 
+def test_formal_thin_external_argument_v2_narrative_does_not_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部新增待验证变量：上游供给节奏仍可能影响交付弹性[^1]。
+
+> **外部原文依据**：部分原材料仍处于紧张状态。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_external_map_uncertainty_does_not_trigger_strong_confirmation():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为光模块。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部新增待验证变量：供应不确定性可能影响交付[^1]。
+
+> **外部原文依据**：部分原材料仍处于紧张状态。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
 def test_formal_thin_external_map_missing_structure_warns():
     text = _quality_shell(
         """

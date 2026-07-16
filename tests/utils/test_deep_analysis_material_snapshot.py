@@ -111,25 +111,15 @@ def _ctx():
             },
         },
         "deep_analysis_display": {
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部材料称技术路线存在分歧。",
-                    "citation_refs": [1],
-                    "verification_need": "需要公告验证。",
-                }
+            "_curated_external_argument_cards_v2": [
+                _external_argument_card(
+                    "外部材料称技术路线存在分歧。",
+                    argument_key="technology:route",
+                    evidence="外部文章讨论 CPO 路线分歧。",
+                )
             ],
-            "_curated_external_topic_groups": {
-                "technology_route": [
-                    {
-                        "heading": "技术路线",
-                        "text": "外部观点称 CPO 路线仍需验证。",
-                        "citation_refs": [2],
-                    }
-                ]
-            },
             "citations": {
                 1: {"source": "微信公众号精选观察", "title": "外部深度"},
-                2: {"source": "雪球精选观察", "title": "外部讨论"},
             },
         },
         "fundflow_material_pack": {
@@ -145,6 +135,98 @@ def _ctx():
             ],
         },
     }
+
+
+def _external_argument_card(claim, *, argument_key, ref=1, topic="供应链交付", evidence="外部原文依据。"):
+    return {
+        "schema_version": "curated_external_argument_card.v2",
+        "card_id": f"external-argument:{argument_key}",
+        "topic_family": topic,
+        "entity_scope": "target",
+        "claim": claim,
+        "evidence_units": [{
+            "text": evidence,
+            "evidence_status": "source_quote_verified",
+            "citation_refs": [ref],
+        }],
+        "display_title": topic,
+        "argument_key": argument_key,
+        "citation_refs": [ref],
+        "quality_action": "preview_only",
+        "synthesis_display_only": True,
+        "scoring_eligible": False,
+        "risk_score_eligible": False,
+    }
+
+
+def test_snapshot_prefers_external_argument_v2_and_keeps_full_snapshot_offsets():
+    ctx = _ctx()
+    ctx["deep_analysis_display"].update({
+        "_curated_external_argument_cards_v2": [
+            _external_argument_card(
+                "外部材料称供应链交付仍需验证。",
+                argument_key="capacity:delivery",
+                evidence="外部文章称上游物料供应偏紧，交付节奏仍需验证。",
+            )
+        ],
+        "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
+    })
+
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    external = [row for row in snapshot.rows if row.source_layer == "external"]
+
+    assert [row.row_id for row in external] == ["external:argument_cards_v2:0"]
+    assert external[0].external_claim == "外部材料称供应链交付仍需验证。"
+    assert external[0].external_evidence.startswith("外部文章称")
+    assert external[0].evidence_status == "source_quote_verified"
+    assert external[0].argument_key == "capacity:delivery"
+    assert external[0].citation_refs == (6,)
+    assert snapshot.citations[6]["title"] == "供应链观察"
+
+
+def test_snapshot_does_not_project_legacy_external_rows_without_v2_cards():
+    ctx = _ctx()
+    ctx["deep_analysis_display"].pop("_curated_external_argument_cards_v2")
+    ctx["deep_analysis_display"]["_curated_external_reasoning_cards"] = [{
+        "claim": "旧 reasoning card 不再投影。",
+        "citation_refs": [1],
+    }]
+
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+
+    assert not [row for row in snapshot.rows if row.source_layer == "external"]
+
+
+def test_v2_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():
+    owner = MaterialRow(
+        "annual:owner", "供应链", "annual", "formal_explanation", (1,), ("annual:owner",),
+        body="公司800G产品保持稳定交付。", render_role="operating_progress",
+    )
+    rows = tuple(
+        MaterialRow(
+            f"external:argument_cards_v2:{index}", claim, "external", "external_observation", (index + 2,), (f"external:{index}",),
+            title="供应链交付", body=claim, render_role="external_variable",
+            external_claim=claim, external_evidence=evidence,
+            evidence_status="source_quote_verified", entity_scope="target",
+            argument_key=f"argument:{index}",
+        )
+        for index, (claim, evidence) in enumerate((
+            ("外部材料称800G供应链短缺可能导致交付延期。", "外部文章记录800G供应链短缺与延期风险。"),
+            ("外部材料称客户认证节奏仍需观察。", "外部文章讨论客户认证进度。"),
+            ("外部材料称海外政策变化带来新增变量。", "外部文章讨论海外政策变化。"),
+        ))
+    )
+
+    selected, diagnostics = select_incremental_external_display_rows(
+        rows, {2: {"source": "外部A"}, 3: {"source": "外部B"}, 4: {"source": "外部C"}}, (owner,),
+    )
+
+    assert len(selected) == 3
+    assert {row.argument_key for row in selected} == {"argument:0", "argument:1", "argument:2"}
+    relations = {row.argument_key: row.owner_relation for row in selected}
+    assert relations["argument:0"] == "owner_delta"
+    assert relations["argument:2"] == "outside_owner"
+    assert diagnostics["external_incremental_selected_count"] == 3
 
 
 def _annual_display_row(body, role="business_structure", ref=1, row_id=None, complete=False, status="formal_explanation", title="测试标题"):
@@ -721,15 +803,15 @@ def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations
     assert rows_by_id["annual:annual_report_explanation:0"].claim_status == "formal_explanation"
     assert rows_by_id["broker:forecast_ranges:0"].source_layer == "broker"
     assert rows_by_id["broker:risks:0"].claim_status == "professional_analysis"
-    assert rows_by_id["external:reasoning_cards:0"].source_layer == "external"
-    assert rows_by_id["external:topic_groups:technology_route:0"].section_hint == "external_map"
+    assert rows_by_id["external:argument_cards_v2:0"].source_layer == "external"
+    assert rows_by_id["external:argument_cards_v2:0"].section_hint == "external_map"
 
     all_refs = {ref for row in snapshot.rows for ref in row.citation_refs}
     assert all_refs
     assert all(ref in snapshot.citations for ref in all_refs)
     assert rows_by_id["annual:confirmed:0"].citation_refs == (1,)
     assert rows_by_id["broker:sections:0"].citation_refs == (3,)
-    assert rows_by_id["external:reasoning_cards:0"].citation_refs == (6,)
+    assert rows_by_id["external:argument_cards_v2:0"].citation_refs == (6,)
 
 
 def test_snapshot_keeps_fundflow_and_peer_material_in_diagnostics_only():
@@ -784,7 +866,7 @@ def test_formal_medium_view_model_unifies_source_layers_and_visible_citations():
     assert {row.source_layer for row in view_model.section("4.1").rows} == {"annual"}
     assert {row.source_layer for row in view_model.section("4.2").rows} == {"broker"}
     assert {row.source_layer for row in view_model.section("4.3").rows} == {"external"}
-    assert {row.source_layer for row in view_model.section("4.4").rows} == {"annual", "broker"}
+    assert {row.source_layer for row in view_model.section("4.4").rows} == {"annual", "broker", "external"}
     assert all(row.attribution for row in view_model.section("4.2").rows)
     assert all(row.source_credit == "official" for row in view_model.section("4.1").rows)
     assert all(row.source_credit == "professional" for row in view_model.section("4.2").rows)
@@ -813,7 +895,7 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
 
     annual_row = next(row for row in view_model.section("4.1").rows if row.row_id == "annual:confirmed:0")
     broker_row = next(row for row in view_model.section("4.2").rows if row.row_id == "broker:sections:0")
-    external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:reasoning_cards:0")
+    external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:argument_cards_v2:0")
     assert annual_row.title == "营业收入"
     assert annual_row.body == "营业收入 10 亿元"
     assert annual_row.render_role == "financial_quality_explanation"
@@ -821,7 +903,9 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
     assert broker_row.render_role == "broker_assumption"
     assert broker_row.attribution == "测试证券"
     assert external_row.render_role == "external_variable"
-    assert external_row.title == "外部变量"
+    assert external_row.title == "供应链交付"
+    assert external_row.external_claim == "外部材料称技术路线存在分歧。"
+    assert external_row.external_evidence == "外部文章讨论 CPO 路线分歧。"
     assert {k: v for k, v in ctx.items() if k != "recommendation_decision"} == before
 
 

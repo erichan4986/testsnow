@@ -2,12 +2,14 @@
 
 from __future__ import annotations
 
+import hashlib
 import sys
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "utils"))
 
 from curated_external_display import (
+    build_curated_external_digest_display,
     build_curated_external_narrative_display,
     classify_external_source_title,
     hydrate_viewpoint_narrative_citation_refs,
@@ -15,7 +17,110 @@ from curated_external_display import (
 )
 
 
-def test_template_reasoning_card_is_enriched_from_claim_and_numbers():
+def _safe_digest_claim(claim_id="c1", **overrides):
+    quote = "外部文章称测试股交付节奏仍需验证。"
+    claim = {
+        "schema_version": "curated_external_viewpoint_claim.v1",
+        "claim_id": claim_id,
+        "stock_name": "测试股",
+        "claim_type": "watch_variable",
+        "topic": "供应链交付",
+        "claim": "测试股交付节奏仍需验证。",
+        "source_quote": quote,
+        "source_quote_hash": hashlib.sha256(quote.encode("utf-8")).hexdigest(),
+        "why_incremental": "新增交付节奏变量。",
+        "baseline_overlap": "none",
+        "source_id": "source-c1",
+        "source_title": "测试股：交付观察",
+        "source_ref": "https://example.com/c1",
+        "verification_status": "professional_observation",
+        "source_credit": 55,
+        "quality_action": "preview_only",
+        "knowledge_eligible": False,
+        "synthesis_display_only": True,
+        "scoring_eligible": False,
+        "risk_score_eligible": False,
+    }
+    claim.update(overrides)
+    if "source_quote" in overrides and "source_quote_hash" not in overrides:
+        claim["source_quote_hash"] = hashlib.sha256(claim["source_quote"].encode("utf-8")).hexdigest()
+    return claim
+
+
+def test_narrative_display_prefers_verified_digest_card_when_both_enabled(tmp_path):
+    import json
+
+    narrative = {
+        "status": "ok",
+        "stock_name": "测试股",
+        "paragraphs": [{"heading": "旧长段落", "text": "旧长段落不应成为v2卡。", "claim_refs": ["c1"]}],
+        "reasoning_cards": [{
+            "claim_id": "c1",
+            "display_topic": "供应链交付",
+            "claim": "测试股交付节奏仍需验证。",
+            "source_excerpt": "缓存摘录。",
+        }],
+        "citations": {"1": {
+            "claim_id": "c1",
+            "source": "微信精选观察",
+            "title": "测试股：交付观察",
+            "url": "https://example.com/c1",
+            "source_type": "curated_external_analysis_evidence",
+            "verification_status": "professional_observation",
+        }},
+    }
+    digest = {"status": "ok", "stock_name": "测试股", "claims": [_safe_digest_claim()]}
+    narrative_path, digest_path = tmp_path / "narrative.json", tmp_path / "digest.json"
+    narrative_path.write_text(json.dumps(narrative, ensure_ascii=False), encoding="utf-8")
+    digest_path.write_text(json.dumps(digest, ensure_ascii=False), encoding="utf-8")
+
+    result = build_curated_external_narrative_display(
+        narrative_path, expected_stock_name="测试股", digest_json=digest_path,
+    )
+
+    display = result["display"]
+    assert display["_curated_external_taxonomy_version"] == "external_argument.v2"
+    assert len(display["_curated_external_argument_cards_v2"]) == 1
+    assert display["_curated_external_argument_cards_v2"][0]["evidence_units"][0]["evidence_status"] == "source_quote_verified"
+    assert result["stats"]["external_argument_v2_status"] == "ready"
+
+
+def test_paragraph_only_narrative_keeps_diagnosed_legacy_fallback(tmp_path):
+    import json
+
+    path = tmp_path / "paragraph_only.json"
+    path.write_text(json.dumps({
+        "status": "ok",
+        "stock_name": "测试股",
+        "paragraphs": [{"heading": "外部观察", "text": "外部材料提示变量。", "citation_refs": [1]}],
+        "reasoning_cards": [],
+        "citations": {"1": {
+            "source": "微信精选观察",
+            "source_type": "curated_external_analysis_evidence",
+            "verification_status": "professional_observation",
+        }},
+    }, ensure_ascii=False), encoding="utf-8")
+
+    result = build_curated_external_narrative_display(path, expected_stock_name="测试股")
+
+    assert "_curated_external_argument_cards_v2" not in result["display"]
+    assert result["stats"]["external_argument_v2_status"] == "legacy_fallback"
+    assert result["display"]["_curated_external_narrative_paragraphs"]
+
+
+def test_digest_only_display_uses_v2_cards_without_legacy_topic_classifier():
+    result = build_curated_external_digest_display(
+        {"status": "ok", "stock_name": "测试股", "claims": [_safe_digest_claim()]},
+        expected_stock_name="测试股",
+    )
+
+    assert result["status"] == "ok"
+    display = result["display"]
+    assert display["_curated_external_taxonomy_version"] == "external_argument.v2"
+    assert display["_curated_external_argument_cards_v2"][0]["topic_family"] == "capacity_delivery"
+
+
+def test_template_reasoning_card_keeps_only_material_projection_fields():
     cards = [
         {
             "claim_id": "c1",
@@ -41,14 +146,14 @@ def test_template_reasoning_card_is_enriched_from_claim_and_numbers():
     normalized = normalize_viewpoint_narrative_reasoning_cards(cards, citations)
 
     card = normalized[0]
-    assert card["reasoning_steps"] != ["外部材料提出该增量变量，需与公司交付能力、上游供给和下游需求交叉验证。"]
-    assert "25-40%" in "；".join(card["reasoning_steps"])
-    assert card["assumptions"] != ["该变量仍属外部观察，未获官方确认。"]
-    assert card["counterpoints"] != ["若下游需求或公司交付节奏不及预期，该变量可能失效。"]
-    assert card["verification_need"] != "跟踪后续公告、订单或行业数据以验证该论断。"
+    assert card["claim"] == "A股估值处于乐观情景上沿，港股折价约50%"
+    assert card["source_excerpt_full"] == "A股现价偏贵25-40%，港股折价约50%。"
+    assert card["verification_need"] == "跟踪后续公告、订单或行业数据以验证该论断。"
+    for synthetic_field in ("reasoning_steps", "numbers_used", "assumptions", "counterpoints"):
+        assert synthetic_field not in card
 
 
-def test_build_narrative_display_preserves_reasoning_card_metadata(tmp_path):
+def test_build_narrative_display_preserves_material_card_fields(tmp_path):
     import json
 
     narrative = {
@@ -90,7 +195,8 @@ def test_build_narrative_display_preserves_reasoning_card_metadata(tmp_path):
     card = display["_curated_external_reasoning_cards"][0]
     assert card["claim_id"] == "c1"
     assert card["claim"] == "外部观点"
-    assert card["reasoning_steps"]
+    assert card["source_excerpt_full"] == "原文"
+    assert "reasoning_steps" not in card
     assert card["citation_refs"] == [1]
 
 

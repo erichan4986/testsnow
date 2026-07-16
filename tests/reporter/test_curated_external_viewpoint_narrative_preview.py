@@ -58,7 +58,8 @@ def _make_baseline(tmp_path: Path) -> Path:
 
 
 def test_cli_heuristic_writes_preview_under_tmp(tmp_path: Path, capsys):
-    stock = f"narrative_{uuid.uuid4().hex[:8]}"
+    suffix = uuid.uuid4().hex[:8].translate(str.maketrans("0123456789", "abcdefghij"))
+    stock = f"narrative_{suffix}"
     digest_path = _make_digest(tmp_path, stock_name=stock)
     baseline_path = _make_baseline(tmp_path)
 
@@ -75,8 +76,9 @@ def test_cli_heuristic_writes_preview_under_tmp(tmp_path: Path, capsys):
                 "heuristic",
             ]
         )
-        payload = json.loads(capsys.readouterr().out)
-        assert rc == 0
+        captured = capsys.readouterr()
+        payload = json.loads(captured.out)
+        assert rc == 0, captured.err or captured.out
         assert payload["status"] == "ok"
         assert payload["wrote_repo_path"] is False
         assert Path(payload["json_output_path"]).exists()

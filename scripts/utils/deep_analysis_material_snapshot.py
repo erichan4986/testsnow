@@ -42,6 +42,12 @@ class MaterialRow:
     attribution: str = ""
     source_credit: str = ""
     editorial_slot: str = ""
+    external_claim: str = ""
+    external_evidence: str = ""
+    evidence_status: str = ""
+    entity_scope: str = ""
+    owner_relation: str = ""
+    argument_key: str = ""
     diagnostics: Tuple[Tuple[str, str], ...] = ()
 
 @dataclass(frozen=True)
@@ -430,7 +436,7 @@ def select_incremental_external_display_rows(
     ]
     owners = tuple(row for row in owner_rows if row.body)
     rejected: Dict[str, int] = {}
-    for bucket in ("narrative_paragraphs", "reasoning_cards", "topic_groups"):
+    for bucket in ("argument_cards_v2", "narrative_paragraphs", "reasoning_cards", "topic_groups"):
         projection = [row for row in candidates if _external_bucket(row) == bucket]
         deduped = _dedupe_external_display_rows(projection, citations)
         selected = []
@@ -444,6 +450,7 @@ def select_incremental_external_display_rows(
                 continue
             selected.append(replace(
                 row,
+                owner_relation="outside_owner" if reason == "new_topic_context" else "owner_delta",
                 diagnostics=(*row.diagnostics, ("external_incremental_reason", reason)),
             ))
         if selected:
@@ -460,7 +467,7 @@ def _external_selection_diagnostics(candidates, selected, rejected) -> Dict[str,
 
 
 def _external_incremental_reason(row: MaterialRow, owners: Tuple[MaterialRow, ...]) -> str:
-    external_body = _normalized_claim_body(row.body)
+    external_body = _normalized_claim_body(row.external_claim or row.body)
     owner_bodies = tuple(_normalized_claim_body(owner.body) for owner in owners)
     if any(
         external_body == owner_body
@@ -470,8 +477,8 @@ def _external_incremental_reason(row: MaterialRow, owners: Tuple[MaterialRow, ..
     ):
         return "owner_text_duplicate"
 
-    external_families = _topic_family_names(row.body)
-    external_anchors = _concrete_anchors(row.body)
+    external_families = _topic_family_names(row.external_claim or row.body)
+    external_anchors = _concrete_anchors(row.external_claim or row.body)
     comparable = tuple(
         owner for owner in owners
         if external_families & _topic_family_names(owner.body)
@@ -510,6 +517,8 @@ def _is_external_display_eligible(row: MaterialRow, citations: Mapping[int, Any]
 
 
 def _external_bucket(row: MaterialRow) -> str:
+    if ":argument_cards_v2:" in row.row_id:
+        return "argument_cards_v2"
     if ":narrative_paragraphs:" in row.row_id:
         return "narrative_paragraphs"
     if ":reasoning_cards:" in row.row_id:
@@ -518,6 +527,8 @@ def _external_bucket(row: MaterialRow) -> str:
 
 
 def external_display_key(row: MaterialRow, citations: Mapping[int, Any]) -> tuple:
+    if row.argument_key:
+        return ("argument", row.argument_key)
     return (
         re.sub(r"\s+", "", row.body).strip("。；;"),
         tuple(sorted({citation_identity(citations.get(ref), fallback_ref=ref) for ref in row.citation_refs})),
@@ -660,35 +671,32 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
     citations = display.get("citations") or {}
     result = []
     section_hint = "external_map" if profile.get("profile") == "formal_thin_external_rich" else "external_addendum"
-    sources = [("reasoning_cards", display.get("_curated_external_reasoning_cards") or [])]
-    sources.extend(
-        (f"topic_groups:{name}", rows)
-        for name, rows in (display.get("_curated_external_topic_groups") or {}).items()
-        if isinstance(rows, list)
-    )
-    sources.append(("narrative_paragraphs", display.get("_curated_external_narrative_paragraphs") or []))
-    for bucket, source_rows in sources:
-        for idx, row in enumerate(source_rows):
-            if not isinstance(row, dict):
-                continue
-            body = (
-                str(row.get("claim") or row.get("verification_need") or "")
-                if bucket == "reasoning_cards"
-                else str(row.get("text") or "")
-            ).strip()
-            result.append(_adapt_material_row(
-                row,
-                allocator,
-                citations,
-                f"external:{bucket}:{idx}",
-                source_layer="external",
-                claim_status="external_observation",
-                section_hint=section_hint,
-                title=str(row.get("heading") or "外部变量").strip(),
-                body=body,
-                render_role="external_variable",
-                source_credit="external_low_credit",
-            ))
+    for idx, row in enumerate(display.get("_curated_external_argument_cards_v2") or []):
+        if not isinstance(row, dict):
+            continue
+        body = str(row.get("claim") or "").strip()
+        material_row = _adapt_material_row(
+            row,
+            allocator,
+            citations,
+            f"external:argument_cards_v2:{idx}",
+            source_layer="external",
+            claim_status="external_observation",
+            section_hint=section_hint,
+            title=str(row.get("display_title") or "外部变量").strip(),
+            body=body,
+            render_role="external_variable",
+            source_credit="external_low_credit",
+        )
+        evidence_units = [unit for unit in row.get("evidence_units") or [] if isinstance(unit, Mapping)]
+        result.append(replace(
+            material_row,
+            external_claim=body,
+            external_evidence="\n\n".join(str(unit.get("text") or "").strip() for unit in evidence_units if str(unit.get("text") or "").strip()),
+            evidence_status=str((evidence_units[0] if evidence_units else {}).get("evidence_status") or ""),
+            entity_scope=str(row.get("entity_scope") or ""),
+            argument_key=str(row.get("argument_key") or ""),
+        ))
     return result
 
 

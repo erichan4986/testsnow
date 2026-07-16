@@ -217,6 +217,21 @@ def test_zhongjixuchuang_config_has_canonical_a_stock_source_intake():
     assert {"光模块", "800G", "1.6T", "CPO", "AI算力"}.issubset(set(keywords))
 
 
+def test_heizhima_config_enables_digest_enrichment_for_external_v2():
+    mod = _load_entry_module()
+    repo_root = Path(__file__).resolve().parents[2]
+    stocks = mod._load_stocks_config(repo_root / "config" / "stocks.json")
+
+    stock = mod._find_stock(stocks, "黑芝麻智能")
+
+    assert stock is not None
+    digest = stock["source_intake"]["curated_external_viewpoint_digest_synthesis_display"]
+    assert digest == {
+        "enabled": True,
+        "digest_json": "data/curated_external/viewpoint_digests/heizhima_20260629.json",
+    }
+
+
 def test_offline_smoke_implies_fast_test_no_pdf_and_installs_patches(tmp_path, monkeypatch):
     mod = _load_entry_module()
     config_path = tmp_path / "stocks.json"

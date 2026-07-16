@@ -242,13 +242,33 @@ def _borrowed_theme_prose_hits(body: str, terms: list[str]) -> list[dict]:
     hits = []
     for paragraph in _iter_prose_paragraphs(body):
         matched_terms = _matched_terms(paragraph, terms)
-        if matched_terms:
+        if matched_terms and not _is_external_v2_delta_paragraph(body, paragraph):
             hits.append({
                 "text": paragraph,
                 "terms": matched_terms,
                 "chars": len(_strip_markdown(paragraph)),
             })
     return hits
+
+
+def _is_external_v2_delta_paragraph(body: str, paragraph: str) -> bool:
+    if not re.match(
+        r"^(?:相对正式材料/机构假设，外部材料新增的待验证点：|外部新增待验证变量：)",
+        paragraph,
+    ):
+        return False
+    if len(_strip_markdown(paragraph)) > BORROWED_THEME_SENTENCE_CHARS:
+        return False
+    if not re.search(r"\[\^\d+\](?:。)?$", paragraph):
+        return False
+    start = body.find(paragraph)
+    if start < 0:
+        return False
+    tail = body[start + len(paragraph):]
+    return bool(re.match(
+        r"^\s*\n\s*\n>\s+\*\*(?:外部原文依据|缓存材料摘录)\*\*：\S",
+        tail,
+    ))
 
 
 def _borrowed_theme_table_hits(body: str, terms: list[str]) -> list[dict]:
@@ -369,6 +389,7 @@ def _is_non_prose_line(line: str) -> bool:
         or line.startswith("- ")
         or line.startswith("> ")
         or line.startswith("#")
+        or re.fullmatch(r"\*\*[^*]+\*\*", line) is not None
         or line.startswith("**本节引用来源")
         or re.match(r"^\[\^\d+\]:", line) is not None
     )

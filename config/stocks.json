@@ -36,6 +36,10 @@
       "curated_external_viewpoint_narrative_synthesis_display": {
         "enabled": true,
         "narrative_json": "data/curated_external/viewpoint_narratives/heizhima_20260629.json"
+      },
+      "curated_external_viewpoint_digest_synthesis_display": {
+        "enabled": true,
+        "digest_json": "data/curated_external/viewpoint_digests/heizhima_20260629.json"
       }
     }
   },

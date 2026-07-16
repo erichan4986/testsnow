@@ -178,6 +178,62 @@ def test_flags_theme_reexpanded_outside_owner_in_multiple_paragraphs():
     assert '"offending_section": "4.2"' in issue.evidence
 
 
+def test_allows_multiple_cited_external_v2_deltas_with_adjacent_evidence():
+    text = """
+## 四、深度分析
+
+### 4.1 官方材料确认
+
+800G 是正式材料中的产品路线。
+
+### 4.2 机构观点
+
+机构假设需要订单兑现。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+**供应链交付**
+
+相对正式材料/机构假设，外部材料新增的待验证点：800G交付节奏仍需验证[^1]。
+
+> **外部原文依据**：外部文章记录上游物料紧张和交付安排。
+
+**同业路线**
+
+外部新增待验证变量：NPO路线进入验证窗口[^2]。
+
+> **缓存材料摘录**：缓存文章讨论同业NPO验证节奏。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" not in _codes(result)
+
+
+def test_external_v2_delta_without_adjacent_evidence_still_warns():
+    text = """
+## 四、深度分析
+
+### 4.1 官方材料确认
+
+800G 是正式材料中的产品路线。
+
+### 4.2 机构观点
+
+机构假设需要订单兑现。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+相对正式材料/机构假设，外部材料新增的待验证点：800G交付节奏仍需验证[^1]。
+
+外部新增待验证变量：800G客户认证节奏仍需验证[^2]。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" in _codes(result)
+
+
 def test_allows_single_borrowed_theme_table_row_without_reexpanded_warning():
     text = """
 ## 四、深度分析

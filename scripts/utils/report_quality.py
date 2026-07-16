@@ -1203,6 +1203,7 @@ def _strip_negative_confirmation_phrases(text: str) -> str:
         r"未经官方确认",
         r"官方未确认",
         r"未确认",
+        r"(?:不|未|无法|难以)确定(?:性)?",
     )
     for pattern in patterns:
         text = re.sub(pattern, "", text)
@@ -1335,7 +1336,16 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             and re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
             and re.search(r"\[\^\d+\]", section)
         )
-        if has_variable_table or has_variable_narrative:
+        has_argument_v2_narrative = (
+            re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(
+                r"(?m)^(?:相对正式材料/机构假设，外部材料新增的待验证点|外部新增待验证变量)："
+                r"[^\n]*\[\^\d+\][。；]?\s*$",
+                section,
+            )
+            and re.search(r"(?m)^> \*\*(?:外部原文依据|缓存材料摘录)\*\*：\S", section)
+        )
+        if has_variable_table or has_variable_narrative or has_argument_v2_narrative:
             missing = []
         else:
             markers = (
