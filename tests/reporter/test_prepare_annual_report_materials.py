@@ -5,6 +5,7 @@ pointing to local sample text files.
 """
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -445,6 +446,26 @@ def test_prepare_failure_no_market(tmp_path: Path) -> None:
 
 
 # --- CLI subprocess tests ---
+
+
+def test_cli_help_survives_inherited_pythonpath() -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(("scripts/utils", "scripts"))
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "prepare_annual_report_materials.py"),
+            "--help",
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Prepare annual report cache" in result.stdout
 
 
 def test_cli_runs_with_stock_and_year(tmp_path: Path) -> None:

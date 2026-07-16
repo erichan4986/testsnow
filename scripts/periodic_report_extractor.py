@@ -7,9 +7,10 @@ import argparse
 import sys
 from pathlib import Path
 
+from _path_bootstrap import prepend_sys_path
+
 UTILS_DIR = Path(__file__).resolve().parent / "utils"
-if str(UTILS_DIR) not in sys.path:
-    sys.path.insert(0, str(UTILS_DIR))
+prepend_sys_path(UTILS_DIR)
 
 from periodic_report_extractor import extract_periodic_report, render_markdown, result_to_json
 

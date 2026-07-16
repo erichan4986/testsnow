@@ -55,10 +55,7 @@ def test_analyzer_wires_market_resonance_with_index_data(monkeypatch):
 
 
 def test_renderer_shows_market_resonance_with_impact_and_relative():
-    import sys as _sys
-    from pathlib import Path
-    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-    from sections.technical_renderer import TechnicalRenderer
+    from scripts.utils.reporter.sections.technical_renderer import TechnicalRenderer
 
     ctx = {
         "stock_name": "测试",
@@ -109,10 +106,7 @@ def test_renderer_shows_market_resonance_with_impact_and_relative():
 
 
 def test_renderer_shows_missing_when_index_data_unavailable():
-    import sys as _sys
-    from pathlib import Path
-    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-    from sections.technical_renderer import TechnicalRenderer
+    from scripts.utils.reporter.sections.technical_renderer import TechnicalRenderer
 
     ctx = {
         "stock_name": "测试",

@@ -10,14 +10,14 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
+
+from _path_bootstrap import prepend_sys_path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 UTILS_DIR = PROJECT_ROOT / "scripts" / "utils"
-if str(UTILS_DIR) not in sys.path:
-    sys.path.insert(0, str(UTILS_DIR))
+prepend_sys_path(UTILS_DIR)
 
 from periodic_report_cache import (  # noqa: E402
     _download_url_bytes,

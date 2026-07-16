@@ -170,10 +170,7 @@ def test_candle_location_strict_in_zone():
 
 
 def test_renderer_shows_corporate_action_warning():
-    import sys as _sys
-    from pathlib import Path
-    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-    from sections.technical_renderer import TechnicalRenderer
+    from scripts.utils.reporter.sections.technical_renderer import TechnicalRenderer
 
     ctx = {
         "stock_name": "乐鑫科技",

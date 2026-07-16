@@ -199,8 +199,7 @@ def test_output_structured_risk_signals_passes_to_risk_section(tmp_path):
     )
     claim_risk_signal_skill(ctx)
     signals = ctx.output["structured_risk_signals"]
-    sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-    from scoring_engine import risk_score_section
+    from reporter.scoring_engine import risk_score_section
 
     section = risk_score_section(
         stock_name="黑芝麻智能",

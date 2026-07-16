@@ -12,6 +12,30 @@ import report_skills.synthesis_skills as synthesis_skills_module
 from report_skills.synthesis_skills import SynthesisSkill
 from source_adapter import SynthesisItem
 
+TEST_STOCK_CODES = {
+    "复旦微电": "688385",
+    "黑芝麻智能": "02533",
+    "中简科技": "300777",
+    "中际旭创": "300308",
+    "圣邦股份": "300661",
+    "韦尔股份": "603501",
+    "测试股": "000001",
+}
+EMPTY_KNOWLEDGE_DIR = Path(__file__).resolve().parent / "_empty_knowledge"
+
+
+def _with_stock_identity(payload):
+    result = dict(payload)
+    stock_name = str(result.get("stock_name") or "")
+    if stock_name and "stock_codes" not in result:
+        result["stock_codes"] = {stock_name: TEST_STOCK_CODES[stock_name]}
+    result.setdefault("knowledge_base_dir", str(EMPTY_KNOWLEDGE_DIR))
+    return result
+
+
+def _test_context(payload):
+    return SkillContext(input=_with_stock_identity(payload))
+
 
 class FakeSynthesizer:
     def __init__(self):
@@ -65,7 +89,7 @@ def test_synthesis_skill_passes_stock_config_to_synthesizer():
         "product_exposure_terms": ["FPGA", "MCU"],
         "competitors": ["紫光国微"],
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_config": stock_config,
         "stock_raw": {
@@ -102,7 +126,7 @@ def test_synthesis_skill_passes_formal_financial_fact_pack_to_synthesizer():
             "evidence_type": "periodic_report_filing_fact",
         },
     ]
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_filing_core_facts": filing_core_facts,
         "stock_raw": {
@@ -139,7 +163,7 @@ def test_synthesis_skill_passes_formal_financial_explanation_pack_to_synthesizer
             }
         ],
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_explanation_pack": explanation_pack,
         "stock_raw": {
@@ -161,7 +185,7 @@ def test_synthesis_skill_passes_formal_financial_explanation_pack_to_synthesizer
 def test_synthesis_skill_builds_fundflow_pack_and_keeps_raw_fundflow_items():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_raw": {
             "announcements": [{"title": "一季报", "content": "公司披露一季报", "date": "2026-04-30"}],
@@ -187,7 +211,7 @@ def test_synthesis_skill_builds_fundflow_pack_and_keeps_raw_fundflow_items():
 def test_fundflow_pack_keeps_citable_fundflow_sources():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_raw": {
             "announcements": [{"title": "一季报", "content": "公司披露一季报", "date": "2026-04-30"}],
@@ -240,7 +264,7 @@ def test_synthesis_skill_replaces_financial_missing_contradiction_when_fact_pack
             "evidence_type": "periodic_report_filing_fact",
         },
     ]
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_filing_core_facts": filing_core_facts,
         "stock_raw": {
@@ -305,7 +329,7 @@ def test_formal_financial_fact_pack_drops_zero_amounts_and_sanitizer_uses_core_f
             "evidence_type": "periodic_report_filing_fact",
         },
     ]
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_filing_core_facts": filing_core_facts,
         "stock_raw": {
@@ -424,7 +448,7 @@ def test_synthesis_skill_enabled_modern_path_passes_context_to_synthesizer(tmp_p
 
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "黑芝麻智能",
         "enable_claim_verification_context": True,
         "claim_verification_base_dir": str(tmp_path / "empty_kb"),
@@ -545,7 +569,7 @@ def test_periodic_report_excerpt_does_not_enter_synthesis_items():
             "verification_status": "management_view",
         },
     )
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "source_intake_enabled": True,
         "source_intake_items": [periodic_excerpt],
@@ -586,7 +610,7 @@ def test_source_intake_keep_items_enter_baseline_synthesis_items():
             "report_eligible": True,
         },
     )
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中际旭创",
         "source_intake_enabled": True,
         "external_evidence_keep_items": [source_intake_item],
@@ -827,7 +851,7 @@ def test_periodic_report_fulltext_items_do_not_enter_synthesis_items():
             "experimental": True,
         },
     )
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "periodic_report_fulltext_items": [fulltext_item],
         "stock_raw": {
@@ -1602,7 +1626,7 @@ def test_curated_external_viewpoint_digest_rejects_mismatched_stock_identity(tmp
         tmp_path, [_make_viewpoint_claim()], stock_name="聚辰股份",
     )
     skill = SynthesisSkill()
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
         "curated_external_viewpoint_digest_json": str(digest_path),
@@ -1629,7 +1653,7 @@ def test_curated_external_viewpoint_digest_drops_foreign_only_target_claim(tmp_p
         tmp_path, [foreign, safe], stock_name="复旦微电",
     )
     skill = SynthesisSkill()
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
         "curated_external_viewpoint_digest_json": str(digest_path),
@@ -1707,7 +1731,7 @@ def test_curated_external_viewpoint_narrative_hydrates_refs_from_claim_ids(tmp_p
     )
 
     skill = SynthesisSkill()
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
         "curated_external_viewpoint_narrative_json": str(narrative_path),
@@ -1779,7 +1803,7 @@ def test_curated_external_viewpoint_narrative_preserves_reasoning_cards_and_trun
     )
 
     skill = SynthesisSkill()
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
         "curated_external_viewpoint_narrative_json": str(narrative_path),
@@ -2249,7 +2273,7 @@ class UnsupportedCoreFactSynthesizer:
 
 
 def _fulltext_ctx(switch, fake):
-    return SkillContext(input={
+    return _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": switch,
         "periodic_report_fulltext_items": [_make_fulltext_item()],
@@ -2378,7 +2402,7 @@ def test_empty_core_facts_fall_back_to_periodic_filing_core_facts():
         "source_labels": ["2025年annual"],
         "evidence_type": "periodic_report_filing_fact",
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "圣邦股份",
         "periodic_report_filing_core_facts": [fallback_fact],
         "stock_raw": {
@@ -2407,7 +2431,7 @@ def test_unsupported_core_facts_fall_back_to_periodic_filing_core_facts():
         "source_labels": ["2025年annual"],
         "evidence_type": "periodic_report_filing_fact",
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "圣邦股份",
         "periodic_report_filing_core_facts": [fallback_fact],
         "stock_raw": {
@@ -2463,7 +2487,7 @@ def test_periodic_report_fulltext_synthesis_no_items_skips_display():
     """Switch on but no eligible fulltext item: behaves like default off."""
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": True,
         "periodic_report_fulltext_items": [],
@@ -2493,7 +2517,7 @@ def test_periodic_report_fulltext_synthesis_rejects_malformed_fulltext_item():
     }
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": True,
         "periodic_report_fulltext_items": [malformed],
@@ -2864,7 +2888,7 @@ def test_display_synthesis_dedupes_duplicate_material_before_synthesizer(tmp_pat
     )
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": True,
         "periodic_report_fulltext_items": [fulltext_item],
@@ -3000,7 +3024,7 @@ def test_formal_thin_external_rich_skips_legacy_synthesis_with_chat_client(tmp_p
 def test_evidence_profile_has_annual_memo_fields():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_raw": {
             "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],

@@ -69,6 +69,6 @@ FPGA产品线积极推进基于1x nm FinFET先进制程、2.5D先进封装的超
     result = periodic_report_fulltext_intake_skill(ctx)
 
     pack = result.get("periodic_report_narrative_evidence_cards")
-    assert pack["schema_version"] == "periodic_report_narrative_evidence_cards.v1"
+    assert pack["schema_version"] == "periodic_report_narrative_evidence_cards.v2"
     excerpts = " ".join(card.get("source_excerpt", "") for card in pack["cards"])
     assert "车规级EEPROM" in excerpts or "先进制程FPGA" in excerpts

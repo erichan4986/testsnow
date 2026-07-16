@@ -5,19 +5,17 @@ from __future__ import annotations
 
 import argparse
 import json
-import sys
 from pathlib import Path
 from typing import Any, Dict, Optional
+
+from _path_bootstrap import prepend_sys_path
 
 
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
 UTILS_DIR = PROJECT_ROOT / "scripts" / "utils"
 PREVIEWS_DIR = PROJECT_ROOT / "scripts" / "previews"
-if str(UTILS_DIR) in sys.path:
-    sys.path.remove(str(UTILS_DIR))
-sys.path.insert(0, str(UTILS_DIR))
-if str(PREVIEWS_DIR) not in sys.path:
-    sys.path.insert(0, str(PREVIEWS_DIR))
+prepend_sys_path(UTILS_DIR)
+prepend_sys_path(PREVIEWS_DIR)
 
 from periodic_report_cache import (  # noqa: E402
     PeriodicReportCacheResult,
