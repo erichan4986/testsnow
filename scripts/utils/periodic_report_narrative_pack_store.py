@@ -49,7 +49,7 @@ def _fail_if(condition: bool, code: str) -> None:
         raise PeriodicNarrativePackStorageError(code)
 
 
-def _root(base_dir: str | Path, stock_name: str) -> Path:
+def periodic_narrative_stock_root(base_dir: str | Path, stock_name: str) -> Path:
     segment = re.sub(r"[\\/]+|\.{2,}", "-", str(stock_name or "").replace("\x00", ""))
     return Path(base_dir) / "10-Stocks" / ("-".join(segment.split()).strip("-. ") or "unknown")
 
@@ -188,7 +188,8 @@ def _manifest_entries(root: Path, stock_name: str, stock_code: str) -> List[Dict
 def write_periodic_report_narrative_pack(
     *, stock_name: str, stock_code: str, card_pack: Dict[str, Any], base_dir: str | Path,
 ) -> PeriodicNarrativePackWriteResult:
-    envelope, root = _envelope(stock_name, stock_code, card_pack), _root(base_dir, stock_name)
+    envelope = _envelope(stock_name, stock_code, card_pack)
+    root = periodic_narrative_stock_root(base_dir, stock_name)
     manifest_path, packs_dir = root / MANIFEST_FILENAME, root / PACK_DIRNAME
     if manifest_path.exists():
         entries, state = _manifest_entries(root, stock_name, stock_code), "upsert"
@@ -211,8 +212,9 @@ def write_periodic_report_narrative_pack(
 def load_validated_periodic_narrative_pack_set(
     *, stock_name: str, stock_code: str, base_dir: str | Path,
 ) -> Dict[str, Any]:
-    root, packs = _root(base_dir, stock_name), []
-    for entry in _manifest_entries(root, stock_name, stock_code):
+    root, packs = periodic_narrative_stock_root(base_dir, stock_name), []
+    entries = _manifest_entries(root, stock_name, stock_code)
+    for entry in entries:
         envelope = _read(root / entry["pack_path"])
         validate_periodic_narrative_pack_envelope(
             envelope, stock_name=stock_name, stock_code=stock_code,
@@ -220,4 +222,8 @@ def load_validated_periodic_narrative_pack_set(
         )
         _fail_if(envelope["integrity"]["cards_sha256"] != entry.get("cards_sha256") or envelope["integrity"]["payload_sha256"] != entry.get("payload_sha256"), "manifest_hash_mismatch")
         packs.append(envelope)
-    return {"packs": packs, "cards": [card for pack in packs for card in pack["cards"]]}
+    return {
+        "entries": entries,
+        "packs": packs,
+        "cards": [card for pack in packs for card in pack["cards"]],
+    }

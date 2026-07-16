@@ -32,10 +32,9 @@ Annual Producer v2 与 Chapter 4 annual display selector 已把主要问题从�
 - Batch 1 已完成，checkpoint：`3ae8c86`；
 - Batch 2 已完成，checkpoint：`4f84fd2`；
 - Batch 3–5 已完成并通过各自 focused / report 验收；
-- 当前进入 Batch 6 Level 3 设计审查，设计文件：
-  `2026-07-15-knowledge-persistence-slimming-design.md`；
-- Batch 6 拆为 6A pack store、6B human projection、6C migration/slimming，必须按
-  顺序独立实现和验收，不得跳过兼容 gate 直接删除 notes。
+- Batch 6 已完成：6A pack store、6B human projection、6C migration/slimming
+  均已独立实现和验收；48 份通过零恢复/零 adapter gate 的 v1 notes 已在用户确认后
+  移入 stock-local `_legacy_archive`，归档后 formal-medium / formal-thin 正式报告复跑通过。
 
 ### Batch 1: Executive Summary Completeness
 
@@ -127,7 +126,8 @@ Batch 3 已完成的窄版式项不在本批重复实现。Batch 5 只处理剩�
 - 不通过 producer 丢 card，不降低八股 coverage，不删除 SourceUnit；
 - v1 notes 的归档/删除必须等 pack migration 与兼容 gate 独立通过。
 
-本批必须单独走 Level 3。当前 881 张本地 notes 保留但不提交，直到持久化契约锁定。
+本批已按 Level 3 收口。机器真源为 validated JSON pack，Markdown 仅保留一文件式
+human projection；旧 v2 writer/parser 已删除，legacy v1 notes 已在兼容 gate 后归档。
 
 ## 4. Dependency Rules
 

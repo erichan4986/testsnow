@@ -2513,9 +2513,10 @@ def test_single_applicability_checkbox_report_tail_fragment_is_rejected():
     assert result["cards"] == []
 
 
-def test_product_feature_table_header_is_rejected_without_excerpt_rewriting():
+def test_product_feature_table_keeps_only_exact_trailing_narrative():
     evidence_pack = {
         "schema_version": "periodic_report_evidence_pack.v1",
+        "document_style": "a_share_annual",
         "blocks": [
             {
                 "id": "glossary-0",
@@ -2551,8 +2552,14 @@ def test_product_feature_table_header_is_rejected_without_excerpt_rewriting():
         evidence_pack=evidence_pack,
     )
 
-    assert result["cards"] == []
-    assert result["diagnostics"]["rejection_counts"]["table_noise"] >= 1
+    assert len(result["cards"]) == 1
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert excerpt == (
+        "依托于公司自主研发的FastCali电池电量算法，公司电池计量芯片可以快速计算电池状态，"
+        "精准提供电池生命周期内电池荷电状态。"
+    )
+    assert excerpt in evidence_pack["blocks"][1]["text"]
+    assert "产品类型" not in excerpt
 
 
 def test_structural_table_header_snippets_are_rejected():
@@ -4472,3 +4479,314 @@ def test_interleaved_rd_columns_remain_rejected():
 
     assert narrative_cards._looks_like_interleaved_rd_table(text)
     assert result["cards"] == []
+
+
+@pytest.mark.parametrize(("usage", "text", "expected_family"), (
+    (
+        "production_sales_inventory_table",
+        "3、非挥发存储器产品线 该产品线拥有EEPROM、NOR Flash和SLC NAND等各类存储器产品，具有多种容量、接口和封装形式。",
+        "business_structure",
+    ),
+    (
+        "production_sales_inventory_table",
+        "2025 年实现销售收入约10.42亿元，其中高可靠存储器实现销售收入约6.81亿元。",
+        "operating_progress",
+    ),
+    (
+        "industry_outlook",
+        "国内互联网厂商逐步加大对AI相关业务的投入，由此推动其资本开支大幅增长。",
+        "market_competition_outlook",
+    ),
+    (
+        "rd_product_progress",
+        "Wi-Fi 6技术能够通过OFDMA支持2.4GHz和5GHz频段的大规模物联网使用场景。",
+        "technology_product_progress",
+    ),
+    (
+        "business_overview",
+        "公司工艺诊断分析平台Vision通过AI图像处理实现全链路协同分析自动化，晶圆轮廓提取效率提升2倍以上。",
+        "technology_product_progress",
+    ),
+    (
+        "product_capacity_profile",
+        "公司研发的高性能模拟集成电路与传感器产品线，具备信号感知、数据转换和电源管理等全链条技术能力。",
+        "technology_product_progress",
+    ),
+))
+def test_real_annual_complete_facts_are_admitted_by_relation(
+    usage, text, expected_family,
+):
+    result = _build_v2_cards(text, usage)
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == expected_family
+    assert result["cards"][0]["source_excerpt"] == text
+
+
+def test_hk_reported_measure_and_product_scale_are_admitted():
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="测试港股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={
+            "document_style": "hkex_annual",
+            "blocks": [
+                {
+                    "id": "hk_financial_commentary-0",
+                    "usage": "hk_financial_commentary",
+                    "text": "具身智能解决方案的毛利率截至2025年12月31日止年度为48.7%。",
+                },
+                {
+                    "id": "hk_market_outlook-0",
+                    "usage": "hk_market_outlook",
+                    "text": "本公司AI影像解决方案累计搭载设备超过5亿台。依托该技术优势，本公司正推进端侧大模型与AI Agent技术布局。",
+                },
+            ],
+        },
+    )
+
+    excerpts = _all_excerpts(result["cards"])
+    assert "毛利率截至2025年12月31日止年度为48.7%" in excerpts
+    assert "累计搭载设备超过5亿台" in excerpts
+    assert "AI Agent技术布局" in excerpts
+
+
+def test_adjacent_anchored_continuations_inherit_one_valid_seed_family():
+    text = (
+        "公司通过开放平台和软件工具建立开发者生态。"
+        "随着开源项目和技术文档不断丰富，开发门槛逐步降低。"
+        "随着开发者数量增加，他们在设计阶段选择公司平台并构建商业原型。"
+        "在这一阶段，工具链成熟度使平台嵌入产品早期架构设计。"
+    )
+    result = _build_v2_cards(text, "product_capacity_profile")
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == "business_structure"
+    assert result["cards"][0]["source_unit_ids"] == [
+        "product_capacity_profile-0:u0",
+        "product_capacity_profile-0:u1",
+        "product_capacity_profile-0:u2",
+        "product_capacity_profile-0:u3",
+    ]
+
+
+@pytest.mark.parametrize(("usage", "text"), (
+    (
+        "related_party_transactions",
+        "董事会按照《公司法》和《董事会议事规则》召集会议并依法行使职权。",
+    ),
+    (
+        "commitments",
+        "自本承诺函签署后，本方将不会控制任何与公司从事相同业务的企业。",
+    ),
+    (
+        "industry_outlook",
+        "> -20% > 0% > 20% > 40% > 60% > 80% > 200 > 400 > 600 > 19Q1 > 20Q1 > 亚马逊 微软 谷歌 同比增速（右轴）",
+    ),
+    (
+        "hk_business_overview",
+        "本公司已完成首次公开发售，并使股份于香港联交所主板上市。",
+    ),
+    (
+        "hk_product_progress",
+        "我们的目标很清晰：把技术和产品创新变成看得见的商业成果。",
+    ),
+))
+def test_admission_repair_keeps_structural_noise_rejected(usage, text):
+    result = _build_v2_cards(text, usage)
+
+    assert result["cards"] == []
+
+
+@pytest.mark.parametrize(("usage", "text", "expected_family"), (
+    (
+        "business_model",
+        "公司对具体EDA工具软件产品的授权一般以合同约定的时间周期为限；",
+        "business_structure",
+    ),
+    (
+        "industry_outlook",
+        "国内EDA市场仍由国际厂商占据主导地位，国内EDA供应商所占市场份额较小。",
+        "market_competition_outlook",
+    ),
+    (
+        "goodwill_note",
+        "商誉减值风险 本报告期初商誉账面原值为7,099,450.64元，该商誉为公司收购形成。",
+        "financial_quality_explanation",
+    ),
+    (
+        "product_capacity_profile",
+        "公司长期研发电池电化学技术，从而打造高精度、低功耗芯片产品，可解决电池状态监测和充电管理问题。",
+        "technology_product_progress",
+    ),
+))
+def test_additional_complete_relations_do_not_need_legacy_recovery(
+    usage, text, expected_family,
+):
+    result = _build_v2_cards(text, usage)
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == expected_family
+
+
+def test_mixed_product_table_keeps_exact_trailing_company_narrative():
+    text = (
+        "公司电池计量芯片主要产品如下表所示：产品类型 图片示例 主要技术特点 主要应用领域 "
+        "电池计量芯片 可监测电压、电流和温度。"
+        "依托于公司自主研发的“FastCali”电池电量算法，公司电池计量芯片可以快速计算电池状态，"
+        "同时具备计算开销小、静态功耗低的特点。"
+    )
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack={"document_style": "a_share_annual", "blocks": [{
+            "id": "management_strategy-0", "usage": "management_strategy", "text": text,
+        }]},
+    )
+
+    assert len(result["cards"]) == 1
+    excerpt = result["cards"][0]["source_excerpt"]
+    assert excerpt == (
+        "依托于公司自主研发的“FastCali”电池电量算法，公司电池计量芯片可以快速计算电池状态，"
+        "同时具备计算开销小、静态功耗低的特点。"
+    )
+    assert excerpt in text
+    assert "产品类型" not in excerpt
+
+
+def test_mid_unit_annual_page_header_keeps_exact_financial_tail():
+    text = (
+        "公司实现该板块营业收入25,039.29万元，同比增长84.81%，"
+        "烟台德邦科技股份有限公司2025年年度报告 > 40 /252 毛利率同比提升2.98个百分点；"
+    )
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack={"document_style": "a_share_annual", "blocks": [{
+            "id": "profitability_commentary-0", "usage": "profitability_commentary", "text": text,
+        }]},
+    )
+
+    assert [card["source_excerpt"] for card in result["cards"]] == [
+        "毛利率同比提升2.98个百分点；"
+    ]
+
+
+@pytest.mark.parametrize(("usage", "text", "expected_family"), (
+    (
+        "business_model",
+        "公司的研发按照项目立项、开发测试和项目发布等顺序进行，公司目前通过直销方式销售。",
+        "business_structure",
+    ),
+    (
+        "goodwill_note",
+        "本报告期内公司完成股权收购交割及并表，支付金额超过可辨认净资产公允价值份额，形成商誉195,651,828.61元。",
+        "financial_quality_explanation",
+    ),
+    (
+        "ar_aging_note",
+        "应收账款无法按期收回的风险 随着经营规模扩大及客户信用政策变动，公司应收账款余额可能保持较大规模。",
+        "financial_quality_explanation",
+    ),
+))
+def test_business_and_financial_relations_cover_legacy_facts(
+    usage, text, expected_family,
+):
+    result = _build_v2_cards(text, usage)
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == expected_family
+
+
+def test_mixed_industry_barrier_block_keeps_distinct_company_position_unit():
+    text = (
+        "行业技术壁垒较高，客户验证周期长，新进入者难以快速打开市场。"
+        "公司围绕头部客户需求，依托技术积累持续推动关键材料国产化进程。"
+    )
+    result = _build_v2_cards(text, "competitive_position")
+
+    assert [card["source_excerpt"] for card in result["cards"]] == [
+        "公司围绕头部客户需求，依托技术积累持续推动关键材料国产化进程。"
+    ]
+
+
+def test_mid_unit_page_number_without_total_keeps_exact_market_tail():
+    text = (
+        "3、云技术在EDA领域的应用日趋深入 华大九天科技股份有限公司 "
+        "2025年年度报告全文 > 38 随着EDA云平台成熟，芯片设计流程迁移至云端已成为明显趋势。"
+    )
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025,
+        report_type="annual", evidence_pack={"document_style": "a_share_annual", "blocks": [{
+            "id": "industry_outlook-0", "usage": "industry_outlook", "text": text,
+        }]},
+    )
+
+    assert [card["source_excerpt"] for card in result["cards"]] == [
+        "随着EDA云平台成熟，芯片设计流程迁移至云端已成为明显趋势。"
+    ]
+
+
+def test_ocr_spaced_market_share_relation_is_admitted():
+    text = (
+        "对于国内 EDA 市场，目前仍由上述国际 EDA 三巨头占据主 导地位，"
+        "国内 EDA 供应商目前所占市场份 额较小。"
+    )
+
+    result = _build_v2_cards(text, "industry_outlook")
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == "market_competition_outlook"
+
+
+def test_barrier_block_keeps_concrete_product_delivery_units():
+    text = (
+        "行业技术壁垒较高，客户验证周期长，新进入者难以快速打开市场。"
+        "公司始终围绕头部客户需求，持续推动关键材料国产化进程。"
+        "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（TIM1.5/TIM2）"
+        "等成熟产品已在国内主流封测厂商实现稳定批量供货；"
+        "同时，芯片级底部填充胶（Underfill）、DAF/CDAF膜、Lid框粘接材料等先进封装材料"
+        "成功打破国外垄断，进入小批量交付阶段，芯片级导热材料也已进入客户端验证导入环节。"
+    )
+
+    result = _build_v2_cards(text, "competitive_position")
+
+    excerpts = _all_excerpts(result["cards"])
+    assert "成熟产品已在国内主流封测厂商实现稳定批量供货" in excerpts
+    assert "先进封装材料成功打破国外垄断，进入小批量交付阶段" in excerpts
+    assert "新进入者难以快速打开市场" not in excerpts
+
+
+@pytest.mark.parametrize(("usage", "text", "expected_family"), (
+    (
+        "ar_aging_note",
+        "应收账款无法按期收回的风险 随着公司经营规模的持续扩大、或者受市场环境、"
+        "客户经营情况、信用政策变动等因素影响，公司应收账款余额可能保持较大规模。",
+        "financial_quality_explanation",
+    ),
+    (
+        "ar_aging_note",
+        "如果公司主要客户的财务状况出现恶化，可能出现较大应 收账款不能收回或延期收回的情况，"
+        "进而对公司资金周转和生产经营产生不利影响。",
+        "financial_quality_explanation",
+    ),
+    (
+        "goodwill_note",
+        "泰吉诺主要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，"
+        "所处行业具有研发投入高、技术迭代快、研发周期长等特点，泰吉诺的经营效益受宏观政策、"
+        "经济周期、市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
+        "market_competition_outlook",
+    ),
+    (
+        "goodwill_note",
+        "如果未来由于行业不景气或泰吉诺自身因素导致其未来经营状况未达预期，"
+        "则公司存在商誉减值风险，从而影响公司当期损益。",
+        "financial_quality_explanation",
+    ),
+))
+def test_named_financial_risks_keep_complete_official_facts(
+    usage, text, expected_family,
+):
+    result = _build_v2_cards(text, usage)
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == expected_family

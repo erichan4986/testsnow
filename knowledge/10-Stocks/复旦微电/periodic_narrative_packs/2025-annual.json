@@ -81,9 +81,86 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
-      "card_id": "annual-argument:a584caf7d8d20a2cf18d",
+      "card_id": "annual-argument:108e9bdf87155f75d93b",
       "fact_anchors": [
-        "2025",
+        "应用"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "production_sales_inventory_table-0",
+      "source_credit": 75,
+      "source_excerpt": "智能识别设备芯片，NFC读写器广泛应用于移动支付、公共交通、智能门禁、智能家居等领 域。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "production_sales_inventory_table-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "production_sales_inventory_table-0",
+          "end_pos": 81,
+          "ordinal": 1,
+          "start_pos": 37,
+          "text": "智能识别设备芯片，NFC读写器广泛应用于移动支付、公共交通、智能门禁、智能家居等领 域。",
+          "unit_id": "production_sales_inventory_table-0:u1"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:31d09e6d049e72d0d56a",
+      "fact_anchors": [
+        "随着数字经济的持续发展和物联网的不断推进，NFC"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "production_sales_inventory_table-0",
+      "source_credit": 75,
+      "source_excerpt": "随着数字经济的持续发展和物联网的不断推进，NFC技术的应用场景有望进一步拓展。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "production_sales_inventory_table-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "production_sales_inventory_table-0",
+          "end_pos": 120,
+          "ordinal": 2,
+          "start_pos": 81,
+          "text": "随着数字经济的持续发展和物联网的不断推进，NFC技术的应用场景有望进一步拓展。",
+          "unit_id": "production_sales_inventory_table-0:u2"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:4b1da0ef3c8b35d32632",
+      "fact_anchors": [
         "产品",
         "客户",
         "应用"
@@ -97,17 +174,18 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "production_sales_inventory_table-0",
       "source_credit": 75,
-      "source_excerpt": "公司 NFC产品广泛应用于金融POS、智能门锁和门禁等市场，在推进扩大市占率的同时，产品线积极拓 展高价值应用，产品竞争力明显，得到客户高度认可。 3、非挥发存储器产品线 该产品线拥有电可擦除可编程只读存储器（EEPROM）、NOR型闪存存储器（NORFlash）和SLC NAND型闪存存储器（NAND Flash）等各类存储器产品，具有多种容量、接口和封装形式。2025 年实现销售收入约10.42亿元，其中，高可靠存储器实现销售收入约6.81亿元。",
+      "source_excerpt": "公司 NFC产品广泛应用于金融POS、智能门锁和门禁等市场，在推进扩大市占率的同时，产品线积极拓 展高价值应用，产品竞争力明显，得到客户高度认可。 3、非挥发存储器产品线 该产品线拥有电可擦除可编程只读存储器（EEPROM）、NOR型闪存存储器（NORFlash）和SLC NAND型闪存存储器（NAND Flash）等各类存储器产品，具有多种容量、接口和封装形式。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
         "production_sales_inventory_table-0:u3",
-        "production_sales_inventory_table-0:u4",
-        "production_sales_inventory_table-0:u5"
+        "production_sales_inventory_table-0:u4"
       ],
       "source_units": [
         {
@@ -125,7 +203,38 @@
           "start_pos": 194,
           "text": "3、非挥发存储器产品线 该产品线拥有电可擦除可编程只读存储器（EEPROM）、NOR型闪存存储器（NORFlash）和SLC NAND型闪存存储器（NAND Flash）等各类存储器产品，具有多种容量、接口和封装形式。",
           "unit_id": "production_sales_inventory_table-0:u4"
-        },
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "operating_progress",
+      "card_id": "annual-argument:c4c1b8c0cb9582b2b35f",
+      "fact_anchors": [
+        "2025",
+        "收入"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:operating_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "production_sales_inventory_table-0",
+      "source_credit": 75,
+      "source_excerpt": "2025 年实现销售收入约10.42亿元，其中，高可靠存储器实现销售收入约6.81亿元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "production_sales_inventory_table-0:u5"
+      ],
+      "source_units": [
         {
           "block_id": "production_sales_inventory_table-0",
           "end_pos": 347,
@@ -135,7 +244,7 @@
           "unit_id": "production_sales_inventory_table-0:u5"
         }
       ],
-      "title": "业务结构"
+      "title": "经营变化"
     },
     {
       "argument_complete": false,
@@ -155,7 +264,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:operating_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "production_sales_inventory_table-0",
@@ -219,11 +330,121 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
-      "card_id": "annual-argument:4e4ea09bf2c282304cde",
+      "card_id": "annual-argument:a0f81ac23ab525900bc2",
+      "fact_anchors": [
+        "产品",
+        "客户",
+        "应用"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "production_sales_inventory_table-0",
+      "source_credit": 75,
+      "source_excerpt": "NAND Flash芯片在下游应用设备中存储容量不断增大，产品线在网通、安防 监控、可穿戴领域持续重点布局，产品在主要客户中获得批量应用。高可靠存储器销量稳步增长， 是公司非挥发存储器产品线的重要构成。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "production_sales_inventory_table-0:u8",
+        "production_sales_inventory_table-0:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "production_sales_inventory_table-0",
+          "end_pos": 565,
+          "ordinal": 8,
+          "start_pos": 496,
+          "text": "NAND Flash芯片在下游应用设备中存储容量不断增大，产品线在网通、安防 监控、可穿戴领域持续重点布局，产品在主要客户中获得批量应用。",
+          "unit_id": "production_sales_inventory_table-0:u8"
+        },
+        {
+          "block_id": "production_sales_inventory_table-0",
+          "end_pos": 597,
+          "ordinal": 9,
+          "start_pos": 565,
+          "text": "高可靠存储器销量稳步增长， 是公司非挥发存储器产品线的重要构成。",
+          "unit_id": "production_sales_inventory_table-0:u9"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:0fc409ae2ad369a7dcb9",
       "fact_anchors": [
         "2025年",
+        "芯片",
+        "量产",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "高端芯片测试解决方案，在高速晶圆KGD测试、超高密度晶圆测试等方向实现量产突破。此外， 公司还在人工智能芯片、高性能计算芯片、车规芯片测试方案和成套工程技术等领域持续进行研 发与创新应用。 （https://www.bse.cn/）披露的《2025年年度报告》。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-2:u0",
+        "rd_product_progress-2:u1",
+        "rd_product_progress-2:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 40,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "高端芯片测试解决方案，在高速晶圆KGD测试、超高密度晶圆测试等方向实现量产突破。",
+          "unit_id": "rd_product_progress-2:u0"
+        },
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 94,
+          "ordinal": 1,
+          "start_pos": 40,
+          "text": "此外， 公司还在人工智能芯片、高性能计算芯片、车规芯片测试方案和成套工程技术等领域持续进行研 发与创新应用。",
+          "unit_id": "rd_product_progress-2:u1"
+        },
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 131,
+          "ordinal": 2,
+          "start_pos": 95,
+          "text": "（https://www.bse.cn/）披露的《2025年年度报告》。",
+          "unit_id": "rd_product_progress-2:u2"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:e30be8a1b1442ee3acab",
+      "fact_anchors": [
         "业务",
-        "应用",
         "服务"
       ],
       "quality_score": 3,
@@ -240,30 +461,12 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-2",
       "source_credit": 75,
-      "source_excerpt": "此外， 公司还在人工智能芯片、高性能计算芯片、车规芯片测试方案和成套工程技术等领域持续进行研 发与创新应用。 （https://www.bse.cn/）披露的《2025年年度报告》。 （3）复微迅捷业务 复微迅捷以NFC技术和云服务为业务支点，努力做出特色业务。",
+      "source_excerpt": "（3）复微迅捷业务 复微迅捷以NFC技术和云服务为业务支点，努力做出特色业务。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "rd_product_progress-2:u1",
-        "rd_product_progress-2:u2",
         "rd_product_progress-2:u3"
       ],
       "source_units": [
-        {
-          "block_id": "rd_product_progress-2",
-          "end_pos": 94,
-          "ordinal": 1,
-          "start_pos": 40,
-          "text": "此外， 公司还在人工智能芯片、高性能计算芯片、车规芯片测试方案和成套工程技术等领域持续进行研 发与创新应用。",
-          "unit_id": "rd_product_progress-2:u1"
-        },
-        {
-          "block_id": "rd_product_progress-2",
-          "end_pos": 131,
-          "ordinal": 2,
-          "start_pos": 95,
-          "text": "（https://www.bse.cn/）披露的《2025年年度报告》。",
-          "unit_id": "rd_product_progress-2:u2"
-        },
         {
           "block_id": "rd_product_progress-2",
           "end_pos": 171,
@@ -277,22 +480,25 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:a81050cf7cad3c152e82",
       "fact_anchors": [
-        "行业"
+        "平台",
+        "合作"
       ],
-      "quality_score": 2,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 1,
+        "anchored_fact": 2,
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-2",
       "source_credit": 75,
@@ -311,26 +517,29 @@
           "unit_id": "rd_product_progress-2:u4"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:528055f1229bfaaf8e3c",
       "fact_anchors": [
-        "行业"
+        "推出",
+        "合作"
       ],
-      "quality_score": 2,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 1,
+        "anchored_fact": 2,
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-2",
       "source_credit": 75,
@@ -349,26 +558,30 @@
           "unit_id": "rd_product_progress-2:u5"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:778cd457cd712ead0ccf",
       "fact_anchors": [
-        "行业"
+        "批量",
+        "供货",
+        "实现"
       ],
-      "quality_score": 2,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 1,
+        "anchored_fact": 2,
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-2",
       "source_credit": 75,
@@ -387,7 +600,45 @@
           "unit_id": "rd_product_progress-2:u6"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:77cbd38116b23b6c2697",
+      "fact_anchors": [
+        "升级"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "升级实体卡应 用场景，在全国大学校园卡、门禁等领域持续推广手机NFC应用 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-2:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 347,
+          "ordinal": 8,
+          "start_pos": 309,
+          "text": "升级实体卡应 用场景，在全国大学校园卡、门禁等领域持续推广手机NFC应用 。",
+          "unit_id": "rd_product_progress-2:u8"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": true,
@@ -554,7 +805,7 @@
     {
       "argument_complete": true,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:b295458d51aeb035ade8",
+      "card_id": "annual-argument:ab5ab1013c0a63df0340",
       "fact_anchors": [
         "工艺",
         "研发"
@@ -573,11 +824,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "cash_flow_capex_table-0",
       "source_credit": 75,
-      "source_excerpt": "同时，持续保持了较强的研发投入，进行产品迭代和产品谱系化扩展，并 且加强基于多元化供方工艺的产品研发所致。 其他收益变动原因说明：主要系报告期内享受集成电路企业增值税加计抵减税收优惠收益及研发 专项政府补助减少所致。",
+      "source_excerpt": "同时，持续保持了较强的研发投入，进行产品迭代和产品谱系化扩展，并 且加强基于多元化供方工艺的产品研发所致。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "cash_flow_capex_table-0:u5",
-        "cash_flow_capex_table-0:u6"
+        "cash_flow_capex_table-0:u5"
       ],
       "source_units": [
         {
@@ -587,7 +837,39 @@
           "start_pos": 358,
           "text": "同时，持续保持了较强的研发投入，进行产品迭代和产品谱系化扩展，并 且加强基于多元化供方工艺的产品研发所致。",
           "unit_id": "cash_flow_capex_table-0:u5"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:ad6739b2af1a5b2520e4",
+      "fact_anchors": [
+        "其他收益",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "cash_flow_capex_table-0",
+      "source_credit": 75,
+      "source_excerpt": "其他收益变动原因说明：主要系报告期内享受集成电路企业增值税加计抵减税收优惠收益及研发 专项政府补助减少所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "cash_flow_capex_table-0:u6"
+      ],
+      "source_units": [
         {
           "block_id": "cash_flow_capex_table-0",
           "end_pos": 466,
@@ -597,7 +879,7 @@
           "unit_id": "cash_flow_capex_table-0:u6"
         }
       ],
-      "title": "技术与产品进展"
+      "title": "财务质量与变化原因"
     },
     {
       "argument_complete": true,
@@ -943,6 +1225,225 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:e61a9fc292fde74df261",
+      "fact_anchors": [
+        "业务",
+        "产品",
+        "服务"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "一、报告期内公司所从事的主要业务、经营模式、行业情况说明 (一) 主要业务、主要产品或服务情况 报告期内，公司的主要业务、主要产品没有发生重大变化。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 74,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "一、报告期内公司所从事的主要业务、经营模式、行业情况说明 (一) 主要业务、主要产品或服务情况 报告期内，公司的主要业务、主要产品没有发生重大变化。",
+          "unit_id": "product_capacity_profile-0:u0"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:64d4f4392c3e6e325461",
+      "fact_anchors": [
+        "业务",
+        "客户",
+        "解决方案"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "1、主要业务 复旦微电是一家从事超大规模集成电路的设计、开发、测试，并为客户提供系统解决方案的 专业公司。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 128,
+          "ordinal": 1,
+          "start_pos": 75,
+          "text": "1、主要业务 复旦微电是一家从事超大规模集成电路的设计、开发、测试，并为客户提供系统解决方案的 专业公司。",
+          "unit_id": "product_capacity_profile-0:u1"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:41225b0c86cda56f5187",
+      "fact_anchors": [
+        "产品",
+        "应用",
+        "解决方案"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "公司目前已建立健全FPGA芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集 成电路测试服务等产品线，产品广泛应用于金融、社保、防伪溯源、网络通讯、家电设备、汽车 电子、工业控制、信号处理、数据中心、人工智能、卫星通信等众多领域。 2、主要产品及服务情况 2.1 FPGA芯片 FPGA是一种硬件可重构的集成电路芯片。FPGA拥有软件的可编程性和灵活性，在5G通信、 人工智能等迭代升级周期较频繁、技术不确定性较大的领域，FPGA是较为理想的解决方案。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u2",
+        "product_capacity_profile-0:u3",
+        "product_capacity_profile-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 244,
+          "ordinal": 2,
+          "start_pos": 128,
+          "text": "公司目前已建立健全FPGA芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集 成电路测试服务等产品线，产品广泛应用于金融、社保、防伪溯源、网络通讯、家电设备、汽车 电子、工业控制、信号处理、数据中心、人工智能、卫星通信等众多领域。",
+          "unit_id": "product_capacity_profile-0:u2"
+        },
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 288,
+          "ordinal": 3,
+          "start_pos": 245,
+          "text": "2、主要产品及服务情况 2.1 FPGA芯片 FPGA是一种硬件可重构的集成电路芯片。",
+          "unit_id": "product_capacity_profile-0:u3"
+        },
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 355,
+          "ordinal": 4,
+          "start_pos": 288,
+          "text": "FPGA拥有软件的可编程性和灵活性，在5G通信、 人工智能等迭代升级周期较频繁、技术不确定性较大的领域，FPGA是较为理想的解决方案。",
+          "unit_id": "product_capacity_profile-0:u4"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:884e1b3a590254f513f2",
+      "fact_anchors": [
+        "产品",
+        "供应商"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-0",
+      "source_credit": 75,
+      "source_excerpt": "公司 是国内领先的FPGA类产品供应商。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-0:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-0",
+          "end_pos": 375,
+          "ordinal": 5,
+          "start_pos": 355,
+          "text": "公司 是国内领先的FPGA类产品供应商。",
+          "unit_id": "product_capacity_profile-0:u5"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:55593a4a0e4b0f09a67d",
+      "fact_anchors": [
+        "芯片"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-1",
+      "source_credit": 75,
+      "source_excerpt": "复旦微电的存储芯片产品线可提供多种接口、各型封装、全面容量、高性价比的非挥发存储 器产品，目前主要产品为EEPROM存储器、NOR Flash存储器和SLC NAND Flash存储器，具有多 种容量、接口和封装形式，整体市场份额居国内前列。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-1:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 121,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "复旦微电的存储芯片产品线可提供多种接口、各型封装、全面容量、高性价比的非挥发存储 器产品，目前主要产品为EEPROM存储器、NOR Flash存储器和SLC NAND Flash存储器，具有多 种容量、接口和封装形式，整体市场份额居国内前列。",
+          "unit_id": "product_capacity_profile-1:u0"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "market_competition_outlook",
       "card_id": "annual-argument:4781943b6c9a71bd78db",
       "fact_anchors": [
@@ -1088,7 +1589,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_market_view-0",
@@ -1128,7 +1631,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "financial_override:financial_quality_explanation",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_market_view-0",
@@ -1554,7 +2059,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:649971bca2cbbde50770",
+      "card_id": "annual-argument:8a5ce30d7c71f8d5030b",
       "fact_anchors": [
         "（2）安全与识别芯片 公司安全与识别产品线拥有射"
       ],
@@ -1574,12 +2079,11 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "competitive_position-0",
       "source_credit": 75,
-      "source_excerpt": "（2）安全与识别芯片 公司安全与识别产品线拥有射频识别（RFID）与传感芯片、智能卡与安全芯片、智能识别设 备芯片三个产品方向，是国内领先的RFID、智能卡、安全芯片和NFC芯片供应商。 RFID相关产品，公司产品覆盖高频、超高频领域。可应用于流通商品管理、机场行李、图书 管理、智能零售、快递物流、智能制造等领域，并积极打造“识别+连接”能力，通过研发各类传 感器，拓展“RFID+传感”的生态。",
+      "source_excerpt": "（2）安全与识别芯片 公司安全与识别产品线拥有射频识别（RFID）与传感芯片、智能卡与安全芯片、智能识别设 备芯片三个产品方向，是国内领先的RFID、智能卡、安全芯片和NFC芯片供应商。 RFID相关产品，公司产品覆盖高频、超高频领域。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
         "competitive_position-0:u4",
-        "competitive_position-0:u5",
-        "competitive_position-0:u6"
+        "competitive_position-0:u5"
       ],
       "source_units": [
         {
@@ -1597,14 +2101,6 @@
           "start_pos": 540,
           "text": "RFID相关产品，公司产品覆盖高频、超高频领域。",
           "unit_id": "competitive_position-0:u5"
-        },
-        {
-          "block_id": "competitive_position-0",
-          "end_pos": 645,
-          "ordinal": 6,
-          "start_pos": 564,
-          "text": "可应用于流通商品管理、机场行李、图书 管理、智能零售、快递物流、智能制造等领域，并积极打造“识别+连接”能力，通过研发各类传 感器，拓展“RFID+传感”的生态。",
-          "unit_id": "competitive_position-0:u6"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -1626,6 +2122,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "business_structure"
       ],
       "selection_reason": "usage_primary:market_competition_outlook",
@@ -1648,6 +2145,87 @@
         }
       ],
       "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:c334b047d9cea5657343",
+      "fact_anchors": [
+        "57.29%",
+        "营业收入",
+        "应收账款"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "应收账款与应收票据账面余额合计占营业收入的比例为57.29%。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 99,
+          "ordinal": 1,
+          "start_pos": 68,
+          "text": "应收账款与应收票据账面余额合计占营业收入的比例为57.29%。",
+          "unit_id": "ar_aging_note-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:60c25d7d0c7312398784",
+      "fact_anchors": [
+        "应收账款"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "如果未来宏观经济形势、 行业发展前景等因素发生不利变化，客户经营状况发生重大困难，公司可能面临应收账款及应收 票据无法收回而增加坏账损失的风险。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 171,
+          "ordinal": 2,
+          "start_pos": 99,
+          "text": "如果未来宏观经济形势、 行业发展前景等因素发生不利变化，客户经营状况发生重大困难，公司可能面临应收账款及应收 票据无法收回而增加坏账损失的风险。",
+          "unit_id": "ar_aging_note-0:u2"
+        }
+      ],
+      "title": "财务质量与变化原因"
     },
     {
       "argument_complete": false,
@@ -1732,6 +2310,196 @@
           "start_pos": 36,
           "text": "报告期内， 资产减值损失约为4.39亿元，较上年同期增加约为2.71亿元。",
           "unit_id": "inventory_note-0:u2"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:cdb88fc0b6c3153ef9f5",
+      "fact_anchors": [
+        "其他收益"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "inventory_note-0",
+      "source_credit": 75,
+      "source_excerpt": "其他收益减少。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "inventory_note-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "inventory_note-0",
+          "end_pos": 81,
+          "ordinal": 3,
+          "start_pos": 74,
+          "text": "其他收益减少。",
+          "unit_id": "inventory_note-0:u3"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:ea30506065be303e32e8",
+      "fact_anchors": [
+        "其他收益"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "inventory_note-0",
+      "source_credit": 75,
+      "source_excerpt": "公司所确认的集成电路设计企业增值税加计抵减额以及研发专项政府补助减 少，导致其他收益减少。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "inventory_note-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "inventory_note-0",
+          "end_pos": 126,
+          "ordinal": 4,
+          "start_pos": 81,
+          "text": "公司所确认的集成电路设计企业增值税加计抵减额以及研发专项政府补助减 少，导致其他收益减少。",
+          "unit_id": "inventory_note-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:1ff6dbd4043d19b45911",
+      "fact_anchors": [
+        "其他收益"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "inventory_note-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内，其他收益约为1.43亿元，较上年同期减少约为0.91亿元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "inventory_note-0:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "inventory_note-0",
+          "end_pos": 160,
+          "ordinal": 5,
+          "start_pos": 126,
+          "text": "报告期内，其他收益约为1.43亿元，较上年同期减少约为0.91亿元。",
+          "unit_id": "inventory_note-0:u5"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:3d8f3b478e642b5afc91",
+      "fact_anchors": [
+        "其他收益"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "government_grant_note-0",
+      "source_credit": 75,
+      "source_excerpt": "政府补助减 少，导致其他收益减少。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "government_grant_note-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 17,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "政府补助减 少，导致其他收益减少。",
+          "unit_id": "government_grant_note-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:04cda25eb51fc1be0fdc",
+      "fact_anchors": [
+        "其他收益"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "government_grant_note-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内，其他收益约为1.43亿元，较上年同期减少约为0.91亿元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "government_grant_note-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 51,
+          "ordinal": 1,
+          "start_pos": 17,
+          "text": "报告期内，其他收益约为1.43亿元，较上年同期减少约为0.91亿元。",
+          "unit_id": "government_grant_note-0:u1"
         }
       ],
       "title": "财务质量与变化原因"
@@ -1837,7 +2605,9 @@
         "argument_complete": 4,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
@@ -2323,7 +3093,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:53880febf3a7f9550b57",
+      "card_id": "annual-argument:cd1ccf90d0d38fe71da2",
       "fact_anchors": [
         "（2）安全与识别芯片 公司安全与识别产品线拥有射"
       ],
@@ -2343,12 +3113,11 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
       "source_credit": 75,
-      "source_excerpt": "（2）安全与识别芯片 公司安全与识别产品线拥有射频识别（RFID）与传感芯片、智能卡与安全芯片、智能识别设 备芯片三个产品方向，是国内领先的RFID、智能卡、安全芯片和NFC芯片供应商。 RFID相关产品，公司产品覆盖高频、超高频领域。可应用于流通商品管理、机场行李、图书 管理、智能零售、快递物流、智能制造等领域，并积极打造“识别+连接”能力，通过研发各类传 感器，拓展“RFID+传感”的生态。",
+      "source_excerpt": "（2）安全与识别芯片 公司安全与识别产品线拥有射频识别（RFID）与传感芯片、智能卡与安全芯片、智能识别设 备芯片三个产品方向，是国内领先的RFID、智能卡、安全芯片和NFC芯片供应商。 RFID相关产品，公司产品覆盖高频、超高频领域。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
         "industry_outlook-0:u17",
-        "industry_outlook-0:u18",
-        "industry_outlook-0:u19"
+        "industry_outlook-0:u18"
       ],
       "source_units": [
         {
@@ -2366,14 +3135,6 @@
           "start_pos": 1777,
           "text": "RFID相关产品，公司产品覆盖高频、超高频领域。",
           "unit_id": "industry_outlook-0:u18"
-        },
-        {
-          "block_id": "industry_outlook-0",
-          "end_pos": 1882,
-          "ordinal": 19,
-          "start_pos": 1801,
-          "text": "可应用于流通商品管理、机场行李、图书 管理、智能零售、快递物流、智能制造等领域，并积极打造“识别+连接”能力，通过研发各类传 感器，拓展“RFID+传感”的生态。",
-          "unit_id": "industry_outlook-0:u19"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -2395,6 +3156,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "business_structure"
       ],
       "selection_reason": "usage_primary:market_competition_outlook",
@@ -2506,33 +3268,33 @@
     }
   ],
   "integrity": {
-    "card_count": 57,
-    "cards_sha256": "e9e14cfbbddbd17a1c4d1b44347a684780335dce7488507627e71942b06bb41f",
-    "payload_sha256": "9fc90a49afe239a6da6bc431393734d80054616a863850b5d598b387268ef729",
-    "producer_diagnostics_sha256": "cb224d5dd7d5c0a1d7ecae12a576e9f0d5767ec85ee7b78641bfe5ef48783cfa",
-    "source_unit_count": 80
+    "card_count": 76,
+    "cards_sha256": "da0f0889dd8871b7d55d9a93150a3a19dde1a7d3c5fcc3631db80f686fafc5e3",
+    "payload_sha256": "9aa38b83f9227edd0e8ca4c6c02b2e78804c4de15a830c7e025a58e505bf0628",
+    "producer_diagnostics_sha256": "6f826b2ffb4e654ff4d8e96384b2039e1ad772f03895029257b79534ef011183",
+    "source_unit_count": 98
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
-      "business_structure": 3,
-      "financial_quality_explanation": 18,
-      "market_competition_outlook": 28,
-      "operating_progress": 1,
-      "technology_product_progress": 7
+      "business_structure": 9,
+      "financial_quality_explanation": 26,
+      "market_competition_outlook": 25,
+      "operating_progress": 2,
+      "technology_product_progress": 14
     },
     "argument_complete_counts": {
-      "atomic": 45,
-      "complete": 12
+      "atomic": 63,
+      "complete": 13
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
-      "business_structure": 3,
-      "financial_quality_explanation": 18,
-      "market_competition_outlook": 28,
-      "operating_progress": 1,
-      "technology_product_progress": 7
+      "business_structure": 9,
+      "financial_quality_explanation": 26,
+      "market_competition_outlook": 25,
+      "operating_progress": 2,
+      "technology_product_progress": 14
     },
     "cards": [
       {
@@ -2570,9 +3332,42 @@
         ]
       },
       {
-        "card_id": "annual-argument:a584caf7d8d20a2cf18d",
+        "card_id": "annual-argument:108e9bdf87155f75d93b",
         "fact_anchors": [
-          "2025",
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "production_sales_inventory_table-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:31d09e6d049e72d0d56a",
+        "fact_anchors": [
+          "随着数字经济的持续发展和物联网的不断推进，NFC"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "production_sales_inventory_table-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4b1da0ef3c8b35d32632",
+        "fact_anchors": [
           "产品",
           "客户",
           "应用"
@@ -2582,11 +3377,29 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "production_sales_inventory_table-0:u3",
-          "production_sales_inventory_table-0:u4",
+          "production_sales_inventory_table-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c4c1b8c0cb9582b2b35f",
+        "fact_anchors": [
+          "2025",
+          "收入"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:operating_progress",
+        "source_unit_ids": [
           "production_sales_inventory_table-0:u5"
         ]
       },
@@ -2602,7 +3415,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:operating_progress",
         "source_unit_ids": [
           "production_sales_inventory_table-0:u6"
@@ -2626,11 +3441,53 @@
         ]
       },
       {
-        "card_id": "annual-argument:4e4ea09bf2c282304cde",
+        "card_id": "annual-argument:a0f81ac23ab525900bc2",
+        "fact_anchors": [
+          "产品",
+          "客户",
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "production_sales_inventory_table-0:u8",
+          "production_sales_inventory_table-0:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0fc409ae2ad369a7dcb9",
         "fact_anchors": [
           "2025年",
+          "芯片",
+          "量产",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-2:u0",
+          "rd_product_progress-2:u1",
+          "rd_product_progress-2:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e30be8a1b1442ee3acab",
+        "fact_anchors": [
           "业务",
-          "应用",
           "服务"
         ],
         "score_parts": {
@@ -2641,23 +3498,24 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
-          "rd_product_progress-2:u1",
-          "rd_product_progress-2:u2",
           "rd_product_progress-2:u3"
         ]
       },
       {
         "card_id": "annual-argument:a81050cf7cad3c152e82",
         "fact_anchors": [
-          "行业"
+          "平台",
+          "合作"
         ],
         "score_parts": {
-          "anchored_fact": 1,
+          "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "rd_product_progress-2:u4"
         ]
@@ -2665,15 +3523,18 @@
       {
         "card_id": "annual-argument:528055f1229bfaaf8e3c",
         "fact_anchors": [
-          "行业"
+          "推出",
+          "合作"
         ],
         "score_parts": {
-          "anchored_fact": 1,
+          "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "rd_product_progress-2:u5"
         ]
@@ -2681,7 +3542,27 @@
       {
         "card_id": "annual-argument:778cd457cd712ead0ccf",
         "fact_anchors": [
-          "行业"
+          "批量",
+          "供货",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-2:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:77cbd38116b23b6c2697",
+        "fact_anchors": [
+          "升级"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -2689,9 +3570,9 @@
           "source_unit_count": 1
         },
         "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "rd_product_progress-2:u6"
+          "rd_product_progress-2:u8"
         ]
       },
       {
@@ -2769,7 +3650,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:b295458d51aeb035ade8",
+        "card_id": "annual-argument:ab5ab1013c0a63df0340",
         "fact_anchors": [
           "工艺",
           "研发"
@@ -2782,7 +3663,24 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "cash_flow_capex_table-0:u5",
+          "cash_flow_capex_table-0:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:ad6739b2af1a5b2520e4",
+        "fact_anchors": [
+          "其他收益",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
           "cash_flow_capex_table-0:u6"
         ]
       },
@@ -2929,6 +3827,99 @@
         ]
       },
       {
+        "card_id": "annual-argument:e61a9fc292fde74df261",
+        "fact_anchors": [
+          "业务",
+          "产品",
+          "服务"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:64d4f4392c3e6e325461",
+        "fact_anchors": [
+          "业务",
+          "客户",
+          "解决方案"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:41225b0c86cda56f5187",
+        "fact_anchors": [
+          "产品",
+          "应用",
+          "解决方案"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u2",
+          "product_capacity_profile-0:u3",
+          "product_capacity_profile-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:884e1b3a590254f513f2",
+        "fact_anchors": [
+          "产品",
+          "供应商"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "product_capacity_profile-0:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:55593a4a0e4b0f09a67d",
+        "fact_anchors": [
+          "芯片"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "product_capacity_profile-1:u0"
+        ]
+      },
+      {
         "card_id": "annual-argument:4781943b6c9a71bd78db",
         "fact_anchors": [
           "2025年",
@@ -2995,7 +3986,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "management_market_view-0:u4"
@@ -3013,7 +4006,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
           "management_market_view-0:u5"
@@ -3199,7 +4194,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:649971bca2cbbde50770",
+        "card_id": "annual-argument:8a5ce30d7c71f8d5030b",
         "fact_anchors": [
           "（2）安全与识别芯片 公司安全与识别产品线拥有射"
         ],
@@ -3214,8 +4209,7 @@
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "competitive_position-0:u4",
-          "competitive_position-0:u5",
-          "competitive_position-0:u6"
+          "competitive_position-0:u5"
         ]
       },
       {
@@ -3229,11 +4223,49 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "business_structure"
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "competitive_position-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c334b047d9cea5657343",
+        "fact_anchors": [
+          "57.29%",
+          "营业收入",
+          "应收账款"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:60c25d7d0c7312398784",
+        "fact_anchors": [
+          "应收账款"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u2"
         ]
       },
       {
@@ -3269,6 +4301,86 @@
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
           "inventory_note-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:cdb88fc0b6c3153ef9f5",
+        "fact_anchors": [
+          "其他收益"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "inventory_note-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:ea30506065be303e32e8",
+        "fact_anchors": [
+          "其他收益"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "inventory_note-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:1ff6dbd4043d19b45911",
+        "fact_anchors": [
+          "其他收益"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "inventory_note-0:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3d8f3b478e642b5afc91",
+        "fact_anchors": [
+          "其他收益"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "government_grant_note-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:04cda25eb51fc1be0fdc",
+        "fact_anchors": [
+          "其他收益"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "government_grant_note-0:u1"
         ]
       },
       {
@@ -3322,7 +4434,9 @@
           "argument_complete": 4,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "industry_outlook-0:u1"
@@ -3530,7 +4644,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:53880febf3a7f9550b57",
+        "card_id": "annual-argument:cd1ccf90d0d38fe71da2",
         "fact_anchors": [
           "（2）安全与识别芯片 公司安全与识别产品线拥有射"
         ],
@@ -3545,8 +4659,7 @@
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "industry_outlook-0:u17",
-          "industry_outlook-0:u18",
-          "industry_outlook-0:u19"
+          "industry_outlook-0:u18"
         ]
       },
       {
@@ -3560,6 +4673,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "business_structure"
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
@@ -3605,12 +4719,12 @@
     "missing_families": [],
     "rejection_counts": {
       "boilerplate": 5,
-      "incomplete": 19,
+      "incomplete": 12,
       "invalid_unit": 1,
-      "no_anchor": 20,
+      "no_anchor": 17,
       "ocr_damage": 32,
       "reused_source_units": 0,
-      "table_noise": 15
+      "table_noise": 7
     },
     "source_blocks_seen": 44,
     "source_unit_decisions": [
@@ -3745,18 +4859,22 @@
         "source_unit_id": "production_sales_inventory_table-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:108e9bdf87155f75d93b"
+        ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 1,
         "source_text_hash": "e6163665cc50182334d8954ac7f7c6e7e889445cffce163143a1e431c429e23f",
         "source_unit_id": "production_sales_inventory_table-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:31d09e6d049e72d0d56a"
+        ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 2,
         "source_text_hash": "455c89b10b54631129fe4fd5569cc7aba4e210c81a9811280c41eccfa89f79a2",
@@ -3766,7 +4884,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:a584caf7d8d20a2cf18d"
+          "annual-argument:4b1da0ef3c8b35d32632"
         ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 3,
@@ -3777,7 +4895,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:a584caf7d8d20a2cf18d"
+          "annual-argument:4b1da0ef3c8b35d32632"
         ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 4,
@@ -3788,7 +4906,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:a584caf7d8d20a2cf18d"
+          "annual-argument:c4c1b8c0cb9582b2b35f"
         ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 5,
@@ -3818,18 +4936,22 @@
         "source_unit_id": "production_sales_inventory_table-0:u7"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a0f81ac23ab525900bc2"
+        ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 8,
         "source_text_hash": "d4ba265db9bdfb9d4731d10d5dc59dd3862d274ff103176c30cccf80f0f983b3",
         "source_unit_id": "production_sales_inventory_table-0:u8"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a0f81ac23ab525900bc2"
+        ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 9,
         "source_text_hash": "798358cce3dd81c1331849473b0d5f16eb4f3d8b2bc412f7ef06e33d91dcd789",
@@ -3917,9 +5039,11 @@
         "source_unit_id": "rd_product_progress-1:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:0fc409ae2ad369a7dcb9"
+        ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 0,
         "source_text_hash": "ef2a74b12bade78533e46396799057ecfa1327a311f98ddaff3644fec8fae98b",
@@ -3929,7 +5053,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4e4ea09bf2c282304cde"
+          "annual-argument:0fc409ae2ad369a7dcb9"
         ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 1,
@@ -3940,7 +5064,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4e4ea09bf2c282304cde"
+          "annual-argument:0fc409ae2ad369a7dcb9"
         ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 2,
@@ -3951,7 +5075,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4e4ea09bf2c282304cde"
+          "annual-argument:e30be8a1b1442ee3acab"
         ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 3,
@@ -4001,9 +5125,11 @@
         "source_unit_id": "rd_product_progress-2:u7"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:77cbd38116b23b6c2697"
+        ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 8,
         "source_text_hash": "346369462d673cb77ef9760386909bc76324447e9defe51642c35c6fbd72d17f",
@@ -4075,7 +5201,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:b295458d51aeb035ade8"
+          "annual-argument:ab5ab1013c0a63df0340"
         ],
         "source_block_id": "cash_flow_capex_table-0",
         "source_order": 5,
@@ -4086,7 +5212,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:b295458d51aeb035ade8"
+          "annual-argument:ad6739b2af1a5b2520e4"
         ],
         "source_block_id": "cash_flow_capex_table-0",
         "source_order": 6,
@@ -4278,54 +5404,66 @@
         "source_unit_id": "governance_dissent-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e61a9fc292fde74df261"
+        ],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 0,
         "source_text_hash": "4ac253c77056953305e3e717478577815a868f4d4371717c887a22257b2fdccb",
         "source_unit_id": "product_capacity_profile-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:64d4f4392c3e6e325461"
+        ],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 1,
         "source_text_hash": "f4c57e8cc09493229d650f2c24deca76d70bd4b0d23d7025f382fbf0ee41a7f1",
         "source_unit_id": "product_capacity_profile-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:41225b0c86cda56f5187"
+        ],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 2,
         "source_text_hash": "cb7d99724e32cb64e53daf784f7ef2401b7cf9b937dd756722f19755c20b7536",
         "source_unit_id": "product_capacity_profile-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:41225b0c86cda56f5187"
+        ],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 3,
         "source_text_hash": "f01710138fbcef5fa32479fb3edd8385553afdcb886a8765f7e9a35fa2cf01f2",
         "source_unit_id": "product_capacity_profile-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:41225b0c86cda56f5187"
+        ],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 4,
         "source_text_hash": "0cd18a98c6906c543b6f05846bd3def1b182554e0ce90f0a89c3b760740734ac",
         "source_unit_id": "product_capacity_profile-0:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:884e1b3a590254f513f2"
+        ],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 5,
         "source_text_hash": "9012bc0c2f8daacdfb54b9c0f06bf0b1f46f05d4f5dcfd169b316eef9090bee6",
@@ -4341,9 +5479,11 @@
         "source_unit_id": "product_capacity_profile-0:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:55593a4a0e4b0f09a67d"
+        ],
         "source_block_id": "product_capacity_profile-1",
         "source_order": 0,
         "source_text_hash": "dfb5443b68dc8c09974a8507e6cd7bd978035eca616e7e59d9162abc9b3d0f25",
@@ -4387,7 +5527,7 @@
       },
       {
         "disposition": "rejected",
-        "reason": "table_or_ocr",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "product_capacity_profile-2",
         "source_order": 2,
@@ -4623,7 +5763,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:649971bca2cbbde50770"
+          "annual-argument:8a5ce30d7c71f8d5030b"
         ],
         "source_block_id": "competitive_position-0",
         "source_order": 4,
@@ -4634,7 +5774,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:649971bca2cbbde50770"
+          "annual-argument:8a5ce30d7c71f8d5030b"
         ],
         "source_block_id": "competitive_position-0",
         "source_order": 5,
@@ -4642,11 +5782,9 @@
         "source_unit_id": "competitive_position-0:u5"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:649971bca2cbbde50770"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "competitive_position-0",
         "source_order": 6,
         "source_text_hash": "b50c221e504c1179368db0bdc6b9baf11cd9aad31335a9a1fcc17b4f3c01456f",
@@ -4682,18 +5820,22 @@
         "source_unit_id": "ar_aging_note-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c334b047d9cea5657343"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 1,
         "source_text_hash": "b412171dd4f9f8f84276d5ef5361de5cecac5648cc37c4f9ce8b95a01ad86d76",
         "source_unit_id": "ar_aging_note-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:60c25d7d0c7312398784"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 2,
         "source_text_hash": "f4d90f1bf23eb4dcbd94d4c4a63b46fcd42b4a1b66169c44c2779a88ed988541",
@@ -4742,27 +5884,33 @@
         "source_unit_id": "inventory_note-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:cdb88fc0b6c3153ef9f5"
+        ],
         "source_block_id": "inventory_note-0",
         "source_order": 3,
         "source_text_hash": "101a477438bb3023ad97c1d8fac16b55b53b5cdafdb89a073224f2393e4daa7d",
         "source_unit_id": "inventory_note-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:ea30506065be303e32e8"
+        ],
         "source_block_id": "inventory_note-0",
         "source_order": 4,
         "source_text_hash": "284e37b0026a67c337b0b2abd1b5a61f487d2df777c28537f7f2ef7452ad93d4",
         "source_unit_id": "inventory_note-0:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:1ff6dbd4043d19b45911"
+        ],
         "source_block_id": "inventory_note-0",
         "source_order": 5,
         "source_text_hash": "5b427d72d4577188ffdcb0913512075dbcfcb4804edd1d0f771e1395c99d35f7",
@@ -4886,18 +6034,22 @@
         "source_unit_id": "goodwill_note-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3d8f3b478e642b5afc91"
+        ],
         "source_block_id": "government_grant_note-0",
         "source_order": 0,
         "source_text_hash": "aa55c22dcbe8cf09691aad92b01bcb2960f98497ba2e356b62953a8f38f83958",
         "source_unit_id": "government_grant_note-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:04cda25eb51fc1be0fdc"
+        ],
         "source_block_id": "government_grant_note-0",
         "source_order": 1,
         "source_text_hash": "5b427d72d4577188ffdcb0913512075dbcfcb4804edd1d0f771e1395c99d35f7",
@@ -5123,7 +6275,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:53880febf3a7f9550b57"
+          "annual-argument:cd1ccf90d0d38fe71da2"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 17,
@@ -5134,7 +6286,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:53880febf3a7f9550b57"
+          "annual-argument:cd1ccf90d0d38fe71da2"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 18,
@@ -5142,11 +6294,9 @@
         "source_unit_id": "industry_outlook-0:u18"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:53880febf3a7f9550b57"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "industry_outlook-0",
         "source_order": 19,
         "source_text_hash": "b50c221e504c1179368db0bdc6b9baf11cd9aad31335a9a1fcc17b4f3c01456f",
@@ -5325,7 +6475,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 172,
-    "usable_units": 99,
+    "usable_units": 110,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

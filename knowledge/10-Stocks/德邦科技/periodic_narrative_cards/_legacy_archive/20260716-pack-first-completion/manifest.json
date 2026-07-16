@@ -1,0 +1,128 @@
+{
+  "archive_batch": "20260716-pack-first-completion",
+  "archived_at": "2026-07-16T06:24:09.723426+00:00",
+  "notes": [
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-business-model-0.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-business-model-0.md",
+      "sha256": "1f00f8e84c4b1ecde59c699a0b09859aeaf3da0e1dd62effb62510b5ef64bcc3",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-business-model-1.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-business-model-1.md",
+      "sha256": "0f1e8eef4188374b2d96031a5e9a6d96a3f9362652c01d28f476c23281e00a0f",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-financial-note-0.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-financial-note-0.md",
+      "sha256": "3883a7650a04ef01671e87afbd955c04b516b0cca04d366c315cd2b5ee764e7c",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-financial-note-1.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-financial-note-1.md",
+      "sha256": "cd18fbce41396418bfc2ad7237c15aea96e1787440cc69287b02b59694200d1b",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-financial-note-2.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-financial-note-2.md",
+      "sha256": "3acda79930e261110ca73d6ae30de02390d493a6aeb47f5d6616292d247fe3e7",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-financial-note-3.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-financial-note-3.md",
+      "sha256": "e5195795e98af1c2689078d1a5d976443a9025b3ee9b21f30c6eab8fb78a3317",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-management-market-view-0.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-management-market-view-0.md",
+      "sha256": "b5095d6cee22dae535e081c78d0c68770cfb07b0e9c55c017413ce191077a5e2",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-management-market-view-1.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-management-market-view-1.md",
+      "sha256": "c272efdfbf03686239c9e37500d7043ea865d28ac2962f2192e048ebbae4a35e",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-management-market-view-2.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-management-market-view-2.md",
+      "sha256": "42328485cb42570d19b03fc7fd3b9fe630e482a2272c59d5616195ac01ff55e1",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-management-market-view-3.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-management-market-view-3.md",
+      "sha256": "e7cb0cfc1f562e4bebb71e3d1a4b777833d72640e9bb760bdfe4572923bea110",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-management-market-view-4.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-management-market-view-4.md",
+      "sha256": "61708e2e47f9ce003888e30096903e62369a998e8cea59f24eed0fd5dc0561ed",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-management-market-view-5.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-management-market-view-5.md",
+      "sha256": "1ce26424ff7af3345cc26694719ff3db79e75dd7bc8cf3fd979fe21f06e7fef5",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-margin-competitiveness-0.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-margin-competitiveness-0.md",
+      "sha256": "365224b7402f4bb21e65b8e27556881dd8e218d5cc53bd426c9af45ff5b4feee",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-margin-competitiveness-1.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-margin-competitiveness-1.md",
+      "sha256": "4bf90049a9d74e2fa879f1eef90121ea9071848e18fff9ba78da63a28517e73f",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-market-outlook-0.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-market-outlook-0.md",
+      "sha256": "82dca8a99ace60593b0e7c4493bc60dff8db2c0b917d5be44d2b15686a33dfe2",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-market-outlook-1.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-market-outlook-1.md",
+      "sha256": "8c68d910aae1948b80f4e639b09adb296b4efa5efac2e2a38fbb4c4ae175f81a",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-market-outlook-2.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-market-outlook-2.md",
+      "sha256": "fa1958db04f3d13093d62a1316304b1e2a1cd4efeaacb2bc5ca40b3580804d71",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-market-outlook-3.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-market-outlook-3.md",
+      "sha256": "03ab138be68cb44484977830b64ac77b3e1ee00f7e60943396576276d23a9959",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-rd-product-progress-0.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-rd-product-progress-0.md",
+      "sha256": "03d1f6503b2b6c395a3d7c1518e8ac62113225a993a19fa71b5ea808f1d5f8ee",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/德邦科技/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-rd-product-progress-1.md",
+      "original_path": "10-Stocks/德邦科技/periodic_narrative_cards/2025-annual-rd-product-progress-1.md",
+      "sha256": "7caa0fdf51f80b705f78bb3826e5aabf672499b8872ae838679f6eaf389054e5",
+      "version": "v1"
+    }
+  ],
+  "schema_version": "periodic_narrative_archive_receipt.v1",
+  "source_manifest": "/tmp/annual-producer-6c-archive-manifest.json"
+}

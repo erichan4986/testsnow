@@ -14,6 +14,7 @@ from periodic_report_narrative_pack_store import (  # noqa: E402
     PeriodicNarrativePackStorageError,
     load_validated_periodic_narrative_pack_set,
     normalized_source_excerpt_hash,
+    periodic_narrative_stock_root,
     write_periodic_report_narrative_pack,
 )
 
@@ -88,8 +89,21 @@ def test_write_bootstraps_manifest_and_roundtrips_validated_pack_set(tmp_path: P
     )
     assert loaded["cards"] == card_pack["cards"]
     assert loaded["packs"][0]["producer_diagnostics"] == card_pack["diagnostics"]
+    assert loaded["entries"] == [{
+        "report_year": 2025,
+        "report_type": "annual",
+        "pack_path": "periodic_narrative_packs/2025-annual.json",
+        "cards_sha256": loaded["packs"][0]["integrity"]["cards_sha256"],
+        "payload_sha256": loaded["packs"][0]["integrity"]["payload_sha256"],
+    }]
     manifest = json.loads(result.manifest_path.read_text(encoding="utf-8"))
     assert manifest["periods"][0]["pack_path"] == "periodic_narrative_packs/2025-annual.json"
+
+
+def test_public_stock_root_uses_pack_store_path_sanitization(tmp_path: Path) -> None:
+    assert periodic_narrative_stock_root(tmp_path, "../中际/旭创") == (
+        tmp_path / "10-Stocks" / "中际-旭创"
+    )
 
 
 def test_writer_rejects_divergent_candidate_cards_without_creating_storage(tmp_path: Path) -> None:

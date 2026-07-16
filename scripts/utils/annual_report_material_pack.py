@@ -6,23 +6,20 @@ narrative cards for display-only synthesis.
 
 from __future__ import annotations
 
-import json
 import re
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Set
 
 if __package__:
     from .source_adapter import SynthesisItem
-    from .annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail, validate_card_v2
+    from .annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail
     from .annual_argument_schema import has_concrete_annual_anchor, normalize_annual_source_text
-    from .periodic_report_narrative_card_note_writer import narrative_card_note_path
-    from .periodic_report_narrative_pack_store import MANIFEST_FILENAME, PACK_DIRNAME, PeriodicNarrativePackStorageError, load_validated_periodic_narrative_pack_set, normalized_source_excerpt_hash, v2_note_card_fingerprint
+    from .periodic_report_narrative_pack_store import MANIFEST_FILENAME, PACK_DIRNAME, PeriodicNarrativePackStorageError, load_validated_periodic_narrative_pack_set
 else:
     from source_adapter import SynthesisItem
-    from annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail, validate_card_v2
+    from annual_argument_schema import ANNUAL_CHECKBOX_MARKER_RUN_RE, CARD_SCHEMA_VERSION, adapt_v1_card, annual_source_tail
     from annual_argument_schema import has_concrete_annual_anchor, normalize_annual_source_text
-    from periodic_report_narrative_card_note_writer import narrative_card_note_path
-    from periodic_report_narrative_pack_store import MANIFEST_FILENAME, PACK_DIRNAME, PeriodicNarrativePackStorageError, load_validated_periodic_narrative_pack_set, normalized_source_excerpt_hash, v2_note_card_fingerprint
+    from periodic_report_narrative_pack_store import MANIFEST_FILENAME, PACK_DIRNAME, PeriodicNarrativePackStorageError, load_validated_periodic_narrative_pack_set
 
 
 SCHEMA_VERSION = "annual_report_material_pack.v1"
@@ -129,29 +126,24 @@ def build_annual_report_material_pack(
 ) -> Dict[str, Any]:
     """Build a deterministic, display-only annual-report material pack.
 
-    The pack only reads narrative-card Knowledge notes. It does not call LLMs,
-    fetch data, or modify Knowledge.
+    The pack reads validated JSON packs or, for migration only, legacy v1
+    Knowledge notes. It does not call LLMs, fetch data, or modify Knowledge.
     """
     del _legacy_options
 
-    if stock_code and _has_pack_storage(stock_name, base_dir):
-        try:
-            result = build_annual_report_material_pack_from_pack_shadow(
-                stock_name=stock_name,
-                stock_code=stock_code,
-                base_dir=base_dir,
-            )
-            result["diagnostics"]["storage_mode"] = "pack_first"
-            return result
-        except PeriodicNarrativePackStorageError as exc:
-            if not _has_v2_note_projections(stock_name, base_dir):
-                raise
-            fallback = _build_legacy_material_pack(stock_name, base_dir)
-            fallback["diagnostics"].update({
-                "storage_mode": "legacy_fallback",
-                "pack_validation_errors": [exc.code],
-            })
-            return fallback
+    if _has_pack_storage(stock_name, base_dir):
+        if not stock_code:
+            raise PeriodicNarrativePackStorageError("expected_stock_code_required")
+        result = build_annual_report_material_pack_from_pack_shadow(
+            stock_name=stock_name,
+            stock_code=stock_code,
+            base_dir=base_dir,
+        )
+        result["diagnostics"]["storage_mode"] = "pack_first"
+        return result
+
+    if _has_v2_note_projections(stock_name, base_dir):
+        raise PeriodicNarrativePackStorageError("pack_missing_with_v2_notes")
 
     return _build_legacy_material_pack(stock_name, base_dir)
 
@@ -166,7 +158,7 @@ def _build_legacy_material_pack(stock_name: str, base_dir: str | Path) -> Dict[s
 
     records: List[_CardRecord] = []
     for path in sorted(notes_dir.glob("*.md")):
-        record = _read_note_as_record(path, adapt_legacy=False)
+        record = _read_legacy_note_as_record(path)
         if record is None:
             continue
         records.append(record)
@@ -197,8 +189,8 @@ def build_annual_report_material_pack_from_pack_shadow(
     ]
     notes_dir = _narrative_cards_dir(stock_name, base_dir)
     for path in sorted(notes_dir.glob("*.md")) if notes_dir.exists() else []:
-        record = _read_note_as_record(path, adapt_legacy=False)
-        if record is not None and not record.is_v2:
+        record = _read_legacy_note_as_record(path)
+        if record is not None:
             records.append(record)
     result = _build_material_pack_from_records(stock_name, records, storage_mode="pack_shadow")
     pack_count = len(loaded["packs"])
@@ -209,122 +201,6 @@ def build_annual_report_material_pack_from_pack_shadow(
         ) if notes_dir.exists() else 0,
     })
     return result
-
-
-def classify_periodic_narrative_v2_notes(
-    *, stock_name: str, producer_cards: List[Dict[str, Any]], base_dir: str | Path,
-    source_unit_decisions: Optional[List[Dict[str, Any]]] = None,
-) -> Dict[str, Any]:
-    """Classify persisted v2 note projections against canonical producer cards."""
-    expected = {str(card.get("card_id") or ""): card for card in producer_cards}
-    current_cards_by_unit: Dict[str, Set[str]] = {}
-    for card in producer_cards:
-        card_id = str(card.get("card_id") or "")
-        for unit_id in card.get("source_unit_ids") or []:
-            if isinstance(unit_id, str) and unit_id and card_id:
-                current_cards_by_unit.setdefault(unit_id, set()).add(card_id)
-    matches: Dict[str, List[tuple[Path, Dict[str, Any]]]] = {}
-    states = (
-        "active_v2", "stale_duplicate", "stale_reindexed", "stale_source_covered", "stale_orphan", "stale_invalid",
-        "stale_resolved_selected", "stale_resolved_structural", "stale_resolved_mixed", "stale_recovery_required", "stale_source_missing", "stale_source_ambiguous",
-    )
-    result: Dict[str, Any] = {key: [] for key in states}
-    notes_dir = _narrative_cards_dir(stock_name, base_dir)
-    for path in sorted(notes_dir.glob("*.md")) if notes_dir.exists() else []:
-        if not _is_v2_note_projection(path):
-            continue
-        record = _read_note_as_record(path, adapt_legacy=False)
-        if record is None:
-            result["stale_invalid"].append(_classification_item(path))
-            continue
-        card = record.card
-        card_id = str(card.get("card_id") or "")
-        canonical = expected.get(card_id)
-        if canonical is None:
-            covered_by = _covering_current_card_ids(card, current_cards_by_unit)
-            if covered_by:
-                result["stale_source_covered"].append(_classification_item(path, card_id, covered_by))
-            elif source_unit_decisions is None:
-                result["stale_orphan"].append(_classification_item(path, card_id))
-            else:
-                target, details = _resolve_stale_source_units(card, source_unit_decisions)
-                result[target].append(_classification_item(path, card_id, details=details))
-        elif v2_note_card_fingerprint(card) != v2_note_card_fingerprint(canonical):
-            result["stale_reindexed"].append(_classification_item(path, card_id))
-        else:
-            matches.setdefault(card_id, []).append((path, card))
-
-    for index, card in enumerate(producer_cards):
-        card_id = str(card.get("card_id") or "")
-        candidates = matches.get(card_id) or []
-        if not candidates:
-            continue
-        expected_path = narrative_card_note_path(
-            stock_name=stock_name, card=card, base_dir=base_dir, index=index,
-        )
-        candidates.sort(key=lambda item: (item[0] != expected_path, str(item[0])))
-        active_path, _active_card = candidates[0]
-        result["active_v2"].append(_classification_item(active_path, card_id))
-        result["stale_duplicate"].extend(
-            _classification_item(path, card_id) for path, _card in candidates[1:]
-        )
-    active_ids = {item["card_id"] for item in result["active_v2"]}
-    result["missing_active_card_ids"] = [str(card.get("card_id") or "") for card in producer_cards
-                                         if str(card.get("card_id") or "") not in active_ids]
-    return result
-
-
-def _covering_current_card_ids(
-    card: Dict[str, Any], current_cards_by_unit: Dict[str, Set[str]],
-) -> List[str]:
-    """Return current cards only when every persisted source unit still exists."""
-    unit_ids = card.get("source_unit_ids") or []
-    if not unit_ids or any(unit_id not in current_cards_by_unit for unit_id in unit_ids):
-        return []
-    return sorted({card_id for unit_id in unit_ids for card_id in current_cards_by_unit[unit_id]})
-
-
-_ARCHIVE_SAFE_REASONS = frozenset({"section_label", "regulatory_disclosure", "audit_procedure", "accounting_policy_definition", "checkbox_or_page_marker", "definition_or_hash"})
-
-
-def _resolve_stale_source_units(card: Dict[str, Any], decisions: List[Dict[str, Any]]) -> tuple[str, Dict[str, Any]]:
-    old_units = card.get("source_units") or []
-    hashes = [normalized_source_excerpt_hash(unit.get("text")) for unit in old_units if isinstance(unit, dict)]
-    if not hashes or len(hashes) != len(old_units):
-        return "stale_source_missing", {}
-    exact = []
-    for unit, text_hash in zip(old_units, hashes):
-        matches = [item for item in decisions if item.get("source_block_id") == unit.get("block_id")
-                   and item.get("source_unit_id") == unit.get("unit_id") and item.get("source_text_hash") == text_hash]
-        if len(matches) != 1:
-            exact = []
-            break
-        exact.append(matches[0])
-    candidates = [exact] if exact else []
-    if not candidates:
-        by_block: Dict[str, List[Dict[str, Any]]] = {}
-        for item in decisions:
-            by_block.setdefault(str(item.get("source_block_id") or ""), []).append(item)
-        for block_items in by_block.values():
-            ordered = sorted(block_items, key=lambda item: int(item.get("source_order") or 0))
-            candidates.extend(ordered[index:index + len(hashes)] for index in range(len(ordered) - len(hashes) + 1)
-                              if [item.get("source_text_hash") for item in ordered[index:index + len(hashes)]] == hashes)
-        same_block = [items for items in candidates if items[0].get("source_block_id") == old_units[0].get("block_id")]
-        candidates = same_block or candidates
-    if len(candidates) != 1:
-        return ("stale_source_ambiguous" if candidates else "stale_source_missing"), {}
-    mapped = candidates[0]
-    reasons = [str(item.get("reason") or "") for item in mapped if item.get("disposition") != "selected"]
-    details = {
-        "mapped_source_unit_ids": [str(item.get("source_unit_id") or "") for item in mapped], "archive_safe_reasons": reasons,
-        "covered_by_card_ids": sorted({card_id for item in mapped for card_id in item.get("selected_by_card_ids") or []}), "source_unit_resolutions": [
-            {key: item.get(key) for key in ("source_unit_id", "disposition", "reason", "selected_by_card_ids")} for item in mapped],
-    }
-    if any(reason not in _ARCHIVE_SAFE_REASONS for reason in reasons):
-        return "stale_recovery_required", details
-    selected = sum(item.get("disposition") == "selected" for item in mapped)
-    return ("stale_resolved_selected" if selected == len(mapped)
-            else "stale_resolved_structural" if not selected else "stale_resolved_mixed"), details
 
 
 def _narrative_cards_dir(stock_name: str, base_dir: str | Path) -> Path:
@@ -338,17 +214,6 @@ def _is_v2_note_projection(path: Path) -> bool:
         return False
     return (frontmatter.get("source_type") == NARRATIVE_CARD_SOURCE_TYPE
             and str(frontmatter.get("schema_version") or "") == CARD_SCHEMA_VERSION)
-
-
-def _classification_item(
-    path: Path, card_id: str = "", covered_by_card_ids: Optional[List[str]] = None,
-    details: Optional[Dict[str, Any]] = None,
-) -> Dict[str, Any]:
-    item: Dict[str, Any] = {"path": str(path), "card_id": card_id}
-    if covered_by_card_ids:
-        item["covered_by_card_ids"] = covered_by_card_ids
-    item.update(details or {})
-    return item
 
 
 def _build_material_pack_from_records(
@@ -501,11 +366,8 @@ def _empty_pack(stock_name: str) -> Dict[str, Any]:
     }
 
 
-def _read_note_as_record(
-    path: Path,
-    *,
-    adapt_legacy: bool = True,
-) -> Optional[_CardRecord]:
+def _read_legacy_note_as_record(path: Path) -> Optional[_CardRecord]:
+    """Read only the v1 note fields still needed for migration coverage."""
     try:
         text = path.read_text(encoding="utf-8")
     except OSError:
@@ -515,42 +377,14 @@ def _read_note_as_record(
     if frontmatter.get("source_type") != NARRATIVE_CARD_SOURCE_TYPE:
         return None
 
+    if str(frontmatter.get("schema_version") or "") == CARD_SCHEMA_VERSION:
+        return None
     excerpt = _extract_narrative_evidence_excerpt(text)
     if not excerpt:
         return None
-
-    is_v2 = str(frontmatter.get("schema_version") or "") == CARD_SCHEMA_VERSION
-    if is_v2:
-        source_units = _extract_json_section(text, "Source Units")
-        diagnostics = _extract_json_section(text, "Selection Diagnostics")
-        if not isinstance(source_units, list) or not isinstance(diagnostics, dict):
-            return None
-        card = dict(frontmatter)
-        card.update({
-            "source_excerpt": excerpt,
-            "source_units": source_units,
-            "score_parts": diagnostics.get("score_parts") or {},
-            "selection_reason": diagnostics.get("selection_reason") or "",
-            "selection_diagnostics": diagnostics,
-        })
-        if validate_card_v2(card) or not _source_units_match_excerpt(source_units, excerpt):
-            return None
-        return _record_from_card(path, card, is_v2=True)
-
     card = dict(frontmatter)
     card["source_excerpt"] = excerpt
-    if adapt_legacy:
-        try:
-            card = adapt_v1_card(card)
-        except (TypeError, ValueError):
-            return None
     return _record_from_card(path, card, is_v2=False)
-
-
-def read_periodic_narrative_card_note(path: str | Path) -> Optional[Dict[str, Any]]:
-    """Parse one valid persisted narrative note without adapting legacy fields."""
-    record = _read_note_as_record(Path(path), adapt_legacy=False)
-    return dict(record.card) if record is not None else None
 
 
 def _record_from_card(path: Path, card: Dict[str, Any], *, is_v2: bool) -> _CardRecord:
@@ -615,19 +449,6 @@ def _parse_frontmatter(text: str) -> Dict[str, Any]:
     return data
 
 
-def _extract_json_section(text: str, heading: str) -> Any:
-    match = re.search(
-        rf"(?ms)^## {re.escape(heading)}\s*\n+```(?:json)?\s*\n?(?P<body>.*?)\n```",
-        text,
-    )
-    if not match:
-        return None
-    try:
-        return json.loads(match.group("body"))
-    except (TypeError, ValueError, json.JSONDecodeError):
-        return None
-
-
 def _extract_narrative_evidence_excerpt(text: str) -> str:
     match = re.search(
         r"(?ms)^## Narrative Evidence\s*\n+(?P<body>.*?)(?:\n## |\Z)",
@@ -644,22 +465,6 @@ def _extract_narrative_evidence_excerpt(text: str) -> str:
         elif lines and stripped:
             break
     return re.sub(r"\s+", " ", " ".join(lines)).strip()
-
-
-def _source_units_match_excerpt(source_units: List[Dict[str, Any]], excerpt: str) -> bool:
-    """Validate persisted block-relative positions against the visible slice."""
-    if not source_units or not excerpt:
-        return False
-    try:
-        base = int(source_units[0]["start_pos"])
-        for unit in source_units:
-            start = int(unit["start_pos"]) - base
-            end = int(unit["end_pos"]) - base
-            if start < 0 or end > len(excerpt) or excerpt[start:end] != unit["text"]:
-                return False
-    except (KeyError, TypeError, ValueError):
-        return False
-    return True
 
 
 def _score_excerpt(excerpt: str) -> tuple[float, List[str]]:
@@ -846,8 +651,8 @@ _FRAGMENT_ENDINGS = ("及", "和", "或", "、", "，", ":", "：", "项目", "�
 
 def _classify_legacy_fragments(excerpt: str, source_block_id: str, v2_records: List[_CardRecord]) -> List[Dict[str, Any]]:
     text = normalize_annual_source_text(excerpt)
-    tail = annual_source_tail(text)
-    fragments = [tail] if tail else [match.group(0).strip() for match in re.finditer(r".+?(?:[。；;！？!?]|$)", text)]
+    source = annual_source_tail(text) or text
+    fragments = [match.group(0).strip() for match in re.finditer(r".+?(?:[。；;！？!?]|$)", source)]
     result = []
     for raw_fragment in filter(None, fragments):
         fragment = annual_source_tail(raw_fragment) or raw_fragment
@@ -859,22 +664,32 @@ def _classify_legacy_fragments(excerpt: str, source_block_id: str, v2_records: L
 
 
 def _proof_unit_ids(fragment: str, source_block_id: str, v2_records: List[_CardRecord]) -> List[str]:
-    source, units, previous = "", [], None
-    for unit in sorted((unit for record in v2_records if record.source_block_id == source_block_id for unit in record.card.get("source_units", []) or []), key=lambda unit: (unit.get("ordinal", 0), unit.get("start_pos", 0))):
-        if previous is not None and unit["ordinal"] != previous + 1:
-            source, units = "", []
-        previous = unit["ordinal"]
-        text = normalize_annual_source_text(unit.get("text", ""))
-        source += text
-        units.append((str(unit.get("unit_id") or ""), len(text)))
-        start = source.find(fragment)
-        if start >= 0:
-            end, offset, proof = start + len(fragment), 0, []
-            for unit_id, length in units:
-                if offset < end and offset + length > start:
-                    proof.append(unit_id)
-                offset += length
-            return proof
+    block_ids = [source_block_id] + sorted({
+        record.source_block_id for record in v2_records
+        if record.source_block_id != source_block_id
+    })
+    for block_id in block_ids:
+        unique_units = {
+            str(unit.get("unit_id") or ""): unit
+            for record in v2_records if record.source_block_id == block_id
+            for unit in record.card.get("source_units", []) or []
+        }
+        source, units, previous = "", [], None
+        for unit in sorted(unique_units.values(), key=lambda item: (item.get("ordinal", 0), item.get("start_pos", 0))):
+            if previous is not None and unit["ordinal"] != previous + 1:
+                source, units = "", []
+            previous = unit["ordinal"]
+            text = normalize_annual_source_text(unit.get("text", ""))
+            source += text
+            units.append((str(unit.get("unit_id") or ""), len(text)))
+            start = source.find(fragment)
+            if start >= 0:
+                end, offset, proof = start + len(fragment), 0, []
+                for unit_id, length in units:
+                    if offset < end and offset + length > start:
+                        proof.append(unit_id)
+                    offset += length
+                return proof
     return []
 
 

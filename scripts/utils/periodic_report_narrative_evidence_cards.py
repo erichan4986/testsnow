@@ -37,7 +37,7 @@ _FINANCIAL_METRICS = (
     "毛利率", "毛利", "净利率", "净利润", "营业收入", "营业利润", "营业成本", "其他收益",
     "营收", "现金流", "应收账款", "存货", "资产减值", "减值损失", "费用率",
     "期间费用", "利润总额", "每股收益", "坏账准备", "可变现净值",
-    "销售费用", "管理费用", "财务费用", "研发费用",
+    "销售费用", "管理费用", "财务费用", "研发费用", "商誉", "商譽",
     "毛利率", "毛利", "營收", "應收賬款", "存貨", "減值", "壞賬", "收入确认", "收入確認",
 )
 _CAUSAL_TOKENS = ("主要系", "主要因", "由于", "由於", "所致", "受", "影响", "影響", "因此", "从而", "帶動", "带动", "随着", "隨著", "进而", "進而")
@@ -119,7 +119,9 @@ def build_periodic_report_narrative_evidence_cards(
                 prepared_units.append(None)
                 continue
             signals = _family_signals(unit["text"])
-            family = _primary_family(unit["text"], usage_hint, signals=signals)
+            family = _primary_family(
+                unit["text"], usage_hint, signals=signals, document_style=document_style
+            )
             if family is None and has_concrete_annual_anchor(
                 unit["text"]
             ) and not _has_technology_capability(unit["text"]):
@@ -183,6 +185,16 @@ def build_periodic_report_narrative_evidence_cards(
             family, secondary_signals, selection_reason = resolve_argument_family(
                 source_excerpt, usage_hint
             )
+            if (
+                canonical_family_for_usage(usage_hint) == "business_structure"
+                and _is_hk_implicit_subject(source_excerpt, document_style, usage_hint)
+            ):
+                family = "business_structure"
+                secondary_signals = [
+                    item for item in _FAMILY_PRECEDENCE
+                    if item != family and item in _family_signals(source_excerpt)
+                ]
+                selection_reason = "usage_primary:business_structure"
             if family is None:
                 _reject(diagnostics, "no_family_signal")
                 _mark_unit_decisions(decisions_by_unit, bundle, "no_family_signal")
@@ -302,7 +314,8 @@ _FAMILY_PRECEDENCE = (
 
 
 def _primary_family(
-    text: str, usage_hint: str, *, signals: set[str] | None = None
+    text: str, usage_hint: str, *, signals: set[str] | None = None,
+    document_style: str = "unknown",
 ) -> str | None:
     resolved_signals = _family_signals(text) if signals is None else signals
     if _is_strong_financial_explanation(text) and _has_concrete_financial_fact(text):
@@ -313,11 +326,24 @@ def _primary_family(
         else:
             return "financial_quality_explanation"
     mapped_family = canonical_family_for_usage(usage_hint)
+    if mapped_family == "business_structure" and _is_hk_implicit_subject(
+        text, document_style, usage_hint
+    ):
+        return mapped_family
     if mapped_family and _mapped_family_has_seed_signal(
         text, mapped_family, usage_hint=usage_hint
     ):
         return mapped_family
-    if mapped_family == "market_competition_outlook" and _market_argument_continues("", text):
+    if mapped_family == "operating_progress" and _has_concrete_business_fact(text):
+        return "business_structure"
+    if (
+        mapped_family == "market_competition_outlook"
+        and _market_argument_continues("", text)
+        and not resolved_signals & {
+            "technology_product_progress", "financial_quality_explanation",
+            "operating_progress",
+        }
+    ):
         return mapped_family
     if mapped_family == "technology_product_progress" and has_concrete_annual_anchor(text):
         contextual = bool(re.match(r"^(?:该|本|相关|相關)(?:产品|產品)", text))
@@ -364,13 +390,26 @@ def _extract_source_tail(
     family = canonical_family_for_usage(usage_hint)
     if document_style != "a_share_annual" or family is None:
         return None
-    tail = annual_source_tail(unit["text"])
+    tail = annual_source_tail(unit["text"]) or _embedded_annual_narrative_tail(
+        unit["text"]
+    )
     if not tail or _noise_reason(
         tail, source_block_text=tail, usage_hint=usage_hint
     ):
         return None
     start = cleaned_block.find(tail, unit["start_pos"], unit["end_pos"])
     return None if start < 0 else {**unit, "start_pos": start, "end_pos": start + len(tail), "text": tail}
+
+
+def _embedded_annual_narrative_tail(text: str) -> str | None:
+    if _looks_like_table_fragment(text) or _looks_like_block_table(text):
+        narrative_starts = list(re.finditer(
+            r"(?:依托|依託|基于|基於|凭借|憑藉)(?:于|於)?(?:本公司|公司|集团|集團)", text
+        ))
+        tail = text[narrative_starts[-1].start():].strip() if narrative_starts else ""
+    else:
+        return None
+    return tail if tail.endswith(("。", "；", ";", "！", "？", "!", "?")) else None
 
 
 def _family_signals(text: str) -> set[str]:
@@ -577,7 +616,14 @@ def _noise_reason(
         return "table_or_ocr"
     if _looks_like_definition_or_hash_fragment(text):
         return "definition_or_hash"
-    if source_block_text and _looks_like_industry_barrier_block(source_block_text):
+    if (
+        source_block_text
+        and _looks_like_industry_barrier_block(source_block_text)
+        and not (
+            _has_company_position_fact(text)
+            or rd_narrative and _matching_tokens(text, _PROGRESS_TOKENS)
+        )
+    ):
         return "audit_or_policy"
     if _looks_like_structural_boilerplate(text):
         return "audit_or_policy"
@@ -585,7 +631,11 @@ def _noise_reason(
         if _looks_like_interleaved_rd_table(source_block_text):
             return "table_or_ocr"
     mixed_narrative_table = usage_hint in {"rd_investment_table", "profitability_commentary"}
-    if source_block_text and not mixed_narrative_table and _looks_like_block_table(source_block_text):
+    if (
+        source_block_text and not mixed_narrative_table
+        and _looks_like_block_table(source_block_text)
+        and (_looks_like_table_fragment(text) or _looks_like_block_table(text))
+    ):
         return "table_or_ocr"
     if source_block_text and not mixed_narrative_table and _looks_like_block_boilerplate(source_block_text):
         return "audit_or_policy"
@@ -614,6 +664,14 @@ def _looks_like_industry_barrier_block(text: str) -> bool:
         "行業需要跨學科複合型人才", "竞争焦点集中", "競爭焦點集中", "竞争格局集中", "競爭格局集中",
     )
     return sum(token in compact for token in barrier_tokens) >= 2
+
+
+def _has_company_position_fact(text: str) -> bool:
+    return bool(re.search(
+        r"(?:公司|本公司|集团|集團).{0,100}(?:客户需求|客戶需求|技术积累|技術積累|"
+        r"国产化|國產化|国产替代|國產替代|市场份额|市場份額|行业地位|行業地位)",
+        _compact_text(text),
+    ))
 
 
 def _looks_like_checkbox_or_page_marker(text: str) -> bool:
@@ -968,7 +1026,11 @@ def _has_concrete_business_fact(text: str) -> bool:
         r"(?:是|为|為).{1,50}(?:供应商|供應商|提供商|服务商|服務商)|(?:采用|採用).{0,30}(?:销售|銷售|经营|經營|商业|商業)模式|"
         r"(?:致力于|致力於).{0,30}(?:打造|平台|服务|服務)|(?:为|為|向)客户提供|(?:与|與).{0,40}(?:合作|夥伴)|"
         r"(?:分为|分為)|客户.{0,50}(?:采购|採購)|(?:建立|转化为|轉化為).{0,35}(?:客户|客戶)(?:关系|關係)|"
-        r"(?:为|為).{0,20}(?:业务|業務).{0,20}(?:提供|支撑|支持)",
+        r"(?:为|為).{0,20}(?:业务|業務).{0,20}(?:提供|支撑|支持)|"
+        r"(?:建立|构建|構建|打造).{0,30}(?:平台|生态|生態|产品线|產品線|客户关系|客戶關係)|"
+        r"(?:产品|產品).{0,20}授权.{0,30}(?:合同|周期|週期|期限)|"
+        r"(?:研发|研發).{0,20}(?:按照|依照).{0,40}(?:顺序|順序)|"
+        r"(?:通过|通過).{0,20}(?:直销|直銷).{0,20}(?:销售|銷售)",
         compact,
     )) or any(token in compact for token in (
         "进入量产", "進入量產", "持续销售", "持續銷售", "持续采购", "持續採購",
@@ -988,19 +1050,26 @@ def _looks_like_risk_text(text: str) -> bool:
 def _is_concrete_risk_fact(text: str, family: str, usage_hint: str) -> bool:
     if canonical_family_for_usage(usage_hint) is None:
         return False
-    hypothetical = any(token in text for token in ("如果", "若", "可能", "或将", "或將"))
-    anchored = bool(re.search(r"20\d{2}年|报告期|報告期|本期", text)) or bool(_named_products(text)) or bool(re.search(r"[一-鿿A-Za-z0-9]{2,}(?:客户|客戶|供应商|供應商)", text))
+    compact = _compact_text(text)
+    hypothetical = any(token in compact for token in ("如果", "若", "可能", "或将", "或將"))
+    anchored = bool(re.search(r"20\d{2}年|报告期|報告期|本期", compact)) or bool(_named_products(compact)) or bool(re.search(r"[一-鿿A-Za-z0-9]{2,}(?:客户|客戶|供应商|供應商)", compact))
+    anchored = anchored or bool(re.search(
+        r"[一-鿿]{2,12}(?:主要从事|主要從事|自身因素|经营状况|經營狀況)", compact
+    )) or bool(
+        _matching_tokens(compact, _FINANCIAL_METRICS)
+        and any(token in compact for token in ("余额", "餘額", "账面", "賬面", "信用政策", "损益", "損益"))
+    )
     if family == "financial_quality_explanation":
-        subject = bool(_matching_tokens(text, _FINANCIAL_METRICS))
-        relation = bool(_matching_tokens(text, _CAUSAL_TOKENS + _FINANCIAL_ACTIONS)) or bool(re.search(
-            r"(?:制定|根据|根據|已有).{0,30}(?:计划|計劃|订单|訂單|采购|採購|生产|生產|预测|預測)|(?:下降|减少|減少|跌价|跌價|减值|減值|坏账|壞賬|亏损|虧損|损失|損失)", text
+        subject = bool(_matching_tokens(compact, _FINANCIAL_METRICS))
+        relation = bool(_matching_tokens(compact, _CAUSAL_TOKENS + _FINANCIAL_ACTIONS)) or bool(re.search(
+            r"(?:制定|根据|根據|已有).{0,30}(?:计划|計劃|订单|訂單|采购|採購|生产|生產|预测|預測)|(?:下降|减少|減少|跌价|跌價|减值|減值|坏账|壞賬|亏损|虧損|损失|損失)", compact
         ))
     elif family == "market_competition_outlook":
-        subject = bool(re.search(r"[一-鿿A-Za-z0-9]{2,}(?:行业|行業|客户|客戶|供应商|供應商)", text)) or any(
-            token in text for token in ("人才", "人才队伍", "人才隊伍", "技术人员", "技術人員", "研发团队", "研發團隊", "技术团队", "技術團隊", "招贤纳士", "招賢納士")
+        subject = bool(re.search(r"[一-鿿A-Za-z0-9]{2,}(?:行业|行業|客户|客戶|供应商|供應商)", compact)) or any(
+            token in compact for token in ("人才", "人才队伍", "人才隊伍", "技术人员", "技術人員", "研发团队", "研發團隊", "技术团队", "技術團隊", "招贤纳士", "招賢納士")
         )
-        relation = any(token in text for token in (
-            "竞争加剧", "競爭加劇", "门槛", "門檻", "争夺", "爭奪", "流失", "引进", "引進", "培训", "培訓", "集中度", "挑战", "挑戰", "拓展", "合作", "激励", "激勵",
+        relation = any(token in compact for token in (
+            "竞争加剧", "競爭加劇", "门槛", "門檻", "争夺", "爭奪", "流失", "引进", "引進", "培训", "培訓", "集中度", "挑战", "挑戰", "拓展", "合作", "激励", "激勵", "业绩不达预期", "業績不達預期",
         ))
     else:
         return False
@@ -1010,7 +1079,12 @@ def _is_concrete_risk_fact(text: str, family: str, usage_hint: str) -> bool:
 def _has_concrete_technology_fact(text: str, usage_hint: str = "") -> bool:
     if _looks_like_risk_text(text) or _looks_like_audit_or_policy(text):
         return False
-    named = bool(_named_products(text)) or bool(re.search(r"(?:SoC|MCU|NPU|GPU|FPGA|IP\s*(?:核|core))", text))
+    compact = _compact_text(text)
+    named = bool(_named_products(text)) or bool(re.search(
+        r"(?:SoC|Wi-?Fi\d*|(?<![A-Z])[A-Z]{2,5}(?![A-Z])|[“\"](?:[A-Z][A-Za-z0-9]{3,})[”\"]|IP(?:核|core)|"
+        r"(?:平台|工具|模型)[A-Z][A-Za-z0-9]{2,}|[A-Z][A-Za-z0-9]{2,}(?:平台|工具|模型))",
+        compact,
+    ))
     rd_subject = bool(re.search(r"(?:研发|研發)(?:策略|范围|範圍|人员|人員|投入|项目|項目)", text))
     specific_product = bool(re.search(
         r"(?:电平转换|電平轉換|芯片|晶片|智能影像|AIoT|先进|先進).{0,8}(?:芯片|晶片|产品|產品|架构|架構|制程|製程)", text
@@ -1018,13 +1092,26 @@ def _has_concrete_technology_fact(text: str, usage_hint: str = "") -> bool:
     relation = any(token in text for token in (
         *_PROGRESS_TOKENS, "亮相", "规划", "規劃", "扩展", "擴展", "研发中", "研發中",
         "自研", "开发", "開發", "积累", "積累", "范围包括", "範圍包括",
+        "能够", "能夠", "支持", "具备", "具備", "分配", "搭载", "搭載", "推进", "推進", "布局", "佈局",
+    ))
+    capability = bool(re.search(
+        r"(?:产品线|產品線|平台|解决方案|解決方案|芯片|晶片|系统|系統|技术|技術).{0,30}"
+        r"(?:具备|具備|支持|实现|實現|用于|用於|应用|應用|搭载|搭載|采用|採用|保障|满足|滿足)",
+        compact,
+    )) or bool(re.search(
+        r"(?:具备|具備|支持|实现|實現).{0,40}(?:信号|訊號|数据|數據|图像|圖像|晶圆|晶圓|"
+        r"接口|频段|頻段|带宽|帶寬|功耗|电源|電源|安全|稳定|穩定|自动化|自動化)",
+        compact,
+    )) or bool(re.search(
+        r"(?:芯片|晶片|产品|產品).{0,30}(?:可|能够|能夠).{0,8}(?:解决|解決|计算|計算|监测|監測|提供).{2,}",
+        compact,
     ))
     measured_change = rd_subject and bool(re.search(r"\d", text)) and bool(
         _matching_tokens(text, ("同比", "环比", "增长", "增長", "增加", "提升", "逐年", "占", "佔"))
     )
     if _has_technology_capability(text) and not (named or measured_change or "范围" in text or "範圍" in text):
         return False
-    return (named or rd_subject or specific_product) and (relation or measured_change)
+    return (named or rd_subject or specific_product) and (relation or measured_change) or capability
 
 
 def _named_products(text: str) -> set[str]:
@@ -1041,7 +1128,8 @@ def _named_products(text: str) -> set[str]:
 def _has_operating_change(text: str) -> bool:
     change_tokens = ("增长", "增長", "下降", "提升", "增加", "减少", "減少", "实现", "實現", "交付", "出货", "出貨", "同比", "环比")
     operating_anchor = ("销量", "銷量", "产量", "產量", "产能", "產能", "订单", "訂單", "收入", "营收", "營收", "交付", "出货", "出貨", "库存", "庫存")
-    has_report_period = bool(re.search(r"(?:报告期|報告期|本期|本年度|20\d{2}年)", text))
+    compact = _compact_text(text)
+    has_report_period = bool(re.search(r"(?:报告期|報告期|本期|本年度|20\d{2}年)", compact))
     return (
         has_report_period
         and bool(_matching_tokens(text, change_tokens))
@@ -1068,11 +1156,14 @@ def _has_market_judgment(text: str) -> bool:
 
 
 def _has_concrete_market_fact(text: str) -> bool:
-    subject = _has_market_judgment(text) or bool(_named_products(text)) or bool(re.search(r"(?:SoC|MCU|芯片|晶片|客户|客戶|企业|企業|行业|行業|市场|市場|光模块|光模塊|解决方案|解決方案|汽车|汽車|眼镜|眼鏡)", text)) or bool(re.search(r"(?:领域|領域).{0,30}(?:产品|產品).{0,50}(?:验证周期|驗證周期)", text))
-    relation = any(token in text for token in (
+    compact = _compact_text(text)
+    subject = _has_market_judgment(compact) or bool(_named_products(compact)) or bool(re.search(r"(?:SoC|MCU|芯片|晶片|客户|客戶|企业|企業|厂商|廠商|行业|行業|市场|市場|光模块|光模塊|解决方案|解決方案|汽车|汽車|眼镜|眼鏡)", compact)) or bool(re.search(r"(?:领域|領域).{0,30}(?:产品|產品).{0,50}(?:验证周期|驗證周期)", compact))
+    relation = any(token in compact for token in (
         "预计", "預計", "市场规模", "市場規模", "需求", "要求", "采用", "採用", "成果", "拓展", "擴展", "合作", "協作", "共同定义", "共同定義",
         "覆盖", "覆蓋", "横向", "橫向", "展望", "竞争", "競爭", "集中度", "挑战", "挑戰",
         "增长", "增長", "成长", "成長", "提升", "扩大", "擴大", "景气", "景氣", "承压", "承壓", "布局", "佈局", "投入", "专注", "專注", "商业化", "商業化", "进展", "進展", "验证周期", "驗證周期",
+        "国产化", "國產化", "国产替代", "國產替代",
+        "占据主导", "佔據主導", "市场份额", "市場份額",
     ))
     return subject and relation
 
@@ -1080,11 +1171,21 @@ def _has_concrete_market_fact(text: str) -> bool:
 def _has_concrete_financial_fact(text: str) -> bool:
     if _looks_like_audit_or_policy(text) or _looks_like_structural_boilerplate(text):
         return False
-    subject = bool(_matching_tokens(text, _FINANCIAL_METRICS)) or bool(re.search(r"(?:资本|資本|项目|項目|现金|現金|付款|電匯|电汇|航信)", text))
-    relation = bool(_matching_tokens(text, _CAUSAL_TOKENS + _FINANCIAL_ACTIONS)) or bool(_matching_tokens(
-        text, ("同比", "环比", "较上期", "較上期", "较上年", "較上年", "变动", "變動", "增加", "减少", "提升", "下降", "支出", "投入", "耗资", "耗資", "差异", "差異", "保持稳定", "保持穩定", "保持相对稳定", "保持相對穩定", "稳中有升", "穩中有升")
-    )) or bool(re.search(r"依靠.{0,20}(?:回款|付款).{0,10}(?:维持|維持)", text))
-    return subject and relation
+    compact = _compact_text(text)
+    subject = bool(_matching_tokens(compact, _FINANCIAL_METRICS)) or bool(re.search(r"(?:资本|資本|项目|項目|现金|現金|付款|電匯|电汇|航信)", compact))
+    relation = bool(_matching_tokens(compact, _CAUSAL_TOKENS + _FINANCIAL_ACTIONS)) or bool(_matching_tokens(
+        compact, ("同比", "环比", "较上期", "較上期", "较上年", "較上年", "变动", "變動", "增加", "减少", "提升", "下降", "支出", "投入", "耗资", "耗資", "差异", "差異", "保持稳定", "保持穩定", "保持相对稳定", "保持相對穩定", "稳中有升", "穩中有升")
+    )) or bool(re.search(r"依靠.{0,20}(?:回款|付款).{0,10}(?:维持|維持)", compact))
+    relation = relation or bool(re.search(
+        r"(?:报告期|報告期|本期).{0,60}(?:收购|收購|交割|并表|並表).{0,100}"
+        r"(?:形成商誉|形成商譽)|(?:完成|实施|實施).{0,20}(?:股权|股權)?"
+        r"(?:收购|收購).{0,40}(?:交割|并表|並表)",
+        compact,
+    ))
+    reported_measure = bool(re.search(r"\d+(?:\.\d+)?%", compact)) and bool(re.search(
+        r"(?:20\d{2}\s*年|报告期|報告期|截至|为|為|达到|達到|实现|實現)", compact
+    ))
+    return subject and (relation or reported_measure)
 
 
 def _has_financial_change(text: str) -> bool:

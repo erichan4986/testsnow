@@ -1,14 +1,14 @@
 {
   "periods": [
     {
-      "cards_sha256": "2284a3e565f5bb3fba34e59574c52afaa48b3bfbe560f1fae11e611df6c45874",
+      "cards_sha256": "c28bf4b357c538bb705bed7d9cd569c59608d2ca34c6efb1bc8f4af5782ba203",
       "pack_path": "periodic_narrative_packs/2025-annual.json",
-      "payload_sha256": "ab3e2cc9b4843c12e1f8a24f3cc3ffa5d1f2c4dc2bf029b87a222565c5404200",
+      "payload_sha256": "c0ec9675e516afb3e8d59f67721a0fcd0905e65278c22bad0084a8663dd55eb4",
       "report_type": "annual",
       "report_year": 2025
     }
   ],
-  "periods_sha256": "4c2599c8e4ff50aa25d7c081a67b5528bf6a9c307813f09ac7ce313509c37d9c",
+  "periods_sha256": "1d8026b16437e07df7061226c5d9628884e886c6306403bb57c635b29a0cdf08",
   "schema_version": "periodic_report_narrative_pack_manifest.v1",
   "stock_code": "02533",
   "stock_name": "黑芝麻智能"

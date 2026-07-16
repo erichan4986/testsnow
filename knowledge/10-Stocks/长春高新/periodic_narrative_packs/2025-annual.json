@@ -1,6 +1,46 @@
 {
   "cards": [
     {
+      "argument_complete": true,
+      "argument_family": "operating_progress",
+      "card_id": "annual-argument:c91391c28dc17874d332",
+      "fact_anchors": [
+        "134.79%",
+        "报告期",
+        "产量"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:operating_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "production_sales_inventory_table-0",
+      "source_credit": 75,
+      "source_excerpt": "房地产业生产量较上年同期增加134.79%，主要原因是本报告期在建项目投入增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "production_sales_inventory_table-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "production_sales_inventory_table-0",
+          "end_pos": 411,
+          "ordinal": 0,
+          "start_pos": 369,
+          "text": "房地产业生产量较上年同期增加134.79%，主要原因是本报告期在建项目投入增加所致。",
+          "unit_id": "production_sales_inventory_table-0:u0"
+        }
+      ],
+      "title": "经营变化"
+    },
+    {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
       "card_id": "annual-argument:d5807cd9564255d50a87",
@@ -40,8 +80,46 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:82d56776ba9f655c55ab",
+      "fact_anchors": [
+        "意见提出通过完善审评审批机制、加强知识产权保护、"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "意见提出通过完善审评审批机制、加强知识产权保护、支持创新药推广使用等措施，从制度层面鼓励和激 发医药创新，为产业发展打造稳定可预期的政策环境，同时通过优化审评流程、缩短审批时限，推动创新药品加速落 地上市。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-0:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-0",
+          "end_pos": 522,
+          "ordinal": 7,
+          "start_pos": 419,
+          "text": "意见提出通过完善审评审批机制、加强知识产权保护、支持创新药推广使用等措施，从制度层面鼓励和激 发医药创新，为产业发展打造稳定可预期的政策环境，同时通过优化审评流程、缩短审批时限，推动创新药品加速落 地上市。",
+          "unit_id": "rd_product_progress-0:u7"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:d14fcf7d9b4af3aa1732",
+      "card_id": "annual-argument:45847f26bf93c86c0a0a",
       "fact_anchors": [
         "2025年",
         "行业"
@@ -60,11 +138,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-0",
       "source_credit": 75,
-      "source_excerpt": "2025年3月，全国两会发布的《政府工作报告》（2025年）明确了医药产业发展的重点方向，提出要培育生物 制造等未来产业，同时优化药品和耗材集采政策、健全药品价格形成机制、制定创新药目录，持续强化对创新药发展 的全链条支持，为全年医药行业创新升级与规范发展奠定了政策基调。 2025年6月，中办国办《关于进一步保障和改善民生着力解决群众急难愁盼的意见》更将“完善基本医疗保险 药品目录调整机制”与“制定出台商业健康保险创新药品目录”同步推进，形成“基本医保保基础、商业保险保创新” 的多层次保障体系。",
+      "source_excerpt": "2025年3月，全国两会发布的《政府工作报告》（2025年）明确了医药产业发展的重点方向，提出要培育生物 制造等未来产业，同时优化药品和耗材集采政策、健全药品价格形成机制、制定创新药目录，持续强化对创新药发展 的全链条支持，为全年医药行业创新升级与规范发展奠定了政策基调。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "rd_product_progress-0:u8",
-        "rd_product_progress-0:u9"
+        "rd_product_progress-0:u8"
       ],
       "source_units": [
         {
@@ -74,14 +151,6 @@
           "start_pos": 523,
           "text": "2025年3月，全国两会发布的《政府工作报告》（2025年）明确了医药产业发展的重点方向，提出要培育生物 制造等未来产业，同时优化药品和耗材集采政策、健全药品价格形成机制、制定创新药目录，持续强化对创新药发展 的全链条支持，为全年医药行业创新升级与规范发展奠定了政策基调。",
           "unit_id": "rd_product_progress-0:u8"
-        },
-        {
-          "block_id": "rd_product_progress-0",
-          "end_pos": 773,
-          "ordinal": 9,
-          "start_pos": 660,
-          "text": "2025年6月，中办国办《关于进一步保障和改善民生着力解决群众急难愁盼的意见》更将“完善基本医疗保险 药品目录调整机制”与“制定出台商业健康保险创新药品目录”同步推进，形成“基本医保保基础、商业保险保创新” 的多层次保障体系。",
-          "unit_id": "rd_product_progress-0:u9"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -1063,7 +1132,7 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "business_structure",
       "card_id": "annual-argument:0e988ccaec2f36e029b4",
       "fact_anchors": [
         "100%",
@@ -1080,7 +1149,8 @@
         "86.20%",
         "88.41%",
         "12.50%",
-        "行业"
+        "产品",
+        "服务"
       ],
       "quality_score": 3,
       "report_type": "annual",
@@ -1091,8 +1161,10 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "segment_table-0",
       "source_credit": 75,
@@ -1111,7 +1183,7 @@
           "unit_id": "segment_table-0:u0"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": true,
@@ -1306,6 +1378,47 @@
         }
       ],
       "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:8748bea45cb77e7e1487",
+      "fact_anchors": [
+        "2025年"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "capex_cip_note-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内公司主要资产计量属性是否发生重大变化 □是 否 3、截至报告期末的资产权利受限情况 单位：元 期末 期初 项目 受限类 受限类 账面余额 账面价值 受限情况 账面余额 账面价值 受限情况 型 型 银行借款 银行借款 固定资产 197,451,980.73163,596,375.28 抵押 197,451,980.73 168,905,535.76 抵押 抵押 抵押 银行借款 银行借款 无形资产 22,624,010.14 16,028,438.69 抵押 22,624,010.14 16,480,918.92 抵押 抵押 抵押 ETC押金 ETC押金冻 500.00 500.00 押金 500.00 500.00 押金 冻结 结 银行存款 诉讼冻结 诉讼冻结 727,965.61 727,965.61 冻结 152,830.00 152,830.00 冻结 款 款 其他货币资 天猫店铺 39.26 39.26 保证金 保证金 50,000.00 50,000.00 保证金 金 保证金 40 长春高新技术产业（集团）股份有限公司2025年年度报告全文 房地产行 房地产行 71,190,799.49 71,190,799.49 冻结 业监管资 61,040,984.02 61,040,984.02 冻结 业监管资 金冻结 金冻结 银行保 银行保函 5,635,115.90 5,635,115.90 函 使用受限 银行借款 在建工程 645,256,314.97 645,256,314.97 抵押 抵押 合计 291,995,295.23251,544,118.33 932,211,735.76 897,522,199.57 （1）根据长春市城市建设开发管理服务中心下发的文件《商品房预售资金监管比例通知书》，长春容园项目行业监管资 金1,243,697.00元，上述监管金额至相关房产办理完毕不动产首次登记后解除；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "capex_cip_note-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "capex_cip_note-0",
+          "end_pos": 1957,
+          "ordinal": 2,
+          "start_pos": 1135,
+          "text": "报告期内公司主要资产计量属性是否发生重大变化 □是 否 3、截至报告期末的资产权利受限情况 单位：元 期末 期初 项目 受限类 受限类 账面余额 账面价值 受限情况 账面余额 账面价值 受限情况 型 型 银行借款 银行借款 固定资产 197,451,980.73163,596,375.28 抵押 197,451,980.73 168,905,535.76 抵押 抵押 抵押 银行借款 银行借款 无形资产 22,624,010.14 16,028,438.69 抵押 22,624,010.14 16,480,918.92 抵押 抵押 抵押 ETC押金 ETC押金冻 500.00 500.00 押金 500.00 500.00 押金 冻结 结 银行存款 诉讼冻结 诉讼冻结 727,965.61 727,965.61 冻结 152,830.00 152,830.00 冻结 款 款 其他货币资 天猫店铺 39.26 39.26 保证金 保证金 50,000.00 50,000.00 保证金 金 保证金 40 长春高新技术产业（集团）股份有限公司2025年年度报告全文 房地产行 房地产行 71,190,799.49 71,190,799.49 冻结 业监管资 61,040,984.02 61,040,984.02 冻结 业监管资 金冻结 金冻结 银行保 银行保函 5,635,115.90 5,635,115.90 函 使用受限 银行借款 在建工程 645,256,314.97 645,256,314.97 抵押 抵押 合计 291,995,295.23251,544,118.33 932,211,735.76 897,522,199.57 （1）根据长春市城市建设开发管理服务中心下发的文件《商品房预售资金监管比例通知书》，长春容园项目行业监管资 金1,243,697.00元，上述监管金额至相关房产办理完毕不动产首次登记后解除；",
+          "unit_id": "capex_cip_note-0:u2"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -1802,6 +1915,136 @@
       "title": "业务结构"
     },
     {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:ca7cf0a4e47c2f3e3003",
+      "fact_anchors": [
+        "2020年",
+        "42.14%",
+        "2021年",
+        "38%",
+        "商誉",
+        "从而"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "商誉减值准备 单位：元 被投资单位名称或形成商誉的事 本期增加 本期减少 期初余额 期末余额 项 计提 处置 Brillian Pharma Inc 4,319,123.64 1,079,780.91 5,398,904.55 浙江云珩耀清生物科技有限公司 17,383,757.24 1,013,488.81 18,397,246.05 合计 21,702,880.88 2,093,269.72 23,796,150.60 （3） 其他说明 1.本公司于2020年12月，支付投资成本185,404,620.00元收购Brillian Pharma Inc 42.14%股权，合并日Brillian Pharma Inc的可辨认净资产的公允价值为174,606,810.86元，从而形成商誉10,797,809.14元。 2.本公司子公司长春金赛药业有限责任公司于2021年7月，支付投资成本206,164,180.00元收购浙江云珩耀清生物科 技有限公司38%股权，合并日浙江云珩耀清生物科技有限公司的可辨认净资产的公允价值为182,952,862.08元，从而形 成商誉23,211,317.92元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u0",
+        "goodwill_note-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 362,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "商誉减值准备 单位：元 被投资单位名称或形成商誉的事 本期增加 本期减少 期初余额 期末余额 项 计提 处置 Brillian Pharma Inc 4,319,123.64 1,079,780.91 5,398,904.55 浙江云珩耀清生物科技有限公司 17,383,757.24 1,013,488.81 18,397,246.05 合计 21,702,880.88 2,093,269.72 23,796,150.60 （3） 其他说明 1.本公司于2020年12月，支付投资成本185,404,620.00元收购Brillian Pharma Inc 42.14%股权，合并日Brillian Pharma Inc的可辨认净资产的公允价值为174,606,810.86元，从而形成商誉10,797,809.14元。",
+          "unit_id": "goodwill_note-0:u0"
+        },
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 504,
+          "ordinal": 1,
+          "start_pos": 363,
+          "text": "2.本公司子公司长春金赛药业有限责任公司于2021年7月，支付投资成本206,164,180.00元收购浙江云珩耀清生物科 技有限公司38%股权，合并日浙江云珩耀清生物科技有限公司的可辨认净资产的公允价值为182,952,862.08元，从而形 成商誉23,211,317.92元。",
+          "unit_id": "goodwill_note-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:19f85bb2a59eb8978b04",
+      "fact_anchors": [
+        "商誉",
+        "从而"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "购买日的合并成本为 702,482,129.45元，可辨认净资产的公允价值份额为636,083,569.83元，从而形成商誉66,398,559.62元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 662,
+          "ordinal": 4,
+          "start_pos": 585,
+          "text": "购买日的合并成本为 702,482,129.45元，可辨认净资产的公允价值份额为636,083,569.83元，从而形成商誉66,398,559.62元。",
+          "unit_id": "goodwill_note-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f1de5663510901be0bcc",
+      "fact_anchors": [
+        "商誉",
+        "随着"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "4.因确认递延所得税负债形成的商誉，随着递延所得税负债的转回而减少所得税费用，导致可收回金额小于账面价值， 本公司在合并报表层面逐期转回递延所得税负债，并计提商誉减值准备。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 749,
+          "ordinal": 5,
+          "start_pos": 663,
+          "text": "4.因确认递延所得税负债形成的商誉，随着递延所得税负债的转回而减少所得税费用，导致可收回金额小于账面价值， 本公司在合并报表层面逐期转回递延所得税负债，并计提商誉减值准备。",
+          "unit_id": "goodwill_note-0:u5"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
       "argument_complete": false,
       "argument_family": "financial_quality_explanation",
       "card_id": "annual-argument:a8dd8beca88ae40262b9",
@@ -1898,7 +2141,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
@@ -1946,7 +2191,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
@@ -1967,6 +2214,44 @@
         }
       ],
       "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:4ec3272ace8bb2d6631f",
+      "fact_anchors": [
+        "女性：子宫内膜异位症、子宫肌瘤或辅助生 注射液 "
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "女性：子宫内膜异位症、子宫肌瘤或辅助生 注射液 育技术(ART)，例如体外授精术(IVF) 注射用 适用于辅助生育技术中，对控制性卵巢刺激的患 醋酸西 金赛捷 者，本品可防止提前排卵 曲瑞克 替勃龙 治疗妇女自然绝经和手术绝经所引起的低雌激素 金赛蓓 片 症状 外用人 粒细胞 巨噬细 金扶宁 促进创面愈合，用于深Ⅱ度烧伤创面 胞刺激 因子凝 胶 用于下列情况的皮层局部麻醉：1.针穿刺，如： 利丙双 金赛宁 置入导管或取血样本；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 1478,
+          "ordinal": 8,
+          "start_pos": 1263,
+          "text": "女性：子宫内膜异位症、子宫肌瘤或辅助生 注射液 育技术(ART)，例如体外授精术(IVF) 注射用 适用于辅助生育技术中，对控制性卵巢刺激的患 醋酸西 金赛捷 者，本品可防止提前排卵 曲瑞克 替勃龙 治疗妇女自然绝经和手术绝经所引起的低雌激素 金赛蓓 片 症状 外用人 粒细胞 巨噬细 金扶宁 促进创面愈合，用于深Ⅱ度烧伤创面 胞刺激 因子凝 胶 用于下列情况的皮层局部麻醉：1.针穿刺，如： 利丙双 金赛宁 置入导管或取血样本；",
+          "unit_id": "business_overview-0:u8"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2007,21 +2292,60 @@
       "title": "业务结构"
     },
     {
-      "argument_complete": true,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:186fbc3b977c32af2b83",
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:e821aa1c2f57eddd6e8b",
       "fact_anchors": [
-        "市场",
-        "需求",
-        "竞争"
+        "平台",
+        "研发"
       ],
-      "quality_score": 7,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
         "anchored_fact": 2,
-        "argument_complete": 4,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "经营模式 1、研发模式 公司坚持以差异化创新为导向，依托覆盖自有技术平台、CMC能力和自主临床开发能力的一站式研发体系，形成 核心研发支撑。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 70,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "经营模式 1、研发模式 公司坚持以差异化创新为导向，依托覆盖自有技术平台、CMC能力和自主临床开发能力的一站式研发体系，形成 核心研发支撑。",
+          "unit_id": "business_model-0:u0"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:b82eb4e416019df212e1",
+      "fact_anchors": [
+        "市场",
+        "需求",
+        "竞争"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [],
@@ -2029,12 +2353,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
       "source_credit": 75,
-      "source_excerpt": "所有项目均以对未 满足医疗需求、竞争格局、市场潜力以及技术和监管成功概率的全面评估为起点，同时公司也会评估在技术壁垒较高 的细分领域中潜在的先发优势。获批立项的项目将被授予项目代码，并指定项目负责人统筹跨部门协调、知识产权申 请及整体进度管控。在研项目将接受定期评审，对未能按期达成预设里程碑或所处市场环境发生不利变化的项目，公 司将对其进行调整或终止。",
+      "source_excerpt": "所有项目均以对未 满足医疗需求、竞争格局、市场潜力以及技术和监管成功概率的全面评估为起点，同时公司也会评估在技术壁垒较高 的细分领域中潜在的先发优势。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "business_model-0:u7",
-        "business_model-0:u8",
-        "business_model-0:u9"
+        "business_model-0:u7"
       ],
       "source_units": [
         {
@@ -2044,22 +2366,6 @@
           "start_pos": 361,
           "text": "所有项目均以对未 满足医疗需求、竞争格局、市场潜力以及技术和监管成功概率的全面评估为起点，同时公司也会评估在技术壁垒较高 的细分领域中潜在的先发优势。",
           "unit_id": "business_model-0:u7"
-        },
-        {
-          "block_id": "business_model-0",
-          "end_pos": 483,
-          "ordinal": 8,
-          "start_pos": 436,
-          "text": "获批立项的项目将被授予项目代码，并指定项目负责人统筹跨部门协调、知识产权申 请及整体进度管控。",
-          "unit_id": "business_model-0:u8"
-        },
-        {
-          "block_id": "business_model-0",
-          "end_pos": 538,
-          "ordinal": 9,
-          "start_pos": 483,
-          "text": "在研项目将接受定期评审，对未能按期达成预设里程碑或所处市场环境发生不利变化的项目，公 司将对其进行调整或终止。",
-          "unit_id": "business_model-0:u9"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -2067,10 +2373,8 @@
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:4b69f2623a82e82bd3d1",
+      "card_id": "annual-argument:d2e12183d2f5720a91cb",
       "fact_anchors": [
-        "2025年",
-        "平台",
         "研发",
         "验证"
       ],
@@ -2084,22 +2388,16 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
-        "market_competition_outlook",
-        "business_structure"
+        "market_competition_outlook"
       ],
       "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
       "source_credit": 75,
-      "source_excerpt": "研发项目通常会经历以下阶段： （1）靶点识别与验证：针对治疗性生物制品、化学药物及疫苗，公司通过研究疾病机制、跟踪国际研究趋势、 评估其对未满足医疗需求的适用性，识别并验证具有差异化潜力的治疗靶点/抗原或制剂。公司与医院及其他医疗机 构、重点医药领域的知名医生和关键意见领袖(KOL)保持积极沟通，获取其关于未满足临床需求、标准治疗实践以及 不同先进治疗方法比较优势的见解与建议，并基于此进一步优化靶点/抗原及机制的筛选，完善临床前景评估。 （2）发现、优化与在研产品筛选：公司运用技术平台对化合物、生物分子或疫苗抗原进行筛选、设计与优化， 旨在遴选出具有预期活性和药物开发潜力的在研产品。 （3）临床前研究与CMC：选定的在研药物需开展药理学、药代动力学及毒理学评估，同时推进CMC开发工作， 确保在临床试验前建立起质量、安全性和批间一致性保障体系。 （4）IND提交与监管审查：当临床前在研化合物经过充分且全面的预临床验证，达到预先定义的疗效和安全性 特征后，公司将向相关监管机构（如国家药监局）提交IND申请。 15 长春高新技术产业（集团）股份有限公司2025年年度报告全文 （5）临床开发：IND获批后，公司通过具备相应资质的医疗机构开展临床试验，以评估药物的安全性、有效性 及其他注册所需的临床终点指标。",
+      "source_excerpt": "研发项目通常会经历以下阶段： （1）靶点识别与验证：针对治疗性生物制品、化学药物及疫苗，公司通过研究疾病机制、跟踪国际研究趋势、 评估其对未满足医疗需求的适用性，识别并验证具有差异化潜力的治疗靶点/抗原或制剂。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "business_model-0:u10",
-        "business_model-0:u11",
-        "business_model-0:u12",
-        "business_model-0:u13",
-        "business_model-0:u14",
-        "business_model-0:u15"
+        "business_model-0:u10"
       ],
       "source_units": [
         {
@@ -2109,23 +2407,40 @@
           "start_pos": 538,
           "text": "研发项目通常会经历以下阶段： （1）靶点识别与验证：针对治疗性生物制品、化学药物及疫苗，公司通过研究疾病机制、跟踪国际研究趋势、 评估其对未满足医疗需求的适用性，识别并验证具有差异化潜力的治疗靶点/抗原或制剂。",
           "unit_id": "business_model-0:u10"
-        },
-        {
-          "block_id": "business_model-0",
-          "end_pos": 758,
-          "ordinal": 11,
-          "start_pos": 643,
-          "text": "公司与医院及其他医疗机 构、重点医药领域的知名医生和关键意见领袖(KOL)保持积极沟通，获取其关于未满足临床需求、标准治疗实践以及 不同先进治疗方法比较优势的见解与建议，并基于此进一步优化靶点/抗原及机制的筛选，完善临床前景评估。",
-          "unit_id": "business_model-0:u11"
-        },
-        {
-          "block_id": "business_model-0",
-          "end_pos": 833,
-          "ordinal": 12,
-          "start_pos": 759,
-          "text": "（2）发现、优化与在研产品筛选：公司运用技术平台对化合物、生物分子或疫苗抗原进行筛选、设计与优化， 旨在遴选出具有预期活性和药物开发潜力的在研产品。",
-          "unit_id": "business_model-0:u12"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:6bda034f59c0e0e7f338",
+      "fact_anchors": [
+        "2025年",
+        "验证"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "（3）临床前研究与CMC：选定的在研药物需开展药理学、药代动力学及毒理学评估，同时推进CMC开发工作， 确保在临床试验前建立起质量、安全性和批间一致性保障体系。 （4）IND提交与监管审查：当临床前在研化合物经过充分且全面的预临床验证，达到预先定义的疗效和安全性 特征后，公司将向相关监管机构（如国家药监局）提交IND申请。 15 长春高新技术产业（集团）股份有限公司2025年年度报告全文 （5）临床开发：IND获批后，公司通过具备相应资质的医疗机构开展临床试验，以评估药物的安全性、有效性 及其他注册所需的临床终点指标。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u13",
+        "business_model-0:u14",
+        "business_model-0:u15"
+      ],
+      "source_units": [
         {
           "block_id": "business_model-0",
           "end_pos": 914,
@@ -2205,7 +2520,7 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
-      "card_id": "annual-argument:f0ba06a9753499e18f32",
+      "card_id": "annual-argument:7b9f6affcbe516a5f6fe",
       "fact_anchors": [
         "产品"
       ],
@@ -2223,14 +2538,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
       "source_credit": 75,
-      "source_excerpt": "公司是中国少数覆盖治疗性生物制剂、化学药品、疫苗和中成药等全药物注册类型并实现全链条自主生产的企业， 拥有严格高效的质量管理体系，可有力支撑研发管线的快速推进、大规模商业化扩产和稳定的产品供应。 子公司金赛药业已构建覆盖治疗性生物制剂及化学药品的全面CMC及产业化能力，贯穿新药候选分子成药性评价、 上游细胞培养及微生物发酵、下游纯化、制剂、工艺开发和放大、技术转移、质量控制及保证，直至商业化生产全流 程，并已运用AI模型及分析持续优化CMC开发和生产工艺。 子公司百克生物针对已获批疫苗运营独立的商业化生产线，拥有符合国家GMP标准的生产基地、采用细胞工厂、 生物反应器等较为先进的生产技术，能够高效、稳定、规模化地培养动物细胞，并凭借成熟的生产工艺和健全完善的 质量管理体系，保证产品生产质量安全稳定。此外，公司通过MES（制造执行系统）、LIMS（实验室管理系统）及 DMS（文件管理系统）等信息化工具，实现了生产与检定全过程的数字化监控与合规化管理。 子公司华康药业是国家中成药标准化项目示范企业，具备片剂、胶囊剂、颗粒剂、口服液、微丸剂、糖浆剂、酊 剂七种主要剂型生产能力。",
+      "source_excerpt": "公司是中国少数覆盖治疗性生物制剂、化学药品、疫苗和中成药等全药物注册类型并实现全链条自主生产的企业， 拥有严格高效的质量管理体系，可有力支撑研发管线的快速推进、大规模商业化扩产和稳定的产品供应。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "business_model-0:u22",
-        "business_model-0:u23",
-        "business_model-0:u24",
-        "business_model-0:u25",
-        "business_model-0:u26"
+        "business_model-0:u22"
       ],
       "source_units": [
         {
@@ -2240,7 +2551,38 @@
           "start_pos": 1459,
           "text": "公司是中国少数覆盖治疗性生物制剂、化学药品、疫苗和中成药等全药物注册类型并实现全链条自主生产的企业， 拥有严格高效的质量管理体系，可有力支撑研发管线的快速推进、大规模商业化扩产和稳定的产品供应。",
           "unit_id": "business_model-0:u22"
-        },
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:1a7213d4ec502bcbe552",
+      "fact_anchors": [
+        "工艺",
+        "模型"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "子公司金赛药业已构建覆盖治疗性生物制剂及化学药品的全面CMC及产业化能力，贯穿新药候选分子成药性评价、 上游细胞培养及微生物发酵、下游纯化、制剂、工艺开发和放大、技术转移、质量控制及保证，直至商业化生产全流 程，并已运用AI模型及分析持续优化CMC开发和生产工艺。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u23"
+      ],
+      "source_units": [
         {
           "block_id": "business_model-0",
           "end_pos": 1689,
@@ -2248,7 +2590,39 @@
           "start_pos": 1557,
           "text": "子公司金赛药业已构建覆盖治疗性生物制剂及化学药品的全面CMC及产业化能力，贯穿新药候选分子成药性评价、 上游细胞培养及微生物发酵、下游纯化、制剂、工艺开发和放大、技术转移、质量控制及保证，直至商业化生产全流 程，并已运用AI模型及分析持续优化CMC开发和生产工艺。",
           "unit_id": "business_model-0:u23"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:cdcc2438619a861ab2d1",
+      "fact_anchors": [
+        "产品"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "子公司百克生物针对已获批疫苗运营独立的商业化生产线，拥有符合国家GMP标准的生产基地、采用细胞工厂、 生物反应器等较为先进的生产技术，能够高效、稳定、规模化地培养动物细胞，并凭借成熟的生产工艺和健全完善的 质量管理体系，保证产品生产质量安全稳定。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u24"
+      ],
+      "source_units": [
         {
           "block_id": "business_model-0",
           "end_pos": 1813,
@@ -2256,7 +2630,37 @@
           "start_pos": 1690,
           "text": "子公司百克生物针对已获批疫苗运营独立的商业化生产线，拥有符合国家GMP标准的生产基地、采用细胞工厂、 生物反应器等较为先进的生产技术，能够高效、稳定、规模化地培养动物细胞，并凭借成熟的生产工艺和健全完善的 质量管理体系，保证产品生产质量安全稳定。",
           "unit_id": "business_model-0:u24"
-        },
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:36541a7b7cdde3f2add8",
+      "fact_anchors": [
+        "实现"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "此外，公司通过MES（制造执行系统）、LIMS（实验室管理系统）及 DMS（文件管理系统）等信息化工具，实现了生产与检定全过程的数字化监控与合规化管理。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u25"
+      ],
+      "source_units": [
         {
           "block_id": "business_model-0",
           "end_pos": 1889,
@@ -2264,17 +2668,9 @@
           "start_pos": 1813,
           "text": "此外，公司通过MES（制造执行系统）、LIMS（实验室管理系统）及 DMS（文件管理系统）等信息化工具，实现了生产与检定全过程的数字化监控与合规化管理。",
           "unit_id": "business_model-0:u25"
-        },
-        {
-          "block_id": "business_model-0",
-          "end_pos": 1952,
-          "ordinal": 26,
-          "start_pos": 1890,
-          "text": "子公司华康药业是国家中成药标准化项目示范企业，具备片剂、胶囊剂、颗粒剂、口服液、微丸剂、糖浆剂、酊 剂七种主要剂型生产能力。",
-          "unit_id": "business_model-0:u26"
         }
       ],
-      "title": "业务结构"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2725,7 +3121,7 @@
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:0612efcbee299b23c963",
+      "card_id": "annual-argument:aa08fc6694f10f98173d",
       "fact_anchors": [
         "平台",
         "研发",
@@ -2748,11 +3144,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "核心竞争力分析 （一）技术平台优势 公司坚持以差异化创新为导向，以覆盖自有技术平台、CMC能力和自主临床开发能力的一站式研发体系为支撑， 持续驱动产品迭代与创新突破。近年来，公司稳步提升研发投入水平，系统完善多领域管线布局，持续拓展技术覆盖 面，推进全球化布局；",
+      "source_excerpt": "核心竞争力分析 （一）技术平台优势 公司坚持以差异化创新为导向，以覆盖自有技术平台、CMC能力和自主临床开发能力的一站式研发体系为支撑， 持续驱动产品迭代与创新突破。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u0",
-        "management_strategy-0:u1"
+        "management_strategy-0:u0"
       ],
       "source_units": [
         {
@@ -2762,7 +3157,37 @@
           "start_pos": 0,
           "text": "核心竞争力分析 （一）技术平台优势 公司坚持以差异化创新为导向，以覆盖自有技术平台、CMC能力和自主临床开发能力的一站式研发体系为支撑， 持续驱动产品迭代与创新突破。",
           "unit_id": "management_strategy-0:u0"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:74960bab1c75a5904eea",
+      "fact_anchors": [
+        "研发"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "近年来，公司稳步提升研发投入水平，系统完善多领域管线布局，持续拓展技术覆盖 面，推进全球化布局；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u1"
+      ],
+      "source_units": [
         {
           "block_id": "management_strategy-0",
           "end_pos": 131,
@@ -2814,10 +3239,90 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:2da2e0cde941ce3afb20",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:f535cad40042127a55a7",
       "fact_anchors": [
-        "行业"
+        "目前，公司已建成多个行业领先、潜力充沛的创新药研"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "目前，公司已建成多个行业领先、潜力充沛的创新药研发技术 平台，全面赋能创新药物全链条开发，重点建设的核心平台包括：超长效多特异性抗体技术平台、肝外siRNA靶向递 送技术平台、长效缓释多肽技术平台、跨血脑屏障递送技术平台、T-CellEngager技术平台、靶蛋白降解技术平台、 裂解酶技术平台、抗体偶联药物技术平台等多个研发创新技术平台。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 367,
+          "ordinal": 3,
+          "start_pos": 197,
+          "text": "目前，公司已建成多个行业领先、潜力充沛的创新药研发技术 平台，全面赋能创新药物全链条开发，重点建设的核心平台包括：超长效多特异性抗体技术平台、肝外siRNA靶向递 送技术平台、长效缓释多肽技术平台、跨血脑屏障递送技术平台、T-CellEngager技术平台、靶蛋白降解技术平台、 裂解酶技术平台、抗体偶联药物技术平台等多个研发创新技术平台。",
+          "unit_id": "management_strategy-0:u3"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:ae9e973109167e4be1f7",
+      "fact_anchors": [
+        "平台",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "技术平台 平台核心优势 核心技术共融，打造超长效多特异性组装能力，实现多靶点同时阻断，强化治疗协同性。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 419,
+          "ordinal": 4,
+          "start_pos": 368,
+          "text": "技术平台 平台核心优势 核心技术共融，打造超长效多特异性组装能力，实现多靶点同时阻断，强化治疗协同性。",
+          "unit_id": "management_strategy-0:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:18bcbca61cca1a8f0c36",
+      "fact_anchors": [
+        "平台"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2829,49 +3334,197 @@
         "source_unit_count": 1
       },
       "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "目前，公司已建成多个行业领先、潜力充沛的创新药研发技术 平台，全面赋能创新药物全链条开发，重点建设的核心平台包括：超长效多特异性抗体技术平台、肝外siRNA靶向递 送技术平台、长效缓释多肽技术平台、跨血脑屏障递送技术平台、T-CellEngager技术平台、靶蛋白降解技术平台、 裂解酶技术平台、抗体偶联药物技术平台等多个研发创新技术平台。 技术平台 平台核心优势 核心技术共融，打造超长效多特异性组装能力，实现多靶点同时阻断，强化治疗协同性。 AI驱动的纳米抗体（VHH）合成文库发现平台(NanoAcell)：快速发现高亲和力、高稳定性VHH 超长效多特异 抗体，提供灵活的结合模块与HSA的长效修饰；",
+      "source_excerpt": "性抗体平台 AI驱动的scFv改造技术平台(OptimAFv)：提高scFv型双/多抗开发周期及成功率，为多抗构建 EvoMabTM 提供具有良好稳定性、功能活性和可开发性的核心“组装模块”；",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u3",
-        "management_strategy-0:u4",
-        "management_strategy-0:u5"
+        "management_strategy-0:u6"
       ],
       "source_units": [
         {
           "block_id": "management_strategy-0",
-          "end_pos": 367,
-          "ordinal": 3,
-          "start_pos": 197,
-          "text": "目前，公司已建成多个行业领先、潜力充沛的创新药研发技术 平台，全面赋能创新药物全链条开发，重点建设的核心平台包括：超长效多特异性抗体技术平台、肝外siRNA靶向递 送技术平台、长效缓释多肽技术平台、跨血脑屏障递送技术平台、T-CellEngager技术平台、靶蛋白降解技术平台、 裂解酶技术平台、抗体偶联药物技术平台等多个研发创新技术平台。",
-          "unit_id": "management_strategy-0:u3"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 419,
-          "ordinal": 4,
-          "start_pos": 368,
-          "text": "技术平台 平台核心优势 核心技术共融，打造超长效多特异性组装能力，实现多靶点同时阻断，强化治疗协同性。",
-          "unit_id": "management_strategy-0:u4"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 500,
-          "ordinal": 5,
-          "start_pos": 420,
-          "text": "AI驱动的纳米抗体（VHH）合成文库发现平台(NanoAcell)：快速发现高亲和力、高稳定性VHH 超长效多特异 抗体，提供灵活的结合模块与HSA的长效修饰；",
-          "unit_id": "management_strategy-0:u5"
+          "end_pos": 597,
+          "ordinal": 6,
+          "start_pos": 501,
+          "text": "性抗体平台 AI驱动的scFv改造技术平台(OptimAFv)：提高scFv型双/多抗开发周期及成功率，为多抗构建 EvoMabTM 提供具有良好稳定性、功能活性和可开发性的核心“组装模块”；",
+          "unit_id": "management_strategy-0:u6"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:746a299de74112932e33",
+      "fact_anchors": [
+        "平台",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "长效抗体改造平台(ProlongX)：系统工程化改造提升成药性和半衰期，实现3-6个月给药周期。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 691,
+          "ordinal": 8,
+          "start_pos": 643,
+          "text": "长效抗体改造平台(ProlongX)：系统工程化改造提升成药性和半衰期，实现3-6个月给药周期。",
+          "unit_id": "management_strategy-0:u8"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:110a9c940f0edbb0ee95",
+      "fact_anchors": [
+        "70%",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "实现肾脏高效特异性递送，靶组织mRNA敲降>70%， 台GPODSTM 无肾毒性；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u13"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 858,
+          "ordinal": 13,
+          "start_pos": 817,
+          "text": "实现肾脏高效特异性递送，靶组织mRNA敲降>70%， 台GPODSTM 无肾毒性；",
+          "unit_id": "management_strategy-0:u13"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:134e2cf88ff5e682a024",
+      "fact_anchors": [
+        "80%",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "实现脂肪，肌肉组织高效特异性递送，靶组织mRNA敲 降>80%，减脂不减肌肉。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u15"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 914,
+          "ordinal": 15,
+          "start_pos": 875,
+          "text": "实现脂肪，肌肉组织高效特异性递送，靶组织mRNA敲 降>80%，减脂不减肌肉。",
+          "unit_id": "management_strategy-0:u15"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:42a9b47ac9ca48b748ab",
+      "fact_anchors": [
+        "2025年",
+        "平台",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "通过VHH、脂肪酸链、前 长效缓释多肽 药，缓释核心等技术，实现多肽，蛋白药物的长效化与控释，显著延长半衰期、减少给药频率、 平台 降低浓度波动相关副作用。 DuratideTM 通过VHH、脂肪酸链、前药，缓释核心等技术，实现多肽，蛋白药物的长效化与控释，显著延长 半衰期、减少给药频率、降低浓度波动相关副作用 20 长春高新技术产业（集团）股份有限公司2025年年度报告全文 技术平台 平台核心优势 跨血脑屏障递 解决传统递送技术入脑率低的局限性。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u17",
+        "management_strategy-0:u18"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1023,
+          "ordinal": 17,
+          "start_pos": 945,
+          "text": "通过VHH、脂肪酸链、前 长效缓释多肽 药，缓释核心等技术，实现多肽，蛋白药物的长效化与控释，显著延长半衰期、减少给药频率、 平台 降低浓度波动相关副作用。",
+          "unit_id": "management_strategy-0:u17"
+        },
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1171,
+          "ordinal": 18,
+          "start_pos": 1024,
+          "text": "DuratideTM 通过VHH、脂肪酸链、前药，缓释核心等技术，实现多肽，蛋白药物的长效化与控释，显著延长 半衰期、减少给药频率、降低浓度波动相关副作用 20 长春高新技术产业（集团）股份有限公司2025年年度报告全文 技术平台 平台核心优势 跨血脑屏障递 解决传统递送技术入脑率低的局限性。",
+          "unit_id": "management_strategy-0:u18"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": true,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:dba92eeef4c671767a4d",
+      "card_id": "annual-argument:771d648816bedccfb99d",
       "fact_anchors": [
         "CD98",
         "平台",
@@ -2891,15 +3544,11 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "通过TfR（转铁蛋白受体）或CD98提高效递送抗体、多 送平台 肽、蛋白及siRNA效率，创新中枢神经系统（CNS）疾病治疗的需求 TransNeuroTM T- 实现 T 细胞高效精准肿瘤细胞杀伤。“条件激活(AbMaskTM 平台)或共刺激(SynTacTM 平 CellEngager 台)”TCE，即在“正常组织中惰性而在病灶组织中（如肿瘤微环境）特异性激活”，提高安全 技术平台 性，扩大治疗窗 实现“不可成药”靶点开发新药。拥有PROTAC，分子胶，RIPTAC和ATAC技术，以泛素-蛋白酶 蛋白降解技术 体与内吞-溶酶体机制，实现胞内与胞外游离“难成药”靶点的快速、深度降解，重塑不可成药 平台 空间的成药边界。 裂解酶技术平 破解耐药性这一公共卫生难题。靶向高效杀灭耐药菌：特异性结合细胞壁肽聚糖，不影响人体正 台EnLysTM 常菌群，安全性好，与传统抗生素相比，具有耐药性低、杀菌速度快的特点 ADC技术平台 解决\"高稳定性\"与\"强药效\"矛盾。高度稳定的亲水linker（MPMS）为技术核心；",
+      "source_excerpt": "通过TfR（转铁蛋白受体）或CD98提高效递送抗体、多 送平台 肽、蛋白及siRNA效率，创新中枢神经系统（CNS）疾病治疗的需求 TransNeuroTM T- 实现 T 细胞高效精准肿瘤细胞杀伤。“条件激活(AbMaskTM 平台)或共刺激(SynTacTM 平 CellEngager 台)”TCE，即在“正常组织中惰性而在病灶组织中（如肿瘤微环境）特异性激活”，提高安全 技术平台 性，扩大治疗窗 实现“不可成药”靶点开发新药。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
         "management_strategy-0:u19",
-        "management_strategy-0:u20",
-        "management_strategy-0:u21",
-        "management_strategy-0:u22",
-        "management_strategy-0:u23",
-        "management_strategy-0:u24"
+        "management_strategy-0:u20"
       ],
       "source_units": [
         {
@@ -2917,7 +3566,39 @@
           "start_pos": 1271,
           "text": "“条件激活(AbMaskTM 平台)或共刺激(SynTacTM 平 CellEngager 台)”TCE，即在“正常组织中惰性而在病灶组织中（如肿瘤微环境）特异性激活”，提高安全 技术平台 性，扩大治疗窗 实现“不可成药”靶点开发新药。",
           "unit_id": "management_strategy-0:u20"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:2c69ea23b77572bd42e0",
+      "fact_anchors": [
+        "拥有PROTAC，分子胶，RIPTAC和ATAC"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "拥有PROTAC，分子胶，RIPTAC和ATAC技术，以泛素-蛋白酶 蛋白降解技术 体与内吞-溶酶体机制，实现胞内与胞外游离“难成药”靶点的快速、深度降解，重塑不可成药 平台 空间的成药边界。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u21"
+      ],
+      "source_units": [
         {
           "block_id": "management_strategy-0",
           "end_pos": 1485,
@@ -2925,66 +3606,39 @@
           "start_pos": 1389,
           "text": "拥有PROTAC，分子胶，RIPTAC和ATAC技术，以泛素-蛋白酶 蛋白降解技术 体与内吞-溶酶体机制，实现胞内与胞外游离“难成药”靶点的快速、深度降解，重塑不可成药 平台 空间的成药边界。",
           "unit_id": "management_strategy-0:u21"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1507,
-          "ordinal": 22,
-          "start_pos": 1486,
-          "text": "裂解酶技术平 破解耐药性这一公共卫生难题。",
-          "unit_id": "management_strategy-0:u22"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1604,
-          "ordinal": 23,
-          "start_pos": 1507,
-          "text": "靶向高效杀灭耐药菌：特异性结合细胞壁肽聚糖，不影响人体正 台EnLysTM 常菌群，安全性好，与传统抗生素相比，具有耐药性低、杀菌速度快的特点 ADC技术平台 解决\"高稳定性\"与\"强药效\"矛盾。",
-          "unit_id": "management_strategy-0:u23"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1629,
-          "ordinal": 24,
-          "start_pos": 1604,
-          "text": "高度稳定的亲水linker（MPMS）为技术核心；",
-          "unit_id": "management_strategy-0:u24"
         }
       ],
-      "title": "技术与产品进展"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:9132c8962d6dd6449dfa",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:0113652bd6005907c43c",
       "fact_anchors": [
-        "市场",
-        "需求",
-        "战略"
+        "产品"
       ],
-      "quality_score": 3,
+      "quality_score": 2,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 2,
+        "anchored_fact": 1,
         "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [
-        "business_structure"
+        "technology_product_progress",
+        "market_competition_outlook"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "精准靶向肿瘤 HydroLockTM 细胞，大幅降低脱靶毒性 在疫苗领域，围绕国家战略和市场需求，依托“病毒规模化培养技术平台”“制剂与佐剂技术平台”“基因工程 技术平台”“细菌性疫苗技术平台”“mRNA疫苗技术平台”五大核心技术平台，各平台之间相辅相成，形成较强的协 同效应，有助于进行产业核心技术的攻关和关键工艺的实验研究，使公司能够以更经济、更高效的方式研发疫苗产品 及构建疫苗产品组合，形成完善的产品梯度布局。 技术平台 优势特点 采用合适的培养体系，对病毒进行大规模的培养。主要包括：应用细胞工厂或生物反应器培养细 病毒规模化培养 胞制备病毒性疫苗。基于人二倍体细胞、Vero细胞培养技术，建立起了病毒规模化培养技术平 技术平台 台。",
+      "source_excerpt": "精准靶向肿瘤 HydroLockTM 细胞，大幅降低脱靶毒性 在疫苗领域，围绕国家战略和市场需求，依托“病毒规模化培养技术平台”“制剂与佐剂技术平台”“基因工程 技术平台”“细菌性疫苗技术平台”“mRNA疫苗技术平台”五大核心技术平台，各平台之间相辅相成，形成较强的协 同效应，有助于进行产业核心技术的攻关和关键工艺的实验研究，使公司能够以更经济、更高效的方式研发疫苗产品 及构建疫苗产品组合，形成完善的产品梯度布局。 技术平台 优势特点 采用合适的培养体系，对病毒进行大规模的培养。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
         "management_strategy-0:u25",
-        "management_strategy-0:u26",
-        "management_strategy-0:u27",
-        "management_strategy-0:u28"
+        "management_strategy-0:u26"
       ],
       "source_units": [
         {
@@ -3002,15 +3656,37 @@
           "start_pos": 1839,
           "text": "技术平台 优势特点 采用合适的培养体系，对病毒进行大规模的培养。",
           "unit_id": "management_strategy-0:u26"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1909,
-          "ordinal": 27,
-          "start_pos": 1871,
-          "text": "主要包括：应用细胞工厂或生物反应器培养细 病毒规模化培养 胞制备病毒性疫苗。",
-          "unit_id": "management_strategy-0:u27"
-        },
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:95d69f37c1edda5a23ad",
+      "fact_anchors": [
+        "基于人二倍体细胞、Vero细胞培养技术，建立起了"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "基于人二倍体细胞、Vero细胞培养技术，建立起了病毒规模化培养技术平 技术平台 台。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u28"
+      ],
+      "source_units": [
         {
           "block_id": "management_strategy-0",
           "end_pos": 1951,
@@ -3020,7 +3696,7 @@
           "unit_id": "management_strategy-0:u28"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
@@ -3113,35 +3789,53 @@
     }
   ],
   "integrity": {
-    "card_count": 70,
-    "cards_sha256": "5d055e22c7c2991fd8e89e9c1e796553380171c7a022d34cf172e2f0b1885e3b",
-    "payload_sha256": "caffefce1390921f9a941f9e4d43f3ec87fbd338045d94a3599526fdc037fe1a",
-    "producer_diagnostics_sha256": "3927e643369458c5d575b2b1f91f58c1d37ad62b9c27cb27cc9fada4495d87e0",
-    "source_unit_count": 107
+    "card_count": 91,
+    "cards_sha256": "fb61ba5dfe6c11009343f8713311e1fad5065048ce71615b03d3d136fd725d33",
+    "payload_sha256": "351c91dff4a513a9ca30f91342261a091ef4895c04e8ec79e64c22c6737631ee",
+    "producer_diagnostics_sha256": "44c8c1fd603109ccf1efc3086cacefd33ff3915bf1aa7ef14fd8bcd3fdd7767c",
+    "source_unit_count": 111
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
-      "business_structure": 12,
-      "financial_quality_explanation": 17,
-      "market_competition_outlook": 36,
-      "operating_progress": 0,
-      "technology_product_progress": 5
+      "business_structure": 18,
+      "financial_quality_explanation": 20,
+      "market_competition_outlook": 33,
+      "operating_progress": 1,
+      "technology_product_progress": 19
     },
     "argument_complete_counts": {
-      "atomic": 54,
-      "complete": 16
+      "atomic": 72,
+      "complete": 19
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
-      "business_structure": 12,
-      "financial_quality_explanation": 17,
-      "market_competition_outlook": 36,
-      "operating_progress": 0,
-      "technology_product_progress": 5
+      "business_structure": 18,
+      "financial_quality_explanation": 20,
+      "market_competition_outlook": 33,
+      "operating_progress": 1,
+      "technology_product_progress": 19
     },
     "cards": [
+      {
+        "card_id": "annual-argument:c91391c28dc17874d332",
+        "fact_anchors": [
+          "134.79%",
+          "报告期",
+          "产量"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:operating_progress",
+        "source_unit_ids": [
+          "production_sales_inventory_table-0:u0"
+        ]
+      },
       {
         "card_id": "annual-argument:d5807cd9564255d50a87",
         "fact_anchors": [
@@ -3159,7 +3853,23 @@
         ]
       },
       {
-        "card_id": "annual-argument:d14fcf7d9b4af3aa1732",
+        "card_id": "annual-argument:82d56776ba9f655c55ab",
+        "fact_anchors": [
+          "意见提出通过完善审评审批机制、加强知识产权保护、"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:45847f26bf93c86c0a0a",
         "fact_anchors": [
           "2025年",
           "行业"
@@ -3172,8 +3882,7 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "rd_product_progress-0:u8",
-          "rd_product_progress-0:u9"
+          "rd_product_progress-0:u8"
         ]
       },
       {
@@ -3606,15 +4315,18 @@
           "86.20%",
           "88.41%",
           "12.50%",
-          "行业"
+          "产品",
+          "服务"
         ],
         "score_parts": {
           "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "segment_table-0:u0"
         ]
@@ -3701,6 +4413,25 @@
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
           "inventory_note-0:u11"
+        ]
+      },
+      {
+        "card_id": "annual-argument:8748bea45cb77e7e1487",
+        "fact_anchors": [
+          "2025年"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:technology_product_progress",
+        "source_unit_ids": [
+          "capex_cip_note-0:u2"
         ]
       },
       {
@@ -3910,6 +4641,62 @@
         ]
       },
       {
+        "card_id": "annual-argument:ca7cf0a4e47c2f3e3003",
+        "fact_anchors": [
+          "2020年",
+          "42.14%",
+          "2021年",
+          "38%",
+          "商誉",
+          "从而"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u0",
+          "goodwill_note-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:19f85bb2a59eb8978b04",
+        "fact_anchors": [
+          "商誉",
+          "从而"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f1de5663510901be0bcc",
+        "fact_anchors": [
+          "商誉",
+          "随着"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u5"
+        ]
+      },
+      {
         "card_id": "annual-argument:a8dd8beca88ae40262b9",
         "fact_anchors": [
           "2025年",
@@ -3956,7 +4743,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_overview-0:u4",
@@ -3974,10 +4763,28 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_overview-0:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4ec3272ace8bb2d6631f",
+        "fact_anchors": [
+          "女性：子宫内膜异位症、子宫肌瘤或辅助生 注射液 "
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_overview-0:u8"
         ]
       },
       {
@@ -3997,7 +4804,24 @@
         ]
       },
       {
-        "card_id": "annual-argument:186fbc3b977c32af2b83",
+        "card_id": "annual-argument:e821aa1c2f57eddd6e8b",
+        "fact_anchors": [
+          "平台",
+          "研发"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_model-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:b82eb4e416019df212e1",
         "fact_anchors": [
           "市场",
           "需求",
@@ -4005,22 +4829,18 @@
         ],
         "score_parts": {
           "anchored_fact": 2,
-          "argument_complete": 4,
+          "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "business_model-0:u7",
-          "business_model-0:u8",
-          "business_model-0:u9"
+          "business_model-0:u7"
         ]
       },
       {
-        "card_id": "annual-argument:4b69f2623a82e82bd3d1",
+        "card_id": "annual-argument:d2e12183d2f5720a91cb",
         "fact_anchors": [
-          "2025年",
-          "平台",
           "研发",
           "验证"
         ],
@@ -4030,14 +4850,27 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
-          "market_competition_outlook",
-          "business_structure"
+          "market_competition_outlook"
         ],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "business_model-0:u10",
-          "business_model-0:u11",
-          "business_model-0:u12",
+          "business_model-0:u10"
+        ]
+      },
+      {
+        "card_id": "annual-argument:6bda034f59c0e0e7f338",
+        "fact_anchors": [
+          "2025年",
+          "验证"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
           "business_model-0:u13",
           "business_model-0:u14",
           "business_model-0:u15"
@@ -4063,7 +4896,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:f0ba06a9753499e18f32",
+        "card_id": "annual-argument:7b9f6affcbe516a5f6fe",
         "fact_anchors": [
           "产品"
         ],
@@ -4075,11 +4908,58 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
-          "business_model-0:u22",
-          "business_model-0:u23",
-          "business_model-0:u24",
-          "business_model-0:u25",
-          "business_model-0:u26"
+          "business_model-0:u22"
+        ]
+      },
+      {
+        "card_id": "annual-argument:1a7213d4ec502bcbe552",
+        "fact_anchors": [
+          "工艺",
+          "模型"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_model-0:u23"
+        ]
+      },
+      {
+        "card_id": "annual-argument:cdcc2438619a861ab2d1",
+        "fact_anchors": [
+          "产品"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_model-0:u24"
+        ]
+      },
+      {
+        "card_id": "annual-argument:36541a7b7cdde3f2add8",
+        "fact_anchors": [
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_model-0:u25"
         ]
       },
       {
@@ -4279,7 +5159,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:0612efcbee299b23c963",
+        "card_id": "annual-argument:aa08fc6694f10f98173d",
         "fact_anchors": [
           "平台",
           "研发",
@@ -4296,7 +5176,22 @@
         ],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "management_strategy-0:u0",
+          "management_strategy-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:74960bab1c75a5904eea",
+        "fact_anchors": [
+          "研发"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
           "management_strategy-0:u1"
         ]
       },
@@ -4317,9 +5212,45 @@
         ]
       },
       {
-        "card_id": "annual-argument:2da2e0cde941ce3afb20",
+        "card_id": "annual-argument:f535cad40042127a55a7",
         "fact_anchors": [
-          "行业"
+          "目前，公司已建成多个行业领先、潜力充沛的创新药研"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:ae9e973109167e4be1f7",
+        "fact_anchors": [
+          "平台",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:18bcbca61cca1a8f0c36",
+        "fact_anchors": [
+          "平台"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -4327,15 +5258,83 @@
           "source_unit_count": 1
         },
         "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "management_strategy-0:u3",
-          "management_strategy-0:u4",
-          "management_strategy-0:u5"
+          "management_strategy-0:u6"
         ]
       },
       {
-        "card_id": "annual-argument:dba92eeef4c671767a4d",
+        "card_id": "annual-argument:746a299de74112932e33",
+        "fact_anchors": [
+          "平台",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:110a9c940f0edbb0ee95",
+        "fact_anchors": [
+          "70%",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u13"
+        ]
+      },
+      {
+        "card_id": "annual-argument:134e2cf88ff5e682a024",
+        "fact_anchors": [
+          "80%",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u15"
+        ]
+      },
+      {
+        "card_id": "annual-argument:42a9b47ac9ca48b748ab",
+        "fact_anchors": [
+          "2025年",
+          "平台",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u17",
+          "management_strategy-0:u18"
+        ]
+      },
+      {
+        "card_id": "annual-argument:771d648816bedccfb99d",
         "fact_anchors": [
           "CD98",
           "平台",
@@ -4350,33 +5349,60 @@
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "management_strategy-0:u19",
-          "management_strategy-0:u20",
-          "management_strategy-0:u21",
-          "management_strategy-0:u22",
-          "management_strategy-0:u23",
-          "management_strategy-0:u24"
+          "management_strategy-0:u20"
         ]
       },
       {
-        "card_id": "annual-argument:9132c8962d6dd6449dfa",
+        "card_id": "annual-argument:2c69ea23b77572bd42e0",
         "fact_anchors": [
-          "市场",
-          "需求",
-          "战略"
+          "拥有PROTAC，分子胶，RIPTAC和ATAC"
         ],
         "score_parts": {
-          "anchored_fact": 2,
+          "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [
-          "business_structure"
+          "technology_product_progress"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u21"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0113652bd6005907c43c",
+        "fact_anchors": [
+          "产品"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "management_strategy-0:u25",
-          "management_strategy-0:u26",
-          "management_strategy-0:u27",
+          "management_strategy-0:u26"
+        ]
+      },
+      {
+        "card_id": "annual-argument:95d69f37c1edda5a23ad",
+        "fact_anchors": [
+          "基于人二倍体细胞、Vero细胞培养技术，建立起了"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
           "management_strategy-0:u28"
         ]
       },
@@ -4418,17 +5444,15 @@
         ]
       }
     ],
-    "missing_families": [
-      "operating_progress"
-    ],
+    "missing_families": [],
     "rejection_counts": {
       "boilerplate": 19,
-      "incomplete": 63,
+      "incomplete": 64,
       "invalid_unit": 1,
-      "no_anchor": 102,
+      "no_anchor": 100,
       "ocr_damage": 21,
       "reused_source_units": 0,
-      "table_noise": 11
+      "table_noise": 8
     },
     "source_blocks_seen": 42,
     "source_unit_decisions": [
@@ -4460,9 +5484,11 @@
         "source_unit_id": "customer_supplier_table-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c91391c28dc17874d332"
+        ],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 0,
         "source_text_hash": "8c71fb2aa0f1b4b5346397c2ec065be235c1075cdf27f64f7610bbfaf3a9d3b3",
@@ -4552,9 +5578,11 @@
         "source_unit_id": "rd_product_progress-0:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_anchor",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:82d56776ba9f655c55ab"
+        ],
         "source_block_id": "rd_product_progress-0",
         "source_order": 7,
         "source_text_hash": "5f485367eb272b99622b8905aff75c0f7180baa560fb86a2ff99fa793bbeb9b8",
@@ -4564,7 +5592,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:d14fcf7d9b4af3aa1732"
+          "annual-argument:45847f26bf93c86c0a0a"
         ],
         "source_block_id": "rd_product_progress-0",
         "source_order": 8,
@@ -4572,11 +5600,9 @@
         "source_unit_id": "rd_product_progress-0:u8"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:d14fcf7d9b4af3aa1732"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "rd_product_progress-0",
         "source_order": 9,
         "source_text_hash": "561d06ac5f3198f2bf893290a4a0c7cec8728c6fd80bf7b6c3d8634a88ec31e9",
@@ -5501,9 +6527,11 @@
         "source_unit_id": "capex_cip_note-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:8748bea45cb77e7e1487"
+        ],
         "source_block_id": "capex_cip_note-0",
         "source_order": 2,
         "source_text_hash": "3c91c18a605f25be3f01837d56ed40d395ac3a47825feac6b00cb26ba22a98d1",
@@ -6188,18 +7216,22 @@
         "source_unit_id": "subsequent_events-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:ca7cf0a4e47c2f3e3003"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 0,
         "source_text_hash": "1d1b5a7fa767114e4bec872bba2c84d13e55058a3daeedefb415b4c3ca3d26d5",
         "source_unit_id": "goodwill_note-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:ca7cf0a4e47c2f3e3003"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 1,
         "source_text_hash": "c50a43363d59d413af955339c490db49879ca26d5b2bf654a8413c909f7fc210",
@@ -6224,18 +7256,22 @@
         "source_unit_id": "goodwill_note-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:19f85bb2a59eb8978b04"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 4,
         "source_text_hash": "62280dc1a2ad9bc2d71c23aa53c05e51a260764fdfb304c2f0003f14b2b9e7bd",
         "source_unit_id": "goodwill_note-0:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f1de5663510901be0bcc"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 5,
         "source_text_hash": "31aff9bee8a814571c38ceacb356f423995d118a3b20163f0c43ea8d7f7eb6f4",
@@ -6360,9 +7396,11 @@
         "source_unit_id": "business_overview-0:u7"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4ec3272ace8bb2d6631f"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 8,
         "source_text_hash": "9039511f35b1deea66b74e968b69091a309466040ff5b021457f325e743468fc",
@@ -6389,9 +7427,11 @@
         "source_unit_id": "business_overview-0:u10"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e821aa1c2f57eddd6e8b"
+        ],
         "source_block_id": "business_model-0",
         "source_order": 0,
         "source_text_hash": "285502a38412c9cfd9d07816ff4cebfc4d9479f1e62ac861672b0139a930062c",
@@ -6455,7 +7495,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:186fbc3b977c32af2b83"
+          "annual-argument:b82eb4e416019df212e1"
         ],
         "source_block_id": "business_model-0",
         "source_order": 7,
@@ -6463,22 +7503,18 @@
         "source_unit_id": "business_model-0:u7"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:186fbc3b977c32af2b83"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_model-0",
         "source_order": 8,
         "source_text_hash": "5a3424a493ce7ea9d435bd718ec6a049731d0e2616716b1b905fad204f9f79ad",
         "source_unit_id": "business_model-0:u8"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:186fbc3b977c32af2b83"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_model-0",
         "source_order": 9,
         "source_text_hash": "7e74f328b39fa3a5ec49195ea654581da0856104fcc5012f69c8d6aa91c4923e",
@@ -6488,7 +7524,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4b69f2623a82e82bd3d1"
+          "annual-argument:d2e12183d2f5720a91cb"
         ],
         "source_block_id": "business_model-0",
         "source_order": 10,
@@ -6496,22 +7532,18 @@
         "source_unit_id": "business_model-0:u10"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:4b69f2623a82e82bd3d1"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_model-0",
         "source_order": 11,
         "source_text_hash": "b273ba2e52a44f6817186f4ab31bae338ec84e96278c71c48f1af0179d25cc37",
         "source_unit_id": "business_model-0:u11"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:4b69f2623a82e82bd3d1"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_model-0",
         "source_order": 12,
         "source_text_hash": "cbb070228ab7494796615620ecab719f1cbb1d23084d54085dbc605165bb73e1",
@@ -6521,7 +7553,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4b69f2623a82e82bd3d1"
+          "annual-argument:6bda034f59c0e0e7f338"
         ],
         "source_block_id": "business_model-0",
         "source_order": 13,
@@ -6532,7 +7564,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4b69f2623a82e82bd3d1"
+          "annual-argument:6bda034f59c0e0e7f338"
         ],
         "source_block_id": "business_model-0",
         "source_order": 14,
@@ -6543,7 +7575,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4b69f2623a82e82bd3d1"
+          "annual-argument:6bda034f59c0e0e7f338"
         ],
         "source_block_id": "business_model-0",
         "source_order": 15,
@@ -6612,7 +7644,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:f0ba06a9753499e18f32"
+          "annual-argument:7b9f6affcbe516a5f6fe"
         ],
         "source_block_id": "business_model-0",
         "source_order": 22,
@@ -6623,7 +7655,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:f0ba06a9753499e18f32"
+          "annual-argument:1a7213d4ec502bcbe552"
         ],
         "source_block_id": "business_model-0",
         "source_order": 23,
@@ -6634,7 +7666,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:f0ba06a9753499e18f32"
+          "annual-argument:cdcc2438619a861ab2d1"
         ],
         "source_block_id": "business_model-0",
         "source_order": 24,
@@ -6645,7 +7677,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:f0ba06a9753499e18f32"
+          "annual-argument:36541a7b7cdde3f2add8"
         ],
         "source_block_id": "business_model-0",
         "source_order": 25,
@@ -6653,11 +7685,9 @@
         "source_unit_id": "business_model-0:u25"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:f0ba06a9753499e18f32"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_model-0",
         "source_order": 26,
         "source_text_hash": "3f15e01dc64dd54994ac3ffb8245e045def40a131f5653b864203f1a0d05fffc",
@@ -6952,7 +7982,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:0612efcbee299b23c963"
+          "annual-argument:aa08fc6694f10f98173d"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 0,
@@ -6963,7 +7993,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:0612efcbee299b23c963"
+          "annual-argument:74960bab1c75a5904eea"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 1,
@@ -6985,7 +8015,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2da2e0cde941ce3afb20"
+          "annual-argument:f535cad40042127a55a7"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 3,
@@ -6996,7 +8026,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2da2e0cde941ce3afb20"
+          "annual-argument:ae9e973109167e4be1f7"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 4,
@@ -7004,20 +8034,20 @@
         "source_unit_id": "management_strategy-0:u4"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:2da2e0cde941ce3afb20"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 5,
         "source_text_hash": "c56047fbaa77203229f9d7b1b5678cace9999a7ee92ddc3752c165e0cdfff772",
         "source_unit_id": "management_strategy-0:u5"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:18bcbca61cca1a8f0c36"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 6,
         "source_text_hash": "ee67bcf6d62d0bf27c7e8b54aabe9f15a1da4a145e52d4db0230641bf6769945",
@@ -7033,9 +8063,11 @@
         "source_unit_id": "management_strategy-0:u7"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:746a299de74112932e33"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 8,
         "source_text_hash": "707c9a13172904c18422e29ae99dd99856d2178172a3099b43f7e9fd3b54758a",
@@ -7078,9 +8110,11 @@
         "source_unit_id": "management_strategy-0:u12"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:110a9c940f0edbb0ee95"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 13,
         "source_text_hash": "e8b9598beaec111ddea40b7094ac2d0ca2481142defe6901f8df91d5a630974d",
@@ -7096,9 +8130,11 @@
         "source_unit_id": "management_strategy-0:u14"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:134e2cf88ff5e682a024"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 15,
         "source_text_hash": "3a6be4b457d7b00bd0408f0fd46d793cd06844d3f0a1f222677fac3cd7aca9df",
@@ -7114,18 +8150,22 @@
         "source_unit_id": "management_strategy-0:u16"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:42a9b47ac9ca48b748ab"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 17,
         "source_text_hash": "b58053939a4a8bd92ccdb749cefa71139d433d09d81af2aff0f09469c872fada",
         "source_unit_id": "management_strategy-0:u17"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:42a9b47ac9ca48b748ab"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 18,
         "source_text_hash": "fd3bfbc1d9e4a4b13c5de80c0b4375cb70e780b8f155b91e0de7eaa8bba5bf59",
@@ -7135,7 +8175,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:dba92eeef4c671767a4d"
+          "annual-argument:771d648816bedccfb99d"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 19,
@@ -7146,7 +8186,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:dba92eeef4c671767a4d"
+          "annual-argument:771d648816bedccfb99d"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 20,
@@ -7157,7 +8197,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:dba92eeef4c671767a4d"
+          "annual-argument:2c69ea23b77572bd42e0"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 21,
@@ -7165,33 +8205,27 @@
         "source_unit_id": "management_strategy-0:u21"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:dba92eeef4c671767a4d"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 22,
         "source_text_hash": "5298079113b24427299070cf7d4c30a739c1155c0eeeefdddeb72bf400caee2d",
         "source_unit_id": "management_strategy-0:u22"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:dba92eeef4c671767a4d"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 23,
         "source_text_hash": "beea90dfb926babdde5237ce975e40672307c3409f28680789c50338d46ad59e",
         "source_unit_id": "management_strategy-0:u23"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:dba92eeef4c671767a4d"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 24,
         "source_text_hash": "cf159e296fac2c20a52d8494fd4b5658384fe39d5399113c00b25d5962d8d083",
@@ -7201,7 +8235,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:9132c8962d6dd6449dfa"
+          "annual-argument:0113652bd6005907c43c"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 25,
@@ -7212,7 +8246,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:9132c8962d6dd6449dfa"
+          "annual-argument:0113652bd6005907c43c"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 26,
@@ -7220,11 +8254,9 @@
         "source_unit_id": "management_strategy-0:u26"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:9132c8962d6dd6449dfa"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 27,
         "source_text_hash": "69a3cec3ac7f9d11c35c5ecd5fa6e7ab238f16ba6dcd86c41b015cd5d279dd81",
@@ -7234,7 +8266,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:9132c8962d6dd6449dfa"
+          "annual-argument:95d69f37c1edda5a23ad"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 28,
@@ -7565,7 +8597,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 324,
-    "usable_units": 162,
+    "usable_units": 167,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

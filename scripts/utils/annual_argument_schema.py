@@ -100,6 +100,9 @@ _ANCHOR_METRIC_RE = re.compile(r"\d+(?:\.\d+)?%|\d+(?:,\d{3})*(?:\.\d+)?(?:万|�
 _ANCHOR_LATIN_ID_RE = re.compile(r"[A-Za-z][A-Za-z0-9.\-]{2,}")
 _ANCHOR_PATTERNS = (_ANCHOR_DATE_RE, _ANCHOR_METRIC_RE, _ANCHOR_LATIN_ID_RE)
 ANNUAL_CHECKBOX_MARKER_RUN_RE = re.compile(r"[□☑■√]\s*(?:不适用|适用)(?:\s*[□☑■√]\s*(?:不适用|适用))*")
+_ANNUAL_PAGE_HEADER_RE = re.compile(
+    r"20\d{2}\s*年?\s*年度报告(?:全文)?\s*>\s*\d+(?:\s*/\s*\d+)?\s*"
+)
 _ANCHOR_CONCRETE_TOKENS = ("主营", "主營", "业务", "業務", "产品", "產品", "客户", "客戶", "平台", "应用", "應用", "技术", "技術", "项目", "項目", "营收", "營收", "毛利率", "现金流", "現金流", "订单", "訂單", "量产", "量產", "验证", "驗證", "交付", "供货", "供貨", "电汇", "電匯", "航信", "所致", "主要系", "由于", "由於")
 
 
@@ -129,10 +132,12 @@ def annual_source_tail(text: object) -> str | None:
         end = marker_runs[0].end()
     elif match := _ANNUAL_SOURCE_PREFIX_RE.match(normalized):
         end = match.end()
+    elif match := _ANNUAL_PAGE_HEADER_RE.search(normalized):
+        end = match.end()
     else:
         return None
     tail = normalized[end:].strip()
-    return tail if tail and not ANNUAL_CHECKBOX_MARKER_RUN_RE.search(tail) and not _ANNUAL_SOURCE_PREFIX_RE.match(tail) and tail.endswith(("。", "；", ";", "！", "？", "!", "?")) and normalized.find(tail) >= 0 else None
+    return tail if tail and not ANNUAL_CHECKBOX_MARKER_RUN_RE.search(tail) and not _ANNUAL_SOURCE_PREFIX_RE.match(tail) and not _ANNUAL_PAGE_HEADER_RE.search(tail) and tail.endswith(("。", "；", ";", "！", "？", "!", "?")) and normalized.find(tail) >= 0 else None
 
 def has_concrete_annual_anchor(text: object) -> bool:
     text = normalize_annual_source_text(text)

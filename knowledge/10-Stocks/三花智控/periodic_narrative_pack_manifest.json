@@ -1,14 +1,14 @@
 {
   "periods": [
     {
-      "cards_sha256": "4fc1b81044db3a3186e370766bb46e0ca344ecc14c3f8b2d0a45dbdc0ee0e5cc",
+      "cards_sha256": "7500a2cdd49d4f990a999539a5e3729d0641c78175746bedb4040c73a0aeddde",
       "pack_path": "periodic_narrative_packs/2025-annual.json",
-      "payload_sha256": "2dee85d530230867ade1581cc6cab12013aa7f450136d347e8ca54954347d921",
+      "payload_sha256": "900e811f2fb6e311c998045b637e6b02f19381de20a533392b58ee0dbdfffc99",
       "report_type": "annual",
       "report_year": 2025
     }
   ],
-  "periods_sha256": "d3af3b2f1ebfdfc198aeedff4b1714664b16f2e5db970306646eeaed41c3bd61",
+  "periods_sha256": "246de23aaea769a6c06fd4f50fb9adf064a68bf3ba8ab1c38858a2a48a9d47e1",
   "schema_version": "periodic_report_narrative_pack_manifest.v1",
   "stock_code": "002050",
   "stock_name": "三花智控"

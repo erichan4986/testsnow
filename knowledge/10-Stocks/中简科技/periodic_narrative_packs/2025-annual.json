@@ -174,24 +174,26 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:9312c045fd2df8b03c74",
       "fact_anchors": [
-        "行业"
+        "研发",
+        "完成"
       ],
-      "quality_score": 2,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 1,
+        "anchored_fact": 2,
         "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "market_competition_outlook",
         "business_structure"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-0",
       "source_credit": 75,
@@ -210,7 +212,7 @@
           "unit_id": "rd_product_progress-0:u7"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -368,6 +370,44 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:36c0d5ec68081a45abec",
+      "fact_anchors": [
+        "完成"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "(4) 有足够的技术、财务资源和其他资源支持，以完成该无形资产的开 发，并有能力使用或出售该无形资产；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-1:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-1",
+          "end_pos": 297,
+          "ordinal": 5,
+          "start_pos": 246,
+          "text": "(4) 有足够的技术、财务资源和其他资源支持，以完成该无形资产的开 发，并有能力使用或出售该无形资产；",
+          "unit_id": "rd_product_progress-1:u5"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "financial_quality_explanation",
       "card_id": "annual-argument:fadae7f15db58bb2e39d",
       "fact_anchors": [
@@ -400,6 +440,82 @@
           "start_pos": 325,
           "text": "24、长期资产减值 对长期股权投资、固定资产、在建工程、使用寿命有限的无形资产等长期资产，在资产负债表日有迹象表明发生减值 的，估计其可收回金额。",
           "unit_id": "rd_product_progress-1:u7"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:8f4b00e520e3586ea10f",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "对因企业合并所形成的商誉和使用寿命不确定的无形资产，无论是否存在减值迹象，每年都进行 减值测试。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-1:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-1",
+          "end_pos": 446,
+          "ordinal": 8,
+          "start_pos": 398,
+          "text": "对因企业合并所形成的商誉和使用寿命不确定的无形资产，无论是否存在减值迹象，每年都进行 减值测试。",
+          "unit_id": "rd_product_progress-1:u8"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:d05922fef8b44c6b8150",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "商誉结合与其相关的资产组或者资产组组合进行减值测试。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-1:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-1",
+          "end_pos": 472,
+          "ordinal": 9,
+          "start_pos": 446,
+          "text": "商誉结合与其相关的资产组或者资产组组合进行减值测试。",
+          "unit_id": "rd_product_progress-1:u9"
         }
       ],
       "title": "财务质量与变化原因"
@@ -525,9 +641,8 @@
     {
       "argument_complete": true,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:2b88f29a54cb51078114",
+      "card_id": "annual-argument:5163415ab461e34e0b28",
       "fact_anchors": [
-        "2025年",
         "行业",
         "市场",
         "需求"
@@ -548,12 +663,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-2",
       "source_credit": 75,
-      "source_excerpt": "与此同时，公司通过持续的新产品研发、客户结构优化及市场拓展等 措施积极降低客户集中可能带来的经营风险，若现有核心客户因国家产业政策调整、宏观经济波动或行业技术变革等因素 导致需求大幅下降，仍可能对公司短期经营业绩产生不利影响。此外，由于公司供货进度主要受客户及其最终用户的采购 计划影响，客户需求的阶段性调整可能引致供货时间分布不均，从而带来供货存在不确定的风险。 21 中简科技股份有限公司2025年年度报告全文 为有效管理该风险，公司将从客户对碳纤维应用场景的个性化需求出发，加强定制化产品研发与技术服务，巩固现有 优质客户的合作黏性；",
+      "source_excerpt": "与此同时，公司通过持续的新产品研发、客户结构优化及市场拓展等 措施积极降低客户集中可能带来的经营风险，若现有核心客户因国家产业政策调整、宏观经济波动或行业技术变革等因素 导致需求大幅下降，仍可能对公司短期经营业绩产生不利影响。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "rd_product_progress-2:u2",
-        "rd_product_progress-2:u3",
-        "rd_product_progress-2:u4"
+        "rd_product_progress-2:u2"
       ],
       "source_units": [
         {
@@ -563,22 +676,6 @@
           "start_pos": 77,
           "text": "与此同时，公司通过持续的新产品研发、客户结构优化及市场拓展等 措施积极降低客户集中可能带来的经营风险，若现有核心客户因国家产业政策调整、宏观经济波动或行业技术变革等因素 导致需求大幅下降，仍可能对公司短期经营业绩产生不利影响。",
           "unit_id": "rd_product_progress-2:u2"
-        },
-        {
-          "block_id": "rd_product_progress-2",
-          "end_pos": 259,
-          "ordinal": 3,
-          "start_pos": 190,
-          "text": "此外，由于公司供货进度主要受客户及其最终用户的采购 计划影响，客户需求的阶段性调整可能引致供货时间分布不均，从而带来供货存在不确定的风险。",
-          "unit_id": "rd_product_progress-2:u3"
-        },
-        {
-          "block_id": "rd_product_progress-2",
-          "end_pos": 347,
-          "ordinal": 4,
-          "start_pos": 285,
-          "text": "为有效管理该风险，公司将从客户对碳纤维应用场景的个性化需求出发，加强定制化产品研发与技术服务，巩固现有 优质客户的合作黏性；",
-          "unit_id": "rd_product_progress-2:u4"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -1393,7 +1490,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_market_view-0",
@@ -1701,7 +1800,8 @@
       "card_id": "annual-argument:ee4c561342078c90759c",
       "fact_anchors": [
         "资产减值",
-        "减值损失"
+        "减值损失",
+        "商誉"
       ],
       "quality_score": 3,
       "report_type": "annual",
@@ -1821,6 +1921,7 @@
         "2.22%",
         "4.24%",
         "2.15%",
+        "其他收益",
         "坏账准备"
       ],
       "quality_score": 3,
@@ -2352,8 +2453,48 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:06cb805ea4aa0e0c96fb",
+      "fact_anchors": [
+        "公司掌握了同一生产线设备下生产不同碳纤维产品的技"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "公司掌握了同一生产线设备下生产不同碳纤维产品的技术，具备根据客 户要求量身定制特定碳纤维产品的能力。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 406,
+          "ordinal": 7,
+          "start_pos": 356,
+          "text": "公司掌握了同一生产线设备下生产不同碳纤维产品的技术，具备根据客 户要求量身定制特定碳纤维产品的能力。",
+          "unit_id": "business_model-0:u7"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "operating_progress",
-      "card_id": "annual-argument:96d1e5d48d0eae899557",
+      "card_id": "annual-argument:8545c02cab845846a78a",
       "fact_anchors": [
         "报告期"
       ],
@@ -2373,11 +2514,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
       "source_credit": 75,
-      "source_excerpt": "报告期内，公司依托智能化柔性生产线，持续提升定制化产品的响应效率与交付 能力，进一步巩固了在航空航天领域的供货保障能力。 3、销售模式 公司客户主要为国内大型航空航天企业集团，客户明确且集中度高。",
+      "source_excerpt": "报告期内，公司依托智能化柔性生产线，持续提升定制化产品的响应效率与交付 能力，进一步巩固了在航空航天领域的供货保障能力。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "business_model-0:u8",
-        "business_model-0:u9"
+        "business_model-0:u8"
       ],
       "source_units": [
         {
@@ -2387,14 +2527,6 @@
           "start_pos": 406,
           "text": "报告期内，公司依托智能化柔性生产线，持续提升定制化产品的响应效率与交付 能力，进一步巩固了在航空航天领域的供货保障能力。",
           "unit_id": "business_model-0:u8"
-        },
-        {
-          "block_id": "business_model-0",
-          "end_pos": 504,
-          "ordinal": 9,
-          "start_pos": 474,
-          "text": "公司客户主要为国内大型航空航天企业集团，客户明确且集中度高。",
-          "unit_id": "business_model-0:u9"
         }
       ],
       "title": "经营变化"
@@ -2714,33 +2846,33 @@
     }
   ],
   "integrity": {
-    "card_count": 66,
-    "cards_sha256": "3baddace7abd5820328d25b4a1241df9b126ff08ebc47ad1a63aeb971ce9aaed",
-    "payload_sha256": "4bea7d709a207a9b16bc5d60b2a4eb57ee1de1bd530b5125a712c5270ff88d53",
-    "producer_diagnostics_sha256": "4e7e5f6f268958c69e07d134b4fd589748e7b76827ab024ba013f841233943ed",
-    "source_unit_count": 76
+    "card_count": 70,
+    "cards_sha256": "ea9feb7f2dd31ac97b27d774338a25babf677bc8ec8d5f8cd45fe79d1272c5f6",
+    "payload_sha256": "071ad3e1d23087b5f8d15806fa9eebcec91669eb0edd8be5c99853473659c777",
+    "producer_diagnostics_sha256": "3511b70626d87c5888e41546e72ac42445bbcadbc2b0e1a08867f7304889daaf",
+    "source_unit_count": 77
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
       "business_structure": 22,
-      "financial_quality_explanation": 15,
-      "market_competition_outlook": 22,
+      "financial_quality_explanation": 17,
+      "market_competition_outlook": 21,
       "operating_progress": 4,
-      "technology_product_progress": 3
+      "technology_product_progress": 6
     },
     "argument_complete_counts": {
-      "atomic": 64,
+      "atomic": 68,
       "complete": 2
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
       "business_structure": 22,
-      "financial_quality_explanation": 15,
-      "market_competition_outlook": 22,
+      "financial_quality_explanation": 17,
+      "market_competition_outlook": 21,
       "operating_progress": 4,
-      "technology_product_progress": 3
+      "technology_product_progress": 6
     },
     "cards": [
       {
@@ -2822,17 +2954,19 @@
       {
         "card_id": "annual-argument:9312c045fd2df8b03c74",
         "fact_anchors": [
-          "行业"
+          "研发",
+          "完成"
         ],
         "score_parts": {
-          "anchored_fact": 1,
+          "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "market_competition_outlook",
           "business_structure"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "rd_product_progress-0:u7"
         ]
@@ -2904,6 +3038,22 @@
         ]
       },
       {
+        "card_id": "annual-argument:36c0d5ec68081a45abec",
+        "fact_anchors": [
+          "完成"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-1:u5"
+        ]
+      },
+      {
         "card_id": "annual-argument:fadae7f15db58bb2e39d",
         "fact_anchors": [
           "资产减值"
@@ -2917,6 +3067,38 @@
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
           "rd_product_progress-1:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:8f4b00e520e3586ea10f",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "rd_product_progress-1:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:d05922fef8b44c6b8150",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "rd_product_progress-1:u9"
         ]
       },
       {
@@ -2972,9 +3154,8 @@
         ]
       },
       {
-        "card_id": "annual-argument:2b88f29a54cb51078114",
+        "card_id": "annual-argument:5163415ab461e34e0b28",
         "fact_anchors": [
-          "2025年",
           "行业",
           "市场",
           "需求"
@@ -2989,9 +3170,7 @@
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "rd_product_progress-2:u2",
-          "rd_product_progress-2:u3",
-          "rd_product_progress-2:u4"
+          "rd_product_progress-2:u2"
         ]
       },
       {
@@ -3358,7 +3537,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "management_market_view-0:u0"
@@ -3492,7 +3673,8 @@
         "card_id": "annual-argument:ee4c561342078c90759c",
         "fact_anchors": [
           "资产减值",
-          "减值损失"
+          "减值损失",
+          "商誉"
         ],
         "score_parts": {
           "anchored_fact": 2,
@@ -3546,6 +3728,7 @@
           "2.22%",
           "4.24%",
           "2.15%",
+          "其他收益",
           "坏账准备"
         ],
         "score_parts": {
@@ -3768,7 +3951,25 @@
         ]
       },
       {
-        "card_id": "annual-argument:96d1e5d48d0eae899557",
+        "card_id": "annual-argument:06cb805ea4aa0e0c96fb",
+        "fact_anchors": [
+          "公司掌握了同一生产线设备下生产不同碳纤维产品的技"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_model-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:8545c02cab845846a78a",
         "fact_anchors": [
           "报告期"
         ],
@@ -3782,8 +3983,7 @@
         ],
         "selection_reason": "usage_primary:operating_progress",
         "source_unit_ids": [
-          "business_model-0:u8",
-          "business_model-0:u9"
+          "business_model-0:u8"
         ]
       },
       {
@@ -3927,12 +4127,12 @@
     "missing_families": [],
     "rejection_counts": {
       "boilerplate": 14,
-      "incomplete": 26,
+      "incomplete": 28,
       "invalid_unit": 3,
-      "no_anchor": 98,
+      "no_anchor": 96,
       "ocr_damage": 15,
       "reused_source_units": 0,
-      "table_noise": 10
+      "table_noise": 9
     },
     "source_blocks_seen": 40,
     "source_unit_decisions": [
@@ -3965,7 +4165,7 @@
       },
       {
         "disposition": "rejected",
-        "reason": "table_or_ocr",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "production_sales_inventory_table-0",
         "source_order": 0,
@@ -4173,9 +4373,11 @@
         "source_unit_id": "rd_product_progress-1:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:36c0d5ec68081a45abec"
+        ],
         "source_block_id": "rd_product_progress-1",
         "source_order": 5,
         "source_text_hash": "ac5fe9d78501151228eae725b0605388ea67d1de17121f6efef742daa864e1a1",
@@ -4202,18 +4404,22 @@
         "source_unit_id": "rd_product_progress-1:u7"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_anchor",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:8f4b00e520e3586ea10f"
+        ],
         "source_block_id": "rd_product_progress-1",
         "source_order": 8,
         "source_text_hash": "9a0159d829500e261fecc28d6569b3603d05834a37786f9deaad9a64887d8caf",
         "source_unit_id": "rd_product_progress-1:u8"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_anchor",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:d05922fef8b44c6b8150"
+        ],
         "source_block_id": "rd_product_progress-1",
         "source_order": 9,
         "source_text_hash": "19ca0a3d4851f1213510cfd365baf2f4d0e891f9d7f316837aab087814aca875",
@@ -4292,7 +4498,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2b88f29a54cb51078114"
+          "annual-argument:5163415ab461e34e0b28"
         ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 2,
@@ -4300,22 +4506,18 @@
         "source_unit_id": "rd_product_progress-2:u2"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:2b88f29a54cb51078114"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "rd_product_progress-2",
         "source_order": 3,
         "source_text_hash": "6bf4857d84592b6ffe0a19cd4b6652921a221be147c10be301dff9b7f11c5df4",
         "source_unit_id": "rd_product_progress-2:u3"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:2b88f29a54cb51078114"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "rd_product_progress-2",
         "source_order": 4,
         "source_text_hash": "ad763316057662cfe8152adfc79ca4c4af4f941c1b464e23337a0d7328e3737b",
@@ -5617,9 +5819,11 @@
         "source_unit_id": "business_model-0:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:06cb805ea4aa0e0c96fb"
+        ],
         "source_block_id": "business_model-0",
         "source_order": 7,
         "source_text_hash": "bd4f6613eadfe1c47e9e828c639b1442174ad824b8011d74acccb4e55093c885",
@@ -5629,7 +5833,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:96d1e5d48d0eae899557"
+          "annual-argument:8545c02cab845846a78a"
         ],
         "source_block_id": "business_model-0",
         "source_order": 8,
@@ -5637,11 +5841,9 @@
         "source_unit_id": "business_model-0:u8"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:96d1e5d48d0eae899557"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_model-0",
         "source_order": 9,
         "source_text_hash": "46215bdac73e696d0ddca9d09798b5d1673177d0b6c50c02201b1e1b0c36e2b5",
@@ -6269,7 +6471,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 242,
-    "usable_units": 95,
+    "usable_units": 98,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

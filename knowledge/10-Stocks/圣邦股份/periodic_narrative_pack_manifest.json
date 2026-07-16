@@ -1,14 +1,14 @@
 {
   "periods": [
     {
-      "cards_sha256": "9b1b9dff7ab3799f87f7bcb4572525f1da76ba3f5878d795988cf149e83942ff",
+      "cards_sha256": "5a5e78110a24bd3b9d2c2a502ac338783240bf77e3476cd513aac93776694b5b",
       "pack_path": "periodic_narrative_packs/2025-annual.json",
-      "payload_sha256": "bb0ad364096c04ebca3c1f8c3e8b218acf29dd8ac71ecf1bc4b762b0f6cba7dd",
+      "payload_sha256": "03fc7f172890536febe2ea3d66e7163408aa01449fef019f2d34a21dd3cccd7c",
       "report_type": "annual",
       "report_year": 2025
     }
   ],
-  "periods_sha256": "937e01612ceb925f37b237e0ce20f81da138efd323a3e30f9f4216a3baa8db22",
+  "periods_sha256": "c5ef2ae68cdec9aa79941b20e851859173cc1511da6228936f421eee618457bf",
   "schema_version": "periodic_report_narrative_pack_manifest.v1",
   "stock_code": "300661",
   "stock_name": "圣邦股份"

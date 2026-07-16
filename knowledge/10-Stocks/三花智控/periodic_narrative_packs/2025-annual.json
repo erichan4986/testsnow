@@ -173,7 +173,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_market_view-0",
@@ -505,6 +507,7 @@
       "fact_anchors": [
         "0.01%",
         "7.06%",
+        "其他收益",
         "资产减值"
       ],
       "quality_score": 3,
@@ -541,7 +544,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:de3aa1eca78f41ffc6cd",
+      "card_id": "annual-argument:47370c5a5b0b4f3a5757",
       "fact_anchors": [
         "行业"
       ],
@@ -554,18 +557,15 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [
-        "business_structure"
-      ],
+      "secondary_signals": [],
       "selection_reason": "signal_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "related_party_transactions-0",
       "source_credit": 75,
-      "source_excerpt": "董事会人数和人 员构成符合法律法规和《公司章程》的要求，在专业背景、行业经验及性别构成上实现多元化。董事会按照《公司法》 和《董事会议事规则》的要求召集、召开会议，执行股东会决议，并依法行使职权，各位董事能够勤勉尽职地行使权利， 认真出席董事会和股东会，积极参加相关知识的培训，提高业务知识，勤勉尽责。",
+      "source_excerpt": "董事会人数和人 员构成符合法律法规和《公司章程》的要求，在专业背景、行业经验及性别构成上实现多元化。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "related_party_transactions-0:u5",
-        "related_party_transactions-0:u6"
+        "related_party_transactions-0:u5"
       ],
       "source_units": [
         {
@@ -575,14 +575,6 @@
           "start_pos": 326,
           "text": "董事会人数和人 员构成符合法律法规和《公司章程》的要求，在专业背景、行业经验及性别构成上实现多元化。",
           "unit_id": "related_party_transactions-0:u5"
-        },
-        {
-          "block_id": "related_party_transactions-0",
-          "end_pos": 477,
-          "ordinal": 6,
-          "start_pos": 376,
-          "text": "董事会按照《公司法》 和《董事会议事规则》的要求召集、召开会议，执行股东会决议，并依法行使职权，各位董事能够勤勉尽职地行使权利， 认真出席董事会和股东会，积极参加相关知识的培训，提高业务知识，勤勉尽责。",
-          "unit_id": "related_party_transactions-0:u6"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -1013,6 +1005,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "market_competition_outlook"
       ],
       "selection_reason": "usage_primary:business_structure",
@@ -1055,6 +1048,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "market_competition_outlook"
       ],
       "selection_reason": "usage_primary:business_structure",
@@ -1096,7 +1090,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
@@ -1256,6 +1252,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "market_competition_outlook"
       ],
       "selection_reason": "usage_primary:business_structure",
@@ -1902,7 +1899,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
@@ -2023,7 +2022,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:7a643276054a0d3eac98",
+      "card_id": "annual-argument:aa655fb5c4b06889a65a",
       "fact_anchors": [
         "行业",
         "战略"
@@ -2044,11 +2043,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
       "source_credit": 75,
-      "source_excerpt": "（二）行业地位 公司深耕热管理零部件领域，具有深厚技术积累与广泛客户认可，是全球众多制冷空调电器厂家和车企的战略合作 伙伴。公司以提升各种终端产品的能效水平为己任，引领推进全球节能环保产品变革。",
+      "source_excerpt": "（二）行业地位 公司深耕热管理零部件领域，具有深厚技术积累与广泛客户认可，是全球众多制冷空调电器厂家和车企的战略合作 伙伴。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "industry_outlook-0:u33",
-        "industry_outlook-0:u34"
+        "industry_outlook-0:u33"
       ],
       "source_units": [
         {
@@ -2058,14 +2056,6 @@
           "start_pos": 1634,
           "text": "（二）行业地位 公司深耕热管理零部件领域，具有深厚技术积累与广泛客户认可，是全球众多制冷空调电器厂家和车企的战略合作 伙伴。",
           "unit_id": "industry_outlook-0:u33"
-        },
-        {
-          "block_id": "industry_outlook-0",
-          "end_pos": 1731,
-          "ordinal": 34,
-          "start_pos": 1696,
-          "text": "公司以提升各种终端产品的能效水平为己任，引领推进全球节能环保产品变革。",
-          "unit_id": "industry_outlook-0:u34"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -2114,7 +2104,7 @@
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:8c8f9a84e6492a728284",
+      "card_id": "annual-argument:87a5f8679f0cc57575b5",
       "fact_anchors": [
         "研发",
         "实现"
@@ -2136,10 +2126,11 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "核心竞争力分析 公司需遵守《深圳证券交易所上市公司自律监管指引第3号——行业信息披露》中汽车制造相关业的披露要求 （一）高度重视研发投入，实现了产品的快速迭代和产业的前瞻布局 公司注重技术投入，使公司能够在行业内趋势方面保持领先，为保障长期增长夯实基础。",
+      "source_excerpt": "核心竞争力分析 公司需遵守《深圳证券交易所上市公司自律监管指引第3号——行业信息披露》中汽车制造相关业的披露要求 （一）高度重视研发投入，实现了产品的快速迭代和产业的前瞻布局 公司注重技术投入，使公司能够在行业内趋势方面保持领先，为保障长期增长夯实基础。通过大力投入技术开发流 程来开发前瞻性技术，支持未来的长足发展，使公司在潜在新客户提出全新技术要求时能做到快速响应。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u0"
+        "management_strategy-0:u0",
+        "management_strategy-0:u1"
       ],
       "source_units": [
         {
@@ -2149,16 +2140,24 @@
           "start_pos": 0,
           "text": "核心竞争力分析 公司需遵守《深圳证券交易所上市公司自律监管指引第3号——行业信息披露》中汽车制造相关业的披露要求 （一）高度重视研发投入，实现了产品的快速迭代和产业的前瞻布局 公司注重技术投入，使公司能够在行业内趋势方面保持领先，为保障长期增长夯实基础。",
           "unit_id": "management_strategy-0:u0"
+        },
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 185,
+          "ordinal": 1,
+          "start_pos": 127,
+          "text": "通过大力投入技术开发流 程来开发前瞻性技术，支持未来的长足发展，使公司在潜在新客户提出全新技术要求时能做到快速响应。",
+          "unit_id": "management_strategy-0:u1"
         }
       ],
       "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:e3ef2e3ba5ae0c8267fe",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:45c493e63cc220e4ecc7",
       "fact_anchors": [
-        "通过大力投入技术开发流 程来开发前瞻性技术，支持"
+        "公司致力于打造具备全球性竞争力的研发体系，涵盖从"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2170,65 +2169,9 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
-        "business_structure"
+        "market_competition_outlook"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
-      "selection_version": "annual_argument_selection.v2",
-      "source_block_id": "management_strategy-0",
-      "source_credit": 75,
-      "source_excerpt": "通过大力投入技术开发流 程来开发前瞻性技术，支持未来的长足发展，使公司在潜在新客户提出全新技术要求时能做到快速响应。 公司已积累强大的研发实力和产品快速迭代升级的能力。在巩固现有产品优势地位的同时，亦利用各业务板块间的 协同效应实现新产业的快速布局。",
-      "source_type": "periodic_report_narrative_evidence",
-      "source_unit_ids": [
-        "management_strategy-0:u1",
-        "management_strategy-0:u2",
-        "management_strategy-0:u3"
-      ],
-      "source_units": [
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 185,
-          "ordinal": 1,
-          "start_pos": 127,
-          "text": "通过大力投入技术开发流 程来开发前瞻性技术，支持未来的长足发展，使公司在潜在新客户提出全新技术要求时能做到快速响应。",
-          "unit_id": "management_strategy-0:u1"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 211,
-          "ordinal": 2,
-          "start_pos": 186,
-          "text": "公司已积累强大的研发实力和产品快速迭代升级的能力。",
-          "unit_id": "management_strategy-0:u2"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 252,
-          "ordinal": 3,
-          "start_pos": 211,
-          "text": "在巩固现有产品优势地位的同时，亦利用各业务板块间的 协同效应实现新产业的快速布局。",
-          "unit_id": "management_strategy-0:u3"
-        }
-      ],
-      "title": "管理层判断与行业展望"
-    },
-    {
-      "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:45c493e63cc220e4ecc7",
-      "fact_anchors": [
-        "竞争"
-      ],
-      "quality_score": 2,
-      "report_type": "annual",
-      "report_year": 2025,
-      "schema_version": "periodic_report_narrative_evidence_card.v2",
-      "score_parts": {
-        "anchored_fact": 1,
-        "argument_complete": 0,
-        "source_unit_count": 1
-      },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2247,47 +2190,42 @@
           "unit_id": "management_strategy-0:u4"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:016d416a837b5ed6cc7d",
+      "card_id": "annual-argument:de8d16bbb47c2b0a78a1",
       "fact_anchors": [
-        "ISO9001",
-        "IATF16949",
-        "QC080000",
-        "认证"
+        "凭借在热管理领域相关的阀泵零部件方面技术积累深厚"
       ],
-      "quality_score": 3,
+      "quality_score": 2,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 2,
+        "anchored_fact": 1,
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [
-        "business_structure"
-      ],
+      "secondary_signals": [],
       "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "公司建立了全面的质量标准，覆 盖了所有生产环节及产品类别，在供应商管理、新品开发、过程控制和售后服务等各环节建立了完善的质量控制制度和 程序，并获得了包括ISO9001、IATF16949及QC080000等质量、环境健康与安全及有害物质管控体系国际认证。",
+      "source_excerpt": "凭借在热管理领域相关的阀泵零部件方面技术积累深厚，底层技术能够做到在不同应用场景中快速适应调节以及应用。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u16"
+        "management_strategy-0:u5"
       ],
       "source_units": [
         {
           "block_id": "management_strategy-0",
-          "end_pos": 1050,
-          "ordinal": 16,
-          "start_pos": 922,
-          "text": "公司建立了全面的质量标准，覆 盖了所有生产环节及产品类别，在供应商管理、新品开发、过程控制和售后服务等各环节建立了完善的质量控制制度和 程序，并获得了包括ISO9001、IATF16949及QC080000等质量、环境健康与安全及有害物质管控体系国际认证。",
-          "unit_id": "management_strategy-0:u16"
+          "end_pos": 342,
+          "ordinal": 5,
+          "start_pos": 290,
+          "text": "凭借在热管理领域相关的阀泵零部件方面技术积累深厚，底层技术能够做到在不同应用场景中快速适应调节以及应用。",
+          "unit_id": "management_strategy-0:u5"
         }
       ],
       "title": "技术与产品进展"
@@ -2295,10 +2233,48 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
-      "card_id": "annual-argument:0d66c7b3c31f20ecd6eb",
+      "card_id": "annual-argument:f96942b8d788023f3dc6",
       "fact_anchors": [
-        "产品",
-        "应用"
+        "截至报告期末，公司拥有六大研发中心，国内外专利授"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "截至报告期末，公司拥有六大研发中心，国内外专利授权4,680项，其中发 明专利授权2,560项。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 492,
+          "ordinal": 7,
+          "start_pos": 444,
+          "text": "截至报告期末，公司拥有六大研发中心，国内外专利授权4,680项，其中发 明专利授权2,560项。",
+          "unit_id": "management_strategy-0:u7"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:e0baf8de81b2c6fbb89a",
+      "fact_anchors": [
+        "交付",
+        "实现"
       ],
       "quality_score": 3,
       "report_type": "annual",
@@ -2310,16 +2286,70 @@
         "source_unit_count": 1
       },
       "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "通过将信息技术与自 动化结合，利用物联网技术实现对设备性能的实时监测以及对生产资源的合理配置，实现稳定的产量及一贯的产品质量， 提高了生产效率，满足客户对产品质量和及时交付的要求。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u13"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 813,
+          "ordinal": 13,
+          "start_pos": 723,
+          "text": "通过将信息技术与自 动化结合，利用物联网技术实现对设备性能的实时监测以及对生产资源的合理配置，实现稳定的产量及一贯的产品质量， 提高了生产效率，满足客户对产品质量和及时交付的要求。",
+          "unit_id": "management_strategy-0:u13"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:5f4abf71cf12e5aa8631",
+      "fact_anchors": [
+        "ISO9001",
+        "IATF16949",
+        "QC080000",
+        "产品",
+        "应用",
+        "供应商"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "通过 严格的研发、生产过程中的质量控制、零部件标准化和自动化技术的应用，公司大大提升了产品的一致性和精度，在提 高生产效率并降低成本的同时保证产品的高质量。",
+      "source_excerpt": "公司建立了全面的质量标准，覆 盖了所有生产环节及产品类别，在供应商管理、新品开发、过程控制和售后服务等各环节建立了完善的质量控制制度和 程序，并获得了包括ISO9001、IATF16949及QC080000等质量、环境健康与安全及有害物质管控体系国际认证。通过 严格的研发、生产过程中的质量控制、零部件标准化和自动化技术的应用，公司大大提升了产品的一致性和精度，在提 高生产效率并降低成本的同时保证产品的高质量。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
+        "management_strategy-0:u16",
         "management_strategy-0:u17"
       ],
       "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1050,
+          "ordinal": 16,
+          "start_pos": 922,
+          "text": "公司建立了全面的质量标准，覆 盖了所有生产环节及产品类别，在供应商管理、新品开发、过程控制和售后服务等各环节建立了完善的质量控制制度和 程序，并获得了包括ISO9001、IATF16949及QC080000等质量、环境健康与安全及有害物质管控体系国际认证。",
+          "unit_id": "management_strategy-0:u16"
+        },
         {
           "block_id": "management_strategy-0",
           "end_pos": 1128,
@@ -2410,10 +2440,10 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:96e951ddc71bbf4f158d",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:42f222ee365166a691f8",
       "fact_anchors": [
-        "行业"
+        "产品"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2424,10 +2454,50 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [
-        "business_structure"
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "截至报告期末，公 司产品已遍及美洲、欧洲、亚洲、大洋洲及非洲，覆盖全球80多个国家及地区，并与众多国际著名企业达成合作。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u23"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1378,
+          "ordinal": 23,
+          "start_pos": 1318,
+          "text": "截至报告期末，公 司产品已遍及美洲、欧洲、亚洲、大洋洲及非洲，覆盖全球80多个国家及地区，并与众多国际著名企业达成合作。",
+          "unit_id": "management_strategy-0:u23"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:96e951ddc71bbf4f158d",
+      "fact_anchors": [
+        "产品",
+        "客户",
+        "服务"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2446,14 +2516,14 @@
           "unit_id": "management_strategy-0:u26"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "business_structure",
       "card_id": "annual-argument:567998025622b481e1da",
       "fact_anchors": [
-        "行业"
+        "客户"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2465,9 +2535,9 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
-        "business_structure"
+        "market_competition_outlook"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2486,7 +2556,47 @@
           "unit_id": "management_strategy-0:u27"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:7711926546a319d8ec8d",
+      "fact_anchors": [
+        "合作"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "在制冷空调电器零部件业务方面，公司与开利、博西家电、大金、 格力、海尔、LG、美的、三菱、松下、三星、西门子和特灵等主要客户合作，获得了客户的广泛认可。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u28"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1651,
+          "ordinal": 28,
+          "start_pos": 1575,
+          "text": "在制冷空调电器零部件业务方面，公司与开利、博西家电、大金、 格力、海尔、LG、美的、三菱、松下、三星、西门子和特灵等主要客户合作，获得了客户的广泛认可。",
+          "unit_id": "management_strategy-0:u28"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2658,7 +2768,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:56fee6e4f8da8f5725cc",
+      "card_id": "annual-argument:6c7a81020fc801dd92e2",
       "fact_anchors": [
         "竞争"
       ],
@@ -2678,11 +2788,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "commitments-0",
       "source_credit": 75,
-      "source_excerpt": "保证将采取合法 及有效的措施， 促使本人（或本 公司）控制的其 他企业不从事、 参与与三花智控 及其下属企业的 经营运作相竞争 的任何业务。2、 如三花智控进一 步拓展其业务范 围，本人（或本 公司）及本人 （或本公司）控 制的其他企业将 不与三花智控拓 展后的业务相竞 争；",
+      "source_excerpt": "保证将采取合法 及有效的措施， 促使本人（或本 公司）控制的其 他企业不从事、 参与与三花智控 及其下属企业的 经营运作相竞争 的任何业务。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "commitments-0:u6",
-        "commitments-0:u7"
+        "commitments-0:u6"
       ],
       "source_units": [
         {
@@ -2692,14 +2801,6 @@
           "start_pos": 895,
           "text": "保证将采取合法 及有效的措施， 促使本人（或本 公司）控制的其 他企业不从事、 参与与三花智控 及其下属企业的 经营运作相竞争 的任何业务。",
           "unit_id": "commitments-0:u6"
-        },
-        {
-          "block_id": "commitments-0",
-          "end_pos": 1033,
-          "ordinal": 7,
-          "start_pos": 965,
-          "text": "2、 如三花智控进一 步拓展其业务范 围，本人（或本 公司）及本人 （或本公司）控 制的其他企业将 不与三花智控拓 展后的业务相竞 争；",
-          "unit_id": "commitments-0:u7"
         }
       ],
       "title": "管理层判断与行业展望"
@@ -2836,33 +2937,33 @@
     }
   ],
   "integrity": {
-    "card_count": 66,
-    "cards_sha256": "4fc1b81044db3a3186e370766bb46e0ca344ecc14c3f8b2d0a45dbdc0ee0e5cc",
-    "payload_sha256": "2dee85d530230867ade1581cc6cab12013aa7f450136d347e8ca54954347d921",
-    "producer_diagnostics_sha256": "0a5f86687c835b0353475f8ab0fc78a2ef0e497cd61751b436db1cf7d8d517b4",
+    "card_count": 69,
+    "cards_sha256": "7500a2cdd49d4f990a999539a5e3729d0641c78175746bedb4040c73a0aeddde",
+    "payload_sha256": "900e811f2fb6e311c998045b637e6b02f19381de20a533392b58ee0dbdfffc99",
+    "producer_diagnostics_sha256": "a3e60fd423de78d42363eec05ff84ee0fae8112a1fb3103d1f6d51c182878233",
     "source_unit_count": 80
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
-      "business_structure": 17,
+      "business_structure": 22,
       "financial_quality_explanation": 8,
-      "market_competition_outlook": 39,
+      "market_competition_outlook": 35,
       "operating_progress": 0,
-      "technology_product_progress": 2
+      "technology_product_progress": 4
     },
     "argument_complete_counts": {
-      "atomic": 63,
+      "atomic": 66,
       "complete": 3
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
-      "business_structure": 17,
+      "business_structure": 22,
       "financial_quality_explanation": 8,
-      "market_competition_outlook": 39,
+      "market_competition_outlook": 35,
       "operating_progress": 0,
-      "technology_product_progress": 2
+      "technology_product_progress": 4
     },
     "cards": [
       {
@@ -2944,7 +3045,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "management_market_view-0:u2",
@@ -3132,6 +3235,7 @@
         "fact_anchors": [
           "0.01%",
           "7.06%",
+          "其他收益",
           "资产减值"
         ],
         "score_parts": {
@@ -3146,7 +3250,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:de3aa1eca78f41ffc6cd",
+        "card_id": "annual-argument:47370c5a5b0b4f3a5757",
         "fact_anchors": [
           "行业"
         ],
@@ -3155,13 +3259,10 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [
-          "business_structure"
-        ],
+        "secondary_signals": [],
         "selection_reason": "signal_primary:market_competition_outlook",
         "source_unit_ids": [
-          "related_party_transactions-0:u5",
-          "related_party_transactions-0:u6"
+          "related_party_transactions-0:u5"
         ]
       },
       {
@@ -3348,6 +3449,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "market_competition_outlook"
         ],
         "selection_reason": "usage_primary:business_structure",
@@ -3368,6 +3470,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "market_competition_outlook"
         ],
         "selection_reason": "usage_primary:business_structure",
@@ -3387,7 +3490,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_overview-0:u2"
@@ -3459,6 +3564,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "market_competition_outlook"
         ],
         "selection_reason": "usage_primary:business_structure",
@@ -3737,7 +3843,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "industry_outlook-0:u28",
@@ -3788,7 +3896,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:7a643276054a0d3eac98",
+        "card_id": "annual-argument:aa655fb5c4b06889a65a",
         "fact_anchors": [
           "行业",
           "战略"
@@ -3803,8 +3911,7 @@
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "industry_outlook-0:u33",
-          "industry_outlook-0:u34"
+          "industry_outlook-0:u33"
         ]
       },
       {
@@ -3827,7 +3934,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:8c8f9a84e6492a728284",
+        "card_id": "annual-argument:87a5f8679f0cc57575b5",
         "fact_anchors": [
           "研发",
           "实现"
@@ -3843,13 +3950,14 @@
         ],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "management_strategy-0:u0"
+          "management_strategy-0:u0",
+          "management_strategy-0:u1"
         ]
       },
       {
-        "card_id": "annual-argument:e3ef2e3ba5ae0c8267fe",
+        "card_id": "annual-argument:45c493e63cc220e4ecc7",
         "fact_anchors": [
-          "通过大力投入技术开发流 程来开发前瞻性技术，支持"
+          "公司致力于打造具备全球性竞争力的研发体系，涵盖从"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -3857,19 +3965,17 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
-          "business_structure"
+          "market_competition_outlook"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
-          "management_strategy-0:u1",
-          "management_strategy-0:u2",
-          "management_strategy-0:u3"
+          "management_strategy-0:u4"
         ]
       },
       {
-        "card_id": "annual-argument:45c493e63cc220e4ecc7",
+        "card_id": "annual-argument:de8d16bbb47c2b0a78a1",
         "fact_anchors": [
-          "竞争"
+          "凭借在热管理领域相关的阀泵零部件方面技术积累深厚"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -3877,46 +3983,65 @@
           "source_unit_count": 1
         },
         "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
-        "source_unit_ids": [
-          "management_strategy-0:u4"
-        ]
-      },
-      {
-        "card_id": "annual-argument:016d416a837b5ed6cc7d",
-        "fact_anchors": [
-          "ISO9001",
-          "IATF16949",
-          "QC080000",
-          "认证"
-        ],
-        "score_parts": {
-          "anchored_fact": 2,
-          "argument_complete": 0,
-          "source_unit_count": 1
-        },
-        "secondary_signals": [
-          "business_structure"
-        ],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "management_strategy-0:u16"
+          "management_strategy-0:u5"
         ]
       },
       {
-        "card_id": "annual-argument:0d66c7b3c31f20ecd6eb",
+        "card_id": "annual-argument:f96942b8d788023f3dc6",
         "fact_anchors": [
-          "产品",
-          "应用"
+          "截至报告期末，公司拥有六大研发中心，国内外专利授"
         ],
         "score_parts": {
-          "anchored_fact": 2,
+          "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
+          "management_strategy-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e0baf8de81b2c6fbb89a",
+        "fact_anchors": [
+          "交付",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u13"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5f4abf71cf12e5aa8631",
+        "fact_anchors": [
+          "ISO9001",
+          "IATF16949",
+          "QC080000",
+          "产品",
+          "应用",
+          "供应商"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u16",
           "management_strategy-0:u17"
         ]
       },
@@ -3954,19 +4079,37 @@
         ]
       },
       {
-        "card_id": "annual-argument:96e951ddc71bbf4f158d",
+        "card_id": "annual-argument:42f222ee365166a691f8",
         "fact_anchors": [
-          "行业"
+          "产品"
         ],
         "score_parts": {
           "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [
-          "business_structure"
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u23"
+        ]
+      },
+      {
+        "card_id": "annual-argument:96e951ddc71bbf4f158d",
+        "fact_anchors": [
+          "产品",
+          "客户",
+          "服务"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "management_strategy-0:u26"
         ]
@@ -3974,7 +4117,25 @@
       {
         "card_id": "annual-argument:567998025622b481e1da",
         "fact_anchors": [
-          "行业"
+          "客户"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u27"
+        ]
+      },
+      {
+        "card_id": "annual-argument:7711926546a319d8ec8d",
+        "fact_anchors": [
+          "合作"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -3984,9 +4145,9 @@
         "secondary_signals": [
           "business_structure"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "management_strategy-0:u27"
+          "management_strategy-0:u28"
         ]
       },
       {
@@ -4061,7 +4222,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:56fee6e4f8da8f5725cc",
+        "card_id": "annual-argument:6c7a81020fc801dd92e2",
         "fact_anchors": [
           "竞争"
         ],
@@ -4075,8 +4236,7 @@
         ],
         "selection_reason": "signal_primary:market_competition_outlook",
         "source_unit_ids": [
-          "commitments-0:u6",
-          "commitments-0:u7"
+          "commitments-0:u6"
         ]
       },
       {
@@ -4141,9 +4301,9 @@
     ],
     "rejection_counts": {
       "boilerplate": 16,
-      "incomplete": 38,
+      "incomplete": 39,
       "invalid_unit": 1,
-      "no_anchor": 97,
+      "no_anchor": 96,
       "ocr_damage": 12,
       "reused_source_units": 0,
       "table_noise": 10
@@ -4558,7 +4718,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:de3aa1eca78f41ffc6cd"
+          "annual-argument:47370c5a5b0b4f3a5757"
         ],
         "source_block_id": "related_party_transactions-0",
         "source_order": 5,
@@ -4566,11 +4726,9 @@
         "source_unit_id": "related_party_transactions-0:u5"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:de3aa1eca78f41ffc6cd"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "related_party_transactions-0",
         "source_order": 6,
         "source_text_hash": "341181321a50d54c13d43275185ce9452f72a6428d830914d14e2370317205d9",
@@ -5920,7 +6078,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:7a643276054a0d3eac98"
+          "annual-argument:aa655fb5c4b06889a65a"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 33,
@@ -5928,11 +6086,9 @@
         "source_unit_id": "industry_outlook-0:u33"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:7a643276054a0d3eac98"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "industry_outlook-0",
         "source_order": 34,
         "source_text_hash": "48c08cdd6cd0a79fe58f62e1bdd9a2d6d3927a2a4a22a13d415207c58c28ce57",
@@ -5953,7 +6109,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:8c8f9a84e6492a728284"
+          "annual-argument:87a5f8679f0cc57575b5"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 0,
@@ -5964,7 +6120,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:e3ef2e3ba5ae0c8267fe"
+          "annual-argument:87a5f8679f0cc57575b5"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 1,
@@ -5972,22 +6128,18 @@
         "source_unit_id": "management_strategy-0:u1"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:e3ef2e3ba5ae0c8267fe"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 2,
         "source_text_hash": "f420e6a51e118bd0263ec9b16e695aaafb93b61a5ad31bc2c2c5ccc3816628b2",
         "source_unit_id": "management_strategy-0:u2"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:e3ef2e3ba5ae0c8267fe"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 3,
         "source_text_hash": "85f2b97eceb209c7aea6619caa95841c1580ca1b8356a57de0747f149c49b13f",
@@ -6005,9 +6157,11 @@
         "source_unit_id": "management_strategy-0:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:de8d16bbb47c2b0a78a1"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 5,
         "source_text_hash": "ba3a36aeab053fd93a315db860b58bc535edfd8ec205d578b4db06f3229af604",
@@ -6023,9 +6177,11 @@
         "source_unit_id": "management_strategy-0:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f96942b8d788023f3dc6"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 7,
         "source_text_hash": "eb831e4a1d9e193bd51322978ddb84da423b35dc53570ea4a82cb92b9aa430e4",
@@ -6077,9 +6233,11 @@
         "source_unit_id": "management_strategy-0:u12"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e0baf8de81b2c6fbb89a"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 13,
         "source_text_hash": "2776b7461c7447db67d5628c16ffc3cabb4f9d3cde7f0dbbe405a7936ce0ae79",
@@ -6107,7 +6265,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:016d416a837b5ed6cc7d"
+          "annual-argument:5f4abf71cf12e5aa8631"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 16,
@@ -6118,7 +6276,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:0d66c7b3c31f20ecd6eb"
+          "annual-argument:5f4abf71cf12e5aa8631"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 17,
@@ -6175,9 +6333,11 @@
         "source_unit_id": "management_strategy-0:u22"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:42f222ee365166a691f8"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 23,
         "source_text_hash": "4893ef87ddfb8e93367b9068411023e0f580f016b6298d8a54813d7b5beefb0b",
@@ -6224,9 +6384,11 @@
         "source_unit_id": "management_strategy-0:u27"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:7711926546a319d8ec8d"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 28,
         "source_text_hash": "095ea7ff339e690f5f7767469854f798beea97f5d357b42297aaa77361a2afc4",
@@ -6453,7 +6615,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:56fee6e4f8da8f5725cc"
+          "annual-argument:6c7a81020fc801dd92e2"
         ],
         "source_block_id": "commitments-0",
         "source_order": 6,
@@ -6461,11 +6623,9 @@
         "source_unit_id": "commitments-0:u6"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:56fee6e4f8da8f5725cc"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "commitments-0",
         "source_order": 7,
         "source_text_hash": "9c74e0d357d72867297b5eadf3ca9fe8b40f9b24add321cb4b39eafc88d2fb9c",
@@ -6599,7 +6759,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 254,
-    "usable_units": 112,
+    "usable_units": 113,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

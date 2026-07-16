@@ -532,6 +532,26 @@ def test_annual_source_tail_accepts_one_complete_checkbox_tail_only():
     assert annual_source_tail("事项 √适用 □不适用 现金流增加") is None
 
 
+def test_annual_source_tail_extracts_mid_unit_page_header_without_total_pages():
+    text = (
+        "3、云技术在EDA领域的应用日趋深入 华大九天科技股份有限公司 "
+        "2025年年度报告全文 > 38 随着EDA云平台成熟，芯片设计流程迁移至云端已成为明显趋势。"
+    )
+
+    assert annual_source_tail(text) == (
+        "随着EDA云平台成熟，芯片设计流程迁移至云端已成为明显趋势。"
+    )
+
+
+def test_annual_source_tail_rejects_text_spanning_multiple_page_headers():
+    text = (
+        "某公司2025年年度报告全文 > 38 第一页完整事实。"
+        "某公司2025年年度报告全文 > 39 第二页完整事实。"
+    )
+
+    assert annual_source_tail(text) is None
+
+
 @pytest.mark.parametrize(
     "text, expected",
     (

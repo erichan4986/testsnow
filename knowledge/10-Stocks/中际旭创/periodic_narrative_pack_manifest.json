@@ -1,14 +1,14 @@
 {
   "periods": [
     {
-      "cards_sha256": "9a5f4b628479a881fee86c0751d9e652cbbfde0defd0e08cfff0f529de7fd9db",
+      "cards_sha256": "afb77ec6d43c043921dc73ad070e0f3b8f67c2e54e3a8de8fe9473bf13d77440",
       "pack_path": "periodic_narrative_packs/2025-annual.json",
-      "payload_sha256": "77a78a35ef6173cd7802a841ff3b4869ec925d7ed6b5fa68f6c9956cc2e5aa94",
+      "payload_sha256": "945edbd7af76de92decb331c6bf17eadd5105ec1fb52b3ce02e25bf4667d3ccb",
       "report_type": "annual",
       "report_year": 2025
     }
   ],
-  "periods_sha256": "6445eb2874d831749ed56171d25906492eafce90ad9a5b82f45b3e924033f666",
+  "periods_sha256": "1148787cd82e9e2c1e74c7dba91859421a218cd95a679a0a58261e4c81039906",
   "schema_version": "periodic_report_narrative_pack_manifest.v1",
   "stock_code": "300308",
   "stock_name": "中际旭创"

@@ -46,44 +46,6 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
-      "card_id": "annual-argument:9ddfbd483b6925493380",
-      "fact_anchors": [
-        "2025"
-      ],
-      "quality_score": 2,
-      "report_type": "annual",
-      "report_year": 2025,
-      "schema_version": "periodic_report_narrative_evidence_card.v2",
-      "score_parts": {
-        "anchored_fact": 1,
-        "argument_complete": 0,
-        "source_unit_count": 1
-      },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:business_structure",
-      "selection_version": "annual_argument_selection.v2",
-      "source_block_id": "product_capacity_profile-0",
-      "source_credit": 75,
-      "source_excerpt": "其中，全定制设计平台 EDA 工具系 统包括模拟电路设计全流程 EDA 工具系统、存储电路设计全流程 EDA 工具系统、射频电路设计全流程 北京华大九天科技股份有限公司 2025 年年度报告全文 > 15 EDA 工具系统和平板显示电路设计全流程 EDA 工具系统；",
-      "source_type": "periodic_report_narrative_evidence",
-      "source_unit_ids": [
-        "product_capacity_profile-0:u1"
-      ],
-      "source_units": [
-        {
-          "block_id": "product_capacity_profile-0",
-          "end_pos": 239,
-          "ordinal": 1,
-          "start_pos": 106,
-          "text": "其中，全定制设计平台 EDA 工具系 统包括模拟电路设计全流程 EDA 工具系统、存储电路设计全流程 EDA 工具系统、射频电路设计全流程 北京华大九天科技股份有限公司 2025 年年度报告全文 > 15 EDA 工具系统和平板显示电路设计全流程 EDA 工具系统；",
-          "unit_id": "product_capacity_profile-0:u1"
-        }
-      ],
-      "title": "业务结构"
-    },
-    {
-      "argument_complete": false,
-      "argument_family": "business_structure",
       "card_id": "annual-argument:630428f3d024e2b11c86",
       "fact_anchors": [
         "产品",
@@ -137,7 +99,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "market_demand_outlook-0",
@@ -158,6 +122,45 @@
         }
       ],
       "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:e482f70b455464bdc728",
+      "fact_anchors": [
+        "芯片",
+        "平台"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "在先进封装设计 EDA 领域 ，公司 先进封装 EDA 平台已具备支撑高端 AI 芯片、 GPU 、高性能处理器 芯片等 Chiplet 芯粒设计的能力 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-0",
+          "end_pos": 238,
+          "ordinal": 3,
+          "start_pos": 160,
+          "text": "在先进封装设计 EDA 领域 ，公司 先进封装 EDA 平台已具备支撑高端 AI 芯片、 GPU 、高性能处理器 芯片等 Chiplet 芯粒设计的能力 。",
+          "unit_id": "market_demand_outlook-0:u3"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -237,6 +240,93 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:c3700690bfa2a0abc22c",
+      "fact_anchors": [
+        "芯片",
+        "工艺"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "这一技术范式的变革，正深刻重塑 EDA 工具的发展方向与应用边界。 首先是既有 EDA 工具需要进一步向埃米级节点发展，更好地支持埃米级工艺节点芯片设计与制造；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-1:u1",
+        "market_demand_outlook-1:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-1",
+          "end_pos": 95,
+          "ordinal": 1,
+          "start_pos": 62,
+          "text": "这一技术范式的变革，正深刻重塑 EDA 工具的发展方向与应用边界。",
+          "unit_id": "market_demand_outlook-1:u1"
+        },
+        {
+          "block_id": "market_demand_outlook-1",
+          "end_pos": 142,
+          "ordinal": 2,
+          "start_pos": 96,
+          "text": "首先是既有 EDA 工具需要进一步向埃米级节点发展，更好地支持埃米级工艺节点芯片设计与制造；",
+          "unit_id": "market_demand_outlook-1:u2"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:a5c9bce0e35edd645d5c",
+      "fact_anchors": [
+        "芯片",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "market_demand_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "第三，需要开发真正面向 3DIC 、Chiplet 或异构集成的原生 EDA 技术和工具，以实现从芯片微观层面到应用系统宏观层面的协同优化。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "market_demand_outlook-1:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "market_demand_outlook-1",
+          "end_pos": 243,
+          "ordinal": 4,
+          "start_pos": 173,
+          "text": "第三，需要开发真正面向 3DIC 、Chiplet 或异构集成的原生 EDA 技术和工具，以实现从芯片微观层面到应用系统宏观层面的协同优化。",
+          "unit_id": "market_demand_outlook-1:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "financial_quality_explanation",
       "card_id": "annual-argument:3e2d54c1aa76147bb661",
       "fact_anchors": [
@@ -271,6 +361,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "operating_progress",
         "market_competition_outlook",
         "business_structure"
       ],
@@ -793,7 +884,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:7024a8fbf22b95b08617",
+      "card_id": "annual-argument:f56e14a7b1f54fe05cc4",
       "fact_anchors": [
         "战略"
       ],
@@ -811,11 +902,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "government_grant_note-0",
       "source_credit": 75,
-      "source_excerpt": "EDA 工具是集成电路设计、 制造、封装、测试等工作的必备工具，是贯穿整个集成电路产业链的战略基础支柱之一。随着集成电路 产业的快速发展，设计规模、 复杂度、工艺先 进性等不断提升， EDA 工具的作用更加突出，已成为提高 集成电路设计效率、加速产业技术进步与革新的关 键因素。",
+      "source_excerpt": "EDA 工具是集成电路设计、 制造、封装、测试等工作的必备工具，是贯穿整个集成电路产业链的战略基础支柱之一。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "government_grant_note-0:u6",
-        "government_grant_note-0:u7"
+        "government_grant_note-0:u6"
       ],
       "source_units": [
         {
@@ -825,24 +915,16 @@
           "start_pos": 1007,
           "text": "EDA 工具是集成电路设计、 制造、封装、测试等工作的必备工具，是贯穿整个集成电路产业链的战略基础支柱之一。",
           "unit_id": "government_grant_note-0:u6"
-        },
-        {
-          "block_id": "government_grant_note-0",
-          "end_pos": 1146,
-          "ordinal": 7,
-          "start_pos": 1061,
-          "text": "随着集成电路 产业的快速发展，设计规模、 复杂度、工艺先 进性等不断提升， EDA 工具的作用更加突出，已成为提高 集成电路设计效率、加速产业技术进步与革新的关 键因素。",
-          "unit_id": "government_grant_note-0:u7"
         }
       ],
       "title": "管理层判断与行业展望"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:f480065a263a32e1375a",
       "fact_anchors": [
-        "战略"
+        "合作"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -854,9 +936,10 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "market_competition_outlook",
         "business_structure"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "government_grant_note-0",
       "source_credit": 75,
@@ -875,12 +958,12 @@
           "unit_id": "government_grant_note-0:u8"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:992a055f03cd4d08242c",
+      "card_id": "annual-argument:a1134384e36583f1c187",
       "fact_anchors": [
         "72%",
         "研发"
@@ -899,11 +982,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "government_grant_note-0",
       "source_credit": 75,
-      "source_excerpt": "研 发团队中硕士研究生及以上学历 773 人，占研发人员总数的 72% 。截至本报告期末，公司核心技术人员 未有离职情况。",
+      "source_excerpt": "研 发团队中硕士研究生及以上学历 773 人，占研发人员总数的 72% 。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "government_grant_note-0:u14",
-        "government_grant_note-0:u15"
+        "government_grant_note-0:u14"
       ],
       "source_units": [
         {
@@ -913,14 +995,6 @@
           "start_pos": 1496,
           "text": "研 发团队中硕士研究生及以上学历 773 人，占研发人员总数的 72% 。",
           "unit_id": "government_grant_note-0:u14"
-        },
-        {
-          "block_id": "government_grant_note-0",
-          "end_pos": 1557,
-          "ordinal": 15,
-          "start_pos": 1533,
-          "text": "截至本报告期末，公司核心技术人员 未有离职情况。",
-          "unit_id": "government_grant_note-0:u15"
         }
       ],
       "title": "技术与产品进展"
@@ -928,7 +1002,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:44a204c85a729575c6a2",
+      "card_id": "annual-argument:4525a32522684100e1ed",
       "fact_anchors": [
         "战略"
       ],
@@ -946,11 +1020,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
       "source_credit": 75,
-      "source_excerpt": "EDA 工具是集成电路设计、 制造、封装、测试等工作的必备工具，是贯穿整个集成电路产业链的战略基础支柱之一。随着集成电路 产业的快速发展，设计规模、 复杂度、工艺先 进性等不断提升， EDA 工具的作用更加突出，已成为提高 集成电路设计效率、加速产业技术进步与革新的关 键因素。",
+      "source_excerpt": "EDA 工具是集成电路设计、 制造、封装、测试等工作的必备工具，是贯穿整个集成电路产业链的战略基础支柱之一。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "business_overview-0:u5",
-        "business_overview-0:u6"
+        "business_overview-0:u5"
       ],
       "source_units": [
         {
@@ -960,24 +1033,16 @@
           "start_pos": 230,
           "text": "EDA 工具是集成电路设计、 制造、封装、测试等工作的必备工具，是贯穿整个集成电路产业链的战略基础支柱之一。",
           "unit_id": "business_overview-0:u5"
-        },
-        {
-          "block_id": "business_overview-0",
-          "end_pos": 369,
-          "ordinal": 6,
-          "start_pos": 284,
-          "text": "随着集成电路 产业的快速发展，设计规模、 复杂度、工艺先 进性等不断提升， EDA 工具的作用更加突出，已成为提高 集成电路设计效率、加速产业技术进步与革新的关 键因素。",
-          "unit_id": "business_overview-0:u6"
         }
       ],
       "title": "管理层判断与行业展望"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:bd96ed1592fb029b5342",
       "fact_anchors": [
-        "战略"
+        "合作"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -989,9 +1054,10 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "market_competition_outlook",
         "business_structure"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
       "source_credit": 75,
@@ -1010,7 +1076,7 @@
           "unit_id": "business_overview-0:u7"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -1064,7 +1130,7 @@
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:589a05fddda80059d932",
+      "card_id": "annual-argument:d3d362e84d900f61cdf6",
       "fact_anchors": [
         "72%",
         "研发"
@@ -1083,11 +1149,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
       "source_credit": 75,
-      "source_excerpt": "研 发团队中硕士研究生及以上学历 773 人，占研发人员总数的 72% 。截至本报告期末，公司核心技术人员 未有离职情况。",
+      "source_excerpt": "研 发团队中硕士研究生及以上学历 773 人，占研发人员总数的 72% 。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "business_overview-0:u13",
-        "business_overview-0:u14"
+        "business_overview-0:u13"
       ],
       "source_units": [
         {
@@ -1097,47 +1162,50 @@
           "start_pos": 719,
           "text": "研 发团队中硕士研究生及以上学历 773 人，占研发人员总数的 72% 。",
           "unit_id": "business_overview-0:u13"
-        },
-        {
-          "block_id": "business_overview-0",
-          "end_pos": 780,
-          "ordinal": 14,
-          "start_pos": 756,
-          "text": "截至本报告期末，公司核心技术人员 未有离职情况。",
-          "unit_id": "business_overview-0:u14"
         }
       ],
       "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:38406c2afdff2ea4b721",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:7811f280f305928af16f",
       "fact_anchors": [
-        "战略"
+        "业务",
+        "解决方案"
       ],
-      "quality_score": 2,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 1,
+        "anchored_fact": 2,
         "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [
-        "business_structure"
+        "technology_product_progress",
+        "market_competition_outlook"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
       "source_credit": 75,
-      "source_excerpt": "此外， 公司以 AI 创新、 3DIC 突破和生态跃迁三大核心业务构建战略增长极：一是， AI+EDA 实现双向赋能打造 “智能设计 -智能硬件 ”闭环，不仅通过 EDA 智能设计驱动 AI 芯片设计效率革命、降低大模型训练成本、 提升 AI 算力，同时大模型及算力提升反向带动 EDA 开发效率和业务提升；",
+      "source_excerpt": "报告期内， 公司成功新推出了 11 款 EDA 核心工具 、创新性地构建了 9 大关键核心解决方案 。此外， 公司以 AI 创新、 3DIC 突破和生态跃迁三大核心业务构建战略增长极：一是， AI+EDA 实现双向赋能打造 “智能设计 -智能硬件 ”闭环，不仅通过 EDA 智能设计驱动 AI 芯片设计效率革命、降低大模型训练成本、 提升 AI 算力，同时大模型及算力提升反向带动 EDA 开发效率和业务提升；",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
+        "business_overview-0:u16",
         "business_overview-0:u17"
       ],
       "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 1081,
+          "ordinal": 16,
+          "start_pos": 1030,
+          "text": "报告期内， 公司成功新推出了 11 款 EDA 核心工具 、创新性地构建了 9 大关键核心解决方案 。",
+          "unit_id": "business_overview-0:u16"
+        },
         {
           "block_id": "business_overview-0",
           "end_pos": 1235,
@@ -1147,7 +1215,7 @@
           "unit_id": "business_overview-0:u17"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
@@ -1184,6 +1252,45 @@
           "start_pos": 1235,
           "text": "二是，依托国内唯一 3DIC 全 流程 EDA 解决方案，率先 突破 2.5D/3D 异构集成技术壁垒，抢占后摩尔时代算力芯片、存储芯片等制高 点，具备很高的技术溢价能力；",
           "unit_id": "business_overview-0:u18"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:6f3c76df8ec71d34640d",
+      "fact_anchors": [
+        "工艺",
+        "突破"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "三是，通过 PDK 生态 +数据底座自主化，构建设计 -制造 -场景全链路闭 环，突破国产先进工艺生态壁垒 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u19"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 1376,
+          "ordinal": 19,
+          "start_pos": 1321,
+          "text": "三是，通过 PDK 生态 +数据底座自主化，构建设计 -制造 -场景全链路闭 环，突破国产先进工艺生态壁垒 。",
+          "unit_id": "business_overview-0:u19"
         }
       ],
       "title": "技术与产品进展"
@@ -1230,10 +1337,10 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:2beb9e1aabb4f4f6f8b4",
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:f6202014986f4693ec03",
       "fact_anchors": [
-        "行业"
+        "实现"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -1244,19 +1351,18 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
       "source_credit": 75,
-      "source_excerpt": "另一方面抢抓时代先机，引领国产 EDA 创 新方向，奋力在新赛道上实现弯道超车，成为全球 EDA 行业不可忽视的中国力量。 在 AI 创新方面， 公司实现了 AI+EDA 双向赋能 。一方面 ，通过 AI 赋能 EDA 工具革新 。公司工艺诊 断分析平台 Vision 通过 AI 图像处理技术实现全链路协同分析自动化，在晶圆轮廓预测、 扫描电镜 图像 处理等领域取得突破性进展，晶圆图像量测工具 Vision ID 的轮廓提取效率提升 2 倍以上，晶圆轮廓预 测工具 Vision HP 的平均预测误差控制在 2nm 以下 。新推出 PyAether 智能体 Aether Coder 和平板显示 电路物理验证伪错过滤工具 ArgusFPD Triage AI ，提升了工具智能化水平；",
+      "source_excerpt": "另一方面抢抓时代先机，引领国产 EDA 创 新方向，奋力在新赛道上实现弯道超车，成为全球 EDA 行业不可忽视的中国力量。 在 AI 创新方面， 公司实现了 AI+EDA 双向赋能 。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
         "business_overview-0:u21",
-        "business_overview-0:u22",
-        "business_overview-0:u23",
-        "business_overview-0:u24",
-        "business_overview-0:u25"
+        "business_overview-0:u22"
       ],
       "source_units": [
         {
@@ -1274,15 +1380,39 @@
           "start_pos": 1496,
           "text": "在 AI 创新方面， 公司实现了 AI+EDA 双向赋能 。",
           "unit_id": "business_overview-0:u22"
-        },
-        {
-          "block_id": "business_overview-0",
-          "end_pos": 1550,
-          "ordinal": 23,
-          "start_pos": 1526,
-          "text": "一方面 ，通过 AI 赋能 EDA 工具革新 。",
-          "unit_id": "business_overview-0:u23"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:c87b15d64ddc2d198188",
+      "fact_anchors": [
+        "平台",
+        "工艺",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "公司工艺诊 断分析平台 Vision 通过 AI 图像处理技术实现全链路协同分析自动化，在晶圆轮廓预测、 扫描电镜 图像 处理等领域取得突破性进展，晶圆图像量测工具 Vision ID 的轮廓提取效率提升 2 倍以上，晶圆轮廓预 测工具 Vision HP 的平均预测误差控制在 2nm 以下 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u24"
+      ],
+      "source_units": [
         {
           "block_id": "business_overview-0",
           "end_pos": 1698,
@@ -1290,7 +1420,38 @@
           "start_pos": 1550,
           "text": "公司工艺诊 断分析平台 Vision 通过 AI 图像处理技术实现全链路协同分析自动化，在晶圆轮廓预测、 扫描电镜 图像 处理等领域取得突破性进展，晶圆图像量测工具 Vision ID 的轮廓提取效率提升 2 倍以上，晶圆轮廓预 测工具 Vision HP 的平均预测误差控制在 2nm 以下 。",
           "unit_id": "business_overview-0:u24"
-        },
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:32e5eea9fb0299ba1085",
+      "fact_anchors": [
+        "验证",
+        "推出"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "新推出 PyAether 智能体 Aether Coder 和平板显示 电路物理验证伪错过滤工具 ArgusFPD Triage AI ，提升了工具智能化水平；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u25"
+      ],
+      "source_units": [
         {
           "block_id": "business_overview-0",
           "end_pos": 1778,
@@ -1300,7 +1461,7 @@
           "unit_id": "business_overview-0:u25"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -1320,7 +1481,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
@@ -1338,6 +1501,44 @@
           "start_pos": 0,
           "text": "经营模式 1、盈利模式 公司主要从事 EDA 工具软件的开发、销售及相关服务，主要盈利模式如下： （1）公司 EDA 工具软件 主要通过授权模式向客户销售，收取授权费。",
           "unit_id": "business_model-0:u0"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:6fea780cb22974dac0a1",
+      "fact_anchors": [
+        "产品"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "公司对具体 EDA 工具软件产品的授权一般以合同约定的时 间周期为限；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 119,
+          "ordinal": 1,
+          "start_pos": 84,
+          "text": "公司对具体 EDA 工具软件产品的授权一般以合同约定的时 间周期为限；",
+          "unit_id": "business_model-0:u1"
         }
       ],
       "title": "业务结构"
@@ -1531,6 +1732,44 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
+      "card_id": "annual-argument:f2f694ad0f1e0d29af96",
+      "fact_anchors": [
+        "公司的研发按照项目立项、项目开发与测试和项目发布"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "公司的研发按照项目立项、项目开发与测试和项目发布等顺序进行： > 公司研发工作流程机制 4、销售模式 公司目前通过直销的方式进行销售。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 581,
+          "ordinal": 9,
+          "start_pos": 514,
+          "text": "公司的研发按照项目立项、项目开发与测试和项目发布等顺序进行： > 公司研发工作流程机制 4、销售模式 公司目前通过直销的方式进行销售。",
+          "unit_id": "business_model-0:u9"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
       "card_id": "annual-argument:89d73f075e66bb307105",
       "fact_anchors": [
         "产品",
@@ -1546,7 +1785,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
@@ -1612,6 +1853,45 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:a66a6ea8c69afcc1e42d",
+      "fact_anchors": [
+        "实现",
+        "突破"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "流程 EDA 工具系统、晶圆制造 EDA 工具和先进封装设计 EDA 工具等领域的优势，不断实现市场新突破。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u13"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 931,
+          "ordinal": 13,
+          "start_pos": 877,
+          "text": "流程 EDA 工具系统、晶圆制造 EDA 工具和先进封装设计 EDA 工具等领域的优势，不断实现市场新突破。",
+          "unit_id": "business_model-0:u13"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "business_structure",
       "card_id": "annual-argument:b7fce3dd39fd1c56b020",
       "fact_anchors": [
@@ -1668,6 +1948,8 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
+        "operating_progress",
         "market_competition_outlook"
       ],
       "selection_reason": "financial_override:financial_quality_explanation",
@@ -1707,7 +1989,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
@@ -1748,7 +2032,9 @@
         "argument_complete": 4,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
@@ -1851,10 +2137,10 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:7470bd4e2283f424ab59",
       "fact_anchors": [
-        "行业"
+        "研发"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -1865,8 +2151,10 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
       "source_credit": 75,
@@ -1885,7 +2173,7 @@
           "unit_id": "business_model-0:u20"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -1948,6 +2236,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "business_structure"
       ],
       "selection_reason": "usage_primary:market_competition_outlook",
@@ -1991,8 +2280,8 @@
           "block_id": "industry_outlook-0",
           "end_pos": 395,
           "ordinal": 3,
-          "start_pos": 256,
-          "text": "EDA 工具保证了 集成电路设计、制造与封装等 各环节 、各 阶段 的准确性，降低了设计成本、缩短了设计 北京华大九天科技股份有限公司 2025 年年度报告全文 > 37 周期、提高了设计效率，是集成电路产业产能性能的源头， EDA 工具 的发展加速了集成电路产业的技术 革新。",
+          "start_pos": 342,
+          "text": "周期、提高了设计效率，是集成电路产业产能性能的源头， EDA 工具 的发展加速了集成电路产业的技术 革新。",
           "unit_id": "industry_outlook-0:u3"
         }
       ],
@@ -2000,24 +2289,24 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "business_structure",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:a9a6205c358b46356ace",
       "fact_anchors": [
-        "主要从事",
-        "业务",
-        "服务"
+        "公司主要从事用于集成电路设计、制造和封装的 ED"
       ],
-      "quality_score": 3,
+      "quality_score": 2,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 2,
+        "anchored_fact": 1,
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:business_structure",
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
       "source_credit": 75,
@@ -2036,7 +2325,7 @@
           "unit_id": "industry_outlook-0:u4"
         }
       ],
-      "title": "业务结构"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2100,7 +2389,83 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:e20edd3b984f81b47cda",
+      "card_id": "annual-argument:b0341562ef5db1120f3c",
+      "fact_anchors": [
+        "市场"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "对于国内 EDA 市场，目前仍由上述国际 EDA 三巨头占据主 导地位，国内 EDA 供应商目前所占市场份 额较小。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 677,
+          "ordinal": 8,
+          "start_pos": 619,
+          "text": "对于国内 EDA 市场，目前仍由上述国际 EDA 三巨头占据主 导地位，国内 EDA 供应商目前所占市场份 额较小。",
+          "unit_id": "industry_outlook-0:u8"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:0cd7efb5583198c673fb",
+      "fact_anchors": [
+        "突破"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "华大九天通过十余年发展及创新，不断丰富和完善模拟电路设计全流程 EDA 工具系统、存储电 路设计全流程 EDA 工具系统、射频电路设计全流程 EDA 工具系统、数字电路设计 EDA 工具系统、平板显 示电路设计全流程 EDA 工具系统、晶圆制造 EDA 工具、先进封装设计 EDA 工具和 3DIC 设计 EDA 工具 等 解决方案，并持续获得市场突破。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 854,
+          "ordinal": 9,
+          "start_pos": 677,
+          "text": "华大九天通过十余年发展及创新，不断丰富和完善模拟电路设计全流程 EDA 工具系统、存储电 路设计全流程 EDA 工具系统、射频电路设计全流程 EDA 工具系统、数字电路设计 EDA 工具系统、平板显 示电路设计全流程 EDA 工具系统、晶圆制造 EDA 工具、先进封装设计 EDA 工具和 3DIC 设计 EDA 工具 等 解决方案，并持续获得市场突破。",
+          "unit_id": "industry_outlook-0:u9"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:d0841e08e9cfc8a1709d",
       "fact_anchors": [
         "行业",
         "趋势"
@@ -2114,17 +2479,17 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
       "source_credit": 75,
-      "source_excerpt": "在当前集成电路产业快速发展的大背景下， EDA 行业主要呈现如下趋势： 1、后摩尔时代技术演进驱动 EDA 技术应用延伸拓展 后摩尔时代，芯片性能提升不再单纯依赖 于尺寸微缩，而是呈现出 “尺寸微缩、新原理器件、集成 芯片 ”三大路径并行演进的格局。这一技术范式的变革，正深刻重塑 EDA 工具的发展方向与应用边界。 首先是既有 EDA 工具需要进一步向埃米级节点发展，更好地支持埃米级工艺节点芯片设计与制造；",
+      "source_excerpt": "在当前集成电路产业快速发展的大背景下， EDA 行业主要呈现如下趋势： 1、后摩尔时代技术演进驱动 EDA 技术应用延伸拓展 后摩尔时代，芯片性能提升不再单纯依赖 于尺寸微缩，而是呈现出 “尺寸微缩、新原理器件、集成 芯片 ”三大路径并行演进的格局。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "industry_outlook-0:u10",
-        "industry_outlook-0:u11",
-        "industry_outlook-0:u12"
+        "industry_outlook-0:u10"
       ],
       "source_units": [
         {
@@ -2134,7 +2499,39 @@
           "start_pos": 855,
           "text": "在当前集成电路产业快速发展的大背景下， EDA 行业主要呈现如下趋势： 1、后摩尔时代技术演进驱动 EDA 技术应用延伸拓展 后摩尔时代，芯片性能提升不再单纯依赖 于尺寸微缩，而是呈现出 “尺寸微缩、新原理器件、集成 芯片 ”三大路径并行演进的格局。",
           "unit_id": "industry_outlook-0:u10"
-        },
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:ed4bf7aa9f35a172821e",
+      "fact_anchors": [
+        "芯片",
+        "工艺"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "这一技术范式的变革，正深刻重塑 EDA 工具的发展方向与应用边界。 首先是既有 EDA 工具需要进一步向埃米级节点发展，更好地支持埃米级工艺节点芯片设计与制造；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u11",
+        "industry_outlook-0:u12"
+      ],
+      "source_units": [
         {
           "block_id": "industry_outlook-0",
           "end_pos": 1013,
@@ -2152,14 +2549,53 @@
           "unit_id": "industry_outlook-0:u12"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:137f291a4294d15a59ca",
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:415a909b7e4e763cc85f",
       "fact_anchors": [
-        "因此， EDA 工具的发展 从整体上提升了芯片设"
+        "芯片",
+        "实现"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "第三，需要开发真正面向 3DIC 、Chiplet 或异构集成的原生 EDA 技术和工具，以实现从芯片微观层面到应用系统宏观层面的协同优化。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u14"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 1161,
+          "ordinal": 14,
+          "start_pos": 1091,
+          "text": "第三，需要开发真正面向 3DIC 、Chiplet 或异构集成的原生 EDA 技术和工具，以实现从芯片微观层面到应用系统宏观层面的协同优化。",
+          "unit_id": "industry_outlook-0:u14"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:e186ca1a946945e2f813",
+      "fact_anchors": [
+        "芯片"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2171,14 +2607,97 @@
         "source_unit_count": 1
       },
       "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "EDA 工具技术的进步和应用的推广一直以来是 推动芯片设计成本保持在合理范围的重要方式。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u17"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 1317,
+          "ordinal": 17,
+          "start_pos": 1273,
+          "text": "EDA 工具技术的进步和应用的推广一直以来是 推动芯片设计成本保持在合理范围的重要方式。",
+          "unit_id": "industry_outlook-0:u17"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:841da9e00adbebe14716",
+      "fact_anchors": [
+        "平台"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "industry_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "同时， 可重复使用的平台模块、异构并行处理器的应用、基于先进封 装集成技术的芯粒技术等成为驱动设计效 率提升的重要方式，而上述方式的应用同样也是与 EDA 技术的进步相辅相成的。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "industry_outlook-0:u19"
+      ],
+      "source_units": [
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 1555,
+          "ordinal": 19,
+          "start_pos": 1466,
+          "text": "同时， 可重复使用的平台模块、异构并行处理器的应用、基于先进封 装集成技术的芯粒技术等成为驱动设计效 率提升的重要方式，而上述方式的应用同样也是与 EDA 技术的进步相辅相成的。",
+          "unit_id": "industry_outlook-0:u19"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:9be9983c8370fc836735",
+      "fact_anchors": [
+        "2025",
+        "需求",
+        "趋势"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
       "source_credit": 75,
-      "source_excerpt": "因此， EDA 工具的发展 从整体上提升了芯片设计的效率，从而平抑了芯片设计的总体成本。",
+      "source_excerpt": "因此， EDA 工具的发展 从整体上提升了芯片设计的效率，从而平抑了芯片设计的总体成本。 3、云技术在 EDA 领域的应用日趋深入 北京华大九天科技股份有限公司 2025 年年度报告全文 > 38 随着 EDA 云平台的成熟发展，将芯片设计流程迁移至云端已成为明显趋势 ，为 EDA 带来的多重效益 日益凸显 。一是可实现 研发风险控制 ：利用云端 EDA 可以有效避免芯片设计企业因流程管理不善或本地 计算资源不足而导致的 开发 延期风险，云端提供的弹性算力支持和智能调度，使得峰值需求下的计算瓶 颈得以缓解 ，保障企业研发生产效率 。二是可 降低 企业 投入 ：企业根…",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "industry_outlook-0:u20"
+        "industry_outlook-0:u20",
+        "industry_outlook-0:u21",
+        "industry_outlook-0:u22",
+        "industry_outlook-0:u23"
       ],
       "source_units": [
         {
@@ -2188,37 +2707,23 @@
           "start_pos": 1555,
           "text": "因此， EDA 工具的发展 从整体上提升了芯片设计的效率，从而平抑了芯片设计的总体成本。",
           "unit_id": "industry_outlook-0:u20"
-        }
-      ],
-      "title": "管理层判断与行业展望"
-    },
-    {
-      "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:599929af7b460ab6ae90",
-      "fact_anchors": [
-        "二是可 降低 企业 投入 ：企业根…"
-      ],
-      "quality_score": 2,
-      "report_type": "annual",
-      "report_year": 2025,
-      "schema_version": "periodic_report_narrative_evidence_card.v2",
-      "score_parts": {
-        "anchored_fact": 1,
-        "argument_complete": 0,
-        "source_unit_count": 1
-      },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
-      "selection_version": "annual_argument_selection.v2",
-      "source_block_id": "industry_outlook-0",
-      "source_credit": 75,
-      "source_excerpt": "二是可 降低 企业 投入 ：企业根…",
-      "source_type": "periodic_report_narrative_evidence",
-      "source_unit_ids": [
-        "industry_outlook-0:u23"
-      ],
-      "source_units": [
+        },
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 1711,
+          "ordinal": 21,
+          "start_pos": 1654,
+          "text": "随着 EDA 云平台的成熟发展，将芯片设计流程迁移至云端已成为明显趋势 ，为 EDA 带来的多重效益 日益凸显 。",
+          "unit_id": "industry_outlook-0:u21"
+        },
+        {
+          "block_id": "industry_outlook-0",
+          "end_pos": 1824,
+          "ordinal": 22,
+          "start_pos": 1711,
+          "text": "一是可实现 研发风险控制 ：利用云端 EDA 可以有效避免芯片设计企业因流程管理不善或本地 计算资源不足而导致的 开发 延期风险，云端提供的弹性算力支持和智能调度，使得峰值需求下的计算瓶 颈得以缓解 ，保障企业研发生产效率 。",
+          "unit_id": "industry_outlook-0:u22"
+        },
         {
           "block_id": "industry_outlook-0",
           "end_pos": 1842,
@@ -2232,26 +2737,25 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:fb33883766eb5b47cc5b",
       "fact_anchors": [
-        "市场",
-        "竞争",
-        "战略"
+        "核心竞争力分析 （一）战略专注与历史积累优势 公"
       ],
-      "quality_score": 3,
+      "quality_score": 2,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 2,
+        "anchored_fact": 1,
         "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "market_competition_outlook",
         "business_structure"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2270,7 +2774,7 @@
           "unit_id": "management_strategy-0:u0"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2351,6 +2855,46 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:cd7cd7215b6e99d9dd8f",
+      "fact_anchors": [
+        "公 司在技术开发和业务拓展上一直聚焦于 EDA "
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "公 司在技术开发和业务拓展上一直聚焦于 EDA 领域，围绕 EDA 技术不断创新，具有显著的历史积累优势。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 334,
+          "ordinal": 6,
+          "start_pos": 281,
+          "text": "公 司在技术开发和业务拓展上一直聚焦于 EDA 领域，围绕 EDA 技术不断创新，具有显著的历史积累优势。",
+          "unit_id": "management_strategy-0:u6"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "business_structure",
       "card_id": "annual-argument:596b68e65cc33d34fce2",
       "fact_anchors": [
@@ -2366,7 +2910,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
@@ -2391,10 +2937,9 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
-      "card_id": "annual-argument:e713a648e43049ec1f4f",
+      "card_id": "annual-argument:b40a1bfdf08866a632b2",
       "fact_anchors": [
         "产品",
-        "解决方案",
         "服务"
       ],
       "quality_score": 3,
@@ -2411,11 +2956,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "公司目前 EDA 工具软件产品和服务覆盖模拟电路设计、存储电路设计、射频电路设计、数字电路设 计、平板显示电路设计、晶圆制造、先进封装设计和 3DIC 设计等领域。其中，模拟电路设计全流程 EDA 工具系统是全球领先的模拟电路设计全流程 EDA 解决方案之一；",
+      "source_excerpt": "公司目前 EDA 工具软件产品和服务覆盖模拟电路设计、存储电路设计、射频电路设计、数字电路设 计、平板显示电路设计、晶圆制造、先进封装设计和 3DIC 设计等领域。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u9",
-        "management_strategy-0:u10"
+        "management_strategy-0:u9"
       ],
       "source_units": [
         {
@@ -2425,22 +2969,52 @@
           "start_pos": 501,
           "text": "公司目前 EDA 工具软件产品和服务覆盖模拟电路设计、存储电路设计、射频电路设计、数字电路设 计、平板显示电路设计、晶圆制造、先进封装设计和 3DIC 设计等领域。",
           "unit_id": "management_strategy-0:u9"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 631,
-          "ordinal": 10,
-          "start_pos": 583,
-          "text": "其中，模拟电路设计全流程 EDA 工具系统是全球领先的模拟电路设计全流程 EDA 解决方案之一；",
-          "unit_id": "management_strategy-0:u10"
         }
       ],
       "title": "业务结构"
     },
     {
       "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:dc50eb85a4c48224e7e4",
+      "fact_anchors": [
+        "竞争"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "为确保自身的竞争力，公司保持了持续高比例的研发投入。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u16"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 905,
+          "ordinal": 16,
+          "start_pos": 879,
+          "text": "为确保自身的竞争力，公司保持了持续高比例的研发投入。",
+          "unit_id": "management_strategy-0:u16"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "financial_quality_explanation",
-      "card_id": "annual-argument:647dcc14c5282cde8a5e",
+      "card_id": "annual-argument:a5403790a1857b2bc283",
       "fact_anchors": [
         "64.84%",
         "营业收入",
@@ -2455,29 +3029,17 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [
-        "technology_product_progress",
-        "market_competition_outlook"
-      ],
+      "secondary_signals": [],
       "selection_reason": "financial_override:financial_quality_explanation",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "为确保自身的竞争力，公司保持了持续高比例的研发投入。报告期内，公司研发费用 85,917.51 万 元，占营业收入的比例为 64.84% 。",
+      "source_excerpt": "报告期内，公司研发费用 85,917.51 万 元，占营业收入的比例为 64.84% 。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u16",
         "management_strategy-0:u17"
       ],
       "source_units": [
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 905,
-          "ordinal": 16,
-          "start_pos": 879,
-          "text": "为确保自身的竞争力，公司保持了持续高比例的研发投入。",
-          "unit_id": "management_strategy-0:u16"
-        },
         {
           "block_id": "management_strategy-0",
           "end_pos": 949,
@@ -2491,11 +3053,13 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:b8aef7cba42a12bd6d6d",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:1c82550b4071d96b883d",
       "fact_anchors": [
-        "行业",
-        "战略"
+        "2025",
+        "产品",
+        "客户",
+        "产业链"
       ],
       "quality_score": 3,
       "report_type": "annual",
@@ -2506,8 +3070,68 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "在保持现有核心技术不断迭代、改进和优化的基础上，积极 学习吸收、研究和开发新产品、新技术，及时响应客户和市场需求，补充和完善 EDA 产品和技术解决方 案，使得公司逐渐成为在产业链中发挥关键作用的重要平台。 北京华大九天科技股份有限公司 2025 年年度报告全文 > 40 （三）全流程工具覆盖优势 公司目前在模拟电路设计、存储电路设计、射频电路设计和平板显示电路设计领域已经实现了对设 计全流程工具的覆盖，在数字电路设计等其他 EDA 领域方面也在不断提升全流程工具的覆盖率。实现设 计全流程工具覆盖，对 EDA 企业具有重要意义，主要包括：①设计全流程工具是我国集成电路产业健康 持续发展的支撑和保障。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u19",
+        "management_strategy-0:u20",
+        "management_strategy-0:u21"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1102,
+          "ordinal": 19,
+          "start_pos": 999,
+          "text": "在保持现有核心技术不断迭代、改进和优化的基础上，积极 学习吸收、研究和开发新产品、新技术，及时响应客户和市场需求，补充和完善 EDA 产品和技术解决方 案，使得公司逐渐成为在产业链中发挥关键作用的重要平台。",
+          "unit_id": "management_strategy-0:u19"
+        },
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1238,
+          "ordinal": 20,
+          "start_pos": 1136,
+          "text": "（三）全流程工具覆盖优势 公司目前在模拟电路设计、存储电路设计、射频电路设计和平板显示电路设计领域已经实现了对设 计全流程工具的覆盖，在数字电路设计等其他 EDA 领域方面也在不断提升全流程工具的覆盖率。",
+          "unit_id": "management_strategy-0:u20"
+        },
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1302,
+          "ordinal": 21,
+          "start_pos": 1238,
+          "text": "实现设 计全流程工具覆盖，对 EDA 企业具有重要意义，主要包括：①设计全流程工具是我国集成电路产业健康 持续发展的支撑和保障。",
+          "unit_id": "management_strategy-0:u21"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:b8aef7cba42a12bd6d6d",
+      "fact_anchors": [
+        "实现"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2526,62 +3150,12 @@
           "unit_id": "management_strategy-0:u23"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:9c69194ea1302ca92930",
-      "fact_anchors": [
-        "市场",
-        "竞争"
-      ],
-      "quality_score": 3,
-      "report_type": "annual",
-      "report_year": 2025,
-      "schema_version": "periodic_report_narrative_evidence_card.v2",
-      "score_parts": {
-        "anchored_fact": 2,
-        "argument_complete": 0,
-        "source_unit_count": 1
-      },
-      "secondary_signals": [
-        "business_structure"
-      ],
-      "selection_reason": "usage_primary:market_competition_outlook",
-      "selection_version": "annual_argument_selection.v2",
-      "source_block_id": "management_strategy-0",
-      "source_credit": 75,
-      "source_excerpt": "②设计全流程工具可以提升公司的市场竞争力。对于 用户而言，相比组合使用多家 EDA 厂 商的点工具，采用同平台的全流程产品能够实现更好的数据兼容性、精度一致性，并且能够显著降低使 用成本、提升使用效率。",
-      "source_type": "periodic_report_narrative_evidence",
-      "source_unit_ids": [
-        "management_strategy-0:u24",
-        "management_strategy-0:u25"
-      ],
-      "source_units": [
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1416,
-          "ordinal": 24,
-          "start_pos": 1395,
-          "text": "②设计全流程工具可以提升公司的市场竞争力。",
-          "unit_id": "management_strategy-0:u24"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1496,
-          "ordinal": 25,
-          "start_pos": 1416,
-          "text": "对于 用户而言，相比组合使用多家 EDA 厂 商的点工具，采用同平台的全流程产品能够实现更好的数据兼容性、精度一致性，并且能够显著降低使 用成本、提升使用效率。",
-          "unit_id": "management_strategy-0:u25"
-        }
-      ],
-      "title": "管理层判断与行业展望"
-    },
-    {
-      "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:4c455bda4cbb393bcc8b",
+      "card_id": "annual-argument:86ef876bf6ac67a72ce9",
       "fact_anchors": [
         "市场",
         "竞争"
@@ -2600,13 +3174,63 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "因此能够提供全流程 EDA 工具的厂商对客户吸引力更大，具有更强的市场竞争 优势。③设计全流程工具可以促进国内生态链的建设和技术进步，实现对国外产品的全面替代，有利于 促进国内集成电路产业自主生态链的建设。",
+      "source_excerpt": "②设计全流程工具可以提升公司的市场竞争力。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
+        "management_strategy-0:u24"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1416,
+          "ordinal": 24,
+          "start_pos": 1395,
+          "text": "②设计全流程工具可以提升公司的市场竞争力。",
+          "unit_id": "management_strategy-0:u24"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:0d056441843eb7e88035",
+      "fact_anchors": [
+        "平台",
+        "实现"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "对于 用户而言，相比组合使用多家 EDA 厂 商的点工具，采用同平台的全流程产品能够实现更好的数据兼容性、精度一致性，并且能够显著降低使 用成本、提升使用效率。因此能够提供全流程 EDA 工具的厂商对客户吸引力更大，具有更强的市场竞争 优势。③设计全流程工具可以促进国内生态链的建设和技术进步，实现对国外产品的全面替代，有利于 促进国内集成电路产业自主生态链的建设。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u25",
         "management_strategy-0:u26",
         "management_strategy-0:u27"
       ],
       "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1496,
+          "ordinal": 25,
+          "start_pos": 1416,
+          "text": "对于 用户而言，相比组合使用多家 EDA 厂 商的点工具，采用同平台的全流程产品能够实现更好的数据兼容性、精度一致性，并且能够显著降低使 用成本、提升使用效率。",
+          "unit_id": "management_strategy-0:u25"
+        },
         {
           "block_id": "management_strategy-0",
           "end_pos": 1537,
@@ -2624,7 +3248,7 @@
           "unit_id": "management_strategy-0:u27"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2666,32 +3290,34 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:4ee192e0c3a63d1aeb05",
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:ed04341eb408369351e7",
       "fact_anchors": [
-        "行业"
+        "业务",
+        "产品",
+        "客户"
       ],
-      "quality_score": 2,
+      "quality_score": 3,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 1,
+        "anchored_fact": 2,
         "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [
-        "business_structure"
+        "technology_product_progress",
+        "market_competition_outlook"
       ],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
-      "source_excerpt": "（四）优质的客户群体优势 作为国内 EDA 行业的龙头企 业，华大九天致力于面向集成电路产业提供一站式 EDA 工具软件产品及 相关服务， EDA 工具软件产品和相关服务已广泛获得客户认可，与国内外主要集成电路设计企业、晶圆 制造企业、封装企业、平板厂商建立了良好的业务合作关系，并通过持续的技术优化和产品迭代稳定与 深化客户合作。 公司的重点客户在所属领域具有技术代表性…",
+      "source_excerpt": "（四）优质的客户群体优势 作为国内 EDA 行业的龙头企 业，华大九天致力于面向集成电路产业提供一站式 EDA 工具软件产品及 相关服务， EDA 工具软件产品和相关服务已广泛获得客户认可，与国内外主要集成电路设计企业、晶圆 制造企业、封装企业、平板厂商建立了良好的业务合作关系，并通过持续的技术优化和产品迭代稳定与 深化客户合作。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "management_strategy-0:u29",
-        "management_strategy-0:u30"
+        "management_strategy-0:u29"
       ],
       "source_units": [
         {
@@ -2701,17 +3327,9 @@
           "start_pos": 1660,
           "text": "（四）优质的客户群体优势 作为国内 EDA 行业的龙头企 业，华大九天致力于面向集成电路产业提供一站式 EDA 工具软件产品及 相关服务， EDA 工具软件产品和相关服务已广泛获得客户认可，与国内外主要集成电路设计企业、晶圆 制造企业、封装企业、平板厂商建立了良好的业务合作关系，并通过持续的技术优化和产品迭代稳定与 深化客户合作。",
           "unit_id": "management_strategy-0:u29"
-        },
-        {
-          "block_id": "management_strategy-0",
-          "end_pos": 1847,
-          "ordinal": 30,
-          "start_pos": 1827,
-          "text": "公司的重点客户在所属领域具有技术代表性…",
-          "unit_id": "management_strategy-0:u30"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
@@ -2793,33 +3411,33 @@
     }
   ],
   "integrity": {
-    "card_count": 64,
-    "cards_sha256": "9f944a2eb9752682432b0576f2395f0440d06c7b78ec0193bbf2ea14e6a6622d",
-    "payload_sha256": "f41e17b96437a3f958908ae0c71d5a230733df7f8c04f052432ce5fc14de3be8",
-    "producer_diagnostics_sha256": "89b3f29d07c05e4313eca4e0b91dbe68f9f5cfadb9d4478fc7b5e04c33cc4613",
-    "source_unit_count": 89
+    "card_count": 80,
+    "cards_sha256": "9da6c28c6a75437d6fe28a01146d8d6fa65f5d56a48223904ac9e618d8ef4e90",
+    "payload_sha256": "aca7c03ef72bcba5515766a9c53292a89fc37dcf9b699623cf20517af2fc6cf6",
+    "producer_diagnostics_sha256": "90e6e768c622e4a3c60c7c96b854ae0ad6506ec784130feefb180b27fbbb0ced",
+    "source_unit_count": 101
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
-      "business_structure": 21,
+      "business_structure": 24,
       "financial_quality_explanation": 13,
-      "market_competition_outlook": 27,
+      "market_competition_outlook": 19,
       "operating_progress": 0,
-      "technology_product_progress": 3
+      "technology_product_progress": 24
     },
     "argument_complete_counts": {
-      "atomic": 53,
-      "complete": 11
+      "atomic": 67,
+      "complete": 13
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
-      "business_structure": 21,
+      "business_structure": 24,
       "financial_quality_explanation": 13,
-      "market_competition_outlook": 27,
+      "market_competition_outlook": 19,
       "operating_progress": 0,
-      "technology_product_progress": 3
+      "technology_product_progress": 24
     },
     "cards": [
       {
@@ -2841,22 +3459,6 @@
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
           "cash_flow_capex_table-0:u0"
-        ]
-      },
-      {
-        "card_id": "annual-argument:9ddfbd483b6925493380",
-        "fact_anchors": [
-          "2025"
-        ],
-        "score_parts": {
-          "anchored_fact": 1,
-          "argument_complete": 0,
-          "source_unit_count": 1
-        },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:business_structure",
-        "source_unit_ids": [
-          "product_capacity_profile-0:u1"
         ]
       },
       {
@@ -2887,10 +3489,29 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "market_demand_outlook-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e482f70b455464bdc728",
+        "fact_anchors": [
+          "芯片",
+          "平台"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "market_demand_outlook-0:u3"
         ]
       },
       {
@@ -2926,6 +3547,41 @@
         ]
       },
       {
+        "card_id": "annual-argument:c3700690bfa2a0abc22c",
+        "fact_anchors": [
+          "芯片",
+          "工艺"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "market_demand_outlook-1:u1",
+          "market_demand_outlook-1:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a5c9bce0e35edd645d5c",
+        "fact_anchors": [
+          "芯片",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "market_demand_outlook-1:u4"
+        ]
+      },
+      {
         "card_id": "annual-argument:3e2d54c1aa76147bb661",
         "fact_anchors": [
           "2025",
@@ -2955,6 +3611,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "operating_progress",
           "market_competition_outlook",
           "business_structure"
         ],
@@ -3187,7 +3844,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:7024a8fbf22b95b08617",
+        "card_id": "annual-argument:f56e14a7b1f54fe05cc4",
         "fact_anchors": [
           "战略"
         ],
@@ -3199,14 +3856,13 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "government_grant_note-0:u6",
-          "government_grant_note-0:u7"
+          "government_grant_note-0:u6"
         ]
       },
       {
         "card_id": "annual-argument:f480065a263a32e1375a",
         "fact_anchors": [
-          "战略"
+          "合作"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -3214,15 +3870,16 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "market_competition_outlook",
           "business_structure"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "government_grant_note-0:u8"
         ]
       },
       {
-        "card_id": "annual-argument:992a055f03cd4d08242c",
+        "card_id": "annual-argument:a1134384e36583f1c187",
         "fact_anchors": [
           "72%",
           "研发"
@@ -3235,12 +3892,11 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "government_grant_note-0:u14",
-          "government_grant_note-0:u15"
+          "government_grant_note-0:u14"
         ]
       },
       {
-        "card_id": "annual-argument:44a204c85a729575c6a2",
+        "card_id": "annual-argument:4525a32522684100e1ed",
         "fact_anchors": [
           "战略"
         ],
@@ -3252,14 +3908,13 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "business_overview-0:u5",
-          "business_overview-0:u6"
+          "business_overview-0:u5"
         ]
       },
       {
         "card_id": "annual-argument:bd96ed1592fb029b5342",
         "fact_anchors": [
-          "战略"
+          "合作"
         ],
         "score_parts": {
           "anchored_fact": 1,
@@ -3267,9 +3922,10 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "market_competition_outlook",
           "business_structure"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "business_overview-0:u7"
         ]
@@ -3294,7 +3950,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:589a05fddda80059d932",
+        "card_id": "annual-argument:d3d362e84d900f61cdf6",
         "fact_anchors": [
           "72%",
           "研发"
@@ -3307,25 +3963,27 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "business_overview-0:u13",
-          "business_overview-0:u14"
+          "business_overview-0:u13"
         ]
       },
       {
-        "card_id": "annual-argument:38406c2afdff2ea4b721",
+        "card_id": "annual-argument:7811f280f305928af16f",
         "fact_anchors": [
-          "战略"
+          "业务",
+          "解决方案"
         ],
         "score_parts": {
-          "anchored_fact": 1,
+          "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [
-          "business_structure"
+          "technology_product_progress",
+          "market_competition_outlook"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
+          "business_overview-0:u16",
           "business_overview-0:u17"
         ]
       },
@@ -3347,6 +4005,23 @@
         ]
       },
       {
+        "card_id": "annual-argument:6f3c76df8ec71d34640d",
+        "fact_anchors": [
+          "工艺",
+          "突破"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_overview-0:u19"
+        ]
+      },
+      {
         "card_id": "annual-argument:cac8282a8ada919dd8cc",
         "fact_anchors": [
           "国产替代"
@@ -3365,22 +4040,56 @@
         ]
       },
       {
-        "card_id": "annual-argument:2beb9e1aabb4f4f6f8b4",
+        "card_id": "annual-argument:f6202014986f4693ec03",
         "fact_anchors": [
-          "行业"
+          "实现"
         ],
         "score_parts": {
           "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "business_overview-0:u21",
-          "business_overview-0:u22",
-          "business_overview-0:u23",
-          "business_overview-0:u24",
+          "business_overview-0:u22"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c87b15d64ddc2d198188",
+        "fact_anchors": [
+          "平台",
+          "工艺",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_overview-0:u24"
+        ]
+      },
+      {
+        "card_id": "annual-argument:32e5eea9fb0299ba1085",
+        "fact_anchors": [
+          "验证",
+          "推出"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
           "business_overview-0:u25"
         ]
       },
@@ -3396,10 +4105,28 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:6fea780cb22974dac0a1",
+        "fact_anchors": [
+          "产品"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_model-0:u1"
         ]
       },
       {
@@ -3477,6 +4204,22 @@
         ]
       },
       {
+        "card_id": "annual-argument:f2f694ad0f1e0d29af96",
+        "fact_anchors": [
+          "公司的研发按照项目立项、项目开发与测试和项目发布"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_model-0:u9"
+        ]
+      },
+      {
         "card_id": "annual-argument:89d73f075e66bb307105",
         "fact_anchors": [
           "产品",
@@ -3488,7 +4231,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u11"
@@ -3512,6 +4257,23 @@
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u12"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a66a6ea8c69afcc1e42d",
+        "fact_anchors": [
+          "实现",
+          "突破"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "business_model-0:u13"
         ]
       },
       {
@@ -3544,6 +4306,8 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
+          "operating_progress",
           "market_competition_outlook"
         ],
         "selection_reason": "financial_override:financial_quality_explanation",
@@ -3561,7 +4325,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u16"
@@ -3580,7 +4346,9 @@
           "argument_complete": 4,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u17"
@@ -3624,15 +4392,17 @@
       {
         "card_id": "annual-argument:7470bd4e2283f424ab59",
         "fact_anchors": [
-          "行业"
+          "研发"
         ],
         "score_parts": {
           "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "business_model-0:u20"
         ]
@@ -3670,6 +4440,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "business_structure"
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
@@ -3683,17 +4454,17 @@
       {
         "card_id": "annual-argument:a9a6205c358b46356ace",
         "fact_anchors": [
-          "主要从事",
-          "业务",
-          "服务"
+          "公司主要从事用于集成电路设计、制造和封装的 ED"
         ],
         "score_parts": {
-          "anchored_fact": 2,
+          "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:business_structure",
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "industry_outlook-0:u4"
         ]
@@ -3720,7 +4491,39 @@
         ]
       },
       {
-        "card_id": "annual-argument:e20edd3b984f81b47cda",
+        "card_id": "annual-argument:b0341562ef5db1120f3c",
+        "fact_anchors": [
+          "市场"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "industry_outlook-0:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0cd7efb5583198c673fb",
+        "fact_anchors": [
+          "突破"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "industry_outlook-0:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:d0841e08e9cfc8a1709d",
         "fact_anchors": [
           "行业",
           "趋势"
@@ -3730,62 +4533,119 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
-        "source_unit_ids": [
-          "industry_outlook-0:u10",
-          "industry_outlook-0:u11",
-          "industry_outlook-0:u12"
-        ]
-      },
-      {
-        "card_id": "annual-argument:137f291a4294d15a59ca",
-        "fact_anchors": [
-          "因此， EDA 工具的发展 从整体上提升了芯片设"
+        "secondary_signals": [
+          "technology_product_progress"
         ],
-        "score_parts": {
-          "anchored_fact": 1,
-          "argument_complete": 0,
-          "source_unit_count": 1
-        },
-        "secondary_signals": [],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
-          "industry_outlook-0:u20"
+          "industry_outlook-0:u10"
         ]
       },
       {
-        "card_id": "annual-argument:599929af7b460ab6ae90",
+        "card_id": "annual-argument:ed4bf7aa9f35a172821e",
         "fact_anchors": [
-          "二是可 降低 企业 投入 ：企业根…"
-        ],
-        "score_parts": {
-          "anchored_fact": 1,
-          "argument_complete": 0,
-          "source_unit_count": 1
-        },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
-        "source_unit_ids": [
-          "industry_outlook-0:u23"
-        ]
-      },
-      {
-        "card_id": "annual-argument:fb33883766eb5b47cc5b",
-        "fact_anchors": [
-          "市场",
-          "竞争",
-          "战略"
+          "芯片",
+          "工艺"
         ],
         "score_parts": {
           "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "industry_outlook-0:u11",
+          "industry_outlook-0:u12"
+        ]
+      },
+      {
+        "card_id": "annual-argument:415a909b7e4e763cc85f",
+        "fact_anchors": [
+          "芯片",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "industry_outlook-0:u14"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e186ca1a946945e2f813",
+        "fact_anchors": [
+          "芯片"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "industry_outlook-0:u17"
+        ]
+      },
+      {
+        "card_id": "annual-argument:841da9e00adbebe14716",
+        "fact_anchors": [
+          "平台"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "industry_outlook-0:u19"
+        ]
+      },
+      {
+        "card_id": "annual-argument:9be9983c8370fc836735",
+        "fact_anchors": [
+          "2025",
+          "需求",
+          "趋势"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
         "secondary_signals": [
           "business_structure"
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "industry_outlook-0:u20",
+          "industry_outlook-0:u21",
+          "industry_outlook-0:u22",
+          "industry_outlook-0:u23"
+        ]
+      },
+      {
+        "card_id": "annual-argument:fb33883766eb5b47cc5b",
+        "fact_anchors": [
+          "核心竞争力分析 （一）战略专注与历史积累优势 公"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "management_strategy-0:u0"
         ]
@@ -3824,6 +4684,24 @@
         ]
       },
       {
+        "card_id": "annual-argument:cd7cd7215b6e99d9dd8f",
+        "fact_anchors": [
+          "公 司在技术开发和业务拓展上一直聚焦于 EDA "
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u6"
+        ]
+      },
+      {
         "card_id": "annual-argument:596b68e65cc33d34fce2",
         "fact_anchors": [
           "业务",
@@ -3834,17 +4712,18 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "management_strategy-0:u7"
         ]
       },
       {
-        "card_id": "annual-argument:e713a648e43049ec1f4f",
+        "card_id": "annual-argument:b40a1bfdf08866a632b2",
         "fact_anchors": [
           "产品",
-          "解决方案",
           "服务"
         ],
         "score_parts": {
@@ -3855,12 +4734,27 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
-          "management_strategy-0:u9",
-          "management_strategy-0:u10"
+          "management_strategy-0:u9"
         ]
       },
       {
-        "card_id": "annual-argument:647dcc14c5282cde8a5e",
+        "card_id": "annual-argument:dc50eb85a4c48224e7e4",
+        "fact_anchors": [
+          "竞争"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "management_strategy-0:u16"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a5403790a1857b2bc283",
         "fact_anchors": [
           "64.84%",
           "营业收入",
@@ -3871,55 +4765,55 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [
-          "technology_product_progress",
-          "market_competition_outlook"
-        ],
+        "secondary_signals": [],
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
-          "management_strategy-0:u16",
           "management_strategy-0:u17"
+        ]
+      },
+      {
+        "card_id": "annual-argument:1c82550b4071d96b883d",
+        "fact_anchors": [
+          "2025",
+          "产品",
+          "客户",
+          "产业链"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u19",
+          "management_strategy-0:u20",
+          "management_strategy-0:u21"
         ]
       },
       {
         "card_id": "annual-argument:b8aef7cba42a12bd6d6d",
         "fact_anchors": [
-          "行业",
-          "战略"
+          "实现"
         ],
         "score_parts": {
-          "anchored_fact": 2,
+          "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "management_strategy-0:u23"
         ]
       },
       {
-        "card_id": "annual-argument:9c69194ea1302ca92930",
-        "fact_anchors": [
-          "市场",
-          "竞争"
-        ],
-        "score_parts": {
-          "anchored_fact": 2,
-          "argument_complete": 0,
-          "source_unit_count": 1
-        },
-        "secondary_signals": [
-          "business_structure"
-        ],
-        "selection_reason": "usage_primary:market_competition_outlook",
-        "source_unit_ids": [
-          "management_strategy-0:u24",
-          "management_strategy-0:u25"
-        ]
-      },
-      {
-        "card_id": "annual-argument:4c455bda4cbb393bcc8b",
+        "card_id": "annual-argument:86ef876bf6ac67a72ce9",
         "fact_anchors": [
           "市场",
           "竞争"
@@ -3932,6 +4826,26 @@
         "secondary_signals": [],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
+          "management_strategy-0:u24"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0d056441843eb7e88035",
+        "fact_anchors": [
+          "平台",
+          "实现"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u25",
           "management_strategy-0:u26",
           "management_strategy-0:u27"
         ]
@@ -3953,22 +4867,24 @@
         ]
       },
       {
-        "card_id": "annual-argument:4ee192e0c3a63d1aeb05",
+        "card_id": "annual-argument:ed04341eb408369351e7",
         "fact_anchors": [
-          "行业"
+          "业务",
+          "产品",
+          "客户"
         ],
         "score_parts": {
-          "anchored_fact": 1,
+          "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [
-          "business_structure"
+          "technology_product_progress",
+          "market_competition_outlook"
         ],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
-          "management_strategy-0:u29",
-          "management_strategy-0:u30"
+          "management_strategy-0:u29"
         ]
       },
       {
@@ -4010,11 +4926,11 @@
       "operating_progress"
     ],
     "rejection_counts": {
-      "boilerplate": 52,
-      "incomplete": 52,
+      "boilerplate": 50,
+      "incomplete": 44,
       "invalid_unit": 12,
       "no_anchor": 51,
-      "ocr_damage": 23,
+      "ocr_damage": 21,
       "reused_source_units": 0,
       "table_noise": 10
     },
@@ -4149,14 +5065,12 @@
         "source_unit_id": "product_capacity_profile-0:u0"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:9ddfbd483b6925493380"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "product_capacity_profile-0",
         "source_order": 1,
-        "source_text_hash": "516137aa4ab983eefce7f0f43f803110655bc2355b6d33fea786de8124b9cb96",
+        "source_text_hash": "d68be68dec2a98604e7d2c41d2e2400b60212b5cf1800cf3ee83359985fc7b8a",
         "source_unit_id": "product_capacity_profile-0:u1"
       },
       {
@@ -4218,9 +5132,11 @@
         "source_unit_id": "market_demand_outlook-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e482f70b455464bdc728"
+        ],
         "source_block_id": "market_demand_outlook-0",
         "source_order": 3,
         "source_text_hash": "cac3c20f6d37bd2dafd6a70eae82a17edabb8bc7aa8e7de1b9d61dbeecc5663e",
@@ -4249,18 +5165,22 @@
         "source_unit_id": "market_demand_outlook-1:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c3700690bfa2a0abc22c"
+        ],
         "source_block_id": "market_demand_outlook-1",
         "source_order": 1,
         "source_text_hash": "0f70593b390067d64fa2ca87ef4e6d1077e2215a5606c0cfa1dcce76e790f247",
         "source_unit_id": "market_demand_outlook-1:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c3700690bfa2a0abc22c"
+        ],
         "source_block_id": "market_demand_outlook-1",
         "source_order": 2,
         "source_text_hash": "26da9b2229a8e0ccda80c05162baaff7958dd8d078aac655e0151b62d49ac316",
@@ -4276,9 +5196,11 @@
         "source_unit_id": "market_demand_outlook-1:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a5c9bce0e35edd645d5c"
+        ],
         "source_block_id": "market_demand_outlook-1",
         "source_order": 4,
         "source_text_hash": "46001d950b6c4ea82e92003ef2e3455c18709d07c10f36325a0d6d46752de171",
@@ -4587,11 +5509,11 @@
       },
       {
         "disposition": "rejected",
-        "reason": "checkbox_or_page_marker",
+        "reason": "audit_or_policy",
         "selected_by_card_ids": [],
         "source_block_id": "inventory_note-0",
         "source_order": 17,
-        "source_text_hash": "d4b552b016cf0a4adcd2b752dfa5cb669569dc3e50946a7fc2d19e7f3d3deebb",
+        "source_text_hash": "2db21ef174710bb84e6fc7e22075e6fde24ffb5a8632c36d9ca37b5fe38bced9",
         "source_unit_id": "inventory_note-0:u17"
       },
       {
@@ -5036,7 +5958,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:7024a8fbf22b95b08617"
+          "annual-argument:f56e14a7b1f54fe05cc4"
         ],
         "source_block_id": "government_grant_note-0",
         "source_order": 6,
@@ -5044,11 +5966,9 @@
         "source_unit_id": "government_grant_note-0:u6"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:7024a8fbf22b95b08617"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "government_grant_note-0",
         "source_order": 7,
         "source_text_hash": "72a4ee4442b8a5b42f32fab5c9d92f13d6b0d0f5fb24d0adc92a99ffa0b49f3e",
@@ -5114,7 +6034,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:992a055f03cd4d08242c"
+          "annual-argument:a1134384e36583f1c187"
         ],
         "source_block_id": "government_grant_note-0",
         "source_order": 14,
@@ -5122,11 +6042,9 @@
         "source_unit_id": "government_grant_note-0:u14"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:992a055f03cd4d08242c"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "government_grant_note-0",
         "source_order": 15,
         "source_text_hash": "eb1e0ffdbb964b850543fb06d414af549f121a1ee22e395814145a9f54d32329",
@@ -5134,11 +6052,11 @@
       },
       {
         "disposition": "rejected",
-        "reason": "audit_or_policy",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "government_grant_note-0",
         "source_order": 16,
-        "source_text_hash": "1826089260c16021161907111d09a72ed5c768a2556c5ba2216fd971b82f0d44",
+        "source_text_hash": "9bac4ddd950db7f975b5397529d79bc685d150fd4183aca20184da156bcb2cd9",
         "source_unit_id": "government_grant_note-0:u16"
       },
       {
@@ -5199,7 +6117,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:44a204c85a729575c6a2"
+          "annual-argument:4525a32522684100e1ed"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 5,
@@ -5207,11 +6125,9 @@
         "source_unit_id": "business_overview-0:u5"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:44a204c85a729575c6a2"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_overview-0",
         "source_order": 6,
         "source_text_hash": "72a4ee4442b8a5b42f32fab5c9d92f13d6b0d0f5fb24d0adc92a99ffa0b49f3e",
@@ -5281,7 +6197,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:589a05fddda80059d932"
+          "annual-argument:d3d362e84d900f61cdf6"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 13,
@@ -5289,11 +6205,9 @@
         "source_unit_id": "business_overview-0:u13"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:589a05fddda80059d932"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_overview-0",
         "source_order": 14,
         "source_text_hash": "eb1e0ffdbb964b850543fb06d414af549f121a1ee22e395814145a9f54d32329",
@@ -5301,17 +6215,19 @@
       },
       {
         "disposition": "rejected",
-        "reason": "audit_or_policy",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "business_overview-0",
         "source_order": 15,
-        "source_text_hash": "1826089260c16021161907111d09a72ed5c768a2556c5ba2216fd971b82f0d44",
+        "source_text_hash": "9bac4ddd950db7f975b5397529d79bc685d150fd4183aca20184da156bcb2cd9",
         "source_unit_id": "business_overview-0:u15"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:7811f280f305928af16f"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 16,
         "source_text_hash": "0f4f26a5fb59edd223261d0730ee4dbcfdd4e53037f62f80a4a824996208448f",
@@ -5321,7 +6237,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:38406c2afdff2ea4b721"
+          "annual-argument:7811f280f305928af16f"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 17,
@@ -5340,9 +6256,11 @@
         "source_unit_id": "business_overview-0:u18"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:6f3c76df8ec71d34640d"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 19,
         "source_text_hash": "6334a61a8807ba393b1af83af51eec62724f982696b954b71ce0c6d28c128543",
@@ -5363,7 +6281,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2beb9e1aabb4f4f6f8b4"
+          "annual-argument:f6202014986f4693ec03"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 21,
@@ -5374,7 +6292,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2beb9e1aabb4f4f6f8b4"
+          "annual-argument:f6202014986f4693ec03"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 22,
@@ -5382,11 +6300,9 @@
         "source_unit_id": "business_overview-0:u22"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:2beb9e1aabb4f4f6f8b4"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "business_overview-0",
         "source_order": 23,
         "source_text_hash": "b39838fa6d92ba86e3096d910457a29fb2c66ebd3be21356de79f40c7e83a9ed",
@@ -5396,7 +6312,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2beb9e1aabb4f4f6f8b4"
+          "annual-argument:c87b15d64ddc2d198188"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 24,
@@ -5407,7 +6323,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:2beb9e1aabb4f4f6f8b4"
+          "annual-argument:32e5eea9fb0299ba1085"
         ],
         "source_block_id": "business_overview-0",
         "source_order": 25,
@@ -5435,9 +6351,11 @@
         "source_unit_id": "business_model-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:6fea780cb22974dac0a1"
+        ],
         "source_block_id": "business_model-0",
         "source_order": 1,
         "source_text_hash": "1791bfbcede3afd60d91c1dbcc5a010c9bf86d39051e4dfb87cda5bc7f0d5b23",
@@ -5521,9 +6439,11 @@
         "source_unit_id": "business_model-0:u8"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f2f694ad0f1e0d29af96"
+        ],
         "source_block_id": "business_model-0",
         "source_order": 9,
         "source_text_hash": "8679189f50fb4e682843421224271f3ddb716b9c221d44a196aaea982cfe379d",
@@ -5561,12 +6481,14 @@
         "source_unit_id": "business_model-0:u12"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a66a6ea8c69afcc1e42d"
+        ],
         "source_block_id": "business_model-0",
         "source_order": 13,
-        "source_text_hash": "48b65fafd5adf16675376656748f484e6b8f075ea12fd1c95d2ccc862d3cb644",
+        "source_text_hash": "f198a05179cb50720f0379bbcb823c6e2e5bd0105a47e4389b45204ff589aa41",
         "source_unit_id": "business_model-0:u13"
       },
       {
@@ -5707,7 +6629,7 @@
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 3,
-        "source_text_hash": "965806eef6409384eebf4bc29234deff2e9b77cf4720d55ac5ec7e74f73e746f",
+        "source_text_hash": "138576d353d096e88c4cad14f096e8a7317d5886db1f8ef7a57414d07580fb97",
         "source_unit_id": "industry_outlook-0:u3"
       },
       {
@@ -5755,18 +6677,22 @@
         "source_unit_id": "industry_outlook-0:u7"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b0341562ef5db1120f3c"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 8,
         "source_text_hash": "70decb99ae697cdb112ad5e2bdb63f17d5cf23dd860fc24cad5c2e59fa49cfcb",
         "source_unit_id": "industry_outlook-0:u8"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:0cd7efb5583198c673fb"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 9,
         "source_text_hash": "25c8f16de55a1584724bad46df02a1128f70b04cf741f13b38b7476c6b22bbc0",
@@ -5776,7 +6702,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:e20edd3b984f81b47cda"
+          "annual-argument:d0841e08e9cfc8a1709d"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 10,
@@ -5787,7 +6713,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:e20edd3b984f81b47cda"
+          "annual-argument:ed4bf7aa9f35a172821e"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 11,
@@ -5798,7 +6724,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:e20edd3b984f81b47cda"
+          "annual-argument:ed4bf7aa9f35a172821e"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 12,
@@ -5815,9 +6741,11 @@
         "source_unit_id": "industry_outlook-0:u13"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:415a909b7e4e763cc85f"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 14,
         "source_text_hash": "46001d950b6c4ea82e92003ef2e3455c18709d07c10f36325a0d6d46752de171",
@@ -5842,9 +6770,11 @@
         "source_unit_id": "industry_outlook-0:u16"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e186ca1a946945e2f813"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 17,
         "source_text_hash": "05648764b6ffeaaf05360fc2d998a30ecc9c85368b3eeb1d160263df0f071299",
@@ -5860,9 +6790,11 @@
         "source_unit_id": "industry_outlook-0:u18"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:841da9e00adbebe14716"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 19,
         "source_text_hash": "436f8894f2882aa6b397c4643e6114014d35be462b30be47a998fa2879ca31c2",
@@ -5872,7 +6804,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:137f291a4294d15a59ca"
+          "annual-argument:9be9983c8370fc836735"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 20,
@@ -5880,18 +6812,22 @@
         "source_unit_id": "industry_outlook-0:u20"
       },
       {
-        "disposition": "rejected",
-        "reason": "checkbox_or_page_marker",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:9be9983c8370fc836735"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 21,
-        "source_text_hash": "3030ad3ae2dded50c964475004f6f13ba13093825ff0232add389f604f0fb8fc",
+        "source_text_hash": "daf282cc3ea028f3bd0791823ee4105e0ada45e1f1fd68292e44a15a8176c547",
         "source_unit_id": "industry_outlook-0:u21"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:9be9983c8370fc836735"
+        ],
         "source_block_id": "industry_outlook-0",
         "source_order": 22,
         "source_text_hash": "f912c7e63e3d655daf86575d5a778c43fc615a56bf775d5eb3a892178ab3acba",
@@ -5901,7 +6837,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:599929af7b460ab6ae90"
+          "annual-argument:9be9983c8370fc836735"
         ],
         "source_block_id": "industry_outlook-0",
         "source_order": 23,
@@ -5969,9 +6905,11 @@
         "source_unit_id": "management_strategy-0:u5"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:cd7cd7215b6e99d9dd8f"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 6,
         "source_text_hash": "2798b4ae9d81ef947665647e9a4d94689a680a2d236de3ddf4772160502b2816",
@@ -6001,7 +6939,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:e713a648e43049ec1f4f"
+          "annual-argument:b40a1bfdf08866a632b2"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 9,
@@ -6009,11 +6947,9 @@
         "source_unit_id": "management_strategy-0:u9"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:e713a648e43049ec1f4f"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 10,
         "source_text_hash": "76700a3c7042b7245f9d74922c3064eb4d77d745c1eb4cd077fa8de5425b24f4",
@@ -6068,7 +7004,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:647dcc14c5282cde8a5e"
+          "annual-argument:dc50eb85a4c48224e7e4"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 16,
@@ -6079,7 +7015,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:647dcc14c5282cde8a5e"
+          "annual-argument:a5403790a1857b2bc283"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 17,
@@ -6096,27 +7032,33 @@
         "source_unit_id": "management_strategy-0:u18"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:1c82550b4071d96b883d"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 19,
         "source_text_hash": "e83bda8a229725af121af9d7b9ce8ad8ac0190f113fd688e6fea124c83015f13",
         "source_unit_id": "management_strategy-0:u19"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:1c82550b4071d96b883d"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 20,
-        "source_text_hash": "c3a0552dc9dda9ab7c2e84762091c17b28451bdb2b0160d01a7d9627eeaa46d7",
+        "source_text_hash": "b7cb64cfba4a265c8e9acdf8b28bf5dd3f919b0edf9987d3c4baa946df230b65",
         "source_unit_id": "management_strategy-0:u20"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:1c82550b4071d96b883d"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 21,
         "source_text_hash": "ecd3505b53fec7dfdaad7293837c80d25cb232e2afbecf0067337098447c5a19",
@@ -6146,7 +7088,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:9c69194ea1302ca92930"
+          "annual-argument:86ef876bf6ac67a72ce9"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 24,
@@ -6157,7 +7099,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:9c69194ea1302ca92930"
+          "annual-argument:0d056441843eb7e88035"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 25,
@@ -6168,7 +7110,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4c455bda4cbb393bcc8b"
+          "annual-argument:0d056441843eb7e88035"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 26,
@@ -6179,7 +7121,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4c455bda4cbb393bcc8b"
+          "annual-argument:0d056441843eb7e88035"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 27,
@@ -6201,7 +7143,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:4ee192e0c3a63d1aeb05"
+          "annual-argument:ed04341eb408369351e7"
         ],
         "source_block_id": "management_strategy-0",
         "source_order": 29,
@@ -6209,11 +7151,9 @@
         "source_unit_id": "management_strategy-0:u29"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:4ee192e0c3a63d1aeb05"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 30,
         "source_text_hash": "72b71172ae2a09e08448a428842bd348ab49c64475935f1722f4d626f110dbaf",
@@ -6802,7 +7742,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 289,
-    "usable_units": 140,
+    "usable_units": 144,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

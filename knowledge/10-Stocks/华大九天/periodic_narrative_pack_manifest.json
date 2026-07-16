@@ -1,14 +1,14 @@
 {
   "periods": [
     {
-      "cards_sha256": "9f944a2eb9752682432b0576f2395f0440d06c7b78ec0193bbf2ea14e6a6622d",
+      "cards_sha256": "9da6c28c6a75437d6fe28a01146d8d6fa65f5d56a48223904ac9e618d8ef4e90",
       "pack_path": "periodic_narrative_packs/2025-annual.json",
-      "payload_sha256": "f41e17b96437a3f958908ae0c71d5a230733df7f8c04f052432ce5fc14de3be8",
+      "payload_sha256": "aca7c03ef72bcba5515766a9c53292a89fc37dcf9b699623cf20517af2fc6cf6",
       "report_type": "annual",
       "report_year": 2025
     }
   ],
-  "periods_sha256": "99bcb546b92da10cd7e1b1d063f5995ce32fa93f9f61e510e9c0ca2854ea8eca",
+  "periods_sha256": "1d1bf1b96ab56a3a8906f89a26326137c2dab1eb2354d7d93d9fb719d2debef0",
   "schema_version": "periodic_report_narrative_pack_manifest.v1",
   "stock_code": "301269",
   "stock_name": "华大九天"

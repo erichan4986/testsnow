@@ -143,7 +143,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "product_capacity_profile-0",
@@ -347,7 +349,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "sales_certification_model-0",
@@ -447,6 +451,49 @@
         }
       ],
       "title": "业务结构"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:10e0a89469a3bccdb4f0",
+      "fact_anchors": [
+        "2025",
+        "行业",
+        "市场",
+        "需求"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_market_view-0",
+      "source_credit": 75,
+      "source_excerpt": "1、宏观经济波动及市场竞争加剧的风险 公司主要产品为高速光通信模块，如果未来全球经济衰退， 下游 CSP 客户 投资计划削减，下游 AI 应用领域市场发展出现滞缓，或者原材料价格、劳动力成本、资金成本、经济形势、政策导向、技术革 中际旭创股份有限公司 2025 年年度报告全文 > -33 - 新等发生变化，市场减少光模块产品需求，以及市场竞争的加剧，可能导致公司盈利能力下降，公司将 充分利用现有的技术和市场优势，积极进行技术和产品创新，大力开拓市场，进而巩固和提升行业地位。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_market_view-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_market_view-0",
+          "end_pos": 239,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "1、宏观经济波动及市场竞争加剧的风险 公司主要产品为高速光通信模块，如果未来全球经济衰退， 下游 CSP 客户 投资计划削减，下游 AI 应用领域市场发展出现滞缓，或者原材料价格、劳动力成本、资金成本、经济形势、政策导向、技术革 中际旭创股份有限公司 2025 年年度报告全文 > -33 - 新等发生变化，市场减少光模块产品需求，以及市场竞争的加剧，可能导致公司盈利能力下降，公司将 充分利用现有的技术和市场优势，积极进行技术和产品创新，大力开拓市场，进而巩固和提升行业地位。",
+          "unit_id": "management_market_view-0:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
     },
     {
       "argument_complete": false,
@@ -1059,7 +1106,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "future_strategy-0",
@@ -1101,6 +1150,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "business_structure"
       ],
       "selection_reason": "usage_primary:market_competition_outlook",
@@ -1171,6 +1221,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "operating_progress",
         "market_competition_outlook"
       ],
       "selection_reason": "financial_override:financial_quality_explanation",
@@ -1193,6 +1244,49 @@
         }
       ],
       "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:0b57fff538e097fd616b",
+      "fact_anchors": [
+        "2025",
+        "2018",
+        "平台"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "related_party_transactions-0",
+      "source_credit": 75,
+      "source_excerpt": "关联交易的议案》 ，为满足海外业务拓展及生产运营的资金需求，优化公司资 中际旭创股份有限公司 2025 年年度报告全文 - 24 - 产负债结构，持续推进公司国际化战略，为长远发展奠定坚实基础，公司及新股东 Platinum Orchid B 2018 RSC Limited （阿布扎比投资局间接持股的全资下属平台） 、Daxue Investments Pte. Ltd. （淡马锡间 接持股的全资下属企业） 、True Light Investments P Pte. Ltd. （淡马锡间接全资持有的独立子公司）拟合 计出资 5.17 亿美元对公司控股孙公司 TeraHop Pte. Ltd. 进行增资，合计认购 TeraHop 16,089,272 股普通 股。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "related_party_transactions-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "related_party_transactions-0",
+          "end_pos": 337,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "关联交易的议案》 ，为满足海外业务拓展及生产运营的资金需求，优化公司资 中际旭创股份有限公司 2025 年年度报告全文 - 24 - 产负债结构，持续推进公司国际化战略，为长远发展奠定坚实基础，公司及新股东 Platinum Orchid B 2018 RSC Limited （阿布扎比投资局间接持股的全资下属平台） 、Daxue Investments Pte. Ltd. （淡马锡间 接持股的全资下属企业） 、True Light Investments P Pte. Ltd. （淡马锡间接全资持有的独立子公司）拟合 计出资 5.17 亿美元对公司控股孙公司 TeraHop Pte. Ltd. 进行增资，合计认购 TeraHop 16,089,272 股普通 股。",
+          "unit_id": "related_party_transactions-0:u0"
+        }
+      ],
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -1379,7 +1473,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
@@ -1497,7 +1593,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
@@ -1574,7 +1672,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_overview-0",
@@ -1979,7 +2079,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "business_model-0",
@@ -2083,6 +2185,44 @@
     {
       "argument_complete": false,
       "argument_family": "business_structure",
+      "card_id": "annual-argument:48f0302f12a41683762c",
+      "fact_anchors": [
+        "产品"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_model-0",
+      "source_credit": 75,
+      "source_excerpt": "公司设有光电技术部、产品开发部、项目运营部和综合管理部，每个部门又下设若干研究组 /工作 室，共同构建了完善的技术平台和产品线，为公司提供了较强的自主创新能力。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_model-0:u10"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_model-0",
+          "end_pos": 783,
+          "ordinal": 10,
+          "start_pos": 703,
+          "text": "公司设有光电技术部、产品开发部、项目运营部和综合管理部，每个部门又下设若干研究组 /工作 室，共同构建了完善的技术平台和产品线，为公司提供了较强的自主创新能力。",
+          "unit_id": "business_model-0:u10"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
       "card_id": "annual-argument:f65ed63423d30cad5f8c",
       "fact_anchors": [
         "产品"
@@ -2172,7 +2312,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
@@ -2252,7 +2394,9 @@
         "argument_complete": 4,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "industry_outlook-0",
@@ -2397,10 +2541,10 @@
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:af2d29b64a88e35f1253",
       "fact_anchors": [
-        "竞争"
+        "3、提升数字经济竞争力（培育 数字产业集群，支持"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2411,8 +2555,10 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2431,16 +2577,18 @@
           "unit_id": "management_strategy-0:u5"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "business_structure",
       "card_id": "annual-argument:da8bb6c01a8a5e9c0678",
       "fact_anchors": [
         "2029",
         "15%",
-        "竞争"
+        "产品",
+        "应用",
+        "服务"
       ],
       "quality_score": 3,
       "report_type": "annual",
@@ -2451,8 +2599,10 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2471,14 +2621,14 @@
           "unit_id": "management_strategy-0:u10"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "业务结构"
     },
     {
       "argument_complete": false,
-      "argument_family": "market_competition_outlook",
+      "argument_family": "technology_product_progress",
       "card_id": "annual-argument:2a3d2960a199ad11d6bc",
       "fact_anchors": [
-        "行业"
+        "模型"
       ],
       "quality_score": 2,
       "report_type": "annual",
@@ -2489,8 +2639,10 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
-      "selection_reason": "usage_primary:market_competition_outlook",
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "management_strategy-0",
       "source_credit": 75,
@@ -2509,7 +2661,7 @@
           "unit_id": "management_strategy-0:u12"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2554,35 +2706,32 @@
       "title": "技术与产品进展"
     },
     {
-      "argument_complete": true,
-      "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:9696fbbc286cb3433fd0",
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:bf55288334043f892932",
       "fact_anchors": [
-        "市场",
-        "需求",
-        "竞争"
+        "合作"
       ],
-      "quality_score": 7,
+      "quality_score": 2,
       "report_type": "annual",
       "report_year": 2025,
       "schema_version": "periodic_report_narrative_evidence_card.v2",
       "score_parts": {
-        "anchored_fact": 2,
-        "argument_complete": 4,
+        "anchored_fact": 1,
+        "argument_complete": 0,
         "source_unit_count": 1
       },
       "secondary_signals": [
         "business_structure"
       ],
-      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_reason": "signal_primary:technology_product_progress",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "risk_disclosure-0",
       "source_credit": 75,
-      "source_excerpt": "公司具备成熟的供应商遴选机制，与主要供应商建立了长期稳 定的合作关系，并根据合作情况动态调整，保证核心原材料具备多家稳定合格的供应商。 4、贸易壁垒及市场需求下降的风险 公司光通信模块业务致力于为客户提供最佳光通信模块解决方案，其研发能力、量产能力以及满足 客户要求的快速响应能力是其核心竞争力，主要出口市场为北美等国家或地区， 其关键原材料亦大部分 源自海外采购，如果未来中美贸易争端升级，贸易制裁手段加深，将减少光模块产品需求，增加关键原 材料的采购难度，影响公司的盈利能力，极端情况下或将出现经营业绩大幅下滑甚至亏损的风险。",
+      "source_excerpt": "公司具备成熟的供应商遴选机制，与主要供应商建立了长期稳 定的合作关系，并根据合作情况动态调整，保证核心原材料具备多家稳定合格的供应商。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "risk_disclosure-0:u6",
-        "risk_disclosure-0:u7"
+        "risk_disclosure-0:u6"
       ],
       "source_units": [
         {
@@ -2592,17 +2741,9 @@
           "start_pos": 629,
           "text": "公司具备成熟的供应商遴选机制，与主要供应商建立了长期稳 定的合作关系，并根据合作情况动态调整，保证核心原材料具备多家稳定合格的供应商。",
           "unit_id": "risk_disclosure-0:u6"
-        },
-        {
-          "block_id": "risk_disclosure-0",
-          "end_pos": 894,
-          "ordinal": 7,
-          "start_pos": 697,
-          "text": "4、贸易壁垒及市场需求下降的风险 公司光通信模块业务致力于为客户提供最佳光通信模块解决方案，其研发能力、量产能力以及满足 客户要求的快速响应能力是其核心竞争力，主要出口市场为北美等国家或地区， 其关键原材料亦大部分 源自海外采购，如果未来中美贸易争端升级，贸易制裁手段加深，将减少光模块产品需求，增加关键原 材料的采购难度，影响公司的盈利能力，极端情况下或将出现经营业绩大幅下滑甚至亏损的风险。",
-          "unit_id": "risk_disclosure-0:u7"
         }
       ],
-      "title": "管理层判断与行业展望"
+      "title": "技术与产品进展"
     },
     {
       "argument_complete": false,
@@ -2727,7 +2868,7 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
-      "card_id": "annual-argument:908f5d60e1ff9b594c03",
+      "card_id": "annual-argument:7aacf1fbd8fa3d344119",
       "fact_anchors": [
         "竞争"
       ],
@@ -2747,14 +2888,10 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "commitments-0",
       "source_credit": 75,
-      "source_excerpt": "王伟修 关于同 业竞 争、关 联交 易、资 金占用 方面的 承诺 关于避免同业竞争的承诺函： 1、 截至本承诺函签署日，本方和 /或 本方的关联企业不存在通过投资关 系或其他安排直接或间接控制任何 其他与中际装备和 /或其控制的企 业从事相同或相似业务的经济实 体、机构和经济组织的情形。 2、 自本承诺函签署后，本方和 /或本 方的关联企业将不会通过投资关系 或其他安排直接或间接控制任何其 他与中 际装备和 /或其控制的企业 从事相同或相似业务的企业。 3、 如中际装备和 /或其控制的企业认 定本方和 /或本方的关联企业将来 从事的主营业务与中际装备和 /或 其控制的企业存在同业竞争，则在 中际装备和 /或其控制的企业提出 异议后，本方和 /或本方的关联企 业将及时转让或终止上述业务。如 中际装备和 /或其控制的企业提出 受让请求，则本方和 /或本方的关 联企业应无条件按经有证券从业资 格的中介机构评估后的公允价格将 上述业务和资产优先转让给中际装 备和 /或其控制的企业。 4、本方和 / 或本方的关联企业如从任何第三方 获得的任何商业机会与中际装备和 /或其控制的企业经营的业务有竞 争或可能构成竞争，则本方将立即 通知中际装备，并尽力将该商业机 会让予中际装备和 /或其控制的企 业。",
+      "source_excerpt": "王伟修 关于同 业竞 争、关 联交 易、资 金占用 方面的 承诺 关于避免同业竞争的承诺函： 1、 截至本承诺函签署日，本方和 /或 本方的关联企业不存在通过投资关 系或其他安排直接或间接控制任何 其他与中际装备和 /或其控制的企 业从事相同或相似业务的经济实 体、机构和经济组织的情形。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "commitments-0:u1",
-        "commitments-0:u2",
-        "commitments-0:u3",
-        "commitments-0:u4",
-        "commitments-0:u5"
+        "commitments-0:u1"
       ],
       "source_units": [
         {
@@ -2764,15 +2901,39 @@
           "start_pos": 141,
           "text": "王伟修 关于同 业竞 争、关 联交 易、资 金占用 方面的 承诺 关于避免同业竞争的承诺函： 1、 截至本承诺函签署日，本方和 /或 本方的关联企业不存在通过投资关 系或其他安排直接或间接控制任何 其他与中际装备和 /或其控制的企 业从事相同或相似业务的经济实 体、机构和经济组织的情形。",
           "unit_id": "commitments-0:u1"
-        },
-        {
-          "block_id": "commitments-0",
-          "end_pos": 369,
-          "ordinal": 2,
-          "start_pos": 286,
-          "text": "2、 自本承诺函签署后，本方和 /或本 方的关联企业将不会通过投资关系 或其他安排直接或间接控制任何其 他与中 际装备和 /或其控制的企业 从事相同或相似业务的企业。",
-          "unit_id": "commitments-0:u2"
-        },
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:01326a1fd894eaacddc5",
+      "fact_anchors": [
+        "竞争"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "commitments-0",
+      "source_credit": 75,
+      "source_excerpt": "3、 如中际装备和 /或其控制的企业认 定本方和 /或本方的关联企业将来 从事的主营业务与中际装备和 /或 其控制的企业存在同业竞争，则在 中际装备和 /或其控制的企业提出 异议后，本方和 /或本方的关联企 业将及时转让或终止上述业务。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "commitments-0:u3"
+      ],
+      "source_units": [
         {
           "block_id": "commitments-0",
           "end_pos": 488,
@@ -2780,15 +2941,39 @@
           "start_pos": 370,
           "text": "3、 如中际装备和 /或其控制的企业认 定本方和 /或本方的关联企业将来 从事的主营业务与中际装备和 /或 其控制的企业存在同业竞争，则在 中际装备和 /或其控制的企业提出 异议后，本方和 /或本方的关联企 业将及时转让或终止上述业务。",
           "unit_id": "commitments-0:u3"
-        },
-        {
-          "block_id": "commitments-0",
-          "end_pos": 584,
-          "ordinal": 4,
-          "start_pos": 488,
-          "text": "如 中际装备和 /或其控制的企业提出 受让请求，则本方和 /或本方的关 联企业应无条件按经有证券从业资 格的中介机构评估后的公允价格将 上述业务和资产优先转让给中际装 备和 /或其控制的企业。",
-          "unit_id": "commitments-0:u4"
-        },
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:c14fa051f77961504eab",
+      "fact_anchors": [
+        "竞争"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "commitments-0",
+      "source_credit": 75,
+      "source_excerpt": "4、本方和 / 或本方的关联企业如从任何第三方 获得的任何商业机会与中际装备和 /或其控制的企业经营的业务有竞 争或可能构成竞争，则本方将立即 通知中际装备，并尽力将该商业机 会让予中际装备和 /或其控制的企 业。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "commitments-0:u5"
+      ],
+      "source_units": [
         {
           "block_id": "commitments-0",
           "end_pos": 692,
@@ -2802,33 +2987,33 @@
     }
   ],
   "integrity": {
-    "card_count": 65,
-    "cards_sha256": "9a5f4b628479a881fee86c0751d9e652cbbfde0defd0e08cfff0f529de7fd9db",
-    "payload_sha256": "77a78a35ef6173cd7802a841ff3b4869ec925d7ed6b5fa68f6c9956cc2e5aa94",
-    "producer_diagnostics_sha256": "791f84ccf11d6627dfc981e17c386bfdad6e24f17511fe68afa195f84089e2be",
+    "card_count": 70,
+    "cards_sha256": "afb77ec6d43c043921dc73ad070e0f3b8f67c2e54e3a8de8fe9473bf13d77440",
+    "payload_sha256": "945edbd7af76de92decb331c6bf17eadd5105ec1fb52b3ce02e25bf4667d3ccb",
+    "producer_diagnostics_sha256": "3c485251ee91aeccd0fc499b4c2d84fba762474718c71ff83c42af8016d09402",
     "source_unit_count": 83
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
-      "business_structure": 27,
+      "business_structure": 29,
       "financial_quality_explanation": 3,
-      "market_competition_outlook": 30,
+      "market_competition_outlook": 29,
       "operating_progress": 0,
-      "technology_product_progress": 5
+      "technology_product_progress": 9
     },
     "argument_complete_counts": {
-      "atomic": 61,
+      "atomic": 66,
       "complete": 4
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
-      "business_structure": 27,
+      "business_structure": 29,
       "financial_quality_explanation": 3,
-      "market_competition_outlook": 30,
+      "market_competition_outlook": 29,
       "operating_progress": 0,
-      "technology_product_progress": 5
+      "technology_product_progress": 9
     },
     "cards": [
       {
@@ -2902,7 +3087,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "product_capacity_profile-0:u4"
@@ -2996,7 +3183,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "sales_certification_model-0:u0"
@@ -3035,6 +3224,27 @@
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "sales_certification_model-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:10e0a89469a3bccdb4f0",
+        "fact_anchors": [
+          "2025",
+          "行业",
+          "市场",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "management_market_view-0:u0"
         ]
       },
       {
@@ -3302,7 +3512,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "future_strategy-0:u1"
@@ -3322,6 +3534,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "business_structure"
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
@@ -3362,11 +3575,33 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "operating_progress",
           "market_competition_outlook"
         ],
         "selection_reason": "financial_override:financial_quality_explanation",
         "source_unit_ids": [
           "segment_table-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0b57fff538e097fd616b",
+        "fact_anchors": [
+          "2025",
+          "2018",
+          "平台"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:technology_product_progress",
+        "source_unit_ids": [
+          "related_party_transactions-0:u0"
         ]
       },
       {
@@ -3460,7 +3695,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_overview-0:u6"
@@ -3512,7 +3749,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_overview-0:u9"
@@ -3545,7 +3784,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_overview-0:u12"
@@ -3712,7 +3953,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u7"
@@ -3751,6 +3994,22 @@
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "business_model-0:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:48f0302f12a41683762c",
+        "fact_anchors": [
+          "产品"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_model-0:u10"
         ]
       },
       {
@@ -3795,7 +4054,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "industry_outlook-0:u2"
@@ -3831,7 +4092,9 @@
           "argument_complete": 4,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "industry_outlook-0:u9"
@@ -3893,15 +4156,17 @@
       {
         "card_id": "annual-argument:af2d29b64a88e35f1253",
         "fact_anchors": [
-          "竞争"
+          "3、提升数字经济竞争力（培育 数字产业集群，支持"
         ],
         "score_parts": {
           "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "management_strategy-0:u5"
         ]
@@ -3911,15 +4176,19 @@
         "fact_anchors": [
           "2029",
           "15%",
-          "竞争"
+          "产品",
+          "应用",
+          "服务"
         ],
         "score_parts": {
           "anchored_fact": 2,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "management_strategy-0:u10"
         ]
@@ -3927,15 +4196,17 @@
       {
         "card_id": "annual-argument:2a3d2960a199ad11d6bc",
         "fact_anchors": [
-          "行业"
+          "模型"
         ],
         "score_parts": {
           "anchored_fact": 1,
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
-        "selection_reason": "usage_primary:market_competition_outlook",
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
           "management_strategy-0:u12"
         ]
@@ -3961,24 +4232,21 @@
         ]
       },
       {
-        "card_id": "annual-argument:9696fbbc286cb3433fd0",
+        "card_id": "annual-argument:bf55288334043f892932",
         "fact_anchors": [
-          "市场",
-          "需求",
-          "竞争"
+          "合作"
         ],
         "score_parts": {
-          "anchored_fact": 2,
-          "argument_complete": 4,
+          "anchored_fact": 1,
+          "argument_complete": 0,
           "source_unit_count": 1
         },
         "secondary_signals": [
           "business_structure"
         ],
-        "selection_reason": "signal_primary:market_competition_outlook",
+        "selection_reason": "signal_primary:technology_product_progress",
         "source_unit_ids": [
-          "risk_disclosure-0:u6",
-          "risk_disclosure-0:u7"
+          "risk_disclosure-0:u6"
         ]
       },
       {
@@ -4036,7 +4304,7 @@
         ]
       },
       {
-        "card_id": "annual-argument:908f5d60e1ff9b594c03",
+        "card_id": "annual-argument:7aacf1fbd8fa3d344119",
         "fact_anchors": [
           "竞争"
         ],
@@ -4050,10 +4318,42 @@
         ],
         "selection_reason": "signal_primary:market_competition_outlook",
         "source_unit_ids": [
-          "commitments-0:u1",
-          "commitments-0:u2",
-          "commitments-0:u3",
-          "commitments-0:u4",
+          "commitments-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:01326a1fd894eaacddc5",
+        "fact_anchors": [
+          "竞争"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "commitments-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c14fa051f77961504eab",
+        "fact_anchors": [
+          "竞争"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
           "commitments-0:u5"
         ]
       }
@@ -4063,12 +4363,12 @@
     ],
     "rejection_counts": {
       "boilerplate": 111,
-      "incomplete": 31,
+      "incomplete": 33,
       "invalid_unit": 2,
-      "no_anchor": 68,
+      "no_anchor": 69,
       "ocr_damage": 28,
       "reused_source_units": 0,
-      "table_noise": 17
+      "table_noise": 14
     },
     "source_blocks_seen": 45,
     "source_unit_decisions": [
@@ -4383,9 +4683,11 @@
         "source_unit_id": "sales_certification_model-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:10e0a89469a3bccdb4f0"
+        ],
         "source_block_id": "management_market_view-0",
         "source_order": 0,
         "source_text_hash": "9c990f87f6d1bcc525b5045b061b9f5a3030ba25ea73df17833e44e640232b90",
@@ -4787,9 +5089,11 @@
         "source_unit_id": "restricted_assets_note-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:0b57fff538e097fd616b"
+        ],
         "source_block_id": "related_party_transactions-0",
         "source_order": 0,
         "source_text_hash": "fef4c5524d2c0c5af230438de53ae9e1bc3fb65ca4ca84aebba814d41bd292c2",
@@ -4797,7 +5101,7 @@
       },
       {
         "disposition": "rejected",
-        "reason": "table_or_ocr",
+        "reason": "no_family_signal",
         "selected_by_card_ids": [],
         "source_block_id": "related_party_transactions-0",
         "source_order": 1,
@@ -4815,7 +5119,7 @@
       },
       {
         "disposition": "rejected",
-        "reason": "table_or_ocr",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "related_party_transactions-0",
         "source_order": 3,
@@ -6198,9 +6502,11 @@
         "source_unit_id": "business_model-0:u9"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:48f0302f12a41683762c"
+        ],
         "source_block_id": "business_model-0",
         "source_order": 10,
         "source_text_hash": "71819aba3a93cc33d3c0a191b0625a272d812fdaf278e4f24ae77fa5a21ed6b2",
@@ -6634,7 +6940,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:9696fbbc286cb3433fd0"
+          "annual-argument:bf55288334043f892932"
         ],
         "source_block_id": "risk_disclosure-0",
         "source_order": 6,
@@ -6642,11 +6948,9 @@
         "source_unit_id": "risk_disclosure-0:u6"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:9696fbbc286cb3433fd0"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "risk_disclosure-0",
         "source_order": 7,
         "source_text_hash": "d06f78a8f7ff2dd1fff10da718796843c6af93463b2e49de3a18640e0af4bcab",
@@ -7076,7 +7380,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:908f5d60e1ff9b594c03"
+          "annual-argument:7aacf1fbd8fa3d344119"
         ],
         "source_block_id": "commitments-0",
         "source_order": 1,
@@ -7084,11 +7388,9 @@
         "source_unit_id": "commitments-0:u1"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:908f5d60e1ff9b594c03"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "commitments-0",
         "source_order": 2,
         "source_text_hash": "32c2fc781831417229f6e9f98253832ff4ea8bbd78b950b74e8f69d65ea8212c",
@@ -7098,7 +7400,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:908f5d60e1ff9b594c03"
+          "annual-argument:01326a1fd894eaacddc5"
         ],
         "source_block_id": "commitments-0",
         "source_order": 3,
@@ -7106,11 +7408,9 @@
         "source_unit_id": "commitments-0:u3"
       },
       {
-        "disposition": "selected",
-        "reason": "selected",
-        "selected_by_card_ids": [
-          "annual-argument:908f5d60e1ff9b594c03"
-        ],
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
         "source_block_id": "commitments-0",
         "source_order": 4,
         "source_text_hash": "8baf1831d4aa1778c67d3aa85fe3c7019b9b31e5aabb960924b36da357871509",
@@ -7120,7 +7420,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:908f5d60e1ff9b594c03"
+          "annual-argument:c14fa051f77961504eab"
         ],
         "source_block_id": "commitments-0",
         "source_order": 5,
@@ -7301,7 +7601,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 340,
-    "usable_units": 112,
+    "usable_units": 114,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

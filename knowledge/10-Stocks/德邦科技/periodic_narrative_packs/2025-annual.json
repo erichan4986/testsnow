@@ -46,10 +46,12 @@
     {
       "argument_complete": false,
       "argument_family": "technology_product_progress",
-      "card_id": "annual-argument:3311ffe0a75a8c31b781",
+      "card_id": "annual-argument:91c77ccab9362d0591a5",
       "fact_anchors": [
         "TIM1",
-        "芯片"
+        "芯片",
+        "工艺",
+        "研发"
       ],
       "quality_score": 3,
       "report_type": "annual",
@@ -67,10 +69,11 @@
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "rd_product_progress-0",
       "source_credit": 75,
-      "source_excerpt": "（1）半导体芯片散热用热界面材料 报告期内 ，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计 ，适用于智能手机 、平 板电脑、可穿戴设备及高性能计算模块等对热管理要求严苛的应用场景。",
+      "source_excerpt": "（1）半导体芯片散热用热界面材料 报告期内 ，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计 ，适用于智能手机 、平 板电脑、可穿戴设备及高性能计算模块等对热管理要求严苛的应用场景。该材料通过自主研发的 核心助剂，独特的生产工艺设计路线，实现了导热填料的高效界面修饰与均匀分散，显著提升了 热导效率与长期稳定性。",
       "source_type": "periodic_report_narrative_evidence",
       "source_unit_ids": [
-        "rd_product_progress-0:u1"
+        "rd_product_progress-0:u1",
+        "rd_product_progress-0:u2"
       ],
       "source_units": [
         {
@@ -80,6 +83,137 @@
           "start_pos": 130,
           "text": "（1）半导体芯片散热用热界面材料 报告期内 ，公司开发的 TIM1 热界面材料专为高功率芯片散热管理设计 ，适用于智能手机 、平 板电脑、可穿戴设备及高性能计算模块等对热管理要求严苛的应用场景。",
           "unit_id": "rd_product_progress-0:u1"
+        },
+        {
+          "block_id": "rd_product_progress-0",
+          "end_pos": 292,
+          "ordinal": 2,
+          "start_pos": 227,
+          "text": "该材料通过自主研发的 核心助剂，独特的生产工艺设计路线，实现了导热填料的高效界面修饰与均匀分散，显著提升了 热导效率与长期稳定性。",
+          "unit_id": "rd_product_progress-0:u2"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:2225e06ae204eeb590ce",
+      "fact_anchors": [
+        "行业",
+        "需求"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "2、 公司所处的行业地位分析及其变化 情况 （1）在集成电路封装材料领域 ，公司始终围绕行业头部客户需求 ，依托多年技术积累 ，持续 推动关键材料的国产化进程。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-2:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 229,
+          "ordinal": 3,
+          "start_pos": 149,
+          "text": "2、 公司所处的行业地位分析及其变化 情况 （1）在集成电路封装材料领域 ，公司始终围绕行业头部客户需求 ，依托多年技术积累 ，持续 推动关键材料的国产化进程。",
+          "unit_id": "rd_product_progress-2:u3"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:8abcec0e91f1d8ad671e",
+      "fact_anchors": [
+        "TIM1.5",
+        "TIM2",
+        "芯片",
+        "批量",
+        "供货"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（ TIM1.5 /TIM2 ） 等成熟产品已在国内主流封测厂商实现稳定批量供货；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-2:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 294,
+          "ordinal": 4,
+          "start_pos": 229,
+          "text": "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（ TIM1.5 /TIM2 ） 等成熟产品已在国内主流封测厂商实现稳定批量供货；",
+          "unit_id": "rd_product_progress-2:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:2218c7584d267e67e823",
+      "fact_anchors": [
+        "芯片",
+        "验证",
+        "批量"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "rd_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "同时，芯片级底部填充胶（ Underfill ）、 DAF/CDAF 膜、 Lid 框粘接材料等先进封装材料成功打破国外垄断，进入小批量交付阶段，芯片级 导热材料也已进入客户端验证导入环节。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "rd_product_progress-2:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "rd_product_progress-2",
+          "end_pos": 389,
+          "ordinal": 5,
+          "start_pos": 294,
+          "text": "同时，芯片级底部填充胶（ Underfill ）、 DAF/CDAF 膜、 Lid 框粘接材料等先进封装材料成功打破国外垄断，进入小批量交付阶段，芯片级 导热材料也已进入客户端验证导入环节。",
+          "unit_id": "rd_product_progress-2:u5"
         }
       ],
       "title": "技术与产品进展"
@@ -593,6 +727,46 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:1b4f0662da9354e1dea2",
+      "fact_anchors": [
+        "研发",
+        "实现",
+        "突破"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "product_capacity_profile-1",
+      "source_credit": 75,
+      "source_excerpt": "在研发创新方面，公司持续加大投入并壮大人才队伍，多项关键核心技 术取得突破并实现产业化落地；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "product_capacity_profile-1:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "product_capacity_profile-1",
+          "end_pos": 420,
+          "ordinal": 7,
+          "start_pos": 374,
+          "text": "在研发创新方面，公司持续加大投入并壮大人才队伍，多项关键核心技 术取得突破并实现产业化落地；",
+          "unit_id": "product_capacity_profile-1:u7"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "business_structure",
       "card_id": "annual-argument:d01842a06a6b2f7d469c",
       "fact_anchors": [
@@ -628,6 +802,56 @@
         }
       ],
       "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:4ab2e64a14eb8dc88981",
+      "fact_anchors": [
+        "行业",
+        "竞争"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_market_view-0",
+      "source_credit": 75,
+      "source_excerpt": "新能源 行业面临政策合规趋严 、产能过剩竞争加剧及技术迭代与供应链波动等多重宏观风险 。 动力电池与储能电池封装材料行业虽保持增长，但仍面临多重宏观风险：环保法规持续趋严推动 企业加大环保投入，欧盟《新电池法》等国际规则对碳足迹、再生材料比例提出更高要求，叠加 国际贸易摩擦，可能增加公司海外业务成本与合规压力；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_market_view-0:u0",
+        "management_market_view-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_market_view-0",
+          "end_pos": 44,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "新能源 行业面临政策合规趋严 、产能过剩竞争加剧及技术迭代与供应链波动等多重宏观风险 。",
+          "unit_id": "management_market_view-0:u0"
+        },
+        {
+          "block_id": "management_market_view-0",
+          "end_pos": 156,
+          "ordinal": 1,
+          "start_pos": 45,
+          "text": "动力电池与储能电池封装材料行业虽保持增长，但仍面临多重宏观风险：环保法规持续趋严推动 企业加大环保投入，欧盟《新电池法》等国际规则对碳足迹、再生材料比例提出更高要求，叠加 国际贸易摩擦，可能增加公司海外业务成本与合规压力；",
+          "unit_id": "management_market_view-0:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
     },
     {
       "argument_complete": false,
@@ -725,7 +949,9 @@
         "argument_complete": 0,
         "source_unit_count": 1
       },
-      "secondary_signals": [],
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
       "selection_reason": "usage_primary:market_competition_outlook",
       "selection_version": "annual_argument_selection.v2",
       "source_block_id": "market_demand_outlook-1",
@@ -833,6 +1059,129 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:aabcc914409e06f9e644",
+      "fact_anchors": [
+        "行业",
+        "需求"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "competitive_position-0",
+      "source_credit": 75,
+      "source_excerpt": "2、 公司所处的行业地位分析及其变化 情况 （1）在集成电路封装材料领域 ，公司始终围绕行业头部客户需求 ，依托多年技术积累 ，持续 推动关键材料的国产化进程。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "competitive_position-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "competitive_position-0",
+          "end_pos": 186,
+          "ordinal": 2,
+          "start_pos": 106,
+          "text": "2、 公司所处的行业地位分析及其变化 情况 （1）在集成电路封装材料领域 ，公司始终围绕行业头部客户需求 ，依托多年技术积累 ，持续 推动关键材料的国产化进程。",
+          "unit_id": "competitive_position-0:u2"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:264f2ca37a5e7c27b8c7",
+      "fact_anchors": [
+        "TIM1.5",
+        "TIM2",
+        "芯片",
+        "批量",
+        "供货"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "competitive_position-0",
+      "source_credit": 75,
+      "source_excerpt": "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（ TIM1.5 /TIM2 ） 等成熟产品已在国内主流封测厂商实现稳定批量供货；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "competitive_position-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "competitive_position-0",
+          "end_pos": 251,
+          "ordinal": 3,
+          "start_pos": 186,
+          "text": "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（ TIM1.5 /TIM2 ） 等成熟产品已在国内主流封测厂商实现稳定批量供货；",
+          "unit_id": "competitive_position-0:u3"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:95aea5cd2ec9d2a501aa",
+      "fact_anchors": [
+        "芯片",
+        "验证",
+        "批量"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "competitive_position-0",
+      "source_credit": 75,
+      "source_excerpt": "同时，芯片级底部填充胶（ Underfill ）、 DAF/CDAF 膜、 Lid 框粘接材料等先进封装材料成功打破国外垄断，进入小批量交付阶段，芯片级 导热材料也已进入客户端验证导入环节。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "competitive_position-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "competitive_position-0",
+          "end_pos": 346,
+          "ordinal": 4,
+          "start_pos": 251,
+          "text": "同时，芯片级底部填充胶（ Underfill ）、 DAF/CDAF 膜、 Lid 框粘接材料等先进封装材料成功打破国外垄断，进入小批量交付阶段，芯片级 导热材料也已进入客户端验证导入环节。",
+          "unit_id": "competitive_position-0:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
       "card_id": "annual-argument:6f6255a45b471967e86c",
       "fact_anchors": [
         "战略"
@@ -911,6 +1260,45 @@
         }
       ],
       "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:b3120fbdc2522e49ae21",
+      "fact_anchors": [
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "profitability_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "毛利率同比提升 2.98 个百分点；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "profitability_commentary-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "profitability_commentary-0",
+          "end_pos": 153,
+          "ordinal": 0,
+          "start_pos": 135,
+          "text": "毛利率同比提升 2.98 个百分点；",
+          "unit_id": "profitability_commentary-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
     },
     {
       "argument_complete": false,
@@ -1327,6 +1715,57 @@
       "title": "财务质量与变化原因"
     },
     {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:3785a6c39819a97c7dfd",
+      "fact_anchors": [
+        "应收账款",
+        "受",
+        "影响"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "应收账款无法按期收回的风险 随着公司经营规模的持续扩大 、或者受市场环境 、客户经营情况 、信用政策变动等因素影响 ， 公司应收账款余额可能保持较大规模。如果公司主要客户的财务状况出现恶化，可能出现较大应 收账款不能收回或延期收回的情况，进而对公司资金周转和生产经营产生不利影响。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u0",
+        "ar_aging_note-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 77,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "应收账款无法按期收回的风险 随着公司经营规模的持续扩大 、或者受市场环境 、客户经营情况 、信用政策变动等因素影响 ， 公司应收账款余额可能保持较大规模。",
+          "unit_id": "ar_aging_note-0:u0"
+        },
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 140,
+          "ordinal": 1,
+          "start_pos": 77,
+          "text": "如果公司主要客户的财务状况出现恶化，可能出现较大应 收账款不能收回或延期收回的情况，进而对公司资金周转和生产经营产生不利影响。",
+          "unit_id": "ar_aging_note-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
       "card_id": "annual-argument:a7d9bbb8e38da07ec07f",
@@ -1366,6 +1805,773 @@
     },
     {
       "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:d31b20226428f2fe2d8b",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "6、商誉减值风险 本报告期初商誉账面原值为 7,099,450.64 元，该商誉为本公司收购东莞德邦公司时形成 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 837,
+          "ordinal": 9,
+          "start_pos": 780,
+          "text": "6、商誉减值风险 本报告期初商誉账面原值为 7,099,450.64 元，该商誉为本公司收购东莞德邦公司时形成 。",
+          "unit_id": "ar_aging_note-0:u9"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:3ab454a3c2ca8cb02da9",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "东 莞德邦公司经营状况良好，目前不存在需要计提商誉减值准备的情况，如果未来经营状况未达预 期，则存在商誉减值的风险。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u10"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 895,
+          "ordinal": 10,
+          "start_pos": 837,
+          "text": "东 莞德邦公司经营状况良好，目前不存在需要计提商誉减值准备的情况，如果未来经营状况未达预 期，则存在商誉减值的风险。",
+          "unit_id": "ar_aging_note-0:u10"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:00e6ee6d80cadea30045",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "本报告期内公司完成了对泰吉诺公司股权收购的交割及并表，支付 金额超过购买日公司享有的可辨认净资产公允价值份额 ，形成商誉 195,651,828.61 元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u11"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 973,
+          "ordinal": 11,
+          "start_pos": 895,
+          "text": "本报告期内公司完成了对泰吉诺公司股权收购的交割及并表，支付 金额超过购买日公司享有的可辨认净资产公允价值份额 ，形成商誉 195,651,828.61 元。",
+          "unit_id": "ar_aging_note-0:u11"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:71a44732a879cf943463",
+      "fact_anchors": [
+        "市场",
+        "竞争"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "泰吉诺主 要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，所处行 业具有研发投入高 、技术迭代快 、研发周期长等特点 ，泰吉诺的经营效益受宏观政策 、经济周期 、 市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u12"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 1102,
+          "ordinal": 12,
+          "start_pos": 973,
+          "text": "泰吉诺主 要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，所处行 业具有研发投入高 、技术迭代快 、研发周期长等特点 ，泰吉诺的经营效益受宏观政策 、经济周期 、 市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
+          "unit_id": "ar_aging_note-0:u12"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f88d00185705ae459f49",
+      "fact_anchors": [
+        "商誉",
+        "由于",
+        "影响"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "ar_aging_note-0",
+      "source_credit": 75,
+      "source_excerpt": "如果未来由于行业不景 气或泰吉诺自身因素导致其未来经营状况未达预期，则公司存在商誉减值风险，从而影响公司当 期损益。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "ar_aging_note-0:u13"
+      ],
+      "source_units": [
+        {
+          "block_id": "ar_aging_note-0",
+          "end_pos": 1160,
+          "ordinal": 13,
+          "start_pos": 1102,
+          "text": "如果未来由于行业不景 气或泰吉诺自身因素导致其未来经营状况未达预期，则公司存在商誉减值风险，从而影响公司当 期损益。",
+          "unit_id": "ar_aging_note-0:u13"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:5ec643bd0f9a1c8035d8",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "商誉减值风险 本报告期初商誉账面原值为 7,099,450.64 元，该商誉为本公司收购东莞德邦公司时形成 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 55,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "商誉减值风险 本报告期初商誉账面原值为 7,099,450.64 元，该商誉为本公司收购东莞德邦公司时形成 。",
+          "unit_id": "goodwill_note-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:e6c8f9f97733ebb09f92",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "东 莞德邦公司经营状况良好，目前不存在需要计提商誉减值准备的情况，如果未来经营状况未达预 期，则存在商誉减值的风险。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 113,
+          "ordinal": 1,
+          "start_pos": 55,
+          "text": "东 莞德邦公司经营状况良好，目前不存在需要计提商誉减值准备的情况，如果未来经营状况未达预 期，则存在商誉减值的风险。",
+          "unit_id": "goodwill_note-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:5fd95b2ad46b3d24f1dc",
+      "fact_anchors": [
+        "商誉"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "本报告期内公司完成了对泰吉诺公司股权收购的交割及并表，支付 金额超过购买日公司享有的可辨认净资产公允价值份额 ，形成商誉 195,651,828.61 元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 191,
+          "ordinal": 2,
+          "start_pos": 113,
+          "text": "本报告期内公司完成了对泰吉诺公司股权收购的交割及并表，支付 金额超过购买日公司享有的可辨认净资产公允价值份额 ，形成商誉 195,651,828.61 元。",
+          "unit_id": "goodwill_note-0:u2"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:4341379f26ac63fa6976",
+      "fact_anchors": [
+        "市场",
+        "竞争"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "泰吉诺主 要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，所处行 业具有研发投入高 、技术迭代快 、研发周期长等特点 ，泰吉诺的经营效益受宏观政策 、经济周期 、 市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 320,
+          "ordinal": 3,
+          "start_pos": 191,
+          "text": "泰吉诺主 要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，所处行 业具有研发投入高 、技术迭代快 、研发周期长等特点 ，泰吉诺的经营效益受宏观政策 、经济周期 、 市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
+          "unit_id": "goodwill_note-0:u3"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f0a40b49ef1d4ae6d20a",
+      "fact_anchors": [
+        "商誉",
+        "由于",
+        "影响"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "goodwill_note-0",
+      "source_credit": 75,
+      "source_excerpt": "如果未来由于行业不景 气或泰吉诺自身因素导致其未来经营状况未达预期，则公司存在商誉减值风险，从而影响公司当 期损益。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "goodwill_note-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "goodwill_note-0",
+          "end_pos": 378,
+          "ordinal": 4,
+          "start_pos": 320,
+          "text": "如果未来由于行业不景 气或泰吉诺自身因素导致其未来经营状况未达预期，则公司存在商誉减值风险，从而影响公司当 期损益。",
+          "unit_id": "goodwill_note-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:22d99e33ce43e486d89b",
+      "fact_anchors": [
+        "受",
+        "影响"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "government_grant_note-0",
+      "source_credit": 75,
+      "source_excerpt": "除同公司正常经营业务相关的有效套 期保值业务外 ，非金融企业持有金融资 产和金融负债产生的公允价值变动损 益以及处置金融资产和金融负债产生 的损益 148,176.84 90,702.08 380,703.48 计入当期损益的对非金融企业收取的 资金占用费 委托他人投资或管理资产的损益 3,374,239.83 6,630,319.45 9,511,102.14 对外委托贷款取得的损益 因不可抗力因 素，如遭受自然灾害而产 生的各项资产损失 单独进行减值测试的应收款项减值准 备转回 企业取得子公司 、联营企业及合营企业 的投资成本小于取得投资时应享有被 投资单位可辨认净资产公允价值产生 的收益 同一控制下企业合并产生的子公司期 初至合并日的当期净损益 非货币性资产交换损益 债务重组损益 企业 因相关经营活动不再持续而发生 的一次性费用，如安置职工的支出等 因税收 、会计等法律 、法规 的调整对当 期损益产生的一次性影响 因取消 、修改股权激励计划一次性确认 的股份支付费用 对于现金结算的股份支付 ，在可行权日 之后 ，应付职工薪酬的公允价值变动产 生的损益 采用公允价值模式进行后续计量的投 资性房地产公允价值变动产生的损益 交易价格显失公允的交易产生的收益 与公司正常经营业务无关的或有事项 产生的损益 受托经营取得的托管费收入 除上述各项之外的其他营业外收入和 支出 630,978.09 6,372,709.96 -2,376,320.14 其他符合非经常性损益定义的损益项 目 减： 所得税影响额 1,776,953.64 2,738,808.97 2,863,452.96 少数股东权益影响额 （税后） 171,805.10 145,029.82 -5,634.76 合计 7,938,673.83 13,772,079.40 15,295,545.82 对公司将《公开发行证券的公司信息披露解释性公告第 1 号—— 非经常性损益》未列举的项目认 定为非经常性损益项目且金额重大的，以及将《公开发行证券的公司信息披露解释性公告第 1 号 —— 非经常性损益》中列举的非经常性损益项目界定为经常性损益的项目，应说明原因。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "government_grant_note-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 1059,
+          "ordinal": 0,
+          "start_pos": 138,
+          "text": "除同公司正常经营业务相关的有效套 期保值业务外 ，非金融企业持有金融资 产和金融负债产生的公允价值变动损 益以及处置金融资产和金融负债产生 的损益 148,176.84 90,702.08 380,703.48 计入当期损益的对非金融企业收取的 资金占用费 委托他人投资或管理资产的损益 3,374,239.83 6,630,319.45 9,511,102.14 对外委托贷款取得的损益 因不可抗力因 素，如遭受自然灾害而产 生的各项资产损失 单独进行减值测试的应收款项减值准 备转回 企业取得子公司 、联营企业及合营企业 的投资成本小于取得投资时应享有被 投资单位可辨认净资产公允价值产生 的收益 同一控制下企业合并产生的子公司期 初至合并日的当期净损益 非货币性资产交换损益 债务重组损益 企业 因相关经营活动不再持续而发生 的一次性费用，如安置职工的支出等 因税收 、会计等法律 、法规 的调整对当 期损益产生的一次性影响 因取消 、修改股权激励计划一次性确认 的股份支付费用 对于现金结算的股份支付 ，在可行权日 之后 ，应付职工薪酬的公允价值变动产 生的损益 采用公允价值模式进行后续计量的投 资性房地产公允价值变动产生的损益 交易价格显失公允的交易产生的收益 与公司正常经营业务无关的或有事项 产生的损益 受托经营取得的托管费收入 除上述各项之外的其他营业外收入和 支出 630,978.09 6,372,709.96 -2,376,320.14 其他符合非经常性损益定义的损益项 目 减： 所得税影响额 1,776,953.64 2,738,808.97 2,863,452.96 少数股东权益影响额 （税后） 171,805.10 145,029.82 -5,634.76 合计 7,938,673.83 13,772,079.40 15,295,545.82 对公司将《公开发行证券的公司信息披露解释性公告第 1 号—— 非经常性损益》未列举的项目认 定为非经常性损益项目且金额重大的，以及将《公开发行证券的公司信息披露解释性公告第 1 号 —— 非经常性损益》中列举的非经常性损益项目界定为经常性损益的项目，应说明原因。",
+          "unit_id": "government_grant_note-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:310595895326bee1d9f4",
+      "fact_anchors": [
+        "营业收入",
+        "营业成本",
+        "主要系"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "营业成本变动原因说明： 主要系随营业收入增长影响，营业成本随之发生变动。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 571,
+          "ordinal": 1,
+          "start_pos": 535,
+          "text": "营业成本变动原因说明： 主要系随营业收入增长影响，营业成本随之发生变动。",
+          "unit_id": "business_overview-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f7e181cb35d98b0394e6",
+      "fact_anchors": [
+        "销售费用",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "销售费用变动原因说明： 主要系本报告期公司积极开拓市场，人员薪酬和业务费用增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 614,
+          "ordinal": 2,
+          "start_pos": 572,
+          "text": "销售费用变动原因说明： 主要系本报告期公司积极开拓市场，人员薪酬和业务费用增加所致。",
+          "unit_id": "business_overview-0:u2"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:c946db73f8cd87c634cc",
+      "fact_anchors": [
+        "管理费用",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "管理费用变动原因说明： 主要系本报告期公司因业务规模扩增 ,人员薪酬和业务费用增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 659,
+          "ordinal": 3,
+          "start_pos": 615,
+          "text": "管理费用变动原因说明： 主要系本报告期公司因业务规模扩增 ,人员薪酬和业务费用增加所致。",
+          "unit_id": "business_overview-0:u3"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:024c1656f3276a4bdec9",
+      "fact_anchors": [
+        "财务费用",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "财务费用变动原因说明： 主要系本报告期公司闲置资金理财利息收入减少所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 696,
+          "ordinal": 4,
+          "start_pos": 660,
+          "text": "财务费用变动原因说明： 主要系本报告期公司闲置资金理财利息收入减少所致。",
+          "unit_id": "business_overview-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:44faaef62878a39a7b91",
+      "fact_anchors": [
+        "现金流",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "经营活动产生的现金流量净额 变动原因说明： 主要系报告期内，公司票据托收及贴现减少，以及 购买商品、接受劳务支付的现金增加所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 761,
+          "ordinal": 5,
+          "start_pos": 697,
+          "text": "经营活动产生的现金流量净额 变动原因说明： 主要系报告期内，公司票据托收及贴现减少，以及 购买商品、接受劳务支付的现金增加所致。",
+          "unit_id": "business_overview-0:u5"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:9c118668f4a0a6232383",
+      "fact_anchors": [
+        "现金流",
+        "主要系",
+        "所致"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "投资活动产生的现金流量净额 变动原因说明： 主要系本报告期公司闲置理财产品到期收回本金及 收益，同时募集资金投资项目竣工，现金流出有所减少所致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 834,
+          "ordinal": 6,
+          "start_pos": 762,
+          "text": "投资活动产生的现金流量净额 变动原因说明： 主要系本报告期公司闲置理财产品到期收回本金及 收益，同时募集资金投资项目竣工，现金流出有所减少所致。",
+          "unit_id": "business_overview-0:u6"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:b5baa532cea26f3a9d53",
+      "fact_anchors": [
+        "现金流",
+        "主要系"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "筹资活动产生的现金流量净额 变动原因说明： 主要系本报告期公司业务拓展导致融资金额增加所 致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 882,
+          "ordinal": 7,
+          "start_pos": 835,
+          "text": "筹资活动产生的现金流量净额 变动原因说明： 主要系本报告期公司业务拓展导致融资金额增加所 致。",
+          "unit_id": "business_overview-0:u7"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:54e157ac0c928bb8b855",
+      "fact_anchors": [
+        "32.80%",
+        "主营",
+        "业务",
+        "产品"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内公司主营业务成本为 112,120.64 万元，同比增长 32.80% ，主要系产品销量增长所 致。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "business_overview-0:u10"
+      ],
+      "source_units": [
+        {
+          "block_id": "business_overview-0",
+          "end_pos": 1131,
+          "ordinal": 10,
+          "start_pos": 1077,
+          "text": "报告期内公司主营业务成本为 112,120.64 万元，同比增长 32.80% ，主要系产品销量增长所 致。",
+          "unit_id": "business_overview-0:u10"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
       "argument_family": "business_structure",
       "card_id": "annual-argument:3185a4abde370e52a235",
       "fact_anchors": [
@@ -1382,6 +2588,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "market_competition_outlook"
       ],
       "selection_reason": "usage_primary:business_structure",
@@ -1461,6 +2668,7 @@
         "source_unit_count": 1
       },
       "secondary_signals": [
+        "technology_product_progress",
         "business_structure"
       ],
       "selection_reason": "usage_primary:market_competition_outlook",
@@ -1526,6 +2734,298 @@
     {
       "argument_complete": false,
       "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:58e166e94d30ea594e92",
+      "fact_anchors": [
+        "行业",
+        "需求"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "2、 公司所处的行业地位分析及其变化 情况 （1）在集成电路封装材料领域 ，公司始终围绕行业头部客户需求 ，依托多年技术积累 ，持续 推动关键材料的国产化进程。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 581,
+          "ordinal": 9,
+          "start_pos": 501,
+          "text": "2、 公司所处的行业地位分析及其变化 情况 （1）在集成电路封装材料领域 ，公司始终围绕行业头部客户需求 ，依托多年技术积累 ，持续 推动关键材料的国产化进程。",
+          "unit_id": "management_strategy-0:u9"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:48306e1ddd00a17d56d3",
+      "fact_anchors": [
+        "TIM1.5",
+        "TIM2",
+        "芯片",
+        "批量",
+        "供货"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（ TIM1.5 /TIM2 ） 等成熟产品已在国内主流封测厂商实现稳定批量供货；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u10"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 646,
+          "ordinal": 10,
+          "start_pos": 581,
+          "text": "目前，晶圆 UV 膜、芯片固晶材料、导热界面材料（ TIM1.5 /TIM2 ） 等成熟产品已在国内主流封测厂商实现稳定批量供货；",
+          "unit_id": "management_strategy-0:u10"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:93d014c3d71f2ea6264b",
+      "fact_anchors": [
+        "芯片",
+        "验证",
+        "批量"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "同时，芯片级底部填充胶（ Underfill ）、 DAF/CDAF 膜、 Lid 框粘接材料等先进封装材料成功打破国外垄断，进入小批量交付阶段，芯片级 导热材料也已进入客户端验证导入环节。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u11"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 741,
+          "ordinal": 11,
+          "start_pos": 646,
+          "text": "同时，芯片级底部填充胶（ Underfill ）、 DAF/CDAF 膜、 Lid 框粘接材料等先进封装材料成功打破国外垄断，进入小批量交付阶段，芯片级 导热材料也已进入客户端验证导入环节。",
+          "unit_id": "management_strategy-0:u11"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:0772f46429652696cb27",
+      "fact_anchors": [
+        "2025",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，公司集成电路封装材料业务收入同比大幅增长 ，毛利率稳步提升 ，市场份额逐步扩 大。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u13"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 827,
+          "ordinal": 13,
+          "start_pos": 779,
+          "text": "2025 年，公司集成电路封装材料业务收入同比大幅增长 ，毛利率稳步提升 ，市场份额逐步扩 大。",
+          "unit_id": "management_strategy-0:u13"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:105ec576d19dd3b5837b",
+      "fact_anchors": [
+        "业务",
+        "产品",
+        "客户"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内，公司完成对泰吉诺的并表，其业务与公司原有导热产品在技术、应用、客户及市 场等方面具备良好互补性。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u15"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1003,
+          "ordinal": 15,
+          "start_pos": 950,
+          "text": "报告期内，公司完成对泰吉诺的并表，其业务与公司原有导热产品在技术、应用、客户及市 场等方面具备良好互补性。",
+          "unit_id": "management_strategy-0:u15"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "operating_progress",
+      "card_id": "annual-argument:9075975cf06fd6245476",
+      "fact_anchors": [
+        "报告期"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:operating_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "报告期内，公司智能终端封装材料凭借技术优势与交付能力，成功 进入国内外头部品牌供应链并实现规模化供货，与国际一流供应商展开全面直接竞争，市场渗透 率持续提升。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u21"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1375,
+          "ordinal": 21,
+          "start_pos": 1296,
+          "text": "报告期内，公司智能终端封装材料凭借技术优势与交付能力，成功 进入国内外头部品牌供应链并实现规模化供货，与国际一流供应商展开全面直接竞争，市场渗透 率持续提升。",
+          "unit_id": "management_strategy-0:u21"
+        }
+      ],
+      "title": "经营变化"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:70d147620e13327a4a24",
+      "fact_anchors": [
+        "应用"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "management_strategy-0",
+      "source_credit": 75,
+      "source_excerpt": "未来，公司将持续深耕高端封装材料技术迭代，深化与全球头部品牌的战略合作， 不断拓宽应用场景、提升供应份额，进一步加速高端市场国产替代进程。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "management_strategy-0:u26"
+      ],
+      "source_units": [
+        {
+          "block_id": "management_strategy-0",
+          "end_pos": 1626,
+          "ordinal": 26,
+          "start_pos": 1557,
+          "text": "未来，公司将持续深耕高端封装材料技术迭代，深化与全球头部品牌的战略合作， 不断拓宽应用场景、提升供应份额，进一步加速高端市场国产替代进程。",
+          "unit_id": "management_strategy-0:u26"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
       "card_id": "annual-argument:99f6a52acc89009e9b6d",
       "fact_anchors": [
         "需求",
@@ -1564,33 +3064,33 @@
     }
   ],
   "integrity": {
-    "card_count": 38,
-    "cards_sha256": "78f73cb751f098f6152b64cc4cc42f6809c720bef6ebcdea702f49cb6bcdad1f",
-    "payload_sha256": "d5c6f2e83845483f29927676cce61c847afc4c92ef54085ed6b1f2cb1e2911bc",
-    "producer_diagnostics_sha256": "af38cc3e12a5519ad473b3cdccaac6a2310f122f9fda13f6378d89baf03e0ead",
-    "source_unit_count": 40
+    "card_count": 74,
+    "cards_sha256": "cf570ffc4234d81ee38b9c0d1042c9a14bdfd73a42ec884500877ef05249dc3b",
+    "payload_sha256": "028a59e8b02227bd83d59f244103fa2a9370ed267b723a790cb9192ef0cf1edc",
+    "producer_diagnostics_sha256": "827d9f00e4b6f5e916181a1f44e8f7d0d3bb1b301a17cd2da04d522bd66469a4",
+    "source_unit_count": 79
   },
   "producer_diagnostics": {
     "admission_invariant_violation": false,
     "admitted_by_family": {
-      "business_structure": 8,
-      "financial_quality_explanation": 14,
-      "market_competition_outlook": 11,
-      "operating_progress": 2,
-      "technology_product_progress": 3
+      "business_structure": 11,
+      "financial_quality_explanation": 33,
+      "market_competition_outlook": 17,
+      "operating_progress": 3,
+      "technology_product_progress": 10
     },
     "argument_complete_counts": {
-      "atomic": 26,
-      "complete": 12
+      "atomic": 50,
+      "complete": 24
     },
     "candidate_explosion": false,
     "candidate_explosion_block_ids": [],
     "candidates_by_family": {
-      "business_structure": 8,
-      "financial_quality_explanation": 14,
-      "market_competition_outlook": 11,
-      "operating_progress": 2,
-      "technology_product_progress": 3
+      "business_structure": 11,
+      "financial_quality_explanation": 33,
+      "market_competition_outlook": 17,
+      "operating_progress": 3,
+      "technology_product_progress": 10
     },
     "cards": [
       {
@@ -1615,10 +3115,12 @@
         ]
       },
       {
-        "card_id": "annual-argument:3311ffe0a75a8c31b781",
+        "card_id": "annual-argument:91c77ccab9362d0591a5",
         "fact_anchors": [
           "TIM1",
-          "芯片"
+          "芯片",
+          "工艺",
+          "研发"
         ],
         "score_parts": {
           "anchored_fact": 2,
@@ -1630,7 +3132,65 @@
         ],
         "selection_reason": "usage_primary:technology_product_progress",
         "source_unit_ids": [
-          "rd_product_progress-0:u1"
+          "rd_product_progress-0:u1",
+          "rd_product_progress-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:2225e06ae204eeb590ce",
+        "fact_anchors": [
+          "行业",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "rd_product_progress-2:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:8abcec0e91f1d8ad671e",
+        "fact_anchors": [
+          "TIM1.5",
+          "TIM2",
+          "芯片",
+          "批量",
+          "供货"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-2:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:2218c7584d267e67e823",
+        "fact_anchors": [
+          "芯片",
+          "验证",
+          "批量"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "rd_product_progress-2:u5"
         ]
       },
       {
@@ -1861,6 +3421,24 @@
         ]
       },
       {
+        "card_id": "annual-argument:1b4f0662da9354e1dea2",
+        "fact_anchors": [
+          "研发",
+          "实现",
+          "突破"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "product_capacity_profile-1:u7"
+        ]
+      },
+      {
         "card_id": "annual-argument:d01842a06a6b2f7d469c",
         "fact_anchors": [
           "服务"
@@ -1874,6 +3452,26 @@
         "selection_reason": "usage_primary:business_structure",
         "source_unit_ids": [
           "product_capacity_profile-1:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4ab2e64a14eb8dc88981",
+        "fact_anchors": [
+          "行业",
+          "竞争"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "management_market_view-0:u0",
+          "management_market_view-0:u1"
         ]
       },
       {
@@ -1922,7 +3520,9 @@
           "argument_complete": 0,
           "source_unit_count": 1
         },
-        "secondary_signals": [],
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "market_demand_outlook-1:u0"
@@ -1968,6 +3568,63 @@
         ]
       },
       {
+        "card_id": "annual-argument:aabcc914409e06f9e644",
+        "fact_anchors": [
+          "行业",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "competitive_position-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:264f2ca37a5e7c27b8c7",
+        "fact_anchors": [
+          "TIM1.5",
+          "TIM2",
+          "芯片",
+          "批量",
+          "供货"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "competitive_position-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:95aea5cd2ec9d2a501aa",
+        "fact_anchors": [
+          "芯片",
+          "验证",
+          "批量"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "competitive_position-0:u4"
+        ]
+      },
+      {
         "card_id": "annual-argument:6f6255a45b471967e86c",
         "fact_anchors": [
           "战略"
@@ -2003,6 +3660,23 @@
         "selection_reason": "usage_primary:market_competition_outlook",
         "source_unit_ids": [
           "future_strategy-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:b3120fbdc2522e49ae21",
+        "fact_anchors": [
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "profitability_commentary-0:u0"
         ]
       },
       {
@@ -2200,6 +3874,27 @@
         ]
       },
       {
+        "card_id": "annual-argument:3785a6c39819a97c7dfd",
+        "fact_anchors": [
+          "应收账款",
+          "受",
+          "影响"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u0",
+          "ar_aging_note-0:u1"
+        ]
+      },
+      {
         "card_id": "annual-argument:a7d9bbb8e38da07ec07f",
         "fact_anchors": [
           "如果国家有关高新 技术企业等税收优惠的法律、法规"
@@ -2216,6 +3911,355 @@
         ]
       },
       {
+        "card_id": "annual-argument:d31b20226428f2fe2d8b",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3ab454a3c2ca8cb02da9",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u10"
+        ]
+      },
+      {
+        "card_id": "annual-argument:00e6ee6d80cadea30045",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u11"
+        ]
+      },
+      {
+        "card_id": "annual-argument:71a44732a879cf943463",
+        "fact_anchors": [
+          "市场",
+          "竞争"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "ar_aging_note-0:u12"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f88d00185705ae459f49",
+        "fact_anchors": [
+          "商誉",
+          "由于",
+          "影响"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "ar_aging_note-0:u13"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5ec643bd0f9a1c8035d8",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e6c8f9f97733ebb09f92",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5fd95b2ad46b3d24f1dc",
+        "fact_anchors": [
+          "商誉"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4341379f26ac63fa6976",
+        "fact_anchors": [
+          "市场",
+          "竞争"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "goodwill_note-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f0a40b49ef1d4ae6d20a",
+        "fact_anchors": [
+          "商誉",
+          "由于",
+          "影响"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "goodwill_note-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:22d99e33ce43e486d89b",
+        "fact_anchors": [
+          "受",
+          "影响"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:financial_quality_explanation",
+        "source_unit_ids": [
+          "government_grant_note-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:310595895326bee1d9f4",
+        "fact_anchors": [
+          "营业收入",
+          "营业成本",
+          "主要系"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f7e181cb35d98b0394e6",
+        "fact_anchors": [
+          "销售费用",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c946db73f8cd87c634cc",
+        "fact_anchors": [
+          "管理费用",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:024c1656f3276a4bdec9",
+        "fact_anchors": [
+          "财务费用",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:44faaef62878a39a7b91",
+        "fact_anchors": [
+          "现金流",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:9c118668f4a0a6232383",
+        "fact_anchors": [
+          "现金流",
+          "主要系",
+          "所致"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:b5baa532cea26f3a9d53",
+        "fact_anchors": [
+          "现金流",
+          "主要系"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "business_overview-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:54e157ac0c928bb8b855",
+        "fact_anchors": [
+          "32.80%",
+          "主营",
+          "业务",
+          "产品"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "business_overview-0:u10"
+        ]
+      },
+      {
         "card_id": "annual-argument:3185a4abde370e52a235",
         "fact_anchors": [
           "产品",
@@ -2227,6 +4271,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "market_competition_outlook"
         ],
         "selection_reason": "usage_primary:business_structure",
@@ -2262,6 +4307,7 @@
           "source_unit_count": 1
         },
         "secondary_signals": [
+          "technology_product_progress",
           "business_structure"
         ],
         "selection_reason": "usage_primary:market_competition_outlook",
@@ -2287,6 +4333,144 @@
         ]
       },
       {
+        "card_id": "annual-argument:58e166e94d30ea594e92",
+        "fact_anchors": [
+          "行业",
+          "需求"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "management_strategy-0:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:48306e1ddd00a17d56d3",
+        "fact_anchors": [
+          "TIM1.5",
+          "TIM2",
+          "芯片",
+          "批量",
+          "供货"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u10"
+        ]
+      },
+      {
+        "card_id": "annual-argument:93d014c3d71f2ea6264b",
+        "fact_anchors": [
+          "芯片",
+          "验证",
+          "批量"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u11"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0772f46429652696cb27",
+        "fact_anchors": [
+          "2025",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "management_strategy-0:u13"
+        ]
+      },
+      {
+        "card_id": "annual-argument:105ec576d19dd3b5837b",
+        "fact_anchors": [
+          "业务",
+          "产品",
+          "客户"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u15"
+        ]
+      },
+      {
+        "card_id": "annual-argument:9075975cf06fd6245476",
+        "fact_anchors": [
+          "报告期"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:operating_progress",
+        "source_unit_ids": [
+          "management_strategy-0:u21"
+        ]
+      },
+      {
+        "card_id": "annual-argument:70d147620e13327a4a24",
+        "fact_anchors": [
+          "应用"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "management_strategy-0:u26"
+        ]
+      },
+      {
         "card_id": "annual-argument:99f6a52acc89009e9b6d",
         "fact_anchors": [
           "需求",
@@ -2306,13 +4490,13 @@
     ],
     "missing_families": [],
     "rejection_counts": {
-      "boilerplate": 119,
-      "incomplete": 21,
+      "boilerplate": 106,
+      "incomplete": 13,
       "invalid_unit": 0,
-      "no_anchor": 45,
-      "ocr_damage": 32,
+      "no_anchor": 39,
+      "ocr_damage": 29,
       "reused_source_units": 0,
-      "table_noise": 18
+      "table_noise": 9
     },
     "source_blocks_seen": 48,
     "source_unit_decisions": [
@@ -2412,7 +4596,7 @@
         "disposition": "selected",
         "reason": "selected",
         "selected_by_card_ids": [
-          "annual-argument:3311ffe0a75a8c31b781"
+          "annual-argument:91c77ccab9362d0591a5"
         ],
         "source_block_id": "rd_product_progress-0",
         "source_order": 1,
@@ -2420,9 +4604,11 @@
         "source_unit_id": "rd_product_progress-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_anchor",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:91c77ccab9362d0591a5"
+        ],
         "source_block_id": "rd_product_progress-0",
         "source_order": 2,
         "source_text_hash": "bfbe78d46c3f306779671a07f49170c6c6c8912671f27e4676077024a04d4faa",
@@ -2483,27 +4669,33 @@
         "source_unit_id": "rd_product_progress-2:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:2225e06ae204eeb590ce"
+        ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 3,
         "source_text_hash": "9c5c4ad54631faa96ac98697fd3e45b6dae82a117a1bd5465c24806247ef119b",
         "source_unit_id": "rd_product_progress-2:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:8abcec0e91f1d8ad671e"
+        ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 4,
         "source_text_hash": "6b8de36f5b9cbf13adecffdf1ad7ab2ba970df4d815fdf9e92ab96801ba4facb",
         "source_unit_id": "rd_product_progress-2:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:2218c7584d267e67e823"
+        ],
         "source_block_id": "rd_product_progress-2",
         "source_order": 5,
         "source_text_hash": "db44336f00bb0eff1971ef79bffed85fc51c962a07982f65750ea21ce17403e4",
@@ -2745,9 +4937,11 @@
         "source_unit_id": "product_capacity_profile-1:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:1b4f0662da9354e1dea2"
+        ],
         "source_block_id": "product_capacity_profile-1",
         "source_order": 7,
         "source_text_hash": "540c010836ebb64a404ef529462579dee63e9c6851049d5fc1b539cbd69ba73a",
@@ -2783,18 +4977,22 @@
         "source_unit_id": "product_capacity_profile-2:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4ab2e64a14eb8dc88981"
+        ],
         "source_block_id": "management_market_view-0",
         "source_order": 0,
         "source_text_hash": "b92f7d17230b030e3ec11f3364b1762f5b7aa7e5c0ff47a9d8b1cf0d78db8e6a",
         "source_unit_id": "management_market_view-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4ab2e64a14eb8dc88981"
+        ],
         "source_block_id": "management_market_view-0",
         "source_order": 1,
         "source_text_hash": "0d8ad2fa5642ac4e5a38feb398a1eee3c03af9a3f4df981ce9ae452345bbb138",
@@ -2919,27 +5117,33 @@
         "source_unit_id": "competitive_position-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:aabcc914409e06f9e644"
+        ],
         "source_block_id": "competitive_position-0",
         "source_order": 2,
         "source_text_hash": "9c5c4ad54631faa96ac98697fd3e45b6dae82a117a1bd5465c24806247ef119b",
         "source_unit_id": "competitive_position-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:264f2ca37a5e7c27b8c7"
+        ],
         "source_block_id": "competitive_position-0",
         "source_order": 3,
         "source_text_hash": "6b8de36f5b9cbf13adecffdf1ad7ab2ba970df4d815fdf9e92ab96801ba4facb",
         "source_unit_id": "competitive_position-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:95aea5cd2ec9d2a501aa"
+        ],
         "source_block_id": "competitive_position-0",
         "source_order": 4,
         "source_text_hash": "db44336f00bb0eff1971ef79bffed85fc51c962a07982f65750ea21ce17403e4",
@@ -2977,12 +5181,14 @@
         "source_unit_id": "future_strategy-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "checkbox_or_page_marker",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b3120fbdc2522e49ae21"
+        ],
         "source_block_id": "profitability_commentary-0",
         "source_order": 0,
-        "source_text_hash": "f604bb9482401073a899532ff62012d814aca3d91e88f0003e33b86cbfde1650",
+        "source_text_hash": "5ced073a23332654f2d9f05dea6967732be7afcef6629205ec2c064e4920dd02",
         "source_unit_id": "profitability_commentary-0:u0"
       },
       {
@@ -3123,18 +5329,22 @@
         "source_unit_id": "region_table-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3785a6c39819a97c7dfd"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 0,
         "source_text_hash": "ae5339d6728976b5356ccdc9f824cd43d96fda7e414a40110de0f40f6e895ebb",
         "source_unit_id": "ar_aging_note-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3785a6c39819a97c7dfd"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 1,
         "source_text_hash": "e465b86e2f273e38d9d22dd7fa8a75c1afc9718a12eb3579c3cfc2f4630068b7",
@@ -3206,45 +5416,55 @@
         "source_unit_id": "ar_aging_note-0:u8"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:d31b20226428f2fe2d8b"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 9,
         "source_text_hash": "4def8fea731ad5f1bcd49d0470a5d4874e1785ee2debde53f53380badcf41836",
         "source_unit_id": "ar_aging_note-0:u9"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3ab454a3c2ca8cb02da9"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 10,
         "source_text_hash": "b2214c6939e905b324b988fedc1d0f98137090139bc2e241c1926cf473099296",
         "source_unit_id": "ar_aging_note-0:u10"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:00e6ee6d80cadea30045"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 11,
         "source_text_hash": "3a6783301325a41030b87b8a70eac85570197274446bd87bdc46e4842d2b76ff",
         "source_unit_id": "ar_aging_note-0:u11"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:71a44732a879cf943463"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 12,
         "source_text_hash": "b21585abe74b024458f6146dcd6032fde943d13fcec6ca53f30f71ae1c9ed38e",
         "source_unit_id": "ar_aging_note-0:u12"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f88d00185705ae459f49"
+        ],
         "source_block_id": "ar_aging_note-0",
         "source_order": 13,
         "source_text_hash": "8dc232056721276ba136621cf2e2cb2ce5072a3e1b71d01187ee53f70d4040dd",
@@ -3737,57 +5957,69 @@
         "source_unit_id": "subsequent_events-0:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5ec643bd0f9a1c8035d8"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 0,
         "source_text_hash": "588ab37044be7fc799cc86ae0cd409164c204390ba2784607398fbee5cb2c465",
         "source_unit_id": "goodwill_note-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e6c8f9f97733ebb09f92"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 1,
         "source_text_hash": "b2214c6939e905b324b988fedc1d0f98137090139bc2e241c1926cf473099296",
         "source_unit_id": "goodwill_note-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "no_family_signal",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5fd95b2ad46b3d24f1dc"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 2,
         "source_text_hash": "3a6783301325a41030b87b8a70eac85570197274446bd87bdc46e4842d2b76ff",
         "source_unit_id": "goodwill_note-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4341379f26ac63fa6976"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 3,
         "source_text_hash": "b21585abe74b024458f6146dcd6032fde943d13fcec6ca53f30f71ae1c9ed38e",
         "source_unit_id": "goodwill_note-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "not_self_contained",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f0a40b49ef1d4ae6d20a"
+        ],
         "source_block_id": "goodwill_note-0",
         "source_order": 4,
         "source_text_hash": "8dc232056721276ba136621cf2e2cb2ce5072a3e1b71d01187ee53f70d4040dd",
         "source_unit_id": "goodwill_note-0:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "checkbox_or_page_marker",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:22d99e33ce43e486d89b"
+        ],
         "source_block_id": "government_grant_note-0",
         "source_order": 0,
-        "source_text_hash": "dfdacff9bd43737181e8692bbb62fe4b2e474066474e2f1aa951b9b7e1c121a1",
+        "source_text_hash": "bb7602be72c412929b393efab434547c302f69a4c3715d71ed8c762808962ec7",
         "source_unit_id": "government_grant_note-0:u0"
       },
       {
@@ -3818,63 +6050,77 @@
         "source_unit_id": "business_overview-0:u0"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:310595895326bee1d9f4"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 1,
         "source_text_hash": "28cb599d555c98a567e118d218b628a28c710d617792a6c2bd3326d1bed9d037",
         "source_unit_id": "business_overview-0:u1"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f7e181cb35d98b0394e6"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 2,
         "source_text_hash": "3adfdbf9b314e1571e5709c7fc839cad2e5dd8b6cf9957e80ac519b32995e8a3",
         "source_unit_id": "business_overview-0:u2"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c946db73f8cd87c634cc"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 3,
         "source_text_hash": "fc76506f98df7501bd12b435e1f46dd3c7d548762526dd1321a5caec6b6e20de",
         "source_unit_id": "business_overview-0:u3"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:024c1656f3276a4bdec9"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 4,
         "source_text_hash": "60fbf5f9139e71ed128af45db4c66eacc115927398af9f32c750bdd955ef758c",
         "source_unit_id": "business_overview-0:u4"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:44faaef62878a39a7b91"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 5,
         "source_text_hash": "0aeadd6123327904cc9f00d11aa188c2765816990f3d5d5bf385d31fbf18e815",
         "source_unit_id": "business_overview-0:u5"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:9c118668f4a0a6232383"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 6,
         "source_text_hash": "06313185cbe403014f9f232e32dd3539f6fdbba2ecff56561f5e3fe8b7cbbf21",
         "source_unit_id": "business_overview-0:u6"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b5baa532cea26f3a9d53"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 7,
         "source_text_hash": "8656a70dd448f04d9a96f14619e38e34e627f532ea0acc9515fca12dc1b126bf",
@@ -3891,7 +6137,7 @@
       },
       {
         "disposition": "rejected",
-        "reason": "table_or_ocr",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "business_overview-0",
         "source_order": 9,
@@ -3899,9 +6145,11 @@
         "source_unit_id": "business_overview-0:u9"
       },
       {
-        "disposition": "rejected",
-        "reason": "table_or_ocr",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:54e157ac0c928bb8b855"
+        ],
         "source_block_id": "business_overview-0",
         "source_order": 10,
         "source_text_hash": "23b634c56ff3965dacae8b5bb54b8dcf512c2bc1184d1bf7d5694c41901a491e",
@@ -3971,11 +6219,11 @@
       },
       {
         "disposition": "rejected",
-        "reason": "checkbox_or_page_marker",
+        "reason": "audit_or_policy",
         "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 1,
-        "source_text_hash": "3f97293af26b10237f5f3006623a3e533b1ce0fb219eed3073f96645f7e6dcbc",
+        "source_text_hash": "598fae0fd812685cd4f10222da037ea360d25fa26f7fe8e3fd2391be42ee42aa",
         "source_unit_id": "management_strategy-0:u1"
       },
       {
@@ -4042,27 +6290,33 @@
         "source_unit_id": "management_strategy-0:u8"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:58e166e94d30ea594e92"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 9,
         "source_text_hash": "9c5c4ad54631faa96ac98697fd3e45b6dae82a117a1bd5465c24806247ef119b",
         "source_unit_id": "management_strategy-0:u9"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:48306e1ddd00a17d56d3"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 10,
         "source_text_hash": "6b8de36f5b9cbf13adecffdf1ad7ab2ba970df4d815fdf9e92ab96801ba4facb",
         "source_unit_id": "management_strategy-0:u10"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:93d014c3d71f2ea6264b"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 11,
         "source_text_hash": "db44336f00bb0eff1971ef79bffed85fc51c962a07982f65750ea21ce17403e4",
@@ -4078,9 +6332,11 @@
         "source_unit_id": "management_strategy-0:u12"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:0772f46429652696cb27"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 13,
         "source_text_hash": "df455e39924c3f2363a498dad23ad7b5498356964bafeb8e9fd2a273d698731f",
@@ -4088,7 +6344,7 @@
       },
       {
         "disposition": "rejected",
-        "reason": "audit_or_policy",
+        "reason": "not_self_contained",
         "selected_by_card_ids": [],
         "source_block_id": "management_strategy-0",
         "source_order": 14,
@@ -4096,9 +6352,11 @@
         "source_unit_id": "management_strategy-0:u14"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:105ec576d19dd3b5837b"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 15,
         "source_text_hash": "19e46d60bfcb0ff05d8bd24a0275c8c47bd0980999cb1d060e7d0a651abc9c82",
@@ -4150,9 +6408,11 @@
         "source_unit_id": "management_strategy-0:u20"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:9075975cf06fd6245476"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 21,
         "source_text_hash": "cfdb61e09b922159970a26d5913a6da60078aea62ef245b1684bb34318544b89",
@@ -4195,9 +6455,11 @@
         "source_unit_id": "management_strategy-0:u25"
       },
       {
-        "disposition": "rejected",
-        "reason": "audit_or_policy",
-        "selected_by_card_ids": [],
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:70d147620e13327a4a24"
+        ],
         "source_block_id": "management_strategy-0",
         "source_order": 26,
         "source_text_hash": "7f98d4d41f6dbe341524156c7c3b5829664dd054572c18ca40261d4d375ddbea",
@@ -4874,7 +7136,7 @@
     ],
     "source_unit_decisions_version": "annual_source_unit_decisions.v1",
     "source_units_seen": 275,
-    "usable_units": 56,
+    "usable_units": 89,
     "v1_adapter_use_count": 0
   },
   "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",

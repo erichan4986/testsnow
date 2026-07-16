@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""One-command preparation of annual-report cache, narrative cards preview, and optional knowledge notes."""
+"""Prepare annual-report cache, cards preview, and optional pack/view storage."""
 
 from __future__ import annotations
 
@@ -27,11 +27,11 @@ from periodic_report_cache import (  # noqa: E402
     discover_cninfo_annual_report,
 )
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack  # noqa: E402
-from periodic_report_narrative_card_note_writer import (  # noqa: E402
-    write_periodic_report_narrative_card_notes,
-)
 from periodic_report_narrative_pack_store import (  # noqa: E402
     write_periodic_report_narrative_pack,
+)
+from periodic_report_narrative_view_writer import (  # noqa: E402
+    write_periodic_report_narrative_view,
 )
 from periodic_report_narrative_cards_preview import (  # noqa: E402
     _safe_filename,
@@ -225,7 +225,7 @@ def prepare_annual_report_materials(
     )
     preview_path.write_text(preview_markdown, encoding="utf-8")
 
-    # 4. Optionally write knowledge notes
+    # 4. Optionally write the machine pack and its human projection.
     knowledge_written_count = 0
     knowledge_outputs: Dict[str, Any] = {}
     if write_knowledge:
@@ -235,21 +235,23 @@ def prepare_annual_report_materials(
             card_pack=cards_pack,
             base_dir=base_dir,
         )
-        write_plan = write_periodic_report_narrative_card_notes(
-            stock_name=stock_name,
-            stock_code=stock_code,
-            card_pack=cards_pack,
-            base_dir=base_dir,
-            dry_run=False,
-            refresh_existing=True,
+        view_result = write_periodic_report_narrative_view(
+            stock_name=stock_name, stock_code=stock_code,
+            report_year=year, report_type=report_type, base_dir=base_dir,
         )
-        knowledge_written_count = len(write_plan.written) + len(write_plan.refreshed)
         knowledge_outputs = {
-            "legacy_note_count": knowledge_written_count,
+            "legacy_note_count": 0,
             "periodic_narrative_pack": {
                 "state": pack_result.state,
                 "pack_path": str(pack_result.pack_path),
                 "manifest_path": str(pack_result.manifest_path),
+            },
+            "periodic_narrative_view": {
+                "state": view_result.state,
+                "view_path": str(view_result.view_path),
+                "total_cards": view_result.total_cards,
+                "displayed_cards": view_result.displayed_cards,
+                "cards_sha256": view_result.cards_sha256,
             },
         }
 
@@ -299,7 +301,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument(
         "--write-knowledge",
         action="store_true",
-        help="Write narrative card notes to knowledge/10-Stocks/<stock>/periodic_narrative_cards/",
+        help="Write validated narrative pack and one human-readable view",
     )
     parser.add_argument(
         "--base-dir",
