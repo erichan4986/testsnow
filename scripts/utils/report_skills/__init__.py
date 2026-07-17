@@ -56,10 +56,8 @@ def build_stock_report_pipeline(
     enable_claim_risk_signals: bool = False,
     enable_source_intake: bool = False,
     enable_periodic_report_fulltext_intake: bool = False,
-    include_curated_external_viewpoint_narrative_in_deep_analysis_display: bool = False,
-    curated_external_viewpoint_narrative_json: str = "",
-    include_curated_external_viewpoint_digest_in_deep_analysis_display: bool = False,
-    curated_external_viewpoint_digest_json: str = "",
+    include_curated_external_argument_pack_in_deep_analysis_display: bool = False,
+    curated_external_argument_pack_json: str = "",
     canonical_synthesis_source_policy: str = "legacy_mixed",
 ) -> SkillPipeline:
     """构建股票报告生成 Pipeline。"""
@@ -95,10 +93,8 @@ def build_stock_report_pipeline(
         TechnicalAnalysisSkill(),
         SynthesisSkill(
             llm_client=llm_client,
-            include_curated_external_viewpoint_narrative_in_deep_analysis_display=include_curated_external_viewpoint_narrative_in_deep_analysis_display,
-            curated_external_viewpoint_narrative_json=curated_external_viewpoint_narrative_json,
-            include_curated_external_viewpoint_digest_in_deep_analysis_display=include_curated_external_viewpoint_digest_in_deep_analysis_display,
-            curated_external_viewpoint_digest_json=curated_external_viewpoint_digest_json,
+            include_curated_external_argument_pack_in_deep_analysis_display=include_curated_external_argument_pack_in_deep_analysis_display,
+            curated_external_argument_pack_json=curated_external_argument_pack_json,
             canonical_synthesis_source_policy=canonical_synthesis_source_policy,
         ),
     ])

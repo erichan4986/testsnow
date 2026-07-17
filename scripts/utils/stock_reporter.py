@@ -125,23 +125,10 @@ class PerStockReporter:
             broker_digest_display_enabled = bool(
                 source_intake_enabled and broker_digest_display_cfg.get("enabled", False)
             )
-            viewpoint_narrative_cfg = (
-                si_cfg.get("curated_external_viewpoint_narrative_synthesis_display", {}) or {}
-            )
-            viewpoint_narrative_enabled = bool(
-                source_intake_enabled and viewpoint_narrative_cfg.get("enabled", False)
-            )
-            viewpoint_narrative_json = self._resolve_repo_relative_path(
-                viewpoint_narrative_cfg.get("narrative_json", "")
-            )
-            viewpoint_digest_cfg = (
-                si_cfg.get("curated_external_viewpoint_digest_synthesis_display", {}) or {}
-            )
-            viewpoint_digest_enabled = bool(
-                source_intake_enabled and viewpoint_digest_cfg.get("enabled", False)
-            )
-            viewpoint_digest_json = self._resolve_repo_relative_path(
-                viewpoint_digest_cfg.get("digest_json", "")
+            argument_pack_cfg = si_cfg.get("curated_external_argument_pack_synthesis_display", {}) or {}
+            argument_pack_enabled = bool(source_intake_enabled and argument_pack_cfg.get("enabled", False))
+            argument_pack_json = self._resolve_repo_relative_path(
+                argument_pack_cfg.get("pack_json", "")
             )
             synthesis_source_policy = str(
                 si_cfg.get("canonical_synthesis_source_policy", "")
@@ -167,12 +154,9 @@ class PerStockReporter:
                 pipeline_kwargs["enable_periodic_report_fulltext_intake"] = True
             if source_intake_enabled and synthesis_source_policy:
                 pipeline_kwargs["canonical_synthesis_source_policy"] = synthesis_source_policy
-            if viewpoint_digest_enabled:
-                pipeline_kwargs["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True
-                pipeline_kwargs["curated_external_viewpoint_digest_json"] = viewpoint_digest_json
-            if viewpoint_narrative_enabled:
-                pipeline_kwargs["include_curated_external_viewpoint_narrative_in_deep_analysis_display"] = True
-                pipeline_kwargs["curated_external_viewpoint_narrative_json"] = viewpoint_narrative_json
+            if argument_pack_enabled:
+                pipeline_kwargs["include_curated_external_argument_pack_in_deep_analysis_display"] = True
+                pipeline_kwargs["curated_external_argument_pack_json"] = argument_pack_json
             pipeline = build_stock_report_pipeline(**pipeline_kwargs)
 
             pipeline_input = {
@@ -240,13 +224,9 @@ class PerStockReporter:
                         broker_digest_display_cfg["max_display_items"]
                     )
 
-            if viewpoint_digest_enabled:
-                pipeline_input["include_curated_external_viewpoint_digest_in_deep_analysis_display"] = True
-                pipeline_input["curated_external_viewpoint_digest_json"] = viewpoint_digest_json
-
-            if viewpoint_narrative_enabled:
-                pipeline_input["include_curated_external_viewpoint_narrative_in_deep_analysis_display"] = True
-                pipeline_input["curated_external_viewpoint_narrative_json"] = viewpoint_narrative_json
+            if argument_pack_enabled:
+                pipeline_input["include_curated_external_argument_pack_in_deep_analysis_display"] = True
+                pipeline_input["curated_external_argument_pack_json"] = argument_pack_json
 
             if evidence_notes_enabled:
                 pipeline_input["enable_evidence_notes"] = True

@@ -27,11 +27,4 @@ def test_reporter_path_marker_routing_contract():
     assert markers_for_path("tests/reporter/test_wechat_targeted_discovery_preview.py") == {
         "external_material"
     }
-    assert markers_for_path("tests/reporter/test_curated_external_viewpoint_narrative_preview.py") == {
-        "external_material",
-        "report_core",
-    }
-    assert markers_for_path("tests/reporter/test_social_viewpoint_digest_preview.py") == {
-        "external_material"
-    }
     assert markers_for_path("tests/test_data_collector.py") == {"slow"}

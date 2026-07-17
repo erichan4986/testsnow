@@ -16,7 +16,6 @@ REPORT_CORE_FILES = {
     "test_stock_reporter_source_intake_config.py",
     "test_synthesis_skills.py",
     "test_curated_external_full_body_viewpoint_preview.py",
-    "test_curated_external_viewpoint_narrative_preview.py",
 }
 
 EXTERNAL_MATERIAL_PREFIXES = (

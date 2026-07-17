@@ -335,31 +335,13 @@ class ReportAssemblySkill(BaseSkill):
             if not isinstance(display, dict):
                 continue
 
-            if display.get("_curated_external_narrative"):
-                for paragraph in display.get("_curated_external_narrative_paragraphs") or []:
-                    if cls._is_structured_external_risk_row(paragraph):
-                        append_signal(
-                            paragraph.get("heading") or paragraph.get("topic") or "",
-                            "curated_external_viewpoint_narrative",
-                            paragraph.get("heading") or "",
-                        )
-
-            topic_groups = display.get("_curated_external_topic_groups") or {}
-            if isinstance(topic_groups, dict):
-                for topic_key, rows in topic_groups.items():
-                    if not isinstance(rows, list):
-                        continue
-                    for row in rows:
-                        if not isinstance(row, dict):
-                            continue
-                        row_with_topic = dict(row)
-                        row_with_topic.setdefault("topic", topic_key)
-                        if cls._is_structured_external_risk_row(row_with_topic):
-                            append_signal(
-                                row.get("heading") or row.get("topic") or topic_key,
-                                "curated_external_viewpoint_digest",
-                                row.get("heading") or "",
-                            )
+            for card in display.get("_curated_external_argument_cards") or []:
+                if cls._is_structured_external_risk_row(card):
+                    append_signal(
+                        card.get("primary_family") or "外部待验证变量",
+                        "curated_external_argument_v3",
+                        " ".join(str(unit.get("text") or "") for unit in card.get("evidence_units") or []),
+                    )
 
         return risks
 
@@ -371,9 +353,11 @@ class ReportAssemblySkill(BaseSkill):
         if bool(row.get("display_only_risk_signal") or row.get("risk_observation")):
             return True
 
-        topic = str(row.get("topic") or row.get("primary_topic") or "").strip()
+        topic = str(
+            row.get("primary_family") or row.get("topic_family") or row.get("topic") or row.get("primary_topic") or ""
+        ).strip()
         claim_type = str(row.get("claim_type") or "").strip()
-        risk_topics = {"risk_rumor_rebuttal", "financial_quality"}
+        risk_topics = {"risk_rumor_rebuttal", "financial_quality", "capacity_delivery", "policy_geopolitics"}
         risk_claim_types = {"dissent"}
         if topic in risk_topics or claim_type in risk_claim_types:
             return True

@@ -650,7 +650,7 @@ def test_composite_score_legacy_fallback_does_not_render_na_percent():
     assert "EV: N/A%" not in result
 
 
-def _assembly_ctx_with_curated_paragraph(paragraph):
+def _assembly_ctx_with_curated_card(card):
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -671,15 +671,14 @@ def _assembly_ctx_with_curated_paragraph(paragraph):
             "pillar_scores": _pillar(),
             "synthesis": {"valuation_debate": "", "fundamentals": ""},
             "deep_analysis_display": {
-                "_curated_external_narrative": True,
-                "_curated_external_narrative_paragraphs": [paragraph],
+                "_curated_external_argument_cards": [card],
                 "citations": {},
             },
         }
     )
 
 
-def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_note():
+def test_assembly_structured_v3_external_card_adds_display_only_risk_note():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -687,10 +686,10 @@ def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_no
             sys.path.insert(0, str(path))
     from utils.report_skills.assembly_skills import ReportAssemblySkill
 
-    ctx = _assembly_ctx_with_curated_paragraph(
+    ctx = _assembly_ctx_with_curated_card(
         {
-            "heading": "财务质量信号：研发费用收缩值得警惕",
-            "text": "这段正文本身不会作为正式风险评分输入。",
+            "primary_family": "financial_quality",
+            "evidence_units": [{"text": "外部材料提示研发费用收缩值得警惕。"}],
             "citation_refs": [1],
         }
     )
@@ -700,7 +699,7 @@ def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_no
     assert "不计入综合风险评分" in markdown
 
 
-def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_text():
+def test_assembly_does_not_infer_display_only_risk_note_from_v3_evidence_text():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -708,10 +707,10 @@ def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_t
             sys.path.insert(0, str(path))
     from utils.report_skills.assembly_skills import ReportAssemblySkill
 
-    ctx = _assembly_ctx_with_curated_paragraph(
+    ctx = _assembly_ctx_with_curated_card(
         {
-            "heading": "产品进展：车型拓展线索",
-            "text": "正文里出现毛利率承压风险等词，但没有结构化风险主题。",
+            "primary_family": "technology_product",
+            "evidence_units": [{"text": "正文里出现毛利率承压风险等词，但没有结构化风险主题。"}],
             "citation_refs": [1],
         }
     )
@@ -719,3 +718,33 @@ def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_t
 
     assert "外部观察说明" not in markdown
     assert "不计入综合风险评分" not in markdown
+
+
+def test_assembly_collects_v3_structured_risk_card_without_changing_risk_score_input():
+    scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+    for path in (scripts_dir, scripts_dir / "utils"):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+    from utils.report_skills.assembly_skills import ReportAssemblySkill
+    from utils.skill_pipeline import SkillContext
+
+    ctx = SkillContext(input={
+        "display_only_external_risks": [{"name": "显式风险", "source_kind": "manual"}],
+        "curated_external_analysis_items": [{
+            "title": "独立风险输入", "source_kind": "curated",
+            "content": "独立输入保留。", "display_only_risk_signal": True,
+        }],
+        "deep_analysis_display": {
+            "_curated_external_argument_cards": [{
+                "primary_family": "capacity_delivery",
+                "evidence_units": [{"text": "外部材料提示上游供给仍可能约束交付。"}],
+            }],
+        },
+    })
+
+    rows = ReportAssemblySkill._collect_display_only_external_risks(
+        ctx, DisplayOnlyExternalRiskSignal,
+    )
+
+    assert {row.name for row in rows} == {"显式风险", "独立风险输入", "capacity_delivery"}
+    assert all(row.source_kind for row in rows)

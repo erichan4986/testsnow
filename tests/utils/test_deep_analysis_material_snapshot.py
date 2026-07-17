@@ -111,9 +111,8 @@ def _ctx():
             },
         },
         "deep_analysis_display": {
-            "_curated_external_argument_cards_v2": [
+            "_curated_external_argument_cards": [
                 _external_argument_card(
-                    "外部材料称技术路线存在分歧。",
                     argument_key="technology:route",
                     evidence="外部文章讨论 CPO 路线分歧。",
                 )
@@ -137,19 +136,24 @@ def _ctx():
     }
 
 
-def _external_argument_card(claim, *, argument_key, ref=1, topic="供应链交付", evidence="外部原文依据。"):
+def _external_argument_card(
+    evidence, *, argument_key, ref=1, topic="capacity_delivery", entity_scope="target",
+):
     return {
-        "schema_version": "curated_external_argument_card.v2",
+        "schema_version": "curated_external_argument_card.v3",
         "card_id": f"external-argument:{argument_key}",
-        "topic_family": topic,
-        "entity_scope": "target",
-        "claim": claim,
+        "entity_scope": entity_scope,
+        "coverage_families": [topic],
+        "primary_family": topic,
         "evidence_units": [{
             "text": evidence,
-            "evidence_status": "source_quote_verified",
+            "evidence_status": "source_unit_verified",
+            "unit_id": f"unit:{argument_key}",
+            "unit_hash": "test",
+            "source_id": "source:test",
+            "source_block_hash": "test",
             "citation_refs": [ref],
         }],
-        "display_title": topic,
         "argument_key": argument_key,
         "citation_refs": [ref],
         "quality_action": "preview_only",
@@ -159,12 +163,11 @@ def _external_argument_card(claim, *, argument_key, ref=1, topic="供应链交�
     }
 
 
-def test_snapshot_prefers_external_argument_v2_and_keeps_full_snapshot_offsets():
+def test_snapshot_projects_external_argument_v3_and_keeps_full_snapshot_offsets():
     ctx = _ctx()
     ctx["deep_analysis_display"].update({
-        "_curated_external_argument_cards_v2": [
+        "_curated_external_argument_cards": [
             _external_argument_card(
-                "外部材料称供应链交付仍需验证。",
                 argument_key="capacity:delivery",
                 evidence="外部文章称上游物料供应偏紧，交付节奏仍需验证。",
             )
@@ -175,36 +178,48 @@ def test_snapshot_prefers_external_argument_v2_and_keeps_full_snapshot_offsets()
     snapshot = build_deep_analysis_material_snapshot(ctx)
     external = [row for row in snapshot.rows if row.source_layer == "external"]
 
-    assert [row.row_id for row in external] == ["external:argument_cards_v2:0"]
-    assert external[0].external_claim == "外部材料称供应链交付仍需验证。"
+    assert [row.row_id for row in external] == ["external:argument_cards:0"]
+    assert external[0].external_claim == "外部文章称上游物料供应偏紧，交付节奏仍需验证。"
     assert external[0].external_evidence.startswith("外部文章称")
-    assert external[0].evidence_status == "source_quote_verified"
+    assert external[0].evidence_status == "source_unit_verified"
     assert external[0].argument_key == "capacity:delivery"
     assert external[0].citation_refs == (6,)
     assert snapshot.citations[6]["title"] == "供应链观察"
 
 
-def test_snapshot_does_not_project_legacy_external_rows_without_v2_cards():
+def test_snapshot_orders_target_external_rows_before_peer_background():
     ctx = _ctx()
-    ctx["deep_analysis_display"].pop("_curated_external_argument_cards_v2")
-    ctx["deep_analysis_display"]["_curated_external_reasoning_cards"] = [{
-        "claim": "旧 reasoning card 不再投影。",
-        "citation_refs": [1],
-    }]
+    ctx["deep_analysis_display"].update({
+        "_curated_external_argument_cards": [
+            _external_argument_card(
+                argument_key="peer:competition", evidence="行业竞争格局加速分化。", ref=2,
+                topic="competitive_landscape", entity_scope="peer_or_industry",
+            ),
+            _external_argument_card(
+                argument_key="target:delivery", evidence="测试股产品完成客户导入。", ref=1,
+                topic="commercialization", entity_scope="target",
+            ),
+        ],
+        "citations": {
+            1: {"source": "微信公众号精选观察", "title": "目标观察"},
+            2: {"source": "微信公众号精选观察", "title": "行业观察"},
+        },
+    })
 
     snapshot = build_deep_analysis_material_snapshot(ctx)
+    external = [row for row in snapshot.rows if row.source_layer == "external"]
 
-    assert not [row for row in snapshot.rows if row.source_layer == "external"]
+    assert [row.entity_scope for row in external] == ["target", "peer_or_industry"]
 
 
-def test_v2_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():
+def test_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():
     owner = MaterialRow(
         "annual:owner", "供应链", "annual", "formal_explanation", (1,), ("annual:owner",),
         body="公司800G产品保持稳定交付。", render_role="operating_progress",
     )
     rows = tuple(
         MaterialRow(
-            f"external:argument_cards_v2:{index}", claim, "external", "external_observation", (index + 2,), (f"external:{index}",),
+            f"external:argument_cards:{index}", claim, "external", "external_observation", (index + 2,), (f"external:{index}",),
             title="供应链交付", body=claim, render_role="external_variable",
             external_claim=claim, external_evidence=evidence,
             evidence_status="source_quote_verified", entity_scope="target",
@@ -403,7 +418,7 @@ def test_select_annual_display_rows_applies_role_budget_without_rewriting_admiss
     assert diagnostics["annual_hidden_by_role"] == {"operating_progress": 14}
 
 
-def test_formal_medium_view_model_assigns_portrait_slot_and_uses_one_external_projection():
+def test_formal_medium_view_model_assigns_portrait_slot_and_keeps_distinct_external_projections():
     annual_rows = (
         _annual_display_row(
             "公司主营业务为高速互连产品研发，产品服务于云计算客户。",
@@ -420,11 +435,11 @@ def test_formal_medium_view_model_assigns_portrait_slot_and_uses_one_external_pr
     )
     external_rows = (
         MaterialRow(
-            "external:reasoning_cards:0", "供应链变量", "external", "external_observation", (3,), ("external:reasoning",),
+            "external:argument_cards:reasoning:0", "供应链变量", "external", "external_observation", (3,), ("external:reasoning",),
             title="供应链观察", body="外部材料称上游供给节奏仍需验证。", render_role="external_variable",
         ),
         MaterialRow(
-            "external:narrative_paragraphs:0", "客户变量", "external", "external_observation", (4,), ("external:narrative",),
+            "external:argument_cards:narrative:0", "客户变量", "external", "external_observation", (4,), ("external:narrative",),
             title="客户验证", body="外部材料称重点客户验证节奏仍需观察。", render_role="external_variable",
         ),
     )
@@ -443,7 +458,10 @@ def test_formal_medium_view_model_assigns_portrait_slot_and_uses_one_external_pr
     annual = view_model.section("4.1").rows
     external = view_model.section("4.3").rows
     assert next(row for row in annual if row.row_id == "annual:portrait").editorial_slot == "portrait"
-    assert [row.row_id for row in external] == ["external:narrative_paragraphs:0"]
+    assert [row.row_id for row in external] == [
+        "external:argument_cards:reasoning:0",
+        "external:argument_cards:narrative:0",
+    ]
 
 
 def test_incremental_external_selector_keeps_owner_superset_with_new_event_delta():
@@ -452,7 +470,7 @@ def test_incremental_external_selector_keeps_owner_superset_with_new_event_delta
         body="公司800G产品已进入批量交付阶段。", render_role="operating_progress",
     )
     external = MaterialRow(
-        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        "external:argument_cards:narrative:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
         title="交付变化", body="外部材料称公司800G产品已进入批量交付阶段，光芯片短缺可能导致后续交付延期。",
         render_role="external_variable",
     )
@@ -472,7 +490,7 @@ def test_incremental_external_selector_rejects_owner_theme_without_delta():
         body="800G产品主要面向数据中心客户。", render_role="broker_assumption", attribution="测试证券",
     )
     external = MaterialRow(
-        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        "external:argument_cards:narrative:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
         title="产品观察", body="外部文章认为数据中心客户正在使用800G产品。", render_role="external_variable",
     )
 
@@ -490,7 +508,7 @@ def test_incremental_external_selector_rejects_rephrased_existing_event():
         body="公司800G产品交付节奏保持稳定。", render_role="operating_progress",
     )
     external = MaterialRow(
-        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        "external:argument_cards:narrative:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
         body="外部文章指出800G产品维持稳定交付节奏。", render_role="external_variable",
     )
 
@@ -508,7 +526,7 @@ def test_incremental_external_selector_keeps_new_event_without_numeric_anchor():
         body="公司订单已覆盖核心客户。", render_role="operating_progress",
     )
     external = MaterialRow(
-        "external:narrative_paragraphs:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        "external:argument_cards:narrative:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
         body="外部材料称订单仍需通过客户认证。", render_role="external_variable",
     )
 
@@ -526,11 +544,11 @@ def test_incremental_external_selector_falls_through_rejected_narrative_bucket()
     )
     rows = (
         MaterialRow(
-            "external:narrative_paragraphs:0", "重复观察", "external", "external_observation", (2,), ("external:0",),
+            "external:argument_cards:narrative:0", "重复观察", "external", "external_observation", (2,), ("external:0",),
             title="客户验证", body="外部材料称公司800G产品已进入客户验证阶段。", render_role="external_variable",
         ),
         MaterialRow(
-            "external:reasoning_cards:0", "增量观察", "external", "external_observation", (3,), ("external:1",),
+            "external:argument_cards:reasoning:0", "增量观察", "external", "external_observation", (3,), ("external:1",),
             title="量产节奏", body="外部材料称800G产品量产时间由2026Q4延期至2027Q1。", render_role="external_variable",
         ),
     )
@@ -539,7 +557,7 @@ def test_incremental_external_selector_falls_through_rejected_narrative_bucket()
         rows, {2: {"source": "外部观察"}, 3: {"source": "外部观察"}}, (owner,),
     )
 
-    assert [row.row_id for row in selected] == ["external:reasoning_cards:0"]
+    assert [row.row_id for row in selected] == ["external:argument_cards:reasoning:0"]
     assert diagnostics["external_incremental_rejected_by_reason"] == {"owner_text_duplicate": 1}
 
 
@@ -549,7 +567,7 @@ def test_incremental_external_selector_keeps_uncovered_context_without_anchor():
         body="公司主营业务为芯片设计。", render_role="business_structure",
     )
     external = MaterialRow(
-        "external:topic_groups:market:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
+        "external:argument_cards:topic:market:0", "外部观察", "external", "external_observation", (2,), ("external:0",),
         title="渠道库存", body="渠道库存变化仍值得持续观察。", render_role="external_variable",
     )
 
@@ -567,11 +585,11 @@ def test_incremental_external_selector_recognizes_new_units_and_acronym_anchors(
     )
     rows = (
         MaterialRow(
-            "external:narrative_paragraphs:0", "交付观察", "external", "external_observation", (2,), ("external:0",),
+            "external:argument_cards:narrative:0", "交付观察", "external", "external_observation", (2,), ("external:0",),
             body="外部材料称800G交付计划由1500万下调至1200万。", render_role="external_variable",
         ),
         MaterialRow(
-            "external:narrative_paragraphs:1", "路线观察", "external", "external_observation", (3,), ("external:1",),
+            "external:argument_cards:narrative:1", "路线观察", "external", "external_observation", (3,), ("external:1",),
             body="外部材料称NPO与XPO路线可能在2027Q1进入验证。", render_role="external_variable",
         ),
     )
@@ -592,7 +610,7 @@ def test_formal_medium_rejected_external_row_stays_out_of_4_3_and_4_4():
             ref=1, row_id="annual:technology",
         ),
         MaterialRow(
-            "external:narrative_paragraphs:0", "重复观察", "external", "external_observation", (2,), ("external:0",),
+            "external:argument_cards:narrative:0", "重复观察", "external", "external_observation", (2,), ("external:0",),
             title="客户验证", body="外部材料称公司CPO产品已进入客户验证阶段。", render_role="external_variable",
         ),
     )
@@ -803,15 +821,15 @@ def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations
     assert rows_by_id["annual:annual_report_explanation:0"].claim_status == "formal_explanation"
     assert rows_by_id["broker:forecast_ranges:0"].source_layer == "broker"
     assert rows_by_id["broker:risks:0"].claim_status == "professional_analysis"
-    assert rows_by_id["external:argument_cards_v2:0"].source_layer == "external"
-    assert rows_by_id["external:argument_cards_v2:0"].section_hint == "external_map"
+    assert rows_by_id["external:argument_cards:0"].source_layer == "external"
+    assert rows_by_id["external:argument_cards:0"].section_hint == "external_map"
 
     all_refs = {ref for row in snapshot.rows for ref in row.citation_refs}
     assert all_refs
     assert all(ref in snapshot.citations for ref in all_refs)
     assert rows_by_id["annual:confirmed:0"].citation_refs == (1,)
     assert rows_by_id["broker:sections:0"].citation_refs == (3,)
-    assert rows_by_id["external:argument_cards_v2:0"].citation_refs == (6,)
+    assert rows_by_id["external:argument_cards:0"].citation_refs == (6,)
 
 
 def test_snapshot_keeps_fundflow_and_peer_material_in_diagnostics_only():
@@ -895,7 +913,7 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
 
     annual_row = next(row for row in view_model.section("4.1").rows if row.row_id == "annual:confirmed:0")
     broker_row = next(row for row in view_model.section("4.2").rows if row.row_id == "broker:sections:0")
-    external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:argument_cards_v2:0")
+    external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:argument_cards:0")
     assert annual_row.title == "营业收入"
     assert annual_row.body == "营业收入 10 亿元"
     assert annual_row.render_role == "financial_quality_explanation"
@@ -903,8 +921,8 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
     assert broker_row.render_role == "broker_assumption"
     assert broker_row.attribution == "测试证券"
     assert external_row.render_role == "external_variable"
-    assert external_row.title == "供应链交付"
-    assert external_row.external_claim == "外部材料称技术路线存在分歧。"
+    assert external_row.title == "供应链与交付"
+    assert external_row.external_claim == "外部文章讨论 CPO 路线分歧。"
     assert external_row.external_evidence == "外部文章讨论 CPO 路线分歧。"
     assert {k: v for k, v in ctx.items() if k != "recommendation_decision"} == before
 

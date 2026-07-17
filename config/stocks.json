@@ -33,13 +33,9 @@
         "enabled": true,
         "max_display_items": 8
       },
-      "curated_external_viewpoint_narrative_synthesis_display": {
+      "curated_external_argument_pack_synthesis_display": {
         "enabled": true,
-        "narrative_json": "data/curated_external/viewpoint_narratives/heizhima_20260629.json"
-      },
-      "curated_external_viewpoint_digest_synthesis_display": {
-        "enabled": true,
-        "digest_json": "data/curated_external/viewpoint_digests/heizhima_20260629.json"
+        "pack_json": "data/curated_external/argument_packs/heizhima.json"
       }
     }
   },
@@ -404,13 +400,9 @@
         "max_supported": 4,
         "max_unverified": 6
       },
-      "curated_external_viewpoint_digest_synthesis_display": {
+      "curated_external_argument_pack_synthesis_display": {
         "enabled": true,
-        "digest_json": "data/curated_external/viewpoint_digests/zhongjixuchuang_20260629.json"
-      },
-      "curated_external_viewpoint_narrative_synthesis_display": {
-        "enabled": true,
-        "narrative_json": "data/curated_external/viewpoint_narratives/zhongjixuchuang_20260629.json"
+        "pack_json": "data/curated_external/argument_packs/zhongjixuchuang.json"
       },
       "broker_research_digest_synthesis_display": {
         "enabled": true,
@@ -552,9 +544,9 @@
         "enabled": true,
         "report_type": "annual_report"
       },
-      "curated_external_viewpoint_narrative_synthesis_display": {
+      "curated_external_argument_pack_synthesis_display": {
         "enabled": true,
-        "narrative_json": "data/curated_external/viewpoint_narratives/fudan_20260702.json"
+        "pack_json": "data/curated_external/argument_packs/fudan.json"
       },
       "claim_verification": {
         "enabled": true,

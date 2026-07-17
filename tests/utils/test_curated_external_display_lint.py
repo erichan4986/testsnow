@@ -35,6 +35,59 @@ def test_curated_only_strong_confirmation_fails():
     assert result["violations"]
 
 
+def test_canonical_preview_heading_with_quoted_exact_source_passes():
+    synthesis = _make_synthesis(
+        "**外部材料原文摘录（Preview，未经官方核验）**\n\n"
+        "> 外部文章公告显示订单已锁定[^1]。",
+        {
+            1: {
+                "source": "微信公众号精选观察",
+                "source_type": "curated_external_analysis_evidence",
+                "source_credit": 55,
+            }
+        },
+    )
+
+    result = lint_curated_external_display_text(synthesis)
+
+    assert result["ok"] is True
+    assert result["violations"] == []
+
+
+def test_quoted_curated_source_without_canonical_preview_heading_still_fails():
+    synthesis = _make_synthesis(
+        "> 外部文章公告显示订单已锁定[^1]。",
+        {1: {"source_type": "curated_external_analysis_evidence", "source_credit": 55}},
+    )
+
+    result = lint_curated_external_display_text(synthesis)
+
+    assert result["ok"] is False
+
+
+def test_canonical_preview_heading_does_not_exempt_unquoted_curated_claim():
+    synthesis = _make_synthesis(
+        "**外部材料原文摘录（Preview，未经官方核验）**\n\n"
+        "外部文章公告显示订单已锁定[^1]。",
+        {1: {"source_type": "curated_external_analysis_evidence", "source_credit": 55}},
+    )
+
+    result = lint_curated_external_display_text(synthesis)
+
+    assert result["ok"] is False
+
+
+def test_canonical_preview_heading_text_inside_quote_does_not_create_contract():
+    synthesis = _make_synthesis(
+        "> 原文提到**外部材料原文摘录（Preview，未经官方核验）**，并公告显示订单已锁定[^1]。",
+        {1: {"source_type": "curated_external_analysis_evidence", "source_credit": 55}},
+    )
+
+    result = lint_curated_external_display_text(synthesis)
+
+    assert result["ok"] is False
+
+
 def test_official_announcement_strong_confirmation_passes():
     synthesis = _make_synthesis(
         "公告显示公司营收同比增长20%[^1]。",

@@ -21,6 +21,16 @@ except ImportError:
 
 SCHEMA = "deep_analysis_material_snapshot.v1"
 DEEP_ANALYSIS_SCOPE = ("deep_analysis",)
+_EXTERNAL_FAMILY_TITLES = {
+    "capacity_delivery": "供应链与交付",
+    "demand_customer": "需求与客户",
+    "technology_product": "技术与产品",
+    "financial_quality": "财务质量",
+    "competitive_landscape": "竞争格局",
+    "commercialization": "商业化进展",
+    "policy_geopolitics": "政策与地缘",
+    "valuation_expectation": "估值与预期",
+}
 
 
 @dataclass(frozen=True)
@@ -436,26 +446,21 @@ def select_incremental_external_display_rows(
     ]
     owners = tuple(row for row in owner_rows if row.body)
     rejected: Dict[str, int] = {}
-    for bucket in ("argument_cards_v2", "narrative_paragraphs", "reasoning_cards", "topic_groups"):
-        projection = [row for row in candidates if _external_bucket(row) == bucket]
-        deduped = _dedupe_external_display_rows(projection, citations)
-        selected = []
-        for row in deduped:
-            reason = _external_incremental_reason(row, owners)
-            if not reason:
-                rejected["owner_theme_without_delta"] = rejected.get("owner_theme_without_delta", 0) + 1
-                continue
-            if reason == "owner_text_duplicate":
-                rejected[reason] = rejected.get(reason, 0) + 1
-                continue
-            selected.append(replace(
-                row,
-                owner_relation="outside_owner" if reason == "new_topic_context" else "owner_delta",
-                diagnostics=(*row.diagnostics, ("external_incremental_reason", reason)),
-            ))
-        if selected:
-            return tuple(selected), _external_selection_diagnostics(candidates, selected, rejected)
-    return (), _external_selection_diagnostics(candidates, (), rejected)
+    selected = []
+    for row in _dedupe_external_display_rows(candidates, citations):
+        reason = _external_incremental_reason(row, owners)
+        if not reason:
+            rejected["owner_theme_without_delta"] = rejected.get("owner_theme_without_delta", 0) + 1
+            continue
+        if reason == "owner_text_duplicate":
+            rejected[reason] = rejected.get(reason, 0) + 1
+            continue
+        selected.append(replace(
+            row,
+            owner_relation="outside_owner" if reason == "new_topic_context" else "owner_delta",
+            diagnostics=(*row.diagnostics, ("external_incremental_reason", reason)),
+        ))
+    return tuple(selected), _external_selection_diagnostics(candidates, selected, rejected)
 
 
 def _external_selection_diagnostics(candidates, selected, rejected) -> Dict[str, Any]:
@@ -514,16 +519,6 @@ def _concrete_anchors(text: str) -> set[str]:
 
 def _is_external_display_eligible(row: MaterialRow, citations: Mapping[int, Any]) -> bool:
     return bool(row.body and row.citation_refs and not row.scoring_eligible and not row.risk_score_eligible and any(citations.get(ref) for ref in row.citation_refs))
-
-
-def _external_bucket(row: MaterialRow) -> str:
-    if ":argument_cards_v2:" in row.row_id:
-        return "argument_cards_v2"
-    if ":narrative_paragraphs:" in row.row_id:
-        return "narrative_paragraphs"
-    if ":reasoning_cards:" in row.row_id:
-        return "reasoning_cards"
-    return "topic_groups"
 
 
 def external_display_key(row: MaterialRow, citations: Mapping[int, Any]) -> tuple:
@@ -671,28 +666,37 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
     citations = display.get("citations") or {}
     result = []
     section_hint = "external_map" if profile.get("profile") == "formal_thin_external_rich" else "external_addendum"
-    for idx, row in enumerate(display.get("_curated_external_argument_cards_v2") or []):
+    cards = sorted(
+        display.get("_curated_external_argument_cards") or [],
+        key=lambda row: isinstance(row, Mapping) and str(row.get("entity_scope") or "") == "peer_or_industry",
+    )
+    for idx, row in enumerate(cards):
         if not isinstance(row, dict):
             continue
-        body = str(row.get("claim") or "").strip()
+        evidence_units = [unit for unit in row.get("evidence_units") or [] if isinstance(unit, Mapping)]
+        body = "\n\n".join(
+            str(unit.get("text") or "").strip() for unit in evidence_units
+            if str(unit.get("text") or "").strip()
+        )
+        if not body:
+            continue
         material_row = _adapt_material_row(
             row,
             allocator,
             citations,
-            f"external:argument_cards_v2:{idx}",
+            f"external:argument_cards:{idx}",
             source_layer="external",
             claim_status="external_observation",
             section_hint=section_hint,
-            title=str(row.get("display_title") or "外部变量").strip(),
+            title=_EXTERNAL_FAMILY_TITLES.get(str(row.get("primary_family") or ""), "外部变量"),
             body=body,
             render_role="external_variable",
             source_credit="external_low_credit",
         )
-        evidence_units = [unit for unit in row.get("evidence_units") or [] if isinstance(unit, Mapping)]
         result.append(replace(
             material_row,
             external_claim=body,
-            external_evidence="\n\n".join(str(unit.get("text") or "").strip() for unit in evidence_units if str(unit.get("text") or "").strip()),
+            external_evidence=body,
             evidence_status=str((evidence_units[0] if evidence_units else {}).get("evidence_status") or ""),
             entity_scope=str(row.get("entity_scope") or ""),
             argument_key=str(row.get("argument_key") or ""),

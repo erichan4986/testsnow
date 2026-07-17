@@ -33,7 +33,7 @@ if __name__.startswith("utils."):
         refresh_broker_research_digest_card_notes_from_manifest,
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
-    from ..curated_external_display import build_curated_external_digest_display, build_curated_external_narrative_display, flatten_synthesis_text
+    from ..curated_external_display import build_curated_external_argument_display, flatten_synthesis_text
     from ..industry_news_relevance import build_industry_relevance_manifest
     from ..peer_comparison_material import build_peer_comparison_material
     from ..fundflow_material import build_fundflow_material_pack
@@ -69,7 +69,7 @@ else:
         refresh_broker_research_digest_card_notes_from_manifest,
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
-    from curated_external_display import build_curated_external_digest_display, build_curated_external_narrative_display, flatten_synthesis_text
+    from curated_external_display import build_curated_external_argument_display, flatten_synthesis_text
     from industry_news_relevance import build_industry_relevance_manifest
     from peer_comparison_material import build_peer_comparison_material
     from fundflow_material import build_fundflow_material_pack
@@ -782,12 +782,7 @@ class SynthesisSkill(BaseSkill):
         ]
 
         deep_display = ctx.get("deep_analysis_display") or {}
-        argument_cards = deep_display.get("_curated_external_argument_cards_v2") or []
-        topic_groups = deep_display.get("_curated_external_topic_groups") or {}
-        topic_claim_count = 0
-        if isinstance(topic_groups, dict):
-            topic_claim_count = sum(len(v) for v in topic_groups.values() if isinstance(v, list))
-
+        argument_cards = deep_display.get("_curated_external_argument_cards") or []
         return {
             "schema": "deep_analysis_material_coverage.v1",
             "annual": {
@@ -831,17 +826,12 @@ class SynthesisSkill(BaseSkill):
             },
             "external": {
                 "citation_source_count": len(deep_display.get("citations") or {}),
-                "argument_v2_count": len(argument_cards),
-                "argument_v2_families": sorted({str(card.get("topic_family") or "other") for card in argument_cards}),
-                "reasoning_card_count": len(deep_display.get("_curated_external_reasoning_cards") or []),
-                "narrative_paragraph_count": len(deep_display.get("_curated_external_narrative_paragraphs") or []),
-                "topic_group_count": len(topic_groups) if isinstance(topic_groups, dict) else 0,
-                "topic_claim_count": topic_claim_count,
-                "status": (
-                    ctx.get("curated_external_viewpoint_narrative_status")
-                    or ctx.get("curated_external_viewpoint_digest_status")
-                    or "absent"
-                ),
+                "argument_card_count": len(argument_cards),
+                "argument_coverage_families": sorted({
+                    str(family) for card in argument_cards
+                    for family in card.get("coverage_families") or []
+                }),
+                "status": ctx.get("curated_external_argument_pack_status") or "absent",
             },
         }
 
@@ -908,66 +898,28 @@ class SynthesisSkill(BaseSkill):
         return {"status": "ok", "report_count": len(reports), "institutions": institutions}
 
     def _build_curated_external_deep_analysis_display(self, ctx: SkillContext) -> None:
-        """Build the external display once, with narrative priority and digest fallback."""
-        narrative_enabled = bool(
-            ctx.get("include_curated_external_viewpoint_narrative_in_deep_analysis_display")
-            or getattr(self, "include_curated_external_viewpoint_narrative_in_deep_analysis_display", False)
+        """Project the persisted canonical argument pack into the external display."""
+        pack_enabled = bool(
+            ctx.get("include_curated_external_argument_pack_in_deep_analysis_display")
+            or getattr(self, "include_curated_external_argument_pack_in_deep_analysis_display", False)
         )
-        digest_enabled = bool(
-            ctx.get("include_curated_external_viewpoint_digest_in_deep_analysis_display")
-            or getattr(self, "include_curated_external_viewpoint_digest_in_deep_analysis_display", False)
+        if not pack_enabled:
+            return
+        pack_json = ctx.get("curated_external_argument_pack_json") or getattr(
+            self, "curated_external_argument_pack_json", ""
         )
-        digest_json = (
-            ctx.get("curated_external_viewpoint_digest_json")
-            or getattr(self, "curated_external_viewpoint_digest_json", "")
-        ) if digest_enabled else None
-        stock_name = str(ctx.get("stock_name") or "").strip()
-
-        if narrative_enabled:
-            narrative_json = ctx.get("curated_external_viewpoint_narrative_json") or getattr(
-                self, "curated_external_viewpoint_narrative_json", ""
-            )
-            result = build_curated_external_narrative_display(
-                narrative_json,
-                expected_stock_name=stock_name,
-                digest_json=digest_json,
-            )
-            if self._store_curated_external_display_result(ctx, "narrative", result):
-                return
-
-        if not digest_enabled or ctx.get("deep_analysis_display"):
-            return
-        if not digest_json:
-            self._store_curated_external_display_result(ctx, "digest", {
-                "status": "missing_config",
-                "stats": {"rejection_reasons": ["curated_external_viewpoint_digest_json not set"]},
-            })
-            return
-
-        try:
-            digest = json.loads(Path(digest_json).read_text(encoding="utf-8"))
-        except Exception as exc:
-            result = {"status": "reader_error", "stats": {"rejection_reasons": [str(exc)]}}
-        else:
-            result = build_curated_external_digest_display(digest, expected_stock_name=stock_name)
-        self._store_curated_external_display_result(ctx, "digest", result)
-
-    @staticmethod
-    def _store_curated_external_display_result(ctx: SkillContext, kind: str, result: dict) -> bool:
-        prefix = f"curated_external_viewpoint_{kind}"
-        status = result.get("status")
-        ctx.set(f"{prefix}_status", status)
-        ctx.set(f"{prefix}_stats", result.get("stats") or {})
-        if result.get("lint"):
-            ctx.set(f"{prefix}_lint", result.get("lint"))
-        if status != "ok":
-            return False
-
-        display = result.get("display") or {}
-        ctx.set("deep_analysis_display", display)
-        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
-        ctx.set(f"synthesis_text_with_{prefix}", result.get("synthesis_text") or "")
-        return True
+        result = build_curated_external_argument_display(
+            pack_json, expected_stock_name=str(ctx.get("stock_name") or "").strip(),
+        )
+        for suffix in ("status", "stats", "lint"):
+            value = result.get(suffix)
+            if value is not None:
+                ctx.set(f"curated_external_argument_pack_{suffix}", value)
+        if result.get("status") == "ok":
+            display = result.get("display") or {}
+            ctx.set("deep_analysis_display", display)
+            ctx.set("deep_analysis_display_sources", display.get("_sources", []))
+            ctx.set("synthesis_text_with_curated_external_argument_pack", result.get("synthesis_text") or "")
 
     @staticmethod
     def _build_evidence_profile(ctx: SkillContext, items: list) -> dict:
@@ -1033,38 +985,50 @@ class SynthesisSkill(BaseSkill):
             if any(m in metric for m in useful_fact_metrics):
                 formal_insight_facts += 1
 
-        argument_cards = deep_display.get("_curated_external_argument_cards_v2") or []
-        topic_groups = deep_display.get("_curated_external_topic_groups") or {}
-        reasoning_cards = deep_display.get("_curated_external_reasoning_cards") or []
+        argument_cards = deep_display.get("_curated_external_argument_cards") or []
         citations = deep_display.get("citations", {}) or {}
-        # Profile routing remains on the legacy evidence contract. Argument v2
-        # is display-only, except for digest-only input that previously supplied
-        # equivalent topic groups before the v2 adapter replaced that projection.
-        external_topics = len(topic_groups)
-        external_claims = len({str(c.get("claim_id") or i): c for i, c in enumerate(reasoning_cards)})
-        if ctx.get("curated_external_viewpoint_digest_status") == "ok" and argument_cards:
-            external_topics = len({str(card.get("topic_family") or "other") for card in argument_cards})
+        pack_active = ctx.get("curated_external_argument_pack_status") == "ok"
+        external_topics = external_claims = 0
+        if pack_active:
+            target_cards = [
+                card for card in argument_cards
+                if str(card.get("entity_scope") or "").startswith("target")
+            ]
+            external_topics = len({
+                family for card in target_cards
+                for family in card.get("coverage_families") or []
+                if family != "other"
+            })
             external_claims = len({str(card.get("argument_key") or i) for i, card in enumerate(argument_cards)})
         external_sources = len(citations)
         distinct_authors = len({
             (str(m.get("source") or ""), str(m.get("author") or ""))
             for m in citations.values() if isinstance(m, dict)
         })
-        single_source = external_sources == 1 and (external_topics >= 3 or external_claims >= 6)
+        single_source = external_sources == 1 and external_topics >= 3 if pack_active else False
 
         has_any_formal = any(section_support.values())
         has_any_item = bool(items)
-        has_external_display = bool(deep_display)
-        external_rich = external_topics >= 3 or external_claims >= 6
+        external_rich = pack_active and external_topics >= 3
+        annual_memo = ctx.get("annual_report_memo") or {}
+        broker_memo = ctx.get("broker_research_memo") or {}
+        annual_ready = annual_memo.get("status") == "ready"
+        broker_usable = int(broker_memo.get("diagnostics", {}).get("usable_card_count", 0) or 0)
         reasons: List[str] = []
         if formal_insight_facts >= 5 and section_support["industry"] >= 2 and section_support["fundamentals"] >= 2:
             profile = "formal_rich"
             reasons.append("formal_support_sufficient")
-        elif has_external_display and external_rich and formal_insight_facts < 5:
+        elif pack_active and annual_ready and broker_usable > 0:
+            profile = "formal_medium"
+            reasons.append("annual_and_broker_material_ready")
+        elif pack_active and annual_ready and external_rich and formal_insight_facts < 5:
             profile = "formal_thin_external_rich"
             reasons.append("formal_thin_external_rich")
             if single_source:
                 reasons.append("single_source_external_rich")
+        elif pack_active:
+            profile = "formal_medium" if (has_any_formal or annual_ready or broker_usable) else "thin_all"
+            reasons.append("formal_support_partial" if profile == "formal_medium" else "material_insufficient")
         elif has_any_formal or has_any_item:
             profile = "formal_medium"
             reasons.append("formal_support_partial")
@@ -1080,8 +1044,6 @@ class SynthesisSkill(BaseSkill):
             "catalysts": "timeline" if section_support["catalyst_support"] >= 1 else ("fallback" if legacy_profile else "skipped"),
         }
 
-        annual_memo = ctx.get("annual_report_memo") or {}
-        broker_memo = ctx.get("broker_research_memo") or {}
         return {
             "profile": profile,
             "formal_insight_facts": formal_insight_facts,

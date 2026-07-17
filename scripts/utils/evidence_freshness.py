@@ -97,7 +97,19 @@ def build_freshness_overlay(*, profile: str, as_of_date: date, official_items: I
     overlay = {"schema": "evidence_freshness.v1", "as_of_date": as_of_date.isoformat(), "official": official, "broker": broker, "external": {"latest_date": None, "status": "unknown"}, "dynamic_topics": {}, "summary_candidate": None, "preface": False, "reason_codes": []}
     if profile not in {"formal_medium", "formal_thin_external_rich"}:
         return overlay
-    display = external_display or {}; paragraphs = display.get("_curated_external_narrative_paragraphs") or []; citations = display.get("citations") or {}; candidates = []
+    display = external_display or {}; citations = display.get("citations") or {}; candidates = []
+    cards = display.get("_curated_external_argument_cards") or []
+    topic_map = {"capacity_delivery": "capacity_delivery", "demand_customer": "order_customer", "technology_product": "product_validation", "financial_quality": "margin_cost"}
+    paragraphs = [
+        {"paragraph_index": index,
+         "text": " ".join(str(unit.get("text") or "") for unit in card.get("evidence_units") or []),
+         "topic_keys": [
+             topic_map.get(str(family), "other")
+             for family in card.get("coverage_families") or []
+         ],
+         "citation_refs": card.get("citation_refs") or []}
+        for index, card in enumerate(cards) if isinstance(card, dict)
+    ]
     for paragraph in paragraphs:
         for topic in paragraph.get("topic_keys") or ():
             if str(topic) != "other":

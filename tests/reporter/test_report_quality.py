@@ -10,7 +10,7 @@ from report_quality import check_report_file, check_report_text
 
 def _snapshot_row(**overrides):
     data = {
-        "row_id": "external:reasoning_cards:0",
+        "row_id": "external:argument_cards:reasoning:0",
         "text": "外部观点A",
         "source_layer": "external",
         "claim_status": "external_observation",
@@ -772,6 +772,47 @@ def test_formal_thin_external_argument_v2_narrative_does_not_warn():
     codes = {issue.code for issue in check_report_text(text).issues}
 
     assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_formal_thin_canonical_source_units_pass_external_quality_gates():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**财务质量**
+
+外部新增待验证变量：收入与毛利均实现增长[^1]。
+同时，公司持续推进产品迭代并形成贡献[^1]。
+
+> **同业/行业背景（Preview）**：以下内容仅描述同业或行业背景，不代表目标公司已确认事实。
+
+**技术与产品**
+
+同业/行业背景观察：同业产品进入验证窗口[^2]。
+
+## 引用来源
+- [^1] 微信公众号精选观察 | 《公司观察》
+- [^2] 知乎精选观察 | 《行业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "curated_external_missing_inline_footnotes" not in codes
+    assert "external_viewpoint_overcompressed" not in codes
+    assert "external_map_unverified_claim_framing" not in codes
 
 
 def test_external_map_uncertainty_does_not_trigger_strong_confirmation():
@@ -2464,6 +2505,44 @@ def test_external_map_body_strong_confirmation_still_triggers():
     codes = {issue.code for issue in result.issues}
 
     assert "external_map_unverified_claim_framing" in codes
+
+
+def test_external_map_peer_preview_strong_wording_does_not_block_target_claims():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为智能驾驶芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**客户进展**
+
+外部新增待验证变量：目标公司合作进度仍需后续数据验证[^1]。
+
+> **同业/行业背景（Preview）**：以下内容仅描述同业或行业背景，不代表目标公司已确认事实。
+
+**商业化进展**
+
+同业/行业背景观察：根据双方确定的项目安排，L4 自动驾驶已经不再是单纯技术展示[^2]。
+
+## 引用来源
+- [^1] 微信公众号精选观察 | 《公司观察》
+- [^2] 知乎精选观察 | 《行业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
 
 
 def test_external_map_framed_market_share_claim_does_not_trigger():

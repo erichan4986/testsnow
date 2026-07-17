@@ -1,0 +1,1032 @@
+{
+  "schema_version": "curated_external_argument_pack.v3",
+  "stock_name": "中际旭创",
+  "status": "ready",
+  "selector_version": "external_unit_selector.v2",
+  "validator_version": "external_argument_validator.v3",
+  "source_packet_fingerprints": [
+    {
+      "source_id": "curated-source:zhihu_selected_observation:9bdb41e4b7936143",
+      "source_content_hash": "65a9fcf7fe2ebbead14cf4dd085d5db1739a368c6d69fbe38eb7725ecb667e8a"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:bea027695b4edb04",
+      "source_content_hash": "e88f8aeb63cd2f658142a99142905bb7f786830db9950360c724e2e86a3c4482"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:adf3f3da200977bd",
+      "source_content_hash": "a8f14d55aa8b7d8bf44b9668c713eb3bb6977f078c1c973aff8710edd3f9cb52"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:0f52085c6f1eb2f4",
+      "source_content_hash": "244dfc9c209c44dd0d9a2a9bb4ca4075303ec1a8ff69d4a295e5b4a29d26a0d7"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:0bfa448515cc6d40",
+      "source_content_hash": "de83bff55ec9800064c637864c7fd904dc1ca5834d89bb05d2ddd2f4d46b1711"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:00eb48ab896022f6",
+      "source_content_hash": "1b3e3e24358d6d61cf26e194f7f679995160dcd7403f3a8926b7792e8333dfe7"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:a72432f72c7cdc1d",
+      "source_content_hash": "5cc0bab936af7728d233c06603fe0d46239a2d2ec507b071b41e4d5afa06866e"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:ea9b75e32b8c49f0",
+      "source_content_hash": "fc8054153631d4a59f862362133f3ecf0b908aff634cb1c83a0c15d2c9b1785b"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:80ba166d7b61293c",
+      "source_content_hash": "2ffdd5f44879b759a47fe3f68837078129b1b93053c1769349904e5591d0c69a"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:28d41b6d8bab4132",
+      "source_content_hash": "326f747d4cb606e9d9b2e1eb6a337452a89d253c70398d16a0289d3e3645ba72"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:1380a2c048c2258a",
+      "source_content_hash": "7b696c929be9922167a936c82450c4d222705a4e4c6f92001a01ecb4c9aa1cc6"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:a99797c5da095cf6",
+      "source_content_hash": "397d64484e990698d196fac5aa515387fa2e22958759f372fe186cd3ad5d1679"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:2fd7882b16b8c71e",
+      "source_content_hash": "33ca8c292344ecfc02f56690a046afdcd3115340cbed55c90f43f97514e0b5cb"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:10ba7b721a79056d",
+      "source_content_hash": "504cf5a1af796926d905a7ce61e11cb2d3b6382665fbb3ff58f4f7776add9778"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:266b8cc7a75cc2cc",
+      "source_content_hash": "787da26cbd2b6c056f06224e0a2c54d6adda32c9a691e78e41447deac45394d1"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:132d3c41fa62dbc2",
+      "source_content_hash": "80a96d19aeab5395ac978e9104c8bd95c26a6bab318f691765f5f0e452227956"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:e06aad85cbb4b4af",
+      "source_content_hash": "5d40957ee441e397db4aa8aedd40857e30bfc7e02c7c21e300da19bb4756272e"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:5fe43df020461239",
+      "source_content_hash": "89a6499bd232dc6f6657a14f1e53579c00eb67fd176d865a555a26e5c331b0bb"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:d37c7b16b2150747",
+      "source_content_hash": "19c4b2ca55cab5b0ff05f766664fea6f74529c91564f446f0c0fb35593e9a43c"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:e43ce6379d8eef72",
+      "source_content_hash": "65a9fcf7fe2ebbead14cf4dd085d5db1739a368c6d69fbe38eb7725ecb667e8a"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:56802a0039c7ea97",
+      "source_content_hash": "26ae3da71b12e13f29167bee272479d43c8bad616d156bfe3069af61d791708c"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:c5544007dc286d56",
+      "source_content_hash": "a543fe8542488875a18beba02b9a94f1641e639add97193c697dfdb81cce38ce"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:c03b34f17b8de9ec",
+      "source_content_hash": "9ebef83d114b7088e668841f2917d8b1957a1653ab1403f47fb933c3186bafa0"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:b77d36ad44860170",
+      "source_content_hash": "3f7cd5c9855a368ad98d58a1d9898e192cb628ad58bdafd0189bf01b1b3e16dc"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:8487f1e1239b428d",
+      "source_content_hash": "99f33ba81c0f134bbbbbd88597d780efbaf72784a82844ca14afd5a58605c4c8"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:855b8fb30e6e7d9a",
+      "source_content_hash": "8eb9f45048b0fd16e442acb05a87af084b7935c70c79f4a87c289983cc588e99"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:ecd9fe1c1c97bd32",
+      "source_content_hash": "0898fd580653da1138aa2ec9edfa9fbb4da3c184c5428dcb1c91698223f3df23"
+    }
+  ],
+  "baseline_fingerprint": "sha256:95f1160d4e4e1534b1372342072e8a445e57542e621fc6915acd80764a91a6c7",
+  "cards": [
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:4a1fb58a11be0247",
+      "stock_name": "中际旭创",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0bfa448515cc6d40:5:f39ded10c21c73c2",
+          "text": "中际旭创已量产1.6T光模块，并具备3.2T产品的开发能力，子公司智禾光通亮相多款400G/800G高速光模块等产品。",
+          "unit_hash": "f39ded10c21c73c28f12f1db71f2e6a3a134dc5ba67525ad38f8f1de3c2d9bb2",
+          "source_id": "curated-source:zhihu_selected_observation:0bfa448515cc6d40",
+          "source_ordinal": 5,
+          "source_block_hash": "de83bff55ec9800064c637864c7fd904dc1ca5834d89bb05d2ddd2f4d46b1711",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "argument_key": "technology_product:target:d78c9899b2e3c7920093",
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1969496789955608861?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:c904bc30de3a23ea",
+      "stock_name": "中际旭创",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:a72432f72c7cdc1d:10:4e814904f6866385",
+          "text": "其中云南锗业已实现4英寸磷化铟衬底稳定出货、国内唯一稳定量产6英寸磷化铟衬底企业，国内市占80% 以上，直供中际旭创、新易盛、华为，适配1.6T/3.2T高端模块。",
+          "unit_hash": "4e814904f6866385fc2df1d7b2f7e5fbba08b89fae802a23381d08c7a19f0daf",
+          "source_id": "curated-source:zhihu_selected_observation:a72432f72c7cdc1d",
+          "source_ordinal": 10,
+          "source_block_hash": "5cc0bab936af7728d233c06603fe0d46239a2d2ec507b071b41e4d5afa06866e",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "commercialization:target:f4ae6a6b149a3a77754f",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2058447295117530373?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:6120abf68cdd021b",
+      "stock_name": "中际旭创",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "coverage_families": [
+        "valuation_expectation"
+      ],
+      "primary_family": "valuation_expectation",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:e06aad85cbb4b4af:0:c1ad34d69fcf7b42",
+          "text": "中际旭创的问题不是估值贵不贵——是2026年这波AI基建把800G打成了\"不够用\"。",
+          "unit_hash": "c1ad34d69fcf7b4202d0f5e61218533ffc8201c48db933f8a62764f1c9afe2a0",
+          "source_id": "curated-source:zhihu_selected_observation:e06aad85cbb4b4af",
+          "source_ordinal": 0,
+          "source_block_hash": "5d40957ee441e397db4aa8aedd40857e30bfc7e02c7c21e300da19bb4756272e",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "argument_key": "valuation_expectation:target:4ccb9addba8248303450",
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://www.zhihu.com/question/2030585016900653696/answer/2058232400296072282?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:7238bcf345a102bf",
+      "stock_name": "中际旭创",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "coverage_families": [
+        "financial_quality",
+        "valuation_expectation"
+      ],
+      "primary_family": "financial_quality",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:e06aad85cbb4b4af:5:22bcfa79a11caa09",
+          "text": "先讲一件事：万亿市值到底贵不贵 按照2026年一致预期，中际旭创全年收入大概350-380亿，归母净利润110-130亿。",
+          "unit_hash": "22bcfa79a11caa09bf5e7a398e076da6bdcd59558cb0c676f1367d5f68a3294d",
+          "source_id": "curated-source:zhihu_selected_observation:e06aad85cbb4b4af",
+          "source_ordinal": 5,
+          "source_block_hash": "5d40957ee441e397db4aa8aedd40857e30bfc7e02c7c21e300da19bb4756272e",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "argument_key": "financial_quality:target:204a58c49ea71829dd93",
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://www.zhihu.com/question/2030585016900653696/answer/2058232400296072282?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:934d00744f2ab3f9",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "policy_geopolitics"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:bea027695b4edb04:10:fd2e42d1171b8b27",
+          "text": "2025 年 7 月，工信部发布 YD/T 6086.3 - 2025 标准，首次对 800Gb/s 强度调制可插拔光模块的技术要求与测试方法予以规范，为产业发展提供了有力的政策支撑。",
+          "unit_hash": "fd2e42d1171b8b2781c691c681e1250618d1c16aee3fddd1a1eabc8ec0588322",
+          "source_id": "curated-source:zhihu_selected_observation:bea027695b4edb04",
+          "source_ordinal": 10,
+          "source_block_hash": "e88f8aeb63cd2f658142a99142905bb7f786830db9950360c724e2e86a3c4482",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:955af588932193fb7fe2",
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1935649949535699394?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:b2099d7e4a4b5fa6",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0f52085c6f1eb2f4:6:341efcbcf911e232",
+          "text": "高速光模块的研发调测与大规模量产保障，已成为制约 AI 算力集群部署效率的关键环节。",
+          "unit_hash": "341efcbcf911e2321070f8919014bfeddca47dfda629b7c8b7a2724c55bb0957",
+          "source_id": "curated-source:zhihu_selected_observation:0f52085c6f1eb2f4",
+          "source_ordinal": 6,
+          "source_block_hash": "244dfc9c209c44dd0d9a2a9bb4ca4075303ec1a8ff69d4a295e5b4a29d26a0d7",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "argument_key": "commercialization:peer_or_industry:595a25fe714ae7a129ef",
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2031053407767769831?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:7c9d262009c16b4a",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "competitive_landscape"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0f52085c6f1eb2f4:7:02f99aa64dabefa8",
+          "text": "万里眼此次发布的 65GHz 采样示波器，实现了三大核心突破：一是效率革命，凭借业界领先的 500kHz 采样率，测试效率对比传统方案提升了 100%，大幅缩短产品生产周期；",
+          "unit_hash": "02f99aa64dabefa8683e8d047384abc4050a34f4f6eadfdcc94a478ffb0ff87d",
+          "source_id": "curated-source:zhihu_selected_observation:0f52085c6f1eb2f4",
+          "source_ordinal": 7,
+          "source_block_hash": "244dfc9c209c44dd0d9a2a9bb4ca4075303ec1a8ff69d4a295e5b4a29d26a0d7",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:65f38664ad4867919c3c",
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2031053407767769831?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:7308653b76c0098e",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "capacity_delivery"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0f52085c6f1eb2f4:9:d44b5e516e808671",
+          "text": "三是超高精度，低至 12 微瓦（典型值）的超低底噪，精准捕捉微弱信号，高质量生产与产品交付。",
+          "unit_hash": "d44b5e516e8086712ee5e8eb0efcdcbfe6def52a076a2f69e770cd683867af0c",
+          "source_id": "curated-source:zhihu_selected_observation:0f52085c6f1eb2f4",
+          "source_ordinal": 9,
+          "source_block_hash": "244dfc9c209c44dd0d9a2a9bb4ca4075303ec1a8ff69d4a295e5b4a29d26a0d7",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:106b7e58e407c28cf401",
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2031053407767769831?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:fecaf86d6a08698b",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "commercialization",
+        "demand_customer",
+        "capacity_delivery"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:a72432f72c7cdc1d:7:ba3ba642e8aef16d",
+          "text": "AI数据中心的大规模建设极大拉动磷化铟的需求，但磷化铟衬底生产需在高温高压下进行极端的环境控制，叠加设备交付慢、良率爬坡难及长达2年的客户认证期，使磷化铟衬底短缺在短期内难以缓解。",
+          "unit_hash": "ba3ba642e8aef16d493d1d953bd24818cda6a2962f0cf7794170a5ce5cfb09cf",
+          "source_id": "curated-source:zhihu_selected_observation:a72432f72c7cdc1d",
+          "source_ordinal": 7,
+          "source_block_hash": "5cc0bab936af7728d233c06603fe0d46239a2d2ec507b071b41e4d5afa06866e",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "commercialization:peer_or_industry:9f4a43a02f8c35014aad",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2058447295117530373?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:80331ad8ff72ebcf",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:a72432f72c7cdc1d:9:a1280789c08c0514",
+          "text": "目前，国内实现磷化铟衬底量产的主要有云南锗业、广东先导科技、珠海鼎泰芯源等少数企业，成都中铝乾星、宿迁联盛（603065）纷纷准备跨界进入。",
+          "unit_hash": "a1280789c08c0514ef0b11a7e80773ab0a41483a2acff33af1b2901fda2702d6",
+          "source_id": "curated-source:zhihu_selected_observation:a72432f72c7cdc1d",
+          "source_ordinal": 9,
+          "source_block_hash": "5cc0bab936af7728d233c06603fe0d46239a2d2ec507b071b41e4d5afa06866e",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "commercialization:peer_or_industry:1f759fc1e0d4b97d271a",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2058447295117530373?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:30b73a321f994788",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "financial_quality",
+        "technology_product",
+        "commercialization",
+        "competitive_landscape",
+        "demand_customer",
+        "capacity_delivery"
+      ],
+      "primary_family": "financial_quality",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ea9b75e32b8c49f0:8:69e04b385bce0686",
+          "text": "中游竞争已从传统规模制造，转向“NPI导入、复杂测试、良率爬坡、自动化产线和规模交付”的综合工程能力比拼。",
+          "unit_hash": "69e04b385bce0686c5373674ac328df1e2c65340f731d017caaffecceb4520e3",
+          "source_id": "curated-source:zhihu_selected_observation:ea9b75e32b8c49f0",
+          "source_ordinal": 8,
+          "source_block_hash": "fc8054153631d4a59f862362133f3ecf0b908aff634cb1c83a0c15d2c9b1785b",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            6
+          ]
+        },
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ea9b75e32b8c49f0:9:abb5bced708f9b51",
+          "text": "谁能更早完成样品验证、客户认证和稳定量产，谁就能在价格下行前锁定订单和利润。",
+          "unit_hash": "abb5bced708f9b51426cb629c9cee621650ffb63f2fdf78916372f6b6b3728d4",
+          "source_id": "curated-source:zhihu_selected_observation:ea9b75e32b8c49f0",
+          "source_ordinal": 9,
+          "source_block_hash": "fc8054153631d4a59f862362133f3ecf0b908aff634cb1c83a0c15d2c9b1785b",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            6
+          ]
+        },
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ea9b75e32b8c49f0:10:67d04a4ca88e74dd",
+          "text": "资料来源：头豹研究院 03 1.6T时代功耗与散热成为限制项，硅光提供底层集成能力，LPO/NPO/CPO分别对应不同工程化路径 随着光模块从800G向1.6T演进，行业瓶颈不再只是单通道速率提升，而是DSP功耗、信号完整性、封装复杂度、散热压力和系统级能效同步上升。",
+          "unit_hash": "67d04a4ca88e74dda99a5dab33832c2713426e8aa028f21b9843c2869d4b890c",
+          "source_id": "curated-source:zhihu_selected_observation:ea9b75e32b8c49f0",
+          "source_ordinal": 10,
+          "source_block_hash": "fc8054153631d4a59f862362133f3ecf0b908aff634cb1c83a0c15d2c9b1785b",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            6
+          ]
+        }
+      ],
+      "argument_key": "financial_quality:peer_or_industry:23ff01d836557ad4bdf0",
+      "citation_refs": [
+        6
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2053414887662133490?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:33a46bdd3d68eb17",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:28d41b6d8bab4132:11:513bf1e6ffeb26e6",
+          "text": "据行业数据，芯片结温每升高10℃，失效率将提升50%，光模块寿命缩短约一半。",
+          "unit_hash": "513bf1e6ffeb26e63baf3372060748f73f9f5bb978072993d3f3bfdefabb74b0",
+          "source_id": "curated-source:zhihu_selected_observation:28d41b6d8bab4132",
+          "source_ordinal": 11,
+          "source_block_hash": "326f747d4cb606e9d9b2e1eb6a337452a89d253c70398d16a0289d3e3645ba72",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            7
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:e20e9d7a29ed003c55c6",
+      "citation_refs": [
+        7
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2056636023640264872?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:f5596c1dbd707e9b",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:1380a2c048c2258a:0:6253c306cd1e2e03",
+          "text": "III-V族化合物InP（磷化铟）、GaAs（砷化镓）属于第二代半导体，具有高频、高低温性能好、抗辐射能力强、光电转换效率高等优点，所以很适合作为光芯片的衬底材料。",
+          "unit_hash": "6253c306cd1e2e031b7ded050186032e3c7a4211c897b2299065bcdaa3df59cd",
+          "source_id": "curated-source:zhihu_selected_observation:1380a2c048c2258a",
+          "source_ordinal": 0,
+          "source_block_hash": "7b696c929be9922167a936c82450c4d222705a4e4c6f92001a01ecb4c9aa1cc6",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            8
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:c9a565984ca4c7a152a7",
+      "citation_refs": [
+        8
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1967218383561945680?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:bbc607beeb3af6fa",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:a99797c5da095cf6:6:b34919a9ca15e8dd",
+          "text": "今年3月份，英伟达推出了集成硅光子技术的共封装光模块 (CPO) 交换机。",
+          "unit_hash": "b34919a9ca15e8dd337f748b8a54adcd13110d3a3471156d2930803f525fa066",
+          "source_id": "curated-source:zhihu_selected_observation:a99797c5da095cf6",
+          "source_ordinal": 6,
+          "source_block_hash": "397d64484e990698d196fac5aa515387fa2e22958759f372fe186cd3ad5d1679",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            9
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:06593300df0655a21fc5",
+      "citation_refs": [
+        9
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1973487478842361142?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:dc419178e477d77d",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:c5544007dc286d56:4:683e54a3ac0fadbb",
+          "text": "行业统计显示,2024年全球高速光模块出货量突破1200万只,其中800G及以上速率产品占比攀升至47%。",
+          "unit_hash": "683e54a3ac0fadbb2c7706cd8f9421db8298f9f11bf3c7d441de4bbe938ade28",
+          "source_id": "curated-source:zhihu_selected_observation:c5544007dc286d56",
+          "source_ordinal": 4,
+          "source_block_hash": "a543fe8542488875a18beba02b9a94f1641e639add97193c697dfdb81cce38ce",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            10
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:a9089a1b71cbf3e6d41f",
+      "citation_refs": [
+        10
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://www.mscbsc.com/info/Nw52jmp"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:中际旭创:d6b642d885c3d834",
+      "stock_name": "中际旭创",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "demand_customer",
+        "capacity_delivery"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:c5544007dc286d56:7:8893a0af977ed973",
+          "text": "该交付节奏直接响应了万卡算力集群对低延迟高吞吐互联链路的刚性需求,行业正加速向硅光集成与高速率并行传输演进,单集群光互联投资占比已升至整机成本的18%。",
+          "unit_hash": "8893a0af977ed973559a80d4f4d59126954e677e73cd424c156033317d0ee978",
+          "source_id": "curated-source:zhihu_selected_observation:c5544007dc286d56",
+          "source_ordinal": 7,
+          "source_block_hash": "a543fe8542488875a18beba02b9a94f1641e639add97193c697dfdb81cce38ce",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            10
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:40c7ac677b7a50c2100e",
+      "citation_refs": [
+        10
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://www.mscbsc.com/info/Nw52jmp"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    }
+  ],
+  "citations": {
+    "1": {
+      "source": "微信公众号精选观察",
+      "author": "",
+      "title": "1.6T光模块,需求预期从1000万只上修至1500万只,受益企业分析 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/1969496789955608861?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/1969496789955608861?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:0bfa448515cc6d40",
+      "source_block_hash": "de83bff55ec9800064c637864c7fd904dc1ca5834d89bb05d2ddd2f4d46b1711",
+      "source_quote_hash": "f39ded10c21c73c28f12f1db71f2e6a3a134dc5ba67525ad38f8f1de3c2d9bb2",
+      "publish_time": "2025-11-05",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "2": {
+      "source": "微信公众号精选观察",
+      "author": "郑思源",
+      "title": "光模块光芯片产业链梳理 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2058447295117530373?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2058447295117530373?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:a72432f72c7cdc1d",
+      "source_block_hash": "5cc0bab936af7728d233c06603fe0d46239a2d2ec507b071b41e4d5afa06866e",
+      "source_quote_hash": "4e814904f6866385fc2df1d7b2f7e5fbba08b89fae802a23381d08c7a19f0daf",
+      "publish_time": "2026-07-08",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "3": {
+      "source": "微信公众号精选观察",
+      "author": "caesar",
+      "title": "光模块龙头中际旭创总市值站上万亿,最近1年股价飙升超10倍,估值合理吗?对 A 股科技板块意味着什么? - 知乎",
+      "url": "https://www.zhihu.com/question/2030585016900653696/answer/2058232400296072282?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://www.zhihu.com/question/2030585016900653696/answer/2058232400296072282?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:e06aad85cbb4b4af",
+      "source_block_hash": "5d40957ee441e397db4aa8aedd40857e30bfc7e02c7c21e300da19bb4756272e",
+      "source_quote_hash": "c1ad34d69fcf7b4202d0f5e61218533ffc8201c48db933f8a62764f1c9afe2a0",
+      "publish_time": "2026-07-08",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "4": {
+      "source": "微信公众号精选观察",
+      "author": "武汉格凌科技",
+      "title": "800G 光模块:AI 算力爆发时代的关键基础设施 —— 解析 LPO 技术如何重塑数据中心光互连格局 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/1935649949535699394?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/1935649949535699394?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:bea027695b4edb04",
+      "source_block_hash": "e88f8aeb63cd2f658142a99142905bb7f786830db9950360c724e2e86a3c4482",
+      "source_quote_hash": "fd2e42d1171b8b2781c691c681e1250618d1c16aee3fddd1a1eabc8ec0588322",
+      "publish_time": "2025-08-04",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "5": {
+      "source": "微信公众号精选观察",
+      "author": "",
+      "title": "万里眼发布65GHz采样示波器,三大突破构筑1.6T光通信测量底座 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2031053407767769831?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2031053407767769831?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:0f52085c6f1eb2f4",
+      "source_block_hash": "244dfc9c209c44dd0d9a2a9bb4ca4075303ec1a8ff69d4a295e5b4a29d26a0d7",
+      "source_quote_hash": "341efcbcf911e2321070f8919014bfeddca47dfda629b7c8b7a2724c55bb0957",
+      "publish_time": "2026-04-24",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "6": {
+      "source": "微信公众号精选观察",
+      "author": "头豹研究院",
+      "title": "光模块行业迎来AI算力周期:从芯片到光纤的关键一跃 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2053414887662133490?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2053414887662133490?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:ea9b75e32b8c49f0",
+      "source_block_hash": "fc8054153631d4a59f862362133f3ecf0b908aff634cb1c83a0c15d2c9b1785b",
+      "source_quote_hash": "69e04b385bce0686c5373674ac328df1e2c65340f731d017caaffecceb4520e3",
+      "publish_time": "2026-06-25",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "7": {
+      "source": "微信公众号精选观察",
+      "author": "凯文蔡说材料",
+      "title": "光模块-光笼连接器散热方案市场调研报告 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2056636023640264872?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2056636023640264872?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:28d41b6d8bab4132",
+      "source_block_hash": "326f747d4cb606e9d9b2e1eb6a337452a89d253c70398d16a0289d3e3645ba72",
+      "source_quote_hash": "513bf1e6ffeb26e63baf3372060748f73f9f5bb978072993d3f3bfdefabb74b0",
+      "publish_time": "2026-07-03",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "8": {
+      "source": "微信公众号精选观察",
+      "author": "小枣君",
+      "title": "硅光,到底是个啥? - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/1967218383561945680?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/1967218383561945680?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:1380a2c048c2258a",
+      "source_block_hash": "7b696c929be9922167a936c82450c4d222705a4e4c6f92001a01ecb4c9aa1cc6",
+      "source_quote_hash": "6253c306cd1e2e031b7ded050186032e3c7a4211c897b2299065bcdaa3df59cd",
+      "publish_time": "2025-10-30",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "9": {
+      "source": "微信公众号精选观察",
+      "author": "张竞扬",
+      "title": "硅光公司,股价涨疯了! - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/1973487478842361142?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/1973487478842361142?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:a99797c5da095cf6",
+      "source_block_hash": "397d64484e990698d196fac5aa515387fa2e22958759f372fe186cd3ad5d1679",
+      "source_quote_hash": "b34919a9ca15e8dd337f748b8a54adcd13110d3a3471156d2930803f525fa066",
+      "publish_time": "2025-11-16",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "10": {
+      "source": "微信公众号精选观察",
+      "author": "|",
+      "title": "新易盛1.6T光模块交付提速 硅光方案占比突破六成 - 移动通信网",
+      "url": "https://www.mscbsc.com/info/Nw52jmp",
+      "source_ref": "https://www.mscbsc.com/info/Nw52jmp",
+      "source_id": "curated-source:zhihu_selected_observation:c5544007dc286d56",
+      "source_block_hash": "a543fe8542488875a18beba02b9a94f1641e639add97193c697dfdb81cce38ce",
+      "source_quote_hash": "683e54a3ac0fadbb2c7706cd8f9421db8298f9f11bf3c7d441de4bbe938ade28",
+      "publish_time": "2026-06-19",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    }
+  },
+  "diagnostics": {
+    "mandatory_target_unit_count": 4,
+    "target_bundle_count": 4,
+    "continuation_rejected_count": 0,
+    "continuation_truncated_count": 0,
+    "optional_peer_raw_count": 214,
+    "optional_peer_eligible_count": 15,
+    "optional_peer_low_signal_count": 199,
+    "optional_peer_duplicate_count": 0,
+    "rejected_by_reason": {},
+    "source_unit_count": 371,
+    "selector_batch_count": 9,
+    "selector_request_count": 9,
+    "accepted_count": 16,
+    "accepted_target_card_count": 4,
+    "accepted_peer_card_count": 12
+  }
+}

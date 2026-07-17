@@ -1153,10 +1153,15 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
             severity="error",
             message=f"{section_id} 外部观点地图缺少 display-only / 不参与评分免责声明。",
         )
-    # Scan only the claim body, excluding the blockquote disclaimer, for
-    # strong confirmation terms.  The disclaimer itself contains words like
-    # "确认" and must not trigger an unverified-claim framing error.
-    claim_body = re.sub(r"(?m)^>.*$", "", section).strip()
+    # The peer/industry suffix is explicitly display-only context, not a
+    # target-company claim. Keep its wording auditable without letting it
+    # satisfy or trip the target-claim confirmation gate.
+    target_section = re.split(
+        r"(?m)^>\s*\*\*同业/行业背景（Preview）\*\*",
+        section,
+        maxsplit=1,
+    )[0]
+    claim_body = re.sub(r"(?m)^>.*$", "", target_section).strip()
     low_credit_only = not re.search(r"来源[:：]\s*(?:公告|年报|研报|官方|交易所)", section)
     if low_credit_only:
         confirmation_terms = ("确认", "已经", "确定", "进入供应链", "订单落地", "客户为")
@@ -1345,7 +1350,15 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             )
             and re.search(r"(?m)^> \*\*(?:外部原文依据|缓存材料摘录)\*\*：\S", section)
         )
-        if has_variable_table or has_variable_narrative or has_argument_v2_narrative:
+        has_canonical_source_narrative = (
+            re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(
+                r"(?m)^(?:相对正式材料/机构假设，外部材料新增的待验证点|外部新增待验证变量|"
+                r"同业/行业背景观察)：[^\n]*\[\^\d+\][。；;]?\s*$",
+                section,
+            )
+        )
+        if has_variable_table or has_variable_narrative or has_argument_v2_narrative or has_canonical_source_narrative:
             missing = []
         else:
             markers = (

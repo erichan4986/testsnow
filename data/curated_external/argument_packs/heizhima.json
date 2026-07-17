@@ -1,0 +1,813 @@
+{
+  "schema_version": "curated_external_argument_pack.v3",
+  "stock_name": "黑芝麻智能",
+  "status": "ready",
+  "selector_version": "external_unit_selector.v2",
+  "validator_version": "external_argument_validator.v3",
+  "source_packet_fingerprints": [
+    {
+      "source_id": "curated-source:zhihu_selected_observation:ec340327d98936fe",
+      "source_content_hash": "fc90e149d29f3bc4239b43dff69d04a5eac51d6ad2eb8b2a2d0d71dd5545fb58"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:001448eebb90ee34",
+      "source_content_hash": "63bf38d81323560480e13a44d6b7c11496c9fee469bfb95f707d321e3737f77e"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+      "source_content_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+      "source_content_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:1bfebd9f4e679291",
+      "source_content_hash": "7f72b80cab9f4ca399f75a3f51c1b075560a5c60d283c66bdf1257d0cdec3147"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:aa49a5ead6c2ae52",
+      "source_content_hash": "081d332e01cea37517ce8d8cff26ad0b5459b4679f64a821859ccb1d0cd77d1b"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:201648d53eb0f94a",
+      "source_content_hash": "f75e002868e0aaeb6a5ae09916bd7864ee9d1362405e5a010b4f6ba2adadce67"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:473a384d97172371",
+      "source_content_hash": "1c2b7ff29d937c8ab2369d00df968b05a7dfdb21f29cd49c90d1b586a371c6f1"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:b6aa51c73b9b760a",
+      "source_content_hash": "6f39954d3702c3707864d2b96b08a41c1588ab5651cc4f2f4e0bc1128fedd78a"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:83d66332f7f72190",
+      "source_content_hash": "42f9bfb3bb89ef3d1d2e50a0c393b578eb52f13cf491b12ef6e5d15949d57563"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:898599c537a0ff0b",
+      "source_content_hash": "a528d954edce47072e032a6ce87fc4b1bdde2402652cb8098406d210a2c4b7d4"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:a9368a289d0f67cf",
+      "source_content_hash": "63f2bce30ff431f580c26a10de8f8853ee979ec2233b1541b3a0e94544c41c50"
+    },
+    {
+      "source_id": "curated-source:zhihu_selected_observation:8bea065223bb4183",
+      "source_content_hash": "b7134ef8f21813d7a182bc87a4c6215d04df11d14fd15c353eee8fd8e54c02c7"
+    }
+  ],
+  "baseline_fingerprint": "sha256:21c397e6d0d24c7ab78ff251358d28b1eb7f0ff3e92443c765f8dac8095a5ec5",
+  "cards": [
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:04570d1abc561689",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target_with_peer_context",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:750d32a6847320df:1:ea4aead4df12cfa1",
+          "text": "顶着 “自动驾驶芯片第一股” 光环的黑芝麻智能，近期动作频频：11 月发布 SesameX 多维具身智能计算平台，宣告入局人形机器人赛道；",
+          "unit_hash": "ea4aead4df12cfa1ae638109658a183c2be4e3d61b5974e122d3737b0928d50b",
+          "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+          "source_ordinal": 1,
+          "source_block_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "argument_key": "technology_product:target_with_peer_context:912d0a02c20f41fd4091",
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:1c0d05a0e93acba7",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "primary_family": "financial_quality",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:750d32a6847320df:4:6583c384d7294ad6",
+          "text": "据经济观察报了解，今年，黑芝麻智能将有望实现至少 60% 以上的收入增长的快速发展。",
+          "unit_hash": "6583c384d7294ad654476c2df043905805c1381e46597efaf6644444b69fe0c3",
+          "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+          "source_ordinal": 4,
+          "source_block_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "argument_key": "financial_quality:target:9e06787f20a2caba6735",
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:7854fd4260af7c56",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target_with_peer_context",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:750d32a6847320df:9:ec54c28692ddf459",
+          "text": "战略锚点：自动驾驶+中央计算架构 自成立以来，黑芝麻智能便将智能汽车领域视为核心主赛道，围绕自动驾驶与跨域融合两大技术趋势构建产品体系，为企业发展奠定了坚实根基。",
+          "unit_hash": "ec54c28692ddf459a1125c282726da48f7a5ed48cfe175bbb76d90a386df45b0",
+          "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+          "source_ordinal": 9,
+          "source_block_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "argument_key": "technology_product:target_with_peer_context:fb9dc5eb2abcf860e74c",
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:f73dd639d7aef72c",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "technology_product",
+        "commercialization",
+        "demand_customer"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:750d32a6847320df:11:9992920c29344a73",
+          "text": "在自动驾驶赛道，黑芝麻智能形成了覆盖中级到高阶的产品梯队：华山系列 A1000 芯片作为高性能算力平台已实现大规模量产，A2000 芯片面向 L3 级自动驾驶和 Robotaxi 场景开始客户送样，成为高阶市场的主力产品。",
+          "unit_hash": "9992920c29344a73e6026b36e3cd5ce1a186b049498640038e0d87ac3660c1ea",
+          "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+          "source_ordinal": 11,
+          "source_block_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "argument_key": "technology_product:target:9154425e02bcdf81d6d0",
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:6c1fe15ac63fbf38",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target_with_peer_context",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0a1df79e774442ab:2:f6bd433a3c8508ab",
+          "text": "该平台搭载黑芝麻智能武当C1296芯片，以单芯片支持智能座舱、L2+行车辅助及FAPA泊车功能，计划率先上车东风奕派007，并在2026年至2027年陆续用于多款量产车型。",
+          "unit_hash": "f6bd433a3c8508abf4be94fdaec25b5ec882b6a99fa74f2d959ca893e579b0ae",
+          "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+          "source_ordinal": 2,
+          "source_block_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "technology_product:target_with_peer_context:4b48fa96a4a1f79f837e",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2032263331025793097?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:236fbc4112f497d3",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "technology_product",
+        "commercialization",
+        "demand_customer"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0a1df79e774442ab:10:ceae1358c62abd27",
+          "text": "根据双方协议，黑芝麻智能将提供华山及武当系列芯片平台和工具链，如祺出行则提供有人网约车与Robotaxi混合运营场景下积累的数据闭环、运营标准和商业化需求。",
+          "unit_hash": "ceae1358c62abd275ff22704abeff139f11d8e02537b31a6171a69d66e67c069",
+          "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+          "source_ordinal": 10,
+          "source_block_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "technology_product:target:d780a6d04898c210bd5d",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2032263331025793097?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:01119d0a983bc487",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0a1df79e774442ab:15:c63057c99bfb7db7",
+          "text": "黑芝麻智能进入这一链条，核心目标是让本土算力平台在L4商业化早期阶段建立生态位置。",
+          "unit_hash": "c63057c99bfb7db7973982265f55a9ebdfde0207c54efea6c45bbb3b06858951",
+          "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+          "source_ordinal": 15,
+          "source_block_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "commercialization:target:ac0be938204b303c2897",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2032263331025793097?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:c86dd37b5fbcbf03",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ec340327d98936fe:1:fb499702366fd14c",
+          "text": "地瓜机器人旭日5芯片作为强大性能与广泛适用性兼具的智能机器人领域佼佼者，展现出强大的性能与广泛的适用性，已实现量产落地，并在科沃斯割草机器人上得到应用，在智能机器人领域成果丰硕且前景广阔。",
+          "unit_hash": "fb499702366fd14ceec119896f65391d9dd0aea22d4752c6cdcb445ccb457158",
+          "source_id": "curated-source:zhihu_selected_observation:ec340327d98936fe",
+          "source_ordinal": 1,
+          "source_block_hash": "fc90e149d29f3bc4239b43dff69d04a5eac51d6ad2eb8b2a2d0d71dd5545fb58",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:410e9efc457b9e7dce25",
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1940021054400630940?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:553146ec2a60b706",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:750d32a6847320df:3:a7b39a1bbe9a7f61",
+          "text": "这家以车规级 AI 芯片为核心的科技企业，正通过 “深耕智能汽车 + 拓展机器人赛道” 的双轮驱动，叠加纵向收购补全产品矩阵的战略布局，完成从单一车规级芯片供应商到全场景 AI 芯片平台型企业的关键跨越。",
+          "unit_hash": "a7b39a1bbe9a7f615fbf63169d62cec0d77e0a9db2a0ca33e66d3472560ca1b3",
+          "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+          "source_ordinal": 3,
+          "source_block_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:dad600d0a09df2fee9e0",
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:31747e665ba12eb8",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0a1df79e774442ab:11:43a9219b571324ae",
+          "text": "双方将共同推动面向量产的Robotaxi方案及试点部署。",
+          "unit_hash": "43a9219b571324ae79ae81c29f6040b385b63b5fc308d4de74d5c245ae8c2937",
+          "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+          "source_ordinal": 11,
+          "source_block_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        },
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:0a1df79e774442ab:12:156575b51b3f624f",
+          "text": "这类合作的现实意义在于，L4自动驾驶已经不再是单纯技术展示。",
+          "unit_hash": "156575b51b3f624f24dd8363c04a694a80f310e3a3bbaff5fadc2d835002ccf9",
+          "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+          "source_ordinal": 12,
+          "source_block_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:0b23fb94be23bbdc0ecb",
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2032263331025793097?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:3f0e2c62b0e89511",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:aa49a5ead6c2ae52:0:e5336df2ef219e24",
+          "text": "去年，自动驾驶之心就听说，有团队基于地平线的 RAD 在做落地闭环强化学习训练框架，而且已经基本验证可行。",
+          "unit_hash": "e5336df2ef219e24b3f4be22471570079072996e428c5b37f278a79b1df7f76b",
+          "source_id": "curated-source:zhihu_selected_observation:aa49a5ead6c2ae52",
+          "source_ordinal": 0,
+          "source_block_hash": "081d332e01cea37517ce8d8cff26ad0b5459b4679f64a821859ccb1d0cd77d1b",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:aa49a5ead6c2ae52:1:947929a77d5a7f6e",
+          "text": "然后这两天地平线和华科团队发布了RAD-2，并且做了实车验证，所以第一时间给大家解读一下。",
+          "unit_hash": "947929a77d5a7f6ee8065bde6ba0022c6a25c88daa7b2696aadeed92280173fd",
+          "source_id": "curated-source:zhihu_selected_observation:aa49a5ead6c2ae52",
+          "source_ordinal": 1,
+          "source_block_hash": "081d332e01cea37517ce8d8cff26ad0b5459b4679f64a821859ccb1d0cd77d1b",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "argument_key": "commercialization:peer_or_industry:a934ba514f6573d753a6",
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2042546286033888014?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:65337b806c3e68ab",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:aa49a5ead6c2ae52:14:f422e6a52c384f40",
+          "text": "相信大家还记得李志琦的那篇《开环端到端自动驾驶：从入门到放弃》，直接点破开环训练的弊端，做不了量产就是做不了。",
+          "unit_hash": "f422e6a52c384f407e4eae28c1b1598aef298e5e2418c52c1613003ac54c8d58",
+          "source_id": "curated-source:zhihu_selected_observation:aa49a5ead6c2ae52",
+          "source_ordinal": 14,
+          "source_block_hash": "081d332e01cea37517ce8d8cff26ad0b5459b4679f64a821859ccb1d0cd77d1b",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "argument_key": "commercialization:peer_or_industry:024ae1220ea232eff5a3",
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2042546286033888014?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:53f33ee2b6b749e1",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "technology_product",
+        "competitive_landscape"
+      ],
+      "primary_family": "technology_product",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:b6aa51c73b9b760a:0:08838812d7a64ca4",
+          "text": "行业集中度走高，智驾芯片“双强”格局形成 数据显示，前两名英伟达与地平线合计占据TOP8总装机量的64.8%，其中英伟达一家占比即达50.9%，约占TOP8总装机量的一半；",
+          "unit_hash": "08838812d7a64ca42727cd2b16c2f384e46c97300c71886a94ca8ddc97c7d94c",
+          "source_id": "curated-source:zhihu_selected_observation:b6aa51c73b9b760a",
+          "source_ordinal": 0,
+          "source_block_hash": "6f39954d3702c3707864d2b96b08a41c1588ab5651cc4f2f4e0bc1128fedd78a",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "argument_key": "technology_product:peer_or_industry:aed0d4e27c8134f5ecd6",
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://zhuanlan.zhihu.com/p/2050934015914423174?utm_medium=openapi_platform&utm_source=2656a07"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    },
+    {
+      "schema_version": "curated_external_argument_card.v3",
+      "card_id": "external-argument:黑芝麻智能:494b76f60251f352",
+      "stock_name": "黑芝麻智能",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "primary_family": "commercialization",
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_source_unit.v1",
+          "unit_id": "external-unit:curated-source:zhihu_selected_observation:8bea065223bb4183:11:b2ae30e7b14268a2",
+          "text": "虽然行业共识认为2028年才是商业化全面爆发的曙光期,但2026至2027年已成为各家企业抢占市场的关键窗口期。",
+          "unit_hash": "b2ae30e7b14268a23811207676fc390c51bec781fa4efa54d345eb81805115a0",
+          "source_id": "curated-source:zhihu_selected_observation:8bea065223bb4183",
+          "source_ordinal": 11,
+          "source_block_hash": "b7134ef8f21813d7a182bc87a4c6215d04df11d14fd15c353eee8fd8e54c02c7",
+          "evidence_status": "source_unit_verified",
+          "citation_refs": [
+            6
+          ]
+        }
+      ],
+      "argument_key": "commercialization:peer_or_industry:4b0a0993c939d6f2aa44",
+      "citation_refs": [
+        6
+      ],
+      "source_identity": [
+        [
+          "url",
+          "https://post.smzdm.com/p/awwpeqv2/"
+        ]
+      ],
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false,
+      "verification_status": "professional_observation"
+    }
+  ],
+  "citations": {
+    "1": {
+      "source": "微信公众号精选观察",
+      "author": "经济观察报",
+      "title": "黑芝麻智能:快速增长背后,全维度竞争 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/1985292502203380868?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:750d32a6847320df",
+      "source_block_hash": "27180a93aa7790349f7811f2c3693fb022832c00bd4aea19eb457a5299f4f576",
+      "source_quote_hash": "ea4aead4df12cfa1ae638109658a183c2be4e3d61b5974e122d3737b0928d50b",
+      "publish_time": "2025-12-19",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "2": {
+      "source": "微信公众号精选观察",
+      "author": "经济观察报",
+      "title": "黑芝麻智能北京车展密集落子,端侧AI算力竞争进入“平台化”阶段 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2032263331025793097?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2032263331025793097?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:0a1df79e774442ab",
+      "source_block_hash": "d965a047247414a0c93938a116d920a9041d9f705f7abbc952dad58c9f6fd3da",
+      "source_quote_hash": "f6bd433a3c8508abf4be94fdaec25b5ec882b6a99fa74f2d959ca893e579b0ae",
+      "publish_time": "2026-04-27",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "3": {
+      "source": "微信公众号精选观察",
+      "author": "NEXUS",
+      "title": "地平线智驾方案简析与国产智驾芯片发展 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/1940021054400630940?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/1940021054400630940?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:ec340327d98936fe",
+      "source_block_hash": "fc90e149d29f3bc4239b43dff69d04a5eac51d6ad2eb8b2a2d0d71dd5545fb58",
+      "source_quote_hash": "fb499702366fd14ceec119896f65391d9dd0aea22d4752c6cdcb445ccb457158",
+      "publish_time": "2025-08-16",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "4": {
+      "source": "微信公众号精选观察",
+      "author": "自动驾驶之心",
+      "title": "地平线一篇面向端到端的闭环RL训练框架,实车已验证...... - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2042546286033888014?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2042546286033888014?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:aa49a5ead6c2ae52",
+      "source_block_hash": "081d332e01cea37517ce8d8cff26ad0b5459b4679f64a821859ccb1d0cd77d1b",
+      "source_quote_hash": "e5336df2ef219e24b3f4be22471570079072996e428c5b37f278a79b1df7f76b",
+      "publish_time": "2026-05-26",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "5": {
+      "source": "微信公众号精选观察",
+      "author": "节点财经",
+      "title": "智驾芯片“双强”格局形成:英伟达第一,地平线第二 - 知乎",
+      "url": "https://zhuanlan.zhihu.com/p/2050934015914423174?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_ref": "https://zhuanlan.zhihu.com/p/2050934015914423174?utm_medium=openapi_platform&utm_source=2656a07",
+      "source_id": "curated-source:zhihu_selected_observation:b6aa51c73b9b760a",
+      "source_block_hash": "6f39954d3702c3707864d2b96b08a41c1588ab5651cc4f2f4e0bc1128fedd78a",
+      "source_quote_hash": "08838812d7a64ca42727cd2b16c2f384e46c97300c71886a94ca8ddc97c7d94c",
+      "publish_time": "2026-06-18",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "6": {
+      "source": "微信公众号精选观察",
+      "author": "源自10位全网作者",
+      "title": "Mobileye 2027年推Robotaxi,首发洛杉矶奥斯汀_新能源车_什么值得买",
+      "url": "https://post.smzdm.com/p/awwpeqv2/",
+      "source_ref": "https://post.smzdm.com/p/awwpeqv2/",
+      "source_id": "curated-source:zhihu_selected_observation:8bea065223bb4183",
+      "source_block_hash": "b7134ef8f21813d7a182bc87a4c6215d04df11d14fd15c353eee8fd8e54c02c7",
+      "source_quote_hash": "b2ae30e7b14268a23811207676fc390c51bec781fa4efa54d345eb81805115a0",
+      "publish_time": "2026-06-17",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    }
+  },
+  "diagnostics": {
+    "mandatory_target_unit_count": 7,
+    "target_bundle_count": 7,
+    "continuation_rejected_count": 1,
+    "continuation_truncated_count": 0,
+    "optional_peer_raw_count": 68,
+    "optional_peer_eligible_count": 9,
+    "optional_peer_low_signal_count": 59,
+    "optional_peer_duplicate_count": 0,
+    "rejected_by_reason": {},
+    "source_unit_count": 168,
+    "selector_batch_count": 6,
+    "selector_request_count": 6,
+    "accepted_count": 14,
+    "accepted_target_card_count": 7,
+    "accepted_peer_card_count": 7
+  }
+}

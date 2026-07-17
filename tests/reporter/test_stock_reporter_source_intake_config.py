@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from utils.stock_reporter import PerStockReporter
+from curated_external_argument_cards import read_external_argument_pack
 
 
 def test_default_reporter_does_not_enable_source_intake():
@@ -172,11 +173,6 @@ def test_fudan_microelectronics_config_present_and_wired():
     assert a_stock["iwencai_industry_research"]["enabled"] is True
 
     assert source_intake["periodic_report_fulltext"]["enabled"] is True
-
-    # 4.4 narrative generated -> curated external viewpoint narrative display is enabled
-    narrative_cfg = source_intake["curated_external_viewpoint_narrative_synthesis_display"]
-    assert narrative_cfg["enabled"] is True
-    assert "fudan_20260702.json" in narrative_cfg["narrative_json"]
 
 
 def test_pilot_stocks_have_direct_relevance_config():
@@ -677,150 +673,47 @@ def test_source_intake_curated_external_display_default_off():
     assert "curated_external_evidence_cards_json" not in call_input
 
 
-def test_source_intake_legacy_curated_external_cards_config_is_ignored():
+def test_source_intake_curated_external_argument_pack_enabled_passes_context():
     reporter = PerStockReporter(
         stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
-        stock_codes={"测试股": "000001"},
-        raw_data={"测试股": {}},
-        source_intake_configs={
-            "测试股": {
-                "enabled": True,
-                "curated_external_evidence_cards_synthesis_display": {
-                    "enabled": True,
-                    "cards_json": "/tmp/cards.json",
-                    "max_display_items": 6,
-                    "min_cards": 2,
-                    "min_total_excerpt_chars": 900,
-                },
+        stock_codes={"测试股": "000001"}, raw_data={"测试股": {}},
+        source_intake_configs={"测试股": {
+            "enabled": True,
+            "curated_external_argument_pack_synthesis_display": {
+                "enabled": True, "pack_json": "/tmp/external-argument-pack.json",
             },
-        },
+        }},
     )
 
     with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
-        mock_pipeline = MagicMock()
-        mock_ctx = MagicMock()
-        mock_ctx.output.get.return_value = ""
-        mock_pipeline.run.return_value = mock_ctx
-        mock_build.return_value = mock_pipeline
-
+        pipeline = MagicMock(); result = MagicMock(); result.output.get.return_value = ""
+        pipeline.run.return_value = result; mock_build.return_value = pipeline
         reporter.generate_stock_report("测试股", "/tmp/out")
 
-    mock_build.assert_called_once_with(
-        enable_agent_reach=False,
-        enable_evidence_notes=False,
-        enable_claim_risk_signals=False,
-        enable_source_intake=True,
-    )
-    call_input = mock_pipeline.run.call_args[0][0]
-    assert "include_curated_external_evidence_cards_in_synthesis_display" not in call_input
-    assert "curated_external_evidence_cards_json" not in call_input
+    assert mock_build.call_args.kwargs["include_curated_external_argument_pack_in_deep_analysis_display"] is True
+    assert mock_build.call_args.kwargs["curated_external_argument_pack_json"] == "/tmp/external-argument-pack.json"
+    call_input = pipeline.run.call_args.args[0]
+    assert call_input["include_curated_external_argument_pack_in_deep_analysis_display"] is True
+    assert call_input["curated_external_argument_pack_json"] == "/tmp/external-argument-pack.json"
 
 
-def test_source_intake_curated_external_viewpoint_digest_enabled_passes_context():
-    reporter = PerStockReporter(
-        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
-        stock_codes={"测试股": "000001"},
-        raw_data={"测试股": {}},
-        source_intake_configs={
-            "测试股": {
-                "enabled": True,
-                "curated_external_viewpoint_digest_synthesis_display": {
-                    "enabled": True,
-                    "digest_json": "/tmp/viewpoint_digest.json",
-                },
-            },
-        },
-    )
+def test_production_external_configs_use_only_readable_canonical_v3_packs():
+    root = Path(__file__).parents[2]
+    configs = {row["name"]: row for row in json.loads((root / "config/stocks.json").read_text(encoding="utf-8"))}
+    expected = {
+        "中际旭创": "data/curated_external/argument_packs/zhongjixuchuang.json",
+        "复旦微电": "data/curated_external/argument_packs/fudan.json",
+        "黑芝麻智能": "data/curated_external/argument_packs/heizhima.json",
+    }
 
-    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
-        mock_pipeline = MagicMock()
-        mock_ctx = MagicMock()
-        mock_ctx.output.get.return_value = ""
-        mock_pipeline.run.return_value = mock_ctx
-        mock_build.return_value = mock_pipeline
-
-        reporter.generate_stock_report("测试股", "/tmp/out")
-
-    mock_build.assert_called_once_with(
-        enable_agent_reach=False,
-        enable_evidence_notes=False,
-        enable_claim_risk_signals=False,
-        enable_source_intake=True,
-        include_curated_external_viewpoint_digest_in_deep_analysis_display=True,
-        curated_external_viewpoint_digest_json="/tmp/viewpoint_digest.json",
-    )
-    call_input = mock_pipeline.run.call_args[0][0]
-    assert call_input["include_curated_external_viewpoint_digest_in_deep_analysis_display"] is True
-    assert call_input["curated_external_viewpoint_digest_json"] == "/tmp/viewpoint_digest.json"
-
-
-def test_source_intake_curated_external_viewpoint_narrative_enabled_passes_context():
-    reporter = PerStockReporter(
-        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
-        stock_codes={"测试股": "000001"},
-        raw_data={"测试股": {}},
-        source_intake_configs={
-            "测试股": {
-                "enabled": True,
-                "curated_external_viewpoint_narrative_synthesis_display": {
-                    "enabled": True,
-                    "narrative_json": "/tmp/viewpoint_narrative.json",
-                },
-            },
-        },
-    )
-
-    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
-        mock_pipeline = MagicMock()
-        mock_ctx = MagicMock()
-        mock_ctx.output.get.return_value = ""
-        mock_pipeline.run.return_value = mock_ctx
-        mock_build.return_value = mock_pipeline
-
-        reporter.generate_stock_report("测试股", "/tmp/out")
-
-    mock_build.assert_called_once_with(
-        enable_agent_reach=False,
-        enable_evidence_notes=False,
-        enable_claim_risk_signals=False,
-        enable_source_intake=True,
-        include_curated_external_viewpoint_narrative_in_deep_analysis_display=True,
-        curated_external_viewpoint_narrative_json="/tmp/viewpoint_narrative.json",
-    )
-    call_input = mock_pipeline.run.call_args[0][0]
-    assert call_input["include_curated_external_viewpoint_narrative_in_deep_analysis_display"] is True
-    assert call_input["curated_external_viewpoint_narrative_json"] == "/tmp/viewpoint_narrative.json"
-
-
-def test_curated_external_viewpoint_display_requires_source_intake_enabled():
-    reporter = PerStockReporter(
-        stocks_data={"测试股": [{"title": "t", "content": "c" * 50, "like": 100, "comment": 50}]},
-        stock_codes={"测试股": "000001"},
-        raw_data={"测试股": {}},
-        source_intake_configs={
-            "测试股": {
-                "enabled": False,
-                "curated_external_viewpoint_narrative_synthesis_display": {
-                    "enabled": True,
-                    "narrative_json": "/tmp/viewpoint_narrative.json",
-                },
-                "curated_external_viewpoint_digest_synthesis_display": {
-                    "enabled": True,
-                    "digest_json": "/tmp/viewpoint_digest.json",
-                },
-            },
-        },
-    )
-
-    with patch("utils.report_skills.build_stock_report_pipeline") as mock_build:
-        mock_pipeline = MagicMock()
-        mock_ctx = MagicMock()
-        mock_ctx.output.get.return_value = ""
-        mock_pipeline.run.return_value = mock_ctx
-        mock_build.return_value = mock_pipeline
-
-        reporter.generate_stock_report("测试股", "/tmp/out")
-
-    call_input = mock_pipeline.run.call_args[0][0]
-    assert "include_curated_external_viewpoint_narrative_in_deep_analysis_display" not in call_input
-    assert "include_curated_external_viewpoint_digest_in_deep_analysis_display" not in call_input
+    for stock_name, relative_path in expected.items():
+        intake = configs[stock_name]["source_intake"]
+        assert intake["curated_external_argument_pack_synthesis_display"] == {
+            "enabled": True, "pack_json": relative_path,
+        }
+        assert {key for key in intake if key.startswith("curated_external_")} == {
+            "curated_external_argument_pack_synthesis_display",
+        }
+        assert read_external_argument_pack(
+            root / relative_path, expected_stock_name=stock_name,
+        )["status"] == "ok"

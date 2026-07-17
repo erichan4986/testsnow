@@ -55,7 +55,7 @@ def test_configured_stock_entry_wires_reporter_without_network(tmp_path, monkeyp
                 "gid": "300001",
                 "keywords": ["测试股", "AI芯片"],
                 "agent_reach": {"enabled": True, "web_urls": ["https://example.com"]},
-                "source_intake": {"enabled": True, "curated_external_viewpoint_narrative_synthesis_display": {"enabled": True}},
+                "source_intake": {"enabled": True, "curated_external_argument_pack_synthesis_display": {"enabled": True}},
             }
         ],
     )
@@ -93,7 +93,7 @@ def test_configured_stock_entry_wires_reporter_without_network(tmp_path, monkeyp
     assert kwargs["stock_codes"] == {"测试股": "300001"}
     assert kwargs["agent_reach_configs"] == {"测试股": {"enabled": True, "web_urls": ["https://example.com"]}}
     assert kwargs["source_intake_configs"] == {
-        "测试股": {"enabled": True, "curated_external_viewpoint_narrative_synthesis_display": {"enabled": True}}
+        "测试股": {"enabled": True, "curated_external_argument_pack_synthesis_display": {"enabled": True}}
     }
     assert kwargs["stocks_data"]["测试股"][0]["content"] == "缓存标题"
     assert kwargs["stocks_data"]["测试股"][0]["like"] == 10
@@ -216,20 +216,6 @@ def test_zhongjixuchuang_config_has_canonical_a_stock_source_intake():
     keywords = a_stock.get("eastmoney_global_news", {}).get("keywords", [])
     assert {"光模块", "800G", "1.6T", "CPO", "AI算力"}.issubset(set(keywords))
 
-
-def test_heizhima_config_enables_digest_enrichment_for_external_v2():
-    mod = _load_entry_module()
-    repo_root = Path(__file__).resolve().parents[2]
-    stocks = mod._load_stocks_config(repo_root / "config" / "stocks.json")
-
-    stock = mod._find_stock(stocks, "黑芝麻智能")
-
-    assert stock is not None
-    digest = stock["source_intake"]["curated_external_viewpoint_digest_synthesis_display"]
-    assert digest == {
-        "enabled": True,
-        "digest_json": "data/curated_external/viewpoint_digests/heizhima_20260629.json",
-    }
 
 
 def test_offline_smoke_implies_fast_test_no_pdf_and_installs_patches(tmp_path, monkeypatch):
