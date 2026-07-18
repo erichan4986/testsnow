@@ -35,6 +35,10 @@ Annual Producer v2 与 Chapter 4 annual display selector 已把主要问题从�
 - Batch 6 已完成：6A pack store、6B human projection、6C migration/slimming
   均已独立实现和验收；48 份通过零恢复/零 adapter gate 的 v1 notes 已在用户确认后
   移入 stock-local `_legacy_archive`，归档后 formal-medium / formal-thin 正式报告复跑通过。
+- Post-Batch-6 基础设施稳定门已完成，默认离线 full suite 恢复全绿。
+- External Producer v3 已完成 canonical pack、正式投影与 legacy cutover，checkpoint：`cb35b7b`。
+- Technical Analysis Phase 2 已完成单一 judgment projection、renderer 瘦身和正式报告验收；
+  `reports/中际旭创_20260718.md`、`reports/复旦微电_20260718.md` 均通过 quality/source 门。
 
 ### Batch 1: Executive Summary Completeness
 
@@ -154,7 +158,7 @@ Batch 6 收口后，后续工作不直接叠加新的报告功能，先经过一
 1. **Pipeline Stabilization**：恢复默认离线 `pytest` 全绿，并统一三个 annual-material
    顶层 CLI 的最小路径 bootstrap。设计见
    `docs/agent_workflow/2026-07-16-pipeline-stabilization-design.md`。
-2. **External Producer v2**：在稳定测试基线之上，改善精选外部材料的论点、论据、
+2. **External Producer v3（已完成）**：在稳定测试基线之上，改善精选外部材料的论点、论据、
    来源边界和同源去重；不得把外部材料升级为官方确认。
 3. **Technical Analysis Phase 2**：在现有技术判断 state machine 与正式报告验收基础上，
    再处理更高阶结构判断和展示质量，不与 External Producer 改动混批。

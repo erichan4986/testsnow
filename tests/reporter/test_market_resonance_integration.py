@@ -105,7 +105,7 @@ def test_renderer_shows_market_resonance_with_impact_and_relative():
     assert "趋势跟随" in output, f"应显示提示：\n{output}"
 
 
-def test_renderer_shows_missing_when_index_data_unavailable():
+def test_renderer_hides_unavailable_market_resonance_placeholder():
     from scripts.utils.reporter.sections.technical_renderer import TechnicalRenderer
 
     ctx = {
@@ -150,5 +150,5 @@ def test_renderer_shows_missing_when_index_data_unavailable():
     }
     renderer = TechnicalRenderer()
     output = renderer.render(ctx)
-    assert "市场/板块共振" in output, f"应显示共振标题：\n{output}"
-    assert "占位" in output or "缺失" in output, f"应显示占位或缺失说明：\n{output}"
+    assert "市场/板块共振" not in output, f"缺失共振数据不应占用正文：\n{output}"
+    assert "占位" not in output, f"不应显示占位分析：\n{output}"

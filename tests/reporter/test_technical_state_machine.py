@@ -10,7 +10,7 @@ from technical_state_machine import (
     evaluate_bias_extreme, evaluate_sell_three_factors,
     detect_false_rebound, detect_false_breakout,
     build_technical_judgment, ensure_technical_judgment,
-    resolve_target_display_mode,
+    is_valid_technical_judgment, resolve_target_display_mode,
 )
 
 
@@ -217,6 +217,162 @@ def test_uptrend_with_health_below_fifty_is_transition():
     )
 
     assert judgment["trend"]["state"] == "transition"
+
+
+def test_interpretation_keeps_local_repair_as_counter_evidence_under_broken_regime():
+    resonance = _resonance_payload(
+        trend_state={
+            "primary_state": "下降趋势", "stage": "破坏期",
+            "summary": "日线结构已经转弱", "state_changed": True,
+            "previous_state": "转弱期",
+        },
+        trend_health={"score": 38, "grade": "破坏风险高"},
+        weekly_background={"trend": "震荡", "ma_structure": "周线均线走平"},
+        daily_structure={
+            "price_vs_ma20": "跌破", "price_vs_ma60": "跌破",
+            "ma20_direction": "向下", "ma60_direction": "向下",
+        },
+        structure_health={
+            "is_healthy": True, "state": "低点抬升",
+            "evidence": ["最近两个低点小幅抬升"],
+        },
+        bias_extreme={"direction": "low", "level": "严重", "warning": "BIAS超卖"},
+    )
+
+    judgment = build_technical_judgment(
+        resonance,
+        _target_payload(
+            status="observe", reason_code="structure_observation",
+            direction="bearish", structure_confidence="observation",
+        ),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+    interpretation = judgment["interpretation"]
+
+    assert judgment["action"]["state"] == "risk_control"
+    assert interpretation["headline"] == "中期趋势偏空，风险控制优先"
+    assert interpretation["timeframe_alignment"] == "daily_break_weekly_range"
+    assert [item["code"] for item in interpretation["counter_evidence"]] == [
+        "local_structure_repair", "momentum_extreme",
+    ]
+    assert "尚不足以改变" in interpretation["counter_evidence"][0]["text"]
+    assert interpretation["target_message"]["state"] == "observe"
+
+
+def test_interpretation_filters_generic_warning_and_promotes_specific_divergence_once():
+    generic = _resonance_payload(
+        weekly_background={"trend": "单边上涨"},
+        daily_structure={"price_vs_ma20": "站上", "price_vs_ma60": "站上", "ma20_direction": "向上"},
+        divergence_scan={"type": "单一预警", "confidence": "轻度", "action": "观望"},
+    )
+    specific = dict(generic, divergence_scan={
+        "type": "MACD顶背离", "confidence": "中度", "action": "控制追高",
+    })
+
+    generic_judgment = build_technical_judgment(
+        generic, _target_payload(), indicators={"analysis_confidence": {"level": "高"}},
+    )
+    specific_judgment = build_technical_judgment(
+        specific, _target_payload(), indicators={"analysis_confidence": {"level": "高"}},
+    )
+
+    assert generic_judgment["interpretation"]["priority_observation"] is None
+    assert specific_judgment["interpretation"]["priority_observation"]["code"] == "divergence"
+
+
+def test_target_status_reason_mismatch_fails_closed_before_interpretation():
+    judgment = build_technical_judgment(
+        _resonance_payload(),
+        _target_payload(status="blocked", reason_code="structure_observation"),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+
+    assert judgment["target"]["producer_status"] == "unavailable"
+    assert judgment["target"]["reason_code"] == "target_status_conflict"
+    assert judgment["interpretation"]["target_message"] == {
+        "state": "unavailable", "text": "证据不足，暂不展示目标价",
+    }
+
+
+def test_market_context_and_confirmation_conditions_use_existing_structured_inputs():
+    resonance = _resonance_payload(
+        weekly_background={"trend": "单边上涨"},
+        daily_structure={"price_vs_ma20": "站上", "price_vs_ma60": "站上", "ma20_direction": "向上"},
+        trigger_checks={
+            "price": {"status": "pending", "detail": "尚未满足突破条件"},
+            "trend": {"status": "pass", "detail": "ADX>=25"},
+            "volume": {"status": "pending", "detail": "量比>=1.5"},
+            "momentum": {"status": "pending", "detail": "MACD或RSI尚未满足方向条件"},
+        },
+        market_resonance={
+            "state": "顺风共振", "impact": "趋势信号可信度上调",
+            "relative_strength": "强于行业", "evidence": ["大盘趋势：主升期"],
+            "missing": ["theme index data missing"],
+        },
+    )
+    judgment = build_technical_judgment(
+        resonance, _target_payload(), indicators={"analysis_confidence": {"level": "高"}},
+    )
+    interpretation = judgment["interpretation"]
+
+    assert interpretation["market_context"]["status"] == "partial"
+    assert "顺风共振" in interpretation["market_context"]["summary"]
+    assert interpretation["confirmation_conditions"] == [
+        "价格：尚未满足突破条件", "量能：量比>=1.5",
+    ]
+
+
+def test_interpretation_shape_is_validated_and_core_cache_upgrade_is_structural_only():
+    built = build_technical_judgment(
+        _resonance_payload(
+            weekly_background={"trend": "单边上涨"},
+            daily_structure={"price_vs_ma20": "站上", "price_vs_ma60": "站上", "ma20_direction": "向上"},
+        ),
+        _target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+    malformed = {**built, "interpretation": {**built["interpretation"], "headline": ""}}
+    core_only = {key: value for key, value in built.items() if key != "interpretation"}
+
+    assert is_valid_technical_judgment(built) is True
+    assert is_valid_technical_judgment(malformed) is False
+    assert ensure_technical_judgment(core_only) is core_only
+    upgraded = ensure_technical_judgment(
+        core_only,
+        resonance=_resonance_payload(
+            weekly_background={"trend": "单边上涨"},
+            daily_structure={"price_vs_ma20": "站上", "price_vs_ma60": "站上", "ma20_direction": "向上"},
+        ),
+        price_target=_target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+    assert "interpretation" in upgraded
+    assert upgraded is not core_only
+
+
+def test_invalid_trend_makes_target_message_invalid_even_when_producer_was_ready():
+    judgment = build_technical_judgment(
+        _resonance_payload(invalidation={
+            "status": "broken", "is_invalidated": True, "hard_invalid": "跌破MA60",
+        }),
+        _target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+
+    assert judgment["target"]["execution_state"] == "invalid"
+    assert judgment["interpretation"]["target_message"] == {
+        "state": "invalid", "text": "周期或形态方向冲突，当前目标无效",
+    }
+
+
+def test_interpretation_rejects_malformed_evidence_item():
+    judgment = build_technical_judgment(
+        _resonance_payload(), _target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+    judgment["interpretation"]["primary_evidence"] = ["raw prose"]
+
+    assert is_valid_technical_judgment(judgment) is False
 
 
 def test_classify_trend_state_basic():

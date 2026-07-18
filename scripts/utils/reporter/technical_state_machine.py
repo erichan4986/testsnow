@@ -534,6 +534,23 @@ _TARGET_STATUSES = {"ready", "observe", "blocked", "invalid", "unavailable"}
 _EXECUTION_STATES = {"triggered", "pending", "blocked", "invalid", "observe", "unavailable"}
 _ACTION_STATES = {"follow", "wait_for_entry", "wait_for_confirmation", "risk_control", "unavailable"}
 _CHECK_STATES = {"pass", "pending", "fail", "unknown"}
+_REASON_STATUS = {
+    "target_ready": "ready",
+    "weekly_range": "observe", "structure_observation": "observe", "risk_plan_unavailable": "observe",
+    "opposing_macd_expansion": "blocked", "risk_reward_below_minimum": "blocked",
+    "timeframe_direction_conflict": "invalid", "pattern_direction_conflict": "invalid",
+    "insufficient_daily_data": "unavailable", "insufficient_weekly_data": "unavailable",
+    "structure_unavailable": "unavailable", "invalid_atr": "unavailable",
+    "untrusted_or_malformed_judgment": "unavailable", "target_status_conflict": "unavailable",
+    "unknown_target_status": "unavailable",
+}
+_HEADLINES = {
+    "risk_control": "中期趋势偏空，风险控制优先",
+    "wait_for_entry": "趋势结构存在，但当前入场条件未满足",
+    "wait_for_confirmation": "技术信号尚待确认，暂不提高仓位",
+    "follow": "趋势与确认条件一致，可继续跟踪",
+    "unavailable": "技术证据不足，维持观察",
+}
 _TREND_LABELS = {
     "strong_up": "强势上行", "weak_up": "弱势上行", "transition": "趋势转折",
     "range": "震荡观察", "down": "下降趋势", "invalid": "趋势失效", "unknown": "未知",
@@ -770,6 +787,191 @@ def _action_state(trend: Dict, target: Dict) -> tuple[str, str]:
     return "unavailable", "技术判断组合未定义，安全降级"
 
 
+def _normalise_target_contract(status: str, reason: str) -> tuple[str, str]:
+    expected = _REASON_STATUS.get(reason)
+    if expected is None:
+        return "unavailable", "unknown_target_status"
+    return (status, reason) if status == expected else ("unavailable", "target_status_conflict")
+
+
+def _timeframe_alignment(resonance: Dict, trend: Dict) -> str:
+    weekly = {"单边上涨": "up", "单边下跌": "down", "震荡": "range"}.get(
+        (resonance.get("weekly_background") or {}).get("trend"), "unknown"
+    )
+    daily = resonance.get("daily_structure") or {}
+    if not isinstance(daily, dict):
+        posture = "unknown"
+    elif (resonance.get("invalidation") or {}).get("status") == "broken" or daily.get("price_vs_ma60") == "跌破":
+        posture = "break"
+    elif daily.get("price_vs_ma20") == "站上" and daily.get("ma20_direction") == "向上":
+        posture = "constructive"
+    elif daily.get("price_vs_ma20") == "跌破" or daily.get("ma20_direction") == "向下":
+        posture = "weak"
+    else:
+        posture = "unknown"
+    state = trend["state"]
+    if weekly == "up" and posture == "constructive" and state in {"strong_up", "weak_up"}:
+        return "aligned_up"
+    if weekly == "down" and posture in {"weak", "break"} and state in {"down", "invalid"}:
+        return "aligned_down"
+    if weekly == "range" and posture in {"weak", "break"} and state in {"down", "invalid"}:
+        return "daily_break_weekly_range"
+    if weekly == "down" and posture == "constructive" and state not in {"down", "invalid"}:
+        return "daily_repair_weekly_weak"
+    if "unknown" in {weekly, posture}:
+        return "unknown"
+    return "mixed"
+
+
+def _market_context(resonance: Dict) -> Dict:
+    market = resonance.get("market_resonance") or {}
+    evidence, missing = market.get("evidence") or [], market.get("missing") or []
+    usable = market.get("state") not in {None, "", "未知"} and bool(evidence)
+    status = "partial" if usable and missing else "ready" if usable else "unavailable"
+    parts = [
+        market.get("state", ""), market.get("impact", ""),
+        market.get("relative_strength", ""), market.get("action_hint", ""),
+    ]
+    return {"status": status, "summary": "；".join(part for part in parts if part and part != "未知")}
+
+
+def _target_message(target: Dict) -> Dict:
+    status, reason, execution, mode = (
+        target.get("producer_status"), target.get("reason_code"),
+        target.get("execution_state"), target.get("display_mode"),
+    )
+    if status == "invalid" or execution == "invalid":
+        return {"state": "invalid", "text": "周期或形态方向冲突，当前目标无效"}
+    if status == "blocked":
+        text = (
+            "MACD动能与目标方向相反且仍在扩张，暂不跟随该目标"
+            if reason == "opposing_macd_expansion"
+            else "目标结构存在，但当前盈亏比未达到既有门槛"
+        )
+        return {"state": "blocked", "text": text}
+    if status == "unavailable":
+        return {"state": "unavailable", "text": "证据不足，暂不展示目标价"}
+    if status == "observe" or mode == "levels_only":
+        return {"state": "observe", "text": "当前仅形成观察结构，暂不展示精确目标价"}
+    if execution == "pending":
+        return {"state": "pending", "text": "目标结构存在，但价格、趋势、量能或动量确认尚未齐备"}
+    if status == "ready" and mode in {"full_targets", "core_targets", "conditional_range"}:
+        return {"state": "ready", "text": "目标结构与既有确认状态一致"}
+    return {"state": "unavailable", "text": "证据不足，暂不展示目标价"}
+
+
+def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> Dict:
+    state = trend["state"]
+    bearish, bullish = state in {"down", "invalid"}, state in {"strong_up", "weak_up"}
+    invalidation = resonance.get("invalidation") or {}
+    channel = resonance.get("channel_status") or {}
+    market = _market_context(resonance)
+    primary, counter = [], []
+
+    def add(items: list, code: str, text: str, limit: int) -> None:
+        if text and len(items) < limit and code not in {item["code"] for item in items}:
+            items.append({"code": code, "text": text})
+
+    if state == "invalid" or invalidation.get("status") == "broken" or invalidation.get("is_invalidated"):
+        add(primary, "hard_invalidation", invalidation.get("hard_invalid") or invalidation.get("message") or "中期结构失效条件已触发", 3)
+    breakout = str(channel.get("breakout_status") or "")
+    if (bearish and "向下" in breakout) or (bullish and "向上" in breakout):
+        add(primary, "directional_channel_break", f"通道/箱体信号：{breakout}", 3)
+    weekly = (resonance.get("weekly_background") or {}).get("trend")
+    daily = resonance.get("daily_structure") or {}
+    if weekly or daily:
+        position = daily.get("price_vs_ma20") if isinstance(daily, dict) else "未知"
+        direction = daily.get("ma20_direction") if isinstance(daily, dict) else "未知"
+        add(primary, "timeframe_structure", f"周线{weekly or '未知'}；日线{position or '未知'}MA20、MA20{direction or '未知'}", 3)
+    if trend.get("health_score") is not None:
+        add(primary, "trend_health", f"趋势健康度{trend['health_score']}/100（{trend.get('health_grade') or '未分级'}）", 3)
+    if market["status"] != "unavailable" and ((bullish and "顺风共振" in market["summary"]) or (bearish and any(word in market["summary"] for word in ("系统性压力", "弱于板块")))):
+        add(primary, "market_confirmation", market["summary"], 3)
+
+    structure = resonance.get("structure_health") or {}
+    if bearish and structure.get("is_healthy") is True:
+        add(counter, "local_structure_repair", f"{structure.get('state') or '局部结构修复'}，但尚不足以改变{trend['label']}判断", 2)
+    elif bullish and structure.get("is_healthy") is False:
+        add(counter, "local_structure_repair", f"{structure.get('state') or '局部结构转弱'}，提示上行结构仍有反向压力", 2)
+    bottom = resonance.get("bottom_signal") or {}
+    if bearish and bottom.get("state") not in {None, "", "none"}:
+        add(counter, "bottom_watch", "出现底部区域线索，但仅作观察，不构成趋势反转确认", 2)
+    bias, divergence = resonance.get("bias_extreme") or {}, resonance.get("divergence_scan") or {}
+    if (bearish and bias.get("direction") == "low") or (bullish and bias.get("direction") == "high"):
+        add(counter, "momentum_extreme", f"{bias.get('warning') or '动量进入极端区域'}，仅作为反向线索", 2)
+    warning_type = str(divergence.get("type") or "")
+    if (bearish and "超卖" in warning_type) or (bullish and "超买" in warning_type):
+        add(counter, "momentum_extreme", f"{warning_type}，仅作为反向线索", 2)
+    if market["status"] != "unavailable" and bullish and any(word in market["summary"] for word in ("逆风独立", "系统性压力", "弱于板块")):
+        add(counter, "market_divergence", market["summary"], 2)
+
+    confirmation = []
+    if target.get("direction") == "bullish" and target.get("producer_status") in {"ready", "observe"}:
+        labels = {"price": "价格", "trend": "趋势", "volume": "量能", "momentum": "动量"}
+        for name in ("price", "trend", "volume", "momentum"):
+            check = (target.get("trigger_checks") or {}).get(name) or {}
+            if check.get("status") != "pass" and len(confirmation) < 2:
+                confirmation.append(f"{labels[name]}：{check.get('detail') or '数据不足'}")
+    conditions = []
+    for text in (invalidation.get("soft_warning"), invalidation.get("hard_invalid")):
+        if text and text not in conditions:
+            conditions.append(text)
+
+    priority = None
+    for key, code, label in (
+        ("false_breakout", "false_breakout", "假突破预警"),
+        ("false_rebound", "false_rebound", "假反弹预警"),
+    ):
+        item = resonance.get(key) or {}
+        if item.get("reason"):
+            priority = {"code": code, "label": label, "detail": item["reason"]}
+            break
+    if priority is None and warning_type != "单一预警" and divergence.get("confidence") in {"中度", "强烈"}:
+        priority = {"code": "divergence", "label": warning_type, "detail": divergence.get("action") or "继续观察"}
+    if priority is None and bias.get("level") == "严重":
+        priority = {"code": "bias_extreme", "label": bias.get("warning") or "BIAS极端", "detail": "动量极端仅作短期观察"}
+
+    trend_state = resonance.get("trend_state") or {}
+    previous, changed, stage = trend_state.get("previous_state"), trend_state.get("state_changed"), trend.get("stage") or ""
+    if changed is False:
+        change_state = "unchanged"
+    elif changed is True and stage in {"转弱期", "破坏期"} and previous not in {"转弱期", "破坏期"}:
+        change_state = "deteriorating"
+    elif changed is True and previous in {"转弱期", "破坏期"} and stage not in {"转弱期", "破坏期"}:
+        change_state = "improving"
+    else:
+        change_state = "unknown"
+    return {
+        "timeframe_alignment": _timeframe_alignment(resonance, trend),
+        "headline": _HEADLINES[action], "primary_evidence": primary, "counter_evidence": counter,
+        "confirmation_conditions": confirmation, "invalidation_conditions": conditions,
+        "priority_observation": priority, "market_context": market, "target_message": _target_message(target),
+        "change": {"state": change_state, "previous_stage": previous or "", "current_stage": stage},
+    }
+
+
+def _valid_interpretation(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    primary, counter, confirmation = value.get("primary_evidence"), value.get("counter_evidence"), value.get("confirmation_conditions")
+    target_message, market, change = value.get("target_message"), value.get("market_context"), value.get("change")
+    evidence_items = lambda items: isinstance(items, list) and all(
+        isinstance(item, dict) and bool(item.get("code")) and bool(item.get("text")) for item in items
+    )
+    text_items = lambda items: isinstance(items, list) and all(isinstance(item, str) and bool(item) for item in items)
+    priority = value.get("priority_observation")
+    return all((
+        value.get("timeframe_alignment") in {"aligned_up", "aligned_down", "daily_break_weekly_range", "daily_repair_weekly_weak", "mixed", "unknown"},
+        bool(value.get("headline")), evidence_items(primary) and len(primary) <= 3,
+        evidence_items(counter) and len(counter) <= 2, text_items(confirmation) and len(confirmation) <= 2,
+        text_items(value.get("invalidation_conditions")),
+        priority is None or (isinstance(priority, dict) and bool(priority.get("code")) and bool(priority.get("label")) and bool(priority.get("detail"))),
+        isinstance(market, dict) and market.get("status") in {"ready", "partial", "unavailable"},
+        isinstance(target_message, dict) and target_message.get("state") in {"ready", "pending", "observe", "blocked", "invalid", "unavailable"} and bool(target_message.get("text")),
+        isinstance(change, dict) and change.get("state") in {"improving", "deteriorating", "unchanged", "unknown"},
+    ))
+
+
 def build_technical_judgment(
     resonance: Dict | None,
     price_target: Dict | None,
@@ -784,6 +986,7 @@ def build_technical_judgment(
     trend = _trend_judgment(resonance)
     producer_status = price_target.get("status") if price_target.get("status") in _TARGET_STATUSES else "unavailable"
     reason_code = str(price_target.get("reason_code") or "untrusted_or_malformed_judgment")
+    producer_status, reason_code = _normalise_target_contract(producer_status, reason_code)
     direction = price_target.get("direction") if price_target.get("direction") in {"bullish", "bearish", "neutral"} else "neutral"
     structure = price_target.get("structure_confidence") or (
         "observation" if (price_target.get("structure_evidence") or {}).get("method_family") == "fib_only" else "unavailable"
@@ -809,13 +1012,18 @@ def build_technical_judgment(
     target["execution_state"] = _execution_state(target, checks, trend)
     target["display_mode"] = resolve_target_display_mode(direction, effective, target["execution_state"])
     action, action_summary = _action_state(trend, target)
-    return {
+    limitations = list((resonance.get("analysis_confidence") or {}).get("limitations", [])) if isinstance(resonance.get("analysis_confidence"), dict) else []
+    judgment = {
         "schema": "technical_judgment.v1",
         "trend": trend,
         "target": target,
         "action": {"state": action, "summary": action_summary},
-        "limitations": list((resonance.get("analysis_confidence") or {}).get("limitations", [])) if isinstance(resonance.get("analysis_confidence"), dict) else [],
+        "limitations": limitations,
     }
+    judgment["interpretation"] = _interpretation(resonance, trend, target, action)
+    if judgment["interpretation"]["market_context"]["status"] == "unavailable" and "市场/行业共振数据不足" not in limitations:
+        limitations.append("市场/行业共振数据不足")
+    return judgment
 
 
 def is_valid_technical_judgment(value: Any) -> bool:
@@ -831,6 +1039,7 @@ def is_valid_technical_judgment(value: Any) -> bool:
         target.get("direction") in {"bullish", "bearish", "neutral"},
         target.get("producer_status") in _TARGET_STATUSES,
         bool(target.get("reason_code")),
+        _REASON_STATUS.get(target.get("reason_code")) == target.get("producer_status"),
         target.get("structure_confidence") in _CONFIDENCE_ORDER,
         target.get("effective_confidence") in _CONFIDENCE_ORDER,
         target.get("execution_state") in _EXECUTION_STATES,
@@ -841,6 +1050,7 @@ def is_valid_technical_judgment(value: Any) -> bool:
         ),
         action.get("state") in _ACTION_STATES,
         action.get("state") == _action_state(trend, target)[0],
+        "interpretation" not in value or _valid_interpretation(value.get("interpretation")),
     )
     return all(checks)
 
@@ -855,7 +1065,16 @@ def ensure_technical_judgment(
 ) -> Dict:
     """Trust a complete v1 judgment, otherwise rebuild or fail closed."""
     if is_valid_technical_judgment(judgment):
-        return judgment
+        if "interpretation" in judgment:
+            return judgment
+        structural = isinstance(resonance, dict) and any(
+            key in resonance for key in (
+                "trend_state", "trend_health", "invalidation", "weekly_background",
+                "daily_structure", "market_resonance",
+            )
+        )
+        if not structural and not price_target:
+            return judgment
     if isinstance(judgment, dict) and not resonance and "trend_state" in judgment:
         resonance = judgment
     return build_technical_judgment(resonance, price_target, indicators, daily_data, market)
