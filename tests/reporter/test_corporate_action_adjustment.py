@@ -68,6 +68,57 @@ def test_corporate_action_lowers_confidence(monkeypatch):
     assert resonance["corporate_action_warning"]["has_recent_action"] is True
     assert resonance["price_data_lineage"]["effective_adjustment"] == "raw"
     assert resonance["price_data_lineage"]["price_adjustment_applied"] is False
+    volume = resonance["trend_health"]["components"]["volume_confirmation"]
+    assert volume["score"] == 5
+    assert volume["status"] == "unreliable"
+    assert "成交量未完成除权等效调整，量价分项按中性处理" in resonance["analysis_confidence"]["limitations"]
+
+
+def test_volume_window_reliability_uses_latest_twenty_one_bars():
+    import sys as _sys
+    from pathlib import Path
+    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    from technical_analyzer import _volume_window_reliable
+
+    df = _make_exrights_df(days=40, exrights_date="2099-01-01")
+    first_window_date = df["date"].iloc[-21]
+    inside = df["date"].iloc[-5]
+    before = first_window_date - pd.Timedelta(days=1)
+
+    def validation(date):
+        return {"price_gaps": {
+            "possible_exrights_gap": True,
+            "latest_gap": {"date": str(date)},
+        }}
+
+    assert _volume_window_reliable(df, validation(inside)) is False
+    assert _volume_window_reliable(df, validation(before)) is True
+    assert _volume_window_reliable(df, validation("not-a-date")) is False
+    assert _volume_window_reliable(df, None) is True
+
+
+def test_unresolved_gap_caps_both_momentum_and_pivot_scans(monkeypatch):
+    import sys as _sys
+    from pathlib import Path
+    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    import technical_analyzer as ta_mod
+
+    monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", lambda df, *a, **k: None)
+    monkeypatch.setattr(ta_mod, "_apply_gap_based_qfq_approximation", lambda df, *a, **k: df.copy())
+    monkeypatch.setattr(ta_mod, "detect_boll_overextension", lambda *a, **k: {
+        "family": "momentum_extreme", "type": "超卖预警", "confidence": "强烈", "action": "观察",
+    })
+    monkeypatch.setattr(ta_mod, "detect_pivot_divergence", lambda *a, **k: {
+        "family": "pivot_divergence", "type": "底背离观察", "confidence": "强烈", "action": "观察",
+    })
+    _disable_market_fetch(monkeypatch, ta_mod)
+
+    resonance = ta_mod.advanced_medium_term_resonance(
+        _make_exrights_df(), quote={"adjustment": "raw", "code": "688018"},
+    )["resonance"]
+
+    assert resonance["overextension_scan"]["confidence"] == "低可信度"
+    assert resonance["divergence_scan"]["confidence"] == "低可信度"
 
 
 def test_qfq_maintains_medium_confidence(monkeypatch):

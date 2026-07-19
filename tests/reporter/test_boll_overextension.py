@@ -3,7 +3,8 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
 
 import pandas as pd
-from technical_analyzer import detect_boll_overextension
+from technical_analyzer import _build_advisors, detect_boll_overextension
+import technical_patterns
 
 
 def _make_df(close_list):
@@ -42,3 +43,72 @@ def test_boll_overextension_detected():
     assert result is not None
     assert result["type"] == "超买预警"
     assert result["confidence"] in ["中度", "强烈"]
+
+
+def test_macd_histogram_classifier_uses_adjacent_direction():
+    classify = technical_patterns.classify_macd_histogram
+    assert classify(-0.5, -0.2) == "空头柱扩张"
+    assert classify(-0.2, -0.5) == "空头柱收缩"
+    assert classify(0.5, 0.2) == "多头柱扩张"
+    assert classify(0.2, 0.5) == "多头柱收缩"
+    assert classify(0.2, 0.2) == "方向未确认"
+    assert classify(None, 0.2) == "方向未确认"
+
+
+def test_negative_expanding_histogram_does_not_confirm_oversold_repair():
+    df = _make_df([100.0] * 30)
+    indicators = {
+        "close": 90.0, "boll_upper": 110.0, "boll_lower": 95.0,
+        "rsi_14": 20.0, "macd_hist": -0.5, "macd_hist_prev": -0.2,
+    }
+
+    result = detect_boll_overextension(df, indicators, weekly_trend="震荡")
+
+    assert result["family"] == "momentum_extreme"
+    assert result["matched"] == 2
+    assert result["confidence"] == "中度"
+    assert result["evidence"]["macd"]["state"] == "空头柱扩张"
+
+
+def test_negative_contracting_histogram_confirms_oversold_repair():
+    df = _make_df([100.0] * 30)
+    indicators = {
+        "close": 90.0, "boll_upper": 110.0, "boll_lower": 95.0,
+        "rsi_14": 20.0, "macd_hist": -0.2, "macd_hist_prev": -0.5,
+    }
+
+    result = detect_boll_overextension(df, indicators, weekly_trend="震荡")
+
+    assert result["matched"] == 3
+    assert result["confidence"] == "强烈"
+    assert result["evidence"]["macd"]["state"] == "空头柱收缩"
+
+
+def test_advisor_and_scan_share_macd_histogram_state():
+    indicators = {
+        "close": 90.0, "boll_upper": 110.0, "boll_lower": 95.0,
+        "rsi_14": 20.0, "macd": -1.0,
+        "macd_hist": -0.5, "macd_hist_prev": -0.2,
+    }
+    scan = detect_boll_overextension(_make_df([100.0] * 30), indicators, weekly_trend="震荡")
+
+    assert _build_advisors(indicators)["macd"]["state"] == "空头柱扩张"
+    assert scan["evidence"]["macd"]["state"] == "空头柱扩张"
+
+
+def test_positive_histogram_contraction_but_not_expansion_confirms_exhaustion():
+    df = _make_df([100.0] * 30)
+    base = {
+        "close": 110.0, "boll_upper": 105.0, "boll_lower": 90.0,
+        "rsi_14": 80.0,
+    }
+
+    expanding = detect_boll_overextension(
+        df, {**base, "macd_hist": 0.5, "macd_hist_prev": 0.2}, weekly_trend="单边上涨",
+    )
+    contracting = detect_boll_overextension(
+        df, {**base, "macd_hist": 0.2, "macd_hist_prev": 0.5}, weekly_trend="单边上涨",
+    )
+
+    assert expanding["matched"] == 2
+    assert contracting["matched"] == 3

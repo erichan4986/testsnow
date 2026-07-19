@@ -51,6 +51,9 @@ _DEFAULT_CONFIG = {
             "min_matched": 2,
             "total_conditions": 3,
             "lookback": 80,
+            "max_signal_age": 10,
+            "price_tolerance_pct": 0.01,
+            "price_atr_multiplier": 0.5,
             "boll_upper_tolerance": 1.01,
         },
         "scoring": {

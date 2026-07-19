@@ -3,6 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
 
 import pandas as pd
+from copy import deepcopy
 
 from technical_state_machine import (
     classify_trend_state, apply_previous_state,
@@ -266,7 +267,8 @@ def test_interpretation_filters_generic_warning_and_promotes_specific_divergence
         divergence_scan={"type": "单一预警", "confidence": "轻度", "action": "观望"},
     )
     specific = dict(generic, divergence_scan={
-        "type": "MACD顶背离", "confidence": "中度", "action": "控制追高",
+        "family": "pivot_divergence",
+        "type": "顶背离观察", "confidence": "中度", "action": "控制追高",
     })
 
     generic_judgment = build_technical_judgment(
@@ -278,6 +280,83 @@ def test_interpretation_filters_generic_warning_and_promotes_specific_divergence
 
     assert generic_judgment["interpretation"]["priority_observation"] is None
     assert specific_judgment["interpretation"]["priority_observation"]["code"] == "divergence"
+
+
+def test_interpretation_signal_contract_invalidates_stale_projection_but_keeps_core():
+    built = build_technical_judgment(
+        _resonance_payload(), _target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+    stale = deepcopy(built)
+    stale["interpretation"].pop("signal_contract")
+    core = {key: value for key, value in stale.items() if key != "interpretation"}
+
+    assert built["interpretation"]["signal_contract"] == "technical_signal_contract.v2.1"
+    assert is_valid_technical_judgment(stale) is False
+    assert ensure_technical_judgment(stale) == core
+
+
+def test_stale_interpretation_rebuilds_from_current_resonance():
+    built = build_technical_judgment(
+        _resonance_payload(), _target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+    built["interpretation"].pop("signal_contract")
+
+    rebuilt = ensure_technical_judgment(
+        built,
+        resonance=_resonance_payload(
+            weekly_background={"trend": "单边上涨"},
+            daily_structure={"price_vs_ma20": "站上", "price_vs_ma60": "站上", "ma20_direction": "向上"},
+        ),
+        price_target=_target_payload(),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+
+    assert rebuilt["interpretation"]["signal_contract"] == "technical_signal_contract.v2.1"
+
+
+def test_pivot_divergence_precedes_overextension_without_upgrading_bearish_action():
+    resonance = _resonance_payload(
+        trend_state={"primary_state": "下降趋势", "stage": "破坏期"},
+        trend_health={"score": 35, "grade": "破坏风险高"},
+        weekly_background={"trend": "单边下跌"},
+        daily_structure={"price_vs_ma20": "跌破", "price_vs_ma60": "跌破", "ma20_direction": "向下"},
+        divergence_scan={
+            "family": "pivot_divergence", "type": "底背离观察",
+            "confidence": "强烈", "action": "等待趋势确认",
+        },
+        overextension_scan={
+            "family": "momentum_extreme", "type": "超卖预警",
+            "confidence": "强烈", "action": "等待修复确认",
+        },
+        bias_extreme={"direction": "low", "level": "严重", "warning": "BIAS超卖"},
+    )
+
+    judgment = build_technical_judgment(
+        resonance,
+        _target_payload(status="observe", reason_code="structure_observation", direction="bearish", structure_confidence="observation"),
+        indicators={"analysis_confidence": {"level": "高"}},
+    )
+
+    assert judgment["action"]["state"] == "risk_control"
+    assert [item["code"] for item in judgment["interpretation"]["counter_evidence"]] == [
+        "pivot_divergence", "momentum_extreme",
+    ]
+    assert judgment["interpretation"]["priority_observation"]["code"] == "divergence"
+
+
+def test_unknown_legacy_scan_family_never_becomes_formal_divergence():
+    resonance = _resonance_payload(divergence_scan={
+        "type": "顶背离观察", "confidence": "强烈", "action": "控制追高",
+    })
+
+    judgment = build_technical_judgment(
+        resonance, _target_payload(), indicators={"analysis_confidence": {"level": "高"}},
+    )
+
+    assert judgment["interpretation"]["priority_observation"] is None
+    assert all(item["code"] != "pivot_divergence" for item in judgment["interpretation"]["counter_evidence"])
 
 
 def test_target_status_reason_mismatch_fails_closed_before_interpretation():

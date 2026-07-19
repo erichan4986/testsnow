@@ -4,10 +4,16 @@ from typing import Dict, Optional, Tuple
 
 import pandas as pd
 
+try:
+    from .technical_structure import confirmed_swing_indices
+except ImportError:
+    from technical_structure import confirmed_swing_indices
+
 __all__ = [
     "detect_double_top", "detect_double_bottom",
-    "detect_boll_overextension", "evaluate_candle_at_key_levels",
-    "multi_indicator_resonance",
+    "classify_macd_histogram", "detect_boll_overextension",
+    "detect_momentum_extreme", "detect_pivot_divergence",
+    "evaluate_candle_at_key_levels",
 ]
 
 def evaluate_candle_at_key_levels(
@@ -182,207 +188,144 @@ def _is_support_resistance(close: pd.Series, window: int = 20, touches: int = 3)
     return support, resistance
 
 
+def classify_macd_histogram(current: float | None, previous: float | None) -> str:
+    if current is None or previous is None or pd.isna(current) or pd.isna(previous) or current == previous:
+        return "方向未确认"
+    if current < 0:
+        return "空头柱扩张" if current < previous else "空头柱收缩"
+    if current > 0:
+        return "多头柱扩张" if current > previous else "多头柱收缩"
+    return "方向未确认"
+
+
+def detect_momentum_extreme(
+    df: pd.DataFrame,
+    indicators: Dict,
+    weekly_trend: str,
+    config: Dict | None = None,
+) -> Dict | None:
+    cfg = (config or {}).get("technical", {}).get("divergence", {})
+    tolerance = cfg.get("boll_upper_tolerance", 1.01)
+    close, upper, lower = indicators.get("close", 0), indicators.get("boll_upper"), indicators.get("boll_lower")
+    rsi = indicators.get("rsi_14")
+    hist_state = classify_macd_histogram(indicators.get("macd_hist"), indicators.get("macd_hist_prev"))
+    direction = (
+        "overbought" if upper and close > upper * tolerance
+        else "oversold" if lower and close < lower / tolerance
+        else "overbought" if rsi is not None and rsi > 75
+        else "oversold" if rsi is not None and rsi < 25
+        else None
+    )
+    matched, evidence = [], {"macd": {"hist": indicators.get("macd_hist"), "state": hist_state}}
+    if direction == "overbought":
+        if upper and close > upper * tolerance:
+            matched.append("boll"); evidence["boll"] = {"price": close, "upper": upper, "state": "突破上轨"}
+        if rsi is not None and rsi > 75:
+            matched.append("rsi"); evidence["rsi"] = {"value": rsi, "state": "超买区"}
+        if hist_state == "多头柱收缩":
+            matched.append("macd")
+    elif direction == "oversold":
+        if lower and close < lower / tolerance:
+            matched.append("boll"); evidence["boll"] = {"price": close, "lower": lower, "state": "跌破下轨"}
+        if rsi is not None and rsi < 25:
+            matched.append("rsi"); evidence["rsi"] = {"value": rsi, "state": "超卖区"}
+        if hist_state == "空头柱收缩":
+            matched.append("macd")
+    if not matched:
+        return None
+    return {
+        "family": "momentum_extreme",
+        "type": "超买预警" if direction == "overbought" else "超卖预警" if direction == "oversold" else "单一预警",
+        "confidence": "强烈" if len(matched) == 3 else "中度" if len(matched) >= 2 else "轻度",
+        "matched": len(matched), "total": 3, "evidence": evidence,
+        "missing": [name for name in ("boll", "rsi", "macd") if name not in matched],
+        "action": "均线为王，仅作中期风险预警" if weekly_trend == "单边上涨" else "建议观察确认",
+    }
+
+
 def detect_boll_overextension(
     df: pd.DataFrame,
     indicators: Dict,
     weekly_trend: str,
     config: Dict | None = None,
 ) -> Dict | None:
-    """简化版背离/超买预警。检测价格突破 BOLL 上轨 + RSI 极端值。"""
-    if config is None:
-        config = {"technical": {"divergence": {
-            "boll_upper_tolerance": 1.01,
-        }}}
-    boll_tol = config.get("technical", {}).get("divergence", {}).get("boll_upper_tolerance", 1.01)
+    """Compatibility alias for the canonical momentum-extreme scan."""
+    return detect_momentum_extreme(df, indicators, weekly_trend, config)
 
-    close = indicators.get("close", 0)
-    boll_upper = indicators.get("boll_upper")
-    boll_lower = indicators.get("boll_lower")
-    rsi = indicators.get("rsi_14")
-    macd_hist = indicators.get("macd_hist")
 
-    warnings = []
-    evidence = {}
+def detect_pivot_divergence(
+    df: pd.DataFrame,
+    rsi_series: pd.Series,
+    macd_hist_series: pd.Series,
+    config: Dict | None = None,
+) -> Dict | None:
+    cfg = (config or {}).get("technical", {}).get("divergence", {})
+    lookback, left, right = cfg.get("lookback", 80), cfg.get("swing_left", 3), cfg.get("swing_right", 3)
+    max_age = cfg.get("max_signal_age", 10)
+    frame = df.tail(lookback).reset_index(drop=True)
+    rsi = pd.Series(rsi_series).tail(len(frame)).reset_index(drop=True)
+    hist = pd.Series(macd_hist_series).tail(len(frame)).reset_index(drop=True)
+    if len(frame) < left + right + 3 or len(rsi) != len(frame) or len(hist) != len(frame):
+        return None
+    tr = pd.concat((
+        frame["high"] - frame["low"],
+        (frame["high"] - frame["close"].shift(1)).abs(),
+        (frame["low"] - frame["close"].shift(1)).abs(),
+    ), axis=1).max(axis=1)
+    atr = tr.rolling(14, min_periods=1).mean()
+    dates = frame["date"] if "date" in frame.columns else pd.Series(frame.index)
 
-    # BOLL 超买/超卖
-    if boll_upper and close > boll_upper * boll_tol:
-        warnings.append("boll_overextension")
-        evidence["boll"] = {"price": close, "upper": boll_upper, "state": "突破上轨"}
-    elif boll_lower and close < boll_lower / boll_tol:
-        warnings.append("boll_overextension")
-        evidence["boll"] = {"price": close, "lower": boll_lower, "state": "跌破下轨"}
-
-    # RSI 极端
-    if rsi is not None and rsi > 75:
-        warnings.append("rsi_overbought")
-        evidence["rsi"] = {"value": rsi, "state": "超买区"}
-    elif rsi is not None and rsi < 25:
-        warnings.append("rsi_oversold")
-        evidence["rsi"] = {"value": rsi, "state": "超卖区"}
-
-    # MACD 柱线收缩
-    if macd_hist is not None and macd_hist < 0:
-        warnings.append("macd_hist_shrinking")
-        evidence["macd"] = {"hist": macd_hist, "state": "柱线翻绿"}
-
-    if len(warnings) >= 2:
+    def candidate(kind: str) -> Dict | None:
+        column = "low" if kind == "bullish" else "high"
+        pivots = confirmed_swing_indices(frame[column], left, right, "low" if kind == "bullish" else "high")
+        if len(pivots) < 2:
+            return None
+        first, second = pivots[-2:]
+        if len(frame) - 1 - second > max_age:
+            return None
+        first_price, second_price = float(frame[column].iloc[first]), float(frame[column].iloc[second])
+        if first_price <= 0 or second_price <= 0:
+            return None
+        materiality = max(
+            cfg.get("price_tolerance_pct", 0.01),
+            cfg.get("price_atr_multiplier", 0.5) * float(atr.iloc[second]) / abs(second_price),
+        )
+        price_change = (second_price - first_price) / abs(first_price)
+        price_ok = price_change <= -materiality if kind == "bullish" else price_change >= materiality
+        rsi_values, hist_values = rsi.iloc[[first, second]], hist.iloc[[first, second]]
+        rsi_ok = bool(not rsi_values.isna().any() and (
+            rsi_values.iloc[1] > rsi_values.iloc[0] if kind == "bullish" else rsi_values.iloc[1] < rsi_values.iloc[0]
+        ))
+        macd_ok = bool(not hist_values.isna().any() and (
+            hist_values.iloc[1] > hist_values.iloc[0] if kind == "bullish" else hist_values.iloc[1] < hist_values.iloc[0]
+        ))
+        matched = 1 + int(bool(rsi_ok)) + int(bool(macd_ok)) if price_ok else 0
+        if matched < cfg.get("min_matched", 2):
+            return None
+        pivot_rows = [
+            {"date": str(dates.iloc[i]), "price": float(frame[column].iloc[i]),
+             "rsi": None if pd.isna(rsi.iloc[i]) else float(rsi.iloc[i]),
+             "macd_hist": None if pd.isna(hist.iloc[i]) else float(hist.iloc[i])}
+            for i in (first, second)
+        ]
+        evidence = [f"价格关系变化 {price_change:.1%}"]
+        if rsi_ok:
+            evidence.append(f"RSI {rsi.iloc[first]:.1f}->{rsi.iloc[second]:.1f}")
+        if macd_ok:
+            evidence.append(f"MACD柱 {hist.iloc[first]:.3f}->{hist.iloc[second]:.3f}")
         return {
-            "type": "超买预警" if close > (boll_upper or close) else "超卖预警",
-            "confidence": "强烈" if len(warnings) >= 3 else "中度",
-            "matched": len(warnings),
-            "total": 3,
+            "family": "pivot_divergence", "type": "底背离观察" if kind == "bullish" else "顶背离观察",
+            "confidence": "强烈" if matched == 3 else "中度", "matched": matched, "total": 3,
+            "pivots": pivot_rows,
             "evidence": evidence,
-            "missing": [],
-            "action": "均线为王，仅作中期风险预警" if weekly_trend == "单边上涨" else "建议减仓观察",
-        }
-    elif len(warnings) == 1:
-        return {
-            "type": "单一预警",
-            "confidence": "轻度",
-            "matched": 1,
-            "total": 3,
-            "evidence": evidence,
-            "missing": [],
-            "action": "观望",
+            "missing": [name for name, ok in (("rsi", rsi_ok), ("macd", macd_ok)) if not ok],
+            "action": "仅作结构反向线索，等待趋势确认",
+            "pivot_index": second,
         }
 
-    return None
-
-
-def multi_indicator_resonance(indicators: Dict) -> Dict:
-    """
-    综合判断趋势、动量、量价配合（legacy，保留向后兼容）。
-    """
-    signals = []
-    score = 5.0
-
-    adx = indicators.get("adx")
-    plus_di = indicators.get("plus_di")
-    minus_di = indicators.get("minus_di")
-    ma5 = indicators.get("ma_5")
-    ma20 = indicators.get("ma_20")
-    ma60 = indicators.get("ma_60")
-    close = indicators.get("close")
-
-    trend = "震荡"
-    if adx is not None and adx > 25:
-        if plus_di is not None and minus_di is not None and plus_di > minus_di:
-            trend = "多头"
-            score += 1.0
-            signals.append(f"ADX={adx:.1f} 强趋势，+DI > -DI，多头排列")
-        elif plus_di is not None and minus_di is not None and plus_di < minus_di:
-            trend = "空头"
-            score -= 1.0
-            signals.append(f"ADX={adx:.1f} 强趋势，-DI > +DI，空头排列")
-    else:
-        adx_str = f"{adx:.1f}" if adx is not None else "N/A"
-        signals.append(f"ADX={adx_str} 趋势偏弱，震荡格局")
-
-    if ma5 is not None and ma20 is not None and ma60 is not None and close is not None:
-        if ma5 > ma20 > ma60 and close > ma5:
-            if trend != "多头":
-                trend = "多头"
-            score += 0.5
-            signals.append("MA 多头排列（5>20>60）")
-        elif ma5 < ma20 < ma60 and close < ma5:
-            if trend != "空头":
-                trend = "空头"
-            score -= 0.5
-            signals.append("MA 空头排列（5<20<60）")
-
-    rsi = indicators.get("rsi_14")
-    stoch_k = indicators.get("stoch_rsi_k")
-    williams = indicators.get("williams_r")
-
-    momentum = "中性"
-    if rsi is not None and rsi > 70:
-        momentum = "超买"
-        score -= 0.5
-        signals.append(f"RSI={rsi:.1f} 超买，短期回调风险")
-    elif rsi is not None and rsi < 30:
-        momentum = "超卖"
-        score += 0.5
-        signals.append(f"RSI={rsi:.1f} 超卖，短期反弹机会")
-    else:
-        if rsi is not None:
-            signals.append(f"RSI={rsi:.1f} 中性区间")
-
-    if stoch_k is not None:
-        if stoch_k > 0.8:
-            score -= 0.3
-            signals.append(f"StochRSI K={stoch_k:.2f} 接近超买")
-        elif stoch_k < 0.2:
-            score += 0.3
-            signals.append(f"StochRSI K={stoch_k:.2f} 接近超卖")
-
-    if williams is not None:
-        if williams > -20:
-            score -= 0.3
-            signals.append(f"Williams %R={williams:.1f} 超买区")
-        elif williams < -80:
-            score += 0.3
-            signals.append(f"Williams %R={williams:.1f} 超卖区")
-
-    macd = indicators.get("macd")
-    macd_signal = indicators.get("macd_signal")
-    macd_hist = indicators.get("macd_hist")
-    if macd is not None and macd_signal is not None:
-        if macd > macd_signal and macd_hist is not None and macd_hist > 0:
-            score += 0.5
-            signals.append("MACD 金叉且柱线扩张，动量向上")
-        elif macd < macd_signal and macd_hist is not None and macd_hist < 0:
-            score -= 0.5
-            signals.append("MACD 死叉且柱线收缩，动量向下")
-        elif macd > macd_signal and macd_hist is not None and macd_hist < 0:
-            signals.append("MACD 金叉但柱线收缩，动量减弱")
-        elif macd < macd_signal and macd_hist is not None and macd_hist > 0:
-            signals.append("MACD 死叉但柱线收缩，下跌动能减弱")
-
-    obv_slope = indicators.get("obv_slope_5")
-    price_slope = indicators.get("price_slope_5")
-    volume_price = "中性"
-    if obv_slope is not None and price_slope is not None:
-        if price_slope > 0 and obv_slope > 0:
-            volume_price = "确认"
-            score += 0.5
-            signals.append("量价齐升，上涨趋势获成交量确认")
-        elif price_slope > 0 and obv_slope < 0:
-            volume_price = "背离"
-            score -= 0.8
-            signals.append("⚠️ 量价背离：价格上涨但 OBV 下降，上涨乏力")
-        elif price_slope < 0 and obv_slope < 0:
-            volume_price = "确认"
-            score -= 0.5
-            signals.append("量价齐跌，下跌趋势获成交量确认")
-        elif price_slope < 0 and obv_slope > 0:
-            volume_price = "背离"
-            score += 0.8
-            signals.append("✅ 底背离：价格下跌但 OBV 上升，吸筹迹象")
-
-    boll_upper = indicators.get("boll_upper")
-    boll_lower = indicators.get("boll_lower")
-    if boll_upper is not None and boll_lower is not None and close is not None:
-        if close > boll_upper:
-            score -= 0.3
-            signals.append("价格突破布林带上轨，短期超买")
-        elif close < boll_lower:
-            score += 0.3
-            signals.append("价格跌破布林带下轨，短期超卖")
-
-    atr = indicators.get("atr_14")
-    if atr is not None and close is not None:
-        atr_pct = atr / close * 100
-        if atr_pct > 5:
-            signals.append(f"ATR={atr_pct:.1f}% 高波动，注意风控")
-        elif atr_pct < 1.5:
-            signals.append(f"ATR={atr_pct:.1f}% 低波动，可能酝酿突破")
-
-    score = round(max(0.0, min(10.0, score)), 1)
-
-    return {
-        "trend": trend,
-        "momentum": momentum,
-        "volume_price": volume_price,
-        "composite_score": score,
-        "signals": signals,
-    }
+    candidates = [item for item in (candidate("bullish"), candidate("bearish")) if item]
+    if not candidates:
+        return None
+    result = max(candidates, key=lambda item: item["pivot_index"])
+    result.pop("pivot_index")
+    return result

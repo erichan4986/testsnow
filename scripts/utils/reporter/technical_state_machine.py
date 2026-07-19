@@ -14,59 +14,45 @@ __all__ = [
 ]
 
 
-def _score_volume_confirmation(df_daily: pd.DataFrame | None) -> tuple[int, str]:
-    """基于实际成交量动态评分。
-
-    规则：
-    - 最新成交量 >= 1.5×MA20：放量确认，9-10分
-    - 1.2×MA20 <= 最新 < 1.5×MA20：温和放量，7-8分
-    - 0.8×MA20 <= 最新 < 1.2×MA20：正常，5-6分
-    - 最新 < 0.8×MA20：缩量，3-4分
-    - 近5日量能递增：+1分
-    - 近5日量能递减：-1分
-    """
-    if df_daily is None or df_daily.empty or "volume" not in df_daily.columns:
-        return 8, "成交额温和（数据不足，默认评分）"
-
+def _score_volume_confirmation(
+    df_daily: pd.DataFrame | None,
+    daily_structure: Dict,
+    volume_reliable: bool = True,
+) -> tuple[int, str, str]:
+    """按最新完成日方向评估量价确认；分值表示多头趋势健康度。"""
+    neutral = (5, "量价数据不足，按中性处理", "insufficient")
+    if not volume_reliable:
+        return 5, "成交量不可比，量价分项按中性处理", "unreliable"
+    if df_daily is None or len(df_daily) < 21 or not {"close", "volume"}.issubset(df_daily.columns):
+        return neutral
     try:
-        vol = df_daily["volume"].astype(float)
-        if len(vol) < 20:
-            return 8, "成交额温和（数据不足，默认评分）"
-
-        latest_vol = float(vol.iloc[-1])
-        ma20_vol = float(vol.tail(20).mean())
-        if ma20_vol <= 0:
-            return 8, "成交额温和（数据不足，默认评分）"
-
-        ratio = latest_vol / ma20_vol
-
-        # 基础分
-        if ratio >= 1.5:
-            base_score = 9
-            evidence = f"放量（量能比{ratio:.1f}×MA20）"
-        elif ratio >= 1.2:
-            base_score = 7
-            evidence = f"温和放量（量能比{ratio:.1f}×MA20）"
-        elif ratio >= 0.8:
-            base_score = 6
-            evidence = f"量能正常（量能比{ratio:.1f}×MA20）"
-        else:
-            base_score = 4
-            evidence = f"缩量（量能比{ratio:.1f}×MA20）"
-
-        # 趋势修正（近5日）
-        if len(vol) >= 6:
-            recent = vol.tail(5).tolist()
-            if all(recent[i] >= recent[i - 1] for i in range(1, 5)):
-                base_score = min(10, base_score + 1)
-                evidence += "，近5日递增"
-            elif all(recent[i] <= recent[i - 1] for i in range(1, 5)):
-                base_score = max(0, base_score - 1)
-                evidence += "，近5日递减"
-
-        return base_score, evidence
-    except Exception:
-        return 8, "成交额温和（计算异常，默认评分）"
+        window = df_daily.tail(21)
+        close = pd.to_numeric(window["close"], errors="coerce")
+        volume = pd.to_numeric(window["volume"], errors="coerce")
+        baseline = volume.iloc[:-1]
+        if close.iloc[-2:].isna().any() or volume.isna().any() or (volume <= 0).any():
+            return neutral
+        baseline_mean = float(baseline.mean())
+        if baseline_mean <= 0:
+            return neutral
+        ratio = float(volume.iloc[-1]) / baseline_mean
+        change = float(close.iloc[-1]) - float(close.iloc[-2])
+        position = daily_structure.get("price_vs_ma20")
+        context = (
+            "bullish" if change > 0 and position == "站上"
+            else "bearish" if change < 0 and position == "跌破"
+            else "mixed"
+        )
+        bucket = 0 if ratio >= 1.5 else 1 if ratio >= 1.2 else 2 if ratio >= 0.8 else 3
+        scores = {"bullish": (9, 7, 6, 4), "bearish": (1, 3, 4, 5), "mixed": (5, 5, 5, 5)}
+        labels = {
+            "bullish": ("放量上涨确认", "温和放量上涨", "量能正常上涨", "缩量上涨"),
+            "bearish": ("放量下跌确认", "温和放量下跌", "量能正常下跌", "缩量下跌"),
+            "mixed": ("方向混合",) * 4,
+        }
+        return scores[context][bucket], f"{labels[context][bucket]}（量能比{ratio:.1f}×MA20）", "ready"
+    except (TypeError, ValueError, IndexError):
+        return neutral
 
 
 def evaluate_bias_extreme(
@@ -356,6 +342,7 @@ def compute_trend_health(
     indicators: Dict,
     config: Dict | None = None,
     df_daily: pd.DataFrame | None = None,
+    volume_reliable: bool = True,
 ) -> Dict:
     """计算趋势健康度评分（0-100）。"""
     if config is None:
@@ -415,8 +402,12 @@ def compute_trend_health(
         score += 5
 
     # 动态成交量确认评分
-    vol_score, vol_evidence = _score_volume_confirmation(df_daily)
-    components["volume_confirmation"] = {"score": vol_score, "max": 10, "evidence": vol_evidence}
+    vol_score, vol_evidence, vol_status = _score_volume_confirmation(
+        df_daily, daily_structure, volume_reliable,
+    )
+    components["volume_confirmation"] = {
+        "score": vol_score, "max": 10, "evidence": vol_evidence, "status": vol_status,
+    }
     score += vol_score
 
     boll_state = indicators.get("boll_state", "正常")
@@ -867,9 +858,15 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     channel = resonance.get("channel_status") or {}
     market = _market_context(resonance)
     primary, counter = [], []
+    bias = resonance.get("bias_extreme") or {}
+    legacy_scan = resonance.get("divergence_scan") or {}
+    pivot = legacy_scan if legacy_scan.get("family") == "pivot_divergence" else {}
+    overextension = resonance.get("overextension_scan") or {}
+    if not overextension and legacy_scan.get("family") == "momentum_extreme":
+        overextension = legacy_scan
 
     def add(items: list, code: str, text: str, limit: int) -> None:
-        if text and len(items) < limit and code not in {item["code"] for item in items}:
+        if text and len(items) < limit and code not in {item["code"] for item in items} and text not in {item["text"] for item in items}:
             items.append({"code": code, "text": text})
 
     if state == "invalid" or invalidation.get("status") == "broken" or invalidation.get("is_invalidated"):
@@ -888,6 +885,12 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     if market["status"] != "unavailable" and ((bullish and "顺风共振" in market["summary"]) or (bearish and any(word in market["summary"] for word in ("系统性压力", "弱于板块")))):
         add(primary, "market_confirmation", market["summary"], 3)
 
+    pivot_type = str(pivot.get("type") or "")
+    if (bearish and "底背离" in pivot_type) or (bullish and "顶背离" in pivot_type):
+        add(counter, "pivot_divergence", f"{pivot_type}，仅作为反向线索", 2)
+    extreme_type = str(overextension.get("type") or "")
+    if (bearish and "超卖" in extreme_type) or (bullish and "超买" in extreme_type):
+        add(counter, "momentum_extreme", f"{extreme_type}，仅作为反向线索", 2)
     structure = resonance.get("structure_health") or {}
     if bearish and structure.get("is_healthy") is True:
         add(counter, "local_structure_repair", f"{structure.get('state') or '局部结构修复'}，但尚不足以改变{trend['label']}判断", 2)
@@ -896,12 +899,8 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     bottom = resonance.get("bottom_signal") or {}
     if bearish and bottom.get("state") not in {None, "", "none"}:
         add(counter, "bottom_watch", "出现底部区域线索，但仅作观察，不构成趋势反转确认", 2)
-    bias, divergence = resonance.get("bias_extreme") or {}, resonance.get("divergence_scan") or {}
     if (bearish and bias.get("direction") == "low") or (bullish and bias.get("direction") == "high"):
         add(counter, "momentum_extreme", f"{bias.get('warning') or '动量进入极端区域'}，仅作为反向线索", 2)
-    warning_type = str(divergence.get("type") or "")
-    if (bearish and "超卖" in warning_type) or (bullish and "超买" in warning_type):
-        add(counter, "momentum_extreme", f"{warning_type}，仅作为反向线索", 2)
     if market["status"] != "unavailable" and bullish and any(word in market["summary"] for word in ("逆风独立", "系统性压力", "弱于板块")):
         add(counter, "market_divergence", market["summary"], 2)
 
@@ -926,8 +925,10 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
         if item.get("reason"):
             priority = {"code": code, "label": label, "detail": item["reason"]}
             break
-    if priority is None and warning_type != "单一预警" and divergence.get("confidence") in {"中度", "强烈"}:
-        priority = {"code": "divergence", "label": warning_type, "detail": divergence.get("action") or "继续观察"}
+    if priority is None and pivot_type and pivot.get("confidence") in {"中度", "强烈"}:
+        priority = {"code": "divergence", "label": pivot_type, "detail": pivot.get("action") or "继续观察"}
+    if priority is None and extreme_type != "单一预警" and overextension.get("confidence") in {"中度", "强烈"}:
+        priority = {"code": "momentum_extreme", "label": extreme_type, "detail": overextension.get("action") or "继续观察"}
     if priority is None and bias.get("level") == "严重":
         priority = {"code": "bias_extreme", "label": bias.get("warning") or "BIAS极端", "detail": "动量极端仅作短期观察"}
 
@@ -942,6 +943,7 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     else:
         change_state = "unknown"
     return {
+        "signal_contract": "technical_signal_contract.v2.1",
         "timeframe_alignment": _timeframe_alignment(resonance, trend),
         "headline": _HEADLINES[action], "primary_evidence": primary, "counter_evidence": counter,
         "confirmation_conditions": confirmation, "invalidation_conditions": conditions,
@@ -961,6 +963,7 @@ def _valid_interpretation(value: Any) -> bool:
     text_items = lambda items: isinstance(items, list) and all(isinstance(item, str) and bool(item) for item in items)
     priority = value.get("priority_observation")
     return all((
+        value.get("signal_contract") == "technical_signal_contract.v2.1",
         value.get("timeframe_alignment") in {"aligned_up", "aligned_down", "daily_break_weekly_range", "daily_repair_weekly_weak", "mixed", "unknown"},
         bool(value.get("headline")), evidence_items(primary) and len(primary) <= 3,
         evidence_items(counter) and len(counter) <= 2, text_items(confirmation) and len(confirmation) <= 2,
@@ -1064,9 +1067,20 @@ def ensure_technical_judgment(
     market: str | None = None,
 ) -> Dict:
     """Trust a complete v1 judgment, otherwise rebuild or fail closed."""
+    if isinstance(judgment, dict):
+        core = {key: value for key, value in judgment.items() if key != "interpretation"}
+        if is_valid_technical_judgment(core):
+            if _valid_interpretation(judgment.get("interpretation")):
+                return judgment
+            structural = isinstance(resonance, dict) and any(
+                key in resonance for key in (
+                    "trend_state", "trend_health", "invalidation", "weekly_background",
+                    "daily_structure", "market_resonance",
+                )
+            )
+            if not structural and not price_target:
+                return judgment if "interpretation" not in judgment else core
     if is_valid_technical_judgment(judgment):
-        if "interpretation" in judgment:
-            return judgment
         structural = isinstance(resonance, dict) and any(
             key in resonance for key in (
                 "trend_state", "trend_health", "invalidation", "weekly_background",

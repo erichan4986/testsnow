@@ -63,14 +63,14 @@ except ImportError:
 try:
     from .technical_patterns import (
         detect_double_top, detect_double_bottom,
-        detect_boll_overextension, evaluate_candle_at_key_levels,
-        multi_indicator_resonance,
+        classify_macd_histogram, detect_boll_overextension,
+        detect_pivot_divergence, evaluate_candle_at_key_levels,
     )
 except ImportError:
     from technical_patterns import (
         detect_double_top, detect_double_bottom,
-        detect_boll_overextension, evaluate_candle_at_key_levels,
-        multi_indicator_resonance,
+        classify_macd_histogram, detect_boll_overextension,
+        detect_pivot_divergence, evaluate_candle_at_key_levels,
     )
 
 try:
@@ -109,6 +109,24 @@ def _min_confidence(current: str, cap: str) -> str:
     order = {"低": 0, "中": 1, "高": 2}
     reverse = {0: "低", 1: "中", 2: "高"}
     return reverse[min(order.get(current, 0), order.get(cap, 0))]
+
+
+def _volume_window_reliable(
+    df_daily: pd.DataFrame,
+    price_adjustment_validation: dict | None,
+) -> bool:
+    """Whether the latest bar and preceding 20 volume bars avoid an unadjusted price gap."""
+    gaps = (price_adjustment_validation or {}).get("price_gaps") or {}
+    if not gaps.get("possible_exrights_gap"):
+        return True
+    latest_gap = gaps.get("latest_gap") or (price_adjustment_validation or {}).get("latest_gap")
+    gap_date = latest_gap.get("date") if isinstance(latest_gap, dict) else gaps.get("gap_date")
+    if df_daily is None or len(df_daily) < 21 or gap_date is None:
+        return False
+    dates = df_daily["date"] if "date" in df_daily.columns else pd.Series(df_daily.index)
+    parsed_gap = pd.to_datetime(gap_date, errors="coerce")
+    first_date = pd.to_datetime(dates.iloc[-21], errors="coerce")
+    return bool(pd.notna(parsed_gap) and pd.notna(first_date) and parsed_gap < first_date)
 
 
 def _build_advisors(indicators: dict) -> dict:
@@ -190,16 +208,9 @@ def _build_advisors(indicators: dict) -> dict:
         boll_meaning = f"{boll_position}，波动正常"
 
     # MACD
-    macd = indicators.get("macd", 0)
-    macd_hist = indicators.get("macd_hist", 0)
-    if macd > 0 and macd_hist < 0:
-        macd_state = "多头动能衰减"
-    elif macd > 0:
-        macd_state = "多头延续"
-    elif macd < 0 and macd_hist > 0:
-        macd_state = "空头动能衰减"
-    else:
-        macd_state = "空头延续"
+    macd_state = classify_macd_histogram(
+        indicators.get("macd_hist"), indicators.get("macd_hist_prev"),
+    )
 
     # RSI
     rsi_value = indicators.get("rsi_14")
@@ -374,6 +385,7 @@ def _compute_base_indicators(df: pd.DataFrame) -> Dict:
         "macd": float(macd_line.iloc[-1]),
         "macd_signal": float(macd_sig.iloc[-1]),
         "macd_hist": float(macd_hist.iloc[-1]),
+        "macd_hist_prev": float(macd_hist.iloc[-2]) if len(macd_hist) >= 2 else None,
         "rsi_14": float(_rsi(close, 14).iloc[-1]),
         "stoch_rsi_k": float(stoch_k.iloc[-1]),
         "stoch_rsi_d": float(stoch_d.iloc[-1]),
@@ -676,15 +688,17 @@ def advanced_medium_term_resonance(
     if candle_signal:
         daily_structure["candle_signal"] = candle_signal
 
-    # 7. 简化背离扫描
-    divergence = detect_boll_overextension(df_daily, indicators, weekly_result["weekly_trend"], config)
+    # 7. 动量极端与真实 pivot 背离分开计算
+    overextension = detect_boll_overextension(df_daily, indicators, weekly_result["weekly_trend"], config)
+    _, _, macd_hist_series = _macd(close)
+    divergence = detect_pivot_divergence(df_daily, _rsi(close, 14), macd_hist_series, config)
 
     # 8. 趋势状态机
     trend_state = classify_trend_state(
         weekly_trend=weekly_result["weekly_trend"],
         daily_structure=daily_structure,
         indicators=indicators,
-        divergence=divergence,
+        divergence=overextension,
     )
     apply_previous_state(trend_state, previous_state)
 
@@ -695,6 +709,7 @@ def advanced_medium_term_resonance(
         indicators=indicators,
         config=config,
         df_daily=df_daily,
+        volume_reliable=_volume_window_reliable(df_daily, price_adjustment_validation),
     )
 
     # 10. 失效条件
@@ -706,22 +721,25 @@ def advanced_medium_term_resonance(
         config=config,
     )
 
-    # Divergence / strong-signal confidence caps based on adjustment quality
-    if divergence and effective_adjustment == "raw" and has_gap:
-        divergence["confidence"] = "低可信度"
-        divergence["action"] = "未使用前复权数据，此预警仅供参考"
+    # Momentum/divergence confidence caps based on adjustment quality
+    scans = [scan for scan in (overextension, divergence) if scan]
+    if scans and effective_adjustment == "raw" and has_gap:
+        for scan in scans:
+            scan["confidence"] = "低可信度"
+            scan["action"] = "未使用前复权数据，此预警仅供参考"
         _resonance["strong_signal_suppressed"] = True
         _resonance["suppressed_signals"] = [
             "divergence_scan",
+            "overextension_scan",
             "bias_extreme",
             "support_resistance_strength",
             "trend_structure_break",
         ]
-    elif divergence and effective_adjustment == "local_qfq_approx":
-        divergence["confidence"] = _min_confidence(
-            divergence.get("confidence", "中"), "中"
-        )
-        divergence["action_note"] = "基于本地近似复权序列，可信度最高为中"
+    elif scans and effective_adjustment == "local_qfq_approx":
+        for scan in scans:
+            if scan.get("confidence") == "强烈":
+                scan["confidence"] = "中度"
+            scan["action_note"] = "基于本地近似复权序列，可信度最高为中"
 
     # 11. 分析可信度
     base_confidence = (
@@ -737,6 +755,8 @@ def advanced_medium_term_resonance(
         limitations.append("周线数据不足20根")
     if not sufficient:
         limitations.append("不满足完整中期趋势分析条件")
+    if trend_health["components"]["volume_confirmation"].get("status") == "unreliable":
+        limitations.append("成交量未完成除权等效调整，量价分项按中性处理")
 
     if effective_adjustment == "raw" and has_gap:
         confidence_level = "低"
@@ -811,6 +831,7 @@ def advanced_medium_term_resonance(
             stock_trend_state=trend_state,
         ),
         "advisors": _build_advisors(indicators),
+        "overextension_scan": overextension,
         "divergence_scan": divergence,
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",

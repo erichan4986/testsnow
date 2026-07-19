@@ -17,6 +17,19 @@ def _make_df(close_list):
     })
 
 
+def _one_sided_config():
+    return {"technical": {"support_resistance": {
+        "lookback": 100,
+        "local_extrema_window": 3,
+        "min_touches": 3,
+        "strong_touches": 5,
+        "reverse_pct": 0.01,
+        "reverse_atr_multiplier": 0.1,
+        "bucket_pct": 0.005,
+        "bucket_atr_multiplier": 0.1,
+    }}}
+
+
 def test_support_resistance_found():
     """构造有明显支撑阻力的价格序列。"""
     np.random.seed(42)
@@ -68,3 +81,46 @@ def test_insufficient_touches_includes_reason():
     assert "历史数据不足" not in reason, "不应回退到默认兜底文案"
     # 应包含具体的触及次数信息
     assert "次" in reason, "reason 应提及触及次数"
+
+
+def test_support_survives_when_resistance_has_no_valid_touches():
+    close = [100.0, 103.0, 106.0, 103.0] * 20
+    df = _make_df(close)
+    df["high"] = [107.0 + i * 0.02 for i in range(len(df))]
+
+    result = find_support_resistance(df, _one_sided_config())
+
+    assert result["support_zone"] is not None
+    assert result["resistance_zone"] is None
+    assert result["diagnostics"]["valid_support_touches"] >= 3
+    assert result["diagnostics"]["valid_resistance_touches"] == 0
+    assert "支撑区已识别" in result["diagnostics"]["reason"]
+
+
+def test_resistance_survives_when_support_has_no_valid_touches():
+    close = [100.0, 103.0, 106.0, 103.0] * 20
+    df = _make_df(close)
+    df["low"] = [99.0 - i * 0.02 for i in range(len(df))]
+
+    result = find_support_resistance(df, _one_sided_config())
+
+    assert result["support_zone"] is None
+    assert result["resistance_zone"] is not None
+    assert result["diagnostics"]["valid_support_touches"] == 0
+    assert result["diagnostics"]["valid_resistance_touches"] >= 3
+    assert "压力区已识别" in result["diagnostics"]["reason"]
+
+
+def test_wrong_side_support_does_not_delete_valid_resistance():
+    np.random.seed(42)
+    close = []
+    for _ in range(50):
+        close.extend(100.0 + np.random.normal(0, 0.5) for _ in range(5))
+        close.extend(110.0 + np.random.normal(0, 0.5) for _ in range(5))
+    close[-1] = 90.0
+
+    result = find_support_resistance(_make_df(close))
+
+    assert result["support_zone"] is None
+    assert result["resistance_zone"] is not None
+    assert "位于当前价格" in result["diagnostics"]["reason"]

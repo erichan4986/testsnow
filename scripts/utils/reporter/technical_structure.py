@@ -11,11 +11,30 @@ __all__ = [
     "compute_bias", "compute_boll_state", "compute_candle_features",
     "compute_ma_direction", "resample_daily_to_weekly",
     "compute_weekly_trend", "find_support_resistance",
-    "evaluate_sr_transformation", "detect_trend_structure_health",
+    "evaluate_sr_transformation", "confirmed_swing_indices", "detect_trend_structure_health",
     "detect_channel_or_box_structure", "evaluate_bottoming_region",
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def confirmed_swing_indices(
+    values: pd.Series,
+    left: int,
+    right: int,
+    kind: str,
+) -> list[int]:
+    """Return strictly confirmed swing positions without using right-edge bars."""
+    series = pd.to_numeric(values, errors="coerce").reset_index(drop=True)
+    indices = []
+    for i in range(left, len(series) - right):
+        center = series.iloc[i]
+        neighbors = pd.concat((series.iloc[i - left:i], series.iloc[i + 1:i + right + 1]))
+        if pd.isna(center) or neighbors.isna().any():
+            continue
+        if (kind == "low" and center < neighbors.min()) or (kind == "high" and center > neighbors.max()):
+            indices.append(i)
+    return indices
 
 
 def evaluate_sr_transformation(
@@ -354,7 +373,7 @@ def find_support_resistance(
                 drop = price - future_min
                 if drop >= reverse_threshold:
                     valid.append(price)
-        return pd.Series(valid)
+        return pd.Series(valid, dtype=float)
 
     max_prices_raw = recent_high[local_max_mask].dropna()
     min_prices_raw = recent_low[local_min_mask].dropna()
@@ -362,7 +381,7 @@ def find_support_resistance(
     max_prices = _valid_touches(max_prices_raw, is_support=False)
     min_prices = _valid_touches(min_prices_raw, is_support=True)
 
-    if len(max_prices) < min_touches or len(min_prices) < min_touches:
+    if len(max_prices) < min_touches and len(min_prices) < min_touches:
         diagnostics.update({
             "bars": len(df),
             "recent_bars": len(recent),
@@ -498,26 +517,16 @@ def detect_trend_structure_health(
         }
 
     df = df_daily.iloc[-lookback:].copy().reset_index(drop=True)
-    lows = df["low"].values
     dates = df["date"] if "date" in df.columns else pd.Series(df.index)
 
     # 计算 ATR（简化版，用 high-low）
     atr = (df["high"] - df["low"]).rolling(14).mean().iloc[-1]
     threshold = max(tolerance_pct, atr_multiplier * (atr / df["close"].iloc[-1] if df["close"].iloc[-1] != 0 else 0))
 
-    # 找 confirmed swing lows
-    swing_lows = []
-    n = len(df)
-    for i in range(swing_left, n - swing_right):
-        is_low = True
-        for j in range(1, swing_left + 1):
-            if lows[i - j] <= lows[i]:
-                is_low = False; break
-        for j in range(1, swing_right + 1):
-            if lows[i + j] <= lows[i]:
-                is_low = False; break
-        if is_low:
-            swing_lows.append({"idx": i, "price": float(lows[i]), "date": str(dates.iloc[i]) if hasattr(dates.iloc[i], 'strftime') else str(dates.iloc[i])})
+    swing_lows = [
+        {"idx": i, "price": float(df["low"].iloc[i]), "date": str(dates.iloc[i])}
+        for i in confirmed_swing_indices(df["low"], swing_left, swing_right, "low")
+    ]
 
     if len(swing_lows) < 2:
         return {
