@@ -232,6 +232,15 @@ img {
     break-inside: avoid;
 }
 
+/* Keep the executive-summary conclusion and its decision chain on one page. */
+img[src$="_decision.png"] {
+    max-height: 148mm;
+}
+
+p:has(> img[src$="_decision.png"]) {
+    margin: 6pt 0 0;
+}
+
 /* Emoji和图标 */
 .emoji {
     font-family: "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";

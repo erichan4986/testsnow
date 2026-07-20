@@ -12,6 +12,14 @@ def test_pdf_html_constrains_report_images_for_a4_pages():
     assert "object-fit: contain;" in html
 
 
+def test_pdf_html_keeps_decision_chain_with_executive_summary():
+    html = _md_to_html("![投资决策链](/tmp/任意股票_20260720_decision.png)")
+
+    assert 'img[src$="_decision.png"] {' in html
+    assert "max-height: 148mm;" in html
+    assert 'p:has(> img[src$="_decision.png"]) {' in html
+
+
 def test_pdf_html_resolves_markdown_and_raw_local_images(tmp_path):
     relative = tmp_path / "decision.png"
     absolute = tmp_path / "technical.png"
