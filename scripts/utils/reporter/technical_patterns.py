@@ -1,6 +1,6 @@
 """形态与预警模块 — 双顶/双底、BOLL超买预警、K线位置评估。"""
 
-from typing import Dict, Optional, Tuple
+from typing import Dict, Optional
 
 import pandas as pd
 
@@ -173,19 +173,6 @@ def detect_double_bottom(close: pd.Series, lookback: int = 30, tolerance: float 
         "peak": round(peak, 2),
         "description": f"两个低点 {round(bot1_val,2)} / {round(bot2_val,2)} 接近，颈线 {round(peak,2)}，突破颈线确认看涨",
     }
-
-
-def _is_support_resistance(close: pd.Series, window: int = 20, touches: int = 3) -> Tuple[Optional[float], Optional[float]]:
-    """找最近 N 天的支撑位和阻力位（基于多次触碰的价格水平）。"""
-    if len(close) < window:
-        return None, None
-    recent = close.iloc[-window:]
-    # 简单实现：用 local min/max 近似
-    local_min = recent[(recent.shift(1) > recent) & (recent.shift(-1) > recent)]
-    local_max = recent[(recent.shift(1) < recent) & (recent.shift(-1) < recent)]
-    support = local_min.mean() if not local_min.empty else None
-    resistance = local_max.mean() if not local_max.empty else None
-    return support, resistance
 
 
 def classify_macd_histogram(current: float | None, previous: float | None) -> str:

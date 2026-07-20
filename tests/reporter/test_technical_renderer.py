@@ -78,6 +78,30 @@ def _make_ctx(with_new_fields=True, mode="full"):
     return ctx
 
 
+def _add_v22_projection_inputs(ctx, terminal_status="ready"):
+    technical = ctx["stock_raw"]["technical"]
+    indicators = technical["indicators"]
+    resonance = indicators["_resonance"]
+    indicators.update({"close": 100.0, "ma_20": 105.0, "ma_60": 110.0})
+    resonance.update({
+        "price_data_lineage": {"effective_adjustment": "qfq", "price_adjustment_applied": True},
+        "structure_path": {
+            "status": "ready", "as_of": "2026-07-19", "limitations": [], "pivot_sequence": [],
+            "segments": [
+                {"start_date": "2026-07-08", "end_date": "2026-07-10", "move": "up", "change_pct": 0.03, "end_kind": "high"},
+                {"start_date": "2026-07-10", "end_date": "2026-07-15", "move": "down", "change_pct": -0.04, "end_kind": "low"},
+            ],
+        },
+        "terminal_shock": {
+            "status": terminal_status, "direction": "down", "facts": ["收盘接近日内低位", "量能比1.8×此前20日均量"],
+        },
+    })
+
+
+def _action_line(output):
+    return next(line for line in output.splitlines() if line.startswith("**当前行动**"))
+
+
 def test_compact_rendering():
     renderer = TechnicalRenderer()
     ctx = _make_ctx(with_new_fields=True, mode="compact")
@@ -103,6 +127,32 @@ def test_full_rendering():
     assert "日线结构" in output
     # 健康度评分以表格形式在 compact 基础输出中呈现，不再单独插入 "### 3. 健康度评分" 标题
     assert "趋势健康度" in output
+
+
+def test_full_renderer_projects_path_shock_and_scenarios_without_raw_selection():
+    ctx = _make_ctx(with_new_fields=True, mode="full")
+    _add_v22_projection_inputs(ctx)
+
+    output = TechnicalRenderer().render(ctx)
+
+    assert "**结构演变**" in output
+    assert "**末端异常K线**" in output
+    assert "**情景阶梯**" in output
+    assert output.count("| 阶段 | 变动 | 含义 |") == 1
+
+
+def test_ordinary_terminal_bar_has_no_placeholder_and_compact_keeps_action():
+    full_ctx = _make_ctx(with_new_fields=True, mode="full")
+    compact_ctx = _make_ctx(with_new_fields=True, mode="compact")
+    _add_v22_projection_inputs(full_ctx, terminal_status="ordinary")
+    _add_v22_projection_inputs(compact_ctx, terminal_status="ordinary")
+
+    full, compact = TechnicalRenderer().render(full_ctx), TechnicalRenderer().render(compact_ctx)
+
+    assert "末端异常K线" not in full
+    assert "| 阶段 | 变动 | 含义 |" not in compact
+    assert "**结构演变**" in compact and "**情景阶梯**" in compact
+    assert _action_line(full) == _action_line(compact)
 
 
 def test_fallback_to_legacy():
@@ -337,6 +387,7 @@ def test_unavailable_market_and_raw_level_diagnostics_are_hidden():
 def test_valid_core_only_cache_uses_safe_minimal_projection():
     renderer = TechnicalRenderer()
     ctx = _make_ctx(with_new_fields=False, mode="compact")
+    ctx["chart_paths"]["technical"] = "/tmp/core-only-technical.png"
     resonance = ctx["stock_raw"]["technical"]["indicators"]["_resonance"]
     resonance["judgment"] = {
         "schema": "technical_judgment.v1",
@@ -361,6 +412,7 @@ def test_valid_core_only_cache_uses_safe_minimal_projection():
     assert "证据不足，暂不展示目标价" in output
     assert "单一预警" not in output
     assert "谋士团" not in output
+    assert "![测试股 技术面分析](/tmp/core-only-technical.png)" in output
 
 
 def test_renderer_has_no_secondary_conclusion_or_priority_owner():

@@ -109,3 +109,28 @@ def test_monotonic_five_day_volume_does_not_change_matrix_score():
     )
 
     assert flat["score"] == monotonic["score"] == 7
+
+
+def test_explicit_volume_context_preserves_direction_aware_score_matrix():
+    context = {
+        "status": "ready",
+        "ratio": 1.5,
+        "price_change": -1.0,
+        "context": "bearish",
+    }
+
+    result = compute_trend_health(
+        weekly_trend="震荡",
+        daily_structure={
+            "ma20_direction": "走平",
+            "ma60_direction": "走平",
+            "price_vs_ma20": "跌破",
+            "price_vs_ma60": "站上",
+        },
+        indicators={"rsi_14": 50, "boll_state": "正常"},
+        volume_context=context,
+    )
+
+    component = result["components"]["volume_confirmation"]
+    assert component["score"] == 1
+    assert "放量下跌确认" in component["evidence"]

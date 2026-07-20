@@ -58,6 +58,38 @@ def _resonance_payload(target=None, **overrides):
     return resonance
 
 
+def _broken_resonance_with_path_and_shock():
+    return _resonance_payload(
+        trend_state={"primary_state": "下降趋势", "stage": "破坏期", "summary": "中期结构走弱"},
+        trend_health={"score": 35, "grade": "破坏风险高"},
+        weekly_background={"trend": "单边下跌"},
+        daily_structure={"price_vs_ma20": "跌破", "price_vs_ma60": "跌破", "ma20_direction": "向下"},
+        analysis_confidence={"level": "高", "data_quality": {"effective_adjustment": "qfq"}},
+        price_data_lineage={"effective_adjustment": "qfq", "price_adjustment_applied": True},
+        key_levels={
+            "support_zone": {"zone_low": 94.0, "zone_high": 96.0},
+            "resistance_zone": {"zone_low": 108.0, "zone_high": 112.0},
+        },
+        invalidation={"status": "near_above", "is_invalidated": False, "hard_invalid": "日线有效跌破MA60", "hard_invalid_price": 90.0},
+        structure_path={
+            "status": "ready", "as_of": "2026-07-19", "limitations": [],
+            "pivot_sequence": [],
+            "segments": [{"start_date": "2026-07-14", "end_date": "2026-07-18", "move": "down", "change_pct": -0.05, "end_kind": "low"}],
+        },
+        terminal_shock={
+            "status": "ready", "direction": "down", "facts": ["收盘接近日内低位"],
+            "range_atr_ratio": 2.0, "body_ratio": 0.8, "volume_status": "ready", "volume_ratio": 1.8,
+        },
+    )
+
+
+def _bearish_observe_target():
+    return _target_payload(
+        status="observe", reason_code="structure_observation",
+        direction="bearish", structure_confidence="observation",
+    )
+
+
 def test_build_technical_judgment_has_stable_contract_and_copies_target_status():
     judgment = build_technical_judgment(
         resonance=_resonance_payload(),
@@ -291,9 +323,62 @@ def test_interpretation_signal_contract_invalidates_stale_projection_but_keeps_c
     stale["interpretation"].pop("signal_contract")
     core = {key: value for key, value in stale.items() if key != "interpretation"}
 
-    assert built["interpretation"]["signal_contract"] == "technical_signal_contract.v2.1"
+    assert built["interpretation"]["signal_contract"] == "technical_signal_contract.v2.2"
     assert is_valid_technical_judgment(stale) is False
     assert ensure_technical_judgment(stale) == core
+
+
+def test_bearish_path_and_downside_shock_are_evidence_not_action_owner():
+    judgment = build_technical_judgment(
+        _broken_resonance_with_path_and_shock(),
+        _bearish_observe_target(),
+        indicators={"close": 100.0, "ma_20": 105.0, "ma_60": 110.0},
+    )
+
+    interpretation = judgment["interpretation"]
+    assert judgment["action"]["state"] == "risk_control"
+    assert interpretation["signal_contract"] == "technical_signal_contract.v2.2"
+    assert interpretation["primary_evidence"][0]["code"] == "terminal_down_shock"
+    assert interpretation["scenario_ladder"]["reference_close"] == 100.0
+    assert {step["level_source"] for step in interpretation["scenario_ladder"]["steps"]} <= {
+        "ma20", "ma60", "support_zone", "resistance_zone", "hard_invalidation",
+    }
+
+
+def test_cached_v22_scenario_with_wrong_reference_close_rebuilds():
+    resonance = _broken_resonance_with_path_and_shock()
+    indicators = {"close": 100.0, "ma_20": 105.0, "ma_60": 120.0}
+    cached = build_technical_judgment(resonance, _bearish_observe_target(), indicators=indicators)
+    cached["interpretation"]["scenario_ladder"]["reference_close"] = 99.0
+
+    rebuilt = ensure_technical_judgment(cached, resonance, _bearish_observe_target(), indicators)
+
+    assert rebuilt["interpretation"]["scenario_ladder"]["reference_close"] == 100.0
+
+
+def test_cached_v22_scenario_with_wrong_zone_edge_rebuilds():
+    resonance = _broken_resonance_with_path_and_shock()
+    indicators = {"close": 100.0, "ma_20": 105.0, "ma_60": 120.0}
+    cached = build_technical_judgment(resonance, _bearish_observe_target(), indicators=indicators)
+    zone_step = next(step for step in cached["interpretation"]["scenario_ladder"]["steps"] if step["level_source"] == "resistance_zone")
+    zone_step["source_field"] = "zone_low" if zone_step["source_field"] == "zone_high" else "zone_high"
+
+    rebuilt = ensure_technical_judgment(cached, resonance, _bearish_observe_target(), indicators)
+
+    rebuilt_step = next(step for step in rebuilt["interpretation"]["scenario_ladder"]["steps"] if step["level_source"] == "resistance_zone")
+    assert rebuilt_step["source_field"] != zone_step["source_field"]
+
+
+def test_context_free_v22_cache_returns_core_only():
+    cached = build_technical_judgment(
+        _broken_resonance_with_path_and_shock(),
+        _bearish_observe_target(),
+        indicators={"close": 100.0, "ma_20": 105.0, "ma_60": 110.0},
+    )
+
+    result = ensure_technical_judgment(cached)
+
+    assert "interpretation" not in result
 
 
 def test_stale_interpretation_rebuilds_from_current_resonance():
@@ -313,7 +398,7 @@ def test_stale_interpretation_rebuilds_from_current_resonance():
         indicators={"analysis_confidence": {"level": "高"}},
     )
 
-    assert rebuilt["interpretation"]["signal_contract"] == "technical_signal_contract.v2.1"
+    assert rebuilt["interpretation"]["signal_contract"] == "technical_signal_contract.v2.2"
 
 
 def test_pivot_divergence_precedes_overextension_without_upgrading_bearish_action():

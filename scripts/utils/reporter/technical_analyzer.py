@@ -31,7 +31,8 @@ try:
         compute_weekly_trend, find_support_resistance,
         evaluate_sr_transformation,
         detect_trend_structure_health, detect_channel_or_box_structure,
-        evaluate_bottoming_region,
+        evaluate_bottoming_region, build_volume_context,
+        build_structure_path, analyze_terminal_shock,
     )
 except ImportError:
     from technical_structure import (
@@ -40,7 +41,8 @@ except ImportError:
         compute_weekly_trend, find_support_resistance,
         evaluate_sr_transformation,
         detect_trend_structure_health, detect_channel_or_box_structure,
-        evaluate_bottoming_region,
+        evaluate_bottoming_region, build_volume_context,
+        build_structure_path, analyze_terminal_shock,
     )
 
 try:
@@ -676,6 +678,10 @@ def advanced_medium_term_resonance(
 
     # 6.5 K线形态信号（只在关键位置）
     atr_series = _atr(df_daily)
+    volume_reliable = _volume_window_reliable(df_daily, price_adjustment_validation)
+    volume_context = build_volume_context(df_daily, daily_structure, volume_reliable)
+    structure_path = build_structure_path(df_daily, config)
+    terminal_shock = analyze_terminal_shock(df_daily, atr_series, volume_context, config)
     candle_features = compute_candle_features(df_daily, atr_series)
     candle_signal = evaluate_candle_at_key_levels(
         candle=candle_features,
@@ -709,7 +715,8 @@ def advanced_medium_term_resonance(
         indicators=indicators,
         config=config,
         df_daily=df_daily,
-        volume_reliable=_volume_window_reliable(df_daily, price_adjustment_validation),
+        volume_reliable=volume_reliable,
+        volume_context=volume_context,
     )
 
     # 10. 失效条件
@@ -819,6 +826,9 @@ def advanced_medium_term_resonance(
         },
         "daily_structure": daily_structure,
         "trend_health": trend_health,
+        "volume_context": volume_context,
+        "structure_path": structure_path,
+        "terminal_shock": terminal_shock,
         "key_levels": {
             "support_zone": sr_result.get("support_zone"),
             "resistance_zone": sr_result.get("resistance_zone"),

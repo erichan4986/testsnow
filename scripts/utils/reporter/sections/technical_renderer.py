@@ -54,7 +54,9 @@ class TechnicalRenderer:
     ) -> str:
         interpretation = judgment.get("interpretation")
         if not isinstance(interpretation, dict):
-            return self._render_core_judgment(judgment)
+            lines = [self._render_core_judgment(judgment), ""]
+            lines.extend(self._technical_chart_lines(stock_name, ctx))
+            return "\n".join(lines)
         ts = resonance.get("trend_state", {})
         th = resonance.get("trend_health", {})
         inv = resonance.get("invalidation", {})
@@ -102,6 +104,10 @@ class TechnicalRenderer:
             label = "已触发" if invalidated else "失效"
             lines.extend(f"- {label}：{text}" for text in invalidations)
             lines.append("")
+
+        lines.extend(self._render_structure_path(interpretation.get("structure_path"), full=full))
+        lines.extend(self._render_terminal_event(interpretation.get("terminal_event")))
+        lines.extend(self._render_scenario_ladder(interpretation.get("scenario_ladder")))
 
         if full:
             weekly = self._as_dict(resonance.get("weekly_background"))
@@ -217,15 +223,14 @@ class TechnicalRenderer:
                 lines.append(f"| {name.upper()} | {info.get('state', '—')} | {info.get('meaning', '')} |")
             lines.append("")
         lines.extend(self._render_target_judgment(judgment, price_target))
-        chart_paths = ctx.get("chart_paths", {})
-        tech_chart = chart_paths.get("technical")
-        if tech_chart:
-            lines.append("### 技术面综合图")
-            lines.append("")
-            lines.append(f"![{stock_name} 技术面分析]({tech_chart})")
-            lines.append("")
+        lines.extend(self._technical_chart_lines(stock_name, ctx))
 
         return "\n".join(lines)
+
+    @staticmethod
+    def _technical_chart_lines(stock_name: str, ctx: Dict) -> list[str]:
+        tech_chart = ctx.get("chart_paths", ctx.get("_chart_paths", {})).get("technical")
+        return ["### 技术面综合图", "", f"![{stock_name} 技术面分析]({tech_chart})", ""] if tech_chart else []
 
     @staticmethod
     def _append_evidence(lines: list[str], title: str, items: Any) -> None:
@@ -234,6 +239,38 @@ class TechnicalRenderer:
         lines.append(f"**{title}**")
         lines.extend(f"- {item.get('text', '')}" for item in items if isinstance(item, dict) and item.get("text"))
         lines.append("")
+
+    @staticmethod
+    def _render_structure_path(projection: Any, *, full: bool) -> list[str]:
+        if not isinstance(projection, dict) or not projection.get("summary"):
+            return []
+        lines = ["**结构演变**", f"- {projection['summary']}"]
+        segments = projection.get("segments") if isinstance(projection.get("segments"), list) else []
+        if full and segments:
+            lines.extend(["", "| 阶段 | 变动 | 含义 |", "|------|------|------|"])
+            lines.extend(
+                f"| {item.get('period', '')} | {item.get('move', '')} | {item.get('meaning', '')} |"
+                for item in segments[-5:] if isinstance(item, dict)
+            )
+        return [*lines, ""]
+
+    @staticmethod
+    def _render_terminal_event(event: Any) -> list[str]:
+        if not isinstance(event, dict) or event.get("status") != "shock":
+            return []
+        lines = ["**末端异常K线**", f"- {event.get('headline', '末端异常K线')}"]
+        lines.extend(f"- {fact}" for fact in (event.get("facts") or [])[:4] if isinstance(fact, str) and fact)
+        return [*lines, ""]
+
+    @staticmethod
+    def _render_scenario_ladder(ladder: Any) -> list[str]:
+        if not isinstance(ladder, dict) or not isinstance(ladder.get("steps"), list) or not ladder["steps"]:
+            return []
+        lines = ["**情景阶梯**"]
+        for step in ladder["steps"][:3]:
+            if isinstance(step, dict):
+                lines.append(f"- {step.get('label', '观察位')}：{step.get('condition', '')}，{step.get('meaning', '')}")
+        return [*lines, ""]
 
     def _render_core_judgment(self, judgment: Dict) -> str:
         trend, target, action = judgment.get("trend") or {}, judgment.get("target") or {}, judgment.get("action") or {}
@@ -392,13 +429,7 @@ class TechnicalRenderer:
                 lines.append(f"- **{p['pattern']}** ({conf}置信): {desc}")
             lines.append("")
 
-        chart_paths = ctx.get("chart_paths", ctx.get("_chart_paths", {}))
-        tech_chart = chart_paths.get("technical")
-        if tech_chart:
-            lines.append("### 技术面综合图")
-            lines.append("")
-            lines.append(f"![{stock_name} 技术面分析]({tech_chart})")
-            lines.append("")
+        lines.extend(self._technical_chart_lines(stock_name, ctx))
 
         return "\n".join(lines)
 

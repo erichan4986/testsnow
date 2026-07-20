@@ -212,6 +212,7 @@ existing normalized indicators object. Upgrade the additive contract to
             "condition": str,
             "level": float | None,
             "level_source": "support_zone|resistance_zone|ma20|ma60|hard_invalidation|none",
+            "source_field": "value|zone_low|zone_high|none",
             "meaning": str,
         }
     ]
@@ -284,7 +285,7 @@ Missing/non-finite close yields an empty ladder rather than a positional guess.
 - Shape validation alone cannot prove a cached price came from the current inputs. Add a context-aware
   `_scenario_levels_match_inputs(interpretation, resonance, indicators)` check in
   `ensure_technical_judgment()`. Every non-null level must equal the value identified by its `level_source`
-  after numeric normalization. `scenario_ladder.reference_close` must equal `indicators.close`, and its
+  and `source_field` after numeric normalization. `scenario_ladder.reference_close` must equal `indicators.close`, and its
   `as_of` must equal the current `structure_path.as_of`. A missing source, mismatched value, wrong side,
   changed close, or changed as-of date invalidates the additive projection and triggers rebuild when
   structural inputs exist.

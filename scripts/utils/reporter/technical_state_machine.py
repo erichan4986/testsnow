@@ -4,6 +4,11 @@ from typing import Any, Dict
 
 import pandas as pd
 
+try:
+    from .technical_structure import build_volume_context
+except ImportError:
+    from technical_structure import build_volume_context
+
 __all__ = [
     "classify_trend_state", "apply_previous_state",
     "compute_trend_health", "compute_invalidation",
@@ -18,31 +23,18 @@ def _score_volume_confirmation(
     df_daily: pd.DataFrame | None,
     daily_structure: Dict,
     volume_reliable: bool = True,
+    volume_context: Dict | None = None,
 ) -> tuple[int, str, str]:
     """按最新完成日方向评估量价确认；分值表示多头趋势健康度。"""
     neutral = (5, "量价数据不足，按中性处理", "insufficient")
-    if not volume_reliable:
+    context_data = volume_context or build_volume_context(df_daily, daily_structure, volume_reliable)
+    status = context_data.get("status")
+    if status == "unreliable":
         return 5, "成交量不可比，量价分项按中性处理", "unreliable"
-    if df_daily is None or len(df_daily) < 21 or not {"close", "volume"}.issubset(df_daily.columns):
+    if status != "ready":
         return neutral
     try:
-        window = df_daily.tail(21)
-        close = pd.to_numeric(window["close"], errors="coerce")
-        volume = pd.to_numeric(window["volume"], errors="coerce")
-        baseline = volume.iloc[:-1]
-        if close.iloc[-2:].isna().any() or volume.isna().any() or (volume <= 0).any():
-            return neutral
-        baseline_mean = float(baseline.mean())
-        if baseline_mean <= 0:
-            return neutral
-        ratio = float(volume.iloc[-1]) / baseline_mean
-        change = float(close.iloc[-1]) - float(close.iloc[-2])
-        position = daily_structure.get("price_vs_ma20")
-        context = (
-            "bullish" if change > 0 and position == "站上"
-            else "bearish" if change < 0 and position == "跌破"
-            else "mixed"
-        )
+        ratio, context = float(context_data["ratio"]), context_data["context"]
         bucket = 0 if ratio >= 1.5 else 1 if ratio >= 1.2 else 2 if ratio >= 0.8 else 3
         scores = {"bullish": (9, 7, 6, 4), "bearish": (1, 3, 4, 5), "mixed": (5, 5, 5, 5)}
         labels = {
@@ -343,6 +335,7 @@ def compute_trend_health(
     config: Dict | None = None,
     df_daily: pd.DataFrame | None = None,
     volume_reliable: bool = True,
+    volume_context: Dict | None = None,
 ) -> Dict:
     """计算趋势健康度评分（0-100）。"""
     if config is None:
@@ -403,7 +396,7 @@ def compute_trend_health(
 
     # 动态成交量确认评分
     vol_score, vol_evidence, vol_status = _score_volume_confirmation(
-        df_daily, daily_structure, volume_reliable,
+        df_daily, daily_structure, volume_reliable, volume_context,
     )
     components["volume_confirmation"] = {
         "score": vol_score, "max": 10, "evidence": vol_evidence, "status": vol_status,
@@ -851,7 +844,136 @@ def _target_message(target: Dict) -> Dict:
     return {"state": "unavailable", "text": "证据不足，暂不展示目标价"}
 
 
-def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> Dict:
+def _finite_number(value: Any) -> float | None:
+    number = _number(value)
+    return number if number is not None and pd.notna(number) and abs(number) != float("inf") else None
+
+
+def _path_interpretation(path: Dict, trend: Dict) -> Dict:
+    """Translate analyzer pivot facts into bounded, regime-aware wording."""
+    status = path.get("status", "unavailable") if isinstance(path, dict) else "unavailable"
+    raw_segments = path.get("segments", []) if isinstance(path, dict) else []
+    segments = []
+    bearish, bullish = trend["state"] in {"down", "invalid"}, trend["state"] in {"strong_up", "weak_up"}
+    for item in raw_segments[-5:] if isinstance(raw_segments, list) else []:
+        if not isinstance(item, dict) or item.get("move") not in {"up", "down", "flat"}:
+            continue
+        move = item["move"]
+        meaning = (
+            "下行延续" if bearish and move == "down" else
+            "反抽/局部修复" if bearish and move == "up" else
+            "上行延续" if bullish and move == "up" else
+            "回撤/局部转弱" if bullish and move == "down" else
+            "区间上行段" if move == "up" else
+            "区间下行段" if move == "down" else "持平整理"
+        )
+        change = _finite_number(item.get("change_pct"))
+        segments.append({
+            "period": f"{item.get('start_date', '')} 至 {item.get('end_date', '')}".strip(),
+            "move": f"{change:.1%}" if change is not None else "变动不详",
+            "meaning": meaning,
+        })
+    summary = f"最近确认结构以{segments[-1]['meaning']}为主。" if segments else "确认拐点不足，暂不展开结构路径。"
+    return {"status": status if status in {"ready", "sparse", "unavailable"} else "unavailable", "summary": summary, "segments": segments}
+
+
+def _terminal_event(shock: Dict, trend: Dict) -> Dict | None:
+    if not isinstance(shock, dict) or shock.get("status") != "ready" or shock.get("direction") not in {"up", "down"}:
+        return None
+    direction = shock["direction"]
+    return {
+        "status": "shock", "direction": direction, "headline": f"末端出现{'下行' if direction == 'down' else '上行'}异常K线",
+        "facts": [fact for fact in shock.get("facts", []) if isinstance(fact, str) and fact][:4],
+        "aligned": trend["state"] in ({"down", "invalid"} if direction == "down" else {"strong_up", "weak_up"}),
+    }
+
+
+def _scenario_candidate(resonance: Dict, indicators: Dict, source: str, field: str) -> Dict | None:
+    if field == "value":
+        value = {
+            "ma20": indicators.get("ma_20"), "ma60": indicators.get("ma_60"),
+            "hard_invalidation": (resonance.get("invalidation") or {}).get("hard_invalid_price"),
+        }.get(source)
+    elif source in {"support_zone", "resistance_zone"} and field in {"zone_low", "zone_high"}:
+        value = ((resonance.get("key_levels") or {}).get(source) or {}).get(field)
+    else:
+        return None
+    level = _finite_number(value)
+    return {"level": level, "level_source": source, "source_field": field} if level is not None else None
+
+
+def _pick_scenario_level(candidates: list[Dict | None], close: float, side: str, used: list[float], boundary: float | None = None) -> Dict | None:
+    eligible = []
+    for candidate in filter(None, candidates):
+        level = candidate["level"]
+        expected_side = level > close if side == "up" else level < close
+        beyond_boundary = boundary is None or (level > boundary if side == "up" else level < boundary)
+        duplicate = any(abs(level - existing) / max(abs(existing), 1e-9) <= 0.005 for existing in used)
+        if expected_side and beyond_boundary and not duplicate:
+            eligible.append(candidate)
+    return min(eligible, key=lambda candidate: abs(candidate["level"] - close), default=None)
+
+
+def _scenario_ladder(resonance: Dict, indicators: Dict, trend: Dict) -> Dict:
+    path = resonance.get("structure_path") or {}
+    close = _finite_number(indicators.get("close"))
+    ladder = {"as_of": path.get("as_of"), "reference_close": close, "steps": []}
+    if close is None:
+        return ladder
+
+    def source(name: str, field: str = "value") -> Dict | None:
+        return _scenario_candidate(resonance, indicators, name, field)
+
+    def add(role: str, label: str, side: str, candidates: list[Dict | None], meaning: str, boundary: float | None = None) -> float | None:
+        used = [step["level"] for step in ladder["steps"]]
+        candidate = _pick_scenario_level(candidates, close, side, used, boundary)
+        if not candidate:
+            return None
+        level = candidate["level"]
+        condition = f"若收盘{'站上' if side == 'up' else '跌破'}{level:.2f}"
+        ladder["steps"].append({"role": role, "label": label, "condition": condition, **candidate, "meaning": meaning})
+        return level
+
+    state = trend["state"]
+    if state in {"down", "invalid"}:
+        near_up = add("near_upside", "反抽观察", "up", [source("ma20"), source("resistance_zone", "zone_low")], "观察反抽能否延续")
+        add("far_upside", "趋势修复", "up", [source("resistance_zone", "zone_high"), source("ma60")], "满足后仍仅视为趋势修复观察", near_up)
+        add("near_downside", "下行延续", "down", [source("support_zone", "zone_low"), source("hard_invalidation")], "跌破后下行结构继续")
+    elif state in {"strong_up", "weak_up"}:
+        add("near_upside", "上行延续", "up", [source("resistance_zone", "zone_low"), source("resistance_zone", "zone_high")], "站上后观察上行延续")
+        near_down = add("near_downside", "第一防线", "down", [source("ma20"), source("support_zone", "zone_high")], "失守后先观察短线结构")
+        add("far_downside", "结构失效观察", "down", [source("ma60"), source("support_zone", "zone_low"), source("hard_invalidation")], "失守后中期结构承压", near_down)
+    elif state in {"range", "transition"}:
+        add("near_upside", "区间上沿", "up", [source("resistance_zone", "zone_low")], "突破前仍按区间观察")
+        add("near_downside", "区间下沿", "down", [source("support_zone", "zone_high")], "跌破前仍按区间观察")
+    return ladder
+
+
+def _scenario_levels_match_inputs(interpretation: Dict, resonance: Dict, indicators: Dict) -> bool:
+    ladder = interpretation.get("scenario_ladder") if isinstance(interpretation, dict) else None
+    if not isinstance(ladder, dict) or ladder.get("as_of") != (resonance.get("structure_path") or {}).get("as_of"):
+        return False
+    close = _finite_number(indicators.get("close"))
+    if ladder.get("reference_close") != close:
+        return False
+    steps = ladder.get("steps")
+    if not isinstance(steps, list) or (close is None and steps):
+        return False
+    for step in steps:
+        if not isinstance(step, dict):
+            return False
+        level = _finite_number(step.get("level"))
+        source = _scenario_candidate(resonance, indicators, step.get("level_source"), step.get("source_field"))
+        expected = source["level"] if source else None
+        role = step.get("role", "")
+        if level is None or expected is None or abs(level - expected) > max(1e-6, abs(expected) * 1e-6):
+            return False
+        if ("upside" in role and level <= close) or ("downside" in role and level >= close):
+            return False
+    return True
+
+
+def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str, indicators: Dict) -> Dict:
     state = trend["state"]
     bearish, bullish = state in {"down", "invalid"}, state in {"strong_up", "weak_up"}
     invalidation = resonance.get("invalidation") or {}
@@ -874,6 +996,10 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     breakout = str(channel.get("breakout_status") or "")
     if (bearish and "向下" in breakout) or (bullish and "向上" in breakout):
         add(primary, "directional_channel_break", f"通道/箱体信号：{breakout}", 3)
+    path = _path_interpretation(resonance.get("structure_path") or {}, trend)
+    terminal = _terminal_event(resonance.get("terminal_shock") or {}, trend)
+    if terminal and terminal["aligned"]:
+        add(primary, f"terminal_{terminal['direction']}_shock", terminal["headline"], 3)
     weekly = (resonance.get("weekly_background") or {}).get("trend")
     daily = resonance.get("daily_structure") or {}
     if weekly or daily:
@@ -888,6 +1014,8 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     pivot_type = str(pivot.get("type") or "")
     if (bearish and "底背离" in pivot_type) or (bullish and "顶背离" in pivot_type):
         add(counter, "pivot_divergence", f"{pivot_type}，仅作为反向线索", 2)
+    if terminal and not terminal["aligned"]:
+        add(counter, f"terminal_{terminal['direction']}_shock", terminal["headline"], 2)
     extreme_type = str(overextension.get("type") or "")
     if (bearish and "超卖" in extreme_type) or (bullish and "超买" in extreme_type):
         add(counter, "momentum_extreme", f"{extreme_type}，仅作为反向线索", 2)
@@ -943,13 +1071,40 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str) -> 
     else:
         change_state = "unknown"
     return {
-        "signal_contract": "technical_signal_contract.v2.1",
+        "signal_contract": "technical_signal_contract.v2.2",
         "timeframe_alignment": _timeframe_alignment(resonance, trend),
         "headline": _HEADLINES[action], "primary_evidence": primary, "counter_evidence": counter,
         "confirmation_conditions": confirmation, "invalidation_conditions": conditions,
         "priority_observation": priority, "market_context": market, "target_message": _target_message(target),
         "change": {"state": change_state, "previous_stage": previous or "", "current_stage": stage},
+        "structure_path": path,
+        "terminal_event": terminal,
+        "scenario_ladder": _scenario_ladder(resonance, indicators, trend),
     }
+
+
+def _valid_scenario_ladder(value: Any) -> bool:
+    if not isinstance(value, dict) or not isinstance(value.get("steps"), list) or len(value["steps"]) > 3:
+        return False
+    close = _finite_number(value.get("reference_close"))
+    if value.get("reference_close") is not None and close is None:
+        return False
+    allowed_roles = {"near_upside", "far_upside", "near_downside", "far_downside"}
+    allowed_sources = {"ma20", "ma60", "support_zone", "resistance_zone", "hard_invalidation"}
+    previous = {"up": None, "down": None}
+    for step in value["steps"]:
+        if not isinstance(step, dict) or step.get("role") not in allowed_roles or step.get("level_source") not in allowed_sources:
+            return False
+        level = _finite_number(step.get("level"))
+        if level is None or not all(isinstance(step.get(key), str) and step.get(key) for key in ("label", "condition", "meaning", "source_field")):
+            return False
+        side = "up" if "upside" in step["role"] else "down"
+        if close is None or (side == "up" and level <= close) or (side == "down" and level >= close):
+            return False
+        if previous[side] is not None and ((side == "up" and level < previous[side]) or (side == "down" and level > previous[side])):
+            return False
+        previous[side] = level
+    return True
 
 
 def _valid_interpretation(value: Any) -> bool:
@@ -963,7 +1118,7 @@ def _valid_interpretation(value: Any) -> bool:
     text_items = lambda items: isinstance(items, list) and all(isinstance(item, str) and bool(item) for item in items)
     priority = value.get("priority_observation")
     return all((
-        value.get("signal_contract") == "technical_signal_contract.v2.1",
+        value.get("signal_contract") == "technical_signal_contract.v2.2",
         value.get("timeframe_alignment") in {"aligned_up", "aligned_down", "daily_break_weekly_range", "daily_repair_weekly_weak", "mixed", "unknown"},
         bool(value.get("headline")), evidence_items(primary) and len(primary) <= 3,
         evidence_items(counter) and len(counter) <= 2, text_items(confirmation) and len(confirmation) <= 2,
@@ -972,6 +1127,19 @@ def _valid_interpretation(value: Any) -> bool:
         isinstance(market, dict) and market.get("status") in {"ready", "partial", "unavailable"},
         isinstance(target_message, dict) and target_message.get("state") in {"ready", "pending", "observe", "blocked", "invalid", "unavailable"} and bool(target_message.get("text")),
         isinstance(change, dict) and change.get("state") in {"improving", "deteriorating", "unchanged", "unknown"},
+        isinstance(value.get("structure_path"), dict)
+        and value["structure_path"].get("status") in {"ready", "sparse", "unavailable"}
+        and isinstance(value["structure_path"].get("summary"), str)
+        and isinstance(value["structure_path"].get("segments"), list)
+        and len(value["structure_path"]["segments"]) <= 5,
+        value.get("terminal_event") is None or (
+            isinstance(value.get("terminal_event"), dict)
+            and value["terminal_event"].get("status") == "shock"
+            and value["terminal_event"].get("direction") in {"up", "down"}
+            and isinstance(value["terminal_event"].get("facts"), list)
+            and len(value["terminal_event"]["facts"]) <= 4
+        ),
+        _valid_scenario_ladder(value.get("scenario_ladder")),
     ))
 
 
@@ -1023,7 +1191,7 @@ def build_technical_judgment(
         "action": {"state": action, "summary": action_summary},
         "limitations": limitations,
     }
-    judgment["interpretation"] = _interpretation(resonance, trend, target, action)
+    judgment["interpretation"] = _interpretation(resonance, trend, target, action, indicators)
     if judgment["interpretation"]["market_context"]["status"] == "unavailable" and "市场/行业共振数据不足" not in limitations:
         limitations.append("市场/行业共振数据不足")
     return judgment
@@ -1067,28 +1235,20 @@ def ensure_technical_judgment(
     market: str | None = None,
 ) -> Dict:
     """Trust a complete v1 judgment, otherwise rebuild or fail closed."""
+    structural = isinstance(resonance, dict) and any(
+        key in resonance for key in (
+            "trend_state", "trend_health", "invalidation", "weekly_background",
+            "daily_structure", "market_resonance", "structure_path", "terminal_shock", "key_levels",
+        )
+    )
     if isinstance(judgment, dict):
         core = {key: value for key, value in judgment.items() if key != "interpretation"}
         if is_valid_technical_judgment(core):
-            if _valid_interpretation(judgment.get("interpretation")):
-                return judgment
-            structural = isinstance(resonance, dict) and any(
-                key in resonance for key in (
-                    "trend_state", "trend_health", "invalidation", "weekly_background",
-                    "daily_structure", "market_resonance",
-                )
-            )
+            interpretation = judgment.get("interpretation")
             if not structural and not price_target:
-                return judgment if "interpretation" not in judgment else core
-    if is_valid_technical_judgment(judgment):
-        structural = isinstance(resonance, dict) and any(
-            key in resonance for key in (
-                "trend_state", "trend_health", "invalidation", "weekly_background",
-                "daily_structure", "market_resonance",
-            )
-        )
-        if not structural and not price_target:
-            return judgment
+                return judgment if interpretation is None else core
+            if _valid_interpretation(interpretation) and _scenario_levels_match_inputs(interpretation, resonance, indicators or {}):
+                return judgment
     if isinstance(judgment, dict) and not resonance and "trend_state" in judgment:
         resonance = judgment
     return build_technical_judgment(resonance, price_target, indicators, daily_data, market)
