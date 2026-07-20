@@ -98,6 +98,23 @@ def test_deep_report_deterministic_executive_summary_body_passes_gate():
     assert "empty_executive_summary_body" not in {i.code for i in result.issues}
 
 
+def test_deep_report_image_first_executive_summary_body_passes_gate():
+    text = """# 测试股 舆情深度报告
+
+## 执行摘要
+
+> **一句话结论**：谨慎持有，等待趋势确认。
+
+![测试股 投资决策链](测试股_20260719_decision.png)
+
+## 一、综合评分与推荐
+
+### 综合评分: 5.3/10 | EV: +8.00%（谨慎持有）
+"""
+    result = check_report_text(text)
+    assert "empty_executive_summary_body" not in {i.code for i in result.issues}
+
+
 def test_freshness_summary_line_requires_preview_boundary_and_resolved_refs():
     fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
     line = (

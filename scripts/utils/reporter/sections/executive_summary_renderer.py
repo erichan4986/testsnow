@@ -480,6 +480,9 @@ class ExecutiveSummaryRenderer:
         stock_name = ctx.get("stock_name", "")
         if not stock_name:
             return ""
+        view = ctx.get("executive_summary_view")
+        if view is not None:
+            return self._render_view_projection(ctx, view)
         synthesis = ctx.get("synthesis_display") or ctx.get("synthesis") or {}
 
         pillar = ctx.get("pillar")
@@ -582,4 +585,32 @@ class ExecutiveSummaryRenderer:
             lines.append(f"![{stock_name} 多空论点对比]({bullbear_chart})")
             lines.append("")
 
+        return "\n".join(lines)
+
+    @staticmethod
+    def _render_view_projection(ctx: Dict[str, Any], view: Any) -> str:
+        lines = [
+            "## 执行摘要",
+            "",
+            f"> **一句话结论**：{view.recommendation_sentence}",
+            "",
+        ]
+        image_path = (ctx.get("chart_paths") or {}).get("executive_summary")
+        if image_path:
+            lines.extend([
+                f"![{view.stock_name} 投资决策链]({image_path})",
+                "",
+            ])
+        else:
+            for label, node in (
+                ("基本面", view.fundamental),
+                ("估值", view.valuation),
+                ("技术与风险", view.technical),
+            ):
+                lines.extend([f"**{label}**：{node.title}；{_sentence(node.detail)}", ""])
+            lines.extend([f"**当前行动**：{_sentence(view.action)}", ""])
+
+        freshness_line = _freshness_candidate_line(ctx)
+        if freshness_line:
+            lines.extend([freshness_line, ""])
         return "\n".join(lines)

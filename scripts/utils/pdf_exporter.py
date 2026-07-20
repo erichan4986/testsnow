@@ -14,6 +14,7 @@ import os
 import re
 import tempfile
 from pathlib import Path
+from urllib.parse import unquote, urlparse
 from markdown import Markdown
 
 
@@ -348,10 +349,33 @@ img {
 """
 
 
-def _md_to_html(md_content: str, title: str = "报告") -> str:
+def _resolve_local_image_sources(html_body: str, base_dir: Path) -> str:
+    """Resolve local image sources to auditable file URIs."""
+    pattern = re.compile(r'(<img\b[^>]*\bsrc\s*=\s*)(["\'])(.*?)\2', re.IGNORECASE)
+
+    def replace(match: re.Match) -> str:
+        source = match.group(3).strip()
+        parsed = urlparse(source)
+        if parsed.scheme in {"http", "https", "data"} or source.startswith("//"):
+            return match.group(0)
+        if parsed.scheme not in {"", "file"}:
+            return match.group(0)
+        path = Path(unquote(parsed.path if parsed.scheme == "file" else source))
+        path = path if path.is_absolute() else base_dir / path
+        path = path.resolve()
+        if not path.is_file():
+            raise FileNotFoundError(f"报告图片不存在: {path}")
+        return f"{match.group(1)}{match.group(2)}{path.as_uri()}{match.group(2)}"
+
+    return pattern.sub(replace, html_body)
+
+
+def _md_to_html(md_content: str, title: str = "报告", base_dir: Path | None = None) -> str:
     """将Markdown转为HTML，并注入CSS样式与可视化增强"""
     md = Markdown(extensions=["tables", "fenced_code", "toc"])
     html_body = md.convert(md_content)
+    if base_dir is not None:
+        html_body = _resolve_local_image_sources(html_body, Path(base_dir))
 
     # 将报告开头的元信息转换为meta-info div
     html_body = _extract_meta_info(html_body)
@@ -492,7 +516,7 @@ def export_pdf(
         title = md_file.stem
 
     # 转换为HTML
-    html_content = _md_to_html(md_content, title=title)
+    html_content = _md_to_html(md_content, title=title, base_dir=md_file.parent)
 
     # 写入临时HTML文件
     with tempfile.NamedTemporaryFile(
@@ -513,6 +537,12 @@ def export_pdf(
             browser = p.chromium.launch()
             page = browser.new_page()
             page.goto(f"file://{temp_html_path}", wait_until="networkidle")
+
+            page.wait_for_function(
+                """() => Array.from(document.images)
+                .filter((image) => image.src.startsWith('file:'))
+                .every((image) => image.complete && image.naturalWidth > 0)"""
+            )
 
             # 等待字体加载
             page.wait_for_timeout(500)

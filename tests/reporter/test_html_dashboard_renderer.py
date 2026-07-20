@@ -51,6 +51,24 @@ def test_render_with_pillar():
     assert "估值健康度" in result
 
 
+def test_dashboard_uses_same_directory_chart_filenames():
+    result = HTMLDashboardRenderer().render({
+        "stock_name": "测试股",
+        "date_str": "20260719",
+        "stock_codes": {},
+        "chart_paths": {
+            "technical": "/tmp/测试股_technical.png",
+            "bullbear": "/tmp/测试股_bullbear.png",
+            "radar": "/tmp/测试股_radar.png",
+            "valuation": "/tmp/测试股_valuation.png",
+        },
+    })
+
+    assert "src='测试股_radar.png'" in result
+    assert "src='测试股_technical.png'" in result
+    assert "src='charts/" not in result
+
+
 def test_dashboard_reads_nested_technical_judgment(monkeypatch):
     monkeypatch.setattr("scripts.utils.reporter.sections.html_dashboard_renderer.fetch_tencent_quote", lambda _code: None, raising=False)
     renderer = HTMLDashboardRenderer()

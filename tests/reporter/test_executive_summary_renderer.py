@@ -4,6 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 from scripts.utils.reporter.sections import ExecutiveSummaryRenderer
+from scripts.utils.reporter.executive_summary_view import build_executive_summary_view
 
 
 def _decision_fixture():
@@ -19,6 +20,64 @@ def _decision_fixture():
             position_advice="控制仓位。",
         ),
     )
+
+
+def _view_context(image_path=None):
+    ctx = {
+        "stock_name": "测试股",
+        "date_str": "20260719",
+        "recommendation_decision": SimpleNamespace(
+            total_score=5.3,
+            ev=SimpleNamespace(ev_display="+8.00%", targets={"base": 42.0}),
+            display_recommendation="谨慎持有",
+            recommendation_sentence="谨慎持有，等待趋势确认。",
+            entry_constraint=SimpleNamespace(position_cap_note="建议仓位 5-10%。"),
+            risk=SimpleNamespace(level="中等风险", position_advice="控制仓位。"),
+        ),
+        "pillar": {"fundamental": 7.0, "fwd_pe": 28.0, "eps_growth": 20.0},
+        "stock_raw": {
+            "technical": {
+                "indicators": {
+                    "_resonance": {
+                        "trend_state": {"stage": "转弱期"},
+                        "trend_health": {"grade": "转弱观察", "score": 47},
+                    }
+                }
+            }
+        },
+        "evidence_freshness": {
+            "summary_candidate": {
+                "claim": "客户订单节奏仍需验证",
+                "citation_refs": [4],
+            }
+        },
+        "chart_paths": {"executive_summary": image_path} if image_path else {},
+    }
+    ctx["executive_summary_view"] = build_executive_summary_view(ctx)
+    return ctx
+
+
+def test_view_projection_prefers_image_and_omits_legacy_summary_blocks():
+    result = ExecutiveSummaryRenderer().render(
+        _view_context("/tmp/测试股_20260719_decision.png")
+    )
+
+    assert "> **一句话结论**：谨慎持有，等待趋势确认。" in result
+    assert "![测试股 投资决策链](/tmp/测试股_20260719_decision.png)" in result
+    assert "**近期待验证变量**" in result and "[^4]" in result
+    assert "**基本面判断**" not in result
+    assert "**估值与业绩预期**" not in result
+    assert "### 多空论点对比" not in result
+
+
+def test_view_projection_falls_back_to_compact_text_chain():
+    result = ExecutiveSummaryRenderer().render(_view_context())
+
+    assert "**基本面**：结构化基本面信号中性偏强" in result
+    assert "**估值**：盈利增长正在消化估值" in result
+    assert "**技术与风险**：转弱观察 / 转弱期" in result
+    assert "**当前行动**：谨慎持有。" in result
+    assert "**基本面判断**" not in result
 
 
 def test_required_keys():

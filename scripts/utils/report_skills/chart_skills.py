@@ -1,32 +1,22 @@
 """Technical analysis and chart generation skills."""
 
 import logging
-import sys
 from pathlib import Path
 
 if __name__.startswith("utils."):
     from ..skill_pipeline import BaseSkill, SkillContext
+    from ..reporter.chart_generator import (
+        generate_bull_bear_chart,
+        generate_radar_chart,
+        generate_technical_panel,
+    )
+    from ..reporter.scoring_engine import compute_pillar_scores
 else:
     from skill_pipeline import BaseSkill, SkillContext
-
-# Module-level imports so tests can patch them via unittest.mock
-try:
     from reporter.chart_generator import (
         generate_bull_bear_chart,
         generate_radar_chart,
         generate_technical_panel,
-        generate_valuation_comparison,
-    )
-    from reporter.scoring_engine import compute_pillar_scores
-except ImportError:
-    utils_dir = Path(__file__).parent.parent
-    if str(utils_dir) not in sys.path:
-        sys.path.insert(0, str(utils_dir))
-    from reporter.chart_generator import (
-        generate_bull_bear_chart,
-        generate_radar_chart,
-        generate_technical_panel,
-        generate_valuation_comparison,
     )
     from reporter.scoring_engine import compute_pillar_scores
 
@@ -133,20 +123,17 @@ class ChartGenerationSkill(BaseSkill):
         # Bull-bear chart
         bullish_args = ctx.get("bullish_args", [])
         bearish_args = ctx.get("bearish_args", [])
-        try:
-            bb_path = Path(output_dir) / f"{stock_name}_bullbear.png"
-            bb_chart_path = generate_bull_bear_chart(
-                stock_name=stock_name,
-                bullish_args=bullish_args,
-                bearish_args=bearish_args,
-                output_path=str(bb_path),
-            )
-            chart_paths["bullbear"] = bb_chart_path
-            ctx.set("chart_bullbear", bb_chart_path)
-        except Exception as e:
-            logger.warning(f"[{stock_name}] 多空图生成失败，跳过: {e}")
-            chart_paths["bullbear"] = None
-            ctx.set("chart_bullbear", None)
+        bb_chart_path = None
+        if bullish_args or bearish_args:
+            try:
+                bb_chart_path = generate_bull_bear_chart(
+                    stock_name, bullish_args, bearish_args,
+                    str(Path(output_dir) / f"{stock_name}_bullbear.png"),
+                )
+            except Exception as e:
+                logger.warning(f"[{stock_name}] 多空图生成失败，跳过: {e}")
+        chart_paths["bullbear"] = bb_chart_path
+        ctx.set("chart_bullbear", bb_chart_path)
 
         # 同业估值保留表格，不再生成单独的估值折线/对比图片。
         chart_paths["valuation"] = None

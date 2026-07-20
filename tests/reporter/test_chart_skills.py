@@ -148,8 +148,7 @@ class TestChartGenerationSkill:
             "fundflow": 4.0,
         }) as mock_score, \
              patch("report_skills.chart_skills.generate_radar_chart", return_value=str(tmp_path / "radar.png")) as mock_radar, \
-             patch("report_skills.chart_skills.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")) as mock_bb, \
-             patch("report_skills.chart_skills.generate_valuation_comparison", return_value=str(tmp_path / "val.png")) as mock_val:
+             patch("report_skills.chart_skills.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")) as mock_bb:
 
             skill = ChartGenerationSkill()
             result = skill.run(ctx)
@@ -162,7 +161,6 @@ class TestChartGenerationSkill:
         mock_score.assert_called_once()
         mock_radar.assert_called_once()
         mock_bb.assert_called_once()
-        mock_val.assert_not_called()
 
     def test_skips_valuation_without_competitor_metrics(self, tmp_path):
         ctx = SkillContext(input={
@@ -192,11 +190,12 @@ class TestChartGenerationSkill:
             "fundflow": 5.0,
         }), \
              patch("report_skills.chart_skills.generate_radar_chart", return_value=str(tmp_path / "radar.png")), \
-             patch("report_skills.chart_skills.generate_bull_bear_chart", return_value=str(tmp_path / "bb.png")):
+             patch("report_skills.chart_skills.generate_bull_bear_chart") as mock_bb:
 
             skill = ChartGenerationSkill()
             result = skill.run(ctx)
 
         assert result.get("chart_valuation") is None
         assert result.get("chart_radar") is not None
-        assert result.get("chart_bullbear") is not None
+        assert result.get("chart_bullbear") is None
+        mock_bb.assert_not_called()

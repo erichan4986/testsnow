@@ -7,9 +7,13 @@ from pathlib import Path
 if __name__.startswith("utils."):
     from ..skill_pipeline import BaseSkill, SkillContext
     from ..reporter.constants import COMPETITOR_MAP, INDUSTRY_MAP
+    from ..reporter.chart_generator import generate_decision_chain_chart
+    from ..reporter.executive_summary_view import build_executive_summary_view
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from reporter.constants import COMPETITOR_MAP, INDUSTRY_MAP
+    from reporter.chart_generator import generate_decision_chain_chart
+    from reporter.executive_summary_view import build_executive_summary_view
 
 logger = logging.getLogger(__name__)
 
@@ -277,6 +281,8 @@ class ReportAssemblySkill(BaseSkill):
             except Exception as e:
                 logger.warning(f"构建 RecommendationDecision 失败: {e}")
 
+        self._prepare_executive_summary(ctx)
+
         sections = [self._header(ctx)]
 
         for name, module_path, class_name in self.RENDERERS:
@@ -285,6 +291,24 @@ class ReportAssemblySkill(BaseSkill):
         sections.append(self._footer(ctx))
 
         return "\n\n".join(s for s in sections if s)
+
+    @staticmethod
+    def _prepare_executive_summary(ctx: SkillContext) -> None:
+        """Build one summary view and optionally materialize its primary image."""
+        view = build_executive_summary_view(ctx)
+        ctx.set("executive_summary_view", view)
+        chart_paths = dict(ctx.get("chart_paths", {}) or {})
+        chart_paths["executive_summary"] = None
+        output_dir = ctx.get("output_dir")
+        if view.image_ready and output_dir and view.stock_name and view.date_str:
+            output_path = Path(output_dir) / f"{view.stock_name}_{view.date_str}_decision.png"
+            try:
+                chart_paths["executive_summary"] = generate_decision_chain_chart(
+                    view, output_path
+                )
+            except Exception as e:
+                logger.warning(f"执行摘要决策链图片生成失败，使用文字回退: {e}")
+        ctx.set("chart_paths", chart_paths)
 
     @classmethod
     def _collect_display_only_external_risks(cls, ctx: SkillContext, signal_cls) -> list:

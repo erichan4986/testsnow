@@ -412,7 +412,7 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | `price_adjustment_validator.py` | 除权复权校验 | `detect_price_gaps()` 检测跳空>25%的除权缺口；`validate_adjustment()` 校验复权状态；`apply_qfq_adjustment()` 应用前复权修复 |
 | `scoring_engine.py` | 评分引擎 | `classify_sentiment()` 关键词情绪分类；`compute_pillar_scores()` 五维评分（基本面/估值/情绪/技术/风险）；`ev_expectation()` EV 预期模型；`composite_score_section()`/`risk_score_section()` 综合/风险评分 |
 | `data_fetcher.py` | 外部 API 数据获取 | `fetch_tencent_quote()` 腾讯实时行情；`fetch_consensus_eps()` 东财一致预期；`fetch_financial_abstract()` 财务摘要；`fetch_competitor_metrics()` 竞品指标；`industry_fwd_pe()` 行业前瞻PE |
-| `chart_generator.py` | 图表生成 | `generate_technical_panel()` 技术面板（K线+成交量+指标）；`generate_bull_bear_chart()` 多空情绪图；`generate_radar_chart()` 雷达图；`generate_valuation_comparison()` 估值对比图。Plotly + Kaleido 输出 PNG |
+| `chart_generator.py` | 图表生成 | `generate_decision_chain_chart()` 投资决策链；`generate_technical_panel()` 动态技术面板；`generate_bull_bear_chart()` 多空情绪图；`generate_radar_chart()` Dashboard 雷达图。Plotly + Kaleido 输出 PNG |
 | `constants.py` | 共享常量 | `COMPETITOR_MAP`/`COMPETITOR_CODES`/`INDUSTRY_MAP` 竞品映射 |
 | `technical_config.py` | 技术指标配置 | `load_technical_config()` 加载阈值参数（MA走平阈值、BOLL开口比例、BIAS窗口、RSI阈值），支持 JSON 覆盖 |
 

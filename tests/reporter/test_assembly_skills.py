@@ -1,10 +1,76 @@
 import sys
 import json
 from pathlib import Path
+from types import SimpleNamespace
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from utils.skill_pipeline import SkillContext
 from utils.report_skills.assembly_skills import ReportAssemblySkill
+
+
+def _summary_context(tmp_path=None):
+    data = {
+        "stock_name": "测试股",
+        "date_str": "20260719",
+        "recommendation_decision": SimpleNamespace(
+            total_score=5.3,
+            ev=SimpleNamespace(ev_display="+8.00%", targets={"base": 42.0}),
+            display_recommendation="谨慎持有",
+            recommendation_sentence="谨慎持有，等待趋势确认。",
+            entry_constraint=SimpleNamespace(position_cap_note="建议仓位 5-10%。"),
+            risk=SimpleNamespace(level="中等风险", position_advice="控制仓位。"),
+        ),
+        "pillar": {"fundamental": 7.0, "fwd_pe": 28.0, "eps_growth": 20.0},
+        "stock_raw": {
+            "technical": {
+                "indicators": {
+                    "_resonance": {
+                        "trend_state": {"stage": "转弱期"},
+                        "trend_health": {"grade": "转弱观察", "score": 47},
+                    }
+                }
+            }
+        },
+    }
+    if tmp_path is not None:
+        data["output_dir"] = str(tmp_path)
+    return SkillContext(input=data)
+
+
+def test_prepare_executive_summary_stores_view_and_dated_image(tmp_path, monkeypatch):
+    captured = {}
+
+    def fake_generate(view, output_path):
+        captured["view"] = view
+        captured["path"] = output_path
+        return str(output_path)
+
+    monkeypatch.setattr(
+        "utils.report_skills.assembly_skills.generate_decision_chain_chart",
+        fake_generate,
+    )
+    ctx = _summary_context(tmp_path)
+
+    ReportAssemblySkill()._prepare_executive_summary(ctx)
+
+    assert ctx.get("executive_summary_view") is captured["view"]
+    assert Path(captured["path"]).name == "测试股_20260719_decision.png"
+    assert ctx.get("chart_paths")["executive_summary"].endswith(
+        "测试股_20260719_decision.png"
+    )
+
+
+def test_prepare_executive_summary_without_output_dir_uses_text_fallback(monkeypatch):
+    monkeypatch.setattr(
+        "utils.report_skills.assembly_skills.generate_decision_chain_chart",
+        lambda *_: (_ for _ in ()).throw(AssertionError("must not generate")),
+    )
+    ctx = _summary_context()
+
+    ReportAssemblySkill()._prepare_executive_summary(ctx)
+
+    assert ctx.get("executive_summary_view").image_ready is True
+    assert ctx.get("chart_paths").get("executive_summary") is None
 
 
 def test_formal_assembly_does_not_register_legacy_price_target_renderer():

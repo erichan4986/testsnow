@@ -218,7 +218,6 @@ def _install_offline_smoke_patches() -> None:
         chart_skills.generate_technical_panel = lambda *args, **kwargs: None
         chart_skills.generate_radar_chart = lambda *args, **kwargs: None
         chart_skills.generate_bull_bear_chart = lambda *args, **kwargs: None
-        chart_skills.generate_valuation_comparison = lambda *args, **kwargs: None
     except Exception as exc:
         logger.warning("离线 smoke 禁用图表生成失败: %s", exc)
 

@@ -2,11 +2,18 @@
 """Chart generator for stock reports using Plotly + Kaleido."""
 
 import os
+import html
 from pathlib import Path
+import re
 from typing import Any
 
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
+
+try:
+    from .executive_summary_view import ExecutiveSummaryViewModel
+except ImportError:
+    from executive_summary_view import ExecutiveSummaryViewModel
 
 
 def _ensure_parent(path: str) -> Path:
@@ -36,30 +43,150 @@ def _compute_ema(values: list[float], span: int) -> list[float]:
     return ema
 
 
+def _wrap_cjk(text: str, width: int = 22, max_lines: int = 2) -> str:
+    """Wrap CJK text while keeping ASCII/numeric tokens intact."""
+    tokens = re.findall(r"[A-Za-z0-9+.%()/:-]+|[\u3400-\u9fff]|[^\s]", str(text or ""))
+    lines: list[str] = []
+    current = ""
+    for token in tokens:
+        space = " " if current and current[-1].isascii() and token[0].isascii() else ""
+        candidate = current + space + token
+        if current and len(candidate) > width:
+            lines.append(current)
+            current = token
+            if len(lines) == max_lines:
+                break
+        else:
+            current = candidate
+    if len(lines) < max_lines and current:
+        lines.append(current)
+    return "<br>".join(lines[:max_lines])
+
+
+def generate_decision_chain_chart(
+    view: ExecutiveSummaryViewModel,
+    output_path: str,
+) -> str:
+    """Generate the A4-safe executive decision-chain image."""
+    p = _ensure_parent(output_path)
+    fig = go.Figure()
+    fig.update_xaxes(visible=False, range=[0, 1], fixedrange=True)
+    fig.update_yaxes(visible=False, range=[0, 1], fixedrange=True)
+    fig.update_layout(
+        width=1240,
+        height=1600,
+        paper_bgcolor="#f3f5f6",
+        plot_bgcolor="#f3f5f6",
+        margin=dict(l=60, r=60, t=60, b=55),
+        showlegend=False,
+        font=dict(family="PingFang SC, Microsoft YaHei, Arial", color="#203047"),
+    )
+
+    def annotation(x: float, y: float, text: str, **kwargs: Any) -> None:
+        fig.add_annotation(x=x, y=y, text=text, showarrow=False, **kwargs)
+
+    annotation(0.02, 0.975, "INVESTMENT DECISION", xanchor="left", font=dict(size=18, color="#62717d"))
+    annotation(
+        0.02, 0.94, f"<b>{html.escape(view.stock_name)}｜投资决策链</b>",
+        xanchor="left", font=dict(size=34),
+    )
+    annotation(0.98, 0.972, html.escape(view.date_str), xanchor="right", font=dict(size=16))
+    annotation(
+        0.98, 0.94, f"<b>{html.escape(view.recommendation)}</b>",
+        xanchor="right", font=dict(size=22, color="#9a403b"),
+    )
+    fig.add_shape(type="line", x0=0.02, x1=0.98, y0=0.905, y1=0.905, line=dict(color="#244b63", width=4))
+
+    metrics = (
+        ("综合评分", view.total_score, "#587a91"),
+        ("模型 EV", view.ev, "#587a91"),
+        ("风险等级", view.risk_level, "#9a6f42"),
+        ("仓位上限", view.position_cap, "#9a403b"),
+    )
+    for index, (label, value, color) in enumerate(metrics):
+        x0 = 0.02 + index * 0.245
+        x1 = x0 + 0.225
+        fig.add_shape(type="rect", x0=x0, x1=x1, y0=0.79, y1=0.88, fillcolor="white", line_width=0)
+        fig.add_shape(type="line", x0=x0, x1=x1, y0=0.88, y1=0.88, line=dict(color=color, width=5))
+        annotation(x0 + 0.012, 0.853, html.escape(label), xanchor="left", font=dict(size=16, color="#66747d"))
+        annotation(x0 + 0.012, 0.818, f"<b>{html.escape(value)}</b>", xanchor="left", font=dict(size=25))
+
+    nodes = (
+        ("01", "基本面", view.fundamental, "#dce9e2"),
+        ("02", "估值", view.valuation, "#e9e3d6"),
+        ("03", "技术与风险", view.technical, "#eddad8"),
+    )
+    for index, (number, label, node, color) in enumerate(nodes):
+        top = 0.73 - index * 0.21
+        bottom = top - 0.15
+        fig.add_shape(type="rect", x0=0.02, x1=0.98, y0=bottom, y1=top, fillcolor="white", line_width=0)
+        fig.add_shape(type="rect", x0=0.02, x1=0.19, y0=bottom, y1=top, fillcolor=color, line_width=0)
+        annotation(0.105, top - 0.055, f"<b>{number}</b><br>{label}", font=dict(size=22), align="center")
+        annotation(
+            0.22, top - 0.05, f"<b>{_wrap_cjk(html.escape(node.title), 29, 2)}</b>",
+            xanchor="left", align="left", font=dict(size=24),
+        )
+        annotation(
+            0.22, bottom + 0.035, _wrap_cjk(html.escape(node.detail), 39, 2),
+            xanchor="left", align="left", font=dict(size=18, color="#66747d"),
+        )
+        if index < 2:
+            annotation(0.5, bottom - 0.03, "▼", font=dict(size=18, color="#758690"))
+
+    fig.add_shape(type="rect", x0=0.02, x1=0.98, y0=0.035, y1=0.12, fillcolor="#244b63", line_width=0)
+    annotation(
+        0.5, 0.078, f"<b>当前行动：{_wrap_cjk(html.escape(view.action), 34, 2)}</b>",
+        font=dict(size=25, color="white"), align="center",
+    )
+    annotation(0.02, 0.012, "详细依据、引用与风险因子见正文。", xanchor="left", font=dict(size=14, color="#71808a"))
+    fig.write_image(str(p), width=1240, height=1600, scale=1)
+    return str(p)
+
+
 def generate_technical_panel(
     stock_name: str,
     daily_data: dict[str, list],
     patterns: list[dict[str, Any]],
     indicators: dict[str, Any],
     output_path: str,
-) -> str:
-    """Generate a 4-panel technical chart (K-line+MA, Volume, MACD, RSI)."""
-    p = _ensure_parent(output_path)
-    close = daily_data.get("close", [])
-    volume = daily_data.get("volume", [])
-    opens = daily_data.get("open", close)
-    highs = daily_data.get("high", close)
-    lows = daily_data.get("low", close)
+) -> str | None:
+    """Generate a technical chart only from aligned, meaningful time series."""
+    close = daily_data.get("close") or []
     n = len(close)
-    idx = list(range(n))
+    opens = daily_data.get("open") or []
+    highs = daily_data.get("high") or []
+    lows = daily_data.get("low") or []
+    if n < 60 or any(len(series) != n for series in (opens, highs, lows)):
+        return None
+
+    def aligned(value: Any) -> list | None:
+        return list(value) if isinstance(value, (list, tuple)) and len(value) == n else None
+
+    volume = aligned(daily_data.get("volume"))
+    macd = aligned(indicators.get("macd"))
+    macd_hist = aligned(indicators.get("macd_hist"))
+    macd_signal = aligned(indicators.get("macd_signal"))
+    rsi = aligned(indicators.get("rsi")) or aligned(indicators.get("rsi_14"))
+    panels = [name for name, ready in (
+        ("volume", volume is not None),
+        ("macd", macd is not None and macd_hist is not None),
+        ("rsi", rsi is not None),
+    ) if ready]
+    if not panels:
+        return None
+
+    p = _ensure_parent(output_path)
+    idx = aligned(daily_data.get("date")) or list(range(n))
+    titles = {"volume": "成交量", "macd": "MACD", "rsi": "RSI"}
+    rows = 1 + len(panels)
 
     fig = make_subplots(
-        rows=4,
+        rows=rows,
         cols=1,
         shared_xaxes=True,
         vertical_spacing=0.03,
-        row_heights=[0.4, 0.2, 0.2, 0.2],
-        subplot_titles=("价格与均线", "成交量", "MACD", "RSI"),
+        row_heights=[0.55] + [0.45 / len(panels)] * len(panels),
+        subplot_titles=("价格与均线", *(titles[name] for name in panels)),
     )
 
     # Row 1: Candlestick + MA
@@ -128,72 +255,53 @@ def generate_technical_panel(
                         col=1,
                     )
 
-    # Row 2: Volume
-    if volume:
+    panel_rows = {name: index + 2 for index, name in enumerate(panels)}
+    if volume is not None:
         colors = ["red" if i > 0 and close[i] > close[i - 1] else "green" for i in range(n)]
-        fig.add_trace(go.Bar(x=idx, y=volume, marker_color=colors, name="成交量"), row=2, col=1)
-
-    # Row 3: MACD
-    macd = indicators.get("macd")
-    macd_hist = indicators.get("macd_hist")
-    macd_signal = indicators.get("macd_signal")
-    if macd is not None and macd_hist is not None and n > 0:
-        if isinstance(macd_hist, list) and len(macd_hist) == n:
-            hist_y = macd_hist
-        else:
-            hist_y = [macd_hist] * n
-        if isinstance(macd, list) and len(macd) == n:
-            macd_y = macd
-        else:
-            macd_y = [macd] * n
-        if macd_signal is None:
-            macd_signal = _compute_ema(macd_y, 9)
-        elif isinstance(macd_signal, (int, float)):
-            macd_signal = [macd_signal] * n
-        elif isinstance(macd_signal, list) and len(macd_signal) != n:
-            macd_signal = [macd_signal[-1] if macd_signal else 0] * n
-
-        fig.add_trace(go.Bar(x=idx, y=hist_y, marker_color="gray", name="MACD柱状"), row=3, col=1)
         fig.add_trace(
-            go.Scatter(x=idx, y=macd_y, mode="lines", name="MACD", line=dict(color="blue")),
-            row=3,
+            go.Bar(x=idx, y=volume, marker_color=colors, name="成交量"),
+            row=panel_rows["volume"], col=1,
+        )
+
+    if macd is not None and macd_hist is not None:
+        row = panel_rows["macd"]
+        signal = macd_signal or _compute_ema(macd, 9)
+        fig.add_trace(go.Bar(x=idx, y=macd_hist, marker_color="gray", name="MACD柱状"), row=row, col=1)
+        fig.add_trace(
+            go.Scatter(x=idx, y=macd, mode="lines", name="MACD", line=dict(color="blue")),
+            row=row,
             col=1,
         )
         fig.add_trace(
             go.Scatter(
                 x=idx,
-                y=macd_signal,
+                y=signal,
                 mode="lines",
                 name="MACD信号线",
                 line=dict(color="orange", dash="dash"),
             ),
-            row=3,
+            row=row,
             col=1,
         )
-        fig.add_hline(y=0, line=dict(color="black", width=0.5), row=3, col=1)
+        fig.add_hline(y=0, line=dict(color="black", width=0.5), row=row, col=1)
 
-    # Row 4: RSI
-    rsi = indicators.get("rsi")
-    if rsi is not None and n > 0:
-        if isinstance(rsi, list) and len(rsi) == n:
-            rsi_y = rsi
-        else:
-            rsi_y = [rsi] * n
+    if rsi is not None:
+        row = panel_rows["rsi"]
         fig.add_trace(
-            go.Scatter(x=idx, y=rsi_y, mode="lines", name="RSI", line=dict(color="purple")),
-            row=4,
+            go.Scatter(x=idx, y=rsi, mode="lines", name="RSI", line=dict(color="purple")),
+            row=row,
             col=1,
         )
-        fig.add_hline(y=70, line=dict(color="red", dash="dash"), row=4, col=1)
-        fig.add_hline(y=30, line=dict(color="green", dash="dash"), row=4, col=1)
+        fig.add_hline(y=70, line=dict(color="red", dash="dash"), row=row, col=1)
+        fig.add_hline(y=30, line=dict(color="green", dash="dash"), row=row, col=1)
 
     fig.update_layout(
         title=f"{stock_name} 技术面分析",
-        height=800,
+        height=480 + rows * 150,
         showlegend=False,
         margin=dict(l=40, r=40, t=60, b=40),
     )
-    fig.write_image(str(p), width=900, height=800, scale=2)
+    fig.write_image(str(p), width=900, height=480 + rows * 150, scale=2)
     return str(p)
 
 
@@ -285,47 +393,4 @@ def generate_radar_chart(
         margin=dict(l=80, r=80, t=80, b=40),
     )
     fig.write_image(str(p), width=700, height=600, scale=2)
-    return str(p)
-
-
-def generate_valuation_comparison(
-    stock_name: str,
-    competitor_metrics: dict[str, dict[str, float]],
-    output_path: str,
-) -> str:
-    """Generate dual-axis chart: Forward PE bars + PS line."""
-    p = _ensure_parent(output_path)
-    names = list(competitor_metrics.keys())
-    forward_pe = [competitor_metrics[n].get("forward_pe", 0) for n in names]
-    ps = [competitor_metrics[n].get("ps", 0) for n in names]
-
-    colors = ["royalblue" if n == stock_name else "lightgray" for n in names]
-
-    fig = make_subplots(specs=[[{"secondary_y": True}]])
-    fig.add_trace(go.Bar(
-        x=names,
-        y=forward_pe,
-        name="Forward PE",
-        marker_color=colors,
-        text=[f"{v:.1f}" for v in forward_pe],
-        textposition="outside",
-    ), secondary_y=False)
-    fig.add_trace(go.Scatter(
-        x=names,
-        y=ps,
-        mode="lines+markers",
-        name="PS",
-        line=dict(color="crimson"),
-        marker=dict(size=10),
-    ), secondary_y=True)
-
-    fig.update_layout(
-        title=f"{stock_name} 估值对比 (Forward PE vs PS)",
-        height=500,
-        legend=dict(orientation="h", yanchor="bottom", y=1.02, xanchor="right", x=1),
-        margin=dict(l=60, r=60, t=80, b=40),
-    )
-    fig.update_yaxes(title_text="Forward PE", secondary_y=False)
-    fig.update_yaxes(title_text="PS", secondary_y=True)
-    fig.write_image(str(p), width=800, height=500, scale=2)
     return str(p)

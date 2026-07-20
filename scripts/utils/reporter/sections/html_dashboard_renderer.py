@@ -251,14 +251,14 @@ class HTMLDashboardRenderer:
         <!-- 技术面分析 -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">技术面分析</h2>
-            {"<img src='charts/" + tech_img + "' alt='技术面分析' class='w-full rounded-xl mb-4'/>" if tech_img else "<p class='text-gray-400 text-sm'>暂无技术面图表</p>"}
+            {"<img src='" + tech_img + "' alt='技术面分析' class='w-full rounded-xl mb-4'/>" if tech_img else "<p class='text-gray-400 text-sm'>暂无技术面图表</p>"}
             <p class="text-sm text-gray-600">综合技术评分: <span class="font-bold text-blue-600">{(pillar.get('technical', 0) if pillar else 'N/A')}</span> / 10</p>
         </div>
 
         <!-- 多空观点拆解 -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">多空观点拆解</h2>
-            {"<img src='charts/" + bb_img + "' alt='多空论点对比' class='w-full rounded-xl mb-4'/>" if bb_img else "<p class='text-gray-400 text-sm'>暂无多空对比图表</p>"}
+            {"<img src='" + bb_img + "' alt='多空论点对比' class='w-full rounded-xl mb-4'/>" if bb_img else "<p class='text-gray-400 text-sm'>暂无多空对比图表</p>"}
             <div class="grid md:grid-cols-2 gap-4 mt-4">
                 {_arg_card("bullish", bullish_args)}
                 {_arg_card("bearish", bearish_args)}
@@ -270,7 +270,7 @@ class HTMLDashboardRenderer:
             <h2 class="text-lg font-bold text-gray-900 mb-4">五维评分雷达</h2>
             <div class="flex flex-col md:flex-row gap-6">
                 <div class="md:w-1/2">
-                    {"<img src='charts/" + radar_img + "' alt='五维评分雷达图' class='w-full rounded-xl'/>" if radar_img else "<p class='text-gray-400 text-sm'>暂无雷达图</p>"}
+                    {"<img src='" + radar_img + "' alt='五维评分雷达图' class='w-full rounded-xl'/>" if radar_img else "<p class='text-gray-400 text-sm'>暂无雷达图</p>"}
                 </div>
                 <div class="md:w-1/2">
                     {radar_cards}
@@ -281,7 +281,7 @@ class HTMLDashboardRenderer:
         <!-- 同业估值对比 -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">同业估值对比</h2>
-            {"<img src='charts/" + val_img + "' alt='同业估值对比' class='w-full rounded-xl'/>" if val_img else "<p class='text-gray-400 text-sm'>暂无估值对比图表</p>"}
+            {"<img src='" + val_img + "' alt='同业估值对比' class='w-full rounded-xl'/>" if val_img else "<p class='text-gray-400 text-sm'>暂无估值对比图表</p>"}
         </div>
 
         <!-- 操作建议 -->

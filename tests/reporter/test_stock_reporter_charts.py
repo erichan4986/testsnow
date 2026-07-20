@@ -66,8 +66,8 @@ class TestStockReporterChartIntegration:
         ) as mock_bb, patch(
             "utils.report_skills.chart_skills.generate_radar_chart", return_value=fake_chart_path
         ) as mock_radar, patch(
-            "utils.report_skills.chart_skills.generate_valuation_comparison", return_value=fake_chart_path
-        ) as mock_val, patch(
+            "utils.report_skills.assembly_skills.generate_decision_chain_chart", return_value=fake_chart_path
+        ) as mock_decision, patch(
             "utils.report_skills.data_skills.fetch_tencent_quote", return_value={"pe_ttm": 15.0}
         ), patch(
             "utils.report_skills.data_skills.fetch_consensus_eps", return_value={}
@@ -83,10 +83,11 @@ class TestStockReporterChartIntegration:
         md_content = Path(md_path).read_text(encoding="utf-8")
         html_content = Path(html_path).read_text(encoding="utf-8")
 
-        # Assert report chart image references are present in Markdown
+        # Markdown/PDF keep the decision image and useful technical chart only.
         assert f"![{stock_name} 技术面分析](" in md_content
-        assert f"![{stock_name} 多空论点对比](" in md_content
-        assert f'alt="{stock_name} 五维评分雷达图"' in md_content
+        assert f"![{stock_name} 投资决策链](" in md_content
+        assert f"![{stock_name} 多空论点对比](" not in md_content
+        assert f'alt="{stock_name} 五维评分雷达图"' not in md_content
         assert f"![{stock_name} 估值对比](" not in md_content
 
         # Assert HTML Dashboard was generated with key sections
@@ -103,6 +104,6 @@ class TestStockReporterChartIntegration:
 
         # Assert chart generators were called
         mock_tech.assert_called_once()
-        mock_bb.assert_called_once()
+        mock_bb.assert_not_called()
         mock_radar.assert_called_once()
-        mock_val.assert_not_called()
+        mock_decision.assert_called_once()
