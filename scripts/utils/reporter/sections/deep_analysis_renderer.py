@@ -66,6 +66,19 @@ _EXTERNAL_FAMILY_TITLES = {
     "policy_geopolitics": "政策与地缘",
     "valuation_expectation": "估值与预期",
 }
+_EXTERNAL_DISPLAY_TOPIC_ORDER = (
+    "需求与客户",
+    "商业化进展",
+    "技术与产品",
+    "财务质量",
+    "竞争格局",
+    "供应链与交付",
+    "政策与地缘",
+    "估值与预期",
+)
+_EXTERNAL_DISPLAY_TOPIC_RANK = {
+    title: index for index, title in enumerate(_EXTERNAL_DISPLAY_TOPIC_ORDER)
+}
 
 
 class DeepAnalysisRenderer:
@@ -647,54 +660,56 @@ class DeepAnalysisRenderer:
                 "正式材料的时间点较早，以下近期外部观察仅补充订单、交付、成本、需求或产品验证等变量；不替代官方确认，不参与评分、风险评分或目标价。",
                 "",
             ])
-        ordered_rows = sorted(
-            material_rows,
-            key=lambda row: row.entity_scope == "peer_or_industry",
-        )
-        peer_section_started = False
-        for row in ordered_rows:
-            is_peer = row.entity_scope == "peer_or_industry"
-            if is_peer and not peer_section_started:
+        for is_peer, scoped_rows in (
+            (False, [row for row in material_rows if row.entity_scope != "peer_or_industry"]),
+            (True, [row for row in material_rows if row.entity_scope == "peer_or_industry"]),
+        ):
+            if not scoped_rows:
+                continue
+            if is_peer:
                 lines.extend([
                     "> **同业/行业背景（Preview）**：以下内容仅描述同业或行业背景，不代表目标公司已确认事实。",
                     "",
                 ])
-                peer_section_started = True
-            refs = [ref + citation_offset for ref in row.citation_refs]
-            variable = row.title if row.title and row.title != "外部变量" else (
-                self._short_heading(row.body) or "外部变量"
-            )
-            if row.evidence_status == "source_unit_verified":
-                relation = "同业/行业背景观察：" if is_peer else (
-                    "相对正式材料/机构假设，外部材料新增的待验证点："
-                    if row.owner_relation == "owner_delta" else "外部新增待验证变量："
+            grouped: Dict[str, List[MaterialRow]] = {}
+            for row in scoped_rows:
+                variable = row.title if row.title and row.title != "外部变量" else (
+                    self._short_heading(row.body) or "外部变量"
                 )
-                paragraphs = self._attach_external_refs_by_paragraph(row.body, refs, prefix=relation)
-                lines.extend([f"**{variable}**", ""])
-                for paragraph in paragraphs:
-                    lines.extend([paragraph, ""])
-                continue
-            if row.external_claim:
                 variable = self._soften_external_unverified_terms(
                     re.sub(r"\s+", " ", str(variable or "")).strip(" ：:，,；;。")
                 ) or "外部变量"
-                claim = self._frame_external_claim(row.external_claim).removeprefix("外部材料称：")
-                relation = "同业/行业背景观察：" if is_peer else (
-                    "相对正式材料/机构假设，外部材料新增的待验证点："
-                    if row.owner_relation == "owner_delta" else "外部新增待验证变量："
-                )
-                rendered_claim = attach_refs_to_sentence(f"{relation}{claim.rstrip('。')}。", refs)
-                evidence_label = "外部原文依据" if row.evidence_status == "source_quote_verified" else "缓存材料摘录"
-                lines.extend([f"**{variable}**", "", rendered_claim])
-                if row.external_evidence:
-                    lines.extend(["", f"> **{evidence_label}**：{row.external_evidence}"])
-                lines.append("")
-                continue
-            self._append_external_variable_paragraph(
-                lines,
-                variable,
-                self._external_claim_sentence(row.body, refs),
+                grouped.setdefault(variable, []).append(row)
+            ordered_groups = sorted(
+                enumerate(grouped.items()),
+                key=lambda item: (
+                    _EXTERNAL_DISPLAY_TOPIC_RANK.get(item[1][0], len(_EXTERNAL_DISPLAY_TOPIC_RANK)),
+                    item[0],
+                ),
             )
+            for _, (variable, rows) in ordered_groups:
+                lines.extend([f"**{variable}**", ""])
+                for row in rows:
+                    refs = [ref + citation_offset for ref in row.citation_refs]
+                    relation = "同业/行业背景观察：" if is_peer else (
+                        "相对正式材料/机构假设，外部材料新增的待验证点："
+                        if row.owner_relation == "owner_delta" else "外部新增待验证变量："
+                    )
+                    if row.evidence_status == "source_unit_verified":
+                        paragraphs = self._attach_external_refs_by_paragraph(row.body, refs, prefix=relation)
+                        for paragraph in paragraphs:
+                            lines.extend([paragraph, ""])
+                        continue
+                    if row.external_claim:
+                        claim = self._frame_external_claim(row.external_claim).removeprefix("外部材料称：")
+                        lines.append(attach_refs_to_sentence(f"{relation}{claim.rstrip('。')}。", refs))
+                        if row.external_evidence:
+                            evidence_label = "外部原文依据" if row.evidence_status == "source_quote_verified" else "缓存材料摘录"
+                            lines.extend(["", f"> **{evidence_label}**：{row.external_evidence}"])
+                        lines.append("")
+                        continue
+                    for block in self._external_claim_blocks(self._external_claim_sentence(row.body, refs)):
+                        lines.extend([block, ""])
         lines.append("")
         return lines
 

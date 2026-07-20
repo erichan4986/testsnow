@@ -160,6 +160,47 @@ def test_external_variable_map_separates_and_orders_peer_industry_background():
     assert "> **同业/行业背景（Preview）**：" in rendered
 
 
+def test_external_variable_map_groups_topics_within_each_entity_scope():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:tech-1", "目标技术一。", "external", "external_observation", (11,), (),
+            title="技术与产品", body="目标技术一。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key="tech-1",
+        ),
+        MaterialRow(
+            "external:financial", "目标财务。", "external", "external_observation", (12,), (),
+            title="财务质量", body="目标财务。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key="financial",
+        ),
+        MaterialRow(
+            "external:tech-2", "目标技术二。", "external", "external_observation", (13,), (),
+            title="技术与产品", body="目标技术二。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key="tech-2",
+        ),
+        MaterialRow(
+            "external:peer-tech", "同业技术。", "external", "external_observation", (14,), (),
+            title="技术与产品", body="同业技术。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="peer_or_industry", argument_key="peer-tech",
+        ),
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows,
+        {ref: {"source": "外部观察"} for ref in range(11, 15)},
+        citation_offset=20,
+        disclaimer="仅作观察。",
+    ))
+    target, peer = rendered.split("> **同业/行业背景（Preview）**", 1)
+
+    assert target.count("**技术与产品**") == 1
+    assert target.count("**财务质量**") == 1
+    assert target.index("目标技术一[^31]") < target.index("目标技术二[^33]")
+    assert target.index("目标技术二[^33]") < target.index("**财务质量**")
+    assert peer.count("**技术与产品**") == 1
+    assert "同业/行业背景观察：同业技术[^34]" in peer
+
+
 def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
     renderer = DeepAnalysisRenderer()
     row = MaterialRow(
