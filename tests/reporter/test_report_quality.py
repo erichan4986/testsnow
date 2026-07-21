@@ -2587,6 +2587,54 @@ def test_external_map_framed_market_share_claim_does_not_trigger():
     assert "external_map_unverified_claim_framing" not in codes
 
 
+def test_external_topic_narrative_lead_frames_market_share_claim():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich"} -->
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+**竞争格局**
+
+近期外部材料主要围绕竞争格局展开。国内高可靠卫星FPGA市占率95%以上[^1]。
+
+## 引用来源
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
+def test_external_topic_narrative_frames_each_separate_paragraph():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich"} -->
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+**竞争格局**
+
+近期外部材料主要围绕竞争格局展开。产品进入客户验证[^1]。
+
+据外部材料，国内高可靠卫星FPGA市占率95%以上[^1]。
+
+## 引用来源
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
 def test_external_map_unframed_market_share_claim_still_triggers():
     text = _quality_shell(
         """

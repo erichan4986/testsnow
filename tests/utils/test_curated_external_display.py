@@ -12,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "utils"
 import curated_external_display as display_module
 from curated_external_argument_cards import build_external_argument_pack, materialize_external_source_units
 from curated_external_display import build_curated_external_argument_display
+from curated_external_topic_narrative import build_external_topic_narrative_envelope
 
 
 def _pack(stock_name="测试股", include=True):
@@ -110,3 +111,38 @@ def test_argument_display_quotes_exact_strong_wording_under_canonical_preview_he
     assert result["lint"]["violations"] == []
     assert text in result["display"]["industry_logic"]
     assert "> 测试股公告显示订单已锁定" in result["display"]["industry_logic"]
+
+
+def test_argument_display_exposes_validated_topic_narratives_only_as_private_projection(tmp_path):
+    pack = _pack()
+    card, unit = pack["cards"][0], pack["cards"][0]["evidence_units"][0]
+    draft = {"schema_version": "curated_external_topic_narrative_draft.v1", "groups": [{
+        "scope_bucket": "target", "primary_family": card["primary_family"], "parts": [{
+            "argument_key": card["argument_key"], "unit_id": unit["unit_id"],
+            "quote": unit["text"], "relation": "first",
+        }],
+    }]}
+    baseline_path = tmp_path / "baseline.json"
+    baseline_path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+    baseline = build_curated_external_argument_display(baseline_path, expected_stock_name="测试股")
+    pack["topic_narratives"] = build_external_topic_narrative_envelope(pack, draft)
+    path = tmp_path / "memo.json"; path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+
+    result = build_curated_external_argument_display(path, expected_stock_name="测试股")
+
+    for key in ("industry_logic", "fundamentals", "valuation_debate", "funding_sentiment",
+                "events_catalysts", "_curated_external_argument_cards", "_items_count", "_sources"):
+        assert result["display"][key] == baseline["display"][key]
+    narratives = result["display"]["_curated_external_topic_narratives"]
+    assert narratives[0]["parts"][0] == draft["groups"][0]["parts"][0]
+    assert result["synthesis_text"] == baseline["synthesis_text"]
+
+
+def test_argument_display_omits_private_projection_when_memo_is_unavailable(tmp_path):
+    pack = _pack(); pack["topic_narratives"] = {"bad": True}
+    path = tmp_path / "pack.json"; path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+
+    result = build_curated_external_argument_display(path, expected_stock_name="测试股")
+
+    assert result["status"] == "ok"
+    assert "_curated_external_topic_narratives" not in result["display"]

@@ -414,6 +414,8 @@ def _external_snapshot_row_is_framed(text: str, row_text: str) -> bool:
         "不等同于官方确认",
         "需验证",
         "待验证",
+        "近期外部材料主要围绕",
+        "同业与行业材料主要集中在",
     )
     return any(term in matching_line for term in framing_terms)
 
@@ -1186,7 +1188,7 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
             if not market_position_term:
                 continue
             has_external_framing = re.search(
-                r"外部材料称|外部观点称|据外部材料|据外部观点|该说法需|需(?:正式)?验证|待(?:正式)?验证|未经官方确认|不等同于官方确认|未确认",
+                r"外部材料称|外部观点称|据外部材料|据外部观点|近期外部材料主要围绕|同业与行业材料主要集中在|该说法需|需(?:正式)?验证|待(?:正式)?验证|未经官方确认|不等同于官方确认|未确认",
                 normalized_line,
             )
             if has_external_framing:

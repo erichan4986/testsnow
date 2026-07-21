@@ -44,6 +44,8 @@ def build_curated_external_argument_display(pack_json: str | Path | None, *, exp
         "_curated_external_taxonomy_version": "external_argument.v3", "_items_count": len(cards),
         "_sources": list(citations.values()),
     }
+    if result.get("topic_narratives"):
+        display["_curated_external_topic_narratives"] = result["topic_narratives"]
     lint = lint_curated_external_display_text(display)
     if not lint.get("ok"):
         return _result("lint_failed", stats=result.get("stats") or {}, lint=lint)

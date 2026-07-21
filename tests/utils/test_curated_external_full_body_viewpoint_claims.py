@@ -9,6 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from curated_external_full_body_viewpoint_claims import (
     build_curated_external_argument_pack,
     build_source_packets,
+    llm_topic_narrative_composer_factory,
     llm_unit_selector_factory,
     normalized_hash,
     write_curated_external_argument_pack,
@@ -76,6 +77,52 @@ def test_target_only_argument_pack_bypasses_selector_entirely():
     assert calls == []
     assert pack["diagnostics"]["selector_request_count"] == 0
     assert pack["diagnostics"]["selector_batch_count"] == 0
+
+
+def _narrative_draft(pack):
+    groups = {}
+    for card in pack["cards"]:
+        scope = "peer_or_industry" if card["entity_scope"] == "peer_or_industry" else "target"
+        key = (scope, card["primary_family"])
+        parts = groups.setdefault(key, [])
+        for unit in card["evidence_units"]:
+            parts.append({
+                "argument_key": card["argument_key"], "unit_id": unit["unit_id"],
+                "quote": unit["text"], "relation": "first" if not parts else "continuation",
+            })
+    return {"schema_version": "curated_external_topic_narrative_draft.v1", "groups": [
+        {"scope_bucket": scope, "primary_family": family, "parts": parts}
+        for (scope, family), parts in groups.items()
+    ]}
+
+
+def test_topic_narrative_composer_runs_once_after_ready_core_pack():
+    calls = []
+    def composer(pack):
+        calls.append(pack)
+        return _narrative_draft(pack)
+
+    pack = build_curated_external_argument_pack(
+        [_packet("TestCo 产品完成客户导入。TestCo 毛利率改善。")], "",
+        selector=lambda units: {}, stock_name="TestCo", topic_narrative_composer=composer,
+    )
+
+    assert pack["status"] == "ready" and len(calls) == 1
+    assert pack["topic_narratives"]["status"] == "ready"
+
+
+def test_topic_narrative_failure_does_not_poison_ready_core_pack():
+    def failed(_pack):
+        raise RuntimeError("memo unavailable")
+
+    pack = build_curated_external_argument_pack(
+        [_packet("TestCo 产品完成客户导入。")], "", selector=lambda units: {},
+        stock_name="TestCo", topic_narrative_composer=failed,
+    )
+
+    assert pack["status"] == "ready"
+    assert pack["topic_narratives"]["status"] == "unavailable"
+    assert pack["cards"]
 
 
 def test_mixed_argument_pack_selects_only_eligible_peer_units_after_target_bypass():
@@ -209,3 +256,21 @@ def test_v3_unit_selector_requests_only_stable_unit_decisions():
 
     assert result["decisions"][0]["unit_id"] == units[0]["unit_id"]
     assert "unit_id" in client.prompt and "topic_family" not in client.prompt and "source_quote" not in client.prompt
+
+
+def test_topic_narrative_factory_uses_one_attempt_and_sixty_second_timeout():
+    class Response:
+        choices = [type("Choice", (), {"message": type("Message", (), {"content": json.dumps({
+            "schema_version": "curated_external_topic_narrative_draft.v1", "groups": [],
+        })})()})()]
+    class Completions:
+        def __init__(self): self.calls = []
+        def create(self, **kwargs): self.calls.append(kwargs); return Response()
+    completions = Completions()
+    client = type("Client", (), {"chat": type("Chat", (), {"completions": completions})()})()
+    composer = llm_topic_narrative_composer_factory("test", "", "", client=client)
+
+    result = composer({"cards": [], "stock_name": "TestCo"})
+
+    assert result["schema_version"] == "curated_external_topic_narrative_draft.v1"
+    assert len(completions.calls) == 1 and completions.calls[0]["timeout"] == 60

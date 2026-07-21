@@ -10,6 +10,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "scripts" / "utils"))
 
 import curated_external_argument_cards as cards_module
+from curated_external_topic_narrative import build_external_topic_narrative_envelope
 from curated_external_argument_cards import (
     build_external_argument_pack, enrich_external_evidence_group, materialize_external_source_units,
     read_external_argument_pack, validate_external_unit_selection,
@@ -102,6 +103,43 @@ def test_v3_pack_persists_only_exact_evidence_and_reader_fails_closed(tmp_path):
     assert result["status"] == "ok" and all("claim" not in card for card in result["cards"])
     pack["cards"][0]["scoring_eligible"] = True; path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
     assert read_external_argument_pack(path, expected_stock_name="测试股")["status"] == "invalid"
+
+
+def test_v3_reader_keeps_core_ready_when_optional_narrative_is_missing_or_invalid(tmp_path):
+    packet = _packet()
+    pack = build_external_argument_pack(stock_name="测试股", source_packets=[packet], baseline_text="", selections=[])
+    path = tmp_path / "pack.json"
+    path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+    missing = read_external_argument_pack(path, expected_stock_name="测试股")
+    assert missing["status"] == "ok"
+    assert missing["topic_narrative_status"] == "missing"
+    assert missing["topic_narratives"] == []
+
+    pack["topic_narratives"] = {"bad": True}
+    path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+    invalid = read_external_argument_pack(path, expected_stock_name="测试股")
+    assert invalid["status"] == "ok"
+    assert invalid["topic_narrative_status"] == "invalid"
+    assert invalid["cards"]
+
+
+def test_v3_reader_returns_validated_optional_narratives_separately(tmp_path):
+    packet = _packet(content="测试股产品完成客户导入。")
+    pack = build_external_argument_pack(stock_name="测试股", source_packets=[packet], baseline_text="", selections=[])
+    card, unit = pack["cards"][0], pack["cards"][0]["evidence_units"][0]
+    draft = {"schema_version": "curated_external_topic_narrative_draft.v1", "groups": [{
+        "scope_bucket": "target", "primary_family": card["primary_family"], "parts": [{
+            "argument_key": card["argument_key"], "unit_id": unit["unit_id"],
+            "quote": unit["text"], "relation": "first",
+        }],
+    }]}
+    pack["topic_narratives"] = build_external_topic_narrative_envelope(pack, draft)
+    path = tmp_path / "pack.json"; path.write_text(json.dumps(pack, ensure_ascii=False), encoding="utf-8")
+
+    result = read_external_argument_pack(path, expected_stock_name="测试股")
+
+    assert result["status"] == "ok" and result["topic_narrative_status"] == "ready"
+    assert result["topic_narratives"][0]["parts"][0]["unit_id"] == unit["unit_id"]
 
 
 def test_v3_pack_fails_closed_when_prepared_target_references_unknown_source():

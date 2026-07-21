@@ -14,6 +14,8 @@ from deep_analysis_material_snapshot import (  # noqa: E402
     Chapter4ViewModel,
     MaterialSnapshot,
     MaterialRow,
+    ExternalNarrativePart,
+    ExternalTopicNarrative,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
     citation_identity,
@@ -210,6 +212,70 @@ def test_snapshot_orders_target_external_rows_before_peer_background():
     external = [row for row in snapshot.rows if row.source_layer == "external"]
 
     assert [row.entity_scope for row in external] == ["target", "peer_or_industry"]
+
+
+def test_snapshot_projects_topic_narratives_with_unit_derived_global_refs():
+    ctx = _ctx()
+    card = _external_argument_card(
+        argument_key="target:delivery", evidence="测试股产品完成客户导入。",
+        topic="commercialization", entity_scope="target",
+    )
+    unit = card["evidence_units"][0]
+    ctx["deep_analysis_display"] = {
+        "_curated_external_argument_cards": [card],
+        "_curated_external_topic_narratives": [{
+            "scope_bucket": "target", "primary_family": "commercialization", "parts": [{
+                "argument_key": card["argument_key"], "unit_id": unit["unit_id"],
+                "quote": unit["text"], "relation": "first", "citation_refs": [1],
+            }],
+        }],
+        "citations": {1: {"source": "微信公众号精选观察", "title": "目标观察"}},
+    }
+
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+
+    narrative = snapshot.external_topic_narratives[0]
+    assert isinstance(narrative, ExternalTopicNarrative)
+    assert isinstance(narrative.parts[0], ExternalNarrativePart)
+    assert narrative.parts[0].citation_refs == (6,)
+    assert snapshot.rows[-1].external_unit_ids == (unit["unit_id"],)
+
+
+def test_view_model_filters_hidden_narrative_arguments_and_keeps_price_path_rows_unchanged():
+    visible = MaterialRow(
+        "external:visible", "客户验证", "external", "external_observation", (2,), ("external:visible",),
+        title="商业化进展", body="测试股产品完成客户导入。", external_claim="测试股产品完成客户导入。",
+        external_evidence="测试股产品完成客户导入。", evidence_status="source_unit_verified",
+        entity_scope="target", argument_key="visible", external_family="commercialization",
+        external_unit_ids=("u-visible",),
+    )
+    hidden = MaterialRow(
+        "external:hidden", "重复观察", "external", "external_observation", (), ("external:hidden",),
+        title="商业化进展", body="测试股产品完成客户导入。", external_claim="测试股产品完成客户导入。",
+        external_evidence="测试股产品完成客户导入。", evidence_status="source_unit_verified",
+        entity_scope="target", argument_key="hidden", external_family="commercialization",
+        external_unit_ids=("u-hidden",),
+    )
+    narrative = ExternalTopicNarrative("target", "commercialization", (
+        ExternalNarrativePart("visible", "u-visible", "测试股产品完成客户导入。", "first", (2,)),
+        ExternalNarrativePart("hidden", "u-hidden", "重复观察。", "continuation", (3,)),
+    ))
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", (visible, hidden),
+        {2: {"source": "外部观察"}, 3: {"source": "外部观察"}}, {}, (narrative,),
+    )
+
+    without_memo = build_chapter4_view_model(
+        MaterialSnapshot(snapshot.schema, snapshot.rows, snapshot.citations, snapshot.diagnostics),
+        "formal_medium",
+    )
+    with_memo = build_chapter4_view_model(snapshot, "formal_medium")
+
+    projected = with_memo.section("4.3").narratives[0]
+    assert [part.argument_key for part in projected.parts] == ["visible"]
+    assert projected.parts[0].relation == "first"
+    assert with_memo.section("4.4").rows == without_memo.section("4.4").rows
+    assert set(with_memo.citations) == {2}
 
 
 def test_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():

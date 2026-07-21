@@ -19,6 +19,10 @@ try:
         prepare_external_argument_material,
         validate_external_unit_selection,
     )
+    from .curated_external_topic_narrative import (
+        build_external_topic_narrative_envelope,
+        build_external_topic_narrative_prompt,
+    )
 except ImportError:
     from curated_external_argument_cards import (
         SELECTION_SCHEMA,
@@ -28,6 +32,10 @@ except ImportError:
         materialize_external_source_units,
         prepare_external_argument_material,
         validate_external_unit_selection,
+    )
+    from curated_external_topic_narrative import (
+        build_external_topic_narrative_envelope,
+        build_external_topic_narrative_prompt,
     )
 
 
@@ -121,7 +129,8 @@ def _extract_json(value: str) -> dict:
 
 
 def _request_json(*, model: str, base_url: str, api_key: str, client: Any, prompt: str,
-                  max_api_retries: int, sleep_fn: Callable[[float], None]) -> dict:
+                  max_api_retries: int, sleep_fn: Callable[[float], None],
+                  timeout_seconds: int = 120) -> dict:
     for attempt in range(max(0, max_api_retries) + 1):
         try:
             active = client
@@ -130,7 +139,7 @@ def _request_json(*, model: str, base_url: str, api_key: str, client: Any, promp
                 active = openai.OpenAI(base_url=base_url, api_key=api_key)
             response = active.chat.completions.create(
                 model=model, messages=[{"role": "user", "content": prompt}],
-                response_format={"type": "json_object"}, timeout=120,
+                response_format={"type": "json_object"}, timeout=timeout_seconds,
             )
             return _extract_json(response.choices[0].message.content or "")
         except Exception as exc:
@@ -171,6 +180,23 @@ def llm_unit_selector_factory(
     return select
 
 
+def llm_topic_narrative_composer_factory(
+    model: str, base_url: str, api_key: str, *, client: Any | None = None,
+    sleep_fn: Callable[[float], None] | None = None,
+) -> Callable[[dict], dict]:
+    """Return the optional one-shot extractive topic-narrative composer."""
+    pause = sleep_fn or time.sleep
+
+    def compose(pack: dict) -> dict:
+        return _request_json(
+            model=model, base_url=base_url, api_key=api_key, client=client,
+            prompt=build_external_topic_narrative_prompt(pack),
+            max_api_retries=0, sleep_fn=pause, timeout_seconds=60,
+        )
+
+    return compose
+
+
 def _downgrade_nonconsecutive_peer_groups(source_units: list[dict], selection: dict) -> dict:
     """Keep ID decisions but turn unsafe ordinal-gap groups into singletons."""
     decisions = selection.get("decisions") if isinstance(selection, dict) else None
@@ -204,7 +230,8 @@ def _downgrade_nonconsecutive_peer_groups(source_units: list[dict], selection: d
 
 
 def build_curated_external_argument_pack(
-    source_packets: list[dict], baseline_text: str, *, selector: Callable[[list[dict]], dict], stock_name: str,
+    source_packets: list[dict], baseline_text: str, *, selector: Callable[[list[dict]], dict],
+    stock_name: str, topic_narrative_composer: Callable[[dict], dict] | None = None,
 ) -> dict:
     """Build a ready v3 pack only after every selector batch validates."""
     units = materialize_external_source_units(source_packets, stock_name=stock_name)
@@ -229,11 +256,21 @@ def build_curated_external_argument_pack(
                 stock_name=stock_name, source_packets=source_packets, baseline_text=baseline_text,
                 selections=[], prepared_material=prepared, selector_request_count=request_count,
             )
-    return build_external_argument_pack(
+    pack = build_external_argument_pack(
         stock_name=stock_name, source_packets=source_packets, baseline_text=baseline_text,
         selections=selections, selector_version=SELECTOR_VERSION,
         prepared_material=prepared, selector_request_count=request_count,
     )
+    if topic_narrative_composer and pack.get("status") == "ready":
+        try:
+            draft = topic_narrative_composer(pack)
+            narrative = build_external_topic_narrative_envelope(pack, draft)
+        except Exception:
+            narrative = build_external_topic_narrative_envelope(
+                pack, None, status_reason="memo_request_failed",
+            )
+        pack = {**pack, "topic_narratives": narrative}
+    return pack
 
 
 def write_curated_external_argument_pack(pack: dict, output_path: str | Path) -> Path:

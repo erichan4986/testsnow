@@ -19,6 +19,7 @@ sys.path.insert(0, str(SCRIPTS_DIR / "utils"))
 from curated_external_full_body_viewpoint_claims import (  # noqa: E402
     build_curated_external_argument_pack,
     build_source_packets,
+    llm_topic_narrative_composer_factory,
     llm_unit_selector_factory,
     write_curated_external_argument_pack,
 )
@@ -67,13 +68,19 @@ def main(argv: list[str] | None = None) -> int:
         args.llm_model, args.llm_base_url, api_key, stock_name=args.stock,
         max_api_retries=args.max_api_retries,
     )
+    topic_composer = llm_topic_narrative_composer_factory(
+        args.llm_model, args.llm_base_url, api_key,
+    )
     pack = build_curated_external_argument_pack(
-        packets, baseline_path.read_text(encoding="utf-8"), selector=selector, stock_name=args.stock,
+        packets, baseline_path.read_text(encoding="utf-8"), selector=selector,
+        stock_name=args.stock, topic_narrative_composer=topic_composer,
     )
     write_curated_external_argument_pack(pack, output)
     print(json.dumps({
         "schema_version": pack.get("schema_version"), "status": pack.get("status"),
         "stock_name": pack.get("stock_name"), "cards_count": len(pack.get("cards") or []),
+        "topic_narrative_status": (pack.get("topic_narratives") or {}).get("status", "missing"),
+        "topic_narrative_group_count": len((pack.get("topic_narratives") or {}).get("groups") or []),
         "pack_output_path": str(output), "wrote_repo_path": False, "wrote_knowledge": False,
         "connected_synthesis": False,
     }, ensure_ascii=False, indent=2))

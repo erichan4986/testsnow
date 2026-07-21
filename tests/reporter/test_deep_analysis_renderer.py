@@ -4,6 +4,8 @@ import re
 
 import pytest
 from scripts.utils.deep_analysis_material_snapshot import (
+    ExternalNarrativePart,
+    ExternalTopicNarrative,
     MaterialRow,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
@@ -35,6 +37,7 @@ def _external_argument_row(claim, evidence, *, ref=None, refs=None, key, title="
         "coverage_families": [family],
         "primary_family": family,
         "evidence_units": [{
+            "unit_id": f"unit:{key}",
             "source_unit_id": f"unit:{key}",
             "text": evidence,
             "evidence_status": "source_unit_verified",
@@ -199,6 +202,92 @@ def test_external_variable_map_groups_topics_within_each_entity_scope():
     assert target.index("目标技术二[^33]") < target.index("**财务质量**")
     assert peer.count("**技术与产品**") == 1
     assert "同业/行业背景观察：同业技术[^34]" in peer
+
+
+def test_external_variable_map_renders_one_extractively_joined_paragraph_per_topic():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:one", "产品进入客户验证。", "external", "external_observation", (1,), (),
+            title="技术与产品", body="产品进入客户验证。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="tech:one", external_family="technology_product",
+            external_unit_ids=("u1",),
+        ),
+        MaterialRow(
+            "external:two", "平台支持多档算力。", "external", "external_observation", (2,), (),
+            title="技术与产品", body="平台支持多档算力。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="tech:two", external_family="technology_product",
+            external_unit_ids=("u2",),
+        ),
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("tech:one", "u1", "产品进入客户验证。", "first", (1,)),
+        ExternalNarrativePart("tech:two", "u2", "平台支持多档算力。", "continuation", (2,)),
+    )),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, citation_offset=10,
+        disclaimer="仅作观察。", narratives=narratives,
+    ))
+
+    assert rendered.count("**技术与产品**") == 1
+    assert "近期外部材料主要围绕技术与产品展开。" in rendered
+    assert "产品进入客户验证[^11]；此外，平台支持多档算力[^12]。" in rendered
+    assert "外部新增待验证变量：" not in rendered
+
+
+def test_external_topic_narrative_honors_separate_paragraphs_and_existing_connectors():
+    renderer = DeepAnalysisRenderer()
+    rows = tuple(
+        MaterialRow(
+            f"external:{index}", text, "external", "external_observation", (index,), (),
+            title="技术与产品", body=text, evidence_status="source_unit_verified",
+            entity_scope="target", argument_key=f"tech:{index}", external_family="technology_product",
+            external_unit_ids=(f"u{index}",),
+        )
+        for index, text in enumerate(("产品进入验证。", "同时，平台完成迭代。", "竞品推出新方案。"), 1)
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("tech:1", "u1", "产品进入验证。", "first", (1,)),
+        ExternalNarrativePart("tech:2", "u2", "同时，平台完成迭代。", "continuation", (2,)),
+        ExternalNarrativePart("tech:3", "u3", "竞品推出新方案。", "separate", (3,)),
+    )),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {index: {"source": "外部"} for index in range(1, 4)},
+        disclaimer="仅作观察。", narratives=narratives,
+    ))
+
+    assert "产品进入验证[^1]；同时，平台完成迭代[^2]。\n\n据外部材料，竞品推出新方案[^3]。" in rendered
+    assert "；此外，同时" not in rendered
+    assert rendered.count("**技术与产品**") == 1
+
+
+def test_external_variable_map_falls_back_only_for_topic_without_valid_narrative():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:tech", "技术路线进入验证。", "external", "external_observation", (1,), (),
+            title="技术与产品", body="技术路线进入验证。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="tech", external_family="technology_product", external_unit_ids=("u1",),
+        ),
+        MaterialRow(
+            "external:financial", "毛利率仍需验证。", "external", "external_observation", (2,), (),
+            title="财务质量", body="毛利率仍需验证。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="financial", external_family="financial_quality", external_unit_ids=("u2",),
+        ),
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("tech", "u1", "技术路线进入验证。", "first", (1,)),
+    )),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, disclaimer="仅作观察。",
+        narratives=narratives,
+    ))
+
+    assert "近期外部材料主要围绕技术与产品展开。" in rendered
+    assert "外部新增待验证变量：毛利率仍需验证[^2]。" in rendered
 
 
 def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
@@ -1352,6 +1441,13 @@ def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
                     "source_type": "curated_external_analysis_evidence",
                 }
             },
+            "_curated_external_topic_narratives": [{
+                "scope_bucket": "target", "primary_family": "technology_product", "parts": [{
+                    "argument_key": "technology:validation", "unit_id": "unit:technology:validation",
+                    "quote": "外部文章记录 FPGA 2026Q3 客户验证节奏仍待确认。",
+                    "relation": "first", "citation_refs": [1],
+                }],
+            }],
         },
         "core_facts": [],
     }
@@ -1360,6 +1456,7 @@ def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
 
     assert "### 4.3 外部观点与待验证变量（Preview，不参与评分）" in result
     assert "FPGA 2026Q3 客户验证节奏仍待确认[^5]" in result
+    assert "近期外部材料主要围绕技术与产品展开。" in result
     assert "[^5] | **微信公众号精选观察** | 《FPGA 客户验证观察》" in result
 
 

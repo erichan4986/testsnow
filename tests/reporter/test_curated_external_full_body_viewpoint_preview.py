@@ -29,10 +29,22 @@ def test_cli_writes_only_v3_pack_under_tmp(tmp_path, capsys, monkeypatch):
         "schema_version": "curated_external_unit_selection.v1",
         "decisions": [{"unit_id": unit["unit_id"], "action": "keep", "group_id": "", "reason": "incremental_target_fact"} for unit in units],
     })
+    monkeypatch.setattr(preview, "llm_topic_narrative_composer_factory", lambda *args, **kwargs: lambda pack: {
+        "schema_version": "curated_external_topic_narrative_draft.v1",
+        "groups": [{
+            "scope_bucket": "peer_or_industry" if card["entity_scope"] == "peer_or_industry" else "target",
+            "primary_family": card["primary_family"],
+            "parts": [{
+                "argument_key": card["argument_key"], "unit_id": unit["unit_id"],
+                "quote": unit["text"], "relation": "first" if index == 0 else "continuation",
+            } for index, unit in enumerate(card["evidence_units"])],
+        } for card in pack["cards"]],
+    })
     try:
         assert preview.main(["--source-jsonl", str(source), "--baseline-synthesis-file", str(baseline), "--stock", stock, "--llm-model", "test", "--llm-base-url", "http://localhost"]) == 0
         payload = json.loads(capsys.readouterr().out)
         assert payload["schema_version"] == "curated_external_argument_pack.v3"
+        assert payload["topic_narrative_status"] == "ready"
         assert Path(payload["pack_output_path"]) == output.resolve() and output.exists()
     finally:
         output.unlink(missing_ok=True)

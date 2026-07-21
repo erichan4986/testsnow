@@ -5,44 +5,53 @@ import re
 from typing import Any, Dict, List
 
 try:
+    from ...curated_external_argument_cards import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
     from ...curated_external_display import attach_refs_to_sentence
     from ...deep_analysis_material_snapshot import (
         Chapter4ViewModel,
+        ExternalTopicNarrative,
         MaterialRow,
         build_chapter4_view_model,
         build_deep_analysis_material_snapshot,
         is_informative_variable_title,
         select_annual_display_rows,
         select_incremental_external_display_rows,
+        select_external_topic_narratives,
     )
     from ...synthesis_credit import citation_identity, sanitize_citation_markers
     from ...synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
     from .executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 except ImportError:
     try:
+        from scripts.utils.curated_external_argument_cards import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
         from scripts.utils.curated_external_display import attach_refs_to_sentence
         from scripts.utils.deep_analysis_material_snapshot import (
             Chapter4ViewModel,
+            ExternalTopicNarrative,
             MaterialRow,
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
             is_informative_variable_title,
             select_annual_display_rows,
             select_incremental_external_display_rows,
+            select_external_topic_narratives,
         )
         from scripts.utils.synthesis_credit import citation_identity, sanitize_citation_markers
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
         from scripts.utils.reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
     except ImportError:
+        from utils.curated_external_argument_cards import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
         from utils.curated_external_display import attach_refs_to_sentence
         from utils.deep_analysis_material_snapshot import (
             Chapter4ViewModel,
+            ExternalTopicNarrative,
             MaterialRow,
             build_chapter4_view_model,
             build_deep_analysis_material_snapshot,
             is_informative_variable_title,
             select_annual_display_rows,
             select_incremental_external_display_rows,
+            select_external_topic_narratives,
         )
         from utils.synthesis_credit import citation_identity, sanitize_citation_markers
         from utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
@@ -56,28 +65,8 @@ _CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
     "1225102392": "补缴税款及滞纳金事项公告",
     "1225362219": "2025年年度权益分派实施公告",
 }
-_EXTERNAL_FAMILY_TITLES = {
-    "capacity_delivery": "供应链与交付",
-    "demand_customer": "需求与客户",
-    "technology_product": "技术与产品",
-    "financial_quality": "财务质量",
-    "competitive_landscape": "竞争格局",
-    "commercialization": "商业化进展",
-    "policy_geopolitics": "政策与地缘",
-    "valuation_expectation": "估值与预期",
-}
-_EXTERNAL_DISPLAY_TOPIC_ORDER = (
-    "需求与客户",
-    "商业化进展",
-    "技术与产品",
-    "财务质量",
-    "竞争格局",
-    "供应链与交付",
-    "政策与地缘",
-    "估值与预期",
-)
 _EXTERNAL_DISPLAY_TOPIC_RANK = {
-    title: index for index, title in enumerate(_EXTERNAL_DISPLAY_TOPIC_ORDER)
+    title: index for index, title in enumerate(EXTERNAL_DISPLAY_TOPIC_ORDER)
 }
 
 
@@ -146,6 +135,7 @@ class DeepAnalysisRenderer:
         broker_memo = {}
         annual_material_rows = ()
         external_material_rows = ()
+        external_topic_narratives = ()
         annual_material_citations = {}
         annual_citation_offset = chapter4_citation_offset
         broker_citation_offset = chapter4_citation_offset
@@ -173,6 +163,9 @@ class DeepAnalysisRenderer:
                 material_snapshot.citations,
                 (*annual_material_rows, *broker_owner_rows),
             )
+            external_topic_narratives = select_external_topic_narratives(
+                material_snapshot.external_topic_narratives, external_material_rows,
+            )
             broker_citation_offset = annual_citation_offset + self._max_snapshot_ref(material_snapshot, {"annual"})
             external_citation_offset = annual_citation_offset + self._max_snapshot_ref(
                 material_snapshot,
@@ -191,6 +184,7 @@ class DeepAnalysisRenderer:
             annual_material_rows=annual_material_rows,
             annual_material_citations=annual_material_citations,
             external_material_rows=external_material_rows,
+            external_topic_narratives=external_topic_narratives,
         )
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), ctx.get("stock_name", ""))
         deep_md = _sanitize_pe_spread_in_text(deep_md, pe_facts, ctx.get("stock_name", ""))
@@ -355,6 +349,7 @@ class DeepAnalysisRenderer:
         annual_material_rows: tuple[MaterialRow, ...] = (),
         annual_material_citations: Dict[int, Any] | None = None,
         external_material_rows: tuple[MaterialRow, ...] = (),
+        external_topic_narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> str:
         """
         深度分析板块：根据 evidence profile 渲染不同布局。
@@ -391,6 +386,7 @@ class DeepAnalysisRenderer:
                 annual_material_rows=annual_material_rows,
                 annual_material_citations=annual_material_citations or {},
                 external_material_rows=external_material_rows,
+                external_topic_narratives=external_topic_narratives,
             ))
         else:
             lines.extend(self._thin_all_body(ctx))
@@ -532,6 +528,7 @@ class DeepAnalysisRenderer:
             citation_offset,
             external_section.disclaimer,
             preface=preface,
+            narratives=external_section.narratives,
         )
         lines.extend(external_map or [
             "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
@@ -644,6 +641,7 @@ class DeepAnalysisRenderer:
         disclaimer: str = "",
         preface: bool = False,
         heading: str = "### 4.3 外部观察与待验证变量（Preview，不参与评分）",
+        narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> List[str]:
         """Render curated external material as a compact variable map."""
         if not material_rows:
@@ -689,6 +687,14 @@ class DeepAnalysisRenderer:
             )
             for _, (variable, rows) in ordered_groups:
                 lines.extend([f"**{variable}**", ""])
+                family = next((row.external_family for row in rows if row.external_family), "")
+                narrative = next((item for item in narratives if (
+                    item.scope_bucket == ("peer_or_industry" if is_peer else "target")
+                    and item.primary_family == family
+                )), None)
+                if narrative:
+                    lines.extend([self._external_topic_narrative_paragraph(narrative, variable, is_peer, citation_offset), ""])
+                    continue
                 for row in rows:
                     refs = [ref + citation_offset for ref in row.citation_refs]
                     relation = "同业/行业背景观察：" if is_peer else (
@@ -712,6 +718,25 @@ class DeepAnalysisRenderer:
                         lines.extend([block, ""])
         lines.append("")
         return lines
+
+    @staticmethod
+    def _external_topic_narrative_paragraph(
+        narrative: ExternalTopicNarrative, variable: str, is_peer: bool, citation_offset: int,
+    ) -> str:
+        lead = (f"同业与行业材料主要集中在{variable}。" if is_peer
+                else f"近期外部材料主要围绕{variable}展开。")
+        paragraphs, current = [], lead
+        for index, part in enumerate(narrative.parts):
+            quote = re.sub(r"[，,；;。！？!?：:]$", "", part.quote.strip())
+            cited = quote + "".join(f"[^{ref + citation_offset}]" for ref in dict.fromkeys(part.citation_refs))
+            if index == 0:
+                current += cited
+            elif part.relation == "continuation":
+                current += ("；" if re.match(r"^(?:同时|此外|其中|另外|并且|而且)[，,]", quote) else "；此外，") + cited
+            else:
+                paragraphs.append(f"{current}。")
+                current = f"据外部材料，{cited}"
+        return "\n\n".join((*paragraphs, f"{current}。"))
 
     @staticmethod
     def _attach_external_refs_by_paragraph(text: str, refs: list, *, prefix: str = "") -> List[str]:
@@ -806,6 +831,7 @@ class DeepAnalysisRenderer:
         annual_material_rows: tuple[MaterialRow, ...] = (),
         annual_material_citations: Dict[int, Any] | None = None,
         external_material_rows: tuple[MaterialRow, ...] = (),
+        external_topic_narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> List[str]:
         """Render formal-thin layout: annual memo + broker placeholder + external map + checklist."""
         lines: List[str] = []
@@ -829,6 +855,7 @@ class DeepAnalysisRenderer:
             disclaimer="以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
             heading="### 4.3 外部观点与待验证变量（Preview，不参与评分）",
             preface=bool((ctx.get("evidence_freshness") or {}).get("preface")),
+            narratives=external_topic_narratives,
         )
         lines.extend(map_md or [
             "### 4.3 外部观点与待验证变量（Preview，不参与评分）", "",
@@ -1371,7 +1398,7 @@ class DeepAnalysisRenderer:
             if not rendered:
                 continue
             family = str(card.get("primary_family") or "").strip()
-            lines.extend([f"**{_EXTERNAL_FAMILY_TITLES.get(family, '外部待验证变量')}**", ""])
+            lines.extend([f"**{external_family_title(family, '外部待验证变量')}**", ""])
             for paragraph in rendered:
                 lines.extend([paragraph, ""])
 

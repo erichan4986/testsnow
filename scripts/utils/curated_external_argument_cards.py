@@ -6,7 +6,7 @@ import hashlib
 import json
 import re
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterable, Mapping
 
 try:
     from .synthesis_credit import citation_identity
@@ -20,6 +20,13 @@ SELECTOR_VERSION = "external_unit_selector.v2"
 ARGUMENT_CARD_V3_SCHEMA = "curated_external_argument_card.v3"
 ARGUMENT_PACK_V3_SCHEMA = "curated_external_argument_pack.v3"
 V3_VALIDATOR_VERSION = "external_argument_validator.v3"
+EXTERNAL_FAMILY_TITLES = {
+    "demand_customer": "需求与客户", "commercialization": "商业化进展",
+    "technology_product": "技术与产品", "financial_quality": "财务质量",
+    "competitive_landscape": "竞争格局", "capacity_delivery": "供应链与交付",
+    "policy_geopolitics": "政策与地缘", "valuation_expectation": "估值与预期",
+}
+EXTERNAL_DISPLAY_TOPIC_ORDER = tuple(EXTERNAL_FAMILY_TITLES.values())
 _PEER_TERMS = ("同业", "竞品", "对比", "三巨头", "行业", "竞争格局")
 _SOURCE_UNIT_BOUNDARY_RE = re.compile(
     r"(?:\.(?=\d)|[^。！？；.!?;])+(?:[。！？；!?;]|(?<!\d)\.(?!\d))"
@@ -570,12 +577,19 @@ def read_external_argument_pack(
         for ref, hashes in ref_unit_hashes.items()
     ):
         return _pack_read_result("invalid", reason="citation_quote_hash_mismatch")
+    try:
+        from .curated_external_topic_narrative import read_external_topic_narratives
+    except ImportError:
+        from curated_external_topic_narrative import read_external_topic_narratives
+    narrative = read_external_topic_narratives(payload)
     return {
         "status": "ok" if cards else "empty",
         "cards": cards,
         "citations": citations,
         "stats": payload.get("diagnostics") or {},
         "pack": payload,
+        "topic_narrative_status": narrative["status"],
+        "topic_narratives": narrative["groups"],
     }
 
 
@@ -681,7 +695,28 @@ def _normalized_refs(refs: object) -> list[int]:
 
 def _pack_read_result(status: str, *, reason: str = "") -> dict:
     stats = {"rejection_reasons": [reason]} if reason else {}
-    return {"status": status, "cards": [], "citations": {}, "stats": stats, "pack": None}
+    return {
+        "status": status, "cards": [], "citations": {}, "stats": stats, "pack": None,
+        "topic_narrative_status": "unavailable", "topic_narratives": [],
+    }
+
+
+def external_family_title(family: Any, fallback: str = "外部变量") -> str:
+    return EXTERNAL_FAMILY_TITLES.get(clean_external_text(family), fallback)
+
+
+def external_scope_bucket(entity_scope: Any) -> str:
+    return "peer_or_industry" if clean_external_text(entity_scope) == "peer_or_industry" else "target"
+
+
+def external_unit_key(argument_key: Any, unit_id: Any) -> tuple[str, str]:
+    return clean_external_text(argument_key), clean_external_text(unit_id)
+
+
+def external_units_by_key(cards: Iterable[Mapping[str, Any]]) -> dict[tuple[str, str], Mapping[str, Any]]:
+    return {external_unit_key(card.get("argument_key"), unit.get("unit_id")): unit
+            for card in cards if isinstance(card, Mapping)
+            for unit in card.get("evidence_units") or () if isinstance(unit, Mapping)}
 
 
 def _mentioned_entities(text: str) -> list[str]:
@@ -700,8 +735,11 @@ def _normalized_citations(citations: Mapping[Any, Any]) -> dict[int, dict]:
     return result
 
 
-def _clean(value: Any) -> str:
+def clean_external_text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
+
+
+_clean = clean_external_text
 
 
 def _hash(value: str) -> str:

@@ -12,27 +12,17 @@ import re
 from typing import Any, Dict, Iterable, Mapping, Tuple
 
 try:
+    from .curated_external_argument_cards import external_family_title, external_scope_bucket, external_unit_key, external_units_by_key
     from .deep_analysis_topic_ownership import matching_topic_families
     from .synthesis_credit import citation_identity
 except ImportError:
+    from curated_external_argument_cards import external_family_title, external_scope_bucket, external_unit_key, external_units_by_key
     from deep_analysis_topic_ownership import matching_topic_families
     from synthesis_credit import citation_identity
 
 
 SCHEMA = "deep_analysis_material_snapshot.v1"
 DEEP_ANALYSIS_SCOPE = ("deep_analysis",)
-_EXTERNAL_FAMILY_TITLES = {
-    "capacity_delivery": "供应链与交付",
-    "demand_customer": "需求与客户",
-    "technology_product": "技术与产品",
-    "financial_quality": "财务质量",
-    "competitive_landscape": "竞争格局",
-    "commercialization": "商业化进展",
-    "policy_geopolitics": "政策与地缘",
-    "valuation_expectation": "估值与预期",
-}
-
-
 @dataclass(frozen=True)
 class MaterialRow:
     row_id: str
@@ -59,6 +49,24 @@ class MaterialRow:
     owner_relation: str = ""
     argument_key: str = ""
     diagnostics: Tuple[Tuple[str, str], ...] = ()
+    external_family: str = ""
+    external_unit_ids: Tuple[str, ...] = ()
+
+@dataclass(frozen=True)
+class ExternalNarrativePart:
+    argument_key: str
+    unit_id: str
+    quote: str
+    relation: str
+    citation_refs: Tuple[int, ...]
+
+
+@dataclass(frozen=True)
+class ExternalTopicNarrative:
+    scope_bucket: str
+    primary_family: str
+    parts: Tuple[ExternalNarrativePart, ...]
+
 
 @dataclass(frozen=True)
 class MaterialSnapshot:
@@ -66,6 +74,7 @@ class MaterialSnapshot:
     rows: Tuple[MaterialRow, ...]
     citations: Dict[int, Dict[str, Any]]
     diagnostics: Dict[str, Any]
+    external_topic_narratives: Tuple[ExternalTopicNarrative, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -74,6 +83,7 @@ class Chapter4Section:
     title: str
     rows: Tuple[MaterialRow, ...]
     disclaimer: str = ""
+    narratives: Tuple[ExternalTopicNarrative, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -119,16 +129,18 @@ def build_deep_analysis_material_snapshot(ctx: Mapping[str, Any]) -> MaterialSna
     """Project current chapter-4 material fields into a deterministic snapshot."""
     allocator = _CitationAllocator()
     profile = ctx.get("deep_analysis_evidence_profile") or {}
+    display = ctx.get("deep_analysis_display") or {}
     rows = [
         *_annual_rows(ctx.get("annual_report_memo") or {}, allocator),
         *_broker_rows(ctx.get("broker_research_memo") or {}, allocator),
-        *_external_rows(ctx.get("deep_analysis_display") or {}, allocator, profile),
+        *_external_rows(display, allocator, profile),
     ]
     return MaterialSnapshot(
         schema=SCHEMA,
         rows=tuple(rows),
         citations=allocator.citations,
         diagnostics=_diagnostics(ctx, rows),
+        external_topic_narratives=_external_narratives(display, allocator),
     )
 
 
@@ -356,6 +368,9 @@ def build_chapter4_view_model(
         snapshot.citations,
         (*annual_rows, *broker_rows),
     )
+    external_narratives = select_external_topic_narratives(
+        snapshot.external_topic_narratives, external_rows,
+    )
     price_path_rows = _select_price_path_rows(annual_rows, broker_rows, external_rows)
     sections = (
         Chapter4Section("4.1", "官方材料确认：业务与财务基座", annual_rows),
@@ -365,6 +380,7 @@ def build_chapter4_view_model(
             "外部观察与待验证变量（Preview，不参与评分）",
             external_rows,
             "以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
+            external_narratives,
         ),
         Chapter4Section(
             "4.4",
@@ -378,7 +394,7 @@ def build_chapter4_view_model(
         for section in sections
         for row in section.rows
         for ref in row.citation_refs
-    })
+    } | {ref for narrative in external_narratives for part in narrative.parts for ref in part.citation_refs})
     citations = {
         ref: dict(snapshot.citations.get(ref) or {})
         for ref in visible_refs
@@ -688,7 +704,7 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
             source_layer="external",
             claim_status="external_observation",
             section_hint=section_hint,
-            title=_EXTERNAL_FAMILY_TITLES.get(str(row.get("primary_family") or ""), "外部变量"),
+            title=external_family_title(row.get("primary_family")),
             body=body,
             render_role="external_variable",
             source_credit="external_low_credit",
@@ -700,8 +716,51 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
             evidence_status=str((evidence_units[0] if evidence_units else {}).get("evidence_status") or ""),
             entity_scope=str(row.get("entity_scope") or ""),
             argument_key=str(row.get("argument_key") or ""),
+            external_family=str(row.get("primary_family") or ""),
+            external_unit_ids=tuple(str(unit.get("unit_id") or "") for unit in evidence_units),
         ))
     return result
+
+
+def _external_narratives(display: Mapping[str, Any], allocator: _CitationAllocator) -> Tuple[ExternalTopicNarrative, ...]:
+    citations = display.get("citations") or {}
+    units = external_units_by_key(display.get("_curated_external_argument_cards") or [])
+    narratives = []
+    for group in display.get("_curated_external_topic_narratives") or []:
+        if not isinstance(group, Mapping):
+            continue
+        parts = []
+        for part in group.get("parts") or []:
+            key = external_unit_key(part.get("argument_key"), part.get("unit_id"))
+            unit = units.get(key)
+            if unit:
+                parts.append(ExternalNarrativePart(
+                    *key, str(part.get("quote") or ""), str(part.get("relation") or ""),
+                    allocator.map_refs(unit.get("citation_refs") or (), citations),
+                ))
+        if parts:
+            narratives.append(ExternalTopicNarrative(
+                str(group.get("scope_bucket") or ""), str(group.get("primary_family") or ""), tuple(parts),
+            ))
+    return tuple(narratives)
+
+
+def select_external_topic_narratives(
+    narratives: Iterable[ExternalTopicNarrative], rows: Iterable[MaterialRow],
+) -> Tuple[ExternalTopicNarrative, ...]:
+    selected = tuple(rows)
+    result = []
+    for narrative in narratives:
+        scoped = tuple(row for row in selected if (
+            external_scope_bucket(row.entity_scope) == narrative.scope_bucket
+            and row.external_family == narrative.primary_family
+        ))
+        expected = [(row.argument_key, unit_id) for row in scoped for unit_id in row.external_unit_ids]
+        keys = {row.argument_key for row in scoped}
+        parts = tuple(part for part in narrative.parts if part.argument_key in keys)
+        if expected and [(part.argument_key, part.unit_id) for part in parts] == expected:
+            result.append(replace(narrative, parts=(replace(parts[0], relation="first"), *parts[1:])))
+    return tuple(result)
 
 
 def _broker_title_body(section: str, row: Mapping[str, Any]) -> tuple[str, str]:
