@@ -2,7 +2,7 @@
 
 日期：2026-07-21  
 分支：`codex/pipeline-stabilization`  
-状态：Draft for user review
+状态：Self-reviewed; awaiting Level 3 external Round 1 review
 
 ## 1. Problem
 
@@ -24,8 +24,8 @@ scope anchor，容易产生第二套文本/主体 owner。
 3. 为 target/peer scope 提供可审计 provenance，而不是根据最终段落猜主体。
 4. 无法安全形成 display span 的 unit 保留在 pack，但不进入 Chapter 4.3 display。
 5. 不增加 LLM 调用，不修改评分、目标价、风险、技术分析、推荐或 Chapter 4.1/4.2/4.4。
-6. 先以中际旭创、复旦微电、黑芝麻智能做 pilot；通过后一次性完成配置股票迁移并删除过渡
-   fallback。
+6. 先以中际旭创、复旦微电、黑芝麻智能做 pilot；通过后一次性完成配置股票迁移，代码与 packs
+   原子切换，不保留 runtime compatibility fallback。
 
 ## 3. Non-Goals
 
@@ -55,7 +55,9 @@ forces an unnecessary evidence migration.
 
 ## 5. Data Contract
 
-Each selected `evidence_unit` gains two validated, display-only objects. Existing fields are unchanged.
+Each selected `evidence_unit` gains two validated, display-only objects. Existing fields are unchanged. In this
+design, “raw” means the immutable text emitted from the already canonicalized source packet by
+`materialize_external_source_units()`; it does not claim byte identity with upstream HTML or the pre-cleaned page.
 
 ```json
 {
@@ -74,7 +76,9 @@ Each selected `evidence_unit` gains two validated, display-only objects. Existin
   "scope_provenance": {
     "schema_version": "curated_external_scope_provenance.v1",
     "origin": "adjacent_target_context",
-    "anchor_unit_id": "external-unit:..."
+    "anchor_unit_id": "external-unit:...",
+    "proof_kind": "continuation_subject",
+    "proof_value": "该产品"
   }
 }
 ```
@@ -95,6 +99,12 @@ Allowed reasons are a closed vocabulary owned by the projection module:
 - `ambiguous_boundary`
 - `unsafe_anchor_context`
 
+State/reason compatibility is also closed:
+
+- `exact`: `raw_complete`, `leading_editorial_context_removed`, `leading_source_label_removed`;
+- `unsafe`: `structural_noise_only`, `tail_not_argument_complete`, `ambiguous_boundary`,
+  `unsafe_anchor_context`.
+
 Offsets are zero-based, start-inclusive and end-exclusive Python string indices over the stored Unicode `text`.
 Whitespace may be omitted only when it lies outside those recorded bounds; projected text is always reconstructed by
 the literal `raw_text[start:end]` slice.
@@ -105,24 +115,43 @@ the literal `raw_text[start:end]` slice.
 - `adjacent_target_context`: inherited from a prior explicit target anchor in the same source; anchor ID is required.
 - `peer_or_industry`: no proven target anchor; anchor ID is empty.
 
+`proof_kind` is `explicit_stock_name`, `continuation_subject`, `shared_named_anchor`, or `none`. `proof_value` is the
+literal matched stock/subject/anchor substring for the first three states and empty for `none`. The validator
+reconstructs every proof from raw text and does not trust stored labels alone.
+
 Card-level `entity_scope` remains the consumer-facing scope, but must be derivable from its units' provenance.
 
 ### 5.3 Pack projection version
 
 The pack gains `display_projection_version: external_display_projection.v1`. This version tracks the deterministic
-span/provenance contract independently. Producer-native scope admission does change, so canonical regeneration also
-bumps the existing selector version. The reader validates both versions before exposing display text.
+span/provenance and admission-input contract independently. The ID-only LLM selector request/response schema and
+decision semantics do not change, so `selector_version` is not bumped merely for this display batch. The reader
+requires the existing selector/validator versions plus the new projection version before exposing projected text.
 
-During Phase A, existing non-pilot reports may temporarily keep the current raw display path. A pilot pack is never
-eligible for acceptance through that fallback: it must carry the projection version and report
-`projection_status=ready`. The reader exposes `legacy_unprojected` distinctly so raw and projected output cannot be
-mixed in one acceptance result. After all configured canonical packs pass migration gates, the fallback is deleted
-and a missing version becomes `display_projection_missing` for the display path. Core pack validity remains
-independent so data is never destroyed by projection failure.
+A pack without this version has `projection_status=missing`; its core evidence may still be read for audit, but it is
+not display-eligible. There is no raw runtime fallback. The implementation branch is not merge-ready until all
+configured canonical packs have been rebuilt and validated, so code and data cut over atomically without a dual
+reader. Core pack validity remains independent so projection failure never destroys evidence.
 
 ## 6. Projection Algorithm
 
 `curated_external_display_projection.py` is the only owner of span and scope projection.
+
+Its public API is deliberately small:
+
+```python
+project_external_source_units(
+    units, *, stock_name, family_resolver, argument_complete_predicate
+) -> list[dict]
+validate_external_projection(cards, *, stock_name, projection_version) -> dict
+external_display_text(unit) -> str
+project_external_display_cards(cards, citations, *, family_resolver) -> tuple[list[dict], dict]
+```
+
+Projection returns new unit dictionaries; it never mutates caller-owned units. `family_resolver` and
+`argument_complete_predicate` are canonical helpers passed by `curated_external_argument_cards.py`, avoiding a
+copied taxonomy or an import cycle. `external_display_text()` is the sole consumer accessor and returns text only for
+a validated exact span.
 
 ### 6.1 Span generation
 
@@ -131,9 +160,17 @@ For each raw unit, generate deterministic candidates in source order:
 1. Full raw text.
 2. Suffix after the first structural separator (`：`, `:`, or a line boundary) only when the prefix is classified
    as editorial direction or source-label context.
+3. Suffix after a bounded source-label envelope such as
+   `资料来源：<name ending in 研究院/证券/协会/公司/官网/公众号> <optional page number>`. The envelope is a
+   closed generic document pattern and must end before the first factual family signal. For example,
+   `资料来源：头豹研究院 03 1.6T时代功耗……` may project the exact `1.6T时代功耗……` suffix; it must not retain
+   `头豹研究院 03` or synthesize a boundary.
 
-The prefix classifier uses generic document-language patterns such as display instructions, table introductions,
-source labels and navigation labels. It must not contain stock names, stock codes, product names or industry names.
+The prefix classifier uses a closed set of generic document-language shapes: `这里/下面/以下 + 做/给出/整理 +
+表/对比/说明`, `资料来源/数据来源/来源`, and existing structural navigation labels. A removable prefix must end at
+the recorded separator and contain no configured stock name, canonical family signal, digit/percentage, named
+product anchor, or factual action/metric predicate. It must not contain stock names, stock codes, product names or
+industry names in its rule table.
 
 A suffix is admitted only when all checks pass:
 
@@ -142,6 +179,11 @@ A suffix is admitted only when all checks pass:
 - it forms an argument-complete clause or sentence rather than a title fragment;
 - it does not begin or end with truncation punctuation;
 - it is not itself a source label, table header, navigation label or disclaimer.
+
+“Argument complete” is deterministic: the candidate extends to the raw unit end, contains a canonical family signal,
+contains either a subject plus factual action predicate or a named metric plus value/direction, and does not end in a
+colon, list marker, conjunction, ellipsis or unmatched bracket. The predicate vocabulary reuses existing external
+admission/action helpers; projection must not add a second semantic taxonomy.
 
 Selection order is deterministic: clean full text first; otherwise the earliest safe suffix. No candidate is joined
 with another substring. If none pass, status is `unsafe`.
@@ -212,6 +254,10 @@ visible; there is no migration-only inference rule.
 4. `_build_v3_card()` preserves projection objects without changing raw unit identity.
 5. Pack diagnostics add exact/unsafe counts, rejection reasons and inherited-scope counts.
 
+Every pack result, including non-ready selector failures, records `display_projection_version` and projection
+diagnostics when projection ran. A caller-provided `prepared_material` is accepted only after its unit projections
+validate against the same version; stale prepared state cannot bypass projection.
+
 ### 7.2 Validator and reader
 
 The stored-card validator checks:
@@ -230,6 +276,18 @@ an inherited anchor must exist in that index, be earlier in the same source, be 
 Projection failure does not invalidate raw evidence. The reader returns core `status=ok` plus a separate projection
 status. Display consumers fail closed when projection is missing or invalid.
 
+Projection statuses are closed and non-overlapping:
+
+- `ready`: versioned metadata validates and at least one display card remains;
+- `empty`: metadata validates but no display card remains;
+- `missing`: pack has no projection metadata;
+- `invalid`: version or metadata is present but fails validation.
+
+Only `ready` can activate the Chapter 4 external display. `empty`, `missing` and `invalid` never count as projected
+pilot success or `external_rich` evidence. `build_curated_external_argument_display()` returns top-level `status=ok`
+only when core status is `ok` and projection status is `ready`; existing synthesis/profile routing therefore needs no
+second compatibility branch.
+
 ### 7.3 Topic narrative memo
 
 - The memo prompt includes only exact display spans.
@@ -244,8 +302,14 @@ status. Display consumers fail closed when projection is missing or invalid.
 ### 7.4 Display, snapshot and renderer
 
 - `curated_external_display` creates display-card copies. Each copy retains card/unit identity and immutable hashes,
-  replaces only the copy's visible `text` with the exact span, drops unsafe units, and rebuilds card refs/source
-  identity from the remaining units. Canonical cards in the pack are never mutated.
+  keeps raw `text` and `unit_hash` unchanged, drops unsafe units, and rebuilds card refs/source identity from the
+  remaining units. Canonical cards in the pack are never mutated.
+- Display, memo-prompt and snapshot consumers obtain visible wording only through `external_display_text(unit)`.
+  No display-path code reads `unit["text"]` as presentation text, so a projected suffix never breaks the
+  `sha256(unit.text) == unit_hash` invariant.
+- Top-level display citations are filtered to refs used by those copies. Citation metadata and identity are copied
+  unchanged from the canonical pack; hidden-only sources therefore cannot inflate source counts or produce unused
+  references.
 - The existing `_curated_external_argument_cards` display field contains those projected copies so downstream code
   has one card path; no consumer branches between raw and projected cards.
 - `MaterialSnapshot` receives only display-card copies. Formal-thin citation numbering continues to allocate over
@@ -259,9 +323,12 @@ status. Display consumers fail closed when projection is missing or invalid.
 ### Phase A: Pure projection and pilot
 
 1. Add pure projection contracts and tests.
-2. Keep a temporary raw fallback only for non-pilot legacy reports; mark it `legacy_unprojected`.
+2. Make missing/invalid projection fail closed in the display builder; do not add a raw compatibility path.
 3. Produce `/tmp` pilot packs for 中际旭创、复旦微电、黑芝麻智能 without changing canonical files.
 4. Generate fresh no-PDF reports through temporary config.
+
+If any pilot's local source packets are unavailable, stop and regenerate or reacquire those inputs explicitly. Do not
+promote a metadata-only migrated pack or a legacy raw report as a substitute for producer-native pilot evidence.
 
 Pilot gates:
 
@@ -280,13 +347,14 @@ review triggers rather than permanent display caps; accepted high-quality conten
 
 ### Phase B: Canonical cutover
 
-1. Rebuild all configured canonical argument packs from their local source packets under the bumped selector version;
+1. Rebuild all configured canonical argument packs from their local source packets with the new projection version;
    do not treat metadata-only migration of old selected cards as canonical regeneration.
 2. Verify every configured pack reports recognized projection version.
-3. Remove the temporary raw fallback and fixtures.
+3. Confirm no compatibility branch or migration-only fixture remains in runtime.
 4. Re-run formal-medium, formal-thin-external-rich and 港股 report fixtures.
 
-No long-lived dual reader or sidecar remains after Phase B.
+No dual reader or sidecar exists at any phase. Phase A runs inside the unmerged implementation branch; Phase B is the
+atomic code-and-pack cutover required before merge.
 
 ## 9. Required Tests
 
@@ -295,13 +363,16 @@ No long-lived dual reader or sidecar remains after Phase B.
 - clean factual unit uses full-range exact span;
 - generic editorial prefix plus complete factual tail selects the exact suffix;
 - source label with no provably complete tail becomes unsafe;
+- bounded `资料来源：头豹研究院 03 ...` removes the complete label/page envelope and preserves an exact tail;
 - offset mismatch, non-contiguous text and ellipsis ending are rejected;
+- invalid state/reason combinations are rejected;
 - no stock/industry-specific token appears in the projection rules.
 
 ### Scope tests
 
 - explicit stock mention produces self-anchored target provenance;
 - same-source adjacent pronoun or exact shared organization inherits target;
+- stored `proof_kind/proof_value` must reconstruct exactly from source and anchor text;
 - a different named company, independent industry subject, heading or distance >2 blocks inheritance;
 - inherited units cannot act as transitive anchors;
 - A-share and HK stock fixtures use the same rules.
@@ -309,11 +380,14 @@ No long-lived dual reader or sidecar remains after Phase B.
 ### Pack/reader tests
 
 - raw text/hash/citation identity remains unchanged after projection;
+- display-card copies still satisfy `sha256(unit.text) == unit_hash`;
 - mixed exact/unsafe cards expose only exact refs;
 - mixed cards derive display scope/family only from exact units and never inherit them from hidden units;
 - display-card copies rebuild refs/source identity and never mutate canonical cards;
+- display-level citations contain exactly the refs reachable from projected cards;
+- `empty/missing/invalid` projection states cannot activate profile routing;
 - invalid projection fails closed without invalidating core evidence;
-- pilot packs cannot pass through `legacy_unprojected` raw fallback;
+- packs missing projection metadata fail closed for display;
 - duplicate unit IDs and missing/non-exact inherited anchors are rejected pack-wide;
 - memo fingerprint changes when projection changes;
 - old memo cannot restore hidden unsafe units.
@@ -321,6 +395,7 @@ No long-lived dual reader or sidecar remains after Phase B.
 ### Report tests
 
 - no unsafe text appears in 4.3;
+- no display, memo or snapshot path renders raw `unit.text` instead of the shared accessor;
 - target/peer rendering follows provenance;
 - formal-thin citation offset remains correct;
 - 4.4 remains isolated;
@@ -331,6 +406,7 @@ No long-lived dual reader or sidecar remains after Phase B.
 | Failure | User-visible symptom | Detection | Response |
 | --- | --- | --- | --- |
 | Span is not exact | displayed wording cannot be traced to source | offset reconstruction test/reader | projection invalid; hide unit |
+| Display copy breaks unit hash | downstream validation sees rewritten evidence | raw hash invariant test | retain raw text; use accessor |
 | Meta prefix falsely removed | fact begins mid-clause | argument-complete tests and pilot excerpts | mark unsafe; do not display |
 | Useful noisy unit hidden | display coverage drops | per-stock/family diagnostics | stop pilot if unexplained/material |
 | Scope inheritance crosses source | peer fact shown as target | provenance validator | reject inherited scope |
@@ -339,7 +415,7 @@ No long-lived dual reader or sidecar remains after Phase B.
 | Mixed card leaks unsafe refs | citation points to hidden text | visible-ref subset tests | rebuild refs from exact units |
 | Hidden anchor leaves a dangling pronoun | paragraph starts with “其/该产品” without target context | anchor-display invariant | hide inherited unit |
 | Pilot silently uses legacy raw text | false-positive acceptance | explicit projection status assertion | reject pilot run |
-| Old pack silently bypasses projection | meta noise persists after cutover | projection-version gate | Phase B cannot complete |
+| Old pack lacks projection | external section is absent rather than leaking raw noise | projection-version gate | rebuild before merge |
 
 ## 11. Scope and Budget
 
@@ -367,23 +443,34 @@ display branches rather than layer a second selector. Exceeding the hard stop re
 - Display coverage drops materially without an explicit unsafe reason.
 - Any low-credit external fact enters scoring, target, risk or official-confirmation sections.
 - Formal-thin citation offset, 4.4 isolation or existing quality gates regress.
-- Phase B would require an indefinite compatibility branch.
+- Any implementation introduces a compatibility or migration-only runtime branch.
 - Runtime net increase exceeds `+220` lines.
 
 ## 13. Acceptance
 
 The batch is complete only when all three pilot stocks and all configured canonical packs pass projection validation,
-fresh report gates and user review; the temporary raw fallback is then removed. A green unit test suite without the
+fresh report gates and user review, with no raw compatibility path present. A green unit test suite without the
 pilot/cutover evidence is not sufficient.
 
 ## 14. Self-Review Delta
 
 - Accepted: separated core pack validity from display projection validity so evidence is retained while display
   fails closed.
-- Accepted: made pilot status explicit; a legacy raw fallback can no longer masquerade as projected output.
+- Accepted: made pilot status explicit; missing projection cannot masquerade as projected output.
 - Accepted: changed downstream integration to projected card copies, closing the current snapshot raw-text leak.
 - Accepted: bound memo quote validation to the exact span and included projection metadata in freshness.
 - Accepted: required a visible exact anchor for inherited clauses and a pack-wide provenance index.
+- Corrected in self-review Round 1: projection version, rather than the unchanged ID-only selector version, owns
+  deterministic span/provenance freshness; this avoids a temporary two-selector reader.
+- Corrected in self-review Round 1: display citations are the exact reachable subset, preventing hidden materials
+  from affecting source counts, profile routing or unused-ref checks.
+- Corrected in self-review Round 2: display copies retain immutable raw text/hash; one accessor owns all visible
+  wording, eliminating a hidden rewritten SourceUnit contract.
+- Corrected in self-review Round 2: provenance persists an exact proof kind/value and the validator reconstructs it.
+- Corrected in self-review Round 2: source-label envelopes include bounded organization/page markers, matching the
+  observed `资料来源：头豹研究院 03 ...` failure without stock- or industry-specific rules.
+- Corrected in self-review Round 2: removed the proposed Phase A raw fallback entirely. The branch must rebuild all
+  configured packs before merge, which is smaller and prevents a second display/profile path.
 - Rejected: a display sidecar and renderer cleaning because both create a second evidence/text owner.
 - Deferred: external source-credit improvement and LLM summarization quality; neither belongs to deterministic
   source-unit hygiene.
