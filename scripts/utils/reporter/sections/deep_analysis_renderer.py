@@ -68,6 +68,7 @@ _CNINFO_PDF_TITLE_MAP: Dict[str, str] = {
 _EXTERNAL_DISPLAY_TOPIC_RANK = {
     title: index for index, title in enumerate(EXTERNAL_DISPLAY_TOPIC_ORDER)
 }
+_EXTERNAL_PARAGRAPH_CHAR_TARGET = 240
 
 
 class DeepAnalysisRenderer:
@@ -695,17 +696,21 @@ class DeepAnalysisRenderer:
                 if narrative:
                     lines.extend([self._external_topic_narrative_paragraph(narrative, variable, is_peer, citation_offset), ""])
                     continue
+                verified_rows = [row for row in rows if row.evidence_status == "source_unit_verified"]
+                if verified_rows:
+                    paragraph = self._external_verified_rows_paragraph(
+                        verified_rows, variable, is_peer, citation_offset,
+                    )
+                    if paragraph:
+                        lines.extend([paragraph, ""])
                 for row in rows:
+                    if row.evidence_status == "source_unit_verified":
+                        continue
                     refs = [ref + citation_offset for ref in row.citation_refs]
                     relation = "同业/行业背景观察：" if is_peer else (
                         "相对正式材料/机构假设，外部材料新增的待验证点："
                         if row.owner_relation == "owner_delta" else "外部新增待验证变量："
                     )
-                    if row.evidence_status == "source_unit_verified":
-                        paragraphs = self._attach_external_refs_by_paragraph(row.body, refs, prefix=relation)
-                        for paragraph in paragraphs:
-                            lines.extend([paragraph, ""])
-                        continue
                     if row.external_claim:
                         claim = self._frame_external_claim(row.external_claim).removeprefix("外部材料称：")
                         lines.append(attach_refs_to_sentence(f"{relation}{claim.rstrip('。')}。", refs))
@@ -723,17 +728,45 @@ class DeepAnalysisRenderer:
     def _external_topic_narrative_paragraph(
         narrative: ExternalTopicNarrative, variable: str, is_peer: bool, citation_offset: int,
     ) -> str:
+        parts = [
+            (part.quote, part.citation_refs, part.relation)
+            for part in narrative.parts
+        ]
+        return DeepAnalysisRenderer._external_evidence_paragraph(
+            parts, variable, is_peer, citation_offset,
+        )
+
+    @staticmethod
+    def _external_verified_rows_paragraph(
+        rows: List[MaterialRow], variable: str, is_peer: bool, citation_offset: int,
+    ) -> str:
+        parts = []
+        for row in rows:
+            for paragraph in (line.strip() for line in str(row.body or "").splitlines() if line.strip()):
+                parts.append((paragraph, row.citation_refs, "first" if not parts else "continuation"))
+        return DeepAnalysisRenderer._external_evidence_paragraph(
+            parts, variable, is_peer, citation_offset,
+        )
+
+    @staticmethod
+    def _external_evidence_paragraph(
+        parts: list, variable: str, is_peer: bool, citation_offset: int,
+    ) -> str:
+        if not parts:
+            return ""
         lead = (f"同业与行业材料主要集中在{variable}。" if is_peer
                 else f"近期外部材料主要围绕{variable}展开。")
         paragraphs, current = [], lead
-        for index, part in enumerate(narrative.parts):
-            quote = re.sub(r"[，,；;。！？!?：:]$", "", part.quote.strip())
-            cited = quote + "".join(f"[^{ref + citation_offset}]" for ref in dict.fromkeys(part.citation_refs))
+        for index, (raw_quote, citation_refs, relation) in enumerate(parts):
+            quote = re.sub(r"[，,；;。！？!?：:]$", "", raw_quote.strip())
+            cited = quote + "".join(f"[^{ref + citation_offset}]" for ref in dict.fromkeys(citation_refs))
             if index == 0:
                 current += cited
-            elif part.relation == "continuation":
-                current += ("；" if re.match(r"^(?:同时|此外|其中|另外|并且|而且)[，,]", quote) else "；此外，") + cited
             else:
+                separator = "；" if re.match(r"^(?:同时|此外|其中|另外|并且|而且)[，,]", quote) else "；此外，"
+                if relation == "continuation" and len(current) + len(separator) + len(cited) <= _EXTERNAL_PARAGRAPH_CHAR_TARGET:
+                    current += separator + cited
+                    continue
                 paragraphs.append(f"{current}。")
                 current = f"据外部材料，{cited}"
         return "\n\n".join((*paragraphs, f"{current}。"))

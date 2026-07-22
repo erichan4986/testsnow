@@ -21,6 +21,7 @@ from deep_analysis_material_snapshot import (  # noqa: E402
     citation_identity,
     select_annual_display_rows,
     select_incremental_external_display_rows,
+    select_external_topic_narratives,
 )
 
 
@@ -301,6 +302,91 @@ def test_view_model_filters_hidden_narrative_arguments_and_keeps_price_path_rows
     assert projected.parts[0].relation == "first"
     assert with_memo.section("4.4").rows == without_memo.section("4.4").rows
     assert set(with_memo.citations) == {2}
+
+
+def _external_narrative_row(key, unit_id, body, ref):
+    return MaterialRow(
+        f"external:{key}", body, "external", "external_observation", (ref,), (f"source:{ref}",),
+        title="财务质量", body=body, evidence_status="source_unit_verified",
+        entity_scope="target", argument_key=key, external_family="financial_quality",
+        external_unit_ids=(unit_id,),
+    )
+
+
+def test_external_narrative_accepts_plan_order_when_unit_coverage_matches():
+    rows = (
+        _external_narrative_row("second", "u2", "归母净利润预计增长。", 2),
+        _external_narrative_row("first", "u1", "营业收入预计增长。", 1),
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", (
+        ExternalNarrativePart("first", "u1", "营业收入预计增长。", "first", (1,)),
+        ExternalNarrativePart("second", "u2", "归母净利润预计增长。", "continuation", (2,)),
+    ))
+
+    selected = select_external_topic_narratives((narrative,), rows)
+
+    assert [(part.argument_key, part.unit_id) for part in selected[0].parts] == [
+        ("first", "u1"), ("second", "u2"),
+    ]
+
+
+def test_external_narrative_merges_equivalent_metric_facts_and_citations():
+    quotes = (
+        "营业收入预计22至24亿元，同比增长19.64%至30.52%。",
+        "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。",
+        "营业收入预计18至20亿元，同比增长5%至10%。",
+    )
+    rows = tuple(
+        _external_narrative_row(f"fact-{index}", f"u{index}", quote, index)
+        for index, quote in enumerate(quotes, 1)
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", tuple(
+        ExternalNarrativePart(f"fact-{index}", f"u{index}", quote, "first" if index == 1 else "continuation", (index,))
+        for index, quote in enumerate(quotes, 1)
+    ))
+
+    parts = select_external_topic_narratives((narrative,), rows)[0].parts
+
+    assert len(parts) == 2
+    assert parts[0].quote == quotes[1]
+    assert parts[0].citation_refs == (1, 2)
+    assert parts[1].quote == quotes[2]
+    assert parts[1].citation_refs == (3,)
+
+
+def test_external_narrative_does_not_merge_different_metrics_with_same_values():
+    quotes = (
+        "营业收入预计22至24亿元，同比增长19.64%至30.52%。",
+        "归母净利润预计22至24亿元，同比增长19.64%至30.52%。",
+    )
+    rows = tuple(
+        _external_narrative_row(f"metric-{index}", f"u{index}", quote, index)
+        for index, quote in enumerate(quotes, 1)
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", tuple(
+        ExternalNarrativePart(f"metric-{index}", f"u{index}", quote, "first" if index == 1 else "continuation", (index,))
+        for index, quote in enumerate(quotes, 1)
+    ))
+
+    parts = select_external_topic_narratives((narrative,), rows)[0].parts
+
+    assert [part.quote for part in parts] == list(quotes)
+
+
+def test_external_narrative_does_not_merge_materially_different_small_values():
+    quotes = ("毛利率预计为0.3%。", "毛利率预计为0.5%。")
+    rows = tuple(
+        _external_narrative_row(f"margin-{index}", f"u{index}", quote, index)
+        for index, quote in enumerate(quotes, 1)
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", tuple(
+        ExternalNarrativePart(f"margin-{index}", f"u{index}", quote, "first" if index == 1 else "continuation", (index,))
+        for index, quote in enumerate(quotes, 1)
+    ))
+
+    parts = select_external_topic_narratives((narrative,), rows)[0].parts
+
+    assert [part.quote for part in parts] == list(quotes)
 
 
 def test_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():

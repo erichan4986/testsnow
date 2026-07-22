@@ -165,7 +165,8 @@ def test_external_variable_map_separates_and_orders_peer_industry_background():
 
     assert rendered.index("测试股产品完成客户导入") < rendered.index("同业/行业背景（Preview）")
     assert rendered.index("同业/行业背景（Preview）") < rendered.index("行业竞争格局加速分化")
-    assert "同业/行业背景观察：行业竞争格局加速分化" in rendered
+    assert "同业与行业材料主要集中在竞争格局。行业竞争格局加速分化[^2]。" in rendered
+    assert "同业/行业背景观察：" not in rendered
     assert "#### 同业/行业背景（Preview）" not in rendered
     assert "> **同业/行业背景（Preview）**：" in rendered
 
@@ -208,7 +209,8 @@ def test_external_variable_map_groups_topics_within_each_entity_scope():
     assert target.index("目标技术一[^31]") < target.index("目标技术二[^33]")
     assert target.index("目标技术二[^33]") < target.index("**财务质量**")
     assert peer.count("**技术与产品**") == 1
-    assert "同业/行业背景观察：同业技术[^34]" in peer
+    assert "同业与行业材料主要集中在技术与产品。同业技术[^34]。" in peer
+    assert "同业/行业背景观察：" not in peer
 
 
 def test_external_variable_map_renders_one_extractively_joined_paragraph_per_topic():
@@ -294,7 +296,8 @@ def test_external_variable_map_falls_back_only_for_topic_without_valid_narrative
     ))
 
     assert "近期外部材料主要围绕技术与产品展开。" in rendered
-    assert "外部新增待验证变量：毛利率仍需验证[^2]。" in rendered
+    assert "近期外部材料主要围绕财务质量展开。毛利率仍需验证[^2]。" in rendered
+    assert "外部新增待验证变量：" not in rendered
 
 
 def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
@@ -310,8 +313,34 @@ def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
         (row,), {7: {"source": "外部观察"}}, disclaimer="仅作观察。",
     ))
 
-    assert "外部新增待验证变量：收入与毛利均实现增长[^7]。" in rendered
-    assert "同时，公司持续推进产品迭代并形成贡献[^7]。" in rendered
+    assert "近期外部材料主要围绕财务质量展开。收入与毛利均实现增长[^7]；同时，公司持续推进产品迭代并形成贡献[^7]。" in rendered
+    assert "外部新增待验证变量：" not in rendered
+
+
+def test_verified_external_topic_wraps_long_fallback_without_dropping_rows():
+    renderer = DeepAnalysisRenderer()
+    rows = tuple(
+        MaterialRow(
+            f"external:{index}", text, "external", "external_observation", (index,), (),
+            title="财务质量", body=text, render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key=f"financial:{index}",
+        )
+        for index, text in enumerate((
+            "营业收入改善，客户需求和产品结构共同形成支撑" * 4 + "。",
+            "归母净利润增长，经营杠杆和投资收益共同贡献" * 4 + "。",
+            "扣非净利润改善，主营业务盈利质量仍需持续验证" * 4 + "。",
+        ), 1)
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {index: {"source": "外部观察"} for index in range(1, 4)}, disclaimer="仅作观察。",
+    ))
+
+    assert rendered.count("近期外部材料主要围绕财务质量展开。") == 1
+    assert "\n\n据外部材料，" in rendered
+    assert all(text.rstrip("。") in rendered for text in (row.body for row in rows))
+    assert max(len(paragraph) for paragraph in rendered.split("\n\n")) <= 260
+    assert rendered.count("外部新增待验证变量：") == 0
 
 
 def test_annual_portrait_prefers_a_complete_sentence():

@@ -819,10 +819,16 @@ def _check_product_industry_mismatch(text: str) -> Iterable[QualityIssue]:
 
 def _check_financial_fact_unit_sanity(text: str) -> Iterable[QualityIssue]:
     normalized = _normalize(text)
-    has_small_core_amount = re.search(
+    small_amount_pattern = re.compile(
         r"(营业收入|归母净利润|净利润|经营现金流[^|。\n]*)[^。\n|]*\|?[^。\n|]{0,20}\d+(?:\.\d+)?万元",
-        normalized,
     )
+    has_small_core_amount = next((
+        match for match in small_amount_pattern.finditer(normalized)
+        if not re.search(
+            r"战略配售|获配|认购|出资|投资(?:成本|金额|收益)",
+            normalized[max(0, match.start() - 12):match.end() + 12],
+        )
+    ), None)
     has_yi_amount = re.search(
         r"(营业收入|归母净利润|净利润|经营现金流[^。,\n]*)[^。,\n]{0,20}\d+(?:\.\d+)?亿",
         normalized,
@@ -1360,7 +1366,21 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
                 section,
             )
         )
-        if has_variable_table or has_variable_narrative or has_argument_v2_narrative or has_canonical_source_narrative:
+        has_grouped_topic_narrative = (
+            re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(
+                r"(?m)^(?:近期外部材料主要围绕[^。\n]{2,80}展开|"
+                r"同业与行业材料主要集中在[^。\n]{2,80})。[^\n]*\[\^\d+\]",
+                section,
+            )
+        )
+        if any((
+            has_variable_table,
+            has_variable_narrative,
+            has_argument_v2_narrative,
+            has_canonical_source_narrative,
+            has_grouped_topic_narrative,
+        )):
             missing = []
         else:
             markers = (

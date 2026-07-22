@@ -8,6 +8,7 @@ scoring, risk, target price, or recommendation paths.
 from __future__ import annotations
 
 from dataclasses import dataclass, replace
+from difflib import SequenceMatcher
 import re
 from typing import Any, Dict, Iterable, Mapping, Tuple
 
@@ -447,6 +448,14 @@ _EXTERNAL_EVENT_TERMS = (
     "传言", "否认", "回应", "下调", "上调", "短缺", "紧张", "瓶颈", "缺口", "供应链", "交付", "订单",
     "认证", "验证", "量产", "制裁", "政策", "停产", "延期", "延后", "提前", "调整", "替代", "降价", "涨价", "分歧", "唯一", "首家", "率先",
 )
+_FINANCIAL_FACT_METRICS = (
+    ("扣非净利润", ("扣非净利润",)),
+    ("归母净利润", ("归母净利润",)),
+    ("营业收入", ("营业收入", "营收")),
+    ("经营现金流", ("经营现金流",)),
+    ("毛利率", ("毛利率",)),
+    ("净利润", ("净利润",)),
+)
 
 
 def select_incremental_external_display_rows(
@@ -755,9 +764,56 @@ def select_external_topic_narratives(
         expected = [(row.argument_key, unit_id) for row in scoped for unit_id in row.external_unit_ids]
         keys = {row.argument_key for row in scoped}
         parts = tuple(part for part in narrative.parts if part.argument_key in keys)
-        if expected and [(part.argument_key, part.unit_id) for part in parts] == expected:
+        received = [(part.argument_key, part.unit_id) for part in parts]
+        if expected and sorted(received) == sorted(expected):
+            parts = _dedupe_external_narrative_parts(parts)
             result.append(replace(narrative, parts=(replace(parts[0], relation="first"), *parts[1:])))
     return tuple(result)
+
+
+def _dedupe_external_narrative_parts(
+    parts: Iterable[ExternalNarrativePart],
+) -> Tuple[ExternalNarrativePart, ...]:
+    result = []
+    for part in parts:
+        duplicate = next((index for index, kept in enumerate(result) if _same_external_fact(kept.quote, part.quote)), None)
+        if duplicate is None:
+            result.append(part)
+            continue
+        kept = result[duplicate]
+        representative = max((kept, part), key=lambda item: len(_normalized_claim_body(item.quote)))
+        result[duplicate] = replace(
+            representative,
+            relation=kept.relation,
+            citation_refs=tuple(dict.fromkeys((*kept.citation_refs, *part.citation_refs))),
+        )
+    return tuple(result)
+
+
+def _same_external_fact(left: str, right: str) -> bool:
+    left_key = re.sub(r"[^0-9a-zA-Z\u4e00-\u9fff]+", "", left).lower()
+    right_key = re.sub(r"[^0-9a-zA-Z\u4e00-\u9fff]+", "", right).lower()
+    if not left_key or not right_key:
+        return False
+    left_metric = next((metric for metric, aliases in _FINANCIAL_FACT_METRICS if any(alias in left for alias in aliases)), "")
+    right_metric = next((metric for metric, aliases in _FINANCIAL_FACT_METRICS if any(alias in right for alias in aliases)), "")
+    if (left_metric or right_metric) and left_metric != right_metric:
+        return False
+    ratio = SequenceMatcher(None, left_key, right_key).ratio()
+    left_numbers = tuple(float(value) for value in re.findall(r"\d+(?:\.\d+)?", left))
+    right_numbers = tuple(float(value) for value in re.findall(r"\d+(?:\.\d+)?", right))
+    if not left_numbers and not right_numbers:
+        return ratio >= 0.88
+    if not left_numbers or not right_numbers or ratio < 0.58:
+        return False
+    shorter, longer = sorted((left_numbers, right_numbers), key=len)
+    unmatched = list(longer)
+    for value in shorter:
+        match = next((item for item in unmatched if abs(item - value) <= max(0.02, abs(value) * 0.002)), None)
+        if match is None:
+            return False
+        unmatched.remove(match)
+    return True
 
 
 def _external_scope_bucket(entity_scope: object) -> str:

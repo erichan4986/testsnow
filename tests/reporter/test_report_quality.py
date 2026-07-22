@@ -832,6 +832,38 @@ def test_formal_thin_canonical_source_units_pass_external_quality_gates():
     assert "external_map_unverified_claim_framing" not in codes
 
 
+def test_formal_thin_grouped_external_topic_narrative_does_not_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**财务质量**
+
+近期外部材料主要围绕财务质量展开。营业收入预计同比增长[^1]；此外，归母净利润预计同比增长[^2]。
+
+## 引用来源
+- [^1] 外部材料精选观察 | 《业绩观察一》
+- [^2] 外部材料精选观察 | 《业绩观察二》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
+
+
 def test_external_map_uncertainty_does_not_trigger_strong_confirmation():
     text = _quality_shell(
         """
@@ -1563,6 +1595,35 @@ def test_financial_fact_unit_conflict_is_error():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "financial_fact_unit_conflict" in codes
+
+
+def test_financial_fact_unit_conflict_ignores_investment_subscription_amount():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 一、公司快照
+
+2026Q1 营业收入 10.32亿，归母净利润 1.48亿。
+
+## 四、深度分析
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "financial_fact_unit_conflict" not in codes
 
 
 def test_financial_data_missing_contradiction_is_metric_specific_error():
