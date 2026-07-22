@@ -2,6 +2,7 @@
 
 import copy
 import sys
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -330,6 +331,23 @@ def test_external_narrative_accepts_plan_order_when_unit_coverage_matches():
     ]
 
 
+def test_external_narrative_rejects_incomplete_plan_before_owner_filtering():
+    duplicate = "公司2025年营业收入为10亿元。"
+    update = "公司2026年上半年营业收入预计为22至24亿元。"
+    owner = _annual_display_row(
+        duplicate, role="financial_quality_explanation", row_id="annual:revenue",
+    )
+    rows = (
+        _external_narrative_row("financial", "u1", duplicate, 2),
+        _external_narrative_row("financial", "u2", update, 2),
+    )
+    incomplete = ExternalTopicNarrative("target", "financial_quality", (
+        ExternalNarrativePart("financial", "u1", duplicate, "first", (2,)),
+    ))
+
+    assert select_external_topic_narratives((incomplete,), rows, (owner,)) == ()
+
+
 def test_external_narrative_merges_equivalent_metric_facts_and_citations():
     quotes = (
         "营业收入预计22至24亿元，同比增长19.64%至30.52%。",
@@ -387,6 +405,170 @@ def test_external_narrative_does_not_merge_materially_different_small_values():
     parts = select_external_topic_narratives((narrative,), rows)[0].parts
 
     assert [part.quote for part in parts] == list(quotes)
+
+
+def test_external_narrative_hides_owner_equivalent_part_and_keeps_new_period():
+    owner = _annual_display_row(
+        "公司2025年营业收入为10亿元。", role="financial_quality_explanation",
+        row_id="annual:revenue",
+    )
+    quotes = (
+        "公司2025年营业收入为10亿元。",
+        "公司2026年上半年营业收入预计为22至24亿元。",
+    )
+    rows = tuple(
+        _external_narrative_row(f"period-{index}", f"u{index}", quote, index + 1)
+        for index, quote in enumerate(quotes)
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", tuple(
+        ExternalNarrativePart(
+            f"period-{index}", f"u{index}", quote,
+            "first" if index == 0 else "continuation", (index + 1,),
+        )
+        for index, quote in enumerate(quotes)
+    ))
+
+    parts = select_external_topic_narratives((narrative,), rows, (owner,))[0].parts
+
+    assert [part.quote for part in parts] == [quotes[1]]
+    assert parts[0].relation == "first"
+
+
+def test_external_narrative_keeps_same_year_different_reporting_period():
+    owner = _annual_display_row(
+        "公司预计2026年上半年营业收入为10亿元，同比增长20%，主要受产品增长推动。",
+        role="financial_quality_explanation",
+        row_id="annual:first-half",
+    )
+    quote = "公司预计2026年下半年营业收入为10亿元，同比增长20%，主要受产品增长推动。"
+    row = _external_narrative_row("second-half", "u1", quote, 2)
+    narrative = ExternalTopicNarrative("target", "financial_quality", (
+        ExternalNarrativePart("second-half", "u1", quote, "first", (2,)),
+    ))
+
+    parts = select_external_topic_narratives((narrative,), (row,), (owner,))[0].parts
+
+    assert [part.quote for part in parts] == [quote]
+
+
+def test_external_narrative_normalizes_full_and_half_width_punctuation_for_owner_match():
+    owner = _annual_display_row(
+        "公司FPGA产品，已认证：可量产。", role="technology_product_progress",
+        row_id="annual:punctuation",
+    )
+    quote = "公司FPGA产品,已认证:可量产。"
+    row = replace(
+        _external_narrative_row("punctuation", "u1", quote, 2),
+        external_family="technology_product",
+    )
+    narrative = ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("punctuation", "u1", quote, "first", (2,)),
+    ))
+
+    selected = select_external_topic_narratives((narrative,), (row,), (owner,))
+
+    assert selected[0].parts == ()
+
+
+def test_external_narrative_keeps_protected_owner_deltas():
+    owners = tuple(
+        _annual_display_row(body, role=role, ref=index + 1, row_id=f"annual:owner:{index}")
+        for index, (body, role) in enumerate((
+            ("公司2025年营业收入为10亿元。", "financial_quality_explanation"),
+            ("公司800G产品处于样品阶段。", "technology_product_progress"),
+            ("公司上游设备采购存在明显瓶颈。", "operating_progress"),
+            ("公司推出NPO产品。", "technology_product_progress"),
+            ("公司FPAI产品覆盖4TOPS至128TOPS。", "technology_product_progress"),
+        ))
+    )
+    quotes = (
+        "公司2025年归母净利润为10亿元。",
+        "公司800G产品进入量产阶段。",
+        "公司上游设备采购没有明显瓶颈。",
+        "公司与头部客户合作推出NPO产品。",
+        "公司FPAI产品集成CPU、FPGA、NPU，覆盖4TOPS至128TOPS。",
+    )
+    rows = tuple(
+        _external_narrative_row(f"protected-{index}", f"u{index}", quote, index + 10)
+        for index, quote in enumerate(quotes)
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", tuple(
+        ExternalNarrativePart(
+            f"protected-{index}", f"u{index}", quote,
+            "first" if index == 0 else "continuation", (index + 10,),
+        )
+        for index, quote in enumerate(quotes)
+    ))
+
+    parts = select_external_topic_narratives((narrative,), rows, owners)[0].parts
+
+    assert [part.quote for part in parts] == list(quotes)
+
+
+def test_external_narrative_returns_empty_sentinel_when_all_parts_match_owner():
+    quote = "公司2025年营业收入为10亿元。"
+    owner = _annual_display_row(
+        quote, role="financial_quality_explanation", row_id="annual:revenue",
+    )
+    row = _external_narrative_row("duplicate", "u1", quote, 2)
+    narrative = ExternalTopicNarrative("target", "financial_quality", (
+        ExternalNarrativePart("duplicate", "u1", quote, "first", (2,)),
+    ))
+
+    selected = select_external_topic_narratives((narrative,), (row,), (owner,))
+
+    assert len(selected) == 1
+    assert selected[0].parts == ()
+
+
+def test_external_peer_narrative_bypasses_target_owner_comparison():
+    quote = "同业公司800G产品已进入量产阶段。"
+    owner = _annual_display_row(
+        quote, role="technology_product_progress", row_id="annual:technology",
+    )
+    row = replace(
+        _external_narrative_row("peer", "u1", quote, 2),
+        entity_scope="peer_or_industry", external_family="technology_product",
+    )
+    narrative = ExternalTopicNarrative("peer_or_industry", "technology_product", (
+        ExternalNarrativePart("peer", "u1", quote, "first", (2,)),
+    ))
+
+    selected = select_external_topic_narratives((narrative,), (row,), (owner,))
+
+    assert [part.quote for part in selected[0].parts] == [quote]
+
+
+def test_view_model_projects_owner_equivalent_parts_without_changing_price_path_rows():
+    owner = _annual_display_row(
+        "公司2025年营业收入为10亿元。", role="financial_quality_explanation",
+        ref=1, row_id="annual:revenue",
+    )
+    duplicate = "公司2025年营业收入为10亿元。"
+    update = "公司2026年上半年营业收入预计为22至24亿元。"
+    external = MaterialRow(
+        "external:financial", "财务更新", "external", "external_observation", (2,), ("external:2",),
+        title="2026年业绩更新", body=duplicate + update, render_role="external_variable",
+        external_claim=duplicate + update, external_evidence=duplicate + update,
+        evidence_status="source_unit_verified", entity_scope="target",
+        argument_key="financial", external_family="financial_quality",
+        external_unit_ids=("u1", "u2"),
+    )
+    narrative = ExternalTopicNarrative("target", "financial_quality", (
+        ExternalNarrativePart("financial", "u1", duplicate, "first", (2,)),
+        ExternalNarrativePart("financial", "u2", update, "continuation", (2,)),
+    ))
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", (owner, external),
+        {1: {"source": "公司年报"}, 2: {"source": "外部观察"}}, {}, (narrative,),
+    )
+
+    view_model = build_chapter4_view_model(snapshot, "formal_medium")
+
+    assert [part.quote for part in view_model.section("4.3").narratives[0].parts] == [update]
+    assert view_model.section("4.1").rows[0].citation_refs == (1,)
+    price_row = next(row for row in view_model.section("4.4").rows if row.source_layer == "external")
+    assert price_row.body == duplicate + update
 
 
 def test_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():

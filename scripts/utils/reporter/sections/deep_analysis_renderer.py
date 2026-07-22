@@ -165,7 +165,9 @@ class DeepAnalysisRenderer:
                 (*annual_material_rows, *broker_owner_rows),
             )
             external_topic_narratives = select_external_topic_narratives(
-                material_snapshot.external_topic_narratives, external_material_rows,
+                material_snapshot.external_topic_narratives,
+                external_material_rows,
+                (*annual_material_rows, *broker_owner_rows),
             )
             broker_citation_offset = annual_citation_offset + self._max_snapshot_ref(material_snapshot, {"annual"})
             external_citation_offset = annual_citation_offset + self._max_snapshot_ref(
@@ -687,13 +689,15 @@ class DeepAnalysisRenderer:
                 ),
             )
             for _, (variable, rows) in ordered_groups:
-                lines.extend([f"**{variable}**", ""])
                 family = next((row.external_family for row in rows if row.external_family), "")
                 narrative = next((item for item in narratives if (
                     item.scope_bucket == ("peer_or_industry" if is_peer else "target")
                     and item.primary_family == family
                 )), None)
-                if narrative:
+                if narrative is not None and not narrative.parts:
+                    continue
+                lines.extend([f"**{variable}**", ""])
+                if narrative is not None:
                     lines.extend([self._external_topic_narrative_paragraph(narrative, variable, is_peer, citation_offset), ""])
                     continue
                 verified_rows = [row for row in rows if row.evidence_status == "source_unit_verified"]

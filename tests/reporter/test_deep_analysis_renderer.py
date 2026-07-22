@@ -300,6 +300,24 @@ def test_external_variable_map_falls_back_only_for_topic_without_valid_narrative
     assert "外部新增待验证变量：" not in rendered
 
 
+def test_external_variable_map_empty_narrative_skips_topic_without_raw_fallback():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "external:duplicate", "重复事实。", "external", "external_observation", (1,), (),
+        title="技术与产品", body="重复事实。", evidence_status="source_unit_verified",
+        entity_scope="target", argument_key="duplicate", external_family="technology_product",
+        external_unit_ids=("u1",),
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", ()),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        (row,), {1: {"source": "外部观察"}}, disclaimer="仅作观察。", narratives=narratives,
+    ))
+
+    assert "**技术与产品**" not in rendered
+    assert "重复事实" not in rendered
+
+
 def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
     renderer = DeepAnalysisRenderer()
     row = MaterialRow(
@@ -1494,6 +1512,60 @@ def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
     assert "FPGA 2026Q3 客户验证节奏仍待确认[^5]" in result
     assert "近期外部材料主要围绕技术与产品展开。" in result
     assert "[^5] | **微信公众号精选观察** | 《FPGA 客户验证观察》" in result
+
+
+def test_formal_thin_owner_filter_keeps_full_snapshot_external_citation_offset():
+    renderer = DeepAnalysisRenderer()
+    duplicate = "新一代 FPGA 进入客户验证阶段。"
+    update = "新一代 FPGA 预计于2026Q3完成下一轮客户认证。"
+    evidence_units = []
+    for index, text in enumerate((duplicate, update), 1):
+        evidence_units.append({
+            "schema_version": "curated_external_evidence_unit.v2",
+            "unit_id": f"unit:technology:{index}", "source_id": "source:fixture",
+            "document_hash": "fixture", "block_id": "block:fixture", "block_ordinal": 0,
+            "unit_ordinal": index - 1, "start": 0, "end": len(text),
+            "unit_hash": f"fixture:{index}", "block_hash": "fixture", "text": text,
+            "evidence_status": "source_unit_verified", "citation_refs": [index],
+            "scope_provenance": {
+                "schema_version": "curated_external_scope_provenance.v2", "origin": "explicit_target",
+                "anchor_unit_id": f"unit:technology:{index}", "proof_kind": "explicit_stock_name",
+                "proof_value": "fixture-target",
+            },
+        })
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {
+            "_curated_external_argument_cards": [{
+                "schema_version": "curated_external_argument_card.v4",
+                "argument_key": "technology:update", "entity_scope": "target",
+                "coverage_families": ["technology_product"], "primary_family": "technology_product",
+                "evidence_units": evidence_units, "citation_refs": [1, 2],
+            }],
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "重复产品观察"},
+                2: {"source": "微信公众号精选观察", "title": "客户认证更新"},
+            },
+            "_curated_external_topic_narratives": [{
+                "scope_bucket": "target", "primary_family": "technology_product", "parts": [
+                    {"argument_key": "technology:update", "unit_id": "unit:technology:1", "quote": duplicate, "relation": "first"},
+                    {"argument_key": "technology:update", "unit_id": "unit:technology:2", "quote": update, "relation": "continuation"},
+                ],
+            }],
+        },
+        "core_facts": [],
+    }
+
+    result = _render(renderer, ctx)
+
+    assert duplicate.rstrip("。") not in result.split("### 4.3", 1)[1]
+    assert f"{update[:-1]}[^6]。" in result
+    assert "[^5] | **微信公众号精选观察**" not in result
+    assert "[^6] | **微信公众号精选观察** | 《客户认证更新》" in result
 
 
 

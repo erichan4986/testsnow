@@ -370,7 +370,7 @@ def build_chapter4_view_model(
         (*annual_rows, *broker_rows),
     )
     external_narratives = select_external_topic_narratives(
-        snapshot.external_topic_narratives, external_rows,
+        snapshot.external_topic_narratives, external_rows, (*annual_rows, *broker_rows),
     )
     price_path_rows = _select_price_path_rows(annual_rows, broker_rows, external_rows)
     sections = (
@@ -447,6 +447,13 @@ _CONCRETE_ANCHOR_RE = re.compile(
 _EXTERNAL_EVENT_TERMS = (
     "传言", "否认", "回应", "下调", "上调", "短缺", "紧张", "瓶颈", "缺口", "供应链", "交付", "订单",
     "认证", "验证", "量产", "制裁", "政策", "停产", "延期", "延后", "提前", "调整", "替代", "降价", "涨价", "分歧", "唯一", "首家", "率先",
+)
+_OWNER_FACT_POLARITY_TERMS = ("未", "不", "没有", "无", "不及", "低于", "放缓", "受限", "风险", "瓶颈")
+_OWNER_FACT_RELATION_TERMS = ("合作", "客户", "供应商", "竞争对手", "绑定", "长协")
+_OWNER_FACT_PUNCTUATION = str.maketrans("，；：！？。", ",;:!?.")
+_TIME_ANCHOR_RE = re.compile(
+    r"20\d{2}(?:Q[1-4]|H[12])?|(?:20\d{2}年)?(?:上半年|下半年|[一二三四]季度)|\d{1,2}月\d{1,2}日",
+    re.I,
 )
 _FINANCIAL_FACT_METRICS = (
     ("扣非净利润", ("扣非净利润",)),
@@ -753,8 +760,10 @@ def _external_narratives(display: Mapping[str, Any], allocator: _CitationAllocat
 
 def select_external_topic_narratives(
     narratives: Iterable[ExternalTopicNarrative], rows: Iterable[MaterialRow],
+    owner_rows: Iterable[MaterialRow] = (),
 ) -> Tuple[ExternalTopicNarrative, ...]:
     selected = tuple(rows)
+    owner_units = _owner_fact_units(owner_rows)
     result = []
     for narrative in narratives:
         scoped = tuple(row for row in selected if (
@@ -767,7 +776,13 @@ def select_external_topic_narratives(
         received = [(part.argument_key, part.unit_id) for part in parts]
         if expected and sorted(received) == sorted(expected):
             parts = _dedupe_external_narrative_parts(parts)
-            result.append(replace(narrative, parts=(replace(parts[0], relation="first"), *parts[1:])))
+            if narrative.scope_bucket == "target" and owner_units:
+                parts = tuple(part for part in parts if not any(
+                    _same_owner_fact(part.quote, owner) for owner in owner_units
+                ))
+            if parts:
+                parts = (replace(parts[0], relation="first"), *parts[1:])
+            result.append(replace(narrative, parts=parts))
     return tuple(result)
 
 
@@ -795,8 +810,8 @@ def _same_external_fact(left: str, right: str) -> bool:
     right_key = re.sub(r"[^0-9a-zA-Z\u4e00-\u9fff]+", "", right).lower()
     if not left_key or not right_key:
         return False
-    left_metric = next((metric for metric, aliases in _FINANCIAL_FACT_METRICS if any(alias in left for alias in aliases)), "")
-    right_metric = next((metric for metric, aliases in _FINANCIAL_FACT_METRICS if any(alias in right for alias in aliases)), "")
+    left_metric = _financial_fact_metric(left)
+    right_metric = _financial_fact_metric(right)
     if (left_metric or right_metric) and left_metric != right_metric:
         return False
     ratio = SequenceMatcher(None, left_key, right_key).ratio()
@@ -814,6 +829,47 @@ def _same_external_fact(left: str, right: str) -> bool:
             return False
         unmatched.remove(match)
     return True
+
+
+def _owner_fact_units(rows: Iterable[MaterialRow]) -> Tuple[str, ...]:
+    return tuple(
+        unit.strip()
+        for row in rows
+        for unit in re.split(r"(?<=[。！？!?；;])", row.body or "")
+        if _normalized_claim_body(unit)
+    )
+
+
+def _same_owner_fact(external: str, owner: str) -> bool:
+    external_key = _normalized_claim_body(external).translate(_OWNER_FACT_PUNCTUATION)
+    owner_key = _normalized_claim_body(owner).translate(_OWNER_FACT_PUNCTUATION)
+    if not external_key or not owner_key:
+        return False
+    external_metric, owner_metric = _financial_fact_metric(external), _financial_fact_metric(owner)
+    if (external_metric or owner_metric) and external_metric != owner_metric:
+        return False
+    external_times = set(_TIME_ANCHOR_RE.findall(external))
+    owner_times = set(_TIME_ANCHOR_RE.findall(owner))
+    if external_times and owner_times and external_times != owner_times:
+        return False
+    if _concrete_anchors(external) - _concrete_anchors(owner):
+        return False
+    for terms in (_EXTERNAL_EVENT_TERMS, _OWNER_FACT_POLARITY_TERMS, _OWNER_FACT_RELATION_TERMS):
+        if {term for term in terms if term in external} - {term for term in terms if term in owner}:
+            return False
+    if external_key == owner_key:
+        return True
+    if len(external_key) >= 24 and external_key in owner_key:
+        return True
+    length_compatible = len(external_key) <= len(owner_key) * 1.1
+    return length_compatible and (
+        (len(owner_key) >= 24 and owner_key in external_key)
+        or SequenceMatcher(None, external_key, owner_key).ratio() >= 0.92
+    )
+
+
+def _financial_fact_metric(text: str) -> str:
+    return next((metric for metric, aliases in _FINANCIAL_FACT_METRICS if any(alias in text for alias in aliases)), "")
 
 
 def _external_scope_bucket(entity_scope: object) -> str:
