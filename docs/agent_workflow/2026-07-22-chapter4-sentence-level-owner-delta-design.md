@@ -23,6 +23,7 @@
 4. 外部 part 被隐藏时，其低信用引用不得迁移到 4.1/4.2。
 5. canonical cards、narrative plan、MaterialSnapshot rows 和 source units 全部保留；过滤仅影响最终 4.3 消费的 narrative projection。
 6. 不以消除 prose warning 为目标。合法的近期更新即使继续触发主题重叠 warning，也不得删除。
+7. 只对 `scope_bucket == "target"` 的 narrative 做 owner-equivalence；peer/industry narrative 不得与目标公司的 4.1/4.2 比较。
 
 ## 4. Architecture
 
@@ -41,7 +42,8 @@ select_external_topic_narratives(narratives, external_rows, owner_rows=())
 3. 按 narrative plan 保持原始顺序。
 4. 执行现有 external-to-external 跨来源事实去重并合并引用。
 5. 将每个保留 part 与可见 owner fact units 比较，只删除 owner-equivalent part。
-6. 重新把首个 part 的 `relation` 设为 `first`；若为空则省略整个 topic narrative。
+6. 重新把首个 part 的 `relation` 设为 `first`。
+7. 若完整覆盖已验证但所有 parts 都被判等价，保留一个 `parts=()` 的内部 projection sentinel；它表示“主动隐藏”，不是 narrative plan 缺失。
 
 不得新增第二个 selector，也不得在 renderer 中复制等价判断。
 
@@ -60,17 +62,23 @@ owner row 按句号、问号、感叹号和分号边界拆成只读比较单元�
 
 `_same_owner_fact(external_quote, owner_unit)` 必须比 external-to-external 去重更保守。
 
-满足以下任一路径才可判定等价：
+判定顺序固定如下：
 
-1. 规范化文本完全相同；
-2. 长度不少于 24 字的一方完整包含另一方，并且 external quote 没有新增 concrete anchor；
-3. 文本高度相似、财务指标身份一致、期间一致、数值兼容，且 external quote 没有新增 concrete anchor 或事件谓词。
+1. 任一硬性保护触发，立即返回非等价；
+2. 规范化文本完全相同，判定等价；
+3. external 规范化文本长度不少于 24 字且完整包含于 owner，判定等价；
+4. owner 完整包含于 external 时，仅当 external 长度不超过 owner 的 1.10 倍才判定等价；
+5. 其余情况仅当 `SequenceMatcher` 相似度不低于 0.92，且 external 长度不超过 owner 的 1.10 倍，才判定等价。
 
 硬性保护：
 
 - 同数字但不同指标不得合并，例如营收与归母净利润；
 - 年份、季度、半年度和具体日期分别提取为 time anchors；2025 与 2026、Q1 与 H1 等期间不同必须保留；
 - `样品/验证/认证/量产/交付/订单/下调/短缺/否认` 等阶段或事件新增必须保留；
+- polarity/constraint anchors 单独比较：`未/不/没有/无/不及/低于/放缓/受限/风险/瓶颈` 不同必须保留；
+- relation anchors 单独比较：`合作/客户/供应商/竞争对手/绑定/长协` 仅在 external 出现时必须保留；
+- financial metric 任一侧存在时，两侧 metric identity 必须相同；两侧都有 time anchors 时必须完全相同；
+- external 的数字/百分比/产品型号等 concrete anchors 必须是 owner anchors 的子集，否则保留；
 - external quote 比 owner 更丰富时必须保留整句，不做非原文改写；
 - 无数字的句子只允许 exact、containment 或极高相似度等价，不使用主题 token overlap。
 
@@ -79,9 +87,20 @@ owner row 按句号、问号、感叹号和分号边界拆成只读比较单元�
 - `formal_medium` 在 `build_chapter4_view_model()` 中传入已选 annual/broker owner rows。
 - `formal_thin_external_rich` 在 renderer 的既有适配路径传入其已选 annual/broker owner rows。
 - formal-thin 的完整 MaterialSnapshot、broker/external renderer 和 citation offset 公式保持原样。
+- `external_material_rows` 原集合继续供 4.4/其他既有消费者使用；本批只替换 4.3 narrative projection，不让显示裁剪反向改变价格推演材料。
 - citation 编号仍按 full snapshot 的既有公式计算，不因隐藏 part 重新编号。
 - 全局来源表继续由现有 `_visible_citations_only()` 根据最终正文过滤；被隐藏 part 的引用不会成为 unused definition，但仍留在 canonical pack 和 snapshot。
 - 本批不改变 selector 返回类型，也不新增第二条 diagnostics 数据流；过滤行为由投影测试和正式报告引用门证明。
+
+### 4.5 Empty Projection and Fallback
+
+renderer 必须在写主题标题前区分三种状态：
+
+1. 找到非空 narrative：渲染 narrative；
+2. 找到 `parts=()` sentinel：整个主题不渲染，也不得回退到 raw rows；
+3. 没有匹配 narrative：保留当前 verified-row fallback，确保 plan 缺失或无效时不丢材料。
+
+判断必须使用 `narrative is not None`，不得用空 parts 与不存在 narrative 共用一个 falsy 分支。
 
 ## 5. Expected Report Behavior
 
@@ -108,10 +127,13 @@ owner row 按句号、问号、感叹号和分号边界拆成只读比较单元�
 | 更丰富外部句被压掉 | owner 只有型号，external 还有客户/阶段 | richer external quote remains verbatim |
 | 真重复未清理 | FPAI 同规格在 4.1 和 4.3 各展开一次 | equivalent owner part omitted |
 | 引用越层 | external ref 被追加到 4.1/4.2 | owner citation refs unchanged |
-| 全部 part 被删后空标题 | 4.3 出现空主题 | empty narrative omitted |
+| 全部 part 被删后 fallback 复活 | 原始重复 rows 再次显示或留下空标题 | empty sentinel skips topic and does not fallback |
 | plan coverage 被过滤掩盖 | 缺 unit 的 narrative 被误接受 | coverage validation runs before filtering |
-| formal-thin offset 回归 | external footnote 编号错位 | full-snapshot offset regression test |
+| formal-thin offset 回归 | external footnote 编号被压缩或错位 | hidden earlier ref leaves later external ref at original full-snapshot offset |
 | scope 串区 | peer part 进入 target topic | target/peer partition regression test |
+| peer 被目标 owner 压掉 | 同业事实与目标事实措辞相似而消失 | peer/industry narrative bypasses owner comparison |
+| 极性反转误合并 | “没有瓶颈”被“存在瓶颈”压掉 | different polarity/constraint remains |
+| 合作关系被压掉 | 目标产品背景覆盖新增合作事实 | new relation anchor remains |
 | 原文被改写 | 投影生成不存在于 source 的事实句 | retained quote remains exactly equal to input part quote |
 
 ## 7. Allowed Scope
