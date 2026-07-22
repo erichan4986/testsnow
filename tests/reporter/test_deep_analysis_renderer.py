@@ -31,17 +31,24 @@ def _external_argument_row(claim, evidence, *, ref=None, refs=None, key, title="
     citation_refs = list(refs if refs is not None else [ref])
     family = _test_external_family(claim, title)
     return {
-        "schema_version": "curated_external_argument_card.v3",
+        "schema_version": "curated_external_argument_card.v4",
         "argument_key": key,
         "entity_scope": "target",
         "coverage_families": [family],
         "primary_family": family,
         "evidence_units": [{
-            "unit_id": f"unit:{key}",
-            "source_unit_id": f"unit:{key}",
+            "schema_version": "curated_external_evidence_unit.v2",
+            "unit_id": f"unit:{key}", "source_id": "source:fixture",
+            "document_hash": "fixture", "block_id": "block:fixture", "block_ordinal": 0,
+            "unit_ordinal": 0, "start": 0, "end": len(evidence), "unit_hash": "fixture", "block_hash": "fixture",
             "text": evidence,
             "evidence_status": "source_unit_verified",
             "citation_refs": citation_refs,
+            "scope_provenance": {
+                "schema_version": "curated_external_scope_provenance.v2", "origin": "explicit_target",
+                "anchor_unit_id": f"unit:{key}", "proof_kind": "explicit_stock_name",
+                "proof_value": "fixture-target",
+            },
         }],
         "citation_refs": citation_refs,
     }

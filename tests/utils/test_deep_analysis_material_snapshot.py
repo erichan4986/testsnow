@@ -141,20 +141,28 @@ def _ctx():
 def _external_argument_card(
     evidence, *, argument_key, ref=1, topic="capacity_delivery", entity_scope="target",
 ):
+    origin = "peer_or_industry" if entity_scope == "peer_or_industry" else "explicit_target"
     return {
-        "schema_version": "curated_external_argument_card.v3",
+        "schema_version": "curated_external_argument_card.v4",
         "card_id": f"external-argument:{argument_key}",
         "entity_scope": entity_scope,
         "coverage_families": [topic],
         "primary_family": topic,
         "evidence_units": [{
-            "text": evidence,
+            "schema_version": "curated_external_evidence_unit.v2", "text": evidence,
             "evidence_status": "source_unit_verified",
             "unit_id": f"unit:{argument_key}",
             "unit_hash": "test",
             "source_id": "source:test",
-            "source_block_hash": "test",
+            "document_hash": "test", "block_id": "block:test", "block_ordinal": 0,
+            "unit_ordinal": 0, "block_hash": "test", "start": 0, "end": len(evidence),
             "citation_refs": [ref],
+            "scope_provenance": {
+                "schema_version": "curated_external_scope_provenance.v2", "origin": origin,
+                "anchor_unit_id": f"unit:{argument_key}" if origin == "explicit_target" else "",
+                "proof_kind": "explicit_stock_name" if origin == "explicit_target" else "none",
+                "proof_value": "测试股" if origin == "explicit_target" else "",
+            },
         }],
         "argument_key": argument_key,
         "citation_refs": [ref],
@@ -165,7 +173,7 @@ def _external_argument_card(
     }
 
 
-def test_snapshot_projects_external_argument_v3_and_keeps_full_snapshot_offsets():
+def test_snapshot_projects_external_argument_v4_and_keeps_full_snapshot_offsets():
     ctx = _ctx()
     ctx["deep_analysis_display"].update({
         "_curated_external_argument_cards": [
@@ -187,6 +195,23 @@ def test_snapshot_projects_external_argument_v3_and_keeps_full_snapshot_offsets(
     assert external[0].argument_key == "capacity:delivery"
     assert external[0].citation_refs == (6,)
     assert snapshot.citations[6]["title"] == "供应链观察"
+
+
+def test_snapshot_uses_v4_exact_unit_text_without_display_projection():
+    ctx = _ctx()
+    ctx["deep_analysis_display"].update({
+        "_curated_external_argument_cards": [_external_argument_card(
+            argument_key="target:product",
+            evidence="测试股产品完成客户导入。",
+        )],
+        "citations": {1: {"source": "微信公众号精选观察", "title": "产品观察"}},
+    })
+
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    row = next(row for row in snapshot.rows if row.source_layer == "external")
+
+    assert row.body == "测试股产品完成客户导入。"
+    assert row.citation_refs == (6,)
 
 
 def test_snapshot_orders_target_external_rows_before_peer_background():

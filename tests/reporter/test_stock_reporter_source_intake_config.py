@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from utils.stock_reporter import PerStockReporter
-from curated_external_argument_cards import read_external_argument_pack
+from external_pack import read_external_argument_pack_v4
 
 
 def test_default_reporter_does_not_enable_source_intake():
@@ -697,7 +697,7 @@ def test_source_intake_curated_external_argument_pack_enabled_passes_context():
     assert call_input["curated_external_argument_pack_json"] == "/tmp/external-argument-pack.json"
 
 
-def test_production_external_configs_use_only_readable_canonical_v3_packs():
+def test_production_external_configs_use_only_readable_canonical_v4_packs():
     root = Path(__file__).parents[2]
     configs = {row["name"]: row for row in json.loads((root / "config/stocks.json").read_text(encoding="utf-8"))}
     expected = {
@@ -714,6 +714,5 @@ def test_production_external_configs_use_only_readable_canonical_v3_packs():
         assert {key for key in intake if key.startswith("curated_external_")} == {
             "curated_external_argument_pack_synthesis_display",
         }
-        assert read_external_argument_pack(
-            root / relative_path, expected_stock_name=stock_name,
-        )["status"] == "ok"
+        pack = json.loads((root / relative_path).read_text(encoding="utf-8"))
+        assert read_external_argument_pack_v4(pack, expected_stock_name=stock_name)["status"] == "ok"

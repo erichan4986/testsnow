@@ -11,7 +11,6 @@ from skill_pipeline import SkillContext
 import report_skills.synthesis_skills as synthesis_skills_module
 from report_skills.synthesis_skills import SynthesisSkill
 from source_adapter import SynthesisItem
-from curated_external_argument_cards import build_external_argument_pack, materialize_external_source_units
 
 TEST_STOCK_CODES = {
     "复旦微电": "688385",

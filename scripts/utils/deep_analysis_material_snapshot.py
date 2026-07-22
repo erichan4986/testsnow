@@ -12,11 +12,11 @@ import re
 from typing import Any, Dict, Iterable, Mapping, Tuple
 
 try:
-    from .curated_external_argument_cards import external_family_title, external_scope_bucket, external_unit_key, external_units_by_key
+    from .external_evidence import external_family_title
     from .deep_analysis_topic_ownership import matching_topic_families
     from .synthesis_credit import citation_identity
 except ImportError:
-    from curated_external_argument_cards import external_family_title, external_scope_bucket, external_unit_key, external_units_by_key
+    from external_evidence import external_family_title
     from deep_analysis_topic_ownership import matching_topic_families
     from synthesis_credit import citation_identity
 
@@ -690,10 +690,7 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
         if not isinstance(row, dict):
             continue
         evidence_units = [unit for unit in row.get("evidence_units") or [] if isinstance(unit, Mapping)]
-        body = "\n\n".join(
-            str(unit.get("text") or "").strip() for unit in evidence_units
-            if str(unit.get("text") or "").strip()
-        )
+        body = "\n\n".join(str(unit.get("text") or "").strip() for unit in evidence_units if str(unit.get("text") or "").strip())
         if not body:
             continue
         material_row = _adapt_material_row(
@@ -713,7 +710,7 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
             material_row,
             external_claim=body,
             external_evidence=body,
-            evidence_status=str((evidence_units[0] if evidence_units else {}).get("evidence_status") or ""),
+            evidence_status=str((evidence_units[0] if evidence_units else {}).get("evidence_status") or "source_unit_verified"),
             entity_scope=str(row.get("entity_scope") or ""),
             argument_key=str(row.get("argument_key") or ""),
             external_family=str(row.get("primary_family") or ""),
@@ -724,14 +721,14 @@ def _external_rows(display: Mapping[str, Any], allocator: _CitationAllocator, pr
 
 def _external_narratives(display: Mapping[str, Any], allocator: _CitationAllocator) -> Tuple[ExternalTopicNarrative, ...]:
     citations = display.get("citations") or {}
-    units = external_units_by_key(display.get("_curated_external_argument_cards") or [])
+    units = _external_units_by_key(display.get("_curated_external_argument_cards") or [])
     narratives = []
     for group in display.get("_curated_external_topic_narratives") or []:
         if not isinstance(group, Mapping):
             continue
         parts = []
         for part in group.get("parts") or []:
-            key = external_unit_key(part.get("argument_key"), part.get("unit_id"))
+            key = _external_unit_key(part.get("argument_key"), part.get("unit_id"))
             unit = units.get(key)
             if unit:
                 parts.append(ExternalNarrativePart(
@@ -752,7 +749,7 @@ def select_external_topic_narratives(
     result = []
     for narrative in narratives:
         scoped = tuple(row for row in selected if (
-            external_scope_bucket(row.entity_scope) == narrative.scope_bucket
+            _external_scope_bucket(row.entity_scope) == narrative.scope_bucket
             and row.external_family == narrative.primary_family
         ))
         expected = [(row.argument_key, unit_id) for row in scoped for unit_id in row.external_unit_ids]
@@ -761,6 +758,24 @@ def select_external_topic_narratives(
         if expected and [(part.argument_key, part.unit_id) for part in parts] == expected:
             result.append(replace(narrative, parts=(replace(parts[0], relation="first"), *parts[1:])))
     return tuple(result)
+
+
+def _external_scope_bucket(entity_scope: object) -> str:
+    return "peer_or_industry" if entity_scope == "peer_or_industry" else "target"
+
+
+def _external_unit_key(argument_key: object, unit_id: object) -> tuple[str, str]:
+    return str(argument_key or "").strip(), str(unit_id or "").strip()
+
+
+def _external_units_by_key(cards: Iterable[Mapping[str, Any]]) -> dict[tuple[str, str], Mapping[str, Any]]:
+    return {
+        _external_unit_key(card.get("argument_key"), unit.get("unit_id")): unit
+        for card in cards
+        if isinstance(card, Mapping)
+        for unit in card.get("evidence_units") or []
+        if isinstance(unit, Mapping)
+    }
 
 
 def _broker_title_body(section: str, row: Mapping[str, Any]) -> tuple[str, str]:

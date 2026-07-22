@@ -5,7 +5,7 @@ import re
 from typing import Any, Dict, List
 
 try:
-    from ...curated_external_argument_cards import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
+    from ...external_evidence import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
     from ...curated_external_display import attach_refs_to_sentence
     from ...deep_analysis_material_snapshot import (
         Chapter4ViewModel,
@@ -23,7 +23,7 @@ try:
     from .executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
 except ImportError:
     try:
-        from scripts.utils.curated_external_argument_cards import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
+        from scripts.utils.external_evidence import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
         from scripts.utils.curated_external_display import attach_refs_to_sentence
         from scripts.utils.deep_analysis_material_snapshot import (
             Chapter4ViewModel,
@@ -40,7 +40,7 @@ except ImportError:
         from scripts.utils.synthesis_source_policy import is_external_viewpoint_source, is_formal_display_source
         from scripts.utils.reporter.sections.executive_summary_renderer import _build_pe_spread_facts, _sanitize_pe_spread_in_text
     except ImportError:
-        from utils.curated_external_argument_cards import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
+        from utils.external_evidence import EXTERNAL_DISPLAY_TOPIC_ORDER, external_family_title
         from utils.curated_external_display import attach_refs_to_sentence
         from utils.deep_analysis_material_snapshot import (
             Chapter4ViewModel,

@@ -58,7 +58,7 @@ def test_build_social_source_packets_from_cached_xueqiu_and_zhihu(tmp_path: Path
     packets = build_social_source_packets(report_input, stock_name="测试股", min_content_chars=120)
 
     assert [packet["source_kind"] for packet in packets] == ["social_xueqiu", "social_zhihu"]
-    assert packets[0]["schema_version"] == "curated_external_source_packet.v1"
+    assert packets[0]["schema_version"] == "curated_external_source_input.v2"
     assert packets[0]["source_ref"] == "https://xueqiu.com/1/2"
     assert packets[0]["account"] == "雪球作者"
     assert packets[1]["source_ref"] == "https://zhihu.com/question/1/answer/2"

@@ -1,1436 +1,1092 @@
 {
-  "schema_version": "curated_external_argument_pack.v3",
-  "stock_name": "复旦微电",
+  "schema_version": "curated_external_argument_pack.v4",
   "status": "ready",
-  "selector_version": "external_unit_selector.v2",
-  "validator_version": "external_argument_validator.v3",
-  "source_packet_fingerprints": [
+  "stock_name": "复旦微电",
+  "validator_version": "external_argument_validator.v4",
+  "source_documents": [
     {
-      "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-      "source_content_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3"
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:24c0eccfb4b73e07",
+      "stock_name": "复旦微电",
+      "title": "科创板芯片龙头，净利预增313%-416%",
+      "account": "郭辉",
+      "publish_time": "2026-07-08 10:09",
+      "source_kind": "media",
+      "source_ref": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "source_url": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "raw_content_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+      "canonical_text": "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元，同比增幅高达313%至416%。扣非净利润预计为3.5亿至4.5亿元，同比增长91.98%至146.83%。公司上半年行业景气度回升及下游客户需求增长推动各产品线收入与毛利实现增长。FPGA系列、NFC射频、RFID产品、车规级MCU及多种解决方案已成为营收增长的重要动力。归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。公司已推出国内首款亿门级和十亿门级FPGA系列产品。在AI融合方向推出了首款FPAI（FPGA+AI）产品，集成CPU、FPGA、NPU三大处理单元，覆盖4TOPS至128TOPS的谱系化产品矩阵。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+      "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元，同比增幅高达313%至416%。扣非净利润预计为3.5亿至4.5亿元，同比增长91.98%至146.83%。公司上半年行业景气度回升及下游客户需求增长推动各产品线收入与毛利实现增长。FPGA系列、NFC射频、RFID产品、车规级MCU及多种解决方案已成为营收增长的重要动力。归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。公司已推出国内首款亿门级和十亿门级FPGA系列产品。在AI融合方向推出了首款FPAI（FPGA+AI）产品，集成CPU、FPGA、NPU三大处理单元，覆盖4TOPS至128TOPS的谱系化产品矩阵。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+          "start": 0,
+          "end": 386,
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51"
+        }
+      ]
     },
     {
-      "source_id": "curated-source:zhihu_selected_observation:641b17a48784b8b9",
-      "source_content_hash": "d66e9e1dd94cff438bc7396dcac916e250645c7c7c45aa1ced564a6c86b45f71"
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:4af7d9111f44a16b",
+      "stock_name": "复旦微电",
+      "title": "半导体超级上行周期再催化！复旦微电半年净利最高暴增416%",
+      "account": "王子敬",
+      "publish_time": "2026-07-07 19:19",
+      "source_kind": "media",
+      "source_ref": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "source_url": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "raw_content_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+      "canonical_text": "复旦微电于7月7日发布2026年半年度业绩预告。公司上半年预计归母净利润达8亿至10亿元，同比增幅为313%至416%。一季度净利润1.48亿元，推算二季度净利润约6.52亿至8.52亿元。三重驱动因素：行业周期回暖，多产品线放量，投资收益增厚。FPGA受益于AI算力与工业控制需求，高端产品渗透率提升。车规级MCU加速国产替代已形成收入贡献。该业绩是国内半导体设计行业周期触底回升的又一核心信号。",
+      "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日发布2026年半年度业绩预告。公司上半年预计归母净利润达8亿至10亿元，同比增幅为313%至416%。一季度净利润1.48亿元，推算二季度净利润约6.52亿至8.52亿元。三重驱动因素：行业周期回暖，多产品线放量，投资收益增厚。FPGA受益于AI算力与工业控制需求，高端产品渗透率提升。车规级MCU加速国产替代已形成收入贡献。该业绩是国内半导体设计行业周期触底回升的又一核心信号。",
+          "start": 0,
+          "end": 199,
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4"
+        }
+      ]
     },
     {
-      "source_id": "curated-source:zhihu_selected_observation:d139d854ee92359c",
-      "source_content_hash": "c0b4a5588fd8ebbe44560733c75b46bcd2d0e40c171ab01a0661ae48ce1da20b"
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:07fbf8fb0f768dd3",
+      "stock_name": "复旦微电",
+      "title": "复旦微电发布半年业绩预告，归母净利润最高预增416%",
+      "account": "全球半导体观察",
+      "publish_time": "2026-07-08 09:53",
+      "source_kind": "media",
+      "source_ref": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "source_url": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "raw_content_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+      "canonical_text": "复旦微电于7月7日披露2026年半年度业绩预告。营业收入预计22至24亿元，同比增长19.64%至30.52%。归母净利润预计8至10亿元，同比增幅313.19%至416.49%。三方面增长原因：行业回暖半导体景气度回升，技术迭代FPGA芯片、NFC射频、RFID识别、车规级MCU等新品落地，投资收益约4.7亿元。公司主营FPGA、安全识别芯片、存储、车规控制芯片等，覆盖工业、汽车电子、AI和通信等多个赛道。",
+      "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日披露2026年半年度业绩预告。营业收入预计22至24亿元，同比增长19.64%至30.52%。归母净利润预计8至10亿元，同比增幅313.19%至416.49%。三方面增长原因：行业回暖半导体景气度回升，技术迭代FPGA芯片、NFC射频、RFID识别、车规级MCU等新品落地，投资收益约4.7亿元。公司主营FPGA、安全识别芯片、存储、车规控制芯片等，覆盖工业、汽车电子、AI和通信等多个赛道。",
+          "start": 0,
+          "end": 206,
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c"
+        }
+      ]
     },
     {
-      "source_id": "curated-source:zhihu_selected_observation:62eacdf2cee1f654",
-      "source_content_hash": "a420380cd45569bc4e3b9d0d87470e5f5a432dc5f909de0b46627f2e2087c8c5"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:02ce318560f66665",
-      "source_content_hash": "e2506738d07e3c55726f859a065289f4c83a9fa7ed6b37fad3046010f7b2b6d0"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:8a8e51c7886a611c",
-      "source_content_hash": "5e826fa7e8577671357587c8d01b830ba923dc867a3f48eac99d9a6ef945d08d"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:4e8aa0ece6e279e4",
-      "source_content_hash": "00abf74366b318ae68e3c29a97e206f28cd65e4ba3422955b00e2bfce62090db"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:278235e7d7789786",
-      "source_content_hash": "429b1f6dda46ba575db59eea1db5d17829a76f7a7a5f1f5de028bbaba2c48285"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:dadad2849de75248",
-      "source_content_hash": "2eadea4f640752301d5968e7973d9a0984a269da47ec39d041bb85c949155dd3"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:bb61ff8d9e2b887d",
-      "source_content_hash": "e9ec73cc10c2f6a09bdec8055dffdd7f9c65ae98d470b98d6799fa54c7d13642"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:ff815604e5847758",
-      "source_content_hash": "cf81262cb1675e4acf8fbc6c1fb2677114de0dd231b60297da4965c85e94c522"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:410843f8e4062a2d",
-      "source_content_hash": "1b6a517957d9de4e50bb55d997de27847698df42821a1d769580db8946de016c"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:de2ec25d5a2de6b2",
-      "source_content_hash": "920c9025e2fcd7fa9763bf7cb9e385833347efd205fd270f0595fb829ca2bef3"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:124f0c3e975528c0",
-      "source_content_hash": "54c0842c04d3d8fb7073e2dcabfca6cba08f20773d2eb11dd43d5a071cebee64"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:4412bddf5e060bfa",
-      "source_content_hash": "3b3c0ff7c1d4cd3979de40b52a0678e313f1aabd9e6a61833ee83df96656c570"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:09b9c48820717a4c",
-      "source_content_hash": "43eb29144036fa7884331f8360e6420636a05e3ba11d1ee8fefbe5643302a627"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:685e81438e4a0c6f",
-      "source_content_hash": "091bec4e60332f740d4d81d3a0ced91389f8ff1397823b4acc3905c023f5d35d"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:de47914622973e8a",
-      "source_content_hash": "d3baffabfa669d77d1f9253fc095921b2e9d89c782169af4f488079fc3c872b8"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:07fbf8fb0f768dd3",
-      "source_content_hash": "1c7348f058a42f5526430c99ab818d9ae0ab3604c7527d1f83af3f3c0dbbe68a"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-      "source_content_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:def9138644572c68",
-      "source_content_hash": "839ad782098f024995720d14caf0f6b83958c70f8add51087847913c684e6449"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:df445803a312e3cf",
-      "source_content_hash": "859f0b46de41c5f9ac8901656be4e519977b628367c107310fdeab63ab5dde62"
-    },
-    {
-      "source_id": "curated-source:zhihu_selected_observation:31fc89f7028b4aba",
-      "source_content_hash": "9850ec702ec501ea7f900a9d718f9c59631d4cf9b6aa6b689bb459eb11fedefb"
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:12547d42f50dbc37",
+      "stock_name": "复旦微电",
+      "title": "复旦微电上半年归母净利预增至高4倍 投资盛合晶微浮盈4.7亿元",
+      "account": "郭辉/财联社",
+      "publish_time": "2026-07-07 21:50",
+      "source_kind": "media",
+      "source_ref": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "source_url": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "raw_content_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+      "canonical_text": "复旦微电于7月7日晚间发布公告，预计2026年上半年营收约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元增幅达313%至416%。FPGA市场需求较好，部分料号处于供需紧平衡状态。FPAI芯片集成CPU、FPGA和NPU三大处理单元，可覆盖4TOPS至128TOPS的谱系化产品矩阵。公司通过战略配售以约6000万元获配盛合晶微304万股，账面收益达8.89倍。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+      "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日晚间发布公告，预计2026年上半年营收约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元增幅达313%至416%。FPGA市场需求较好，部分料号处于供需紧平衡状态。FPAI芯片集成CPU、FPGA和NPU三大处理单元，可覆盖4TOPS至128TOPS的谱系化产品矩阵。公司通过战略配售以约6000万元获配盛合晶微304万股，账面收益达8.89倍。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+          "start": 0,
+          "end": 229,
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14"
+        }
+      ]
     }
   ],
-  "baseline_fingerprint": "sha256:0aba5e03c9d52587b9c8fb6f3f569a45692ca954ac1b17244eff43d6b05c136e",
+  "baseline_fingerprint": "sha256:1fd79ce7e36d860c03faca8343aa38e2b3880907012b9646337d80458bd87783",
   "cards": [
     {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:b30eebe263570e7e",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ecb2f765b37b4d52:0:54d30ecca70a12fd",
-          "text": "公告显示，「集成电路技术中心」是复旦微电和复旦大学联合创办的非独立法人资格的科研合作开发机构；",
-          "unit_hash": "54d30ecca70a12fd5b6f8cc8e09646a0d83558e55217176f6a98591fc81eba99",
-          "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-          "source_ordinal": 0,
-          "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            1
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target_with_peer_context:8bcb19f6f2471d06855e",
-      "citation_refs": [
-        1
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:055fc81ef93a88f0",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "financial_quality",
-        "technology_product"
-      ],
-      "primary_family": "financial_quality",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ecb2f765b37b4d52:3:b0925741fe3fd4d1",
-          "text": "复旦微电向集成电路技术中心开展项目研发提供的费用，是复旦微电年度研发预算的组成部分。",
-          "unit_hash": "b0925741fe3fd4d192af39304dfceecc14ced18770baac186c6c1b1184a3a3d0",
-          "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-          "source_ordinal": 3,
-          "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            1
-          ]
-        }
-      ],
-      "argument_key": "financial_quality:target_with_peer_context:40482084023fb240e1e4",
-      "citation_refs": [
-        1
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:43c57a442d34985d",
-      "stock_name": "复旦微电",
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:32ef70610253dca8",
+      "argument_key": "financial_quality:target:32ef70610253dca8",
       "entity_scope": "target",
       "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
       "coverage_families": [
-        "technology_product"
+        "financial_quality"
       ],
-      "primary_family": "technology_product",
       "evidence_units": [
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ecb2f765b37b4d52:5:a8fd5a23bc13bc9f",
-          "text": "复旦微电向集成电路技术中心提供不超过 10 亿元的合作经费，包括项目启动费、研发经费等必要的支出，研发经费金额具体以各个《技术开发协议》约定为准。",
-          "unit_hash": "a8fd5a23bc13bc9fa5593fd51eef949a58d251832973c3f01d58e219e9718a1e",
-          "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-          "source_ordinal": 5,
-          "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:0:01965945b310a707",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 24,
+          "text": "复旦微电于7月7日披露2026年半年度业绩预告。",
+          "unit_hash": "sha256:72b6c5e325ead650947c46b326c7832a8982ca763892af3d01965945b310a707",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:0:01965945b310a707"
+          },
+          "citation_refs": [
+            1
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:1:3371a5a5bda8f426",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 24,
+          "end": 56,
+          "text": "营业收入预计22至24亿元，同比增长19.64%至30.52%。",
+          "unit_hash": "sha256:8eaa1185eb25ce23ddcc3409ba7a0d938e75aaaa57074aa63371a5a5bda8f426",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:1:3371a5a5bda8f426"
+          },
+          "citation_refs": [
+            1
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:2:e7b5592d6a0c4663",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 56,
+          "end": 90,
+          "text": "归母净利润预计8至10亿元，同比增幅313.19%至416.49%。",
+          "unit_hash": "sha256:79161c2c78b7ffb53c329bb69445995ff4784485232c7221e7b5592d6a0c4663",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:2:e7b5592d6a0c4663"
+          },
           "citation_refs": [
             1
           ]
         }
       ],
-      "argument_key": "technology_product:target:6f88a261f6ebd61d5743",
       "citation_refs": [
         1
       ],
       "source_identity": [
         [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07"
+          "https://www.dramx.com/News/IC/20260708-40746.html",
+          "curated-source:media:07fbf8fb0f768dd3"
         ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
+      ]
     },
     {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:4baf43770370bc77",
-      "stock_name": "复旦微电",
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:b7717e733a7bfc81",
+      "argument_key": "technology_product:target:b7717e733a7bfc81",
       "entity_scope": "target",
       "target_entity": "复旦微电",
+      "primary_family": "technology_product",
       "coverage_families": [
-        "financial_quality",
         "technology_product"
       ],
-      "primary_family": "financial_quality",
       "evidence_units": [
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ecb2f765b37b4d52:10:2511121700f91785",
-          "text": "中心成立项目委员会，成员 5 名，负责对项目进行管理，项目委员会由中心主任 1 名、中心副主任 1 名、中心人事行政负责人 1 名、复旦微电技术负责人 1 名、复旦微电财务负责人 1 名组成，对《技术开发协议》的签署、项目立项、项目人员构成、经费安排、中心和项目的审计及项目结题考核进行决策。",
-          "unit_hash": "2511121700f91785d3612d677bf159048d29abbcf7f8864cb851671ad0b3ffc9",
-          "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-          "source_ordinal": 10,
-          "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:3:5658654be8d588c8",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 90,
+          "end": 158,
+          "text": "三方面增长原因：行业回暖半导体景气度回升，技术迭代FPGA芯片、NFC射频、RFID识别、车规级MCU等新品落地，投资收益约4.7亿元。",
+          "unit_hash": "sha256:a3a4a77a8eabf80256a250c5cf244eb86cd120d94bfe90b05658654be8d588c8",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:3:5658654be8d588c8"
+          },
+          "citation_refs": [
+            1
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:4:b901c9b9532a2fe7",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 158,
+          "end": 206,
+          "text": "公司主营FPGA、安全识别芯片、存储、车规控制芯片等，覆盖工业、汽车电子、AI和通信等多个赛道。",
+          "unit_hash": "sha256:80685242b87a096752b7feec94c578858a990c28641dd8c8b901c9b9532a2fe7",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:4:b901c9b9532a2fe7"
+          },
           "citation_refs": [
             1
           ]
         }
       ],
-      "argument_key": "financial_quality:target:26def2136bb83f495a19",
       "citation_refs": [
         1
       ],
       "source_identity": [
         [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07"
+          "https://www.dramx.com/News/IC/20260708-40746.html",
+          "curated-source:media:07fbf8fb0f768dd3"
         ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
+      ]
     },
     {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:6340f126b3544f56",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:bcda7ad4208e7e82",
+      "argument_key": "financial_quality:target:bcda7ad4208e7e82",
+      "entity_scope": "target",
       "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
       "coverage_families": [
-        "technology_product",
-        "competitive_landscape"
+        "financial_quality"
       ],
-      "primary_family": "technology_product",
       "evidence_units": [
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:641b17a48784b8b9:2:c9d22351025cfea3",
-          "text": "竞争对手：三条截然不同的路 国内FPGA市场就三家主要玩家：复旦微电、紫光同创、安路科技。",
-          "unit_hash": "c9d22351025cfea386a5ab48d95b1f0a8e4ddcae8d992d3546b461961a79b142",
-          "source_id": "curated-source:zhihu_selected_observation:641b17a48784b8b9",
-          "source_ordinal": 2,
-          "source_block_hash": "d66e9e1dd94cff438bc7396dcac916e250645c7c7c45aa1ced564a6c86b45f71",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:0:d8e11c2e1704b142",
+          "source_id": "curated-source:media:12547d42f50dbc37",
+          "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 55,
+          "text": "复旦微电于7月7日晚间发布公告，预计2026年上半年营收约22至24亿元，同比增长19.64%至30.52%。",
+          "unit_hash": "sha256:12110494d7d3f99e0f4454feb22bf78276a9b04e05f39f44d8e11c2e1704b142",
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+            "anchor_block_id": "curated-source:media:12547d42f50dbc37:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:0:d8e11c2e1704b142"
+          },
+          "citation_refs": [
+            2
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:1:4366e8b9e2755f05",
+          "source_id": "curated-source:media:12547d42f50dbc37",
+          "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 55,
+          "end": 83,
+          "text": "归母净利润预计为8亿至10亿元增幅达313%至416%。",
+          "unit_hash": "sha256:4b879facb6cc58cbfd2bf8829ad92bc2ed75f0dcf35c3d934366e8b9e2755f05",
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+            "anchor_block_id": "curated-source:media:12547d42f50dbc37:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:1:4366e8b9e2755f05"
+          },
           "citation_refs": [
             2
           ]
         }
       ],
-      "argument_key": "technology_product:target_with_peer_context:82fa0f3fd457260a3765",
       "citation_refs": [
         2
       ],
       "source_identity": [
         [
-          "url",
-          "https://www.zhihu.com/question/405228315/answer/2039797273815733141?utm_medium=openapi_platform&utm_source=2656a07"
+          "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+          "curated-source:media:12547d42f50dbc37"
         ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
+      ]
     },
     {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:932630c02caf622b",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:3ab47dff949c86c1",
+      "argument_key": "technology_product:target:3ab47dff949c86c1",
+      "entity_scope": "target",
       "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product",
-        "competitive_landscape"
-      ],
       "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
       "evidence_units": [
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:641b17a48784b8b9:14:cdaff451a78874a7",
-          "text": "这里做一张清晰的对比表（只对比FPGA相关口径）： 智能电表MCU赛道上，复旦微电是名副其实的“地头蛇”——国网单相智能电表MCU市场份额第一。",
-          "unit_hash": "cdaff451a78874a7198221f223f48354334ab16c400657c57ff9898cba067717",
-          "source_id": "curated-source:zhihu_selected_observation:641b17a48784b8b9",
-          "source_ordinal": 14,
-          "source_block_hash": "d66e9e1dd94cff438bc7396dcac916e250645c7c7c45aa1ced564a6c86b45f71",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:3:6f907e27d15c3dc0",
+          "source_id": "curated-source:media:12547d42f50dbc37",
+          "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 108,
+          "end": 160,
+          "text": "FPAI芯片集成CPU、FPGA和NPU三大处理单元，可覆盖4TOPS至128TOPS的谱系化产品矩阵。",
+          "unit_hash": "sha256:e2b8463aed6c70e1f09a7e9429e87ad4f3eec09146e220b46f907e27d15c3dc0",
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+            "anchor_block_id": "curated-source:media:12547d42f50dbc37:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:3:6f907e27d15c3dc0"
+          },
           "citation_refs": [
             2
           ]
         }
       ],
-      "argument_key": "technology_product:target_with_peer_context:eb923a47f66b00944cf6",
       "citation_refs": [
         2
       ],
       "source_identity": [
         [
-          "url",
-          "https://www.zhihu.com/question/405228315/answer/2039797273815733141?utm_medium=openapi_platform&utm_source=2656a07"
+          "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+          "curated-source:media:12547d42f50dbc37"
         ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
+      ]
     },
     {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:ce187ec3f46f4c6e",
-      "stock_name": "复旦微电",
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:ab16b4d1aafa9a69",
+      "argument_key": "financial_quality:target:ab16b4d1aafa9a69",
       "entity_scope": "target",
       "target_entity": "复旦微电",
-      "coverage_families": [
-        "financial_quality"
-      ],
       "primary_family": "financial_quality",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:07fbf8fb0f768dd3:0:618d327191b29319",
-          "text": "7月7日,复旦微电披露2026年半年度业绩自愿性预告公告,公告数据显示,公司预计上半年经营、盈利指标实现大幅增长。",
-          "unit_hash": "618d327191b293192fd934b04f35e04d3164d70988c1df223774ef0d85add3af",
-          "source_id": "curated-source:zhihu_selected_observation:07fbf8fb0f768dd3",
-          "source_ordinal": 0,
-          "source_block_hash": "1c7348f058a42f5526430c99ab818d9ae0ab3604c7527d1f83af3f3c0dbbe68a",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            3
-          ]
-        }
-      ],
-      "argument_key": "financial_quality:target:30b057e31b8d03b9e55d",
-      "citation_refs": [
-        3
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.dramx.com/News/IC/20260708-40746.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:81d0fe344ea9cbbf",
-      "stock_name": "复旦微电",
-      "entity_scope": "target",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "financial_quality"
-      ],
-      "primary_family": "financial_quality",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:07fbf8fb0f768dd3:1:cede9832e309c203",
-          "text": "经公司财务部门初步测算,2026年上半年,复旦微电预计实现营业收入22亿元至24亿元,同比增长19.64%至30.52%;",
-          "unit_hash": "cede9832e309c203ea30063cb2912264b76820eb0ded41ab28fdf0aa0b16c8ac",
-          "source_id": "curated-source:zhihu_selected_observation:07fbf8fb0f768dd3",
-          "source_ordinal": 1,
-          "source_block_hash": "1c7348f058a42f5526430c99ab818d9ae0ab3604c7527d1f83af3f3c0dbbe68a",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            3
-          ]
-        }
-      ],
-      "argument_key": "financial_quality:target:dee71980ac8128a993d5",
-      "citation_refs": [
-        3
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.dramx.com/News/IC/20260708-40746.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:5d3a41fd2fc68e18",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:07fbf8fb0f768dd3:11:63a17b59aee08989",
-          "text": "复旦微电主营FPGA、安全识别芯片、存储、车规控制芯片等集成电路产品,覆盖工业、汽车电子、AI、通信多赛道。",
-          "unit_hash": "63a17b59aee0898933c6ce4534a755b283eb82f740c507cb84c0923f4c259545",
-          "source_id": "curated-source:zhihu_selected_observation:07fbf8fb0f768dd3",
-          "source_ordinal": 11,
-          "source_block_hash": "1c7348f058a42f5526430c99ab818d9ae0ab3604c7527d1f83af3f3c0dbbe68a",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            3
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target_with_peer_context:b4fb5b4ae701eddc0eab",
-      "citation_refs": [
-        3
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.dramx.com/News/IC/20260708-40746.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:fafc856d466fede4",
-      "stock_name": "复旦微电",
-      "entity_scope": "target",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "financial_quality"
-      ],
-      "primary_family": "financial_quality",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:1:25ec572171e6721f",
-          "text": "复旦微电今日(7月7日)晚间公告称,预计2026年上半年度实现营业收入约22亿元至24亿元,与上年同期相比,同比增加19.64%至30.52%。",
-          "unit_hash": "25ec572171e6721f2bf0aa9f5777521c2e67d5d363fa04aa87e9eeee4954d90b",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 1,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            4
-          ]
-        }
-      ],
-      "argument_key": "financial_quality:target:94c7b45c7acb001fb924",
-      "citation_refs": [
-        4
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:54584465f7a56b21",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
-      "target_entity": "复旦微电",
       "coverage_families": [
         "financial_quality",
         "technology_product",
         "demand_customer"
       ],
-      "primary_family": "financial_quality",
       "evidence_units": [
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:4:359437c1698482fb",
-          "text": "关于业绩变化原因,复旦微电称, 今年上半年,行业景气度回升及下游客户需求增长的有利影响,该公司集成电路设计各产品线的收入与毛利均实现增长。",
-          "unit_hash": "359437c1698482fb3bfc63905338295eac17ec453ccaa505bb19b0b10439eb27",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 4,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:0:dd53a983dc8f5b9d",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 57,
+          "text": "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。",
+          "unit_hash": "sha256:f6bd4ccf1c66a397cdbf602b4bc1f71baab1e9af0252bb8cdd53a983dc8f5b9d",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:0:dd53a983dc8f5b9d"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:1:1241a0893a926979",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 57,
+          "end": 89,
+          "text": "归母净利润预计为8亿至10亿元，同比增幅高达313%至416%。",
+          "unit_hash": "sha256:ef13dda9de0a417cf66fd62cdd0380727b86d37dd34f094b1241a0893a926979",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:1:1241a0893a926979"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:2:15843fb8bc740c27",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 89,
+          "end": 127,
+          "text": "扣非净利润预计为3.5亿至4.5亿元，同比增长91.98%至146.83%。",
+          "unit_hash": "sha256:93acd347bef43f0e5ae606a2508d32406ace67c0e4bf12b015843fb8bc740c27",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:2:15843fb8bc740c27"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:3:1b56e72d309feb45",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 127,
+          "end": 164,
+          "text": "公司上半年行业景气度回升及下游客户需求增长推动各产品线收入与毛利实现增长。",
+          "unit_hash": "sha256:d74dd89151c4c5cb50160f93f74706e1618749b641d6d4901b56e72d309feb45",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product",
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:3:1b56e72d309feb45"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:4:1c49e72ad7c20473",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 164,
+          "end": 210,
+          "text": "FPGA系列、NFC射频、RFID产品、车规级MCU及多种解决方案已成为营收增长的重要动力。",
+          "unit_hash": "sha256:89919ed7864fa843487c25822f440cebab1ed9f9c6cf75f11c49e72ad7c20473",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:4:1c49e72ad7c20473"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:5:ed23e591cc7377d6",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 210,
+          "end": 257,
+          "text": "归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。",
+          "unit_hash": "sha256:2c0174f98d68193e042b748813fb26f9361e6d0552207332ed23e591cc7377d6",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:5:ed23e591cc7377d6"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+          "curated-source:media:24c0eccfb4b73e07"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:218005a49aa73deb",
+      "argument_key": "technology_product:target:218005a49aa73deb",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:6:7630d533fa4dc07a",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 257,
+          "end": 283,
+          "text": "公司已推出国内首款亿门级和十亿门级FPGA系列产品。",
+          "unit_hash": "sha256:731cbd8e678c185c4e86962f5afd7dd48be73a35901812267630d533fa4dc07a",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:6:7630d533fa4dc07a"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:7:64f3f0f36e034056",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 7,
+          "start": 283,
+          "end": 356,
+          "text": "在AI融合方向推出了首款FPAI（FPGA+AI）产品，集成CPU、FPGA、NPU三大处理单元，覆盖4TOPS至128TOPS的谱系化产品矩阵。",
+          "unit_hash": "sha256:5eaf953d4026c8c80daa4a86a035aeff33181b25040199b064f3f0f36e034056",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:7:64f3f0f36e034056"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+          "curated-source:media:24c0eccfb4b73e07"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:f56e2295693ea299",
+      "argument_key": "financial_quality:target:f56e2295693ea299",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:0:a1e51c084cf1d281",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 24,
+          "text": "复旦微电于7月7日发布2026年半年度业绩预告。",
+          "unit_hash": "sha256:b59b7e108bcd83ffe0aa599a00df2d236e45d20a9a7cedb6a1e51c084cf1d281",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:0:a1e51c084cf1d281"
+          },
           "citation_refs": [
             4
           ]
         },
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:5:811664088930b97b",
-          "text": "同时,公司持续推进技术创新和产品迭代,FPGA系列产品、NFC射频、RFID产品、车规级MCU产品及多种解决方案不断推出并形成贡献,带动公司营业收入增长,产品结构优化及经营效率提升。",
-          "unit_hash": "811664088930b97bf1f7699f736488745d59003ccd4706ce86f8879cbb26c3ff",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 5,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:1:0053109ee8fefacb",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 24,
+          "end": 60,
+          "text": "公司上半年预计归母净利润达8亿至10亿元，同比增幅为313%至416%。",
+          "unit_hash": "sha256:763c82766ee4dc22aa0cbff482621561ac0c6348ce5d658a0053109ee8fefacb",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:1:0053109ee8fefacb"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:2:6140f60ceffcc38b",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 60,
+          "end": 95,
+          "text": "一季度净利润1.48亿元，推算二季度净利润约6.52亿至8.52亿元。",
+          "unit_hash": "sha256:1cba1d3586a42399426131ccaee095034f95fce37ffaa87b6140f60ceffcc38b",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:2:6140f60ceffcc38b"
+          },
           "citation_refs": [
             4
           ]
         }
       ],
-      "argument_key": "financial_quality:target_with_peer_context:c6fcdab2fc3f47f4f3c2",
       "citation_refs": [
         4
       ],
       "source_identity": [
         [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
+          "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+          "curated-source:media:4af7d9111f44a16b"
         ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
+      ]
     },
     {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:6bcab7d72c9d6541",
-      "stock_name": "复旦微电",
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:c43e4d92468117f5",
+      "argument_key": "financial_quality:target:c43e4d92468117f5",
       "entity_scope": "target",
       "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product",
-        "demand_customer"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:6:2fb1c90d3eb98609",
-          "text": "复旦微电在今年6月接受机构调研时表示,目前FPGA产品市场需求较好,部分料号存在供需紧平衡的状态。",
-          "unit_hash": "2fb1c90d3eb986092b8bde3fa44c8f52f7e3aadf10fbc9cc43b22c3fd032cef1",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 6,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            4
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target:03882b9be7e403271fb4",
-      "citation_refs": [
-        4
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:8eb66cc82c6ea241",
-      "stock_name": "复旦微电",
-      "entity_scope": "target",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:9:254bb7ef5b33f778",
-          "text": "值得关注的是,在工业级FPGA领域的拓展上,复旦微电已推出国内首款亿门级和十亿门级FPGA系列产品,该公司FPGA产品正在向高端路由网安、检测量测、仪器仪表等领域拓展。",
-          "unit_hash": "254bb7ef5b33f77819cb59b9276d8a28a423cc142c44bc74390174077d0177fb",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 9,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            4
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target:8b723c6e4c0abb246123",
-      "citation_refs": [
-        4
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:ee0658b565116a81",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:10:792e730d4563ee31",
-          "text": "据介绍,复旦微电首款面向人工智能应用的FPAI(FPGA+AI)产品,产品广泛应用于工业控制、测试测量、人工智能等领域。",
-          "unit_hash": "792e730d4563ee31b9ba803a5f613b8c480c23d1b07620a639e2cacfeb943789",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 10,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            4
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target_with_peer_context:fd9bf0176ca94e4ca1bf",
-      "citation_refs": [
-        4
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:5ba89e3997eba068",
-      "stock_name": "复旦微电",
-      "entity_scope": "target_with_peer_context",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:11:6b5a7c2c63a75c69",
-          "text": "在今年的慕尼黑上海电子展上,复旦微电展出其FPAI产品线及方案。",
-          "unit_hash": "6b5a7c2c63a75c6997f09e3e08efafc8efea114899573c0e3a62af70670e2e89",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 11,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            4
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target_with_peer_context:d5a8398000c91784bb14",
-      "citation_refs": [
-        4
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:4217201687d29896",
-      "stock_name": "复旦微电",
-      "entity_scope": "target",
-      "target_entity": "复旦微电",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:12547d42f50dbc37:12:4978c2085d84dc2c",
-          "text": "据了解, 复旦微电FPAI系列芯片集成了CPU、FPGA和NPU三大处理单元,将FPGA的空间可重构灵活性与NPU的高效AI算力深度融合,可形成覆盖4TOPS至128TOPS的谱系化产品矩阵。",
-          "unit_hash": "4978c2085d84dc2c92fcaa68275eea99f1eeaca6800a68fe04082bba339fe5cc",
-          "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-          "source_ordinal": 12,
-          "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            4
-          ]
-        }
-      ],
-      "argument_key": "technology_product:target:6210b0adab44d8f3cf74",
-      "citation_refs": [
-        4
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.163.com/dy/article/L191SQEG05198CJN.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:bee6077a18d33701",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "financial_quality"
-      ],
       "primary_family": "financial_quality",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ecb2f765b37b4d52:6:a07fbc54adfaa37d",
-          "text": "复旦大学将根据双方确定的具体合作研发项目为中心向国家或省部级申请重点研发项目并争取将获得政府财政拨款支出的各类计划项目经费用于合作研发。",
-          "unit_hash": "a07fbc54adfaa37d45e8fcf6f441947f5f7e1049ae0fd66bb0a6f3380787e36a",
-          "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-          "source_ordinal": 6,
-          "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            1
-          ]
-        }
-      ],
-      "argument_key": "financial_quality:peer_or_industry:30abe189aeda9e571e62",
-      "citation_refs": [
-        1
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:c51614c6dc40078a",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
       "coverage_families": [
+        "financial_quality",
         "technology_product"
       ],
-      "primary_family": "technology_product",
       "evidence_units": [
         {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:ecb2f765b37b4d52:11:6058d22216f362ab",
-          "text": "此外，「集成电路技术中心」计划组建不少于 300 名人员的科研与工程技术团队，并从外部引进 3-5 名战略性优秀人才参与合作研发项目，以实现合作研发目标。",
-          "unit_hash": "6058d22216f362ab42a40f3257ef09a302d7da17975cdd99ebf1441ea96a50f6",
-          "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-          "source_ordinal": 11,
-          "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-          "evidence_status": "source_unit_verified",
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:5:c1dbd4bb28d5a38b",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 152,
+          "end": 172,
+          "text": "车规级MCU加速国产替代已形成收入贡献。",
+          "unit_hash": "sha256:a743116e274d3de5070bd462b10ae9d4c7c6569f6e3b6ce2c1dbd4bb28d5a38b",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:5:c1dbd4bb28d5a38b"
+          },
           "citation_refs": [
-            1
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:6:aee153c8d8bff14f",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 172,
+          "end": 199,
+          "text": "该业绩是国内半导体设计行业周期触底回升的又一核心信号。",
+          "unit_hash": "sha256:8abf0cc90b1af12af4074d642c770d94ac84f5f59bf0dc45aee153c8d8bff14f",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:6:aee153c8d8bff14f"
+          },
+          "citation_refs": [
+            4
           ]
         }
       ],
-      "argument_key": "technology_product:peer_or_industry:052e5d868e39249f656e",
       "citation_refs": [
-        1
+        4
       ],
       "source_identity": [
         [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07"
+          "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+          "curated-source:media:4af7d9111f44a16b"
         ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:98f1554f214996c2",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product",
-        "commercialization"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:641b17a48784b8b9:1:b7fae757649a3047",
-          "text": "车规级产品已完成ISO26262体系认证，新一代车规MCU已进行小规模量产。",
-          "unit_hash": "b7fae757649a30472c07ef35b92c5c4c4dcddba618a13e91b56d8281691b565a",
-          "source_id": "curated-source:zhihu_selected_observation:641b17a48784b8b9",
-          "source_ordinal": 1,
-          "source_block_hash": "d66e9e1dd94cff438bc7396dcac916e250645c7c7c45aa1ced564a6c86b45f71",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            2
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:a5969cdf31cfc85c69c9",
-      "citation_refs": [
-        2
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.zhihu.com/question/405228315/answer/2039797273815733141?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:88337a5548cf8c50",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "policy_geopolitics"
-      ],
-      "primary_family": "policy_geopolitics",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:d139d854ee92359c:3:98e6ddc1fc47297b",
-          "text": "深耕期（2021-至今）：聚焦高价值，把护城河挖深 后疫情时代，缺芯潮、价格战、地缘政治……半导体行业一波三折。",
-          "unit_hash": "98e6ddc1fc47297b9d422dc06bef846a8e2d53306dbb938144339488343af136",
-          "source_id": "curated-source:zhihu_selected_observation:d139d854ee92359c",
-          "source_ordinal": 3,
-          "source_block_hash": "c0b4a5588fd8ebbe44560733c75b46bcd2d0e40c171ab01a0661ae48ce1da20b",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            5
-          ]
-        }
-      ],
-      "argument_key": "policy_geopolitics:peer_or_industry:9e24acf7c594b26873f5",
-      "citation_refs": [
-        5
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2017176088556642712?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:9cee27f7e82cb7e8",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product",
-        "commercialization"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:62eacdf2cee1f654:16:4fab556e8e7fb427",
-          "text": "一旦开发路径建立，后续的量产方案往往也会沿着这一技术栈延续，从而在不知不觉中实现对传统MCU体系的“流量截取”。",
-          "unit_hash": "4fab556e8e7fb427d3649ec880e51fd35991d5dfb8ade31d52c2360b85ab25a8",
-          "source_id": "curated-source:zhihu_selected_observation:62eacdf2cee1f654",
-          "source_ordinal": 16,
-          "source_block_hash": "a420380cd45569bc4e3b9d0d87470e5f5a432dc5f909de0b46627f2e2087c8c5",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            6
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:bf530f4f168a8a252b0d",
-      "citation_refs": [
-        6
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2027095762748589560?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:658438b978c0c485",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:dadad2849de75248:8:749df6c667d8093d",
-          "text": "2012年，Xilinx公司推出的Virtex-7 2000T，容量相当于当时市场同类最大28nm FPGA 的两倍；",
-          "unit_hash": "749df6c667d8093d8880f9955f377165337ead93dadf58c4b273af38357cf169",
-          "source_id": "curated-source:zhihu_selected_observation:dadad2849de75248",
-          "source_ordinal": 8,
-          "source_block_hash": "2eadea4f640752301d5968e7973d9a0984a269da47ec39d041bb85c949155dd3",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            7
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:3add0fce702c249a4e79",
-      "citation_refs": [
-        7
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.zhihu.com/question/1969377152/answer/1979708531730036329?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:ebe23ddf281029f1",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:bb61ff8d9e2b887d:8:c1daa3e3f222223c",
-          "text": "航盛电子成立于1993年，是中国汽车电子行业的头部企业，主营智能座舱、智能驾驶、新能源汽车电控系统及汽车声学产品，其“墨子”系列智能座舱平台已搭载于众多国产及合资车型。",
-          "unit_hash": "c1daa3e3f222223cbeab9b895649de3656feb10c4aad3e2ff4ed82d7c3ed9314",
-          "source_id": "curated-source:zhihu_selected_observation:bb61ff8d9e2b887d",
-          "source_ordinal": 8,
-          "source_block_hash": "e9ec73cc10c2f6a09bdec8055dffdd7f9c65ae98d470b98d6799fa54c7d13642",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            8
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:803c8894c18efd4fc099",
-      "citation_refs": [
-        8
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2055601306732065879?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:42bcd2a6d49016e2",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:410843f8e4062a2d:6:0dc3c5a7b5104eaa",
-          "text": "高通在2020年的CES展上就发布了，其第一代Snapdragon Ride芯片SA8540，它的发布时间，介于8155和8295之间，现在算起来也算6年有余了。",
-          "unit_hash": "0dc3c5a7b5104eaa99a63faace65c01eac1c60a8deb1b76d9c01576b6b49bd3b",
-          "source_id": "curated-source:zhihu_selected_observation:410843f8e4062a2d",
-          "source_ordinal": 6,
-          "source_block_hash": "1b6a517957d9de4e50bb55d997de27847698df42821a1d769580db8946de016c",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            9
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:72d4d7015f91ee1bf170",
-      "citation_refs": [
-        9
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2041823190851309711?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:87f2d24d0cb08d56",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product",
-        "commercialization"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:124f0c3e975528c0:4:003bbd137c5983ba",
-          "text": "在台积电等国际巨头持续加码MRAM研发的行业背景下，致真存储作为国内唯一可量产SOT-MRAM的企业，其技术落地印证了国产MRAM产业化正日趋成熟，发展潜力十足，也让这一兼具技术壁垒与稀缺性的赛道成为资本关注的焦点。",
-          "unit_hash": "003bbd137c5983bafc06d66fded5825c16d2338f15c71f4a48accbc04319a319",
-          "source_id": "curated-source:zhihu_selected_observation:124f0c3e975528c0",
-          "source_ordinal": 4,
-          "source_block_hash": "54c0842c04d3d8fb7073e2dcabfca6cba08f20773d2eb11dd43d5a071cebee64",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            10
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:965f13ee514e5224b95d",
-      "citation_refs": [
-        10
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://zhuanlan.zhihu.com/p/2019455338747799359?utm_medium=openapi_platform&utm_source=2656a07"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
-    },
-    {
-      "schema_version": "curated_external_argument_card.v3",
-      "card_id": "external-argument:复旦微电:e41277eac488a54e",
-      "stock_name": "复旦微电",
-      "entity_scope": "peer_or_industry",
-      "target_entity": "",
-      "coverage_families": [
-        "technology_product"
-      ],
-      "primary_family": "technology_product",
-      "evidence_units": [
-        {
-          "schema_version": "curated_external_source_unit.v1",
-          "unit_id": "external-unit:curated-source:zhihu_selected_observation:def9138644572c68:3:c10f0cac6a991674",
-          "text": "针对以上行业共性难题,华润微电子功率集成事业群(PIBG)依托多年MCU技术积淀,推出新一代高集成电机控制MCU——CS32ME13,凭借硬件化FOC加速、单运放分时复用、小巧封装三大核心优势,打造兼顾高性能、低成本、强兼容性的变频电机控制新方案。",
-          "unit_hash": "c10f0cac6a991674a1396a46a118471f27fae644d24ab461bcff0304d9265f5d",
-          "source_id": "curated-source:zhihu_selected_observation:def9138644572c68",
-          "source_ordinal": 3,
-          "source_block_hash": "839ad782098f024995720d14caf0f6b83958c70f8add51087847913c684e6449",
-          "evidence_status": "source_unit_verified",
-          "citation_refs": [
-            11
-          ]
-        }
-      ],
-      "argument_key": "technology_product:peer_or_industry:fc090f335232369fff42",
-      "citation_refs": [
-        11
-      ],
-      "source_identity": [
-        [
-          "url",
-          "https://www.ic-ceca.org.cn/jishu/1775401.html"
-        ]
-      ],
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "knowledge_eligible": false,
-      "scoring_eligible": false,
-      "risk_score_eligible": false,
-      "verification_status": "professional_observation"
+      ]
     }
   ],
   "citations": {
     "1": {
-      "source": "微信公众号精选观察",
-      "author": "半导体产业纵横",
-      "title": "复旦微电拟与复旦大学、国盛投资共建集成电路技术中心 - 知乎",
-      "url": "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://zhuanlan.zhihu.com/p/2037591439325058197?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:ecb2f765b37b4d52",
-      "source_block_hash": "fce3d4f69861744ba5bf614cb50cf0e4678c207ad7966978e24204dc4d3e59f3",
-      "source_quote_hash": "54d30ecca70a12fd5b6f8cc8e09646a0d83558e55217176f6a98591fc81eba99",
-      "publish_time": "2026-05-12",
+      "source": "外部材料精选观察",
+      "author": "全球半导体观察",
+      "title": "复旦微电发布半年业绩预告，归母净利润最高预增416%",
+      "url": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "source_ref": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "source_id": "curated-source:media:07fbf8fb0f768dd3",
+      "source_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+      "publish_time": "2026-07-08 09:53",
+      "source_kind": "media",
       "source_type": "curated_external_analysis_evidence",
       "source_credit": 55,
       "verification_status": "professional_observation",
       "quality_action": "preview_only",
       "synthesis_display_only": true,
+      "knowledge_eligible": false,
       "scoring_eligible": false,
       "risk_score_eligible": false
     },
     "2": {
-      "source": "微信公众号精选观察",
-      "author": "深圳电子平哥",
-      "title": "该不该放弃FPGA这条路? - 知乎",
-      "url": "https://www.zhihu.com/question/405228315/answer/2039797273815733141?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://www.zhihu.com/question/405228315/answer/2039797273815733141?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:641b17a48784b8b9",
-      "source_block_hash": "d66e9e1dd94cff438bc7396dcac916e250645c7c7c45aa1ced564a6c86b45f71",
-      "source_quote_hash": "c9d22351025cfea386a5ab48d95b1f0a8e4ddcae8d992d3546b461961a79b142",
-      "publish_time": "2026-05-18",
+      "source": "外部材料精选观察",
+      "author": "郭辉/财联社",
+      "title": "复旦微电上半年归母净利预增至高4倍 投资盛合晶微浮盈4.7亿元",
+      "url": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "source_ref": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "source_id": "curated-source:media:12547d42f50dbc37",
+      "source_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+      "publish_time": "2026-07-07 21:50",
+      "source_kind": "media",
       "source_type": "curated_external_analysis_evidence",
       "source_credit": 55,
       "verification_status": "professional_observation",
       "quality_action": "preview_only",
       "synthesis_display_only": true,
+      "knowledge_eligible": false,
       "scoring_eligible": false,
       "risk_score_eligible": false
     },
     "3": {
-      "source": "微信公众号精选观察",
-      "author": "",
-      "title": "复旦微电发布半年业绩预告,归母净利润最高预增416%-全球半导体观察",
-      "url": "https://www.dramx.com/News/IC/20260708-40746.html",
-      "source_ref": "https://www.dramx.com/News/IC/20260708-40746.html",
-      "source_id": "curated-source:zhihu_selected_observation:07fbf8fb0f768dd3",
-      "source_block_hash": "1c7348f058a42f5526430c99ab818d9ae0ab3604c7527d1f83af3f3c0dbbe68a",
-      "source_quote_hash": "618d327191b293192fd934b04f35e04d3164d70988c1df223774ef0d85add3af",
-      "publish_time": "2026-07-08",
+      "source": "外部材料精选观察",
+      "author": "郭辉",
+      "title": "科创板芯片龙头，净利预增313%-416%",
+      "url": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "source_ref": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "source_id": "curated-source:media:24c0eccfb4b73e07",
+      "source_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+      "publish_time": "2026-07-08 10:09",
+      "source_kind": "media",
       "source_type": "curated_external_analysis_evidence",
       "source_credit": 55,
       "verification_status": "professional_observation",
       "quality_action": "preview_only",
       "synthesis_display_only": true,
+      "knowledge_eligible": false,
       "scoring_eligible": false,
       "risk_score_eligible": false
     },
     "4": {
-      "source": "微信公众号精选观察",
-      "author": "财联社",
-      "title": "复旦微电上半年归母净利预增至高4倍 投资盛合晶微浮盈4.7亿元 多家A股公司亦将获益|a股|国盛_网易订阅",
-      "url": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
-      "source_ref": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
-      "source_id": "curated-source:zhihu_selected_observation:12547d42f50dbc37",
-      "source_block_hash": "042e46c65ff369b2b99fde6b0db9ae8af9b219e5b8ef12a844a6179e943b4724",
-      "source_quote_hash": "25ec572171e6721f2bf0aa9f5777521c2e67d5d363fa04aa87e9eeee4954d90b",
-      "publish_time": "2026-07-07",
+      "source": "外部材料精选观察",
+      "author": "王子敬",
+      "title": "半导体超级上行周期再催化！复旦微电半年净利最高暴增416%",
+      "url": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "source_ref": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "source_id": "curated-source:media:4af7d9111f44a16b",
+      "source_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+      "publish_time": "2026-07-07 19:19",
+      "source_kind": "media",
       "source_type": "curated_external_analysis_evidence",
       "source_credit": 55,
       "verification_status": "professional_observation",
       "quality_action": "preview_only",
       "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "5": {
-      "source": "微信公众号精选观察",
-      "author": "深圳电子平哥",
-      "title": "从飞利浦分部到汽车芯片霸主:NXP恩智浦的逆袭之路,藏着半导体行业的生存密码 - 知乎",
-      "url": "https://zhuanlan.zhihu.com/p/2017176088556642712?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://zhuanlan.zhihu.com/p/2017176088556642712?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:d139d854ee92359c",
-      "source_block_hash": "c0b4a5588fd8ebbe44560733c75b46bcd2d0e40c171ab01a0661ae48ce1da20b",
-      "source_quote_hash": "98e6ddc1fc47297b9d422dc06bef846a8e2d53306dbb938144339488343af136",
-      "publish_time": "2026-03-17",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "6": {
-      "source": "微信公众号精选观察",
-      "author": "张竞扬",
-      "title": "一家意想不到的MCU新贵,悄然崛起! - 知乎",
-      "url": "https://zhuanlan.zhihu.com/p/2027095762748589560?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://zhuanlan.zhihu.com/p/2027095762748589560?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:62eacdf2cee1f654",
-      "source_block_hash": "a420380cd45569bc4e3b9d0d87470e5f5a432dc5f909de0b46627f2e2087c8c5",
-      "source_quote_hash": "4fab556e8e7fb427d3649ec880e51fd35991d5dfb8ade31d52c2360b85ab25a8",
-      "publish_time": "2026-04-13",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "7": {
-      "source": "微信公众号精选观察",
-      "author": "Forever snow",
-      "title": "为什么FPGA的逻辑资源普遍上不去? - 知乎",
-      "url": "https://www.zhihu.com/question/1969377152/answer/1979708531730036329?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://www.zhihu.com/question/1969377152/answer/1979708531730036329?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:dadad2849de75248",
-      "source_block_hash": "2eadea4f640752301d5968e7973d9a0984a269da47ec39d041bb85c949155dd3",
-      "source_quote_hash": "749df6c667d8093d8880f9955f377165337ead93dadf58c4b273af38357cf169",
-      "publish_time": "2025-12-03",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "8": {
-      "source": "微信公众号精选观察",
-      "author": "经济观察报",
-      "title": "广和通14.28亿元拿下航盛电子,汽车电子Tier2晋升Tier1 - 知乎",
-      "url": "https://zhuanlan.zhihu.com/p/2055601306732065879?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://zhuanlan.zhihu.com/p/2055601306732065879?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:bb61ff8d9e2b887d",
-      "source_block_hash": "e9ec73cc10c2f6a09bdec8055dffdd7f9c65ae98d470b98d6799fa54c7d13642",
-      "source_quote_hash": "c1daa3e3f222223cbeab9b895649de3656feb10c4aad3e2ff4ed82d7c3ed9314",
-      "publish_time": "2026-07-01",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "9": {
-      "source": "微信公众号精选观察",
-      "author": "Roy",
-      "title": "干货周记:高通车规芯片的那些事儿(下:智驾篇)(汽车电子33) - 知乎",
-      "url": "https://zhuanlan.zhihu.com/p/2041823190851309711?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://zhuanlan.zhihu.com/p/2041823190851309711?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:410843f8e4062a2d",
-      "source_block_hash": "1b6a517957d9de4e50bb55d997de27847698df42821a1d769580db8946de016c",
-      "source_quote_hash": "0dc3c5a7b5104eaa99a63faace65c01eac1c60a8deb1b76d9c01576b6b49bd3b",
-      "publish_time": "2026-05-24",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "10": {
-      "source": "微信公众号精选观察",
-      "author": "张竞扬",
-      "title": "国产MRAM制造迎资本风口,致真存储赋能无人机! - 知乎",
-      "url": "https://zhuanlan.zhihu.com/p/2019455338747799359?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_ref": "https://zhuanlan.zhihu.com/p/2019455338747799359?utm_medium=openapi_platform&utm_source=2656a07",
-      "source_id": "curated-source:zhihu_selected_observation:124f0c3e975528c0",
-      "source_block_hash": "54c0842c04d3d8fb7073e2dcabfca6cba08f20773d2eb11dd43d5a071cebee64",
-      "source_quote_hash": "003bbd137c5983bafc06d66fded5825c16d2338f15c71f4a48accbc04319a319",
-      "publish_time": "2026-03-23",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
-      "scoring_eligible": false,
-      "risk_score_eligible": false
-    },
-    "11": {
-      "source": "微信公众号精选观察",
-      "author": "电子创新网",
-      "title": "华润微电子推出新一代高集成电机控制MCU——CS32ME133-CECA:中国电子元件行业协会",
-      "url": "https://www.ic-ceca.org.cn/jishu/1775401.html",
-      "source_ref": "https://www.ic-ceca.org.cn/jishu/1775401.html",
-      "source_id": "curated-source:zhihu_selected_observation:def9138644572c68",
-      "source_block_hash": "839ad782098f024995720d14caf0f6b83958c70f8add51087847913c684e6449",
-      "source_quote_hash": "c10f0cac6a991674a1396a46a118471f27fae644d24ab461bcff0304d9265f5d",
-      "publish_time": "2026-07-08",
-      "source_type": "curated_external_analysis_evidence",
-      "source_credit": 55,
-      "verification_status": "professional_observation",
-      "quality_action": "preview_only",
-      "synthesis_display_only": true,
+      "knowledge_eligible": false,
       "scoring_eligible": false,
       "risk_score_eligible": false
     }
   },
   "diagnostics": {
-    "mandatory_target_unit_count": 16,
-    "target_bundle_count": 16,
-    "continuation_rejected_count": 0,
-    "continuation_truncated_count": 0,
-    "optional_peer_raw_count": 154,
-    "optional_peer_eligible_count": 12,
-    "optional_peer_low_signal_count": 142,
-    "optional_peer_duplicate_count": 0,
-    "rejected_by_reason": {},
-    "source_unit_count": 309,
-    "selector_batch_count": 10,
-    "selector_request_count": 11,
-    "accepted_count": 26,
-    "accepted_target_card_count": 16,
-    "accepted_peer_card_count": 10
+    "source_unit_count": 27,
+    "target_unit_count": 21,
+    "peer_unit_count": 0,
+    "rejected_by_reason": {
+      "unclassified": 3,
+      "incomplete": 3
+    },
+    "rejected_source_documents": {},
+    "selector_batch_count": 0,
+    "selector_request_count": 1,
+    "accepted_target_card_count": 8,
+    "accepted_peer_card_count": 0,
+    "accepted_count": 8
+  },
+  "narrative_plan": {
+    "schema_version": "curated_external_narrative_plan.v1",
+    "groups": [
+      {
+        "scope_bucket": "target",
+        "primary_family": "financial_quality",
+        "card_ids": [
+          "external-card:32ef70610253dca8",
+          "external-card:bcda7ad4208e7e82",
+          "external-card:ab16b4d1aafa9a69",
+          "external-card:f56e2295693ea299",
+          "external-card:c43e4d92468117f5"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "technology_product",
+        "card_ids": [
+          "external-card:b7717e733a7bfc81",
+          "external-card:3ab47dff949c86c1",
+          "external-card:218005a49aa73deb"
+        ]
+      }
+    ]
   }
 }
