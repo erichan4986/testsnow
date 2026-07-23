@@ -1,7 +1,7 @@
 # Formal-Medium Chapter 4.4 Retirement Design
 
 日期：2026-07-22  
-状态：proposed
+状态：approved after Codex self-review rounds 1--3
 
 ## 1. Goal
 
@@ -40,6 +40,9 @@
 - 删除 `_select_price_path_rows()` 调用；
 - 删除 `Chapter4Section("4.4", ...)`；
 - visible refs 继续只从实际可见三个 sections 和 external narratives 计算。
+- `visible_rows_count` 改为遍历全部 `sections`，删除历史遗留的 `sections[:3]` 切片，避免 read-model 继续暗示存在隐藏第四节。
+
+这是有意的 read-model API 收缩：`Chapter4ViewModel.section("4.4")` 在新 formal-medium model 上应抛出既有 `KeyError`。全仓审计确认唯一 runtime caller 是本批同步删除的 renderer 调用；其他 caller 都是 price-path 专用测试。
 
 完整 snapshot rows 不变，因此不是材料丢失或 producer 裁剪。
 
@@ -82,6 +85,7 @@ formal-thin 和 formal-rich renderer 不修改。
 - 不把 external citations 移入 4.1/4.2。
 - 不改变 formal-thin 的 annual/broker/external citation offset 公式。
 - formal-rich legacy 4.4 的 disclaimer、inline citations 和质量门保持原样。
+- `view_model.citations` 必须严格等于 4.1--4.3 rows 与 external narrative parts 的 visible refs；删除 4.4 前后该集合不应变化，因为 price-path rows 原本就是前三节 rows 的子集。
 
 ## 7. Tests
 
@@ -93,6 +97,18 @@ formal-thin 和 formal-rich renderer 不修改。
 4. formal-thin 仍无 4.4，且后置 external ref 保持 full-snapshot offset。
 5. formal-rich fixture 仍显示 legacy “4.4 外部观点与待验证变量（Preview）”。
 
+### Existing Test Migration Ledger
+
+- 删除纯 price-path tests：generic broker fallback、risk-row exclusion、annual role priority、incomplete annual fallback。
+- 混合测试不得整条删除：
+  - narrative filtering 测试改为比较 4.3 rows/narratives 与 citations；
+  - owner-delta 测试改为断言 4.3 external row 原文保持不变；
+  - rejected-external 测试保留 4.3 rejection 与 diagnostics 断言，只删除 4.4 断言；
+  - unified view-model 测试把 section ids 改为 4.1--4.3，并保留 layer、citation 与 immutability 断言。
+- renderer 新增通过公开 `render()` 入口执行的 formal-medium 三节 fixture，明确禁止 4.4 heading、三类模板标签和固定条件句；不得只调用私有 `_formal_medium_source_layer_body()` 来证明集成行为。
+- 现有 formal-thin offset tests 增加“无 4.4”断言；现有 formal-rich legacy 4.4 tests 原样保留。
+- `report_quality.py` 和历史 formal-medium 4.4 parser fixtures 不删除、不修改；质量工具仍需能检查旧报告，本批只改变新 renderer 输出。
+
 ### Regression Gates
 
 - focused snapshot and renderer tests；
@@ -100,7 +116,7 @@ formal-thin 和 formal-rich renderer 不修改。
 - full offline suite；
 - `bash tools/ci_grep_gates.sh`；
 - `git diff --check`；
-- fresh Fudan and Zhongji report rerun，确认 Fudan 仍为三节、Zhongji 从四节变为三节，且其余内容与引用不丢失。
+- fresh Fudan and Zhongji report rerun，先读取报告内实际 profile metadata，再按 profile-specific contract 验收：formal-medium 与 formal-thin 都应只有 4.1--4.3；formal-rich 仍可保留 legacy 4.4。当前预期为 Fudan formal-thin、Zhongji formal-medium，且其余内容与引用不丢失。
 
 ## 8. Failure Modes
 
@@ -132,6 +148,16 @@ No changes to producer, canonical packs, profile routing, quality rules, scoring
 
 ## 10. Runtime Budget
 
-This is a deletion batch. Expected runtime net change: `-70` to `-90` lines.
+This is a deletion batch. Expected runtime net change: `-85` to `-105` lines.
 
 Stop and return to design if implementation requires net-positive runtime, a replacement inference engine, changes outside the allowed runtime files, or changes to formal-rich/formal-thin behavior.
+
+本批不顺带缩减 `_NON_INFORMATIVE_VARIABLE_TITLES` 或重命名 `is_informative_variable_title()`。删除 price-path 后它们仍服务 4.2；进一步按 broker-only 语义瘦身需要独立证明，不与章节删除混做。
+
+## 11. Design Delta
+
+- Accepted: remove the formal-medium price-path 4.4 and its dedicated selectors/template; retain formal-rich legacy 4.4 and formal-thin behavior.
+- Accepted: remove the stale `sections[:3]` diagnostics slice and verify absence through public renderer integration.
+- Rejected: derive directional conditions from existing prose; current material lacks an auditable trigger contract.
+- Deferred: rename or shrink the shared informative-title helper used by 4.2.
+- Review gate: the user explicitly replaced the planned Claude review with two additional Codex self-review/fix rounds. Round 2 and Round 3 notes close all findings; no external Round 1 remains required.

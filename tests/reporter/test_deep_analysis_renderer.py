@@ -7,6 +7,7 @@ from scripts.utils.deep_analysis_material_snapshot import (
     ExternalNarrativePart,
     ExternalTopicNarrative,
     MaterialRow,
+    MaterialSnapshot,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
     select_annual_display_rows,
@@ -1211,6 +1212,50 @@ def test_render_deep_analysis_display_with_curated_external_sources_adds_preview
     assert result.index("### 4.1 产业逻辑与竞争格局") < result.index("### 4.4 外部观点与待验证变量（Preview）")
 
 
+def test_formal_medium_public_render_ends_after_external_variables():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "annual:1", "主营业务", "annual", "formal_fact", (1,), ("annual:1",),
+            title="主营业务", body="公司主营业务为芯片设计。",
+            render_role="business_structure", source_credit="official",
+        ),
+        MaterialRow(
+            "broker:1", "增长假设", "broker", "professional_analysis", (2,), ("broker:1",),
+            title="增长假设", body="研报预计产品放量。", render_role="broker_assumption",
+            attribution="测试证券", source_credit="professional",
+        ),
+        MaterialRow(
+            "external:1", "验证变量", "external", "external_observation", (3,), ("external:1",),
+            title="客户验证", body="外部材料称客户验证节奏仍需观察。",
+            render_role="external_variable", source_credit="external_low_credit",
+        ),
+    )
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", rows,
+        {1: {"source": "公司年报"}, 2: {"source": "券商研报"}, 3: {"source": "外部观察"}}, {},
+    )
+    view_model = build_chapter4_view_model(snapshot, "formal_medium")
+
+    result = renderer.render({
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "正式材料基线。", "citations": {}},
+        "core_facts": [],
+        "deep_analysis_material_snapshot": snapshot,
+        "chapter4_view_model": view_model,
+    })
+
+    assert "### 4.1 官方材料确认：业务与财务基座" in result
+    assert "### 4.2 机构观点与盈利假设" in result
+    assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
+    assert "### 4.4" not in result
+    assert "官方确认：" not in result
+    assert "机构假设：" not in result
+    assert "外部待验证：" not in result
+    assert "若机构关于需求、产品放量或盈利弹性的假设兑现" not in result
+
+
 def test_formal_rich_v3_addendum_renders_exact_evidence_and_deduped_source():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -1512,6 +1557,7 @@ def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
     assert "FPGA 2026Q3 客户验证节奏仍待确认[^5]" in result
     assert "近期外部材料主要围绕技术与产品展开。" in result
     assert "[^5] | **微信公众号精选观察** | 《FPGA 客户验证观察》" in result
+    assert "### 4.4" not in result
 
 
 def test_formal_thin_owner_filter_keeps_full_snapshot_external_citation_offset():
@@ -1566,6 +1612,7 @@ def test_formal_thin_owner_filter_keeps_full_snapshot_external_citation_offset()
     assert f"{update[:-1]}[^6]。" in result
     assert "[^5] | **微信公众号精选观察**" not in result
     assert "[^6] | **微信公众号精选观察** | 《客户认证更新》" in result
+    assert "### 4.4" not in result
 
 
 

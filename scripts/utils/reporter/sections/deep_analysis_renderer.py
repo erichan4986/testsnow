@@ -541,15 +541,6 @@ class DeepAnalysisRenderer:
             "当前外部材料未提供相对正式材料或研报的新增待验证变量。",
             "",
         ])
-
-        lines.extend(["### 4.4 上行 / 下行条件与股价推演", ""])
-        price_path_section = view_model.section("4.4")
-        lines.extend(self._formal_medium_price_path_section(
-            price_path_section.rows,
-            citations,
-            citation_offset,
-            price_path_section.disclaimer,
-        ))
         return lines
 
     def _annual_material_profile_section(
@@ -782,57 +773,6 @@ class DeepAnalysisRenderer:
             attach_refs_to_sentence(f"{prefix if index == 0 else ''}{paragraph}", refs)
             for index, paragraph in enumerate(paragraphs)
         ]
-
-    def _formal_medium_price_path_section(
-        self,
-        material_rows: tuple[MaterialRow, ...],
-        citations: Dict[int, Any],
-        citation_offset: int = 0,
-        disclaimer: str = "",
-    ) -> List[str]:
-        """Render deterministic upgrade/downgrade conditions without changing scoring."""
-        lines = [
-            f"> {disclaimer}",
-            "",
-        ]
-        entry_count = 0
-
-        annual_row = next((row for row in material_rows if row.source_layer == "annual"), None)
-        if annual_row:
-            refs = [ref + citation_offset for ref in annual_row.citation_refs]
-            variable = annual_row.title
-            lines.extend([
-                f"**官方确认：{variable}**{''.join(f'[^{ref}]' for ref in refs)}",
-                "- 若官方材料中的该变量持续改善，基本面支撑增强；若增长线索不能延续或财务质量恶化，估值支撑减弱。",
-                "",
-            ])
-            entry_count += 1
-
-        broker_row = next((row for row in material_rows if row.source_layer == "broker"), None)
-        if broker_row:
-            refs = [ref + citation_offset for ref in broker_row.citation_refs]
-            variable = broker_row.title
-            lines.extend([
-                f"**机构假设：{variable}**{''.join(f'[^{ref}]' for ref in refs)}",
-                "- 若机构关于需求、产品放量或盈利弹性的假设兑现，估值可由业绩增长消化；若假设落空，盈利预测或估值溢价面临下修。",
-                "",
-            ])
-            entry_count += 1
-
-        external_row = next((row for row in material_rows if row.source_layer == "external"), None)
-        if external_row:
-            refs = [ref + citation_offset for ref in external_row.citation_refs]
-            variable = external_row.title
-            lines.extend([
-                f"**外部待验证：{variable}**{''.join(f'[^{ref}]' for ref in refs)}",
-                "- 若该变量获得公告、订单或行业数据验证，可提升市场置信度；若被证伪或长期缺乏正式证据，则只作为情绪噪音处理。",
-                "",
-            ])
-            entry_count += 1
-
-        if entry_count == 0:
-            lines.extend(["当前已选材料缺少可用于条件推演的具体变量标题，本节不形成方向推演。", ""])
-        return lines
 
     def _append_section_citations(
         self,

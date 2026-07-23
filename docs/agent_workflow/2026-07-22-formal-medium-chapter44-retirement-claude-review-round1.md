@@ -1,5 +1,12 @@
 # Claude Review Task: Formal-Medium Chapter 4.4 Retirement
 
+状态：`superseded`。用户于 2026-07-23 明确要求改为 Codex 两轮自审和修复；对应结果见：
+
+- `2026-07-23-formal-medium-chapter44-retirement-codex-self-review-round2-notes.md`
+- `2026-07-23-formal-medium-chapter44-retirement-codex-self-review-round3-notes.md`
+
+不要再执行本任务。以下内容仅保留为审计记录。
+
 你是只读设计审查模型。工作目录：
 
 `/Users/erichan/testsnow/.worktrees/annual-producer-v2`

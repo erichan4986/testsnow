@@ -268,7 +268,7 @@ def test_snapshot_projects_topic_narratives_with_unit_derived_global_refs():
     assert snapshot.rows[-1].external_unit_ids == (unit["unit_id"],)
 
 
-def test_view_model_filters_hidden_narrative_arguments_and_keeps_price_path_rows_unchanged():
+def test_view_model_filters_hidden_narrative_arguments_and_keeps_visible_citations():
     visible = MaterialRow(
         "external:visible", "客户验证", "external", "external_observation", (2,), ("external:visible",),
         title="商业化进展", body="测试股产品完成客户导入。", external_claim="测试股产品完成客户导入。",
@@ -301,7 +301,7 @@ def test_view_model_filters_hidden_narrative_arguments_and_keeps_price_path_rows
     projected = with_memo.section("4.3").narratives[0]
     assert [part.argument_key for part in projected.parts] == ["visible"]
     assert projected.parts[0].relation == "first"
-    assert with_memo.section("4.4").rows == without_memo.section("4.4").rows
+    assert with_memo.section("4.3").rows == without_memo.section("4.3").rows
     assert set(with_memo.citations) == {2}
 
 
@@ -539,7 +539,7 @@ def test_external_peer_narrative_bypasses_target_owner_comparison():
     assert [part.quote for part in selected[0].parts] == [quote]
 
 
-def test_view_model_projects_owner_equivalent_parts_without_changing_price_path_rows():
+def test_view_model_projects_owner_delta_parts_without_rewriting_external_row_body():
     owner = _annual_display_row(
         "公司2025年营业收入为10亿元。", role="financial_quality_explanation",
         ref=1, row_id="annual:revenue",
@@ -567,8 +567,8 @@ def test_view_model_projects_owner_equivalent_parts_without_changing_price_path_
 
     assert [part.quote for part in view_model.section("4.3").narratives[0].parts] == [update]
     assert view_model.section("4.1").rows[0].citation_refs == (1,)
-    price_row = next(row for row in view_model.section("4.4").rows if row.source_layer == "external")
-    assert price_row.body == duplicate + update
+    projected_row = view_model.section("4.3").rows[0]
+    assert projected_row.body == duplicate + update
 
 
 def test_external_selector_keeps_all_distinct_arguments_and_marks_owner_relation():
@@ -962,7 +962,7 @@ def test_incremental_external_selector_recognizes_new_units_and_acronym_anchors(
     ]
 
 
-def test_formal_medium_rejected_external_row_stays_out_of_4_3_and_4_4():
+def test_formal_medium_rejected_external_row_stays_out_of_4_3():
     rows = (
         _annual_display_row(
             "公司CPO产品已进入客户验证阶段。", role="technology_product_progress",
@@ -981,43 +981,7 @@ def test_formal_medium_rejected_external_row_stays_out_of_4_3_and_4_4():
     view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
 
     assert not view_model.section("4.3").rows
-    assert all(row.source_layer != "external" for row in view_model.section("4.4").rows)
     assert view_model.diagnostics["external_incremental_rejected_by_reason"] == {"owner_text_duplicate": 1}
-
-
-def test_formal_medium_price_path_falls_back_to_cited_generic_broker_assumption():
-    rows = (
-        MaterialRow("annual:generic", "业务", "annual", "formal_explanation", (1,), ("annual:generic",), title="财务质量与变化原因", body="公司主营业务为芯片设计并服务工业客户。", render_role="business_structure", argument_complete=True),
-        MaterialRow("broker:generic", "观点", "broker", "professional_analysis", (2,), ("broker:generic",), title="券商核心观点", body="研报认为产品放量支撑增长。", render_role="broker_assumption", attribution="测试证券"),
-        MaterialRow("external:generic", "观察", "external", "external_observation", (3,), ("external:generic",), title="反方风险", body="外部材料称供应链需要验证。", render_role="external_variable"),
-    )
-    snapshot = MaterialSnapshot(
-        "deep_analysis_material_snapshot.v1", rows,
-        {1: {"source": "公司年报"}, 2: {"source": "券商研报"}, 3: {"source": "微信公众号精选观察"}}, {},
-    )
-
-    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
-
-    price_path_rows = view_model.section("4.4").rows
-    broker = next(row for row in price_path_rows if row.source_layer == "broker")
-    assert broker.row_id == "broker:generic"
-    assert broker.title == "测试证券研报核心假设"
-    assert broker.body == "研报认为产品放量支撑增长。"
-
-
-def test_formal_medium_price_path_generic_broker_fallback_never_uses_risk_row():
-    rows = (
-        MaterialRow("annual:generic", "业务", "annual", "formal_explanation", (1,), ("annual:generic",), title="财务质量与变化原因", body="公司主营业务为芯片设计并服务工业客户。", render_role="business_structure", argument_complete=True),
-        MaterialRow("broker:risk", "风险", "broker", "professional_analysis", (2,), ("broker:risk",), title="风险提示", body="研报提示需求不及预期。", render_role="broker_risk", attribution="测试证券"),
-    )
-    snapshot = MaterialSnapshot(
-        "deep_analysis_material_snapshot.v1", rows,
-        {1: {"source": "公司年报"}, 2: {"source": "券商研报"}}, {},
-    )
-
-    view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})
-
-    assert all(row.source_layer != "broker" for row in view_model.section("4.4").rows)
 
 
 def test_select_annual_display_rows_dedupes_exact_and_containment_only():
@@ -1135,37 +1099,6 @@ def test_formal_medium_view_model_selects_annual_display_rows_and_reports_diagno
     assert view_model.diagnostics["annual_selected_count"] == 2
 
 
-def test_formal_medium_price_path_uses_strict_selected_role_priority():
-    ctx = _ctx()
-    ctx["annual_report_memo"]["sections"]["annual_report_explanation"] = [
-        {
-            "title": "审计意见",
-            "body": "我们认为，后附的公司财务报表在所有重大方面公允反映了公司财务状况。",
-            "citation_refs": [1],
-            "source_ref_ids": ["annual:audit"],
-            "argument_family": "business_structure",
-            "argument_complete": True,
-        },
-        {
-            "title": "技术进展",
-            "body": "公司推出新一代产品并完成客户验证。",
-            "citation_refs": [2],
-            "source_ref_ids": ["annual:technology"],
-            "argument_family": "technology_product_progress",
-            "argument_complete": True,
-        },
-    ]
-
-    view_model = build_chapter4_view_model(
-        build_deep_analysis_material_snapshot(ctx),
-        {"profile": "formal_medium"},
-    )
-
-    price_path_annual = [row for row in view_model.section("4.4").rows if row.source_layer == "annual"]
-    assert price_path_annual
-    assert price_path_annual[0].row_id == "annual:confirmed:0"
-
-
 def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations():
     snapshot = build_deep_analysis_material_snapshot(_ctx())
 
@@ -1239,11 +1172,12 @@ def test_formal_medium_view_model_unifies_source_layers_and_visible_citations():
 
     assert isinstance(view_model, Chapter4ViewModel)
     assert all(isinstance(row, MaterialRow) for row in snapshot.rows)
-    assert [section.section_id for section in view_model.sections] == ["4.1", "4.2", "4.3", "4.4"]
+    assert [section.section_id for section in view_model.sections] == ["4.1", "4.2", "4.3"]
+    with pytest.raises(KeyError):
+        view_model.section("4.4")
     assert {row.source_layer for row in view_model.section("4.1").rows} == {"annual"}
     assert {row.source_layer for row in view_model.section("4.2").rows} == {"broker"}
     assert {row.source_layer for row in view_model.section("4.3").rows} == {"external"}
-    assert {row.source_layer for row in view_model.section("4.4").rows} == {"annual", "broker", "external"}
     assert all(row.attribution for row in view_model.section("4.2").rows)
     assert all(row.source_credit == "official" for row in view_model.section("4.1").rows)
     assert all(row.source_credit == "professional" for row in view_model.section("4.2").rows)
@@ -1258,6 +1192,12 @@ def test_formal_medium_view_model_unifies_source_layers_and_visible_citations():
         for section in view_model.sections
         for row in section.rows
         for ref in row.citation_refs
+    } | {
+        ref
+        for section in view_model.sections
+        for narrative in section.narratives
+        for part in narrative.parts
+        for ref in part.citation_refs
     }
     assert visible_refs == set(view_model.citations)
     assert not any(row.row_id == "annual:not_disclosed:0" for row in view_model.section("4.1").rows)
@@ -1284,19 +1224,6 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
     assert external_row.external_claim == "外部文章讨论 CPO 路线分歧。"
     assert external_row.external_evidence == "外部文章讨论 CPO 路线分歧。"
     assert {k: v for k, v in ctx.items() if k != "recommendation_decision"} == before
-
-
-def test_incomplete_selected_annual_rows_enter_price_path_after_complete_rows_are_exhausted():
-    ctx = _ctx()
-    ctx["annual_report_memo"]["sections"]["annual_report_explanation"][0]["argument_complete"] = False
-
-    view_model = build_chapter4_view_model(
-        build_deep_analysis_material_snapshot(ctx),
-        {"profile": "formal_medium"},
-    )
-
-    assert view_model.section("4.1").rows
-    assert any(row.source_layer == "annual" for row in view_model.section("4.4").rows)
 
 
 def test_snapshot_does_not_admit_stale_rows_from_absent_annual_or_broker_memo():

@@ -372,7 +372,6 @@ def build_chapter4_view_model(
     external_narratives = select_external_topic_narratives(
         snapshot.external_topic_narratives, external_rows, (*annual_rows, *broker_rows),
     )
-    price_path_rows = _select_price_path_rows(annual_rows, broker_rows, external_rows)
     sections = (
         Chapter4Section("4.1", "官方材料确认：业务与财务基座", annual_rows),
         Chapter4Section("4.2", "机构观点与盈利假设", broker_rows),
@@ -382,12 +381,6 @@ def build_chapter4_view_model(
             external_rows,
             "以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
             external_narratives,
-        ),
-        Chapter4Section(
-            "4.4",
-            "上行 / 下行条件与股价推演",
-            price_path_rows,
-            "本节只做股价方向的条件推演，不直接修改目标价、评分、风险评分或最终推荐。",
         ),
     )
     visible_refs = sorted({
@@ -405,7 +398,7 @@ def build_chapter4_view_model(
     diagnostics.update(annual_selection_diagnostics,
                        **external_selection_diagnostics,
                        profile=profile_name,
-                       visible_rows_count=sum(len(section.rows) for section in sections[:3]),
+                       visible_rows_count=sum(len(section.rows) for section in sections),
                        visible_citation_count=len(citations))
     return Chapter4ViewModel(profile_name, sections, citations, diagnostics)
 
@@ -581,38 +574,6 @@ _NON_INFORMATIVE_VARIABLE_TITLES = {
 def is_informative_variable_title(title: str) -> bool:
     normalized = re.sub(r"\s+", " ", str(title or "")).strip(" ：:，,；;。")
     return normalized not in _NON_INFORMATIVE_VARIABLE_TITLES
-
-
-def _select_price_path_rows(
-    annual_rows: Iterable[MaterialRow],
-    broker_rows: Iterable[MaterialRow],
-    external_rows: Iterable[MaterialRow],
-) -> Tuple[MaterialRow, ...]:
-    annual = _select_price_row(annual_rows, ("operating_progress", "financial_quality_explanation", "technology_product_progress", "market_competition_outlook", "business_structure"), exclude_portrait=True)
-    broker = _select_price_row(broker_rows, ("broker_assumption", "broker_forecast"))
-    if broker is None:
-        broker = _generic_broker_price_row(broker_rows)
-    external = next((row for row in external_rows if is_informative_variable_title(row.title)), None)
-    return tuple(row for row in (annual, broker, external) if row is not None)
-
-
-def _select_price_row(rows: Iterable[MaterialRow], roles: Iterable[str], *, exclude_portrait: bool = False) -> MaterialRow | None:
-    filtered = [row for row in rows if is_informative_variable_title(row.title) and not (exclude_portrait and row.editorial_slot == "portrait")]
-    for role in roles:
-        matches = [row for row in filtered if row.render_role == role]
-        complete = next((row for row in matches if row.argument_complete), None)
-        if complete or matches:
-            return complete or matches[0]
-    return None
-
-
-def _generic_broker_price_row(rows: Iterable[MaterialRow]) -> MaterialRow | None:
-    eligible = tuple(row for row in rows if row.body and row.citation_refs)
-    row = next((row for role in ("broker_assumption", "broker_forecast") for row in eligible if row.render_role == role), None)
-    if row is None:
-        return None
-    attribution = row.attribution if row.attribution and row.attribution != "研报" else ""
-    return replace(row, title=f"{attribution}研报核心假设")
 
 
 def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list[MaterialRow]:
