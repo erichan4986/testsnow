@@ -93,7 +93,11 @@ def build_volume_context(
 
 def build_structure_path(df_daily: pd.DataFrame | None, config: Dict | None) -> dict:
     """Build a source-ordered path from confirmed pivots plus the latest close."""
-    empty = {"status": "unavailable", "as_of": None, "pivot_sequence": [], "segments": [], "limitations": []}
+    unavailable_relation = {"status": "unavailable", "previous": None, "latest": None, "materiality_pct": None}
+    empty = {
+        "status": "unavailable", "as_of": None, "pivot_sequence": [], "segments": [], "limitations": [],
+        "pivot_relations": {"high": dict(unavailable_relation), "low": dict(unavailable_relation)},
+    }
     if df_daily is None or not {"high", "low", "close"}.issubset(df_daily.columns):
         return {**empty, "limitations": ["OHLC 数据不足"]}
     dates = _source_dates(df_daily)
@@ -143,7 +147,26 @@ def build_structure_path(df_daily: pd.DataFrame | None, config: Dict | None) -> 
         return {
             "start_date": start["date"], "end_date": end_date,
             "start_price": start["price"], "end_price": end_price,
-            "end_kind": end_kind, "change_pct": float(change_pct), "move": move,
+            "start_kind": start["kind"], "end_kind": end_kind,
+            "change_pct": float(change_pct), "move": move,
+        }
+
+    def relation(kind: str) -> dict:
+        points = [pivot for pivot in pivots if pivot["kind"] == kind]
+        if len(points) < 2:
+            return dict(unavailable_relation)
+        previous, latest = points[-2:]
+        previous_price, latest_price = _finite(previous["price"]), _finite(latest["price"])
+        atr_value = _finite(atr.iloc[latest["idx"]])
+        if previous_price in {None, 0.0} or latest_price in {None, 0.0} or atr_value is None:
+            return dict(unavailable_relation)
+        threshold = max(tolerance, multiplier * atr_value / abs(latest_price))
+        change = latest_price / previous_price - 1.0
+        status = "higher" if change > threshold else "lower" if change < -threshold else "flat"
+        point = lambda item: {"date": item["date"], "price": float(item["price"])}
+        return {
+            "status": status, "previous": point(previous), "latest": point(latest),
+            "materiality_pct": float(threshold),
         }
 
     segments = [
@@ -155,7 +178,8 @@ def build_structure_path(df_daily: pd.DataFrame | None, config: Dict | None) -> 
     return {
         "status": "ready" if len(pivots) >= 2 else "sparse", "as_of": date_text.iloc[-1],
         "pivot_sequence": [{key: value for key, value in pivot.items() if key != "idx"} for pivot in pivots],
-        "segments": segments, "limitations": limitations,
+        "segments": segments, "pivot_relations": {"high": relation("high"), "low": relation("low")},
+        "limitations": limitations,
     }
 
 

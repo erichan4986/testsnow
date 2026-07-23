@@ -3,6 +3,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
 
 import pandas as pd
+import pytest
 from copy import deepcopy
 
 from technical_state_machine import (
@@ -74,7 +75,22 @@ def _broken_resonance_with_path_and_shock():
         structure_path={
             "status": "ready", "as_of": "2026-07-19", "limitations": [],
             "pivot_sequence": [],
-            "segments": [{"start_date": "2026-07-14", "end_date": "2026-07-18", "move": "down", "change_pct": -0.05, "end_kind": "low"}],
+            "pivot_relations": {
+                "high": {"status": "lower", "previous": {"date": "2026-07-08", "price": 112.0}, "latest": {"date": "2026-07-14", "price": 108.0}},
+                "low": {"status": "lower", "previous": {"date": "2026-07-10", "price": 98.0}, "latest": {"date": "2026-07-18", "price": 94.0}},
+            },
+            "segments": [{
+                "start_date": "2026-07-18", "end_date": "2026-07-19",
+                "start_price": 94.0, "end_price": 100.0, "start_kind": "low",
+                "move": "up", "change_pct": 0.0638, "end_kind": "latest_close",
+            }],
+        },
+        structure_health={
+            "last_low_relation": "lower",
+            "swing_lows": [
+                {"date": "2026-07-10", "price": 98.0},
+                {"date": "2026-07-18", "price": 94.0},
+            ],
         },
         terminal_shock={
             "status": "ready", "direction": "down", "facts": ["收盘接近日内低位"],
@@ -323,7 +339,7 @@ def test_interpretation_signal_contract_invalidates_stale_projection_but_keeps_c
     stale["interpretation"].pop("signal_contract")
     core = {key: value for key, value in stale.items() if key != "interpretation"}
 
-    assert built["interpretation"]["signal_contract"] == "technical_signal_contract.v2.2"
+    assert built["interpretation"]["signal_contract"] == "technical_signal_contract.v2.3"
     assert is_valid_technical_judgment(stale) is False
     assert ensure_technical_judgment(stale) == core
 
@@ -337,7 +353,12 @@ def test_bearish_path_and_downside_shock_are_evidence_not_action_owner():
 
     interpretation = judgment["interpretation"]
     assert judgment["action"]["state"] == "risk_control"
-    assert interpretation["signal_contract"] == "technical_signal_contract.v2.2"
+    assert interpretation["signal_contract"] == "technical_signal_contract.v2.3"
+    assert interpretation["structure_path"]["structure_state"] == "descending"
+    assert interpretation["structure_path"]["active_phase"] == "countertrend_rebound"
+    assert "下降结构中的反抽" in interpretation["structure_path"]["summary"]
+    assert interpretation["structure_path"]["segments"][0]["start_price"] == 94.0
+    assert interpretation["structure_path"]["covers_auxiliary_low_relation"] is True
     assert interpretation["primary_evidence"][0]["code"] == "terminal_down_shock"
     assert interpretation["scenario_ladder"]["reference_close"] == 100.0
     assert {step["level_source"] for step in interpretation["scenario_ladder"]["steps"]} <= {
@@ -398,7 +419,146 @@ def test_stale_interpretation_rebuilds_from_current_resonance():
         indicators={"analysis_confidence": {"level": "高"}},
     )
 
-    assert rebuilt["interpretation"]["signal_contract"] == "technical_signal_contract.v2.2"
+    assert rebuilt["interpretation"]["signal_contract"] == "technical_signal_contract.v2.3"
+
+
+@pytest.mark.parametrize(
+    ("high_relation", "low_relation", "move", "expected_state", "expected_phase", "wording"),
+    [
+        ("lower", "lower", "down", "descending", "continuation", "下降结构延续"),
+        ("higher", "higher", "up", "ascending", "continuation", "上升结构延续"),
+        ("higher", "higher", "down", "ascending", "countertrend_pullback", "上升结构中的回撤"),
+        ("flat", "flat", "up", "range", "range_leg", "区间上行段"),
+        ("lower", "higher", "up", "mixed", "transition", "混合过渡"),
+        ("lower", "lower", "flat", "descending", "flat", "横向整理"),
+    ],
+)
+def test_v23_structure_path_mapping_is_deterministic(
+    high_relation, low_relation, move, expected_state, expected_phase, wording,
+):
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["structure_path"]["pivot_relations"]["high"]["status"] = high_relation
+    resonance["structure_path"]["pivot_relations"]["low"]["status"] = low_relation
+    resonance["structure_path"]["segments"][0]["move"] = move
+
+    path = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 100.0, "ma_20": 105.0, "ma_60": 110.0},
+    )["interpretation"]["structure_path"]
+
+    assert path["structure_state"] == expected_state
+    assert path["active_phase"] == expected_phase
+    assert wording in path["summary"]
+
+
+def test_v23_sparse_relation_does_not_force_structure_state():
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["structure_path"]["pivot_relations"]["high"] = {
+        "status": "unavailable", "previous": None, "latest": None,
+    }
+
+    path = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 100.0},
+    )["interpretation"]["structure_path"]
+
+    assert path["status"] == "sparse"
+    assert path["structure_state"] == "sparse"
+    assert path["active_phase"] == "unknown"
+    assert path["covers_auxiliary_low_relation"] is False
+
+
+def test_v23_ready_relations_without_active_segment_do_not_invent_direction():
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["structure_path"]["segments"] = []
+
+    path = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 100.0},
+    )["interpretation"]["structure_path"]
+
+    assert path["active_phase"] == "unknown"
+    assert "当前段证据不足" in path["summary"]
+    assert "结构下行段" not in path["summary"]
+
+
+def test_v23_unknown_source_path_status_fails_closed():
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["structure_path"]["status"] = "corrupt"
+
+    path = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 100.0},
+    )["interpretation"]["structure_path"]
+
+    assert path["status"] == "unavailable"
+    assert path["structure_state"] == "unavailable"
+
+
+def test_v23_unavailable_projection_preserves_source_as_of():
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["structure_path"] = {
+        "status": "unavailable", "as_of": "2026-07-19", "segments": [], "pivot_relations": {},
+    }
+
+    judgment = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 100.0},
+    )
+
+    assert judgment["interpretation"]["structure_path"]["as_of"] == "2026-07-19"
+    assert is_valid_technical_judgment(judgment) is True
+
+
+def test_v23_local_structure_conflict_does_not_change_core_trend_or_action():
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["structure_path"]["pivot_relations"]["high"]["status"] = "higher"
+    resonance["structure_path"]["pivot_relations"]["low"]["status"] = "higher"
+
+    judgment = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 100.0},
+    )
+
+    assert judgment["trend"]["state"] == "down"
+    assert judgment["action"]["state"] == "risk_control"
+    assert "局部修复线索" in judgment["interpretation"]["structure_path"]["summary"]
+
+
+def test_v23_auxiliary_overlap_requires_same_relation_and_same_low_points():
+    resonance = _broken_resonance_with_path_and_shock()
+    target = _bearish_observe_target()
+    matching = build_technical_judgment(resonance, target, indicators={"close": 100.0})
+    changed = deepcopy(resonance)
+    changed["structure_health"]["swing_lows"][-1]["price"] = 93.0
+    different = build_technical_judgment(changed, target, indicators={"close": 100.0})
+
+    assert matching["interpretation"]["structure_path"]["covers_auxiliary_low_relation"] is True
+    assert different["interpretation"]["structure_path"]["covers_auxiliary_low_relation"] is False
+
+
+def test_broken_invalidation_uses_observed_fact_not_formula_as_primary_evidence():
+    resonance = _broken_resonance_with_path_and_shock()
+    resonance["invalidation"] = {
+        "status": "broken", "is_invalidated": True,
+        "message": "当前收盘价已跌破MA60（90.00），中期结构破坏确认。",
+        "hard_invalid": "周线收盘跌破MA10，或日线有效跌破MA60",
+        "soft_warning": "日线连续3日收盘跌破MA20", "hard_invalid_price": 90.0,
+    }
+
+    interpretation = build_technical_judgment(
+        resonance, _bearish_observe_target(), indicators={"close": 80.0},
+    )["interpretation"]
+
+    assert interpretation["primary_evidence"][0]["text"] == resonance["invalidation"]["message"]
+    assert resonance["invalidation"]["hard_invalid"] in interpretation["invalidation_conditions"]
+    assert all("或" not in item["text"] for item in interpretation["primary_evidence"])
+
+
+def test_v23_shape_valid_but_stale_structure_projection_rebuilds():
+    resonance = _broken_resonance_with_path_and_shock()
+    target = _bearish_observe_target()
+    indicators = {"close": 100.0, "ma_20": 105.0, "ma_60": 110.0}
+    cached = build_technical_judgment(resonance, target, indicators=indicators)
+    cached["interpretation"]["structure_path"]["segments"][0]["end_price"] = 99.0
+
+    rebuilt = ensure_technical_judgment(cached, resonance, target, indicators)
+
+    assert rebuilt["interpretation"]["structure_path"]["segments"][0]["end_price"] == 100.0
 
 
 def test_pivot_divergence_precedes_overextension_without_upgrading_bearish_action():

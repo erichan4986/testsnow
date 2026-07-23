@@ -78,7 +78,7 @@ def _make_ctx(with_new_fields=True, mode="full"):
     return ctx
 
 
-def _add_v22_projection_inputs(ctx, terminal_status="ready"):
+def _add_v23_projection_inputs(ctx, terminal_status="ready", *, overlap=True):
     technical = ctx["stock_raw"]["technical"]
     indicators = technical["indicators"]
     resonance = indicators["_resonance"]
@@ -87,14 +87,25 @@ def _add_v22_projection_inputs(ctx, terminal_status="ready"):
         "price_data_lineage": {"effective_adjustment": "qfq", "price_adjustment_applied": True},
         "structure_path": {
             "status": "ready", "as_of": "2026-07-19", "limitations": [], "pivot_sequence": [],
+            "pivot_relations": {
+                "high": {"status": "lower", "previous": {"date": "2026-07-08", "price": 112.0}, "latest": {"date": "2026-07-14", "price": 108.0}},
+                "low": {"status": "lower", "previous": {"date": "2026-07-10", "price": 98.0}, "latest": {"date": "2026-07-18", "price": 94.0}},
+            },
             "segments": [
-                {"start_date": "2026-07-08", "end_date": "2026-07-10", "move": "up", "change_pct": 0.03, "end_kind": "high"},
-                {"start_date": "2026-07-10", "end_date": "2026-07-15", "move": "down", "change_pct": -0.04, "end_kind": "low"},
+                {"start_date": "2026-07-08", "end_date": "2026-07-10", "start_price": 96.0, "end_price": 98.0, "start_kind": "low", "move": "up", "change_pct": 0.0208, "end_kind": "high"},
+                {"start_date": "2026-07-10", "end_date": "2026-07-19", "start_price": 98.0, "end_price": 100.0, "start_kind": "low", "move": "up", "change_pct": 0.0204, "end_kind": "latest_close"},
             ],
         },
         "terminal_shock": {
             "status": terminal_status, "direction": "down", "facts": ["收盘接近日内低位", "量能比1.8×此前20日均量"],
         },
+    })
+    resonance["structure_health"].update({
+        "last_low_relation": "lower",
+        "swing_lows": [
+            {"date": "2026-07-10", "price": 98.0},
+            {"date": "2026-07-18", "price": 94.0 if overlap else 93.0},
+        ],
     })
 
 
@@ -110,7 +121,7 @@ def test_compact_rendering():
     assert "主升期" in output
     assert "72/100" in output
     assert "趋势失效条件" in output
-    assert "局部趋势结构（辅助）" in output
+    assert "60日局部低点结构（辅助）" in output
     assert "通道/箱体（辅助）" in output
     # 评分子项以表格形式呈现
     assert "| 维度 | 得分 | 说明 |" in output
@@ -131,28 +142,42 @@ def test_full_rendering():
 
 def test_full_renderer_projects_path_shock_and_scenarios_without_raw_selection():
     ctx = _make_ctx(with_new_fields=True, mode="full")
-    _add_v22_projection_inputs(ctx)
+    _add_v23_projection_inputs(ctx)
 
     output = TechnicalRenderer().render(ctx)
 
     assert "**结构演变**" in output
     assert "**末端异常K线**" in output
     assert "**情景阶梯**" in output
-    assert output.count("| 阶段 | 变动 | 含义 |") == 1
+    assert output.count("| 阶段 | 价格区间 | 变动 | 结构含义 |") == 1
+    assert "| 2026-07-10 至 2026-07-19 | 98.00 → 100.00 | 2.0% | 下降结构中的反抽 |" in output
+    assert "局部趋势结构（辅助）" not in output
 
 
 def test_ordinary_terminal_bar_has_no_placeholder_and_compact_keeps_action():
     full_ctx = _make_ctx(with_new_fields=True, mode="full")
     compact_ctx = _make_ctx(with_new_fields=True, mode="compact")
-    _add_v22_projection_inputs(full_ctx, terminal_status="ordinary")
-    _add_v22_projection_inputs(compact_ctx, terminal_status="ordinary")
+    _add_v23_projection_inputs(full_ctx, terminal_status="ordinary")
+    _add_v23_projection_inputs(compact_ctx, terminal_status="ordinary")
 
     full, compact = TechnicalRenderer().render(full_ctx), TechnicalRenderer().render(compact_ctx)
 
     assert "末端异常K线" not in full
-    assert "| 阶段 | 变动 | 含义 |" not in compact
+    assert "| 阶段 | 价格区间 | 变动 | 结构含义 |" not in compact
     assert "**结构演变**" in compact and "**情景阶梯**" in compact
     assert _action_line(full) == _action_line(compact)
+    full_summary = next(line for line in full.splitlines() if line.startswith("- 高点下移"))
+    compact_summary = next(line for line in compact.splitlines() if line.startswith("- 高点下移"))
+    assert full_summary == compact_summary
+
+
+def test_non_overlapping_auxiliary_structure_is_preserved_with_explicit_window():
+    ctx = _make_ctx(with_new_fields=True, mode="full")
+    _add_v23_projection_inputs(ctx, overlap=False)
+
+    output = TechnicalRenderer().render(ctx)
+
+    assert "**60日局部低点结构（辅助）**" in output
 
 
 def test_fallback_to_legacy():
@@ -301,7 +326,7 @@ def test_broken_regime_renders_controlling_and_counter_evidence_without_second_c
     assert "上升趋势结构健康" not in output
 
 
-def test_invalid_regime_labels_triggered_conditions_and_dedupes_primary_evidence():
+def test_invalid_regime_keeps_condition_definitions_separate_from_observed_break():
     renderer = TechnicalRenderer()
     ctx = _make_ctx(with_new_fields=True, mode="compact")
     tech = ctx["stock_raw"]["technical"]
@@ -311,8 +336,10 @@ def test_invalid_regime_labels_triggered_conditions_and_dedupes_primary_evidence
         "trend_health": {"score": 34, "grade": "破坏风险高"},
         "invalidation": {
             "status": "broken", "is_invalidated": True,
+            "message": "当前收盘价已跌破MA60（90.00），中期结构破坏确认。",
             "soft_warning": "日线连续3日收盘跌破MA20",
             "hard_invalid": "周线收盘跌破MA10，或日线有效跌破MA60",
+            "hard_invalid_price": 90.0,
         },
     })
     tech["price_target"] = {
@@ -322,10 +349,27 @@ def test_invalid_regime_labels_triggered_conditions_and_dedupes_primary_evidence
 
     output = renderer.render(ctx)
 
-    assert "**已触发的破坏条件**" in output
-    assert "- 已触发：日线连续3日收盘跌破MA20" in output
+    assert "**趋势失效条件**" in output
+    assert "- 失效：日线连续3日收盘跌破MA20" in output
     assert output.count("周线收盘跌破MA10，或日线有效跌破MA60") == 1
-    assert "- 失效：" not in output
+    assert output.count("当前收盘价已跌破MA60（90.00），中期结构破坏确认。") == 1
+    assert "已触发：" not in output
+
+
+def test_radar_summary_does_not_call_a_weak_component_strongest():
+    renderer = TechnicalRenderer()
+    weak = {
+        "weekly_structure": {"score": 10, "max": 30},
+        "daily_ma_alignment": {"score": 5, "max": 25},
+        "price_structure": {"score": 5, "max": 15},
+        "volume_confirmation": {"score": 5, "max": 10},
+        "volatility_condition": {"score": 5, "max": 10},
+    }
+    strong = {**weak, "volume_confirmation": {"score": 8, "max": 10}}
+
+    assert "各维度均未形成明显支撑" in renderer._build_radar_summary(weak, 30)
+    assert "最强" not in renderer._build_radar_summary(weak, 30)
+    assert "成交量确认最强" in renderer._build_radar_summary(strong, 50)
 
 
 def test_full_and_compact_share_judgment_semantics_and_do_not_duplicate_sell_assessment():

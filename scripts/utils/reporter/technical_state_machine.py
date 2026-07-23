@@ -849,32 +849,108 @@ def _finite_number(value: Any) -> float | None:
     return number if number is not None and pd.notna(number) and abs(number) != float("inf") else None
 
 
-def _path_interpretation(path: Dict, trend: Dict) -> Dict:
-    """Translate analyzer pivot facts into bounded, regime-aware wording."""
-    status = path.get("status", "unavailable") if isinstance(path, dict) else "unavailable"
-    raw_segments = path.get("segments", []) if isinstance(path, dict) else []
+def _path_interpretation(
+    path: Dict, trend: Dict, channel: Dict, invalidation: Dict, structure_health: Dict,
+) -> Dict:
+    """Translate current pivot facts once, without changing the controlling trend."""
+    path = path if isinstance(path, dict) else {}
+    relations = path.get("pivot_relations") if isinstance(path.get("pivot_relations"), dict) else {}
+    high = relations.get("high") if isinstance(relations.get("high"), dict) else {}
+    low = relations.get("low") if isinstance(relations.get("low"), dict) else {}
+    high_state, low_state = high.get("status"), low.get("status")
+    relation_states = {"higher", "lower", "flat"}
+    source_status = path.get("status", "unavailable")
+    if source_status not in {"ready", "sparse"}:
+        status, structure_state = "unavailable", "unavailable"
+    elif source_status == "sparse" or high_state not in relation_states or low_state not in relation_states:
+        status, structure_state = "sparse", "sparse"
+    else:
+        status = "ready"
+        structure_state = (
+            "descending" if (high_state, low_state) == ("lower", "lower") else
+            "ascending" if (high_state, low_state) == ("higher", "higher") else
+            "range" if (high_state, low_state) == ("flat", "flat") else "mixed"
+        )
+
+    raw_segments = path.get("segments") if isinstance(path.get("segments"), list) else []
+    active_move = raw_segments[-1].get("move") if raw_segments and isinstance(raw_segments[-1], dict) else None
+    phase_by_move = {
+        ("descending", "down"): "continuation", ("descending", "up"): "countertrend_rebound",
+        ("ascending", "up"): "continuation", ("ascending", "down"): "countertrend_pullback",
+        ("range", "up"): "range_leg", ("range", "down"): "range_leg",
+    }
+    active_phase = phase_by_move.get((structure_state, active_move), "flat" if active_move == "flat" else "transition")
+    if status != "ready" or active_move not in {"up", "down", "flat"}:
+        active_phase = "unknown"
+
+    breakout = str(channel.get("breakout_status") or "")
+    invalidated = invalidation.get("status") == "broken" or invalidation.get("is_invalidated")
+    break_state = "confirmed_down" if invalidated or "向下" in breakout else "confirmed_up" if "向上" in breakout else "none"
+
+    relation_text = {
+        "higher": {"high": "高点抬高", "low": "低点抬高"},
+        "lower": {"high": "高点下移", "low": "低点下移"},
+        "flat": {"high": "高点持平", "low": "低点持平"},
+    }
+    def segment_meaning(move: str) -> str:
+        if move == "flat":
+            return "横向整理"
+        meanings = {
+            ("descending", "down"): "下降结构延续", ("descending", "up"): "下降结构中的反抽",
+            ("ascending", "up"): "上升结构延续", ("ascending", "down"): "上升结构中的回撤",
+            ("range", "up"): "区间上行段", ("range", "down"): "区间下行段",
+        }
+        return meanings.get((structure_state, move), "混合过渡" if structure_state == "mixed" else f"结构{'上' if move == 'up' else '下'}行段")
+
+    if status == "ready":
+        phase_label = "当前段证据不足" if active_phase == "unknown" else segment_meaning(active_move)
+        summary = f"{relation_text[high_state]['high']}、{relation_text[low_state]['low']}；当前为{phase_label}"
+        core_state = trend.get("state")
+        if structure_state == "ascending" and core_state in {"down", "invalid"}:
+            summary += "，属于局部修复线索，尚未改变控制趋势"
+        elif structure_state == "descending" and core_state in {"strong_up", "weak_up"}:
+            summary += "，属于局部转弱线索，尚未改变控制趋势"
+        elif active_phase in {"countertrend_rebound", "countertrend_pullback"}:
+            summary += "，尚未改变控制趋势"
+        if break_state != "none":
+            summary += "；当前同时处于已确认破位状态"
+        summary += "。"
+    else:
+        summary = "确认拐点不足，暂不展开结构路径。"
+
     segments = []
-    bearish, bullish = trend["state"] in {"down", "invalid"}, trend["state"] in {"strong_up", "weak_up"}
-    for item in raw_segments[-5:] if isinstance(raw_segments, list) else []:
+    for item in raw_segments[-5:]:
         if not isinstance(item, dict) or item.get("move") not in {"up", "down", "flat"}:
             continue
-        move = item["move"]
-        meaning = (
-            "下行延续" if bearish and move == "down" else
-            "反抽/局部修复" if bearish and move == "up" else
-            "上行延续" if bullish and move == "up" else
-            "回撤/局部转弱" if bullish and move == "down" else
-            "区间上行段" if move == "up" else
-            "区间下行段" if move == "down" else "持平整理"
-        )
-        change = _finite_number(item.get("change_pct"))
+        start, end, change = map(_finite_number, (item.get("start_price"), item.get("end_price"), item.get("change_pct")))
+        if start is None or end is None:
+            continue
         segments.append({
             "period": f"{item.get('start_date', '')} 至 {item.get('end_date', '')}".strip(),
+            "start_price": start, "end_price": end,
             "move": f"{change:.1%}" if change is not None else "变动不详",
-            "meaning": meaning,
+            "meaning": segment_meaning(item["move"]),
         })
-    summary = f"最近确认结构以{segments[-1]['meaning']}为主。" if segments else "确认拐点不足，暂不展开结构路径。"
-    return {"status": status if status in {"ready", "sparse", "unavailable"} else "unavailable", "summary": summary, "segments": segments}
+
+    def same_point(left: Dict, right: Dict) -> bool:
+        left_date = str(left.get("date") or "").split("T")[0].split(" ")[0]
+        right_date = str(right.get("date") or "").split("T")[0].split(" ")[0]
+        left_price, right_price = _finite_number(left.get("price")), _finite_number(right.get("price"))
+        return bool(left_date and left_date == right_date and left_price is not None and right_price is not None
+                    and abs(left_price - right_price) <= max(1e-9, abs(right_price) * 1e-6))
+
+    auxiliary_lows = structure_health.get("swing_lows") if isinstance(structure_health.get("swing_lows"), list) else []
+    covers_auxiliary = bool(
+        status == "ready" and low_state in relation_states
+        and structure_health.get("last_low_relation") == low_state and len(auxiliary_lows) >= 2
+        and isinstance(low.get("previous"), dict) and isinstance(low.get("latest"), dict)
+        and same_point(low["previous"], auxiliary_lows[-2]) and same_point(low["latest"], auxiliary_lows[-1])
+    )
+    return {
+        "status": status, "as_of": path.get("as_of"), "structure_state": structure_state,
+        "active_phase": active_phase, "break_state": break_state,
+        "covers_auxiliary_low_relation": covers_auxiliary, "summary": summary, "segments": segments,
+    }
 
 
 def _terminal_event(shock: Dict, trend: Dict) -> Dict | None:
@@ -992,11 +1068,17 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str, ind
             items.append({"code": code, "text": text})
 
     if state == "invalid" or invalidation.get("status") == "broken" or invalidation.get("is_invalidated"):
-        add(primary, "hard_invalidation", invalidation.get("hard_invalid") or invalidation.get("message") or "中期结构失效条件已触发", 3)
+        observed_break = invalidation.get("message") if (
+            invalidation.get("status") == "broken" or invalidation.get("is_invalidated")
+        ) else None
+        add(primary, "hard_invalidation", observed_break or "中期结构失效已确认", 3)
     breakout = str(channel.get("breakout_status") or "")
     if (bearish and "向下" in breakout) or (bullish and "向上" in breakout):
         add(primary, "directional_channel_break", f"通道/箱体信号：{breakout}", 3)
-    path = _path_interpretation(resonance.get("structure_path") or {}, trend)
+    path = _path_interpretation(
+        resonance.get("structure_path") or {}, trend, channel, invalidation,
+        resonance.get("structure_health") or {},
+    )
     terminal = _terminal_event(resonance.get("terminal_shock") or {}, trend)
     if terminal and terminal["aligned"]:
         add(primary, f"terminal_{terminal['direction']}_shock", terminal["headline"], 3)
@@ -1071,7 +1153,7 @@ def _interpretation(resonance: Dict, trend: Dict, target: Dict, action: str, ind
     else:
         change_state = "unknown"
     return {
-        "signal_contract": "technical_signal_contract.v2.2",
+        "signal_contract": "technical_signal_contract.v2.3",
         "timeframe_alignment": _timeframe_alignment(resonance, trend),
         "headline": _HEADLINES[action], "primary_evidence": primary, "counter_evidence": counter,
         "confirmation_conditions": confirmation, "invalidation_conditions": conditions,
@@ -1107,6 +1189,33 @@ def _valid_scenario_ladder(value: Any) -> bool:
     return True
 
 
+def _valid_structure_projection(value: Any) -> bool:
+    if not isinstance(value, dict):
+        return False
+    enum_fields = {
+        "status": {"ready", "sparse", "unavailable"},
+        "structure_state": {"descending", "ascending", "range", "mixed", "sparse", "unavailable"},
+        "active_phase": {"continuation", "countertrend_rebound", "countertrend_pullback", "range_leg", "transition", "flat", "unknown"},
+        "break_state": {"confirmed_down", "confirmed_up", "none"},
+    }
+    status, as_of, segments = value.get("status"), value.get("as_of"), value.get("segments")
+    if any(value.get(field) not in allowed for field, allowed in enum_fields.items()):
+        return False
+    if not all((
+        as_of is None or isinstance(as_of, str),
+        isinstance(value.get("covers_auxiliary_low_relation"), bool), isinstance(value.get("summary"), str),
+        isinstance(segments, list) and len(segments) <= 5,
+    )):
+        return False
+    return all(
+        isinstance(segment, dict)
+        and all(isinstance(segment.get(key), str) and segment.get(key) for key in ("period", "move", "meaning"))
+        and _finite_number(segment.get("start_price")) is not None
+        and _finite_number(segment.get("end_price")) is not None
+        for segment in segments
+    )
+
+
 def _valid_interpretation(value: Any) -> bool:
     if not isinstance(value, dict):
         return False
@@ -1118,7 +1227,7 @@ def _valid_interpretation(value: Any) -> bool:
     text_items = lambda items: isinstance(items, list) and all(isinstance(item, str) and bool(item) for item in items)
     priority = value.get("priority_observation")
     return all((
-        value.get("signal_contract") == "technical_signal_contract.v2.2",
+        value.get("signal_contract") == "technical_signal_contract.v2.3",
         value.get("timeframe_alignment") in {"aligned_up", "aligned_down", "daily_break_weekly_range", "daily_repair_weekly_weak", "mixed", "unknown"},
         bool(value.get("headline")), evidence_items(primary) and len(primary) <= 3,
         evidence_items(counter) and len(counter) <= 2, text_items(confirmation) and len(confirmation) <= 2,
@@ -1127,11 +1236,7 @@ def _valid_interpretation(value: Any) -> bool:
         isinstance(market, dict) and market.get("status") in {"ready", "partial", "unavailable"},
         isinstance(target_message, dict) and target_message.get("state") in {"ready", "pending", "observe", "blocked", "invalid", "unavailable"} and bool(target_message.get("text")),
         isinstance(change, dict) and change.get("state") in {"improving", "deteriorating", "unchanged", "unknown"},
-        isinstance(value.get("structure_path"), dict)
-        and value["structure_path"].get("status") in {"ready", "sparse", "unavailable"}
-        and isinstance(value["structure_path"].get("summary"), str)
-        and isinstance(value["structure_path"].get("segments"), list)
-        and len(value["structure_path"]["segments"]) <= 5,
+        _valid_structure_projection(value.get("structure_path")),
         value.get("terminal_event") is None or (
             isinstance(value.get("terminal_event"), dict)
             and value["terminal_event"].get("status") == "shock"
@@ -1247,7 +1352,16 @@ def ensure_technical_judgment(
             interpretation = judgment.get("interpretation")
             if not structural and not price_target:
                 return judgment if interpretation is None else core
-            if _valid_interpretation(interpretation) and _scenario_levels_match_inputs(interpretation, resonance, indicators or {}):
+            expected_path = _path_interpretation(
+                (resonance or {}).get("structure_path") or {}, core.get("trend") or {},
+                (resonance or {}).get("channel_status") or {}, (resonance or {}).get("invalidation") or {},
+                (resonance or {}).get("structure_health") or {},
+            )
+            if (
+                _valid_interpretation(interpretation)
+                and _scenario_levels_match_inputs(interpretation, resonance, indicators or {})
+                and interpretation.get("structure_path") == expected_path
+            ):
                 return judgment
     if isinstance(judgment, dict) and not resonance and "trend_state" in judgment:
         resonance = judgment

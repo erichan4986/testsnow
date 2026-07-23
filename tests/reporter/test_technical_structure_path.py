@@ -68,6 +68,47 @@ def test_path_uses_confirmed_pivots_and_latest_close_only():
     assert result["pivot_sequence"][-1]["date"] != result["as_of"]
 
 
+def test_path_relations_preserve_exact_lower_highs_and_lows():
+    result = build_structure_path(_daily_frame([100, 120, 112, 115, 105, 110, 100, 105]), _config())
+
+    high = result["pivot_relations"]["high"]
+    low = result["pivot_relations"]["low"]
+    assert high["status"] == "lower"
+    assert high["previous"] == {"date": "2026-01-06", "price": 116.0}
+    assert high["latest"] == {"date": "2026-01-08", "price": 111.0}
+    assert low["status"] == "lower"
+    assert low["previous"] == {"date": "2026-01-07", "price": 104.0}
+    assert low["latest"] == {"date": "2026-01-09", "price": 99.0}
+    assert result["segments"][-1]["start_kind"] == "low"
+
+
+def test_path_relations_detect_higher_and_sub_material_flat_pairs():
+    higher = build_structure_path(_daily_frame([100, 110, 102, 115, 107, 120, 112, 118]), _config())
+    flat = build_structure_path(_daily_frame([100, 120, 112, 120.1, 112.1, 118]), _config())
+
+    assert higher["pivot_relations"]["high"]["status"] == "higher"
+    assert higher["pivot_relations"]["low"]["status"] == "higher"
+    assert flat["pivot_relations"]["high"]["status"] == "flat"
+    assert flat["pivot_relations"]["low"]["status"] == "flat"
+
+
+def test_path_relation_is_unavailable_without_two_same_kind_pivots():
+    result = build_structure_path(_daily_frame([10, 20, 12, 18]), _config())
+
+    assert result["pivot_relations"]["high"]["status"] == "unavailable"
+    assert result["pivot_relations"]["low"]["status"] == "unavailable"
+
+
+def test_unconfirmed_right_edge_extreme_does_not_enter_path_relations():
+    base = _daily_frame([100, 120, 112, 115, 105, 110, 100, 105])
+    candidate = pd.concat([base, _daily_frame([130]).assign(date=pd.Timestamp("2026-01-13"))], ignore_index=True)
+
+    result = build_structure_path(candidate, _config())
+
+    assert result["pivot_relations"]["high"]["latest"] == {"date": "2026-01-08", "price": 111.0}
+    assert result["segments"][-1]["end_kind"] == "latest_close"
+
+
 def test_dual_extreme_bar_is_omitted_not_ordered_twice():
     frame = _daily_frame([100, 101, 100, 100, 100, 101, 100])
     frame.loc[3, ["high", "low"]] = [120.0, 80.0]

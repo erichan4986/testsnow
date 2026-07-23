@@ -95,14 +95,9 @@ class TechnicalRenderer:
             if text not in primary_texts
         ]
         if confirmations or invalidations:
-            invalidated = trend.get("state") == "invalid"
-            if invalidated and not confirmations:
-                lines.append("**已触发的破坏条件**")
-            else:
-                lines.append("**确认条件与已触发的破坏条件**" if invalidated else "**确认与趋势失效条件**")
+            lines.append("**确认与趋势失效条件**" if confirmations else "**趋势失效条件**")
             lines.extend(f"- 确认：{text}" for text in confirmations)
-            label = "已触发" if invalidated else "失效"
-            lines.extend(f"- {label}：{text}" for text in invalidations)
+            lines.extend(f"- 失效：{text}" for text in invalidations)
             lines.append("")
 
         lines.extend(self._render_structure_path(interpretation.get("structure_path"), full=full))
@@ -178,12 +173,16 @@ class TechnicalRenderer:
             dist = inv.get("current_distance_to_invalid", "未知")
             msg = inv.get("message", "")
             lines.append(f"- 中期失效参考：日线 {basis} 约 {price:.2f}，当前距离约 {dist}")
-            if msg:
+            if msg and msg not in primary_texts:
                 lines.append(f"  {msg}")
         lines.append("")
         structure = resonance.get("structure_health") or {}
-        if structure.get("state") not in {None, "", "无法判断"}:
-            lines.append(f"**局部趋势结构（辅助）**：{structure['state']}（置信度：{structure.get('confidence', '未知')}）")
+        canonical_path = interpretation.get("structure_path") or {}
+        if (
+            not canonical_path.get("covers_auxiliary_low_relation")
+            and structure.get("state") not in {None, "", "无法判断"}
+        ):
+            lines.append(f"**60日局部低点结构（辅助）**：{structure['state']}（置信度：{structure.get('confidence', '未知')}）")
             for evidence in (structure.get("evidence") or [])[:1]:
                 lines.append(f"- {evidence}")
             lines.append("")
@@ -247,9 +246,9 @@ class TechnicalRenderer:
         lines = ["**结构演变**", f"- {projection['summary']}"]
         segments = projection.get("segments") if isinstance(projection.get("segments"), list) else []
         if full and segments:
-            lines.extend(["", "| 阶段 | 变动 | 含义 |", "|------|------|------|"])
+            lines.extend(["", "| 阶段 | 价格区间 | 变动 | 结构含义 |", "|------|----------|------|----------|"])
             lines.extend(
-                f"| {item.get('period', '')} | {item.get('move', '')} | {item.get('meaning', '')} |"
+                f"| {item.get('period', '')} | {item.get('start_price', 0):.2f} → {item.get('end_price', 0):.2f} | {item.get('move', '')} | {item.get('meaning', '')} |"
                 for item in segments[-5:] if isinstance(item, dict)
             )
         return [*lines, ""]
@@ -469,7 +468,7 @@ class TechnicalRenderer:
         else:
             overall = "结构偏弱"
 
-        parts = [f"{overall}，{best_label}最强"]
+        parts = [f"{overall}，各维度均未形成明显支撑" if best_ratio <= 0.5 else f"{overall}，{best_label}最强"]
         if worst_ratio < 0.4:
             parts.append(f"{worst_label}偏弱需关注")
         return "；".join(parts) + "。"
