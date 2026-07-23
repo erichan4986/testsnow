@@ -141,6 +141,9 @@ def test_selector_group_cannot_cross_source_or_block():
 
     assert pack["status"] == "selector_incomplete"
     assert pack["diagnostics"]["rejection_reasons"] == ["selection_invalid_group"]
+    assert pack["source_documents"] == documents
+    assert pack["cards"] == []
+    assert pack["citations"] == {}
 
 
 def test_pack_uses_prepared_material_without_reresolving_scope():
@@ -203,6 +206,7 @@ def test_pack_rejects_cutover_when_any_comparative_source_is_degraded():
     assert pack["status"] == "source_input_degraded"
     assert pack["source_documents"] == []
     assert pack["cards"] == []
+    assert "rejection_reasons" not in pack["diagnostics"]
     assert pack["diagnostics"]["rejected_source_documents"] == {
         "scope_input_degraded": ["source:degraded"],
     }

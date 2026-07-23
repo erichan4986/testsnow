@@ -678,7 +678,7 @@ def _assembly_ctx_with_curated_card(card):
     )
 
 
-def test_assembly_structured_v3_external_card_adds_display_only_risk_note():
+def test_assembly_structured_external_card_adds_display_only_risk_note():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -699,7 +699,7 @@ def test_assembly_structured_v3_external_card_adds_display_only_risk_note():
     assert "不计入综合风险评分" in markdown
 
 
-def test_assembly_does_not_infer_display_only_risk_note_from_v3_evidence_text():
+def test_assembly_does_not_infer_display_only_risk_note_from_structured_evidence_text():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -720,7 +720,7 @@ def test_assembly_does_not_infer_display_only_risk_note_from_v3_evidence_text():
     assert "不计入综合风险评分" not in markdown
 
 
-def test_assembly_collects_v3_structured_risk_card_without_changing_risk_score_input():
+def test_assembly_collects_structured_risk_card_without_changing_risk_score_input():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     for path in (scripts_dir, scripts_dir / "utils"):
         if str(path) not in sys.path:
@@ -748,3 +748,4 @@ def test_assembly_collects_v3_structured_risk_card_without_changing_risk_score_i
 
     assert {row.name for row in rows} == {"显式风险", "独立风险输入", "capacity_delivery"}
     assert all(row.source_kind for row in rows)
+    assert {row.name: row.source_kind for row in rows}["capacity_delivery"] == "curated_external_argument"

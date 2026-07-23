@@ -60,7 +60,7 @@ def prepare_external_argument_material_v4(
                 rejected[origin or "ambiguous"] = rejected.get(origin or "ambiguous", 0) + 1
     return {
         "source_document_hashes": [str(document.get("document_hash") or "") for document in valid_documents],
-        "target_cards": _build_target_cards(stock_name, target),
+        "target_cards": _cards_from_runs(stock_name, target, _target_unit_scope),
         "peer_units": peer,
         "all_units": all_units,
         "diagnostics": {
@@ -114,15 +114,21 @@ def build_external_argument_pack_v4(
         diagnostics["rejected_source_documents"] = rejected_documents
         prepared["diagnostics"] = diagnostics
     if rejected_documents or not valid_documents:
-        return _source_input_degraded(stock_name, prepared)
+        return _failure_pack("source_input_degraded", stock_name, prepared)
     batches = external_selection_batches_v4(prepared["peer_units"])
     if len(selections) != len(batches):
-        return _incomplete(valid_documents, stock_name, prepared, "selection_batch_count_mismatch")
+        return _failure_pack(
+            "selector_incomplete", stock_name, prepared,
+            source_documents=valid_documents, rejection_reason="selection_batch_count_mismatch",
+        )
     selected_peer = []
     for batch, selection in zip(batches, selections):
         result = validate_external_unit_selection_v4(batch, selection)
         if result["status"] != "ok":
-            return _incomplete(valid_documents, stock_name, prepared, result["reason"])
+            return _failure_pack(
+                "selector_incomplete", stock_name, prepared,
+                source_documents=valid_documents, rejection_reason=result["reason"],
+            )
         decisions = {str(row["unit_id"]): row for row in selection["decisions"]}
         selected_peer.extend(_selected_peer_cards(stock_name, batch, decisions))
     cards = [*prepared["target_cards"], *selected_peer]
@@ -293,10 +299,6 @@ def read_external_argument_pack_v4(pack: Mapping[str, Any], *, expected_stock_na
     return _result("ok", "")
 
 
-def _build_target_cards(stock_name: str, units: list[dict]) -> list[dict]:
-    return _cards_from_runs(stock_name, units, _target_unit_scope)
-
-
 def _selected_peer_cards(stock_name: str, batch: list[dict], decisions: Mapping[str, Mapping[str, Any]]) -> list[dict]:
     groups: dict[str, list[dict]] = {}
     for unit in batch:
@@ -388,25 +390,21 @@ def _citation_from_document(document: Mapping[str, Any]) -> dict:
     }
 
 
-def _incomplete(documents: list[dict], stock_name: str, prepared: Mapping[str, Any], reason: str) -> dict:
-    return {
-        "schema_version": ARGUMENT_PACK_SCHEMA, "status": "selector_incomplete", "stock_name": stock_name,
-        "validator_version": PACK_VALIDATOR_VERSION, "source_documents": documents,
-        "cards": [], "citations": {},
-        "diagnostics": {**dict(prepared.get("diagnostics") or {}), "rejection_reasons": [reason]},
-    }
-
-
-def _source_input_degraded(stock_name: str, prepared: Mapping[str, Any]) -> dict:
+def _failure_pack(
+    status: str, stock_name: str, prepared: Mapping[str, Any], *,
+    source_documents: Iterable[Mapping[str, Any]] = (), rejection_reason: str | None = None,
+) -> dict:
+    diagnostics = dict(prepared.get("diagnostics") or {})
+    if rejection_reason:
+        diagnostics["rejection_reasons"] = [rejection_reason]
     return {
         "schema_version": ARGUMENT_PACK_SCHEMA,
-        "status": "source_input_degraded",
+        "status": status,
         "stock_name": stock_name,
         "validator_version": PACK_VALIDATOR_VERSION,
-        "source_documents": [],
-        "cards": [],
-        "citations": {},
-        "diagnostics": dict(prepared.get("diagnostics") or {}),
+        "source_documents": list(source_documents),
+        "cards": [], "citations": {},
+        "diagnostics": diagnostics,
     }
 
 

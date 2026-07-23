@@ -363,7 +363,7 @@ class ReportAssemblySkill(BaseSkill):
                 if cls._is_structured_external_risk_row(card):
                     append_signal(
                         card.get("primary_family") or "外部待验证变量",
-                        "curated_external_argument_v3",
+                        "curated_external_argument",
                         " ".join(str(unit.get("text") or "") for unit in card.get("evidence_units") or []),
                     )
 
