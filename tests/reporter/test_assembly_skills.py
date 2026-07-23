@@ -2,6 +2,9 @@ import sys
 import json
 from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
+
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
 from utils.skill_pipeline import SkillContext
@@ -75,6 +78,62 @@ def test_prepare_executive_summary_without_output_dir_uses_text_fallback(monkeyp
 
 def test_formal_assembly_does_not_register_legacy_price_target_renderer():
     assert all(name != "price_target" for name, *_ in ReportAssemblySkill.RENDERERS)
+
+
+def test_detach_global_citation_section_preserves_reserved_ref_and_body():
+    markdown = "## 四、深度分析\n\n执行摘要保留引用[^8]。\n\n## 引用来源\n\n- [^8] | **公司公告** | 《保留来源》"
+
+    body, appendix = ReportAssemblySkill._detach_global_citation_section(markdown)
+
+    assert body == "## 四、深度分析\n\n执行摘要保留引用[^8]。"
+    assert appendix == "## 引用来源\n\n- [^8] | **公司公告** | 《保留来源》"
+
+
+def test_detach_global_citation_section_without_appendix_is_identity():
+    markdown = "## 四、深度分析\n\n无编号引用。"
+
+    assert ReportAssemblySkill._detach_global_citation_section(markdown) == (markdown, "")
+
+
+def test_detach_global_citation_section_rejects_duplicate_headings():
+    markdown = "## 引用来源\n\n- [^1] A\n\n## 引用来源  \n\n- [^2] B"
+
+    with pytest.raises(ValueError, match="multiple global citation"):
+        ReportAssemblySkill._detach_global_citation_section(markdown)
+
+
+def test_assembly_places_citations_after_risk_and_before_footer(monkeypatch):
+    skill = ReportAssemblySkill()
+    rendered = {
+        "deep_analysis": "## 四、深度分析\n\n正文[^1]。\n\n## 引用来源\n\n- [^1] | **公司年报** | 《年度报告》",
+        "risk": "## 综合风险评分\n\n风险正文。",
+    }
+    monkeypatch.setattr(skill, "_prepare_executive_summary", lambda ctx: None)
+    monkeypatch.setattr(skill, "_header", lambda ctx: "HEADER")
+    monkeypatch.setattr(skill, "_footer", lambda ctx: "---\n\n*DISCLAIMER*")
+    monkeypatch.setattr(skill, "_render_section", lambda name, module, cls, ctx: rendered.get(name, ""))
+
+    result = skill._assemble_markdown(SkillContext(input={"stock_name": "测试股"}))
+
+    assert result.count("## 引用来源") == 1
+    assert result.index("## 综合风险评分") < result.index("## 引用来源") < result.index("*DISCLAIMER*")
+    assert "正文[^1]" in result
+
+
+@pytest.mark.parametrize("name,text", [
+    ("risk", "## 引用来源\n\n- [^1] 非法第二所有者"),
+    ("deep_analysis", "## 四、深度分析\n\n**本节引用来源：**\n- [^1] 局部来源"),
+    ("deep_analysis", "## 四、深度分析\n\n**本节引用来源:**\n- [^1] 局部来源"),
+])
+def test_assembly_rejects_competing_or_local_citation_owner(monkeypatch, name, text):
+    skill = ReportAssemblySkill()
+    monkeypatch.setattr(skill, "_prepare_executive_summary", lambda ctx: None)
+    monkeypatch.setattr(skill, "_header", lambda ctx: "HEADER")
+    monkeypatch.setattr(skill, "_footer", lambda ctx: "FOOTER")
+    monkeypatch.setattr(skill, "_render_section", lambda key, module, cls, ctx: text if key == name else "")
+
+    with pytest.raises(ValueError, match="citation appendix ownership"):
+        skill._assemble_markdown(SkillContext(input={"stock_name": "测试股"}))
 
 
 def test_assembly_writes_agent_reach_audit_json(tmp_path):

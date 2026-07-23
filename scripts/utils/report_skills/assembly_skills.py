@@ -2,6 +2,7 @@
 
 import json
 import logging
+import re
 from pathlib import Path
 
 if __name__.startswith("utils."):
@@ -284,13 +285,32 @@ class ReportAssemblySkill(BaseSkill):
         self._prepare_executive_summary(ctx)
 
         sections = [self._header(ctx)]
+        citation_appendix = ""
 
         for name, module_path, class_name in self.RENDERERS:
-            sections.append(self._render_section(name, module_path, class_name, ctx))
+            rendered = self._render_section(name, module_path, class_name, ctx)
+            if "本节引用来源" in rendered:
+                raise ValueError("citation appendix ownership: local source list remains")
+            if name == "deep_analysis":
+                rendered, citation_appendix = self._detach_global_citation_section(rendered)
+            elif re.search(r"(?m)^## 引用来源[ \t]*$", rendered):
+                raise ValueError(f"citation appendix ownership: {name} emitted global sources")
+            sections.append(rendered)
 
+        sections.append(citation_appendix)
         sections.append(self._footer(ctx))
 
         return "\n\n".join(s for s in sections if s)
+
+    @staticmethod
+    def _detach_global_citation_section(markdown: str) -> tuple[str, str]:
+        matches = list(re.finditer(r"(?m)^## 引用来源[ \t]*$", markdown or ""))
+        if not matches:
+            return markdown, ""
+        if len(matches) > 1:
+            raise ValueError("multiple global citation sections")
+        start = matches[0].start()
+        return markdown[:start].rstrip(), markdown[start:].strip()
 
     @staticmethod
     def _prepare_executive_summary(ctx: SkillContext) -> None:

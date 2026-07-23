@@ -328,3 +328,97 @@ def test_duplicate_4_4_citations_fall_back_to_source_author_title_when_url_missi
     assert "duplicate_4_4_citation_source" in _codes(result)
     issue = next(i for i in result.issues if i.code == "duplicate_4_4_citation_source")
     assert "雪球专栏观察|研究员A|同一篇无URL文章" in issue.evidence
+
+
+def test_flags_duplicate_4_4_sources_from_terminal_global_citations():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+同一来源被两个脚注分别引用[^1][^2]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+- [^2] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+"""
+
+    result = check_report_prose_text(text)
+
+    issue = next(i for i in result.issues if i.code == "duplicate_4_4_citation_source")
+    assert "https://example.com/a" in issue.evidence
+
+
+def test_terminal_global_citations_use_source_author_title_without_url():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+同一无 URL 来源被两个脚注分别引用[^1][^2]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **雪球专栏观察** | 作者: 研究员A | 《同一篇无URL文章》
+- [^2] | **雪球专栏观察** | 作者: 研究员A | 《同一篇无URL文章》
+"""
+
+    result = check_report_prose_text(text)
+
+    issue = next(i for i in result.issues if i.code == "duplicate_4_4_citation_source")
+    assert "雪球专栏观察|研究员A|同一篇无URL文章" in issue.evidence
+
+
+def test_repeated_4_4_use_of_one_ref_is_not_a_duplicate_source():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+同一脚注在不同条件中重复使用[^1]，但仍是同一个引用编号[^1]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "duplicate_4_4_citation_source" not in _codes(result)
+
+
+def test_terminal_duplicate_sources_unused_by_4_4_are_ignored():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+本节只引用独立来源[^1]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **公司年报** | 《年度报告》 | https://example.com/annual
+- [^2] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+- [^3] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "duplicate_4_4_citation_source" not in _codes(result)

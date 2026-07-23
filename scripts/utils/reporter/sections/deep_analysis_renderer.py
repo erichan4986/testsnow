@@ -419,7 +419,6 @@ class DeepAnalysisRenderer:
         4.2 业绩路径与多空分歧
         4.3 资金面与催化剂时间线
         """
-        citations = synthesis.get("citations", {})
         lines: List[str] = []
 
         verified_summary = self._verified_claim_summary_section(claim_verification_summary)
@@ -436,9 +435,6 @@ class DeepAnalysisRenderer:
             or "当前正式材料不足以形成可验证的产业逻辑与竞争格局判断；本节不使用泛行业材料补链条。",
             "",
         ])
-        used_refs = set(int(m) for m in re.findall(r"\[\^(\d+)\]", industry_logic))
-        self._append_section_citations(lines, used_refs, citations)
-
         # 4.2 业绩路径与多空分歧
         fundamentals = synthesis.get("fundamentals", "")
         valuation_debate = synthesis.get("valuation_debate", "")
@@ -455,11 +451,6 @@ class DeepAnalysisRenderer:
         if not fundamentals and not valuation_debate:
             lines.append("当前正式材料不足以形成可验证的业绩路径或估值分歧判断；本节不使用外部观点补充财务结论。")
             lines.append("")
-
-        used_refs = set()
-        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", fundamentals))
-        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", valuation_debate))
-        self._append_section_citations(lines, used_refs, citations)
 
         # 4.3 资金面与催化剂时间线
         funding = synthesis.get("funding_sentiment", "")
@@ -484,11 +475,6 @@ class DeepAnalysisRenderer:
             lines.append("当前正式材料未形成可验证的资金面或催化剂时间线；本节不使用泛行业新闻补链条。")
             lines.append("")
 
-        used_refs = set()
-        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", funding))
-        used_refs.update(int(m) for m in re.findall(r"\[\^(\d+)\]", events))
-        self._append_section_citations(lines, used_refs, citations)
-
         curated_md = self._curated_external_addendum(curated_external_display, curated_citation_offset)
         if curated_md:
             lines.append(curated_md)
@@ -509,12 +495,10 @@ class DeepAnalysisRenderer:
         lines.extend(["### 4.1 官方材料确认：业务与财务基座", ""])
         lines.extend(self._annual_material_profile_section(
             view_model.section("4.1").rows,
-            citations,
             citation_offset,
             fallback="当前未取得足够官方材料，无法形成业务与财务基座。",
             include_confirmed_financial_rows=True,
             financial_label="财务基座",
-            include_section_citations=False,
         ))
 
         lines.extend(["### 4.2 机构观点与盈利假设", ""])
@@ -546,13 +530,11 @@ class DeepAnalysisRenderer:
     def _annual_material_profile_section(
         self,
         material_rows: tuple[MaterialRow, ...],
-        citations: Dict[int, Any],
         citation_offset: int = 0,
         *,
         fallback: str,
         include_confirmed_financial_rows: bool = True,
         financial_label: str = "财务变化原因",
-        include_section_citations: bool = True,
     ) -> List[str]:
         """Format already-selected annual MaterialRows for Chapter 4.1."""
         sections = {"confirmed": [], "annual_report_explanation": []}
@@ -568,12 +550,11 @@ class DeepAnalysisRenderer:
             section = "confirmed" if material_row.claim_status == "formal_fact" else "annual_report_explanation"
             sections[section].append(row)
         return self._annual_report_business_profile_section(
-            {"status": "ready" if material_rows else "absent", "sections": sections, "citations": citations},
+            {"status": "ready" if material_rows else "absent", "sections": sections},
             citation_offset,
             fallback=fallback,
             include_confirmed_financial_rows=include_confirmed_financial_rows,
             financial_label=financial_label,
-            include_section_citations=include_section_citations,
         )
 
     def _formal_medium_broker_assumption_section(
@@ -774,31 +755,6 @@ class DeepAnalysisRenderer:
             for index, paragraph in enumerate(paragraphs)
         ]
 
-    def _append_section_citations(
-        self,
-        lines: List[str],
-        used_refs: set[int],
-        citations: Dict[int, Any],
-        include_url: bool = False,
-    ) -> None:
-        if not used_refs:
-            return
-        lines.append("**本节引用来源：**")
-        for ref_id in sorted(used_refs):
-            meta = citations.get(ref_id, {})
-            source = meta.get("source", "未知")
-            author = meta.get("author", "")
-            title_text = meta.get("title", "")
-            line = f"- [^{ref_id}] {source}"
-            if author:
-                line += f" | 作者: {author}"
-            if title_text:
-                line += f" | 《{self._truncate_title(title_text, 40)}》"
-            if include_url and meta.get("url"):
-                line += f" | {meta.get('url')}"
-            lines.append(line)
-        lines.append("")
-
     def _formal_thin_external_rich_body(
         self,
         ctx: Dict[str, Any],
@@ -815,16 +771,12 @@ class DeepAnalysisRenderer:
         lines.extend(["### 4.1 年报经营摘要", ""])
         lines.extend(self._annual_material_profile_section(
             annual_material_rows,
-            annual_material_citations,
             annual_citation_offset,
             fallback="当前未取得足够年报材料，无法形成年报经营摘要。",
-            include_section_citations=False,
         ))
         lines.extend(["### 4.2 研报观点与假设", ""])
         broker_memo = ctx.get("broker_research_memo") or {}
-        lines.extend(self._broker_research_memo_section(
-            broker_memo, broker_citation_offset, include_section_citations=False,
-        ))
+        lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
         map_md = self._formal_medium_external_variable_map(
             external_material_rows,
             annual_material_citations or {},
@@ -860,15 +812,12 @@ class DeepAnalysisRenderer:
         self,
         memo: Dict[str, Any],
         citation_offset: int = 0,
-        *,
-        include_section_citations: bool = True,
     ) -> List[str]:
         """Render broker memo as attributed professional assumptions."""
         if (memo or {}).get("status") not in {"ready", "single_institution"}:
             return ["当前未取得足够可用研报 digest，不展开研报观点与假设。", ""]
 
         lines: List[str] = []
-        used: set[int] = set()
         if memo.get("status") == "single_institution":
             lines.extend(["**单篇研报观点 / 单机构观点**", ""])
         for row in (memo.get("sections") or []):
@@ -884,7 +833,6 @@ class DeepAnalysisRenderer:
                     author=self._broker_row_author(row, memo),
                 )
                 lines.append(f"- {attach_refs_to_sentence(f'**{title}**：{text}' if title else text, refs)}")
-                used.update(refs)
         for row in (memo.get("forecast_ranges") or []):
             if not isinstance(row, dict):
                 continue
@@ -894,7 +842,6 @@ class DeepAnalysisRenderer:
                 author = self._broker_row_author(row, memo)
                 prefix = f"{author}研报预计" if author else "研报预计"
                 lines.append(f"- {attach_refs_to_sentence(f'{prefix}：{text}', refs)}")
-                used.update(refs)
         for row in (memo.get("risks") or []):
             if not isinstance(row, dict):
                 continue
@@ -907,10 +854,7 @@ class DeepAnalysisRenderer:
                     author=self._broker_row_author(row, memo),
                 )
                 lines.append(f"- {attach_refs_to_sentence(text, refs)}")
-                used.update(refs)
         lines.append("")
-        if used and include_section_citations:
-            self._append_section_citations(lines, used, self._offset_citations(memo.get("citations", {}), citation_offset))
         return lines
 
     def _thin_all_body(self, ctx: Dict[str, Any]) -> List[str]:
@@ -934,14 +878,10 @@ class DeepAnalysisRenderer:
         fallback: str = "当前未取得足够年报材料，无法形成业务画像。",
         include_confirmed_financial_rows: bool = True,
         financial_label: str = "财务变化原因",
-        include_section_citations: bool = True,
     ) -> List[str]:
         """Project annual memo rows into a compact business profile."""
         lines: List[str] = []
         secs = memo.get("sections") or {}
-        cits = memo.get("citations", {}) or {}
-        used: set[int] = set()
-
         if (memo or {}).get("status") not in {"ready", "deterministic_fallback"}:
             return [fallback, ""]
 
@@ -964,7 +904,6 @@ class DeepAnalysisRenderer:
             portrait_row = portrait_row or self._select_annual_portrait_row(technology_rows)
         if portrait_row:
             refs = self._display_refs(portrait_row, citation_offset)
-            used.update(refs)
             portrait = self._compact_annual_text(str(portrait_row.get("body") or ""), 140)
             lines.extend(["**一句话画像**", f"- {attach_refs_to_sentence(portrait, refs)}", ""])
 
@@ -996,14 +935,11 @@ class DeepAnalysisRenderer:
             lines.append(f"**{label}**")
             for row in rows:
                 refs = self._display_refs(row, citation_offset)
-                used.update(refs)
                 body = self._annual_row_visible_body(row, include_title=(label == financial_label))
                 lines.append(f"- {attach_refs_to_sentence(body, refs)}")
             lines.append("")
         if not lines and not (confirmed_rows or explanation_rows):
             lines.extend([fallback, ""])
-        if used and include_section_citations:
-            self._append_section_citations(lines, used, self._offset_citations(cits, citation_offset))
         return lines
 
     @staticmethod
@@ -1336,7 +1272,6 @@ class DeepAnalysisRenderer:
         if not cards or not self._has_curated_external_citation(curated_display):
             return ""
 
-        citations = curated_display.get("citations", {}) or {}
         lines = [
             "### 4.4 外部观点与待验证变量（Preview）",
             "",
@@ -1349,7 +1284,7 @@ class DeepAnalysisRenderer:
             for ref in card.get("citation_refs") or [] if str(ref).isdigit()
         }
         shifted_citations = self._offset_citations(curated_display.get("citations", {}) or {}, citation_offset)
-        ref_map, display_refs = self._curated_external_display_ref_map(shifted_citations, used_refs)
+        ref_map = self._curated_external_display_ref_map(shifted_citations, used_refs)
         ordered_cards = sorted(
             (card for card in cards if isinstance(card, dict)),
             key=lambda card: str(card.get("entity_scope") or "") == "peer_or_industry",
@@ -1379,14 +1314,12 @@ class DeepAnalysisRenderer:
             for paragraph in rendered:
                 lines.extend([paragraph, ""])
 
-        self._append_section_citations(lines, display_refs, shifted_citations, include_url=True)
         return "\n".join(lines)
 
     @staticmethod
-    def _curated_external_display_ref_map(shifted_citations: Dict[int, Any], used_refs: set) -> tuple[dict, set]:
+    def _curated_external_display_ref_map(shifted_citations: Dict[int, Any], used_refs: set) -> dict:
         canonical_by_key = {}
         ref_map = {}
-        display_refs = set()
         for ref_id in sorted(used_refs):
             meta = shifted_citations.get(ref_id, {})
             key = citation_identity(meta)
@@ -1398,8 +1331,7 @@ class DeepAnalysisRenderer:
                 canonical_by_key[key] = ref_id
                 canonical = ref_id
             ref_map[ref_id] = canonical
-            display_refs.add(canonical)
-        return ref_map, display_refs
+        return ref_map
 
     @staticmethod
     def _max_citation_id(citations: Dict) -> int:

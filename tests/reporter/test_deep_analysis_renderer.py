@@ -399,7 +399,6 @@ def test_annual_portrait_falls_back_after_an_ineligible_business_pool():
 
     rendered = "\n".join(renderer._annual_material_profile_section(
         rows,
-        {1: {"source": "公司年报"}, 2: {"source": "公司年报"}},
         fallback="无材料",
     ))
     portrait = rendered.split("**一句话画像**", 1)[1].split("**业务结构**", 1)[0]
@@ -425,7 +424,6 @@ def test_annual_profile_dedupes_rows_that_compact_to_the_same_visible_sentence()
 
     rendered = "\n".join(renderer._annual_material_profile_section(
         rows,
-        {1: {"source": "公司年报", "title": "业务"}, 2: {"source": "公司年报", "title": "经营"}},
         fallback="无材料",
     ))
 
@@ -448,6 +446,32 @@ def test_render_basic():
     result = _render(renderer, ctx)
     assert isinstance(result, str)
     assert len(result) > 0
+
+
+def test_legacy_render_keeps_inline_refs_but_omits_local_source_lists():
+    renderer = DeepAnalysisRenderer()
+    result = _render(renderer, {
+        "stock_name": "测试股",
+        "synthesis": {
+            "industry_logic": "行业逻辑来自正式材料[^1]。",
+            "fundamentals": "业绩路径来自研报假设[^2]。",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {
+                1: {"source": "公司年报", "title": "年度报告"},
+                2: {"source": "券商研报", "title": "业绩点评"},
+            },
+        },
+        "core_facts": [],
+    })
+
+    assert "行业逻辑来自正式材料[^1]" in result
+    assert "业绩路径来自研报假设[^2]" in result
+    assert "**本节引用来源：**" not in result
+    assert result.count("## 引用来源") == 1
+    assert "- [^1] | **公司年报**" in result
+    assert "- [^2] | **券商研报**" in result
     assert "## 四、深度分析" in result
     assert "4.1 产业逻辑与竞争格局" in result
 
@@ -583,7 +607,7 @@ def test_curated_external_display_is_addendum_not_replacement():
     assert "800G需求增长[^2]" in result
     assert result.index("baseline 产业逻辑") < result.index("### 4.4 外部观点与待验证变量（Preview）")
     assert "不直接形成估值结论" not in result
-    assert "- [^1] 雪球" in result
+    assert "- [^1] | **雪球**" in result
 
 
 
@@ -1298,8 +1322,9 @@ def test_formal_rich_v3_addendum_renders_exact_evidence_and_deduped_source():
     assert "**供应链与交付**" in result
     assert "上游供给偏紧" in result
     assert "外部原文依据" not in result
-    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
-    assert local_sources.count("https://example.com/shared") == 1
+    assert "**本节引用来源：**" not in result
+    assert result.count("## 引用来源") == 1
+    assert result.count("https://example.com/shared") == 1
 
 
 def test_render_uses_synthesis_display_when_no_deep_analysis():

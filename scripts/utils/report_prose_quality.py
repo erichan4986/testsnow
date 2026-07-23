@@ -115,7 +115,7 @@ def check_report_prose_text(text: str, path: str = "<memory>") -> ProseQualityRe
     issues.extend(_check_aiish_transitions(main_sections))
     issues.extend(_check_strong_assertions(main_sections))
     if "4.4" in sections:
-        issues.extend(_check_duplicate_4_4_citations(sections["4.4"]))
+        issues.extend(_check_duplicate_4_4_citations(sections["4.4"], text))
 
     # Current checker is advisory: warnings should not fail the report pipeline.
     return ProseQualityResult(path=path, passed=True, issues=issues)
@@ -330,27 +330,46 @@ def _check_strong_assertions(sections: dict[str, str]) -> Iterable[ProseIssue]:
         )
 
 
-def _check_duplicate_4_4_citations(section_body: str) -> Iterable[ProseIssue]:
-    urls = re.findall(r"https?://[^\s|）)]+", section_body)
-    counts: dict[str, int] = {}
-    for url in urls:
-        counts[url] = counts.get(url, 0) + 1
-    duplicates = [f"{url} x{count}" for url, count in counts.items() if count > 1]
+def _check_duplicate_4_4_citations(
+    section_body: str, report_text: str = ""
+) -> Iterable[ProseIssue]:
+    definitions = _citation_definition_lines(section_body)
+    if not definitions:
+        global_match = re.search(
+            r"(?ms)^## 引用来源[ \t]*\r?\n(.*?)(?=^##[ \t]|\Z)", report_text
+        )
+        cited_ids = set(re.findall(r"\[\^(\d+)\]", section_body))
+        definitions = [
+            (ref_id, line)
+            for ref_id, line in _citation_definition_lines(
+                global_match.group(1) if global_match else ""
+            )
+            if ref_id in cited_ids
+        ]
 
-    fallback_counts: dict[str, int] = {}
-    for line in section_body.splitlines():
-        key = _citation_fallback_key(line)
+    counts: dict[str, int] = {}
+    for _, line in definitions:
+        urls = re.findall(r"https?://[^\s|）)]+", line)
+        key = urls[0] if urls else _citation_fallback_key(line)
         if key:
-            fallback_counts[key] = fallback_counts.get(key, 0) + 1
-    duplicates.extend(f"{key} x{count}" for key, count in fallback_counts.items() if count > 1)
+            counts[key] = counts.get(key, 0) + 1
+    duplicates = [f"{key} x{count}" for key, count in counts.items() if count > 1]
     if duplicates:
         yield ProseIssue(
             code="duplicate_4_4_citation_source",
             severity="warning",
             section="4.4",
-            message="4.4 引用列表存在同源重复，建议合并同一 URL 或同一文章来源。",
+            message="4.4 使用的引用存在同源重复，建议合并同一 URL 或同一文章来源。",
             evidence="; ".join(duplicates[:10]),
         )
+
+
+def _citation_definition_lines(text: str) -> list[tuple[str, str]]:
+    return [
+        (match.group(1), line)
+        for line in text.splitlines()
+        if (match := re.match(r"^\s*-\s+\[\^(\d+)\]", line))
+    ]
 
 
 def _citation_fallback_key(line: str) -> str:
@@ -359,8 +378,9 @@ def _citation_fallback_key(line: str) -> str:
     if re.search(r"https?://", line):
         return ""
 
-    source_match = re.match(r"^\s*-\s+\[\^\d+\]\s*([^|]+)", line)
-    source = source_match.group(1).strip() if source_match else ""
+    payload = re.sub(r"^\s*-\s+\[\^\d+\]\s*", "", line).lstrip("| ")
+    source = payload.split("|", 1)[0].strip()
+    source = re.sub(r"[*_`]", "", source).strip()
     author_match = re.search(r"作者:\s*([^|《]+)", line)
     author = author_match.group(1).strip() if author_match else ""
     title_match = re.search(r"《([^》]+)》", line)
