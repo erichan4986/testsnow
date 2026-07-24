@@ -37,6 +37,18 @@ def _test_context(payload):
     return SkillContext(input=_with_stock_identity(payload))
 
 
+def _external_map_context(**overrides):
+    payload = {
+        "stock_name": "测试股",
+        "include_curated_external_argument_pack_in_deep_analysis_display": True,
+        "curated_external_argument_pack_json": "/tmp/test-external-pack.json",
+        "periodic_report_metric_series_pack": {"kind": "metric"},
+        "periodic_report_financial_scan_pack": {"kind": "scan"},
+    }
+    payload.update(overrides)
+    return _test_context(payload)
+
+
 class FakeSynthesizer:
     def __init__(self):
         self.calls = []
@@ -107,6 +119,76 @@ def test_synthesis_skill_passes_stock_config_to_synthesizer():
     assert fake.calls
     _, all_data = fake.calls[0]
     assert all_data["stock_config"] == stock_config
+
+
+def test_curated_external_display_publishes_periodic_external_evidence_map() -> None:
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = _external_map_context()
+    display = {"_sources": [{"source_id": "source:test"}], "marker": "unchanged"}
+    mapped = {"schema_version": "periodic_external_evidence_map.v1", "status": "ready"}
+    result = {"status": "ok", "display": display, "synthesis_text": "外部材料"}
+
+    with patch.object(
+        synthesis_skills_module,
+        "build_curated_external_argument_display",
+        return_value=result,
+    ), patch.object(
+        synthesis_skills_module,
+        "build_periodic_external_evidence_map",
+        return_value=mapped,
+    ) as build_map:
+        skill._build_curated_external_deep_analysis_display(ctx)
+
+    assert ctx.get("periodic_external_evidence_map") == mapped
+    assert ctx.get("deep_analysis_display") == display
+    assert display == {"_sources": [{"source_id": "source:test"}], "marker": "unchanged"}
+    assert build_map.call_args.kwargs == {
+        "stock_code": "000001",
+        "stock_name": "测试股",
+        "metric_series_pack": {"kind": "metric"},
+        "financial_scan_pack": {"kind": "scan"},
+        "validated_external_display": display,
+    }
+
+
+def test_curated_external_display_does_not_map_without_both_periodic_packs() -> None:
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    result = {"status": "ok", "display": {"_sources": []}, "synthesis_text": ""}
+
+    for missing_key in (
+        "periodic_report_metric_series_pack",
+        "periodic_report_financial_scan_pack",
+    ):
+        ctx = _external_map_context(**{missing_key: None})
+        with patch.object(
+            synthesis_skills_module,
+            "build_curated_external_argument_display",
+            return_value=result,
+        ), patch.object(
+            synthesis_skills_module,
+            "build_periodic_external_evidence_map",
+        ) as build_map:
+            skill._build_curated_external_deep_analysis_display(ctx)
+        build_map.assert_not_called()
+        assert ctx.get("periodic_external_evidence_map") is None
+
+
+def test_invalid_curated_external_display_does_not_publish_external_map() -> None:
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = _external_map_context()
+
+    with patch.object(
+        synthesis_skills_module,
+        "build_curated_external_argument_display",
+        return_value={"status": "invalid", "stats": {}},
+    ), patch.object(
+        synthesis_skills_module,
+        "build_periodic_external_evidence_map",
+    ) as build_map:
+        skill._build_curated_external_deep_analysis_display(ctx)
+
+    build_map.assert_not_called()
+    assert ctx.get("periodic_external_evidence_map") is None
 
 
 def test_synthesis_skill_passes_formal_financial_fact_pack_to_synthesizer():

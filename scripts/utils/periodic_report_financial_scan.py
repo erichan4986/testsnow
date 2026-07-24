@@ -39,51 +39,23 @@ def build_periodic_report_financial_scan_pack(
     metric_series_pack: Dict[str, Any],
 ) -> Dict[str, Any]:
     """Build a code-only financial scan from one validated metric-series pack."""
-    raw_schema = metric_series_pack.get("schema_version") if isinstance(metric_series_pack, dict) else ""
-    source_schema = raw_schema if isinstance(raw_schema, str) else ""
-    top_error = _top_level_error(metric_series_pack, stock_code)
-    if top_error:
+    source = read_periodic_financial_scan_source(
+        stock_code=stock_code,
+        metric_series_pack=metric_series_pack,
+    )
+    if source["status"] != "ok":
         return _pack(
             stock_code,
             stock_name,
-            source_schema,
+            source["source_schema_version"],
             "unavailable",
-            diagnostics=[_diagnostic(top_error)],
+            diagnostics=source["diagnostics"],
         )
 
-    diagnostics = _upstream_diagnostics(metric_series_pack.get("diagnostics") or [])
-    source_rows = [
-        *(metric_series_pack.get("series") or []),
-        *(metric_series_pack.get("derived_series") or []),
-    ]
-    ids = [
-        str(row.get("series_id") or "")
-        for row in source_rows
-        if isinstance(row, dict)
-    ]
-    duplicate_ids = {series_id for series_id, count in Counter(ids).items() if series_id and count > 1}
-    diagnostics.extend(
-        _diagnostic("duplicate_source_series_id", series_id=series_id)
-        for series_id in sorted(duplicate_ids)
-    )
-
-    filing_series = []
-    derived_series = []
-    for row in metric_series_pack.get("series") or []:
-        if isinstance(row, dict) and str(row.get("series_id") or "") in duplicate_ids:
-            continue
-        admitted, row_diagnostics = _admit_filing_series(row, stock_code)
-        diagnostics.extend(row_diagnostics)
-        if admitted:
-            filing_series.append(admitted)
-    for row in metric_series_pack.get("derived_series") or []:
-        if isinstance(row, dict) and str(row.get("series_id") or "") in duplicate_ids:
-            continue
-        admitted, row_diagnostics = _admit_derived_series(row, stock_code, filing_series)
-        diagnostics.extend(row_diagnostics)
-        if admitted:
-            derived_series.append(admitted)
-
+    diagnostics = list(source["diagnostics"])
+    filing_series = source["filing_series"]
+    derived_series = source["derived_series"]
+    source_schema = source["source_schema_version"]
     source_series_count = len(filing_series) + len(derived_series)
     source_point_count = sum(
         len(row["points"]) for row in [*filing_series, *derived_series]
@@ -123,6 +95,65 @@ def build_periodic_report_financial_scan_pack(
         findings=findings,
         diagnostics=diagnostics,
     )
+
+
+def read_periodic_financial_scan_source(
+    *,
+    stock_code: str,
+    metric_series_pack: Dict[str, Any],
+) -> Dict[str, Any]:
+    """Return the scanner's sanitized in-process MetricSeries read model."""
+    raw_schema = metric_series_pack.get("schema_version") if isinstance(metric_series_pack, dict) else ""
+    source_schema = raw_schema if isinstance(raw_schema, str) else ""
+    top_error = _top_level_error(metric_series_pack, stock_code)
+    if top_error:
+        return {
+            "status": "unavailable",
+            "source_schema_version": source_schema,
+            "filing_series": [],
+            "derived_series": [],
+            "diagnostics": [_diagnostic(top_error)],
+        }
+
+    diagnostics = _upstream_diagnostics(metric_series_pack.get("diagnostics") or [])
+    source_rows = [
+        *(metric_series_pack.get("series") or []),
+        *(metric_series_pack.get("derived_series") or []),
+    ]
+    ids = [
+        str(row.get("series_id") or "")
+        for row in source_rows
+        if isinstance(row, dict)
+    ]
+    duplicate_ids = {series_id for series_id, count in Counter(ids).items() if series_id and count > 1}
+    diagnostics.extend(
+        _diagnostic("duplicate_source_series_id", series_id=series_id)
+        for series_id in sorted(duplicate_ids)
+    )
+
+    filing_series = []
+    derived_series = []
+    for row in metric_series_pack.get("series") or []:
+        if isinstance(row, dict) and str(row.get("series_id") or "") in duplicate_ids:
+            continue
+        admitted, row_diagnostics = _admit_filing_series(row, stock_code)
+        diagnostics.extend(row_diagnostics)
+        if admitted:
+            filing_series.append(admitted)
+    for row in metric_series_pack.get("derived_series") or []:
+        if isinstance(row, dict) and str(row.get("series_id") or "") in duplicate_ids:
+            continue
+        admitted, row_diagnostics = _admit_derived_series(row, stock_code, filing_series)
+        diagnostics.extend(row_diagnostics)
+        if admitted:
+            derived_series.append(admitted)
+    return {
+        "status": "ok",
+        "source_schema_version": source_schema,
+        "filing_series": sorted(filing_series, key=lambda row: row["series_id"]),
+        "derived_series": sorted(derived_series, key=lambda row: row["series_id"]),
+        "diagnostics": sorted(diagnostics, key=_diagnostic_sort_key),
+    }
 
 
 def _pack(

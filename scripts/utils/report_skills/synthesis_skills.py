@@ -34,6 +34,7 @@ if __name__.startswith("utils."):
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
     from ..curated_external_display import build_curated_external_argument_display, flatten_synthesis_text
+    from ..periodic_external_evidence_map import build_periodic_external_evidence_map
     from ..industry_news_relevance import build_industry_relevance_manifest
     from ..peer_comparison_material import build_peer_comparison_material
     from ..fundflow_material import build_fundflow_material_pack
@@ -70,6 +71,7 @@ else:
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
     from curated_external_display import build_curated_external_argument_display, flatten_synthesis_text
+    from periodic_external_evidence_map import build_periodic_external_evidence_map
     from industry_news_relevance import build_industry_relevance_manifest
     from peer_comparison_material import build_peer_comparison_material
     from fundflow_material import build_fundflow_material_pack
@@ -920,6 +922,17 @@ class SynthesisSkill(BaseSkill):
             ctx.set("deep_analysis_display", display)
             ctx.set("deep_analysis_display_sources", display.get("_sources", []))
             ctx.set("synthesis_text_with_curated_external_argument_pack", result.get("synthesis_text") or "")
+            metric_pack = ctx.get("periodic_report_metric_series_pack")
+            scan_pack = ctx.get("periodic_report_financial_scan_pack")
+            if metric_pack and scan_pack:
+                stock_name = str(ctx.get("stock_name") or "").strip()
+                ctx.set("periodic_external_evidence_map", build_periodic_external_evidence_map(
+                    stock_code=str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip(),
+                    stock_name=stock_name,
+                    metric_series_pack=metric_pack,
+                    financial_scan_pack=scan_pack,
+                    validated_external_display=display,
+                ))
 
     @staticmethod
     def _build_evidence_profile(ctx: SkillContext, items: list) -> dict:

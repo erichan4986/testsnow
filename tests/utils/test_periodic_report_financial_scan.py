@@ -10,7 +10,10 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
-from periodic_report_financial_scan import build_periodic_report_financial_scan_pack
+from periodic_report_financial_scan import (
+    build_periodic_report_financial_scan_pack,
+    read_periodic_financial_scan_source,
+)
 from periodic_report_metric_series import build_periodic_report_metric_series_pack
 
 
@@ -125,6 +128,13 @@ def _scan(pack: dict) -> dict:
     )
 
 
+def _read_source(pack: dict) -> dict:
+    return read_periodic_financial_scan_source(
+        stock_code="300001",
+        metric_series_pack=pack,
+    )
+
+
 def _history(
     values: dict[int, dict[str, str]],
     *,
@@ -222,6 +232,47 @@ def test_valid_source_without_points_returns_empty_pack() -> None:
     assert result["source_point_count"] == 0
     assert result["comparable_interval_count"] == 0
     assert result["findings"] == []
+
+
+def test_public_source_reader_returns_the_scanners_sanitized_inputs() -> None:
+    source = _cashflow_history([
+        (2025, "100.00", "40.00", "40.00", "as_reported"),
+    ])
+
+    result = _read_source(source)
+
+    assert result["status"] == "ok"
+    assert result["source_schema_version"] == "periodic_report_metric_series_pack.v1"
+    assert [row["metric_key"] for row in result["filing_series"]] == [
+        "net_profit",
+        "operating_cash_flow",
+    ]
+    assert [row["metric_key"] for row in result["derived_series"]] == [
+        "operating_cash_flow_to_net_profit",
+    ]
+    assert result["diagnostics"] == []
+
+
+def test_source_reader_and_scan_reject_the_same_duplicate_and_malformed_rows() -> None:
+    source = _metric_pack(_fact_pack(
+        2025,
+        [
+            _filing_fact("revenue", "1000.00", year=2025),
+            _filing_fact("net_profit", "100.00", year=2025),
+        ],
+    ))
+    source["series"].append(copy.deepcopy(source["series"][0]))
+    source["series"][1]["points"][0]["numeric_value"] = "100.000"
+
+    reader = _read_source(source)
+    scan = _scan(source)
+
+    assert reader["status"] == "ok"
+    assert reader["filing_series"] == []
+    assert reader["derived_series"] == []
+    assert reader["diagnostics"] == scan["diagnostics"]
+    assert scan["source_series_count"] == 0
+    assert scan["source_point_count"] == 0
 
 
 def test_one_admitted_point_returns_partial_pack() -> None:
