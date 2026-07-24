@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import hashlib
 import re
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional, Tuple
 
 if __name__.startswith("utils."):
@@ -58,6 +58,7 @@ def build_periodic_report_structured_fact_pack(
     report_type: str,
     evidence_pack: Dict[str, Any],
     required_financial_metrics: Dict[str, Any],
+    source_doc: str = "",
 ) -> Dict[str, Any]:
     """Build a conservative Phase A structured fact pack."""
     diagnostics: List[Dict[str, Any]] = []
@@ -101,6 +102,7 @@ def build_periodic_report_structured_fact_pack(
             label=matched_label,
             cell=cell,
             anchor=anchor,
+            source_doc=source_doc,
         ))
 
     derived_facts, derived_diagnostics = _build_derived_facts(
@@ -108,6 +110,7 @@ def build_periodic_report_structured_fact_pack(
         stock_code=stock_code,
         report_year=report_year,
         report_type=report_type,
+        source_doc=source_doc,
     )
     diagnostics.extend(derived_diagnostics)
     risk_signals = _build_risk_signals(
@@ -117,7 +120,7 @@ def build_periodic_report_structured_fact_pack(
         report_type=report_type,
     )
 
-    return {
+    pack = {
         "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
         "source_pack_schema_version": evidence_pack.get("schema_version", ""),
         "stock_code": stock_code,
@@ -129,6 +132,9 @@ def build_periodic_report_structured_fact_pack(
         "filing_risk_signals": risk_signals,
         "diagnostics": diagnostics,
     }
+    if source_doc:
+        pack["source_doc"] = source_doc
+    return pack
 
 
 def _filing_fact(
@@ -141,10 +147,11 @@ def _filing_fact(
     label: str,
     cell: Dict[str, Any],
     anchor: Dict[str, str],
+    source_doc: str = "",
 ) -> Dict[str, Any]:
     fact_id = _fact_id(stock_code, report_year, report_type, metric_key)
     unit = str(cell.get("unit") or "")
-    return {
+    fact = {
         "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
         "source_type": "periodic_report_filing_fact",
         "fact_id": fact_id,
@@ -170,6 +177,9 @@ def _filing_fact(
         "source_credit": 75,
         "knowledge_eligible": False,
     }
+    if source_doc:
+        fact["source_doc"] = source_doc
+    return fact
 
 
 def filing_facts_to_core_facts(
@@ -243,6 +253,7 @@ def _build_derived_facts(
     stock_code: str,
     report_year: int,
     report_type: str,
+    source_doc: str = "",
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     by_key = {fact.get("metric_key"): fact for fact in filing_facts}
     if not by_key.get("net_profit"):
@@ -264,11 +275,14 @@ def _build_derived_facts(
         return [], diagnostics
 
     metric_key = "operating_cash_flow_to_net_profit"
-    return [
-        {
+    derived_fact = {
             "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
             "source_type": "periodic_report_derived_fact",
             "fact_id": _fact_id(stock_code, report_year, report_type, metric_key),
+            "stock_code": stock_code,
+            "report_year": int(report_year),
+            "report_type": report_type,
+            "period": str(report_year),
             "metric_key": metric_key,
             "label": "经营现金流/归母净利润",
             "value": ratio["text"],
@@ -279,9 +293,12 @@ def _build_derived_facts(
                 _fact_id(stock_code, report_year, report_type, "net_profit"),
             ],
             "calculation": "operating_cash_flow / abs(net_profit)",
+            "formula_version": "cash_conversion.v1",
             "knowledge_eligible": False,
         }
-    ], diagnostics
+    if source_doc:
+        derived_fact["source_doc"] = source_doc
+    return [derived_fact], diagnostics
 
 
 def _build_risk_signals(

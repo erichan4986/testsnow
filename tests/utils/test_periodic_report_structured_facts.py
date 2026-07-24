@@ -10,6 +10,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack
 from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
 from periodic_report_structured_facts import (
+    _display_financial_amount,
     build_periodic_report_structured_fact_pack,
     filing_facts_to_core_facts,
 )
@@ -295,3 +296,40 @@ def test_hk_revenue_and_negative_ocf_anchor_to_statement_blocks_without_net_prof
     codes = {diagnostic["code"] for diagnostic in pack["diagnostics"]}
     assert "missing_required_metric" in codes
     assert "missing_net_profit_for_cashflow_ratio" in codes
+
+
+def test_structured_facts_preserve_source_doc_and_derived_period_metadata() -> None:
+    evidence_pack = build_periodic_report_evidence_pack(
+        SIGNED_CASHFLOW_TEXT,
+        report_type="annual",
+    )
+    financial_metrics = build_required_financial_risk_metrics(
+        evidence_pack,
+        raw_text=SIGNED_CASHFLOW_TEXT,
+    )
+
+    pack = build_periodic_report_structured_fact_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        required_financial_metrics=financial_metrics,
+        source_doc="测试股份_2025_annual_jina.txt",
+    )
+
+    assert pack["source_doc"] == "测试股份_2025_annual_jina.txt"
+    assert {fact["source_doc"] for fact in pack["filing_facts"]} == {
+        "测试股份_2025_annual_jina.txt"
+    }
+    ratio = pack["derived_facts"][0]
+    assert ratio["source_doc"] == "测试股份_2025_annual_jina.txt"
+    assert ratio["stock_code"] == "300001"
+    assert ratio["report_year"] == 2025
+    assert ratio["report_type"] == "annual"
+    assert ratio["period"] == "2025"
+    assert ratio["formula_version"] == "cash_conversion.v1"
+
+
+def test_invalid_financial_display_value_fails_safe() -> None:
+    assert _display_financial_amount("not-a-number万元") == "not-a-number万元"

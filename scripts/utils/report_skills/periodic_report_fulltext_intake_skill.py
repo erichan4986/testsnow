@@ -38,6 +38,7 @@ if __name__.startswith("utils."):
     from ..periodic_report_narrative_evidence_cards import (
         build_periodic_report_narrative_evidence_cards,
     )
+    from ..periodic_report_metric_series import build_periodic_report_metric_series_pack
     from ..periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from ..periodic_report_required_metrics import build_required_business_metrics
     from ..periodic_report_structured_facts import (
@@ -60,6 +61,7 @@ else:
     from periodic_report_narrative_evidence_cards import (
         build_periodic_report_narrative_evidence_cards,
     )
+    from periodic_report_metric_series import build_periodic_report_metric_series_pack
     from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from periodic_report_required_metrics import build_required_business_metrics
     from periodic_report_structured_facts import (
@@ -320,6 +322,93 @@ def build_periodic_report_filing_core_facts_from_cache(
     return filing_facts_to_core_facts(fact_pack.get("filing_facts") or [])
 
 
+def build_periodic_report_metric_series_from_cache(
+    *,
+    stock_code: str,
+    stock_name: str,
+    cache_dir: Union[str, Path],
+    report_type: str = "annual_report",
+) -> Dict[str, Any]:
+    """Build a compute-only metric history from every matching local cache."""
+    fact_packs: List[Dict[str, Any]] = []
+    cache_diagnostics: List[Dict[str, Any]] = []
+    normalized_report_type = _normalize_report_type(report_type)
+    structured_report_type = _structured_report_type(normalized_report_type)
+
+    for cache_file in _find_periodic_report_cache_files(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    ):
+        report_year = _infer_report_year_from_cache_file(cache_file)
+        if report_year <= 0:
+            cache_diagnostics.append(_cache_series_diagnostic(
+                "cache_report_year_missing",
+                cache_file,
+                report_year,
+                structured_report_type,
+            ))
+            continue
+        try:
+            raw_text = cache_file.read_text(encoding="utf-8")
+        except Exception:
+            cache_diagnostics.append(_cache_series_diagnostic(
+                "cache_read_failed",
+                cache_file,
+                report_year,
+                structured_report_type,
+            ))
+            continue
+        if not raw_text.strip():
+            cache_diagnostics.append(_cache_series_diagnostic(
+                "cache_text_empty",
+                cache_file,
+                report_year,
+                structured_report_type,
+            ))
+            continue
+
+        try:
+            evidence_pack = build_periodic_report_evidence_pack(
+                raw_text,
+                report_type=structured_report_type,
+            )
+            financial_metrics = build_required_financial_risk_metrics(
+                evidence_pack,
+                raw_text=raw_text,
+            )
+            fact_packs.append(build_periodic_report_structured_fact_pack(
+                stock_code=stock_code,
+                stock_name=stock_name,
+                report_year=report_year,
+                report_type=structured_report_type,
+                evidence_pack=evidence_pack,
+                required_financial_metrics=financial_metrics,
+                source_doc=cache_file.name,
+            ))
+        except Exception:
+            cache_diagnostics.append(_cache_series_diagnostic(
+                "cache_processing_failed",
+                cache_file,
+                report_year,
+                structured_report_type,
+            ))
+
+    result = build_periodic_report_metric_series_pack(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        fact_packs=fact_packs,
+    )
+    result["diagnostics"] = sorted(
+        [*(result.get("diagnostics") or []), *cache_diagnostics],
+        key=lambda row: tuple(str(row.get(key) or "") for key in (
+            "code", "report_type", "report_year", "metric_key", "source_doc"
+        )),
+    )
+    return result
+
+
 def build_periodic_report_explanation_pack_from_cache(
     *,
     stock_code: str,
@@ -398,9 +487,28 @@ def _find_latest_periodic_report_cache_file(
     cache_dir: Union[str, Path],
     report_type: str = "annual_report",
 ) -> Optional[Path]:
+    files = _find_periodic_report_cache_files(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    if not files:
+        return None
+    return max(files, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))
+
+
+def _find_periodic_report_cache_files(
+    *,
+    stock_code: str,
+    stock_name: str = "",
+    cache_dir: Union[str, Path],
+    report_type: str = "annual_report",
+) -> List[Path]:
+    """Return each matching cache once, sorted by period then path."""
     cache_path = Path(cache_dir)
     if not cache_path.exists() or not cache_path.is_dir():
-        return None
+        return []
 
     report_type = _normalize_report_type(report_type)
     prefixes = [stock_code]
@@ -433,18 +541,36 @@ def _find_latest_periodic_report_cache_file(
     else:
         patterns = tuple(f"{prefix}_*_jina*.txt" for prefix in prefixes)
 
-    files: List[Path] = []
+    files: Dict[str, Path] = {}
     search_dirs = [cache_path]
     hk_cache_path = cache_path / "hk"
     if hk_cache_path.exists() and hk_cache_path.is_dir():
         search_dirs.append(hk_cache_path)
     for directory in search_dirs:
         for pattern in patterns:
-            files.extend(directory.glob(pattern))
+            for path in directory.glob(pattern):
+                files.setdefault(str(path.resolve()), path)
 
-    if not files:
-        return None
-    return sorted(files, key=lambda p: p.stat().st_mtime, reverse=True)[0]
+    return sorted(
+        files.values(),
+        key=lambda path: (_infer_report_year_from_cache_file(path), path.as_posix()),
+    )
+
+
+def _cache_series_diagnostic(
+    code: str,
+    cache_file: Path,
+    report_year: int,
+    report_type: str,
+) -> Dict[str, Any]:
+    row: Dict[str, Any] = {
+        "code": code,
+        "source_doc": cache_file.name,
+        "report_type": report_type,
+    }
+    if report_year > 0:
+        row["report_year"] = report_year
+    return row
 
 
 def _infer_report_year_from_cache_file(cache_file: Path) -> int:
@@ -500,6 +626,12 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         cache_dir=cache_dir,
         report_type=report_type,
     )
+    metric_series_pack = build_periodic_report_metric_series_from_cache(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        cache_dir=cache_dir,
+        report_type=report_type,
+    )
     explanation_pack = build_periodic_report_explanation_pack_from_cache(
         stock_code=stock_code,
         stock_name=stock_name,
@@ -516,6 +648,7 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
 
     ctx.set("periodic_report_fulltext_items", items)
     ctx.set("periodic_report_filing_core_facts", filing_core_facts)
+    ctx.set("periodic_report_metric_series_pack", metric_series_pack)
     ctx.set("periodic_report_explanation_pack", explanation_pack)
     ctx.set("periodic_report_narrative_evidence_cards", narrative_cards)
     ctx.set("periodic_report_fulltext_status", "ok" if items else "empty")

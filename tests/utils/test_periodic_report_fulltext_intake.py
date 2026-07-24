@@ -5,9 +5,11 @@ wrapped as Source Intake material-layer items without entering the core pipeline
 scoring, or knowledge base.
 """
 
+import inspect
+import importlib
+import os
 import sys
 from pathlib import Path
-import inspect
 
 import pytest
 
@@ -16,6 +18,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 import report_skills.periodic_report_fulltext_intake_skill as intake_skill
 from report_skills.periodic_report_fulltext_intake_skill import (
     _build_stable_fulltext_id,
+    _find_latest_periodic_report_cache_file,
+    _find_periodic_report_cache_files,
+    build_periodic_report_metric_series_from_cache,
     build_periodic_report_fulltext_intake_item,
     build_periodic_report_fulltext_intake_items_from_cache,
 )
@@ -46,6 +51,15 @@ SAMPLE_FULLTEXT_REPORT = """
 第十节 财务报告
 存货账面价值 1,448,216,300.11 元，占总资产 20.83%。
 资产减值损失 -170,237,600.06 元，主要为存货跌价准备。
+"""
+
+
+def _financial_report(revenue: str, net_profit: str, operating_cash_flow: str) -> str:
+    return f"""
+主要会计数据和财务指标
+营业收入 {revenue} 900,000,000.00 11.11%
+归属于上市公司股东的净利润 {net_profit} 80,000,000.00 25.00%
+经营活动产生的现金流量净额 {operating_cash_flow} 50,000,000.00 20.00%
 """
 
 
@@ -300,6 +314,108 @@ def test_build_items_prefers_latest_when_multiple_cache_files(tmp_path):
     assert "信号链" in items[0].content
 
 
+def test_cache_history_finder_deduplicates_overlapping_patterns_and_sorts_by_year(tmp_path):
+    old = tmp_path / "测试股份_2024_annual_jina.txt"
+    new = tmp_path / "测试股份_2025_annual_jina.txt"
+    old.write_text(_financial_report("1,000,000,000.00", "100,000,000.00", "80,000,000.00"), encoding="utf-8")
+    new.write_text(_financial_report("1,100,000,000.00", "110,000,000.00", "90,000,000.00"), encoding="utf-8")
+
+    files = _find_periodic_report_cache_files(
+        stock_code="300001",
+        stock_name="测试股份",
+        cache_dir=tmp_path,
+        report_type="annual_report",
+    )
+
+    assert files == [old, new]
+
+
+def test_builds_metric_series_from_all_local_cache_years(tmp_path):
+    (tmp_path / "测试股份_2024_annual_jina.txt").write_text(
+        _financial_report("1,000,000,000.00", "100,000,000.00", "80,000,000.00"),
+        encoding="utf-8",
+    )
+    (tmp_path / "测试股份_2025_annual_jina.txt").write_text(
+        _financial_report("1,100,000,000.00", "110,000,000.00", "90,000,000.00"),
+        encoding="utf-8",
+    )
+
+    pack = build_periodic_report_metric_series_from_cache(
+        stock_code="300001",
+        stock_name="测试股份",
+        cache_dir=tmp_path,
+        report_type="annual_report",
+    )
+
+    revenue = next(row for row in pack["series"] if row["metric_key"] == "revenue")
+    assert [point["report_year"] for point in revenue["points"]] == [2024, 2025]
+    assert revenue["changes"][0]["growth_rate"] == "10.00%"
+    assert pack["source_pack_count"] == 2
+
+
+def test_metric_series_cache_adapter_returns_well_formed_empty_pack(tmp_path):
+    pack = build_periodic_report_metric_series_from_cache(
+        stock_code="300001",
+        stock_name="测试股份",
+        cache_dir=tmp_path,
+        report_type="annual_report",
+    )
+
+    assert pack["schema_version"] == "periodic_report_metric_series_pack.v1"
+    assert pack["source_pack_count"] == 0
+    assert pack["series"] == []
+    assert pack["derived_series"] == []
+
+
+def test_metric_series_cache_adapter_isolates_one_cache_processing_failure(tmp_path, monkeypatch):
+    good = tmp_path / "测试股份_2024_annual_jina.txt"
+    bad = tmp_path / "测试股份_2025_annual_jina.txt"
+    good.write_text(
+        _financial_report("1,000,000,000.00", "100,000,000.00", "80,000,000.00"),
+        encoding="utf-8",
+    )
+    bad.write_text("BROKEN CACHE", encoding="utf-8")
+    intake_module = importlib.import_module(
+        "report_skills.periodic_report_fulltext_intake_skill"
+    )
+    original = intake_module.build_periodic_report_evidence_pack
+
+    def _build_or_raise(text, **kwargs):
+        if "BROKEN CACHE" in text:
+            raise ValueError("synthetic parser failure")
+        return original(text, **kwargs)
+
+    monkeypatch.setattr(intake_module, "build_periodic_report_evidence_pack", _build_or_raise)
+
+    pack = build_periodic_report_metric_series_from_cache(
+        stock_code="300001",
+        stock_name="测试股份",
+        cache_dir=tmp_path,
+        report_type="annual_report",
+    )
+
+    assert pack["source_pack_count"] == 1
+    assert any(row["code"] == "cache_processing_failed" for row in pack["diagnostics"])
+
+
+def test_latest_cache_selection_remains_mtime_based(tmp_path):
+    newer_year_older_mtime = tmp_path / "测试股份_2025_annual_jina.txt"
+    older_year_newer_mtime = tmp_path / "测试股份_2024_annual_jina.txt"
+    newer_year_older_mtime.write_text("2025", encoding="utf-8")
+    older_year_newer_mtime.write_text("2024", encoding="utf-8")
+    os.utime(newer_year_older_mtime, ns=(1_000_000_000, 1_000_000_000))
+    os.utime(older_year_newer_mtime, ns=(2_000_000_000, 2_000_000_000))
+
+    latest = _find_latest_periodic_report_cache_file(
+        stock_code="300001",
+        stock_name="测试股份",
+        cache_dir=tmp_path,
+        report_type="annual_report",
+    )
+
+    assert latest == older_year_newer_mtime
+
+
 def test_empty_raw_text_returns_empty_item():
     item = build_periodic_report_fulltext_intake_item(
         stock_code="300661",
@@ -379,6 +495,10 @@ def test_skill_builds_filing_core_facts_from_cache(tmp_path):
     assert core_facts[0]["data"] == "38.98亿元"
     assert core_facts[0]["provenance_status"] == "supported"
     assert core_facts[0]["evidence_type"] == "periodic_report_filing_fact"
+    metric_series = result.get("periodic_report_metric_series_pack")
+    assert metric_series["schema_version"] == "periodic_report_metric_series_pack.v1"
+    assert metric_series["source_pack_count"] == 1
+    assert metric_series["report_eligible"] is False
 
 
 def test_skill_skips_when_stock_code_missing():
