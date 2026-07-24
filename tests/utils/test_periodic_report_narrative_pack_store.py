@@ -72,7 +72,13 @@ def test_normalized_source_excerpt_hash_matches_whitespace_normalization() -> No
 
 
 def test_write_bootstraps_manifest_and_roundtrips_validated_pack_set(tmp_path: Path) -> None:
-    card_pack = _pack([_card()], diagnostics={"candidate_count": 1})
+    coverage = {
+        "schema_version": "annual_document_coverage_manifest.v1",
+        "stage": "producer",
+        "status": "ready",
+        "summary": {"recognized_section_count": 2},
+    }
+    card_pack = _pack([_card()], diagnostics={"candidate_count": 1, "coverage_manifest": coverage})
 
     result = write_periodic_report_narrative_pack(
         stock_name="中际旭创",
@@ -89,6 +95,7 @@ def test_write_bootstraps_manifest_and_roundtrips_validated_pack_set(tmp_path: P
     )
     assert loaded["cards"] == card_pack["cards"]
     assert loaded["packs"][0]["producer_diagnostics"] == card_pack["diagnostics"]
+    assert loaded["packs"][0]["producer_diagnostics"]["coverage_manifest"] == coverage
     assert loaded["entries"] == [{
         "report_year": 2025,
         "report_type": "annual",

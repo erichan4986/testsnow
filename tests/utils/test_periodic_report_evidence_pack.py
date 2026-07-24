@@ -8,6 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import periodic_report_evidence_pack as evidence_pack_module
 from periodic_report_evidence_pack import (
     USAGE_PRIORITY,
     build_periodic_report_evidence_pack,
@@ -226,6 +227,60 @@ def test_stable_ids_for_same_input():
     ids1 = [b["id"] for b in pack1["blocks"]]
     ids2 = [b["id"] for b in pack2["blocks"]]
     assert ids1 == ids2
+
+
+def test_selected_blocks_have_exact_evidence_stage_coverage_ids():
+    pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
+    selected_decisions = [
+        row for row in pack["coverage_manifest"]["block_decisions"]
+        if row["evidence_disposition"] == "selected_for_producer"
+    ]
+
+    assert pack["coverage_manifest"]["stage"] == "evidence"
+    assert {row["evidence_block_id"] for row in selected_decisions} == {
+        block["id"] for block in pack["blocks"]
+    }
+    assert all(row["coverage_block_id"].startswith("coverage-block:") for row in selected_decisions)
+
+
+def test_capacity_omission_is_audited_without_changing_selected_blocks(monkeypatch):
+    text = "# 年度报告\n" + "经营信息完整。" * 80
+    candidates = [
+        {
+            "id": f"usage_{index}-0",
+            "usage": f"usage_{index}",
+            "section": "年度报告",
+            "title": f"候选{index}",
+            "text": f"第{index}项经营信息。",
+            "source_span": {"start": 8 + index, "end": 9 + index},
+        }
+        for index in range(49)
+    ]
+    monkeypatch.setattr(evidence_pack_module, "_extract_section_blocks", lambda _: candidates)
+    for name in (
+        "_extract_keyword_blocks", "_extract_hk_statement_blocks",
+        "_extract_hk_narrative_blocks", "_extract_table_blocks",
+    ):
+        monkeypatch.setattr(evidence_pack_module, name, lambda _: [])
+
+    pack = build_periodic_report_evidence_pack(text, report_type="annual")
+    omitted = [
+        row for row in pack["coverage_manifest"]["block_decisions"]
+        if row["evidence_disposition"] == "omitted_capacity"
+    ]
+
+    assert len(pack["blocks"]) == 48
+    assert [block["id"] for block in pack["blocks"]] == [f"usage_{index}-0" for index in range(48)]
+    assert len(omitted) == 1
+    assert omitted[0]["evidence_block_id"] == "usage_48-0"
+
+
+def test_empty_evidence_pack_has_unavailable_coverage_manifest():
+    pack = build_periodic_report_evidence_pack("")
+
+    assert pack["blocks"] == []
+    assert pack["coverage_manifest"]["status"] == "unavailable"
+    assert pack["coverage_manifest"]["unavailable_reason"] == "empty_document"
 
 
 def test_document_style_is_envelope_only_and_conservative():

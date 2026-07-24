@@ -11,8 +11,10 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 if __package__:
     from .annual_argument_schema import CANONICAL_FAMILIES, canonical_family_for_usage, is_high_value_narrative_usage
+    from .periodic_report_coverage_manifest import build_periodic_report_coverage_manifest
 else:
     from annual_argument_schema import CANONICAL_FAMILIES, canonical_family_for_usage, is_high_value_narrative_usage
+    from periodic_report_coverage_manifest import build_periodic_report_coverage_manifest
 
 
 SCHEMA_VERSION = "periodic_report_evidence_pack.v1"
@@ -348,22 +350,28 @@ def build_periodic_report_evidence_pack(
     detected_report_type = _detect_report_type(cleaned) if report_type == "auto" else report_type
     audit_status = _detect_audit_status(cleaned, detected_report_type)
 
-    blocks: List[Dict[str, Any]] = []
-    blocks.extend(_extract_section_blocks(cleaned))
-    blocks.extend(_extract_keyword_blocks(cleaned))
-    blocks.extend(_extract_hk_statement_blocks(cleaned))
-    blocks.extend(_extract_hk_narrative_blocks(cleaned))
-    blocks.extend(_extract_table_blocks(cleaned))
-    blocks = _dedupe_and_prioritize_blocks(blocks)
-    blocks = _select_bounded_blocks(blocks)
-    blocks = [_trim_block_text(b, _MAX_CHARS_PER_BLOCK) for b in blocks]
+    extracted: List[Dict[str, Any]] = []
+    extracted.extend(_extract_section_blocks(cleaned))
+    extracted.extend(_extract_keyword_blocks(cleaned))
+    extracted.extend(_extract_hk_statement_blocks(cleaned))
+    extracted.extend(_extract_hk_narrative_blocks(cleaned))
+    extracted.extend(_extract_table_blocks(cleaned))
+    prioritized = _dedupe_and_prioritize_blocks(extracted)
+    selected = _select_bounded_blocks(prioritized)
+    document_style = _document_style(cleaned, detected_report_type)
+    coverage = build_periodic_report_coverage_manifest(
+        cleaned, report_type=detected_report_type, document_style=document_style,
+        extracted_candidates=extracted, prioritized_candidates=prioritized, selected_blocks=selected,
+    )
+    blocks = [_trim_block_text(b, _MAX_CHARS_PER_BLOCK) for b in selected]
 
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": detected_report_type,
         "audit_status": audit_status,
-        "document_style": _document_style(cleaned, detected_report_type),
+        "document_style": document_style,
         "blocks": blocks,
+        "coverage_manifest": coverage,
     }
 
 
@@ -1666,10 +1674,14 @@ def _is_boilerplate(line: str) -> bool:
 
 
 def _empty_pack(report_type: str) -> Dict[str, Any]:
+    normalized_type = report_type if report_type != "auto" else "unknown"
     return {
         "schema_version": SCHEMA_VERSION,
-        "report_type": report_type if report_type != "auto" else "unknown",
+        "report_type": normalized_type,
         "audit_status": "unknown",
         "document_style": "unknown",
         "blocks": [],
+        "coverage_manifest": build_periodic_report_coverage_manifest(
+            "", report_type=normalized_type, document_style="unknown",
+            extracted_candidates=[], prioritized_candidates=[], selected_blocks=[]),
     }

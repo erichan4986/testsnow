@@ -20,6 +20,7 @@ if __package__:
         canonical_family_for_usage, has_concrete_annual_anchor,
         normalize_annual_source_text, validate_card_v2,
     )
+    from .periodic_report_coverage_manifest import finalize_periodic_report_coverage_manifest
 else:
     from annual_argument_schema import (
         annual_source_tail, CANONICAL_FAMILIES, CARD_SCHEMA_VERSION,
@@ -28,6 +29,7 @@ else:
         canonical_family_for_usage, has_concrete_annual_anchor,
         normalize_annual_source_text, validate_card_v2,
     )
+    from periodic_report_coverage_manifest import finalize_periodic_report_coverage_manifest
 
 
 SOURCE_TYPE = "periodic_report_narrative_evidence"
@@ -254,6 +256,10 @@ def build_periodic_report_narrative_evidence_cards(
         "score_parts": dict(card["score_parts"]),
         "selection_reason": card["selection_reason"],
     } for card in cards]
+    diagnostics["coverage_manifest"] = finalize_periodic_report_coverage_manifest(
+        evidence_pack.get("coverage_manifest") if isinstance(evidence_pack, dict) else None,
+        source_unit_decisions=diagnostics["source_unit_decisions"], cards=cards,
+        report_type=report_type, document_style=document_style)
     return {
         "schema_version": ENVELOPE_SCHEMA_VERSION,
         "selection_version": SELECTION_VERSION,

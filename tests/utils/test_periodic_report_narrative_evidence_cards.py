@@ -13,6 +13,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 import periodic_report_narrative_evidence_cards as narrative_cards
 
 from annual_argument_schema import CANONICAL_FAMILIES, validate_card_v2
+from periodic_report_coverage_manifest import build_periodic_report_coverage_manifest
 
 from periodic_report_narrative_evidence_cards import (
     _candidate_invariant_errors,
@@ -615,6 +616,64 @@ def test_empty_evidence_pack_returns_empty_cards_and_diagnostics():
     assert result["report_type"] == "annual"
     assert result["cards"] == []
     assert result["diagnostics"]["source_blocks_seen"] == 0
+
+
+def test_producer_finalizes_exact_block_coverage_states() -> None:
+    source = (
+        "# 年度报告\n年度经营摘要足够长。\n## 管理层讨论与分析\n"
+        "公司主营高速光模块并服务云数据中心客户。\n"
+        "公司需遵守深圳证券交易所自律监管指引中的行业信息披露要求。\n"
+    )
+    selected_text = "公司主营高速光模块并服务云数据中心客户。"
+    rejected_text = "公司需遵守深圳证券交易所自律监管指引中的行业信息披露要求。"
+    blocks = [
+        {
+            "id": "business_overview-0", "usage": "business_overview",
+            "section": "管理层讨论与分析", "title": "主营业务", "text": selected_text,
+            "source_span": {"start": source.index(selected_text), "end": source.index(selected_text) + len(selected_text)},
+        },
+        {
+            "id": "business_overview-1", "usage": "business_overview",
+            "section": "管理层讨论与分析", "title": "披露要求", "text": rejected_text,
+            "source_span": {"start": source.index(rejected_text), "end": source.index(rejected_text) + len(rejected_text)},
+        },
+    ]
+    coverage = build_periodic_report_coverage_manifest(
+        source, report_type="annual_report", document_style="a_share_annual",
+        extracted_candidates=blocks, prioritized_candidates=blocks, selected_blocks=blocks,
+    )
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025, report_type="annual",
+        evidence_pack={"document_style": "a_share_annual", "blocks": blocks, "coverage_manifest": coverage},
+    )
+    manifest = result["diagnostics"]["coverage_manifest"]
+    by_id = {row["evidence_block_id"]: row for row in manifest["block_decisions"]}
+
+    assert manifest["stage"] == "producer"
+    assert by_id["business_overview-0"]["producer_disposition"] == "card_selected"
+    assert by_id["business_overview-1"]["producer_disposition"] == "reviewed_no_card"
+    assert manifest["summary"]["source_unit_count"] == 2
+    assert manifest["summary"]["selected_source_unit_count"] == 1
+
+
+def test_missing_or_malformed_coverage_does_not_change_cards() -> None:
+    block = {
+        "id": "business_overview-0", "usage": "business_overview",
+        "text": "公司主营高速光模块并服务云数据中心客户。",
+    }
+    missing = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025, report_type="annual",
+        evidence_pack={"blocks": [block]},
+    )
+    malformed = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001", stock_name="测试股", report_year=2025, report_type="annual",
+        evidence_pack={"blocks": [block], "coverage_manifest": {"schema_version": "broken"}},
+    )
+
+    assert missing["cards"] == malformed["cards"]
+    assert missing["diagnostics"]["coverage_manifest"]["unavailable_reason"] == "upstream_missing"
+    assert malformed["diagnostics"]["coverage_manifest"]["unavailable_reason"] == "upstream_invalid"
 
 
 def test_business_model_card_from_company_description_block():
