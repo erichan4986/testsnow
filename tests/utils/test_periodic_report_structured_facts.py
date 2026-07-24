@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 import sys
+from decimal import Decimal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
@@ -10,9 +11,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack
 from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
 from periodic_report_structured_facts import (
+    CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT,
     _display_financial_amount,
     build_periodic_report_structured_fact_pack,
     filing_facts_to_core_facts,
+    is_cashflow_quality_weak,
 )
 
 
@@ -196,6 +199,13 @@ def test_cashflow_quality_signal_fires_for_negative_ocf_positive_profit() -> Non
     assert signal["input_refs"] == [
         "periodic:300000:2025:annual:operating_cash_flow_to_net_profit"
     ]
+
+
+def test_cashflow_quality_predicate_owns_exact_existing_threshold() -> None:
+    assert CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT == Decimal("50")
+    assert is_cashflow_quality_weak(Decimal("49.99")) is True
+    assert is_cashflow_quality_weak(Decimal("50")) is False
+    assert is_cashflow_quality_weak(None) is False
 
 
 def test_no_healthy_ratio_when_net_profit_is_non_positive() -> None:

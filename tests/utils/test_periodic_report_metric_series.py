@@ -545,3 +545,103 @@ def test_derived_input_is_rejected_when_value_basis_is_ambiguous() -> None:
     assert len([row for row in result["series"] if row["metric_key"] == "net_profit"]) == 2
     assert result["derived_series"] == []
     assert any(row["code"] == "derived_input_not_accepted" for row in result["diagnostics"])
+
+
+def test_filing_fact_rejects_unsafe_value_basis_identity() -> None:
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        fact_packs=[
+            _fact_pack(
+                2025,
+                [
+                    _filing_fact(
+                        "revenue",
+                        "1000.00",
+                        year=2025,
+                        value_basis="as:reported",
+                    )
+                ],
+            )
+        ],
+    )
+
+    assert result["series"] == []
+    assert any(row["code"] == "invalid_value_basis" for row in result["diagnostics"])
+
+
+def test_derived_input_rejects_mismatched_value_basis_dimensions() -> None:
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        fact_packs=[
+            _fact_pack(
+                2025,
+                [
+                    _filing_fact("net_profit", "100.00", year=2025),
+                    _filing_fact(
+                        "operating_cash_flow",
+                        "80.00",
+                        year=2025,
+                        value_basis="restated",
+                    ),
+                ],
+                derived_facts=[_derived_cash_conversion("80.00", year=2025)],
+            )
+        ],
+    )
+
+    assert result["derived_series"] == []
+    assert any(
+        row["code"] == "derived_input_dimension_mismatch"
+        for row in result["diagnostics"]
+    )
+
+
+def test_derived_series_never_mix_value_basis_across_years() -> None:
+    packs = []
+    for year, basis, net_profit, operating_cash_flow in (
+        (2024, "as_reported", "100.00", "80.00"),
+        (2025, "restated", "120.00", "90.00"),
+    ):
+        packs.append(_fact_pack(
+            year,
+            [
+                _filing_fact("net_profit", net_profit, year=year, value_basis=basis),
+                _filing_fact(
+                    "operating_cash_flow",
+                    operating_cash_flow,
+                    year=year,
+                    value_basis=basis,
+                ),
+            ],
+            derived_facts=[
+                _derived_cash_conversion(
+                    "80.00" if year == 2024 else "75.00",
+                    year=year,
+                )
+            ],
+        ))
+
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        fact_packs=packs,
+    )
+
+    assert len(result["derived_series"]) == 2
+    assert {
+        (row["value_basis"], row["series_id"])
+        for row in result["derived_series"]
+    } == {
+        (
+            "as_reported",
+            "periodic-derived-series:300001:annual:"
+            "operating_cash_flow_to_net_profit:as_reported:cash_conversion.v1:pct",
+        ),
+        (
+            "restated",
+            "periodic-derived-series:300001:annual:"
+            "operating_cash_flow_to_net_profit:restated:cash_conversion.v1:pct",
+        ),
+    }

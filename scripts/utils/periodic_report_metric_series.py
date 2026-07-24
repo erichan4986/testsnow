@@ -122,6 +122,8 @@ def _validated_filing_row(
     value_basis = str(fact.get("value_basis") or "")
     if not value_basis:
         return None, "missing_value_basis"
+    if not _valid_value_basis(value_basis):
+        return None, "invalid_value_basis"
     numeric = _amount_in_wan(str(fact.get("normalized_value") or ""))
     if numeric is None:
         return None, "invalid_normalized_value"
@@ -208,7 +210,12 @@ def _filing_point_index(
     index: Dict[Tuple[str, int, str], List[Dict[str, Any]]] = defaultdict(list)
     for row in series:
         for point in row["points"]:
-            index[(row["report_type"], point["report_year"], row["metric_key"])].append(point)
+            index[(row["report_type"], point["report_year"], row["metric_key"])].append({
+                **point,
+                "_value_basis": row["value_basis"],
+                "_currency": row["currency"],
+                "_unit": row["unit"],
+            })
     return index
 
 
@@ -262,6 +269,13 @@ def _validated_derived_row(
     if input_refs != expected_refs or any(len(group) != 1 for group in point_groups):
         return None, "derived_input_not_accepted"
     points = [group[0] for group in point_groups]
+    dimensions = {
+        (point["_value_basis"], point["_currency"], point["_unit"])
+        for point in points
+    }
+    if len(dimensions) != 1:
+        return None, "derived_input_dimension_mismatch"
+    value_basis, _, _ = next(iter(dimensions))
     for metric_key, point in zip(("net_profit", "operating_cash_flow"), points):
         expected_ref = f"periodic:{stock_code}:{report_year}:{report_type}:{metric_key}"
         if expected_ref not in point["fact_refs"]:
@@ -274,6 +288,7 @@ def _validated_derived_row(
         "numeric": numeric,
         "fact_id": str(fact.get("fact_id") or ""),
         "input_refs": sorted(input_refs),
+        "value_basis": value_basis,
         "source_evidence": _unique_evidence(
             evidence
             for point in points
@@ -288,13 +303,13 @@ def _build_derived_series(
     rows: List[Dict[str, Any]],
     diagnostics: List[Dict[str, Any]],
 ) -> List[Dict[str, Any]]:
-    by_type: Dict[str, List[Dict[str, Any]]] = defaultdict(list)
+    by_type: Dict[Tuple[str, str], List[Dict[str, Any]]] = defaultdict(list)
     for row in rows:
-        by_type[row["report_type"]].append(row)
+        by_type[(row["report_type"], row["value_basis"])].append(row)
     output = []
-    for report_type in sorted(by_type):
+    for report_type, value_basis in sorted(by_type):
         by_year: Dict[int, List[Dict[str, Any]]] = defaultdict(list)
-        for row in by_type[report_type]:
+        for row in by_type[(report_type, value_basis)]:
             by_year[row["report_year"]].append(row)
         points = []
         for year in sorted(by_year):
@@ -326,10 +341,12 @@ def _build_derived_series(
             output.append({
                 "series_id": (
                     f"periodic-derived-series:{stock_code}:{report_type}:"
-                    f"{_CASH_CONVERSION_METRIC}:{_CASH_CONVERSION_FORMULA}:pct"
+                    f"{_CASH_CONVERSION_METRIC}:{value_basis}:"
+                    f"{_CASH_CONVERSION_FORMULA}:pct"
                 ),
                 "metric_key": _CASH_CONVERSION_METRIC,
                 "report_type": report_type,
+                "value_basis": value_basis,
                 "unit": "pct",
                 "formula_version": _CASH_CONVERSION_FORMULA,
                 "report_eligible": False,
@@ -395,6 +412,10 @@ def _source_evidence(fact: Dict[str, Any], source_doc: str) -> List[Dict[str, st
 
 def _valid_sha256(value: Any) -> bool:
     return bool(re.fullmatch(r"[0-9a-f]{64}", str(value or "")))
+
+
+def _valid_value_basis(value: str) -> bool:
+    return bool(re.fullmatch(r"[a-z][a-z0-9_]{0,63}", str(value or "")))
 
 
 def _unique_evidence(rows: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:

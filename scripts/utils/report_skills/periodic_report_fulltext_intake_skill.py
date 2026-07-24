@@ -38,6 +38,7 @@ if __name__.startswith("utils."):
     from ..periodic_report_narrative_evidence_cards import (
         build_periodic_report_narrative_evidence_cards,
     )
+    from ..periodic_report_financial_scan import build_periodic_report_financial_scan_pack
     from ..periodic_report_metric_series import build_periodic_report_metric_series_pack
     from ..periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from ..periodic_report_required_metrics import build_required_business_metrics
@@ -61,6 +62,7 @@ else:
     from periodic_report_narrative_evidence_cards import (
         build_periodic_report_narrative_evidence_cards,
     )
+    from periodic_report_financial_scan import build_periodic_report_financial_scan_pack
     from periodic_report_metric_series import build_periodic_report_metric_series_pack
     from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from periodic_report_required_metrics import build_required_business_metrics
@@ -632,6 +634,11 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         cache_dir=cache_dir,
         report_type=report_type,
     )
+    financial_scan_pack = build_periodic_report_financial_scan_pack(
+        stock_code=stock_code,
+        stock_name=stock_name,
+        metric_series_pack=metric_series_pack,
+    )
     explanation_pack = build_periodic_report_explanation_pack_from_cache(
         stock_code=stock_code,
         stock_name=stock_name,
@@ -649,6 +656,7 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
     ctx.set("periodic_report_fulltext_items", items)
     ctx.set("periodic_report_filing_core_facts", filing_core_facts)
     ctx.set("periodic_report_metric_series_pack", metric_series_pack)
+    ctx.set("periodic_report_financial_scan_pack", financial_scan_pack)
     ctx.set("periodic_report_explanation_pack", explanation_pack)
     ctx.set("periodic_report_narrative_evidence_cards", narrative_cards)
     ctx.set("periodic_report_fulltext_status", "ok" if items else "empty")

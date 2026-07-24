@@ -20,6 +20,7 @@ else:
 
 STRUCTURED_FACT_SCHEMA_VERSION = "periodic_report_structured_fact.v1"
 RISK_SIGNAL_SCHEMA_VERSION = "periodic_report_risk_signal.v1"
+CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT = Decimal("50")
 
 _PHASE_A_METRICS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ("revenue", "profit_quality", "revenue", ("营业收入", "收入", "來自客戶合同的收入", "来自客户合同的收入")),
@@ -320,7 +321,7 @@ def _build_risk_signals(
         return []
 
     ratio_value = _pct_decimal(str(ratio_fact.get("signed_value") or ratio_fact.get("value") or ""))
-    if ratio_value is None or ratio_value >= Decimal("50"):
+    if not is_cashflow_quality_weak(ratio_value):
         return []
 
     return [
@@ -337,6 +338,14 @@ def _build_risk_signals(
             "scoring_eligible": False,
         }
     ]
+
+
+def is_cashflow_quality_weak(ratio_pct: Optional[Decimal]) -> bool:
+    """Return the canonical display-only cashflow-quality threshold result."""
+    return (
+        ratio_pct is not None
+        and ratio_pct < CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT
+    )
 
 
 def _anchor_cell_to_block(

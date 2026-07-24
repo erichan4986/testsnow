@@ -499,6 +499,29 @@ def test_skill_builds_filing_core_facts_from_cache(tmp_path):
     assert metric_series["schema_version"] == "periodic_report_metric_series_pack.v1"
     assert metric_series["source_pack_count"] == 1
     assert metric_series["report_eligible"] is False
+    financial_scan = result.get("periodic_report_financial_scan_pack")
+    assert financial_scan["schema_version"] == "periodic_report_financial_scan_pack.v1"
+    assert financial_scan["status"] in {"partial", "ready"}
+    assert financial_scan["report_eligible"] is False
+    assert financial_scan["scoring_eligible"] is False
+
+
+def test_skill_publishes_well_formed_empty_financial_scan_without_cache(tmp_path):
+    from report_skills.periodic_report_fulltext_intake_skill import periodic_report_fulltext_intake_skill
+    from skill_pipeline import SkillContext
+
+    result = periodic_report_fulltext_intake_skill(SkillContext(input={
+        "stock_name": "圣邦股份",
+        "stock_codes": {"圣邦股份": "300661"},
+        "periodic_report_fulltext_cache_dir": str(tmp_path),
+        "periodic_report_fulltext_report_type": "annual_report",
+    }))
+
+    scan = result.get("periodic_report_financial_scan_pack")
+    assert scan["schema_version"] == "periodic_report_financial_scan_pack.v1"
+    assert scan["status"] == "empty"
+    assert scan["source_series_count"] == 0
+    assert scan["findings"] == []
 
 
 def test_skill_skips_when_stock_code_missing():
@@ -512,6 +535,7 @@ def test_skill_skips_when_stock_code_missing():
     result = periodic_report_fulltext_intake_skill(ctx)
     assert result.get("periodic_report_fulltext_items") == []
     assert result.get("periodic_report_fulltext_status") == "skipped_no_stock_code"
+    assert "periodic_report_financial_scan_pack" not in result.output
 
 
 def test_skill_does_not_pollute_external_evidence():
