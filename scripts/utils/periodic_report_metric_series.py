@@ -7,9 +7,14 @@ pack, keeps compact evidence identities, and produces compute-only histories.
 from __future__ import annotations
 
 from collections import defaultdict
-from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
+from decimal import Decimal, ROUND_HALF_UP
 import re
 from typing import Any, Dict, Iterable, List, Tuple
+
+if __name__.startswith("utils."):
+    from .periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
+else:
+    from periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
 
 
 METRIC_SERIES_SCHEMA_VERSION = "periodic_report_metric_series_pack.v1"
@@ -184,7 +189,7 @@ def _build_filing_series(
             "normalized_value": f"{_decimal_text(numeric)}万元",
             "fact_refs": sorted({row["fact_id"] for row in year_rows}),
             "evidence_refs": sorted({ref for row in year_rows for ref in row["evidence_refs"]}),
-            "source_evidence": _unique_evidence(
+            "source_evidence": dedupe_filing_evidence(
                 evidence
                 for row in year_rows
                 for evidence in row["source_evidence"]
@@ -289,7 +294,7 @@ def _validated_derived_row(
         "fact_id": str(fact.get("fact_id") or ""),
         "input_refs": sorted(input_refs),
         "value_basis": value_basis,
-        "source_evidence": _unique_evidence(
+        "source_evidence": dedupe_filing_evidence(
             evidence
             for point in points
             if point
@@ -331,7 +336,7 @@ def _build_derived_series(
                 "value": f"{_decimal_text(numeric)}%",
                 "fact_refs": sorted({row["fact_id"] for row in year_rows}),
                 "input_refs": sorted({ref for row in year_rows for ref in row["input_refs"]}),
-                "source_evidence": _unique_evidence(
+                "source_evidence": dedupe_filing_evidence(
                     evidence
                     for row in year_rows
                     for evidence in row["source_evidence"]
@@ -418,29 +423,12 @@ def _valid_value_basis(value: str) -> bool:
     return bool(re.fullmatch(r"[a-z][a-z0-9_]{0,63}", str(value or "")))
 
 
-def _unique_evidence(rows: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
-    keyed = {
-        (
-            row["source_doc"],
-            row["source_block_id"],
-            row["source_excerpt_hash"],
-            row["source_block_hash"],
-        ): row
-        for row in rows
-    }
-    return [keyed[key] for key in sorted(keyed)]
-
-
 def _amount_in_wan(value: str) -> Decimal | None:
     value = str(value or "").strip()
     number = value[:-2] if value.endswith("万元") else ""
     if not re.fullmatch(r"-?\d+(?:\.\d+)?", number):
         return None
-    try:
-        result = Decimal(number)
-    except (InvalidOperation, ValueError):
-        return None
-    return result if result.is_finite() else None
+    return finite_decimal(number)
 
 
 def _percentage_value(value: str) -> Decimal | None:
@@ -448,11 +436,7 @@ def _percentage_value(value: str) -> Decimal | None:
     number = value[:-1] if value.endswith("%") else ""
     if not re.fullmatch(r"-?\d+(?:\.\d+)?", number):
         return None
-    try:
-        result = Decimal(number)
-    except (InvalidOperation, ValueError):
-        return None
-    return result if result.is_finite() else None
+    return finite_decimal(number)
 
 
 def _decimal_text(value: Decimal) -> str:

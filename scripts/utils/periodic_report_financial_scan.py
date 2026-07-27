@@ -8,13 +8,15 @@ authority.
 from __future__ import annotations
 
 from collections import Counter
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 import re
 from typing import Any, Dict, Iterable, List, Tuple
 
 if __name__.startswith("utils."):
+    from .periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
     from .periodic_report_structured_facts import is_cashflow_quality_weak
 else:
+    from periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
     from periodic_report_structured_facts import is_cashflow_quality_weak
 
 
@@ -444,7 +446,7 @@ def _admit_derived_point(
         ):
             return None, "unresolved_derived_input_refs"
         resolved_points.append(filing_point)
-    if evidence != _merge_evidence(*(
+    if evidence != dedupe_filing_evidence(*(
         filing_point["source_evidence"] for filing_point in resolved_points
     )):
         return None, "invalid_derived_point_contract"
@@ -482,7 +484,7 @@ def _cross_metric_findings(
                 "growth": growth,
                 "growth_rate": change["growth_rate"],
                 "input_refs": change["input_refs"],
-                "source_evidence": _merge_evidence(
+                "source_evidence": dedupe_filing_evidence(
                     points[change["from_period"]]["source_evidence"],
                     points[change["to_period"]]["source_evidence"],
                 ),
@@ -524,7 +526,7 @@ def _cross_metric_findings(
                     _growth_observation(negative_metric, negative, from_period, to_period),
                 ],
                 input_refs=[*positive["input_refs"], *negative["input_refs"]],
-                source_evidence=_merge_evidence(
+                source_evidence=dedupe_filing_evidence(
                     positive["source_evidence"], negative["source_evidence"]
                 ),
             ))
@@ -578,7 +580,7 @@ def _trend_findings(
                     ),
                 ],
                 input_refs=[*previous["input_refs"], *current["input_refs"]],
-                source_evidence=_merge_evidence(*(
+                source_evidence=dedupe_filing_evidence(*(
                     points[period]["source_evidence"] for period in periods
                 )),
             ))
@@ -593,7 +595,7 @@ def _cashflow_findings(
     for series in derived_series:
         points = series["points"]
         weak = {
-            point["period"]: is_cashflow_quality_weak(_decimal(point["numeric_value"]))
+            point["period"]: is_cashflow_quality_weak(finite_decimal(point["numeric_value"]))
             for point in points
         }
         for point in points:
@@ -651,7 +653,7 @@ def _cashflow_finding(
         input_refs=[
             ref for point in points for ref in [*point["fact_refs"], *point["input_refs"]]
         ],
-        source_evidence=_merge_evidence(*(
+        source_evidence=dedupe_filing_evidence(*(
             point["source_evidence"] for point in points
         )),
     )
@@ -735,20 +737,6 @@ def _finding(
     }
 
 
-def _merge_evidence(*groups: Iterable[Dict[str, str]]) -> List[Dict[str, str]]:
-    keyed = {
-        (
-            row["source_doc"],
-            row["source_block_id"],
-            row["source_excerpt_hash"],
-            row["source_block_hash"],
-        ): row
-        for group in groups
-        for row in group
-    }
-    return [keyed[key] for key in sorted(keyed)]
-
-
 def _source_evidence(value: Any) -> List[Dict[str, str]] | None:
     if not isinstance(value, list) or not value:
         return None
@@ -777,14 +765,6 @@ def _source_evidence(value: Any) -> List[Dict[str, str]] | None:
     return [keyed[key] for key in sorted(keyed)]
 
 
-def _decimal(value: Any) -> Decimal | None:
-    try:
-        result = Decimal(str(value))
-    except (InvalidOperation, ValueError):
-        return None
-    return result if result.is_finite() else None
-
-
 def _fixed_decimal(value: Any, *, suffix: str = "") -> Decimal | None:
     if not isinstance(value, str):
         return None
@@ -793,13 +773,13 @@ def _fixed_decimal(value: Any, *, suffix: str = "") -> Decimal | None:
         return None
     if not _FIXED_DECIMAL_RE.fullmatch(text):
         return None
-    result = _decimal(text)
+    result = finite_decimal(text)
     return None if result == 0 and text.startswith("-") else result
 
 
 def _percentage(value: Any) -> Decimal | None:
     text = str(value or "")
-    return _decimal(text[:-1]) if text.endswith("%") else None
+    return finite_decimal(text[:-1]) if text.endswith("%") else None
 
 
 def _upstream_diagnostics(rows: Iterable[Any]) -> List[Dict[str, Any]]:

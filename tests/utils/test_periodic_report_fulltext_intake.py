@@ -9,6 +9,7 @@ import inspect
 import importlib
 import os
 import sys
+from collections import Counter
 from pathlib import Path
 
 import pytest
@@ -416,6 +417,19 @@ def test_latest_cache_selection_remains_mtime_based(tmp_path):
     assert latest == older_year_newer_mtime
 
 
+def test_latest_cache_selection_breaks_equal_mtime_ties_by_path(tmp_path):
+    left = tmp_path / "300001_2025_annual_jina-a.txt"
+    right = tmp_path / "300001_2025_annual_jina-b.txt"
+    left.write_text("left", encoding="utf-8")
+    right.write_text("right", encoding="utf-8")
+    os.utime(left, ns=(1_000_000_000, 1_000_000_000))
+    os.utime(right, ns=(1_000_000_000, 1_000_000_000))
+
+    assert _find_latest_periodic_report_cache_file(
+        stock_code="300001", cache_dir=tmp_path,
+    ) == right
+
+
 def test_empty_raw_text_returns_empty_item():
     item = build_periodic_report_fulltext_intake_item(
         stock_code="300661",
@@ -504,6 +518,100 @@ def test_skill_builds_filing_core_facts_from_cache(tmp_path):
     assert financial_scan["status"] in {"partial", "ready"}
     assert financial_scan["report_eligible"] is False
     assert financial_scan["scoring_eligible"] is False
+
+
+def test_skill_reads_and_builds_each_cache_material_once_per_run(tmp_path, monkeypatch):
+    intake_module = importlib.import_module(
+        "report_skills.periodic_report_fulltext_intake_skill"
+    )
+    cache_dir = tmp_path / "custom_cache"
+    cache_dir.mkdir()
+    older = cache_dir / "300661_2024_annual_jina.txt"
+    latest = cache_dir / "300661_2025_annual_jina.txt"
+    older.write_text(SAMPLE_FULLTEXT_REPORT, encoding="utf-8")
+    latest.write_text(SAMPLE_FULLTEXT_REPORT, encoding="utf-8")
+    os.utime(older, ns=(1_000_000_000, 1_000_000_000))
+    os.utime(latest, ns=(2_000_000_000, 2_000_000_000))
+
+    read_counts = Counter()
+    evidence_report_types = []
+    original_read_text = Path.read_text
+    original_evidence_builder = intake_module.build_periodic_report_evidence_pack
+
+    def counted_read_text(path, *args, **kwargs):
+        if path.parent == cache_dir:
+            read_counts[path.name] += 1
+        return original_read_text(path, *args, **kwargs)
+
+    def counted_evidence_builder(text, *, report_type="auto"):
+        evidence_report_types.append(report_type)
+        return original_evidence_builder(text, report_type=report_type)
+
+    monkeypatch.setattr(Path, "read_text", counted_read_text)
+    monkeypatch.setattr(
+        intake_module,
+        "build_periodic_report_evidence_pack",
+        counted_evidence_builder,
+    )
+
+    result = intake_module.periodic_report_fulltext_intake_skill(
+        intake_module.SkillContext(input={
+            "stock_name": "圣邦股份",
+            "stock_codes": {"圣邦股份": "300661"},
+            "periodic_report_fulltext_cache_dir": str(cache_dir),
+            "periodic_report_fulltext_report_type": "annual_report",
+        })
+    )
+
+    assert result.get("periodic_report_fulltext_status") == "ok"
+    assert read_counts == Counter({older.name: 1, latest.name: 1})
+    assert Counter(evidence_report_types) == Counter({"annual": 2, "annual_report": 1})
+
+
+def test_direct_latest_only_cache_wrapper_does_not_read_history(tmp_path, monkeypatch):
+    older = tmp_path / "300661_2024_annual_jina.txt"
+    latest = tmp_path / "300661_2025_annual_jina.txt"
+    older.write_text(SAMPLE_FULLTEXT_REPORT, encoding="utf-8")
+    latest.write_text(SAMPLE_FULLTEXT_REPORT, encoding="utf-8")
+    os.utime(older, ns=(1_000_000_000, 1_000_000_000))
+    os.utime(latest, ns=(2_000_000_000, 2_000_000_000))
+    reads = Counter()
+    original_read_text = Path.read_text
+
+    def counted_read_text(path, *args, **kwargs):
+        if path.parent == tmp_path:
+            reads[path.name] += 1
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", counted_read_text)
+
+    items = build_periodic_report_fulltext_intake_items_from_cache(
+        "300661", tmp_path, stock_name="圣邦股份",
+    )
+
+    assert len(items) == 1
+    assert reads == Counter({latest.name: 1})
+
+
+def test_metric_series_keeps_valid_history_when_one_cache_read_fails(tmp_path, monkeypatch):
+    good = tmp_path / "300001_2024_annual_jina.txt"
+    bad = tmp_path / "300001_2025_annual_jina.txt"
+    good.write_text(_financial_report("1,000,000,000.00", "100,000,000.00", "80,000,000.00"), encoding="utf-8")
+    bad.write_text("unreadable", encoding="utf-8")
+    original_read_text = Path.read_text
+
+    def fail_one_read(path, *args, **kwargs):
+        if path == bad:
+            raise OSError("synthetic read failure")
+        return original_read_text(path, *args, **kwargs)
+
+    monkeypatch.setattr(Path, "read_text", fail_one_read)
+    pack = build_periodic_report_metric_series_from_cache(
+        stock_code="300001", stock_name="测试股份", cache_dir=tmp_path,
+    )
+
+    assert pack["source_pack_count"] == 1
+    assert any(row["code"] == "cache_read_failed" for row in pack["diagnostics"])
 
 
 def test_skill_publishes_well_formed_empty_financial_scan_without_cache(tmp_path):

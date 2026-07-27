@@ -249,34 +249,33 @@ def build_periodic_report_fulltext_intake_items_from_cache(
 
     Missing cache directories return an empty list without raising.
     """
-    latest = _find_latest_periodic_report_cache_file(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
-        report_type=report_type,
+    rows = _load_periodic_report_cache_rows(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
+        report_type=report_type, latest_only=True,
     )
-    if latest is None:
+    return _fulltext_items_from_cache_rows(
+        rows, stock_code=stock_code, report_type=report_type,
+        enable_llm=enable_llm, llm_client=llm_client,
+    )
+
+
+def _fulltext_items_from_cache_rows(
+    rows: List[Dict[str, Any]], *, stock_code: str, report_type: str,
+    enable_llm: bool = False, llm_client: Any = None,
+) -> List[SynthesisItem]:
+    latest = _latest_cache_row(rows)
+    if not latest or latest["raw_text"] is None:
         return []
-
-    try:
-        raw_text = latest.read_text(encoding="utf-8")
-    except Exception:
-        return []
-
-    # Use the cache filename stem as a fallback announcement id so the stable id
-    # is still deterministic and distinct from the original cninfo announcement.
-    announcement_id = latest.stem
-
-    item = build_periodic_report_fulltext_intake_item(
+    path = latest["path"]
+    return [build_periodic_report_fulltext_intake_item(
         stock_code=stock_code,
-        raw_text=raw_text,
+        raw_text=latest["raw_text"],
         report_type=report_type,
-        announcement_id=announcement_id,
-        source_domain=_infer_source_domain_from_cache_file(latest),
+        announcement_id=path.stem,
+        source_domain=_infer_source_domain_from_cache_file(path),
         enable_llm=enable_llm,
         llm_client=llm_client,
-    )
-    return [item]
+    )]
 
 
 def build_periodic_report_filing_core_facts_from_cache(
@@ -287,40 +286,30 @@ def build_periodic_report_filing_core_facts_from_cache(
     report_type: str = "annual_report",
 ) -> List[Dict[str, Any]]:
     """Build deterministic core facts from the latest local periodic report cache."""
-    latest = _find_latest_periodic_report_cache_file(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
+    rows = _load_periodic_report_cache_rows(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
+        report_type=report_type, latest_only=True,
+    )
+    return _filing_core_facts_from_cache_rows(
+        rows, stock_code=stock_code, stock_name=stock_name,
         report_type=report_type,
     )
-    if latest is None:
-        return []
-    try:
-        raw_text = latest.read_text(encoding="utf-8")
-    except Exception:
-        return []
-    if not raw_text.strip():
-        return []
 
-    normalized_report_type = _normalize_report_type(report_type)
-    structured_report_type = _structured_report_type(normalized_report_type)
-    report_year = _infer_report_year_from_cache_file(latest)
-    evidence_pack = build_periodic_report_evidence_pack(
-        raw_text,
-        report_type=structured_report_type,
+
+def _filing_core_facts_from_cache_rows(
+    rows: List[Dict[str, Any]], *, stock_code: str, stock_name: str,
+    report_type: str,
+) -> List[Dict[str, Any]]:
+    latest = _latest_cache_row(rows)
+    if not latest:
+        return []
+    material = _structured_cache_material(
+        latest, stock_code=stock_code, stock_name=stock_name,
+        report_type=report_type,
     )
-    required_financial_metrics = build_required_financial_risk_metrics(
-        evidence_pack,
-        raw_text=raw_text,
-    )
-    fact_pack = build_periodic_report_structured_fact_pack(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        report_year=report_year,
-        report_type=structured_report_type,
-        evidence_pack=evidence_pack,
-        required_financial_metrics=required_financial_metrics,
-    )
+    if material.get("error"):
+        raise material["error"]
+    fact_pack = material.get("fact_pack") or {}
     return filing_facts_to_core_facts(fact_pack.get("filing_facts") or [])
 
 
@@ -332,68 +321,33 @@ def build_periodic_report_metric_series_from_cache(
     report_type: str = "annual_report",
 ) -> Dict[str, Any]:
     """Build a compute-only metric history from every matching local cache."""
+    rows = _load_periodic_report_cache_rows(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    return _metric_series_from_cache_rows(
+        rows, stock_code=stock_code, stock_name=stock_name,
+        report_type=report_type,
+    )
+
+
+def _metric_series_from_cache_rows(
+    rows: List[Dict[str, Any]], *, stock_code: str, stock_name: str,
+    report_type: str,
+) -> Dict[str, Any]:
     fact_packs: List[Dict[str, Any]] = []
     cache_diagnostics: List[Dict[str, Any]] = []
-    normalized_report_type = _normalize_report_type(report_type)
-    structured_report_type = _structured_report_type(normalized_report_type)
-
-    for cache_file in _find_periodic_report_cache_files(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
-        report_type=report_type,
-    ):
-        report_year = _infer_report_year_from_cache_file(cache_file)
-        if report_year <= 0:
+    structured_report_type = _structured_report_type(_normalize_report_type(report_type))
+    for row in rows:
+        material = _structured_cache_material(
+            row, stock_code=stock_code, stock_name=stock_name,
+            report_type=report_type,
+        )
+        if material.get("fact_pack"):
+            fact_packs.append(material["fact_pack"])
+        elif material.get("diagnostic"):
             cache_diagnostics.append(_cache_series_diagnostic(
-                "cache_report_year_missing",
-                cache_file,
-                report_year,
-                structured_report_type,
-            ))
-            continue
-        try:
-            raw_text = cache_file.read_text(encoding="utf-8")
-        except Exception:
-            cache_diagnostics.append(_cache_series_diagnostic(
-                "cache_read_failed",
-                cache_file,
-                report_year,
-                structured_report_type,
-            ))
-            continue
-        if not raw_text.strip():
-            cache_diagnostics.append(_cache_series_diagnostic(
-                "cache_text_empty",
-                cache_file,
-                report_year,
-                structured_report_type,
-            ))
-            continue
-
-        try:
-            evidence_pack = build_periodic_report_evidence_pack(
-                raw_text,
-                report_type=structured_report_type,
-            )
-            financial_metrics = build_required_financial_risk_metrics(
-                evidence_pack,
-                raw_text=raw_text,
-            )
-            fact_packs.append(build_periodic_report_structured_fact_pack(
-                stock_code=stock_code,
-                stock_name=stock_name,
-                report_year=report_year,
-                report_type=structured_report_type,
-                evidence_pack=evidence_pack,
-                required_financial_metrics=financial_metrics,
-                source_doc=cache_file.name,
-            ))
-        except Exception:
-            cache_diagnostics.append(_cache_series_diagnostic(
-                "cache_processing_failed",
-                cache_file,
-                report_year,
+                material["diagnostic"], row["path"], row["report_year"],
                 structured_report_type,
             ))
 
@@ -419,25 +373,21 @@ def build_periodic_report_explanation_pack_from_cache(
     report_type: str = "annual_report",
 ) -> Dict[str, Any]:
     """Build a deterministic financial explanation pack from local report text."""
-    latest = _find_latest_periodic_report_cache_file(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
-        report_type=report_type,
+    rows = _load_periodic_report_cache_rows(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
+        report_type=report_type, latest_only=True,
     )
-    if latest is None:
-        return {}
-    try:
-        raw_text = latest.read_text(encoding="utf-8")
-    except Exception:
-        return {}
-    if not raw_text.strip():
-        return {}
+    return _explanation_pack_from_cache_rows(rows, stock_name=stock_name)
 
+
+def _explanation_pack_from_cache_rows(
+    rows: List[Dict[str, Any]], *, stock_name: str,
+) -> Dict[str, Any]:
+    latest = _latest_cache_row(rows)
+    if not latest or not (latest["raw_text"] or "").strip():
+        return {}
     return build_formal_financial_explanation_pack(
-        raw_text,
-        stock_name=stock_name,
-        source_doc=latest.name,
+        latest["raw_text"], stock_name=stock_name, source_doc=latest["path"].name,
     )
 
 
@@ -450,36 +400,109 @@ def build_periodic_report_narrative_cards_from_cache(
     max_total_cards: int = 12,
 ) -> Dict[str, Any]:
     """Build deterministic narrative cards from local report text without writing notes."""
-    latest = _find_latest_periodic_report_cache_file(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
+    rows = _load_periodic_report_cache_rows(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
+        report_type=report_type, latest_only=True,
+    )
+    return _narrative_cards_from_cache_rows(
+        rows, stock_code=stock_code, stock_name=stock_name,
+        report_type=report_type, max_total_cards=max_total_cards,
+    )
+
+
+def _narrative_cards_from_cache_rows(
+    rows: List[Dict[str, Any]], *, stock_code: str, stock_name: str,
+    report_type: str, max_total_cards: int,
+) -> Dict[str, Any]:
+    latest = _latest_cache_row(rows)
+    if not latest:
+        return {}
+    material = _structured_cache_material(
+        latest, stock_code=stock_code, stock_name=stock_name,
         report_type=report_type,
     )
-    if latest is None:
+    if material.get("error"):
+        raise material["error"]
+    if not material.get("evidence_pack"):
         return {}
-    try:
-        raw_text = latest.read_text(encoding="utf-8")
-    except Exception:
-        return {}
-    if not raw_text.strip():
-        return {}
-
-    normalized_report_type = _normalize_report_type(report_type)
-    structured_report_type = _structured_report_type(normalized_report_type)
-    evidence_pack = build_periodic_report_evidence_pack(
-        raw_text,
-        report_type=structured_report_type,
-    )
+    structured_report_type = _structured_report_type(_normalize_report_type(report_type))
     return build_periodic_report_narrative_evidence_cards(
         stock_code=stock_code,
         stock_name=stock_name,
-        report_year=_infer_report_year_from_cache_file(latest),
+        report_year=latest["report_year"],
         report_type=structured_report_type,
-        evidence_pack=evidence_pack,
-        raw_text=raw_text,
+        evidence_pack=material["evidence_pack"],
+        raw_text=latest["raw_text"],
         max_total_cards=max_total_cards,
     )
+
+
+def _load_periodic_report_cache_rows(
+    *, stock_code: str, stock_name: str, cache_dir: Union[str, Path],
+    report_type: str, latest_only: bool = False,
+) -> List[Dict[str, Any]]:
+    rows = []
+    paths = _find_periodic_report_cache_files(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
+        report_type=report_type,
+    )
+    if latest_only and paths:
+        paths = [max(paths, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))]
+    for path in paths:
+        try:
+            raw_text = path.read_text(encoding="utf-8")
+        except Exception:
+            raw_text = None
+        rows.append({
+            "path": path,
+            "report_year": _infer_report_year_from_cache_file(path),
+            "raw_text": raw_text,
+        })
+    return rows
+
+
+def _latest_cache_row(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    return max(
+        rows,
+        key=lambda row: (row["path"].stat().st_mtime_ns, row["path"].as_posix()),
+    ) if rows else None
+
+
+def _structured_cache_material(
+    row: Dict[str, Any], *, stock_code: str, stock_name: str, report_type: str,
+) -> Dict[str, Any]:
+    if "_structured_material" in row:
+        return row["_structured_material"]
+    raw_text, report_year = row["raw_text"], row["report_year"]
+    if report_year <= 0:
+        result = {"diagnostic": "cache_report_year_missing"}
+    elif raw_text is None:
+        result = {"diagnostic": "cache_read_failed"}
+    elif not raw_text.strip():
+        result = {"diagnostic": "cache_text_empty"}
+    else:
+        structured_type = _structured_report_type(_normalize_report_type(report_type))
+        try:
+            evidence_pack = build_periodic_report_evidence_pack(
+                raw_text, report_type=structured_type,
+            )
+            financial_metrics = build_required_financial_risk_metrics(
+                evidence_pack, raw_text=raw_text,
+            )
+            result = {
+                "evidence_pack": evidence_pack,
+                "fact_pack": build_periodic_report_structured_fact_pack(
+                    stock_code=stock_code, stock_name=stock_name,
+                    report_year=report_year, report_type=structured_type,
+                    evidence_pack=evidence_pack,
+                    required_financial_metrics=financial_metrics,
+                    source_doc=row["path"].name,
+                ),
+            }
+        except Exception as exc:
+            result = {"diagnostic": "cache_processing_failed", "error": exc}
+    row["_structured_material"] = result
+    return result
 
 
 def _find_latest_periodic_report_cache_file(
@@ -614,24 +637,19 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
     cache_dir = ctx.get("periodic_report_fulltext_cache_dir", _DEFAULT_CACHE_DIR)
     report_type = ctx.get("periodic_report_fulltext_report_type", _DEFAULT_REPORT_TYPE)
 
-    items = build_periodic_report_fulltext_intake_items_from_cache(
-        stock_code=stock_code,
-        cache_dir=cache_dir,
-        stock_name=stock_name,
-        report_type=report_type,
-        enable_llm=False,
-        llm_client=None,
-    )
-    filing_core_facts = build_periodic_report_filing_core_facts_from_cache(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
+    cache_rows = _load_periodic_report_cache_rows(
+        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
         report_type=report_type,
     )
-    metric_series_pack = build_periodic_report_metric_series_from_cache(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
+    items = _fulltext_items_from_cache_rows(
+        cache_rows, stock_code=stock_code, report_type=report_type,
+    )
+    filing_core_facts = _filing_core_facts_from_cache_rows(
+        cache_rows, stock_code=stock_code, stock_name=stock_name,
+        report_type=report_type,
+    )
+    metric_series_pack = _metric_series_from_cache_rows(
+        cache_rows, stock_code=stock_code, stock_name=stock_name,
         report_type=report_type,
     )
     financial_scan_pack = build_periodic_report_financial_scan_pack(
@@ -639,18 +657,12 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         stock_name=stock_name,
         metric_series_pack=metric_series_pack,
     )
-    explanation_pack = build_periodic_report_explanation_pack_from_cache(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
-        report_type=report_type,
+    explanation_pack = _explanation_pack_from_cache_rows(
+        cache_rows, stock_name=stock_name,
     )
-    narrative_cards = build_periodic_report_narrative_cards_from_cache(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        cache_dir=cache_dir,
-        report_type=report_type,
-        max_total_cards=12,
+    narrative_cards = _narrative_cards_from_cache_rows(
+        cache_rows, stock_code=stock_code, stock_name=stock_name,
+        report_type=report_type, max_total_cards=12,
     )
 
     ctx.set("periodic_report_fulltext_items", items)

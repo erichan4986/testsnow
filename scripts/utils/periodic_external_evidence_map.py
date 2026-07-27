@@ -2,18 +2,20 @@
 
 from __future__ import annotations
 
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal
 import hashlib
 import re
 from typing import Any, Dict, Iterable, Mapping, Tuple
 
 if __name__.startswith("utils."):
+    from .periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
     from .periodic_report_financial_scan import (
         FINANCIAL_SCAN_SCHEMA_VERSION,
         build_periodic_report_financial_scan_pack,
         read_periodic_financial_scan_source,
     )
 else:
+    from periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
     from periodic_report_financial_scan import (
         FINANCIAL_SCAN_SCHEMA_VERSION,
         build_periodic_report_financial_scan_pack,
@@ -285,7 +287,7 @@ def _numeric_candidate(clause: str, *, amount: bool) -> dict | None:
     else:
         low_raw = high_raw = match.group("value")
         unit = match.groupdict().get("unit") or "%"
-    low, high = _decimal(low_raw), _decimal(high_raw)
+    low, high = finite_decimal(low_raw.replace(",", "")), finite_decimal(high_raw.replace(",", ""))
     if low is None or high is None or low > high:
         return {"error": "invalid_numeric_range"}
     if ((_LOSS_RE.search(clause) if amount else _DECLINE_RE.search(clause)) and low >= 0 and high >= 0):
@@ -415,7 +417,7 @@ def _change_target(series: Mapping[str, Any], change: Mapping[str, Any]) -> dict
         "target_value": change["growth_rate"].removesuffix("%"),
         "unit": "pct",
         "input_refs": change["input_refs"],
-        "filing_evidence": _merge_mapping_evidence(*(
+        "filing_evidence": dedupe_filing_evidence(*(
             points[period]["source_evidence"] for period in periods
         )),
     }
@@ -444,10 +446,10 @@ def _compatibility_mapping(
     target: Mapping[str, Any],
     financial_scan_pack: Mapping[str, Any],
 ) -> dict:
-    low = _decimal(observation["lower_value"])
-    high = _decimal(observation["upper_value"])
-    precision = _decimal(observation["precision"])
-    target_value = _decimal(target["target_value"])
+    low = finite_decimal(observation["lower_value"])
+    high = finite_decimal(observation["upper_value"])
+    precision = finite_decimal(observation["precision"])
+    target_value = finite_decimal(target["target_value"])
     assert low is not None and high is not None and precision is not None and target_value is not None
     is_range = bool(observation["is_range"])
     if not is_range:
@@ -477,8 +479,8 @@ def _update_mapping(observation: Mapping[str, Any], target: Mapping[str, Any]) -
         target,
         relation="update",
         relation_basis="newer_period_observation",
-        external_low=_decimal(observation["lower_value"]),
-        external_high=_decimal(observation["upper_value"]),
+        external_low=finite_decimal(observation["lower_value"]),
+        external_high=finite_decimal(observation["upper_value"]),
         linked_finding_ids=[],
     )
 
@@ -544,16 +546,6 @@ def _relation_unmapped(observation: Mapping[str, Any], reason: str) -> dict:
         reason,
     )
 
-def _merge_mapping_evidence(*groups: Iterable[dict]) -> list[dict]:
-    keyed = {
-        (
-            row.get("source_doc", ""), row.get("source_block_id", ""),
-            row.get("source_excerpt_hash", ""), row.get("source_block_hash", ""),
-        ): row
-        for group in groups for row in group
-    }
-    return [keyed[key] for key in sorted(keyed)]
-
 def _resolve_identities(rows: Iterable[dict], key: str) -> Tuple[list, list]:
     grouped: Dict[str, list] = {}
     for row in rows:
@@ -575,13 +567,6 @@ def _citations(value: Any) -> Dict[int, dict]:
 
 def _normalize_unit(value: Any) -> str:
     return "%" if value == "%" else "万元"
-
-def _decimal(value: Any) -> Decimal | None:
-    try:
-        result = Decimal(str(value).replace(",", ""))
-    except (InvalidOperation, ValueError):
-        return None
-    return result if result.is_finite() else None
 
 def _source_precision(value: str) -> Decimal:
     clean = str(value).replace(",", "")
