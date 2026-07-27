@@ -87,6 +87,17 @@ def test_mapped_usage_stays_primary_when_product_signal_is_stronger():
     assert "technology_product_progress" in result["cards"][0]["secondary_signals"]
 
 
+def test_completed_capacity_project_routes_to_operating_progress():
+    result = _build_v2_cards(
+        "报告期内，高端产品产业园三期项目实施完毕，公司所有项目均已结项，"
+        "将进一步提升公司高端产品产能。",
+        "product_capacity_profile",
+    )
+
+    assert len(result["cards"]) == 1
+    assert result["cards"][0]["argument_family"] == "operating_progress"
+
+
 def test_seed_keeps_adjacent_context_dependent_continuation():
     text = (
         "公司发布A2000芯片并完成客户验证。"
@@ -4048,7 +4059,13 @@ def test_hk_product_progress_block_maps_to_rd_product_progress_card():
             ),
         }
     ]
-    result = _build_hk_cards(blocks)
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="黑芝麻智能",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"document_style": "hkex_annual", "blocks": blocks},
+    )
     card_types = {card["argument_family"] for card in result["cards"]}
     assert "technology_product_progress" in card_types
     excerpts = _all_excerpts(result["cards"])
@@ -4091,6 +4108,47 @@ def test_hk_customer_ecosystem_block_maps_to_business_model_card():
     result = _build_hk_cards(blocks)
     card_types = {card["argument_family"] for card in result["cards"]}
     assert "business_structure" in card_types
+
+
+def test_hk_customer_ecosystem_keeps_named_partners_with_delivery_result():
+    blocks = [
+        {
+            "id": "hk_customer_ecosystem-0",
+            "usage": "hk_customer_ecosystem",
+            "section": "管理層討論及分析",
+            "title": "hk_customer_ecosystem",
+            "text": (
+                "2025 年，本公司通過發佈 SesameX 平台，完成了從智能駕駛領軍者向端側 AI 全棧芯片供應商的跨越。"
+                "SesameX 平台以「全腦智能」體系引領具身智能新範式，通過 Kalos、Aura、Liora 三款核心模組"
+                "為機器人提供從基礎控制到高階認知的全棧算力。"
+                "報告期內，本公司先後與雲深處、傅利葉智能、聯想、智平方、極智嘉、雲蹟、天問人形機器人及"
+                "均勝電子等頭部機器人產業鏈企業合作，共同推動具身智能的商業化落地。"
+                "目前已在四足機器人、航運智能巡檢等場景規模化交付，與智能駕駛形成雙主業增長格局。"
+            ),
+        }
+    ]
+
+    result = build_periodic_report_narrative_evidence_cards(
+        stock_code="02533",
+        stock_name="黑芝麻智能",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack={"document_style": "hkex_annual", "blocks": blocks},
+    )
+    matching = [
+        card for card in result["cards"]
+        if "雲深處" in card["source_excerpt"]
+    ]
+    delivery = [
+        card for card in result["cards"]
+        if card["source_excerpt"].startswith("目前已在四足機器人")
+    ]
+
+    assert len(matching) == 1
+    assert matching[0]["source_excerpt"].startswith("報告期內，本公司")
+    assert len(delivery) == 1
+    assert delivery[0]["argument_family"] == "operating_progress"
+    assert "航運智能巡檢等場景規模化交付" in delivery[0]["source_excerpt"]
 
 
 def test_hk_financial_commentary_block_maps_to_margin_card():

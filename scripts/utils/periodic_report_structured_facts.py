@@ -24,7 +24,12 @@ CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT = Decimal("50")
 
 _PHASE_A_METRICS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ("revenue", "profit_quality", "revenue", ("营业收入", "收入", "來自客戶合同的收入", "来自客户合同的收入")),
-    ("net_profit", "profit_quality", "net_profit", ("归属于上市公司股东的净利润",)),
+    (
+        "net_profit",
+        "profit_quality",
+        "net_profit",
+        ("归属于上市公司股东的净利润", "本公司權益持有人應佔年內", "年內虧損"),
+    ),
     (
         "operating_cash_flow",
         "cash_flow_quality",
@@ -152,6 +157,7 @@ def _filing_fact(
 ) -> Dict[str, Any]:
     fact_id = _fact_id(stock_code, report_year, report_type, metric_key)
     unit = str(cell.get("unit") or "")
+    normalized_value = _canonical_wan_amount(cell)
     fact = {
         "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
         "source_type": "periodic_report_filing_fact",
@@ -163,9 +169,9 @@ def _filing_fact(
         "metric_key": metric_key,
         "label": label,
         "value": f"{cell.get('text', '')}{unit}",
-        "normalized_value": str(cell.get("normalized") or ""),
-        "display_value": _display_financial_amount(str(cell.get("normalized") or "")),
-        "unit": "万元" if str(cell.get("normalized") or "").endswith("万元") else unit,
+        "normalized_value": normalized_value,
+        "display_value": _display_financial_amount(normalized_value),
+        "unit": "万元",
         "currency": "CNY",
         "period": str(report_year),
         "value_basis": "as_reported",
@@ -181,6 +187,13 @@ def _filing_fact(
     if source_doc:
         fact["source_doc"] = source_doc
     return fact
+
+
+def _canonical_wan_amount(cell: Dict[str, Any]) -> str:
+    amount = _amount_in_wan(cell).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if amount == Decimal("-0.00"):
+        amount = Decimal("0.00")
+    return f"{amount:.2f}万元"
 
 
 def filing_facts_to_core_facts(
@@ -371,7 +384,7 @@ def _anchor_cell_to_block(
         if text_value in block_text or any(
             candidate and candidate in block_number_compact
             for candidate in text_value_compact_candidates
-        ):
+        ) or _block_contains_equivalent_amount(block_text, label, cell):
             source_excerpt = _bounded_excerpt(block_text, label, text_value)
             return {
                 "source_block_id": str(block["id"]),
@@ -380,6 +393,53 @@ def _anchor_cell_to_block(
                 "source_block_hash": _source_text_hash(block_text),
             }
     return None
+
+
+def _block_contains_equivalent_amount(
+    block_text: str,
+    label: str,
+    cell: Dict[str, Any],
+) -> bool:
+    """Match a rounded summary amount to the same metric in a statement unit."""
+    compact = re.sub(r"\s+", "", str(block_text or ""))
+    label_compact = _compact_text(label)
+    label_pos = compact.find(label_compact)
+    if label_pos < 0:
+        return False
+    tail = compact[label_pos + len(label_compact):label_pos + len(label_compact) + 120]
+    unit_match = re.match(r"[（(]?(亿元|万元|千元|元)[）)]?", tail)
+    if not unit_match:
+        unit_match = re.search(r"(?:单位[:：]?|人民币)(亿元|万元|千元|元)", compact[:label_pos + 40])
+    if not unit_match:
+        return False
+    unit = unit_match.group(1)
+    amount_tail = tail[unit_match.end():] if unit_match.start() == 0 else tail
+    try:
+        target_wan = _amount_in_wan(cell)
+    except (InvalidOperation, TypeError, ValueError):
+        return False
+    tolerance = _amount_rounding_tolerance_wan(cell)
+    factors = {"亿元": Decimal("10000"), "万元": Decimal("1"), "千元": Decimal("0.1"), "元": Decimal("0.0001")}
+    for match in re.finditer(r"(?<![\d.])(\(?-?\d[\d,，]*(?:\.\d+)?\)?)(?![\d.%％])", amount_tail):
+        raw = match.group(1)
+        negative = raw.startswith("(") and raw.endswith(")")
+        try:
+            amount = Decimal(raw.strip("()").replace(",", "").replace("，", ""))
+        except InvalidOperation:
+            continue
+        candidate_wan = -amount * factors[unit] if negative else amount * factors[unit]
+        if abs(candidate_wan - target_wan) <= tolerance:
+            return True
+    return False
+
+
+def _amount_rounding_tolerance_wan(cell: Dict[str, Any]) -> Decimal:
+    text = str(cell.get("text") or "").replace(",", "").replace("，", "")
+    decimals = len(text.rsplit(".", 1)[1]) if "." in text else 0
+    factor = {"亿元": Decimal("10000"), "万元": Decimal("1"), "千元": Decimal("0.1"), "元": Decimal("0.0001")}.get(
+        str(cell.get("unit") or ""), Decimal("1")
+    )
+    return factor * (Decimal("10") ** -decimals) / 2
 
 
 def _source_text_hash(text: str) -> str:

@@ -137,6 +137,17 @@ def test_pilot_stocks_enable_formal_first_source_policy_in_config():
         assert source_intake["canonical_synthesis_source_policy"] == "formal_first"
 
 
+def test_annual_review_stocks_enable_local_fulltext_intake() -> None:
+    config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
+    stocks = json.loads(config_path.read_text(encoding="utf-8"))
+    by_name = {stock.get("name"): stock for stock in stocks}
+
+    for stock_name in ("中际旭创", "复旦微电", "黑芝麻智能"):
+        fulltext = by_name[stock_name]["source_intake"]["periodic_report_fulltext"]
+        assert fulltext["enabled"] is True
+        assert fulltext["report_type"] == "annual_report"
+
+
 def test_zhongji_config_enables_broker_digest_display():
     config_path = Path(__file__).resolve().parents[2] / "config" / "stocks.json"
     stocks = json.loads(config_path.read_text(encoding="utf-8"))

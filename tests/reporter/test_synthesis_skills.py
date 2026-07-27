@@ -2892,6 +2892,43 @@ def test_build_annual_report_memo_uses_in_memory_narrative_cards_without_notes()
     assert "先进制程FPGA" in bodies
 
 
+def test_build_annual_report_memo_prefers_current_fulltext_cards_over_stale_pack():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [{
+                "card_id": "stale:1",
+                "argument_family": "business_structure",
+                "title": "旧目录摘录",
+                "excerpt": "产品类型 产品介绍 应用领域 产品或终端样图。",
+                "source_block_id": "stale-product-table",
+            }],
+        },
+        "periodic_report_narrative_evidence_cards": {
+            "cards": [{
+                "card_id": "current:1",
+                "argument_family": "financial_quality_explanation",
+                "argument_complete": True,
+                "title": "财务质量与变化原因",
+                "source_excerpt": (
+                    "报告期内，受益于终端客户需求增长，公司产品出货较快增长，"
+                    "运营效率继续提升，营业收入与净利润均同比增长。"
+                ),
+                "source_block_id": "profitability_commentary-0",
+                "source_credit": 75,
+            }],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    bodies = " ".join(row["body"] for row in memo["sections"]["annual_report_explanation"])
+
+    assert "产品出货较快增长" in bodies
+    assert "产品类型 产品介绍" not in bodies
+
+
 def test_build_annual_report_memo_dedupes_duplicate_narrative_card_bodies():
     skill = SynthesisSkill(synthesizer=MagicMock())
     duplicate_body = "公司是国内领先的FPGA类产品供应商，提供FPGA、PSoC、FPAI等产品。"

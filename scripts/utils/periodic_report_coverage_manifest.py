@@ -44,6 +44,8 @@ def _headings(text: str) -> list[tuple[int, int, int, str]]:
 def _sections(text: str) -> list[dict]:
     headings, markers = _headings(text), _markers(text)
     synthetic = not headings
+    if headings and headings[0][0] > 0:
+        headings.insert(0, (0, 0, 0, "document-preamble"))
     headings = headings or [(0, 0, 0, "document-root")]
     rows = []
     for index, (start, heading_end, level, heading) in enumerate(headings):

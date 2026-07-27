@@ -909,10 +909,7 @@ class DeepAnalysisRenderer:
 
         portrait_key = self._annual_row_text_key(portrait_row) if portrait_row else ""
         seen_display_keys = {portrait_key} if portrait_key else set()
-        financial_rows = [
-            row for row in self._annual_rows_by_group(explanation_rows, "financial_quality_explanation")
-            if self._is_financial_explanation_row(row)
-        ]
+        financial_rows = self._annual_rows_by_group(explanation_rows, "financial_quality_explanation")
         if include_confirmed_financial_rows:
             financial_rows.extend(confirmed_rows)
         groups = (
@@ -1043,22 +1040,10 @@ class DeepAnalysisRenderer:
             return ""
         return re.sub(r"\s+", "", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))
 
-    @staticmethod
-    def _is_financial_explanation_row(row: Dict[str, Any]) -> bool:
-        body = str(row.get("body") or "")
-        title = str(row.get("title") or "")
-        if not body.strip():
-            return False
-        if any(term in body for term in ("变化原因", "主要系", "所致")):
-            return True
-        if any(term in title for term in ("营业收入", "归母净利润", "净利润", "毛利率", "现金流", "存货", "费用")):
-                return any(term in body for term in ("增长", "下降", "增加", "减少", "提升", "改善", "承压", "同比", "环比"))
-        return False
-
     def _annual_row_visible_body(self, row: Dict[str, Any], include_title: bool = False) -> str:
         body = self._compact_annual_text(str(row.get("body") or ""), 140)
         title = str(row.get("title") or "").strip()
-        if include_title and title and title not in body and "原因" not in body:
+        if include_title and is_informative_variable_title(title) and title not in body and "原因" not in body:
             return f"{title}：{body}"
         return body
 

@@ -55,6 +55,8 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
     (
         "product_capacity_profile",
         (
+            "实施完毕",
+            "均已结项",
             "主要产品及应用",
             "经营范围和主营业务",
             "主要产品",
@@ -144,6 +146,7 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
     (
         "profitability_commentary",
         (
+            "报告期内，公司实现营业收入",
             "毛利率较上年同期提升",
             "毛利率较上年同期增加",
             "毛利率同比提升",
@@ -156,6 +159,8 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
             "规模效应逐步释放",
             "成本规模效应",
             "高端产品出货占比提升",
+            "产品出货较快增长",
+            "综合毛利率",
         ),
     ),
     ("audit_key_matters", ("关键审计事项",)),
@@ -1047,7 +1052,18 @@ def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:
             return False
         return any(token in compact for token in ("AI数据中心", "1.6T", "3.2T", "工作计划", "国际化战略", "供应链", "下游市场需求", "产品结构升级", "技术研发投入", "产品线", "国产化替代"))
     if usage == "profitability_commentary":
-        return any(token in compact for token in ("毛利率", "盈利能力", "规模效应"))
+        if all(token in compact for token in ("报告期内，公司实现营业收入", "净利润", "同比")):
+            return True
+        return any(
+            token in compact
+            for token in (
+                "毛利率",
+                "盈利能力",
+                "规模效应",
+                "高端产品出货占比提升",
+                "产品出货较快增长",
+            )
+        )
     if usage == "rd_product_progress":
         return any(
             token in compact
@@ -1074,6 +1090,10 @@ def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:
     )
     if any(token in compact for token in audit_noise):
         return False
+    if "产能" in compact and any(
+        token in compact for token in ("实施完毕", "均已结项")
+    ):
+        return True
     product_markers = (
         "主要产品",
         "主营业务",

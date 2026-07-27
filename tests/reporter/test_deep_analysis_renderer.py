@@ -430,6 +430,30 @@ def test_annual_profile_dedupes_rows_that_compact_to_the_same_visible_sentence()
     assert rendered.count(sentence.rstrip("。")) == 1
 
 
+def test_annual_material_profile_keeps_preselected_financial_performance_fact():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "annual:profit",
+        "财务质量与变化原因：归属于上市公司股东的净利润约为2.32亿元，较上年同期减少59.42%。",
+        "annual",
+        "formal_explanation",
+        (1,),
+        ("annual:profit",),
+        title="财务质量与变化原因",
+        body="归属于上市公司股东的净利润约为2.32亿元，较上年同期减少59.42%。",
+        render_role="financial_quality_explanation",
+        source_credit="official",
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(
+        (row,), fallback="无材料",
+    ))
+
+    assert "**财务变化原因**" in rendered
+    assert "净利润约为2.32亿元，较上年同期减少59.42%" in rendered
+    assert "财务质量与变化原因：" not in rendered
+
+
 def test_render_basic():
     renderer = DeepAnalysisRenderer()
     ctx = {

@@ -176,16 +176,40 @@ def select_annual_display_rows(
 
 _ANNUAL_ROLE_BUDGETS = {
     "business_structure": 3,
-    "operating_progress": 2,
-    "market_competition_outlook": 1,
-    "technology_product_progress": 2,
-    "financial_quality_explanation": 3,
+    "operating_progress": 4,
+    "market_competition_outlook": 3,
+    "technology_product_progress": 3,
+    "financial_quality_explanation": 6,
 }
 _ANNUAL_ROLE_ORDER = tuple(_ANNUAL_ROLE_BUDGETS)
 _PORTRAIT_ROLES = ("business_structure", "operating_progress", "technology_product_progress")
 _EVIDENCE_SIGNAL_TERMS = (
     "主要系", "所致", "同比", "环比", "报告期内", "客户", "订单", "量产", "导入",
-    "推出", "发布", "验证", "研发", "收入", "营收", "利润", "毛利率", "现金流",
+    "推出", "发布", "验证", "交付", "研发", "收入", "营收", "利润", "毛利率", "现金流",
+)
+_ANNUAL_FINANCIAL_METRIC_TERMS = (
+    "收入", "营收", "營收", "利润", "利潤", "亏损", "虧損", "毛利", "毛利率",
+    "费用", "費用", "销售成本", "銷售成本", "现金流", "現金流", "存货", "存貨",
+    "减值", "減值", "应收", "應收", "负债", "負債", "借款",
+)
+_ANNUAL_FINANCIAL_QUALITY_TERMS = (
+    "现金流", "現金流", "存货", "存貨", "减值", "減值", "应收", "應收",
+    "负债", "負債", "借款", "汇兑", "匯兌", "研发费用", "研發開支", "无形资产", "無形資產",
+)
+_ANNUAL_FINANCIAL_EXPLANATION_TERMS = (
+    "主要系", "所致", "导致", "導致", "变动原因", "變動原因", "变化原因", "變化原因",
+    "得益于", "得益於", "受益于", "受益於", "随着", "隨著", "由于上述原因", "由於上述原因",
+)
+_FINANCIAL_FACT_ALIASES = (
+    ("operating_cash_flow", ("经营活动产生的现金流量净额", "经营现金流量净额", "经营现金流", "經營活動所用現金淨額", "經營現金流")),
+    ("net_profit", ("归属于上市公司股东的净利润", "归属于上市公司股东净利润", "归母净利润", "本公司權益持有人應佔年內", "年內虧損")),
+    ("revenue", ("营业收入", "營業收入", "营收", "營收")),
+    ("gross_margin", ("毛利率",)),
+)
+_ANNUAL_BUSINESS_HEADING_RE = re.compile(
+    r"^(?:[一二三四五六七八九十]+[、.]\s*)?报告期内公司所从事的主要业务、经营模式、行业情况说明\s*"
+    r"(?:\([一二三四五六七八九十\d]+\)\s*)?(?:主要业务、主要产品或服务情况\s*)?"
+    r"(?:\d+[、.]\s*主要业务\s*)?"
 )
 
 
@@ -197,7 +221,13 @@ def _select_annual_editorial_rows(rows: Iterable[MaterialRow]) -> tuple[Tuple[Ma
     hidden_by_role: Dict[str, int] = {}
     for role in _ANNUAL_ROLE_ORDER:
         ranked = _rank_annual_rows(row for row in row_list if row.render_role == role)
-        visible = [row for row in ranked if row.row_id not in selected_ids][:_ANNUAL_ROLE_BUDGETS[role] - int(portrait is not None and portrait.render_role == role)]
+        budget = _ANNUAL_ROLE_BUDGETS[role] - int(portrait is not None and portrait.render_role == role)
+        available = [row for row in ranked if row.row_id not in selected_ids]
+        visible = (
+            _select_financial_editorial_rows(available, budget)
+            if role == "financial_quality_explanation"
+            else available[:budget]
+        )
         selected.extend(visible)
         selected_ids.update(row.row_id for row in visible)
         hidden = len(ranked) - len(visible) - int(portrait is not None and portrait.render_role == role)
@@ -215,8 +245,15 @@ def _select_annual_portrait(rows: Iterable[MaterialRow]) -> MaterialRow | None:
 
 def _is_portrait_candidate(body: str) -> bool:
     compact = re.sub(r"\s+", "", body)
-    has_scope = bool(re.search(r"(?:主营业务|主要业务|增长主线|是一家从事|公司.{0,12}(?:从事|建立|开发)|报告期内，公司)", compact))
-    complete = bool(re.search(r"[。！？；;]$", compact) or re.search(r"(?:客户|市场|领域|需求|解决方案|产品线|业务)$", compact))
+    has_scope = bool(re.search(
+        r"(?:主营业务|主要业务|增长主线|是一家从事|公司.{0,12}(?:从事|建立|开发)|报告期内，公司|本公司.{0,30}(?:平台|供應商|供应商|業務|业务))",
+        compact,
+    )) or any(term in compact for term in ("双主业", "雙主業", "双引擎", "雙引擎"))
+    complete = bool(
+        re.search(r"[。！？；;]$", compact)
+        or re.search(r"(?:客户|市场|领域|需求|解决方案|产品线|业务|公司|供应商|供應商|格局)$", compact)
+        or re.search(r"完成.{0,8}[从從].{0,50}(?:供应商|供應商)", compact)
+    )
     return has_scope and complete
 
 
@@ -225,17 +262,32 @@ def _portrait_score(body: str) -> int:
     weighted = {"主营业务": 5, "从事": 4, "公司": 3, "产品线": 2, "客户": 2, "应用": 2, "行业": 2, "市场": 2}
     score = sum(weight for term, weight in weighted.items() if term in compact)
     score += min(5, sum(term in compact for term in ("设计", "开发", "研发", "制造", "生产", "测试", "系统解决方案")))
+    score += 12 * int("是一家从事" in compact or bool(re.search(r"完成.{0,8}[从從].{0,50}(?:供应商|供應商)", compact)))
+    score += 14 * int(any(term in compact for term in ("双主业", "雙主業", "双引擎", "雙引擎")))
     return score - (3 if "介绍" in compact and len(compact) < 60 else 0)
 
 
 def _rank_annual_rows(rows: Iterable[MaterialRow]) -> list[MaterialRow]:
     return [row for _, row in sorted(enumerate(rows), key=lambda pair: (
-        -int(pair[1].argument_complete),
-        -int(bool(pair[1].citation_refs)),
-        -_annual_evidence_signal_score(pair[1].body),
+        -_annual_editorial_score(pair[1]),
         _annual_length_penalty(pair[1].body),
         pair[0],
     ))]
+
+
+def _annual_editorial_score(row: MaterialRow) -> int:
+    compact = re.sub(r"\s+", "", row.body)
+    score = 2 * _annual_evidence_signal_score(compact)
+    score += 2 * int(row.argument_complete) + int(bool(row.citation_refs))
+    score += 3 * int(bool(re.search(r"\d", compact)))
+    score += 2 * sum(term in compact for term in (
+        "定点", "批量", "出货", "交付", "订单", "客户", "量产", "验证", "导入", "合作", "收入", "营收", "毛利率", "同比", "环比",
+    ))
+    score += 2 * int(bool(re.search(r"(?:[A-Za-z]+\d+|\d+(?:\.\d+)?[GT])", compact)))
+    score += 3 * int(any(term in compact for term in ("长期稳定的合作关系", "市场份额持续", "市场份额的持续")))
+    generic_plan = any(term in compact for term in ("持续关注", "提升核心竞争力", "稳步推进", "把握发展机遇"))
+    concrete = bool(re.search(r"\d", compact)) or any(term in compact for term in ("客户", "订单", "定点", "量产", "出货", "收入", "利润", "毛利率"))
+    return score - 8 * int(generic_plan and not concrete)
 
 
 def _annual_evidence_signal_score(body: str) -> int:
@@ -248,13 +300,116 @@ def _annual_length_penalty(body: str) -> int:
     return 0 if 24 <= length <= 320 else abs(min(max(length, 24), 320) - length)
 
 
+def _financial_dimensions(body: str) -> tuple[str, ...]:
+    compact = re.sub(r"\s+", "", body)
+    dimensions = []
+    if re.search(r"\d", compact) and any(term in compact for term in _ANNUAL_FINANCIAL_METRIC_TERMS) and any(term in compact for term in ("同比", "环比", "增长", "增長", "下降", "增加", "减少", "減少")):
+        dimensions.append("performance")
+    if any(term in compact for term in _ANNUAL_FINANCIAL_QUALITY_TERMS):
+        dimensions.append("quality")
+    if any(term in compact for term in _ANNUAL_FINANCIAL_EXPLANATION_TERMS) and any(term in compact for term in ("需求", "销售", "銷售", "价格", "價格", "客户", "客戶", "产品结构", "產品結構", "规模", "規模", "汇率", "匯率", "补助", "補助", "税收", "稅收", "研发项目", "研發項目", "原材料", "无形资产", "無形資產", "减值", "減值")):
+        dimensions.append("driver")
+    return tuple(dimensions)
+
+
+def _financial_insight_score(row: MaterialRow) -> int:
+    compact = re.sub(r"\s+", "", row.body)
+    score = 4 * len(_financial_dimensions(compact)) + 2 * int(bool(re.search(r"\d", compact)))
+    score += 10 if any(term in compact for term in ("归母净利润", "归属于上市公司股东的净利润", "归属于上市公司股东净利润", "本公司權益持有人應佔年內")) else 5 if any(term in compact for term in ("利润", "利潤", "亏损", "虧損", "毛利")) else 0
+    score += min(3, sum(any(alias in compact for alias in aliases) for _, aliases in _FINANCIAL_FACT_ALIASES))
+    score += 4 if any(term in compact for term in _ANNUAL_FINANCIAL_QUALITY_TERMS) else 0
+    score += int(
+        any(term in compact for term in ("减值", "減值"))
+        and any(term in compact for term in ("销售未达预期", "銷售未達預期", "需求结构变化", "需求結構變化", "未达到预期收益", "未達到預期收益"))
+    )
+    score += int(bool(re.search(r"\d", compact)) and any(term in compact for term in ("减值损失", "減值損失")))
+    mechanical = (
+        "营业成本变动原因说明" in compact and "营业收入增加" in compact
+    ) or (
+        "现金流量净额变动原因说明" in compact and not re.search(r"\d", compact)
+    )
+    return score + int(row.argument_complete) - 8 * int(mechanical)
+
+
+def _select_financial_editorial_rows(rows: Iterable[MaterialRow], budget: int) -> list[MaterialRow]:
+    row_list = list(rows)
+    core_facts = [row for row in row_list if row.claim_status == "formal_fact" and _core_financial_metric(row)]
+    overview = None
+    if len(core_facts) >= 2:
+        row_list = [row for row in row_list if row not in core_facts]
+        overview = _merge_core_financial_facts(core_facts)
+    ranked = sorted(
+        (row for row in row_list if _financial_insight_score(row) >= 0),
+        key=_financial_insight_score,
+        reverse=True,
+    )
+    selected = [overview] if overview is not None else []
+    for dimension in ("performance", "quality", "driver"):
+        row = next((item for item in ranked if item not in selected and dimension in _financial_dimensions(item.body)), None)
+        if row is not None:
+            selected.append(row)
+        if len(selected) == budget:
+            return selected
+    selected.extend(row for row in ranked if row not in selected)
+    return selected[:budget]
+
+
+def _core_financial_metric(row: MaterialRow) -> str:
+    text = f"{row.title}{row.body}"
+    return next((metric for metric in ("营业收入", "归母净利润", "经营现金流量净额") if metric in text), "")
+
+
+def _merge_core_financial_facts(rows: Iterable[MaterialRow]) -> MaterialRow:
+    order = ("营业收入", "归母净利润", "经营现金流量净额")
+    by_metric = {_core_financial_metric(row): row for row in rows}
+    first = next(by_metric[metric] for metric in order if metric in by_metric)
+    parts = []
+    refs = []
+    source_refs = []
+    for metric in order:
+        row = by_metric.get(metric)
+        if row is None:
+            continue
+        value = re.sub(rf"^(?:{re.escape(metric)})?[：:]?", "", re.sub(r"\s+", "", row.body))
+        parts.append(f"{metric}{value}")
+        refs.extend(ref for ref in row.citation_refs if ref not in refs)
+        source_refs.extend(ref for ref in row.source_ref_ids if ref not in source_refs)
+    body = "；".join(parts) + "。"
+    return replace(
+        first,
+        row_id="annual:core-financial-overview",
+        title="核心财务指标",
+        body=body,
+        text=f"核心财务指标：{body}",
+        citation_refs=tuple(refs),
+        source_ref_ids=tuple(source_refs),
+    )
+
+
 def _project_annual_display_row(row: MaterialRow) -> tuple[MaterialRow | None, str]:
     if not row.body or not row.citation_refs:
         return None, "empty"
     kept = []
     reasons = []
     for segment in re.split(r"(?<=[。！？；;])", row.body):
+        segment = _ANNUAL_BUSINESS_HEADING_RE.sub("", segment).strip()
+        segment = re.sub(
+            r"^\d+\s+\d{4}\s*年年度報告.{0,60}?管理層討論及分析\s*（續）\s*",
+            "",
+            segment,
+        )
+        segment = re.sub(r"^毛利及毛利率\s*(?=由於|由于)", "", segment)
+        segment = re.sub(r"^(?:由於|由于)上述原因[，,]?", "", segment)
+        segment = re.sub(r"^（\d+）[^，。；]{1,20}(?=公司)", "", segment)
+        segment = re.sub(r"^(.{2,20}?(?:解决方案|解決方案))\1", r"\1", segment)
+        segment = re.sub(
+            r"^(.{2,20}?(?:解决方案|解決方案))(?=(?:我们|我們)的\1)",
+            "",
+            segment,
+        )
         segment = re.sub(r"^(?:\d+[、.]\s*(?:主要业务|主要产品及服务情况)\s*|\d+(?:\.\d+)+\s*[^，。；;\d]{1,20}\s+(?=\S)|（?[^）]{1,20}）?芯片\s*\d+[、.]\s*|(?:报告期内公司从事的主要业务)?公司需遵守《[^》]+》[^。；，,]*披露要求[，,]*(?=公司(?:主营|主要业务|产品)))", "", segment)
+        segment = re.sub(r"^并(?=在业界.{0,20}(?:推出|发布|量产))", "", segment)
+        segment = _strip_annual_self_comparison(segment)
         if not segment:
             reasons.append("disclosure_or_governance")
             continue
@@ -263,11 +418,15 @@ def _project_annual_display_row(row: MaterialRow) -> tuple[MaterialRow | None, s
             prefix = segment.split(routine_marker, 1)[0].strip(" ，,；;。")
             if prefix and any(term in prefix for term in ("主营业务", "产品", "客户", "设备", "服务", "研发")):
                 segment = prefix
-        reason = _annual_segment_rejection_reason(segment, row.render_role)
+        admission_role = _annual_display_role(row.render_role, segment)
+        if admission_role != "financial_quality_explanation" and row.render_role != "financial_quality_explanation":
+            admission_role = row.render_role
+        reason = _annual_segment_rejection_reason(segment, admission_role)
+        compact_segment = re.sub(r"\s+", "", segment)
         is_titled_financial_fact = (
             row.claim_status == "formal_fact"
-            and re.fullmatch(r"\d[\d,，.]*(?:%|％|亿元|万元|亿|万)", re.sub(r"\s+", "", segment))
             and any(term in row.title for term in ("收入", "营收", "利润", "毛利率", "费用", "现金流", "存货"))
+            and bool(re.search(r"\d[\d,，.]*(?:%|％|亿元|万元|亿|万)", compact_segment))
         )
         if reason and not is_titled_financial_fact:
             reasons.append(reason)
@@ -279,33 +438,175 @@ def _project_annual_display_row(row: MaterialRow) -> tuple[MaterialRow | None, s
     projected_body = "".join(part if not index or kept[index - 1][-1:] in "。！？；;" else f"。{part}" for index, part in enumerate(kept)).strip()
     if not projected_body:
         return None, "empty"
-    if projected_body == row.body:
+    projected_role = _annual_display_role(row.render_role, projected_body)
+    projected_title = row.title if projected_role == row.render_role else {
+        "technology_product_progress": "技术与产品进展",
+        "market_competition_outlook": "市场与竞争",
+        "financial_quality_explanation": "分部财务信息",
+    }.get(projected_role, row.title)
+    if projected_body == row.body and projected_role == row.render_role and projected_title == row.title:
         return row, ""
-    return replace(row, body=projected_body, text=f"{row.title}：{projected_body}" if row.title else projected_body), ""
+    return replace(
+        row,
+        body=projected_body,
+        title=projected_title,
+        text=f"{projected_title}：{projected_body}" if projected_title else projected_body,
+        render_role=projected_role,
+    ), ""
+
+
+def _strip_annual_self_comparison(segment: str) -> str:
+    trimmed = re.sub(
+        r"^(?:在业界|在業界)?率先(?=(?:推出|发布|發佈|量产|量產))",
+        "",
+        segment,
+    )
+    trimmed = re.sub(
+        r"^(?:(?:公司|本公司)(?:是|为|為)|作为|作為)(?:国内|國內|全球|行业|行業)?"
+        r"(?:领先|領先|唯一)[^，,。；;]{0,100}[，,]\s*",
+        "",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"^(?:公司|本公司)是(?:国内|國內)[^，,。；;]{0,60}(?:产品线|產品線)(?:较|較)广的企业[，,]\s*",
+        "公司",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"^(.{2,40}?(?:平台|产品|產品))以[^，,。；;]{1,80}(?:引领|引領)"
+        r"[^，,。；;]{1,80}[，,](?=(?:通过|通過))",
+        r"\1",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"^(.{1,40}?)(?:因|凭借|憑藉)(?:良好|稳定|穩定|优异|優異|强大|強大)"
+        r"[^，,]{1,60}[，,]",
+        r"\1",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"[，,](?:公司)?(?:产品|產品)竞争力(?:明显|明顯|强|強|较强|較強)[，,]"
+        r"(?:得到|获得|獲得)(?:客户|客戶)(?:高度)?认可[。]?$",
+        "。",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"(?:公司)?(?:产品|產品)竞争力(?:明显|明顯|强|強|较强|較強)[，,]?",
+        "",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"[、，,](?:保持|維持)(?:公司|本公司)在(?:行业|行業)内的(?:竞争优势|競爭優勢)(?=奠定)",
+        "",
+        trimmed,
+    )
+    trimmed = re.sub(
+        r"[，,](?:为|為)(?:客户|客戶)提供[^。；;]{0,120}(?:多元产品矩阵|多元產品矩陣)"
+        r"[，,](?:全面)?匹配[^。；;]{1,80}[。]?$",
+        "。",
+        trimmed,
+    )
+    return re.sub(
+        r"[，,](?:在(?:行业|行業)内)?(?:保持了?|具备|具備|拥有|擁有)"
+        r"[^。；;]{0,100}(?:领先|領先)[^。；;]{0,24}[。]?$",
+        "。",
+        trimmed,
+    )
+
+
+def _annual_display_role(role: str, body: str) -> str:
+    compact = re.sub(r"\s+", "", body)
+    if (
+        role == "financial_quality_explanation"
+        and not any(term in compact for term in _ANNUAL_FINANCIAL_METRIC_TERMS)
+        and any(term in compact for term in ("产能", "產能", "产线", "產線", "产业园", "產業園"))
+        and any(term in compact for term in ("实施完毕", "實施完畢", "建成", "投产", "投產", "结项", "結項", "提升", "扩产", "擴產"))
+    ):
+        return "operating_progress"
+    if role == "business_structure" and re.search(r"(?:销售成本|銷售成本|毛利率|现金流|現金流).{0,18}\d", compact):
+        return "financial_quality_explanation"
+    if role == "market_competition_outlook" and not any(term in compact for term in ("行业地位", "市場地位", "市场份额", "市占率", "竞争", "競爭", "领先", "領先")):
+        if re.search(r"(?:开发|研發|研发|推出|发布|量产|验证).{0,40}(?:产品|芯片|平台|工具)", compact) or re.search(r"(?:产品|芯片|平台).{0,40}(?:开发|研發|研发|推出|发布|量产|验证)", compact):
+            return "technology_product_progress"
+    if role == "technology_product_progress" and any(term in compact for term in ("行业地位", "市場地位", "市场地位", "领先", "領先", "主要供应商", "主要供應商")):
+        return "market_competition_outlook"
+    return role
 
 
 def _annual_segment_rejection_reason(segment: str, role: str) -> str:
     compact = re.sub(r"\s+", "", segment)
     if not compact:
         return "empty"
+    if any(term in compact for term in ("领先", "領先", "领军者", "領軍者", "唯一", "显著优于", "顯著優於", "全面占优", "全面佔優")):
+        return "unsupported_self_comparison"
     if "我们认为" in compact and "财务报表" in compact and "公允反映" in compact:
         return "audit_boilerplate"
     if (
         "公司需遵守" in compact
         or "披露要求" in compact
         or "机构独立情况" in compact
-        or any(term in compact for term in ("供应商遴选", "本承诺函", "同业竞争", "保证独立性", "自主经营能力", "香港联交所", "无从事与本公司相同或相近的业务"))
+        or any(term in compact for term in ("供应商遴选", "本承诺函", "同业竞争", "保证独立性", "自主经营能力", "香港联交所", "无从事与本公司相同或相近的业务", "反贿赂", "反賄賂", "反腐败政策", "反腐敗政策", "商业道德", "商業道德"))
         or (any(term in compact for term in ("同业竞争", "关联交易", "资金占用")) and "承诺" in compact)
     ):
         return "disclosure_or_governance"
     if compact.startswith(">") or "|" in compact or "年度报告全文" in compact or "http://" in compact or "https://" in compact or re.match(r"^\d+[、.]\s*.{0,24}(?:风险|关税政策变化)", compact):
         return "document_or_heading_noise"
-    if compact.endswith(("、", ":", "：", "…", "...")) or compact.startswith(("方面，", "其中，", "此外，", "核心竞争力，", "并在", "与世界")) or ("知识产权列表" in compact and "申请数" in compact):
+    if compact.count("•") >= 2 and len(compact) >= 70:
+        return "catalog_without_business_value"
+    if compact.endswith(("、", ":", "：", "…", "...")) or re.search(r"(?:公司|股权|股權|事项|事項)(?:经|經)$", compact) or compact.startswith(("方面，", "其中，", "此外，", "核心竞争力，", "并在", "与世界")) or ("知识产权列表" in compact and "申请数" in compact):
         return "document_or_heading_noise"
+    if re.search(r"(?:与|和)?截至(?:\d{4}年\d{1,2}月\d{1,2}日止|\d{4}年?)$", compact):
+        return "document_or_heading_noise"
+    if role == "financial_quality_explanation" and re.search(r"(?:分别为|分別為).{0,50}(?:及|与|與)$", compact):
+        return "document_or_heading_noise"
+    if (
+        role == "financial_quality_explanation"
+        and len(re.findall(r"-?\d[\d,，]*(?:\.\d+)?", compact)) >= 8
+        and (
+            len(compact) >= 120
+            or sum(term in compact for term in _ANNUAL_FINANCIAL_METRIC_TERMS) >= 4
+        )
+    ):
+        return "financial_table_dump"
     if len(compact) <= 16 and not any(term in compact for term in ("公司", "产品", "客户", "收入", "增长", "研发")):
         return "document_or_heading_noise"
+    if re.search(r"(?:主营业务|主要业务|主要产品|经营模式|业务模式).{0,18}(?:未|没有)发生(?:重大)?变化", compact):
+        return "no_incremental_change"
+    if sum(term in compact for term in ("产品系列", "产品外观", "产品特性", "应用场景")) >= 3:
+        return "catalog_without_business_value"
+    if re.match(r"^\d+[、.].{0,24}(?:产品线|芯片|业务)", compact) and not any(term in compact for term in ("客户", "量产", "出货", "增长", "下降", "导入", "推出")):
+        return "document_or_heading_noise"
+    if compact.startswith("主要应用于") and not any(term in compact for term in ("公司", "客户", "订单", "量产", "推出", "收入")):
+        return "catalog_without_business_value"
+    if (
+        role == "market_competition_outlook"
+        and re.match(r"^\d+[、.]?公司行业地位", compact)
+        and not any(term in compact for term in ("市场份额", "排名", "领先", "竞争优势", "客户认可"))
+    ):
+        return "duplicate_business_profile"
+    if (
+        any(term in compact for term in ("持续关注", "提升核心竞争力", "稳步推进", "把握发展机遇"))
+        and not re.search(r"\d", compact)
+        and not any(term in compact for term in ("客户", "订单", "定点", "量产", "出货", "收入", "利润", "毛利率"))
+    ):
+        return "generic_management_statement"
+    if (
+        any(term in compact for term in ("避免技术流失", "避免技術流失", "技术保护措施", "技術保護措施"))
+        and not re.search(r"\d", compact)
+    ):
+        return "generic_management_statement"
+    if (
+        role == "technology_product_progress"
+        and not re.search(r"\d", compact)
+        and (
+            "始终重视技术创新" in compact
+            or "力争保持技术领先" in compact
+            or bool(re.search(r"持续.{0,12}研发投入", compact))
+        )
+    ):
+        return "generic_management_statement"
 
-    progress = ("报告期内", "实现", "增长", "下降", "出货", "导入", "进入", "量产", "拓展", "提升", "改善", "推出", "发布", "验证", "新增", "覆盖")
+    progress = ("报告期内", "实现", "增长", "下降", "出货", "交付", "导入", "进入", "量产", "拓展", "提升", "改善", "推出", "发布", "验证", "新增", "覆盖")
     linked = ("公司", "本集团", "管理层", "报告期内", "营收", "出货", "销量", "客户导入", "销售增长", "销售下滑")
     if any(term in compact for term in ("采购模式", "生产模式", "经营模式", "销售模式", "代理销售", "认证程序", "生产流程")):
         if "没有发生变化" in compact or not any(term in compact for term in progress + ("竞争优势", "财务", "利润", "毛利率")):
@@ -314,19 +615,27 @@ def _annual_segment_rejection_reason(segment: str, role: str) -> str:
         return "routine_process"
 
     spec_tokens = re.findall(r"(?:IEEE|MSA|QSFP|OSFP|CMIS|\b\d+(?:\.\d+)?[GMTK]?\b)", segment)
-    if len(spec_tokens) >= 3 and not any(term in compact for term in progress + ("客户", "应用", "技术路线")):
+    if role != "financial_quality_explanation" and len(spec_tokens) >= 3 and not any(term in compact for term in progress + ("客户", "应用", "技术路线")):
         return "catalog_without_business_value"
 
     generic_industry = ("预测", "市场规模", "年均复合", "行业发展", "技术门槛", "技术壁垒", "全球市场", "全球宏观经济", "中国半导体", "海关总署", "国内互联网厂商", "国内芯片设计企业", "中国企业")
     if (role == "market_competition_outlook" or any(term in compact for term in generic_industry)) and not any(term in compact for term in linked):
         return "generic_industry_context"
 
+    if role == "financial_quality_explanation":
+        has_metric = any(term in compact for term in _ANNUAL_FINANCIAL_METRIC_TERMS)
+        has_amount = has_metric and bool(re.search(r"\d", compact))
+        has_explanation = has_metric and any(term in compact for term in _ANNUAL_FINANCIAL_EXPLANATION_TERMS)
+        has_quality_fact = any(term in compact for term in _ANNUAL_FINANCIAL_QUALITY_TERMS)
+        if not (has_amount or has_explanation or has_quality_fact):
+            return "role_mismatch"
+        return ""
+
     terms = {
         "business_structure": ("公司", "主营", "主要业务", "产品", "客户", "应用", "服务于", "从事", "平台", "增长"),
         "operating_progress": progress,
         "market_competition_outlook": ("公司", "管理层", "竞争", "战略", "需求", "行业地位", "市场份额", "产品", "应用"),
-        "technology_product_progress": ("研发", "推出", "发布", "量产", "验证", "技术", "平台", "产品", "投入", "迭代"),
-        "financial_quality_explanation": ("收入", "营收", "利润", "毛利率", "费用", "现金流", "存货", "主要系", "变化原因", "所致"),
+        "technology_product_progress": ("研发", "研發", "推出", "发布", "發佈", "量产", "量產", "验证", "驗證", "定点", "定點", "技术", "技術", "平台", "产品", "產品", "投入", "迭代"),
     }.get(str(role or ""), linked + ("收入", "营收", "利润", "毛利率", "费用", "现金流", "存货"))
     return "" if any(term in compact for term in terms) else "role_mismatch"
 
@@ -340,16 +649,42 @@ def _dedupe_annual_display_rows(
         body_key = re.sub(r"\s+", "", row.body).strip("。；;")
         for index, previous in enumerate(kept):
             previous_key = re.sub(r"\s+", "", previous.body).strip("。；;")
-            if not body_key or not (body_key == previous_key or (previous.render_role == row.render_role and (body_key in previous_key or previous_key in body_key))):
+            same_role = previous.render_role == row.render_role
+            if not body_key:
                 continue
-            reason = "duplicate_exact" if body_key == previous_key else "duplicate_contained"
+            if body_key == previous_key:
+                reason = "duplicate_exact"
+            elif same_role and (body_key in previous_key or previous_key in body_key):
+                reason = "duplicate_contained"
+            elif (
+                same_role
+                and row.render_role == "financial_quality_explanation"
+                and _financial_fact_keys(row.body) & _financial_fact_keys(previous.body)
+            ):
+                reason = "duplicate_financial_fact"
+            else:
+                continue
             reasons[reason] = reasons.get(reason, 0) + 1
-            if len(body_key) > len(previous_key):
+            if (
+                reason == "duplicate_financial_fact"
+                and _financial_insight_score(row) > _financial_insight_score(previous)
+            ) or (reason != "duplicate_financial_fact" and len(body_key) > len(previous_key)):
                 kept[index] = row
             break
         else:
             kept.append(row)
     return tuple(kept), sum(reasons.values()), reasons
+
+
+def _financial_fact_keys(body: str) -> set[tuple[str, str]]:
+    compact = re.sub(r"\s+", "", body)
+    metric = next((name for name, aliases in _FINANCIAL_FACT_ALIASES if any(alias in compact for alias in aliases)), "")
+    if not metric:
+        return set()
+    return {
+        (metric, f"{value.replace(',', '').replace('，', '')}{unit.replace('億', '亿').replace('萬', '万')}")
+        for value, unit in re.findall(r"(-?\d[\d,，]*(?:\.\d+)?)\s*(亿元|億元|万元|萬元|百万元|百萬元|千元|元)", compact)
+    }
 
 
 def build_chapter4_view_model(

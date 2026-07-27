@@ -29,6 +29,10 @@
     "source_intake": {
       "enabled": true,
       "canonical_synthesis_source_policy": "formal_first",
+      "periodic_report_fulltext": {
+        "enabled": true,
+        "report_type": "annual_report"
+      },
       "periodic_narrative_cards_synthesis_display": {
         "enabled": true,
         "max_display_items": 8

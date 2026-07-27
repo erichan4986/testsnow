@@ -910,7 +910,10 @@ def _continues_same_argument(
     elif family == "operating_progress":
         extends = not following_text.startswith(("报告期", "報告期", "本期", "本年度"))
     else:
-        extends = not following_text.startswith(("公司", "本公司", "集團", "集团"))
+        extends = not bool(re.match(
+            r"^(?:(?:报告期内|報告期內|本年度|本期)[，,]?)?(?:公司|本公司|集團|集团)",
+            _compact_text(following_text),
+        ))
     if not extends or following_state != "seed":
         return extends
     if family == "market_competition_outlook" and _market_argument_continues("", following_text):
@@ -1030,7 +1033,7 @@ def _has_concrete_business_fact(text: str) -> bool:
     relation = bool(re.search(
         r"(?:主要)?(?:应用|應用|用于|用於|服务|服務)(?:于|於)?|(?:面向|包括|涵盖|涵蓋|拥有|擁有|符合|认证|認證)|"
         r"(?:是|为|為).{1,50}(?:供应商|供應商|提供商|服务商|服務商)|(?:采用|採用).{0,30}(?:销售|銷售|经营|經營|商业|商業)模式|"
-        r"(?:致力于|致力於).{0,30}(?:打造|平台|服务|服務)|(?:为|為|向)客户提供|(?:与|與).{0,40}(?:合作|夥伴)|"
+        r"(?:致力于|致力於).{0,30}(?:打造|平台|服务|服務)|(?:为|為|向)客户提供|(?:与|與).{0,100}(?:合作|夥伴)|"
         r"(?:分为|分為)|客户.{0,50}(?:采购|採購)|(?:建立|转化为|轉化為).{0,35}(?:客户|客戶)(?:关系|關係)|"
         r"(?:为|為).{0,20}(?:业务|業務).{0,20}(?:提供|支撑|支持)|"
         r"(?:建立|构建|構建|打造).{0,30}(?:平台|生态|生態|产品线|產品線|客户关系|客戶關係)|"
@@ -1135,7 +1138,7 @@ def _has_operating_change(text: str) -> bool:
     change_tokens = ("增长", "增長", "下降", "提升", "增加", "减少", "減少", "实现", "實現", "交付", "出货", "出貨", "同比", "环比")
     operating_anchor = ("销量", "銷量", "产量", "產量", "产能", "產能", "订单", "訂單", "收入", "营收", "營收", "交付", "出货", "出貨", "库存", "庫存")
     compact = _compact_text(text)
-    has_report_period = bool(re.search(r"(?:报告期|報告期|本期|本年度|20\d{2}年)", compact))
+    has_report_period = bool(re.search(r"(?:报告期|報告期|本期|本年度|目前|20\d{2}年)", compact))
     return (
         has_report_period
         and bool(_matching_tokens(text, change_tokens))

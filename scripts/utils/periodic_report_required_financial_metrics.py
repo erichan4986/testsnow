@@ -115,6 +115,10 @@ def _extract_hk_profit_quality(text: str) -> Dict[str, Any]:
         or summary_gross_profit
         or _hk_thousand_metric(text, "毛利")
     )
+    net_profit = (
+        _hk_thousand_metric(text, "本公司權益持有人應佔年內")
+        or _hk_thousand_metric(text, "年內虧損")
+    )
     operating_loss = _hk_thousand_metric(text, "經營虧損")
     adjusted_loss = adjusted_loss or _hk_thousand_metric(text, "經調整虧損淨額") or _hk_thousand_metric(text, "年內經調整虧損淨額")
     rd_expense = rd_expense or _hk_thousand_metric(text, "研發開支")
@@ -125,6 +129,7 @@ def _extract_hk_profit_quality(text: str) -> Dict[str, Any]:
         "revenue_yoy": revenue_yoy,
         "gross_profit": gross_profit,
         "gross_margin": gross_margin,
+        "net_profit": net_profit,
         "operating_loss": operating_loss,
         "adjusted_net_loss": adjusted_loss,
         "rd_expense": rd_expense,
@@ -512,16 +517,34 @@ def _extract_corporate_actions(text: str) -> Dict[str, Any]:
 
 
 def _line_metric(text: str, label: str) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-    for line in _candidate_lines(text, label):
+    candidates = []
+    for index, line in enumerate(_candidate_lines(text, label)):
         tail = line[line.find(label) + len(label):] if label in line else line
         tokens = _number_tokens(tail)
         if len(tokens) < 2:
             continue
-        amount = _amount_cell(tokens[0][0], tokens[0][1] or "元")
+        explicit_unit = tokens[0][1] if tokens[0][1] in {"亿元", "万元", "千元", "元"} else ""
+        contextual_unit = _nearest_table_amount_unit(text, line) if not explicit_unit else ""
+        candidates.append((0 if explicit_unit else 1 if contextual_unit else 2, index, tokens, explicit_unit or contextual_unit or "元"))
+    for _, _, tokens, unit in sorted(candidates):
+        amount = _amount_cell(tokens[0][0], unit)
         rate_token = _rate_token_from_financial_row(tokens)
         rate = _value_cell(rate_token, "%") if rate_token is not None else None
         return amount, rate
     return None, None
+
+
+def _nearest_table_amount_unit(text: str, line: str, max_context: int = 600) -> str:
+    """Infer a unit only from the nearest table header in the same text block."""
+    start = 0
+    matches = []
+    while line and (position := text.find(line, start)) >= 0:
+        context = text[max(0, position - max_context):position].rsplit("\n\n", 1)[-1]
+        markers = list(re.finditer(r"单位\s*[:：]\s*(亿元|万元|千元|元)", context))
+        if markers:
+            matches.append((len(context) - markers[-1].end(), markers[-1].group(1)))
+        start = position + max(1, len(line))
+    return min(matches, default=(0, ""))[1]
 
 
 def _candidate_lines(text: str, label: str) -> List[str]:

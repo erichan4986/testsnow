@@ -408,12 +408,6 @@ class SynthesisSkill(BaseSkill):
 
     @staticmethod
     def _annual_narrative_cards(ctx: SkillContext, material: Dict[str, Any]) -> List[Dict[str, Any]]:
-        selected = [
-            c for c in (material.get("selected_narrative_cards") or [])
-            if isinstance(c, dict)
-        ]
-        if selected:
-            return selected
         pack = ctx.get("periodic_report_narrative_evidence_cards") or {}
         cards: List[Dict[str, Any]] = []
         for c in pack.get("cards") or []:
@@ -426,7 +420,12 @@ class SynthesisSkill(BaseSkill):
             card["excerpt"] = excerpt
             card.setdefault("source_credit", 75)
             cards.append(card)
-        return cards
+        if cards:
+            return cards
+        return [
+            c for c in (material.get("selected_narrative_cards") or [])
+            if isinstance(c, dict)
+        ]
 
     @staticmethod
     def _clean_annual_memo_excerpt(text: str, max_chars: int = 300) -> str:

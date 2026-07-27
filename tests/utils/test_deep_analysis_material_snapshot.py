@@ -771,10 +771,369 @@ def test_select_annual_display_rows_applies_role_budget_without_rewriting_admiss
 
     selected, diagnostics = select_annual_display_rows(rows)
 
-    assert len(selected) == 2
+    assert len(selected) == 4
     assert diagnostics["annual_selected_count"] == 16
-    assert diagnostics["annual_hidden_count"] == 14
-    assert diagnostics["annual_hidden_by_role"] == {"operating_progress": 14}
+    assert diagnostics["annual_hidden_count"] == 12
+    assert diagnostics["annual_hidden_by_role"] == {"operating_progress": 12}
+
+
+def test_select_annual_display_rows_keeps_three_concrete_market_observations():
+    selected, _ = select_annual_display_rows(tuple(
+        _annual_display_row(
+            f"2025年，公司产品{i}在客户市场实现批量应用，市场份额持续提升。",
+            role="market_competition_outlook", ref=i + 1,
+            row_id=f"annual:market:{i}",
+        )
+        for i in range(3)
+    ))
+
+    assert len(selected) == 3
+
+
+def test_select_annual_display_rows_keeps_six_diverse_financial_rows():
+    rows = (
+        _annual_display_row("营业收入：8.22亿元", role="financial_quality_explanation", row_id="annual:revenue", status="formal_fact", title="营业收入", ref=1),
+        _annual_display_row("归母净利润：-14.25亿元", role="financial_quality_explanation", row_id="annual:profit", status="formal_fact", title="归母净利润", ref=2),
+        _annual_display_row("经营现金流量净额：-9.85亿元", role="financial_quality_explanation", row_id="annual:cash", status="formal_fact", title="经营现金流量净额", ref=3),
+        _annual_display_row("全年营收8.22亿元，同比增长73.4%，毛利率为41.0%。", role="financial_quality_explanation", row_id="annual:performance", ref=4),
+        _annual_display_row("整体毛利由1.95亿元增加73.1%至3.37亿元。", role="financial_quality_explanation", row_id="annual:gross-profit", ref=5),
+        _annual_display_row("得益于新业务增长和规模放量，经营性亏损同比收窄。", role="financial_quality_explanation", row_id="annual:driver", ref=6),
+        _annual_display_row("具身智能解决方案收入0.96亿元，同比增长。", role="financial_quality_explanation", row_id="annual:segment-revenue", ref=7),
+        _annual_display_row("具身智能解决方案毛利率为48.7%。", role="financial_quality_explanation", row_id="annual:segment-margin", ref=8),
+    )
+
+    selected, diagnostics = select_annual_display_rows(rows)
+
+    assert len(selected) == 6
+    assert diagnostics["annual_hidden_by_role"] == {"financial_quality_explanation": 1}
+    assert {row.row_id for row in selected} >= {
+        "annual:core-financial-overview", "annual:performance", "annual:driver",
+    }
+
+
+def test_select_annual_display_rows_accepts_benefit_led_financial_driver():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "报告期内，受益于客户需求增长且随着运营效率提升，营业收入与净利润均同比增长。",
+            role="financial_quality_explanation", row_id="annual:benefit-driver", complete=True,
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:benefit-driver"]
+
+
+def test_select_annual_display_rows_accepts_current_scale_delivery_progress():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "目前已在四足机器人、航运智能巡检等场景规模化交付。",
+            role="operating_progress", row_id="annual:scale-delivery", complete=True,
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:scale-delivery"]
+
+
+def test_select_annual_display_rows_removes_unsupported_self_comparison_wording():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "公司为客户提供100G至1.6T高速光模块，在行业内保持了出货量和市场份额的领先优势。",
+            role="business_structure", row_id="annual:product-scope",
+        ),
+        _annual_display_row(
+            "公司是国内领先的FPGA类产品供应商，2025年实现销售收入约13.16亿元。",
+            role="operating_progress", row_id="annual:fpga-revenue",
+        ),
+        _annual_display_row(
+            "作為國內唯一堅持打造開放平台的高性能智能駕駛芯片，A2000目前已拿到頭部車企定點，預期今年開始量產。",
+            role="technology_product_progress", row_id="annual:a2000-progress",
+        ),
+        _annual_display_row(
+            "凭借行业领先的研发与交付能力，公司保持市场份额持续成长。",
+            role="operating_progress", row_id="annual:promotional-only",
+        ),
+    ))
+    by_id = {row.row_id: row.body for row in selected}
+
+    assert by_id["annual:product-scope"] == "公司为客户提供100G至1.6T高速光模块。"
+    assert by_id["annual:fpga-revenue"] == "2025年实现销售收入约13.16亿元。"
+    assert by_id["annual:a2000-progress"] == "A2000目前已拿到頭部車企定點，預期今年開始量產。"
+    assert "annual:promotional-only" not in by_id
+    assert diagnostics["annual_rejected_by_reason"]["unsupported_self_comparison"] == 1
+
+
+def test_select_annual_display_rows_keeps_platform_fact_without_promotional_portrait_clauses():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "2025年，本公司通過發佈SesameX平台，完成了從智能駕駛領軍者向端側AI全棧芯片供應商的跨越。"
+            "SesameX平台以全腦智能體系引領具身智能新範式，通過Kalos、Aura、Liora三款核心模組"
+            "為機器人提供從基礎控制到高階認知的全棧算力。",
+            role="business_structure", row_id="annual:sesamex-portrait",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:sesamex-portrait"]
+    assert selected[0].body == (
+        "SesameX平台通過Kalos、Aura、Liora三款核心模組"
+        "為機器人提供從基礎控制到高階認知的全棧算力。"
+    )
+    assert diagnostics["annual_rejected_by_reason"] == {}
+
+
+def test_select_annual_display_rows_removes_generic_product_praise_from_hard_facts():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "公司NFC产品广泛应用于金融POS、智能门锁和门禁市场，产品线积极拓展高价值应用，"
+            "产品竞争力明显，得到客户高度认可。",
+            role="business_structure", row_id="annual:nfc-applications",
+        ),
+        _annual_display_row(
+            "FPGA产品在通信、工业控制和人工智能领域应用良好，公司产品竞争力强，营收增长。",
+            role="operating_progress", row_id="annual:fpga-growth",
+        ),
+        _annual_display_row(
+            "MCU芯片因良好市场布局和稳定产品质量，在车规和白色家电市场出货较上年快速增长。",
+            role="operating_progress", row_id="annual:mcu-growth",
+        ),
+    ))
+    by_id = {row.row_id: row.body for row in selected}
+
+    assert by_id == {
+        "annual:nfc-applications": "公司NFC产品广泛应用于金融POS、智能门锁和门禁市场，产品线积极拓展高价值应用。",
+        "annual:fpga-growth": "FPGA产品在通信、工业控制和人工智能领域应用良好，营收增长。",
+        "annual:mcu-growth": "MCU芯片在车规和白色家电市场出货较上年快速增长。",
+    }
+
+
+def test_select_annual_display_rows_removes_competitive_praise_inside_capacity_fact():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "报告期内，产业园三期项目实施完毕，有利于提升高端产品产能，"
+            "为保障客户规模上量、保持公司在行业内的竞争优势奠定基础。",
+            role="operating_progress", row_id="annual:capacity",
+        ),
+    ))
+
+    assert selected[0].body == (
+        "报告期内，产业园三期项目实施完毕，有利于提升高端产品产能，"
+        "为保障客户规模上量奠定基础。"
+    )
+
+
+def test_select_annual_display_rows_keeps_product_breadth_without_comparative_praise():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "公司是国内芯片设计企业中产品线较广的企业，主要有FPGA、安全与识别、非挥发存储器、"
+            "智能电表芯片四大类产品线，并通过控股子公司提供芯片测试服务。",
+            role="business_structure", row_id="annual:product-lines",
+        ),
+        _annual_display_row(
+            "公司开发FPGA、RF-FPGA、PSoC、RFSoC、FPAI等系列产品，算力从4TOPS至128TOPS，"
+            "广泛应用于工业控制、消费电子和人工智能领域，为客户提供低成本、低功耗、高性能、"
+            "高可靠性的多元产品矩阵，全面匹配多样化应用需求。",
+            role="technology_product_progress", row_id="annual:product-matrix",
+        ),
+    ))
+    by_id = {row.row_id: row.body for row in selected}
+
+    assert by_id == {
+        "annual:product-lines": (
+            "公司主要有FPGA、安全与识别、非挥发存储器、智能电表芯片四大类产品线，"
+            "并通过控股子公司提供芯片测试服务。"
+        ),
+        "annual:product-matrix": (
+            "公司开发FPGA、RF-FPGA、PSoC、RFSoC、FPAI等系列产品，算力从4TOPS至128TOPS，"
+            "广泛应用于工业控制、消费电子和人工智能领域。"
+        ),
+    }
+
+
+def test_select_annual_display_rows_prefers_current_dual_business_delivery_as_portrait():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "2026年本公司将推动SesameX平台在物流、制造、服务等场景规模化部署。",
+            role="business_structure", row_id="annual:future-platform",
+        ),
+        _annual_display_row(
+            "目前已在四足机器人、航运智能巡检等场景规模化交付，与智能驾驶形成双主业增长格局。",
+            role="operating_progress", row_id="annual:current-dual-business", ref=2,
+        ),
+    ))
+
+    portrait = next(row for row in selected if row.editorial_slot == "portrait")
+    assert portrait.row_id == "annual:current-dual-business"
+
+
+def test_select_annual_display_rows_reroutes_capacity_progress_from_financial_family():
+    body = "报告期内，产业园三期项目实施完毕，公司高端产品产能进一步提升，为客户规模上量提供保障。"
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            body, role="financial_quality_explanation", row_id="annual:capacity-progress", complete=True,
+        ),
+    ))
+
+    assert [(row.row_id, row.render_role, row.body) for row in selected] == [
+        ("annual:capacity-progress", "operating_progress", body),
+    ]
+
+
+def test_select_annual_display_rows_prioritizes_compact_multi_metric_summary():
+    rows = (
+        _annual_display_row(
+            "2025年营业收入39.82亿元，同比增长10.92%，综合毛利率56.19%，归属于上市公司股东净利润2.32亿元。",
+            role="financial_quality_explanation", row_id="annual:multi-metric-summary",
+        ),
+        _annual_display_row("归属于上市公司股东的净利润2.32亿元，同比减少59.42%。", role="financial_quality_explanation", row_id="annual:profit"),
+        _annual_display_row("资产减值损失4.39亿元，同比增加2.71亿元。", role="financial_quality_explanation", row_id="annual:impairment"),
+        _annual_display_row("研发费用增加，主要系资本化研发项目撇销所致。", role="financial_quality_explanation", row_id="annual:rd", complete=True),
+        _annual_display_row("财务费用增加，主要系美元汇率变动导致汇兑损失增加。", role="financial_quality_explanation", row_id="annual:fx", complete=True),
+        _annual_display_row("存货跌价损失增加，主要系部分备货产品销售未达预期。", role="financial_quality_explanation", row_id="annual:inventory", complete=True),
+        _annual_display_row("经营现金流改善，主要系销售商品收到的现金增加所致。", role="financial_quality_explanation", row_id="annual:cash-driver", complete=True),
+    )
+
+    selected, _ = select_annual_display_rows(rows)
+
+    assert "annual:multi-metric-summary" in {row.row_id for row in selected}
+
+
+def test_select_annual_display_rows_rejects_bullet_joined_product_table_fragment():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "SoC，为智能汽车提供计算解决方案 机器人平台SESAMEX TM • 业界首个全脑智能平台 • "
+            "融合感知、认知、决策与控制的商业化部署计算平台 瀚海中间件智能瀚海®辅助驾驶中间件平台",
+            role="business_structure", row_id="annual:hk-product-table",
+        ),
+        _annual_display_row(
+            "公司将具身智能解决方案与高阶智能驾驶共同作为发展核心双引擎。",
+            role="business_structure", row_id="annual:dual-engine",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:dual-engine"]
+    assert diagnostics["annual_rejected_by_reason"]["catalog_without_business_value"] == 1
+
+
+def test_select_annual_display_rows_rejects_governance_policy_from_business_structure():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "我們制定了適用於本集團公司所有管理人員、員工和外部第三方的《反賄賂反腐敗政策》，"
+            "以規範員工及第三方的商業道德行為，塑造專業、公正和誠信的企業形象。",
+            role="business_structure", row_id="annual:anti-bribery-policy",
+        ),
+        _annual_display_row(
+            "公司将具身智能解决方案与高阶智能驾驶共同作为发展核心双引擎。",
+            role="business_structure", row_id="annual:dual-engine",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:dual-engine"]
+    assert diagnostics["annual_rejected_by_reason"]["disclosure_or_governance"] == 1
+
+
+def test_select_annual_display_rows_keeps_specific_impairment_driver_when_crowded():
+    rows = (
+        _annual_display_row("营业收入：39.82亿元", role="financial_quality_explanation", row_id="annual:revenue", status="formal_fact", title="营业收入", ref=11),
+        _annual_display_row("经营现金流量净额：7.84亿元", role="financial_quality_explanation", row_id="annual:operating-cash", status="formal_fact", title="经营现金流量净额", ref=12),
+        _annual_display_row("2025年营业收入39.82亿元，同比增长10.92%，综合毛利率56.19%，归属于上市公司股东净利润2.32亿元。", role="financial_quality_explanation", row_id="annual:summary"),
+        _annual_display_row("资产减值损失4.39亿元，同比增加2.71亿元。", role="financial_quality_explanation", row_id="annual:impairment"),
+        _annual_display_row("研发费用增加，主要系资本化研发项目撇销所致。", role="financial_quality_explanation", row_id="annual:rd", complete=True),
+        _annual_display_row("毛利较上年增加2.29亿元。", role="financial_quality_explanation", row_id="annual:gross-profit"),
+        _annual_display_row("财务费用变动原因说明：主要系报告期内因美元汇率变动使得汇兑损失增加。", role="financial_quality_explanation", row_id="annual:fx", complete=True),
+        _annual_display_row("存货与现金流说明：主要系销售商品收到的现金增加所致。", role="financial_quality_explanation", row_id="annual:cash", complete=True),
+        _annual_display_row(
+            "资产减值损失增加，主要系部分备货产品下游需求结构变化、销售未达预期，"
+            "同时部分无形资产未达到预期收益。",
+            role="financial_quality_explanation", row_id="annual:impairment-driver", complete=True,
+        ),
+    )
+
+    selected, _ = select_annual_display_rows(rows)
+
+    assert "annual:impairment-driver" in {row.row_id for row in selected}
+
+
+def test_select_annual_display_rows_rejects_truncated_financial_comparison():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "整体毛利率保持稳定，2024年及2025年分别为41.1%及",
+            role="financial_quality_explanation", row_id="annual:truncated-margin",
+        ),
+        _annual_display_row(
+            "具身智能解决方案毛利率为48.7%。",
+            role="financial_quality_explanation", row_id="annual:complete-margin", ref=2,
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:complete-margin"]
+    assert diagnostics["annual_rejected_by_reason"]["document_or_heading_noise"] == 1
+
+
+def test_select_annual_display_rows_rejects_truncated_transaction_tail():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "同日，SPV以人民币2,021.8838万元认购目标公司新增注册资本，"
+            "相当于增资事项后目标公司经",
+            role="operating_progress", row_id="annual:truncated-transaction",
+        ),
+        _annual_display_row(
+            "目前已在四足机器人、航运智能巡检等场景规模化交付。",
+            role="operating_progress", row_id="annual:delivery", ref=2,
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:delivery"]
+    assert diagnostics["annual_rejected_by_reason"]["document_or_heading_noise"] == 1
+
+
+def test_select_annual_display_rows_rejects_generic_technology_protection_boilerplate():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "为保持公司核心竞争力、避免技术流失，公司采取严密的技术保护措施。",
+            role="operating_progress", row_id="annual:protection",
+        ),
+        _annual_display_row(
+            "报告期内，高端光模块产业园三期项目实施完毕，相关项目均已结项。",
+            role="operating_progress", row_id="annual:capacity", ref=2,
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:capacity"]
+    assert diagnostics["annual_rejected_by_reason"]["generic_management_statement"] == 1
+
+
+def test_select_annual_display_rows_strips_hk_segment_heading_prefix():
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "智能影像解決方案我們的智能影像解決方案收入由人民幣36.3百萬元增加7.9%，至人民幣39.2百萬元，"
+            "主要是我們智能影像解決方案產品拓展至AI眼鏡等領域。",
+            role="technology_product_progress", row_id="annual:imaging",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:imaging"]
+    assert selected[0].body == (
+        "我們的智能影像解決方案收入由人民幣36.3百萬元增加7.9%，至人民幣39.2百萬元，"
+        "主要是我們智能影像解決方案產品拓展至AI眼鏡等領域。"
+    )
+
+
+def test_select_annual_display_rows_prefers_concrete_progress_over_generic_complete_plan():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "公司将持续关注行业发展并提升核心竞争力。",
+            role="market_competition_outlook", row_id="annual:generic", complete=True,
+        ),
+        _annual_display_row(
+            "2025年，公司A2000芯片完成头部客户定点并启动量产。",
+            role="market_competition_outlook", row_id="annual:product",
+        ),
+        _annual_display_row(
+            "2025年，公司与客户合作推进Robotaxi项目量产落地。",
+            role="market_competition_outlook", row_id="annual:customer",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:customer", "annual:product"]
+    assert diagnostics["annual_rejected_by_reason"]["generic_management_statement"] == 1
 
 
 def test_formal_medium_view_model_assigns_portrait_slot_and_keeps_distinct_external_projections():
@@ -1047,11 +1406,332 @@ def test_select_annual_display_rows_rejects_remaining_report_noise_shapes():
     assert sum(diagnostics["annual_rejected_by_reason"].values()) == 7
 
 
-def test_select_annual_display_rows_removes_normalized_duplicate_segments_within_a_row():
-    sentence = "主要应用于400G以太网、数据中心和云网络。"
+def test_select_annual_display_rows_strips_business_heading_and_rejects_no_change_row():
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "一、报告期内公司所从事的主要业务、经营模式、行业情况说明 "
+            "(一) 主要业务、主要产品或服务情况 报告期内，公司的主要业务、主要产品没有发生重大变化。",
+            row_id="annual:no-change",
+        ),
+        _annual_display_row(
+            "一、报告期内公司所从事的主要业务、经营模式、行业情况说明 "
+            "(一) 主要业务、主要产品或服务情况 1、主要业务 "
+            "复旦微电是一家从事集成电路设计、开发和测试，并为客户提供系统解决方案的专业公司。",
+            row_id="annual:profile",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:profile"]
+    assert selected[0].body == "复旦微电是一家从事集成电路设计、开发和测试，并为客户提供系统解决方案的专业公司。"
+    assert diagnostics["annual_rejected_by_reason"]["no_incremental_change"] == 1
+
+
+def test_select_annual_display_rows_diversifies_financial_insight_over_mechanical_rows():
     selected, _ = select_annual_display_rows((
         _annual_display_row(
-            sentence + "主要应用于 400G 以 太网、数据中心和云 网络。",
+            "报告期内，资产减值损失约为4.39亿元，较上年同期增加约2.71亿元。",
+            role="financial_quality_explanation", row_id="annual:impairment",
+        ),
+        _annual_display_row(
+            "归属于上市公司股东的净利润约为2.32亿元，较上年同期减少59.42%。",
+            role="financial_quality_explanation", row_id="annual:profit",
+        ),
+        _annual_display_row(
+            "部分备货产品下游需求结构变化、销售未达预期，同时部分无形资产未达到预期收益，导致减值损失增加。",
+            role="financial_quality_explanation", row_id="annual:driver",
+        ),
+        _annual_display_row(
+            "营业成本变动原因说明：主要系报告期内营业收入增加，使得营业成本相应增加。",
+            role="financial_quality_explanation", row_id="annual:cost", complete=True,
+        ),
+        _annual_display_row(
+            "投资活动产生的现金流量净额变动原因说明：主要系购建固定资产、无形资产支付现金减少所致。",
+            role="financial_quality_explanation", row_id="annual:investing-cash", complete=True,
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == [
+        "annual:profit", "annual:impairment", "annual:driver", "annual:investing-cash",
+    ]
+
+
+def test_select_annual_display_rows_rejects_incomplete_period_tail() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "我们辅助驾驶产品及解决方案的毛利率保持相对稳定，截至2024年12月31日止年度与截至2025年12月31日止",
+            role="financial_quality_explanation", row_id="annual:broken-period",
+        ),
+        _annual_display_row(
+            "辅助驾驶产品毛利率保持稳定，截至2024年12月31日止年度与截至2025",
+            role="financial_quality_explanation", row_id="annual:broken-year",
+        ),
+        _annual_display_row(
+            "2025年全年营收8.22亿元，同比增长73.4%，毛利率为41.0%。",
+            role="financial_quality_explanation", row_id="annual:headline",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:headline"]
+    assert diagnostics["annual_rejected_by_reason"]["document_or_heading_noise"] == 2
+
+
+def test_select_annual_display_rows_rejects_catalog_headers_and_orphan_application_fragments() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "（一）主要产品 产品系列 产品外观 产品特性 应用场景 1.6T OSFP拥有DR8及2xFR4系列产品；",
+            row_id="annual:catalog",
+        ),
+        _annual_display_row(
+            "主要应用于400G以太网、数据中心和云网络。",
+            row_id="annual:orphan-application",
+        ),
+    ))
+
+    assert selected == ()
+    assert diagnostics["annual_rejected_by_reason"]["catalog_without_business_value"] == 2
+
+
+def test_select_annual_display_rows_keeps_concrete_product_launch_after_leading_conjunction() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "并在业界率先推出1.6T-DR8 OSFP224 LPO。",
+            role="technology_product_progress", row_id="annual:launch",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:launch"]
+    assert selected[0].body == "推出1.6T-DR8 OSFP224 LPO。"
+
+
+def test_select_annual_display_rows_rejects_profile_repeated_as_market_position() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "2、公司行业地位 公司从事高速光模块研发、设计、封装、测试和销售，为客户提供400G、800G和1.6T产品。",
+            role="market_competition_outlook", row_id="annual:repeated-profile",
+        ),
+        _annual_display_row(
+            "凭借研发和交付能力，公司获得海内外客户认可，并保持市场份额持续增长。",
+            role="market_competition_outlook", row_id="annual:market-share",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:market-share"]
+    assert diagnostics["annual_rejected_by_reason"]["duplicate_business_profile"] == 1
+
+
+def test_select_annual_display_rows_rejects_generic_technology_and_financial_aspirations() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "公司始终重视技术创新、不断增加研发投入，促进产品持续迭代升级，力争保持技术领先。",
+            role="technology_product_progress", row_id="annual:generic-tech",
+        ),
+        _annual_display_row(
+            "同时，持续保持较强的研发投入，进行产品迭代和产品谱系化扩展。",
+            role="technology_product_progress", row_id="annual:generic-rd-spend",
+        ),
+        _annual_display_row(
+            "公司紧盯行业发展趋势并积极切入新领域，不断提升营收水平。",
+            role="financial_quality_explanation", row_id="annual:generic-financial",
+        ),
+        _annual_display_row(
+            "本年度研发投入167,593.11万元，主要投向产品升级及相关技术储备。",
+            role="technology_product_progress", row_id="annual:rd-spend",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:rd-spend"]
+    assert diagnostics["annual_rejected_by_reason"]["generic_management_statement"] == 1
+    assert diagnostics["annual_rejected_by_reason"]["unsupported_self_comparison"] == 1
+    assert diagnostics["annual_rejected_by_reason"]["role_mismatch"] == 1
+
+
+def test_select_annual_display_rows_dedupes_same_financial_metric_and_amount() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "归母净利润：2.32亿元", role="financial_quality_explanation",
+            row_id="annual:confirmed-profit", status="formal_fact", title="归母净利润",
+        ),
+        _annual_display_row(
+            "实现归属于上市公司股东的净利润约2.32亿元，同比减少59.42%。",
+            role="financial_quality_explanation", row_id="annual:explained-profit",
+        ),
+    ))
+
+    assert [row.row_id for row in selected] == ["annual:explained-profit"]
+    assert diagnostics["annual_rejected_by_reason"]["duplicate_financial_fact"] == 1
+
+
+def test_select_annual_display_rows_merges_core_financial_facts_into_one_overview() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "营业收入：39.82亿元", role="financial_quality_explanation",
+            row_id="annual:revenue", status="formal_fact", title="营业收入", ref=1,
+        ),
+        _annual_display_row(
+            "归母净利润：2.32亿元", role="financial_quality_explanation",
+            row_id="annual:profit", status="formal_fact", title="归母净利润", ref=2,
+        ),
+        _annual_display_row(
+            "经营现金流量净额：7.84亿元", role="financial_quality_explanation",
+            row_id="annual:cash", status="formal_fact", title="经营现金流量净额", ref=3,
+        ),
+        _annual_display_row(
+            "资产减值损失约4.39亿元，同比增加2.71亿元。",
+            role="financial_quality_explanation", row_id="annual:impairment", ref=4,
+        ),
+    ))
+
+    assert len(selected) == 2
+    assert selected[0].title == "核心财务指标"
+    assert selected[0].body == "营业收入39.82亿元；归母净利润2.32亿元；经营现金流量净额7.84亿元。"
+    assert selected[0].citation_refs == (1, 2, 3)
+
+
+def test_select_annual_display_rows_corrects_display_role_without_changing_source_text() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "公司开发FPAI系列产品，算力覆盖4TOPS至128TOPS，并提供自主EDA工具。",
+            role="market_competition_outlook", row_id="annual:product-progress",
+        ),
+        _annual_display_row(
+            "公司所处行业地位保持领先，是国内主要FPGA产品供应商。",
+            role="technology_product_progress", row_id="annual:market-position",
+        ),
+        _annual_display_row(
+            "具身智能解决方案销售成本为人民币49.4百万元，主要来自平台适配服务。",
+            role="business_structure", row_id="annual:segment-cost",
+        ),
+    ))
+
+    assert {row.row_id: row.render_role for row in selected} == {
+        "annual:product-progress": "technology_product_progress",
+        "annual:segment-cost": "financial_quality_explanation",
+    }
+    assert diagnostics["annual_rejected_by_reason"]["unsupported_self_comparison"] == 1
+    assert next(row for row in selected if row.row_id == "annual:segment-cost").title == "分部财务信息"
+
+
+def test_select_annual_display_rows_trims_embedded_numbered_subsection() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "公司NFC产品应用于金融POS和智能门锁，并获得客户认可。3、非挥发存储器产品线拥有多类存储产品。",
+            row_id="annual:mixed-subsection",
+        ),
+    ))
+
+    assert selected[0].body == "公司NFC产品应用于金融POS和智能门锁，并获得客户认可。"
+
+
+def test_select_annual_display_rows_strips_numbered_product_heading_before_company_fact() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "（2）安全与识别芯片公司是国内主要的RFID、智能卡和NFC芯片供应商。",
+            role="market_competition_outlook", row_id="annual:numbered-heading",
+        ),
+    ))
+
+    assert selected[0].body == "公司是国内主要的RFID、智能卡和NFC芯片供应商。"
+
+
+def test_select_annual_display_rows_collapses_adjacent_solution_name_repetition() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "具身智能解決方案具身智能解決方案的銷售成本為人民幣49.4百萬元。",
+            role="business_structure", row_id="annual:repeated-solution",
+        ),
+    ))
+
+    assert selected[0].body == "具身智能解決方案的銷售成本為人民幣49.4百萬元。"
+
+
+def test_select_annual_display_rows_keeps_hk_financial_performance_and_driver() -> None:
+    selected, diagnostics = select_annual_display_rows((
+        _annual_display_row(
+            "营业收入：8.22亿元", role="financial_quality_explanation",
+            row_id="annual:revenue", status="formal_fact", title="营业收入", ref=1,
+        ),
+        _annual_display_row(
+            "归母净利润：-14.25亿元", role="financial_quality_explanation",
+            row_id="annual:profit", status="formal_fact", title="归母净利润", ref=2,
+        ),
+        _annual_display_row(
+            "经营现金流量净额：-9.85亿元", role="financial_quality_explanation",
+            row_id="annual:cash", status="formal_fact", title="经营现金流量净额", ref=3,
+        ),
+        _annual_display_row(
+            "全年營收人民幣 8.22 億元，同比增長 73.4% ，毛利率為 41.0% 。",
+            role="financial_quality_explanation", row_id="annual:headline", ref=4,
+        ),
+        _annual_display_row(
+            "13 2025 年年度報告 黑芝麻智能國際控股有限公司 管理層討論及分析 （續） "
+            "毛利及毛利率 由於上述原因，我們的整體毛利由人民幣 194.7 百萬元增加 73.1% "
+            "至人民幣 337.1 百萬元。",
+            role="financial_quality_explanation", row_id="annual:gross-profit", ref=5,
+        ),
+        _annual_display_row(
+            "得益於具身智能業務增長及規模放量，全年經營性虧損同比收窄。",
+            role="financial_quality_explanation", row_id="annual:loss-driver", ref=6,
+        ),
+        _annual_display_row(
+            "整體毛利率保持穩定，截至2024年12月31日止年度及截至2025",
+            role="financial_quality_explanation", row_id="annual:broken-margin", ref=7,
+        ),
+        _annual_display_row(
+            "下表載列截至2025年及2024年12月31日止年度的比較數字：人民幣千元收入822,328 "
+            "銷售成本(485,239)毛利337,089銷售開支(87,894)一般及行政開支(298,329)"
+            "研發開支(1,417,423)金融資產減值虧損淨額(9,897)其他收入16,071。",
+            role="financial_quality_explanation", row_id="annual:table-dump", ref=8,
+        ),
+        _annual_display_row(
+            "其他收益淨額12,063(9,591)經營虧損(1,448,320)(1,753,982)財務收入58,175 "
+            "財務成本(33,595)除所得稅前虧損(1,424,679)313,315所得稅開支(21)"
+            "本公司權益持有人應佔年內虧損(1,424,700)313,315。",
+            role="financial_quality_explanation", row_id="annual:headerless-table-dump", ref=9,
+        ),
+    ))
+
+    assert selected[0].title == "核心财务指标"
+    assert {row.row_id for row in selected[1:]} == {
+        "annual:headline", "annual:gross-profit", "annual:loss-driver",
+    }
+    assert diagnostics["annual_rejected_by_reason"]["document_or_heading_noise"] == 1
+    assert diagnostics["annual_rejected_by_reason"]["financial_table_dump"] == 2
+    gross_profit = next(row for row in selected if row.row_id == "annual:gross-profit")
+    assert gross_profit.body.startswith("我們的整體毛利")
+
+
+def test_select_annual_display_rows_recognizes_hk_company_platform_portrait() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "本公司通过发布SesameX平台，完成从智能驾驶企业向端侧AI全栈芯片供应商的转型。",
+            row_id="annual:hk-portrait",
+        ),
+    ))
+
+    assert selected[0].editorial_slot == "portrait"
+
+
+def test_select_annual_display_rows_prefers_explicit_company_identity_for_portrait() -> None:
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            "在子系列基础上，公司开发FPGA、FPAI等产品，算力覆盖4TOPS至128TOPS。",
+            role="technology_product_progress", row_id="annual:product-matrix",
+        ),
+        _annual_display_row(
+            "复旦微电是一家从事集成电路设计、开发和测试，并为客户提供系统解决方案的专业公司",
+            row_id="annual:company-profile",
+        ),
+    ))
+
+    portrait = next(row for row in selected if row.editorial_slot == "portrait")
+    assert portrait.row_id == "annual:company-profile"
+
+
+def test_select_annual_display_rows_removes_normalized_duplicate_segments_within_a_row():
+    sentence = "公司产品主要应用于400G以太网、数据中心和云网络。"
+    selected, _ = select_annual_display_rows((
+        _annual_display_row(
+            sentence + "公司产品主要应用于 400G 以 太网、数据中心和云 网络。",
             role="business_structure",
             row_id="annual:repeated",
         ),

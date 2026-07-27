@@ -140,6 +140,54 @@ def _texts_for_usage(pack: dict, usage: str) -> str:
     return "\n".join(block["text"] for block in pack["blocks"] if block["usage"] == usage)
 
 
+def test_extracts_current_year_operating_driver_commentary():
+    report = """
+第三节 管理层讨论与分析
+四、主营业务分析
+1、概述
+报告期内，受益于终端客户需求增长，公司产品出货较快增长，其中高端产品占比持续提高，运营效率继续提升，公司营业收入与净利润均同比增长。
+报告期内，随着产业园三期项目实施完毕，公司高端产品产能进一步提升，为客户规模上量提供保障。
+"""
+
+    text = _texts_for_usage(build_periodic_report_evidence_pack(report), "profitability_commentary")
+
+    assert "产品出货较快增长" in text
+    assert "高端产品产能进一步提升" in text
+
+
+def test_extracts_compact_annual_performance_summary_with_gross_margin():
+    report = """
+第三节 管理层讨论与分析
+五、主营业务分析
+2025年公司实现营业收入约39.82亿元，同比增长10.92%，综合毛利率56.19%，归属于上市公司股东净利润约2.32亿元。
+报告期内，公司继续推进产品升级和重点客户导入。
+"""
+
+    text = _texts_for_usage(build_periodic_report_evidence_pack(report), "profitability_commentary")
+
+    assert "综合毛利率56.19%" in text
+    assert "净利润约2.32亿元" in text
+
+
+def test_extracts_compact_annual_performance_summary_with_yoy_changes():
+    report = """
+第三节 管理层讨论与分析
+四、主营业务分析
+1、概述
+报告期内，公司实现营业收入382.40亿元，同比增长60.25%；实现营业利润135.97亿元，同比
+增加124.74%；归属于上市公司股东的净利润107.97亿元，同比增加108.78%；归属于上市公司
+股东的扣除非经常性损益的净利润107.10亿元，同比增加111.31%；经营活动产生的现金流量净额
+108.96亿元，同比增加244.31%。截至2025年末，公司总资产452.89亿元，总负债136.68亿元，
+净资产316.21亿元，资产负债率30.18%。
+报告期内，受益于终端客户需求增长，公司产品出货较快增长，运营效率继续提升。
+"""
+
+    text = _texts_for_usage(build_periodic_report_evidence_pack(report), "profitability_commentary")
+
+    assert "营业收入382.40亿元" in text
+    assert "同比增加244.31%" in text
+
+
 def test_locates_management_discussion_without_company_specific_terms():
     pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
     usages = [b["usage"] for b in pack["blocks"]]
@@ -1234,6 +1282,35 @@ def test_extracts_product_capacity_profile_and_sales_certification_model():
     assert "2000 吨级" in product_text
     assert "合格供方目录" in by_usage["sales_certification_model"]["text"]
     assert "定型认证" in by_usage["sales_certification_model"]["text"]
+
+
+def test_product_capacity_profile_prioritizes_completed_capacity_project():
+    distant_product_sections = []
+    for index in range(3):
+        filler = "\n".join(
+            f"过渡说明 {index}-{line}" for line in range(25)
+        )
+        distant_product_sections.append(
+            f"主要产品\n公司第 {index + 1} 类产品覆盖具体应用场景。\n{filler}"
+        )
+    report = "\n".join((
+        "第三节 管理层讨论与分析",
+        *distant_product_sections,
+        "报告期内，随着“高端产品产业园三期项目”实施完毕，公司所有项目均已结项，",
+        "这将有利于进一步提升公司高端产品产能，为客户技术迭代和规模上量提供保障。",
+    ))
+
+    pack = build_periodic_report_evidence_pack(report)
+    product_blocks = [
+        block for block in pack["blocks"]
+        if block["usage"] == "product_capacity_profile"
+    ]
+
+    assert any(
+        "项目”实施完毕" in block["text"]
+        and "提升公司高端产品产能" in block["text"]
+        for block in product_blocks
+    )
 
 
 def test_extracts_numbered_product_profile_without_stopping_at_subheading():

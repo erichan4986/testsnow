@@ -122,6 +122,36 @@ def test_no_heading_uses_one_synthetic_document_root() -> None:
     assert len(manifest["sections"][0]["section_id"].removeprefix("section:")) == 64
 
 
+def test_content_before_first_markdown_heading_gets_a_preamble_section() -> None:
+    text = (
+        "可能面对的风险，请投资者注意查阅。\n"
+        "# 年度报告\n"
+        "公司主营芯片设计并服务汽车客户。\n"
+    )
+    preamble_end = text.index("# 年度报告")
+    candidate = _candidate(
+        "可能面对的风险，请投资者注意查阅。",
+        "risk_disclosure",
+        0,
+        preamble_end - 1,
+        block_id="risk_disclosure-0",
+    )
+
+    manifest = build_periodic_report_coverage_manifest(
+        text,
+        report_type="annual_report",
+        document_style="a_share_annual",
+        extracted_candidates=[candidate],
+        prioritized_candidates=[candidate],
+        selected_blocks=[candidate],
+    )
+
+    assert manifest["sections"][0]["heading"] == "document-preamble"
+    assert manifest["sections"][0]["source_span"] == {"start": 0, "end": preamble_end}
+    assert manifest["block_decisions"][0]["section_id"] == manifest["sections"][0]["section_id"]
+    assert validate_periodic_report_coverage_manifest(manifest) == ()
+
+
 def test_short_synthetic_root_remains_unmapped_and_whitespace_is_unavailable() -> None:
     short = _build("主营芯片。")
     whitespace = _build(" \n\t")
