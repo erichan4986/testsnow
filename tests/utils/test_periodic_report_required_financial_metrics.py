@@ -82,6 +82,16 @@ A_SHARE_TABLE_WITH_EXPLICIT_SUMMARY_UNITS = """
 的净利润约为2.32亿元，较上年同期减少59.42%。
 """
 
+A_SHARE_TABLE_WITH_ADJUSTED_PROFIT_SENTENCE = """
+主要会计数据和财务指标
+单位：万元 币种：人民币
+营业收入 359,022.38 353,625.94 1.53 353,890.89
+归属于上市公司股东的净利润 57,259.51 71,949.44 -20.42 107,684.33
+经营活动产生的现金流量净额 73,246.56 -70,816.66 不适用 32,128.55
+
+2024年度，剔除调整项目后归属于上市公司股东的净利润为626,808,711.76元，同比减少25.37%。
+"""
+
 REALISTIC_INVENTORY_NOTE_WITH_RMB_UNITS = """
 于 2025 年 12 月 31 日，存货账面价值为人民币 59,651.98 万元，占公司期末资产总额的 24.21%。
 项目 期末余额 期初余额
@@ -249,6 +259,15 @@ def test_explicit_summary_units_outrank_unitless_table_rows() -> None:
 
     assert metrics["profit_quality"]["revenue"]["normalized"] == "39.82亿元"
     assert metrics["profit_quality"]["net_profit"]["normalized"] == "2.32亿元"
+
+
+def test_adjusted_profit_sentence_does_not_override_core_table_metric() -> None:
+    pack = build_periodic_report_evidence_pack(A_SHARE_TABLE_WITH_ADJUSTED_PROFIT_SENTENCE)
+    metrics = build_required_financial_risk_metrics(
+        pack, raw_text=A_SHARE_TABLE_WITH_ADJUSTED_PROFIT_SENTENCE,
+    )
+
+    assert metrics["profit_quality"]["net_profit"]["normalized"] == "57259.51万元"
 
 
 def test_extracts_shengbang_profit_inventory_financial_assets_and_goodwill():

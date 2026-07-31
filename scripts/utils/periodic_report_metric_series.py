@@ -12,9 +12,9 @@ import re
 from typing import Any, Dict, Iterable, List, Tuple
 
 if __name__.startswith("utils."):
-    from .periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
+    from .periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal, percentage_ratio_cell
 else:
-    from periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal
+    from periodic_report_contract_utils import dedupe_filing_evidence, finite_decimal, percentage_ratio_cell
 
 
 METRIC_SERIES_SCHEMA_VERSION = "periodic_report_metric_series_pack.v1"
@@ -23,6 +23,7 @@ GROWTH_FORMULA_VERSION = "periodic_growth.v1"
 
 _FILING_SOURCE_TYPE = "periodic_report_filing_fact"
 _DERIVED_SOURCE_TYPE = "periodic_report_derived_fact"
+_API_SOURCE_TYPE = "structured_financial_api_fact"
 _ALLOWED_METRICS = {"revenue", "net_profit", "operating_cash_flow"}
 _CASH_CONVERSION_METRIC = "operating_cash_flow_to_net_profit"
 _CASH_CONVERSION_FORMULA = "cash_conversion.v1"
@@ -33,15 +34,17 @@ def build_periodic_report_metric_series_pack(
     *,
     stock_code: str,
     stock_name: str,
-    fact_packs: List[Dict[str, Any]],
+    fact_packs: List[Dict[str, Any]] | None = None,
+    source_points: List[Dict[str, Any]] | None = None,
 ) -> Dict[str, Any]:
     """Build deterministic filing and derived metric histories."""
-    diagnostics: List[Dict[str, Any]] = []
+    invalid_authority = (fact_packs is None) == (source_points is None)
+    diagnostics: List[Dict[str, Any]] = [{"code": "invalid_source_authority"}] if invalid_authority else []
     rows: List[Dict[str, Any]] = []
     rejected_count = 0
     valid_packs: List[Dict[str, Any]] = []
 
-    for pack in fact_packs or []:
+    for pack in [] if invalid_authority else (fact_packs or []):
         code = _fact_pack_error(pack, stock_code)
         if code:
             diagnostics.append(_diagnostic(code, pack=pack))
@@ -57,6 +60,14 @@ def build_periodic_report_metric_series_pack(
             elif row:
                 rows.append(row)
         diagnostics.extend(_input_pack_diagnostics(pack))
+
+    for fact in [] if invalid_authority else (source_points or []):
+        row, code = _validated_api_row(fact, stock_code)
+        if code:
+            rejected_count += 1
+            diagnostics.append(_diagnostic(code, fact=fact))
+        elif row:
+            rows.append(row)
 
     grouped: Dict[Tuple[str, ...], List[Dict[str, Any]]] = defaultdict(list)
     for row in rows:
@@ -76,6 +87,8 @@ def build_periodic_report_metric_series_pack(
                 diagnostics.append(_diagnostic(code, fact=fact, pack=pack))
             elif row:
                 derived_rows.append(row)
+    if source_points is not None and not invalid_authority:
+        derived_rows.extend(_api_derived_rows(stock_code, series, diagnostics))
 
     return {
         "schema_version": METRIC_SERIES_SCHEMA_VERSION,
@@ -83,13 +96,67 @@ def build_periodic_report_metric_series_pack(
         "stock_name": str(stock_name),
         "report_eligible": False,
         "scoring_eligible": False,
-        "source_pack_count": len(fact_packs or []),
+        "source_pack_count": len(fact_packs or []) if fact_packs is not None else len({
+            str(row.get("source_doc") or "") for row in source_points or []
+        }),
         "accepted_fact_count": len(rows),
         "rejected_fact_count": rejected_count,
         "series": sorted(series, key=lambda row: row["series_id"]),
         "derived_series": _build_derived_series(stock_code, derived_rows, diagnostics),
         "diagnostics": sorted(diagnostics, key=_diagnostic_sort_key),
     }
+
+
+def _validated_api_row(fact: Any, stock_code: str) -> Tuple[Dict[str, Any] | None, str]:
+    if not isinstance(fact, dict) or fact.get("source_type") != _API_SOURCE_TYPE:
+        return None, "unsupported_fact_source_type"
+    try:
+        year = int(fact.get("report_year"))
+    except (TypeError, ValueError):
+        return None, "invalid_report_year"
+    if (fact.get("report_type") != "annual"
+            or str(fact.get("report_date") or "") != f"{year}-12-31"
+            or fact.get("provider") != "eastmoney"
+            or fact.get("dataset") not in {"profit", "cashflow"}
+            or not str(fact.get("source_field") or "")
+            or not _valid_sha256(fact.get("cache_data_hash"))):
+        return None, "invalid_api_source_provenance"
+    pack = {"stock_code": stock_code, "report_year": year, "report_type": "annual", "source_doc": fact.get("source_doc")}
+    filing_fact = {**fact, "schema_version": STRUCTURED_FACT_SCHEMA_VERSION, "source_type": _FILING_SOURCE_TYPE}
+    return _validated_filing_row(filing_fact, pack, stock_code)
+
+
+def _api_derived_rows(
+    stock_code: str, series: List[Dict[str, Any]], diagnostics: List[Dict[str, Any]],
+) -> List[Dict[str, Any]]:
+    index = _filing_point_index(series)
+    rows = []
+    years = sorted({(report_type, year) for report_type, year, _ in index})
+    for report_type, year in years:
+        groups = [index.get((report_type, year, key), []) for key in ("net_profit", "operating_cash_flow")]
+        if any(len(group) != 1 for group in groups):
+            continue
+        if len({(group[0]["_value_basis"], group[0]["_currency"], group[0]["_unit"]) for group in groups}) != 1:
+            diagnostics.append({"code": "derived_input_dimension_mismatch", "report_year": year, "report_type": report_type})
+            continue
+        profit, cashflow = (Decimal(group[0]["numeric_value"]) for group in groups)
+        if profit <= 0:
+            diagnostics.append({"code": "non_positive_net_profit_for_cashflow_ratio", "report_year": year, "report_type": report_type})
+            continue
+        ratio = percentage_ratio_cell(cashflow, abs(profit))
+        if not ratio:
+            diagnostics.append({"code": "cashflow_ratio_not_computable", "report_year": year})
+            continue
+        value_basis = groups[0][0]["_value_basis"]
+        input_refs = [f"periodic:{stock_code}:{year}:{report_type}:{key}" for key in ("net_profit", "operating_cash_flow")]
+        rows.append({
+            "report_type": report_type, "report_year": year, "period": str(year),
+            "numeric": _percentage_value(ratio["text"]),
+            "fact_id": f"periodic:{stock_code}:{year}:{report_type}:{_CASH_CONVERSION_METRIC}",
+            "input_refs": sorted(input_refs), "value_basis": value_basis,
+            "source_evidence": dedupe_filing_evidence(*(group[0]["source_evidence"] for group in groups)),
+        })
+    return rows
 
 
 def _validated_filing_row(

@@ -120,6 +120,35 @@ def _series(pack: dict, metric_key: str, report_type: str = "annual") -> dict:
     )
 
 
+def _api_point(metric_key: str, value: str, *, year: int = 2025, **overrides):
+    block_id = f"eastmoney:profit:{year}:{metric_key}"
+    row = {
+        "source_type": "structured_financial_api_fact",
+        "fact_id": f"periodic:300001:{year}:annual:{metric_key}",
+        "stock_code": "300001",
+        "report_year": year,
+        "report_type": "annual",
+        "period": str(year),
+        "metric_key": metric_key,
+        "currency": "CNY",
+        "unit": "万元",
+        "value_basis": "as_reported",
+        "normalized_value": f"{value}万元",
+        "source_doc": "300001.json",
+        "source_block_id": block_id,
+        "evidence_refs": [block_id],
+        "source_excerpt_hash": "a" * 64,
+        "source_block_hash": "b" * 64,
+        "provider": "eastmoney",
+        "dataset": "cashflow" if metric_key == "operating_cash_flow" else "profit",
+        "source_field": "FIELD",
+        "report_date": f"{year}-12-31",
+        "cache_data_hash": "c" * 64,
+    }
+    row.update(overrides)
+    return row
+
+
 def test_builds_oldest_first_annual_series_and_consecutive_growth() -> None:
     packs = [
         _fact_pack(2025, [_filing_fact("revenue", "1100.00", year=2025)]),
@@ -229,6 +258,94 @@ def test_exact_same_period_value_merges_document_bound_evidence() -> None:
         en_doc,
         zh_doc,
     ]
+
+
+def test_api_source_points_reuse_series_growth_and_cash_conversion() -> None:
+    points = []
+    for year, revenue, profit, cashflow in (
+        (2024, "1000.00", "100.00", "80.00"),
+        (2025, "1100.00", "110.00", "99.00"),
+    ):
+        points.extend([
+            _api_point("revenue", revenue, year=year),
+            _api_point("net_profit", profit, year=year),
+            _api_point("operating_cash_flow", cashflow, year=year),
+        ])
+
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001", stock_name="测试股份", source_points=points,
+    )
+
+    assert result["source_pack_count"] == 1
+    assert result["accepted_fact_count"] == 6
+    assert _series(result, "revenue")["changes"][0]["growth_rate"] == "10.00%"
+    derived = result["derived_series"][0]
+    assert [point["numeric_value"] for point in derived["points"]] == ["80.00", "90.00"]
+    assert derived["formula_version"] == "cash_conversion.v1"
+
+
+def test_metric_series_source_authorities_are_mutually_exclusive() -> None:
+    for kwargs in ({}, {"fact_packs": [], "source_points": []}):
+        result = build_periodic_report_metric_series_pack(
+            stock_code="300001", stock_name="测试股份", **kwargs,
+        )
+        assert result["series"] == []
+        assert result["diagnostics"] == [{"code": "invalid_source_authority"}]
+
+    empty = build_periodic_report_metric_series_pack(
+        stock_code="300001", stock_name="测试股份", source_points=[],
+    )
+    assert empty["series"] == []
+    assert empty["diagnostics"] == []
+
+
+def test_api_source_point_rejects_unverified_cache_provenance() -> None:
+    point = _api_point("revenue", "1000.00", cache_data_hash="not-a-hash")
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001", stock_name="测试股份", source_points=[point],
+    )
+
+    assert result["series"] == []
+    assert result["rejected_fact_count"] == 1
+    assert result["diagnostics"][0]["code"] == "invalid_api_source_provenance"
+
+
+def test_api_cash_conversion_preserves_non_positive_profit_diagnostic() -> None:
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        source_points=[
+            _api_point("net_profit", "-100.00"),
+            _api_point("operating_cash_flow", "80.00"),
+        ],
+    )
+
+    assert result["derived_series"] == []
+    assert any(
+        row["code"] == "non_positive_net_profit_for_cashflow_ratio"
+        for row in result["diagnostics"]
+    )
+
+
+def test_api_cash_conversion_rejects_mismatched_value_basis_dimensions() -> None:
+    result = build_periodic_report_metric_series_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        source_points=[
+            _api_point("net_profit", "100.00", value_basis="as_reported"),
+            _api_point(
+                "operating_cash_flow",
+                "80.00",
+                value_basis="restated",
+            ),
+        ],
+    )
+
+    assert result["derived_series"] == []
+    assert any(
+        row["code"] == "derived_input_dimension_mismatch"
+        for row in result["diagnostics"]
+    )
 
 
 def test_conflicting_same_period_values_are_omitted_fail_closed() -> None:

@@ -146,6 +146,29 @@ def hk_key_indicators(secucode: str, page_size: int = 4) -> List[Dict]:
     )
 
 
+def fetch_structured_financial_history_rows(code: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Fetch raw annual-statement rows; field admission belongs to the adapter."""
+    code = str(code or "").upper().replace(".HK", "")
+    if _is_hk_code(code):
+        secucode = f"{code}.HK"
+        return {
+            "profit": hk_key_indicators(secucode, page_size=16),
+            "cashflow": eastmoney_datacenter(
+                report_name="RPT_HKSK_FN_CASHFLOW", filter_str=f'(SECUCODE="{secucode}")',
+                page_size=500, sort_columns="REPORT_DATE", sort_types="-1",
+            ),
+        }
+    if not _is_standard_a_share_code(code):
+        raise ValueError(f"unsupported stock code: {code}")
+    import akshare as ak
+    prefix = "SH" if code.startswith(("6", "9")) else "BJ" if code.startswith("8") else "SZ"
+    symbol = f"{prefix}{code}"
+    return {
+        "profit": ak.stock_profit_sheet_by_report_em(symbol=symbol).to_dict("records"),
+        "cashflow": ak.stock_cash_flow_sheet_by_report_em(symbol=symbol).to_dict("records"),
+    }
+
+
 def fund_flow_daily(ticker_or_code: str, secid_prefix: int = 105, limit: int = 100) -> List[Dict]:
     """
     东财 push2his 日级资金流 — 主力/大单/中单/小单净流入

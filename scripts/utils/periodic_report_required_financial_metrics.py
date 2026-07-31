@@ -12,8 +12,10 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Dict, Iterable, List, Optional
 
 if __name__.startswith("utils."):
+    from .periodic_report_contract_utils import percentage_ratio_cell
     from .periodic_report_required_metrics import _normalize_numeric, _value_cell
 else:
+    from periodic_report_contract_utils import percentage_ratio_cell
     from periodic_report_required_metrics import _normalize_numeric, _value_cell
 
 
@@ -519,6 +521,8 @@ def _extract_corporate_actions(text: str) -> Dict[str, Any]:
 def _line_metric(text: str, label: str) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
     candidates = []
     for index, line in enumerate(_candidate_lines(text, label)):
+        if _is_adjusted_metric_candidate(text, line, label):
+            continue
         tail = line[line.find(label) + len(label):] if label in line else line
         tokens = _number_tokens(tail)
         if len(tokens) < 2:
@@ -532,6 +536,20 @@ def _line_metric(text: str, label: str) -> tuple[Optional[Dict[str, Any]], Optio
         rate = _value_cell(rate_token, "%") if rate_token is not None else None
         return amount, rate
     return None, None
+
+
+def _is_adjusted_metric_candidate(text: str, line: str, label: str) -> bool:
+    qualifiers = ("剔除", "经调整", "經調整", "调整后", "調整後")
+    label_index = line.find(label)
+    if label_index >= 0 and any(token in line[max(0, label_index - 48):label_index] for token in qualifiers):
+        return True
+
+    prefixes = []
+    start = 0
+    while line and (position := text.find(line, start)) >= 0:
+        prefixes.append(text[max(0, position - 48):position])
+        start = position + max(1, len(line))
+    return bool(prefixes) and all(any(token in prefix for token in qualifiers) for prefix in prefixes)
 
 
 def _nearest_table_amount_unit(text: str, line: str, max_context: int = 600) -> str:
@@ -850,11 +868,11 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
     inventory_impairment_allowance = _amount_in_wan(inventory.get("inventory_impairment_allowance"))
 
     if revenue and revenue != 0 and rd_expense:
-        derived["rd_expense_to_revenue"] = _ratio_cell(abs(rd_expense), revenue)
+        derived["rd_expense_to_revenue"] = percentage_ratio_cell(abs(rd_expense), revenue)
     if gross_profit and gross_profit != 0 and rd_expense:
-        derived["rd_expense_to_gross_profit"] = _ratio_cell(abs(rd_expense), gross_profit)
+        derived["rd_expense_to_gross_profit"] = percentage_ratio_cell(abs(rd_expense), gross_profit)
     if monetary_funds and monetary_funds != 0 and operating_cash_flow:
-        derived["operating_cash_outflow_to_cash"] = _ratio_cell(
+        derived["operating_cash_outflow_to_cash"] = percentage_ratio_cell(
             abs(operating_cash_flow), monetary_funds
         )
     if revenue and revenue != 0:
@@ -864,7 +882,7 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
         if bills_receivable:
             total_receivables += bills_receivable
         if total_receivables:
-            derived["receivables_to_revenue"] = _ratio_cell(total_receivables, revenue)
+            derived["receivables_to_revenue"] = percentage_ratio_cell(total_receivables, revenue)
 
     cash_and_fv = Decimal("0")
     if monetary_funds:
@@ -872,7 +890,7 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
     if fair_value_financial_assets:
         cash_and_fv += fair_value_financial_assets
     if cash_and_fv and cash_and_fv != 0 and acquisition_consideration:
-        derived["acquisition_to_cash_and_fv_assets"] = _ratio_cell(
+        derived["acquisition_to_cash_and_fv_assets"] = percentage_ratio_cell(
             acquisition_consideration, cash_and_fv
         )
 
@@ -881,21 +899,8 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
         and inventory_balance != 0
         and inventory_impairment_allowance
     ):
-        derived["inventory_impairment_allowance_to_inventory_if_available"] = _ratio_cell(
+        derived["inventory_impairment_allowance_to_inventory_if_available"] = percentage_ratio_cell(
             abs(inventory_impairment_allowance), inventory_balance
         )
 
     return _drop_empty(derived)
-
-
-def _ratio_cell(numerator: Decimal, denominator: Decimal) -> Optional[Dict[str, Any]]:
-    """Return a percentage ratio cell or None when the ratio cannot be computed."""
-    if denominator == 0:
-        return None
-    try:
-        ratio = (numerator / denominator) * Decimal("100")
-        ratio = ratio.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        text = f"{ratio}%"
-        return {"text": text, "unit": "%", "normalized": text}
-    except (InvalidOperation, ValueError, ZeroDivisionError):
-        return None

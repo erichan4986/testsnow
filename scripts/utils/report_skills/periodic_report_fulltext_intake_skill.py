@@ -39,6 +39,7 @@ if __name__.startswith("utils."):
         build_periodic_report_narrative_evidence_cards,
     )
     from ..periodic_report_financial_scan import build_periodic_report_financial_scan_pack
+    from ..periodic_report_financial_trend_view import build_periodic_report_financial_trend_view
     from ..periodic_report_metric_series import build_periodic_report_metric_series_pack
     from ..periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from ..periodic_report_required_metrics import build_required_business_metrics
@@ -46,6 +47,7 @@ if __name__.startswith("utils."):
         build_periodic_report_structured_fact_pack,
         filing_facts_to_core_facts,
     )
+    from ..structured_financial_history import read_structured_financial_history_source_points
     from ..skill_pipeline import skill, SkillContext
     from ..source_adapter import SynthesisItem
 else:
@@ -63,6 +65,7 @@ else:
         build_periodic_report_narrative_evidence_cards,
     )
     from periodic_report_financial_scan import build_periodic_report_financial_scan_pack
+    from periodic_report_financial_trend_view import build_periodic_report_financial_trend_view
     from periodic_report_metric_series import build_periodic_report_metric_series_pack
     from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
     from periodic_report_required_metrics import build_required_business_metrics
@@ -70,6 +73,7 @@ else:
         build_periodic_report_structured_fact_pack,
         filing_facts_to_core_facts,
     )
+    from structured_financial_history import read_structured_financial_history_source_points
     from skill_pipeline import skill, SkillContext
     from source_adapter import SynthesisItem
 
@@ -82,6 +86,7 @@ _FIXED_SOURCE_CREDIT = 75
 _FIXED_VERIFICATION_STATUS = "professional_analysis"
 _FIXED_CLAIM_STATUS = "professional_analysis"
 _DEFAULT_CACHE_DIR = Path(__file__).resolve().parents[3] / "data" / "raw" / "periodic_reports"
+_DEFAULT_HISTORY_CACHE_DIR = Path(__file__).resolve().parents[3] / "data" / "raw" / "structured_financial_history"
 
 
 def _build_stable_fulltext_id(stock_code: str, announcement_id: str, report_type: str) -> str:
@@ -245,7 +250,8 @@ def build_periodic_report_fulltext_intake_items_from_cache(
 
     Reads ``data/raw/periodic_reports/*_annual_jina.txt`` or
     ``*_semiannual_jina.txt`` style caches.  If multiple caches match, the
-    most recently modified file is used and only one item is returned.
+    newest report year is used and only one item is returned. Modification time
+    breaks ties between same-year variants.
 
     Missing cache directories return an empty list without raising.
     """
@@ -313,51 +319,17 @@ def _filing_core_facts_from_cache_rows(
     return filing_facts_to_core_facts(fact_pack.get("filing_facts") or [])
 
 
-def build_periodic_report_metric_series_from_cache(
-    *,
-    stock_code: str,
-    stock_name: str,
-    cache_dir: Union[str, Path],
-    report_type: str = "annual_report",
+def _metric_series_from_history_cache(
+    cache_file: Path, *, stock_code: str, stock_name: str,
 ) -> Dict[str, Any]:
-    """Build a compute-only metric history from every matching local cache."""
-    rows = _load_periodic_report_cache_rows(
-        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
-        report_type=report_type,
+    points, diagnostics = read_structured_financial_history_source_points(
+        cache_file, expected_stock_code=stock_code,
     )
-    return _metric_series_from_cache_rows(
-        rows, stock_code=stock_code, stock_name=stock_name,
-        report_type=report_type,
-    )
-
-
-def _metric_series_from_cache_rows(
-    rows: List[Dict[str, Any]], *, stock_code: str, stock_name: str,
-    report_type: str,
-) -> Dict[str, Any]:
-    fact_packs: List[Dict[str, Any]] = []
-    cache_diagnostics: List[Dict[str, Any]] = []
-    structured_report_type = _structured_report_type(_normalize_report_type(report_type))
-    for row in rows:
-        material = _structured_cache_material(
-            row, stock_code=stock_code, stock_name=stock_name,
-            report_type=report_type,
-        )
-        if material.get("fact_pack"):
-            fact_packs.append(material["fact_pack"])
-        elif material.get("diagnostic"):
-            cache_diagnostics.append(_cache_series_diagnostic(
-                material["diagnostic"], row["path"], row["report_year"],
-                structured_report_type,
-            ))
-
     result = build_periodic_report_metric_series_pack(
-        stock_code=stock_code,
-        stock_name=stock_name,
-        fact_packs=fact_packs,
+        stock_code=stock_code, stock_name=stock_name, source_points=points,
     )
     result["diagnostics"] = sorted(
-        [*(result.get("diagnostics") or []), *cache_diagnostics],
+        [*(result.get("diagnostics") or []), *diagnostics],
         key=lambda row: tuple(str(row.get(key) or "") for key in (
             "code", "report_type", "report_year", "metric_key", "source_doc"
         )),
@@ -447,7 +419,7 @@ def _load_periodic_report_cache_rows(
         report_type=report_type,
     )
     if latest_only and paths:
-        paths = [max(paths, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))]
+        paths = [max(paths, key=_cache_selection_key)]
     for path in paths:
         try:
             raw_text = path.read_text(encoding="utf-8")
@@ -462,10 +434,7 @@ def _load_periodic_report_cache_rows(
 
 
 def _latest_cache_row(rows: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
-    return max(
-        rows,
-        key=lambda row: (row["path"].stat().st_mtime_ns, row["path"].as_posix()),
-    ) if rows else None
+    return max(rows, key=lambda row: _cache_selection_key(row["path"])) if rows else None
 
 
 def _structured_cache_material(
@@ -520,7 +489,7 @@ def _find_latest_periodic_report_cache_file(
     )
     if not files:
         return None
-    return max(files, key=lambda path: (path.stat().st_mtime_ns, path.as_posix()))
+    return max(files, key=_cache_selection_key)
 
 
 def _find_periodic_report_cache_files(
@@ -582,25 +551,17 @@ def _find_periodic_report_cache_files(
     )
 
 
-def _cache_series_diagnostic(
-    code: str,
-    cache_file: Path,
-    report_year: int,
-    report_type: str,
-) -> Dict[str, Any]:
-    row: Dict[str, Any] = {
-        "code": code,
-        "source_doc": cache_file.name,
-        "report_type": report_type,
-    }
-    if report_year > 0:
-        row["report_year"] = report_year
-    return row
-
-
 def _infer_report_year_from_cache_file(cache_file: Path) -> int:
     match = re.search(r"(20\d{2})", cache_file.stem)
     return int(match.group(1)) if match else 0
+
+
+def _cache_selection_key(cache_file: Path) -> tuple[int, int, str]:
+    return (
+        _infer_report_year_from_cache_file(cache_file),
+        cache_file.stat().st_mtime_ns,
+        cache_file.as_posix(),
+    )
 
 
 def _structured_report_type(report_type: str) -> str:
@@ -639,7 +600,7 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
 
     cache_rows = _load_periodic_report_cache_rows(
         stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
-        report_type=report_type,
+        report_type=report_type, latest_only=True,
     )
     items = _fulltext_items_from_cache_rows(
         cache_rows, stock_code=stock_code, report_type=report_type,
@@ -648,10 +609,15 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
         cache_rows, stock_code=stock_code, stock_name=stock_name,
         report_type=report_type,
     )
-    metric_series_pack = _metric_series_from_cache_rows(
-        cache_rows, stock_code=stock_code, stock_name=stock_name,
-        report_type=report_type,
+    history_dir = Path(ctx.get(
+        "structured_financial_history_cache_dir", _DEFAULT_HISTORY_CACHE_DIR,
+    ))
+    metric_series_pack = _metric_series_from_history_cache(
+        history_dir / f"{stock_code}.json",
+        stock_code=stock_code, stock_name=stock_name,
     )
+    financial_trend_view = build_periodic_report_financial_trend_view(
+        stock_code=stock_code, metric_series_pack=metric_series_pack)
     financial_scan_pack = build_periodic_report_financial_scan_pack(
         stock_code=stock_code,
         stock_name=stock_name,
@@ -668,6 +634,7 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
     ctx.set("periodic_report_fulltext_items", items)
     ctx.set("periodic_report_filing_core_facts", filing_core_facts)
     ctx.set("periodic_report_metric_series_pack", metric_series_pack)
+    ctx.set("financial_trend_view", financial_trend_view)
     ctx.set("periodic_report_financial_scan_pack", financial_scan_pack)
     ctx.set("periodic_report_explanation_pack", explanation_pack)
     ctx.set("periodic_report_narrative_evidence_cards", narrative_cards)

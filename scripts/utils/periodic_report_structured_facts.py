@@ -13,9 +13,11 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional, Tuple
 
 if __name__.startswith("utils."):
-    from .periodic_report_required_financial_metrics import _amount_in_wan, _ratio_cell
+    from .periodic_report_contract_utils import percentage_ratio_cell
+    from .periodic_report_required_financial_metrics import _amount_in_wan
 else:
-    from periodic_report_required_financial_metrics import _amount_in_wan, _ratio_cell
+    from periodic_report_contract_utils import percentage_ratio_cell
+    from periodic_report_required_financial_metrics import _amount_in_wan
 
 
 STRUCTURED_FACT_SCHEMA_VERSION = "periodic_report_structured_fact.v1"
@@ -283,7 +285,7 @@ def _build_derived_facts(
         diagnostics.append({"code": "non_positive_net_profit_for_cashflow_ratio"})
         return [], diagnostics
 
-    ratio = _ratio_cell(ocf, abs(net_profit))
+    ratio = percentage_ratio_cell(ocf, abs(net_profit))
     if not ratio:
         diagnostics.append({"code": "cashflow_ratio_not_computable"})
         return [], diagnostics

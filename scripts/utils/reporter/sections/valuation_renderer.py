@@ -3,6 +3,16 @@
 from typing import Any, Dict, List, Optional
 
 
+_FINANCIAL_TREND_KEYS = ("revenue", "net_profit", "operating_cash_flow")
+_NO_QUOTE_NOTE = "> 实时行情暂不可用，以下仅展示结构化年度财务趋势。"
+
+
+def _safe_cells(values: Any, count: int) -> bool:
+    return (isinstance(values, list) and len(values) == count
+            and all(isinstance(value, str) and value and "|" not in value
+                    and "\n" not in value for value in values))
+
+
 class ValuationRenderer:
     """估值与财务快照 — 实时估值指标 + Forward 估值 + 最新财务快照 + 同业对比。"""
 
@@ -57,7 +67,8 @@ class ValuationRenderer:
                     consensus = None
 
         if not quote:
-            return ""
+            trend_md = self._financial_trend_table(ctx.get("financial_trend_view"), code)
+            return "\n\n".join(("## 二、估值与财务快照", _NO_QUOTE_NOTE, trend_md)) if trend_md else ""
 
         price = quote.get("price", 0)
         pe_ttm = quote.get("pe_ttm", 0)
@@ -128,6 +139,9 @@ class ValuationRenderer:
         fin_md = self._quarterly_financials_table(code)
         if fin_md:
             lines.append(fin_md)
+        trend_md = self._financial_trend_table(ctx.get("financial_trend_view"), code)
+        if trend_md:
+            lines.append(trend_md)
 
         # 同业对比
         try:
@@ -163,6 +177,59 @@ class ValuationRenderer:
                 lines.append("")
 
         return "\n".join(lines)
+
+    @staticmethod
+    def _financial_trend_table(view: Any, stock_code: str) -> str:
+        if not isinstance(view, dict) or (
+            view.get("schema_version") != "financial_trend_view.v1"
+            or view.get("status") != "ready"
+            or view.get("display_eligible") is not True
+            or view.get("scoring_eligible") is not False
+            or str(view.get("stock_code") or "") != str(stock_code)
+        ):
+            return ""
+        years, rows, ratio = (
+            view.get("years"), view.get("rows"), view.get("cash_conversion"),
+        )
+        if (
+            not isinstance(years, list) or len(years) != 3
+            or not all(isinstance(year, int) for year in years)
+            or years != list(range(years[0], years[0] + 3))
+            or not isinstance(rows, list) or len(rows) != 3
+            or not isinstance(ratio, dict)
+        ):
+            return ""
+        display_rows = []
+        for row, metric_key in zip(rows, _FINANCIAL_TREND_KEYS):
+            values = row.get("values") if isinstance(row, dict) else None
+            if (
+                not isinstance(row, dict)
+                or row.get("metric_key") != metric_key or row.get("unit") != "亿元"
+                or not _safe_cells([row.get("label")], 1)
+                or not _safe_cells(values, 3)
+                or not _safe_cells([row.get("latest_growth_rate")], 1)
+            ):
+                return ""
+            display_rows.append([f"{row['label']}（{row['unit']}）", *values, row["latest_growth_rate"]])
+        if (
+            ratio.get("metric_key") != "operating_cash_flow_to_net_profit"
+            or ratio.get("label") != "现金转换率"
+            or ratio.get("unit") != "%"
+            or ratio.get("latest_growth_rate") != "—"
+            or not _safe_cells(ratio.get("values"), 3)
+        ):
+            return ""
+        summary, source = view.get("summary"), view.get("source_label")
+        if not _safe_cells([summary, source], 2):
+            return ""
+        display_rows.append(["现金转换率", *ratio["values"], "—"])
+        return "\n".join([
+            "### 近三年财务趋势", "",
+            "| 指标 | " + " | ".join(map(str, years)) + " | 最新同比 |",
+            "|------|------|------|------|----------|",
+            *("| " + " | ".join(row) + " |" for row in display_rows),
+            "", f"> **趋势观察**: {summary}", ">", f"> 数据来源：{source}", "",
+        ])
 
     @staticmethod
     def _format_float_mcap(quote: dict) -> str:

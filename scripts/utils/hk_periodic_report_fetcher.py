@@ -111,6 +111,7 @@ def find_hk_periodic_report(
     *,
     report_type: str = "annual",
     lang: str = "ZH",
+    report_year: int | None = None,
 ) -> Optional[Dict[str, Any]]:
     """Find the first matching periodic report in HKEX titleSearchServlet JSON.
 
@@ -130,6 +131,8 @@ def find_hk_periodic_report(
         title = str(entry.get("title") or entry.get("TITLE") or "")
         title_lower = title.lower()
         if not any(keyword in title_lower for keyword in keywords):
+            continue
+        if report_year is not None and str(int(report_year)) not in title:
             continue
 
         file_link = str(entry.get("file_link") or entry.get("FILE_LINK") or "").strip()
@@ -217,6 +220,7 @@ def discover_hkex_periodic_report(
         disclosure_json,
         report_type=report_type,
         lang=lang,
+        report_year=report_year,
     )
     if not report or not report.get("pdf_url"):
         raise ValueError(f"No HKEX {report_type} report found for {stock_code} {report_year}")

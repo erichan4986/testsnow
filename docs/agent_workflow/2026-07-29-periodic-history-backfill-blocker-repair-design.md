@@ -33,6 +33,18 @@ line-level label and the source context before a regex-level candidate, because
 the latter starts at the label. Keep the existing explicit-unit/context-unit
 ranking for all non-adjusted candidates.
 
+## Defect 3: Backfilled History Overrides the Current Report
+
+The latest-report adapters rank cache files by filesystem modification time.
+Publishing a historical cache therefore makes a newly copied 2024 file newer
+than the pre-existing 2025 file and incorrectly replaces the current filing in
+core facts, narrative cards and the annual memo.
+
+Use one shared cache-selection key everywhere: report year first, then mtime,
+then path for deterministic same-year variants. Historical MetricSeries loading
+continues to read every period in year order; only latest-report consumers use
+this selection key.
+
 ## Tests
 
 1. A mixed HKEX payload ordered `2025年報`, `2024年報` returns the 2024 item
@@ -46,6 +58,9 @@ ranking for all non-adjusted candidates.
    table value.
 6. A normal explicit-unit core sentence remains preferred, proving that the
    filter is qualifier-specific rather than a general priority reversal.
+7. A 2025 cache with an older mtime outranks a newly copied 2024 cache in both
+   the direct latest-only wrapper and the pipeline skill.
+8. Same-year variants retain the existing mtime/path tie-break behavior.
 
 ## Failure Modes
 
@@ -55,6 +70,7 @@ ranking for all non-adjusted candidates.
   label; words such as “同比调整” after the amount cannot suppress a core fact.
 - No fuzzy company matching, alternate document substitution, or manual metric
   override is introduced.
+- Cache publication time can never override an explicitly newer report year.
 
 ## Self Review Round 1
 
@@ -69,3 +85,7 @@ Filtering only full lines would miss regex-generated candidates that begin at
 the metric label and discard their prefix. The final design requires bounded
 source-context inspection for those candidates and locks it with the mixed
 table/narrative fixture.
+
+The history backfill also exposed an independent selection defect: mtime is a
+valid tie-breaker only within one report year. Reusing a single year-first key
+avoids fixing the file finder while leaving the row-based pipeline owner stale.
