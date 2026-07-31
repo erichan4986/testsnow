@@ -143,6 +143,23 @@ enter MetricSeries.
 5. `ValuationRenderer` appends one row to the existing table and performs no
    calculation.
 
+The additive `financial_trend_view.v1` field is either absent or:
+
+```json
+{
+  "metric_key": "gross_margin",
+  "label": "毛利率",
+  "unit": "%",
+  "values": ["33.4%", "35.2%*", "38.1%"],
+  "origins": ["direct", "derived", "direct"],
+  "latest_change": "+2.9pct",
+  "derivation_note": "* 为同源同年财务字段计算值。"
+}
+```
+
+The view builder owns every formatted field above. The renderer validates this
+envelope and joins cells only. Existing views without `gross_margin` remain valid.
+
 Example:
 
 ```markdown
@@ -153,7 +170,8 @@ Example:
 - The latest change is the exact latest ratio minus the prior-year ratio and is
   displayed in percentage points, not relative percent growth.
 - If either latest point is missing, latest change is `—`.
-- Missing years display `—`; the base three-year table remains ready.
+- Missing individual years display `—`; the base three-year table remains ready.
+- If all three years are unavailable, omit `gross_margin` and render no empty row.
 - If any displayed value is derived, append to the existing source disclosure:
   `* 为同源同年财务字段计算值。`
 
