@@ -233,6 +233,8 @@ Codex may use repository skills under `.agents/skills` when relevant.
 
 major task 在实现前必须至少完成 Round 1 设计审查；Round 2 条件触发：
 
+用户在已看到设计、风险和停止条件后，若明确写出“确认跳过仓库级只读审查并开始实现”或同等含义，可用一份真实标注为 user-approved waiver 的 review record 代替外部 Claude Round 1。该豁免只跳过外部模型审查，不跳过设计、自审、TDD、范围/停止条件和 Codex 最终验收；涉及账号安全、凭证、雪球/CDP 或系统级安全硬门时不得豁免。
+
 1. Codex 起草 `docs/agent_workflow/YYYY-MM-DD-topic-design.md`
    - design 必须包含 failure modes：会坏在哪里、坏了怎么表现、哪个测试捕获。
 2. Codex 写 `YYYY-MM-DD-topic-claude-review-round1.md`，并给出可直接交给本地 Claude Code 的 prompt。
