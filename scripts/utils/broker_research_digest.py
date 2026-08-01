@@ -1114,11 +1114,6 @@ def _has_knowledge_driver_candidate(candidates: List[Dict[str, Any]]) -> bool:
     )
 
 
-def _generic_driver_block_excerpt(text: str) -> str:
-    excerpts = _generic_driver_block_excerpts(text, max_blocks=1)
-    return excerpts[0] if excerpts else ""
-
-
 def _generic_driver_block_excerpts(text: str, max_blocks: int = 3) -> List[str]:
     scored: List[Tuple[int, int, str]] = []
     blocks = [_clean_driver_excerpt(block) for block in _iter_generic_driver_blocks(text)]
@@ -1346,35 +1341,6 @@ def _is_display_only_card(card_type: str, viewpoint_cluster: str, excerpt: str) 
     ):
         return True
     return False
-
-
-def _looks_like_financial_snapshot_without_driver(text: str) -> bool:
-    financial_terms = ("营业收入", "营收", "归母净利润", "扣非", "毛利率", "净利率", "ROE", "现金流")
-    if sum(1 for term in financial_terms if term in text) < 3:
-        return False
-    driver_terms = (
-        "下游",
-        "客户",
-        "订单",
-        "产能",
-        "交付",
-        "产品结构",
-        "高端产品",
-        "新产品",
-        "新品",
-        "导入",
-        "升级",
-        "迭代",
-        "放量",
-        "份额",
-        "景气",
-        "需求",
-        "驱动",
-        "带动",
-        "受益",
-        "业务结构",
-    )
-    return not any(term in text for term in driver_terms)
 
 
 def deduplicate_broker_digest_cards_by_viewpoint(

@@ -78,9 +78,13 @@ def test_official_certification_no_tech_route_risk(text):
         "竞品分析",
         "竞争对手包括地平线和Mobileye",
         "黑芝麻智能与竞品对比",
+        "难以被替代",
+        "不被替代",
+        "未被替代",
+        "护城河深厚，难以被替代",
     ],
 )
-def test_bare_competitor_no_competition_risk(text):
+def test_non_risk_competition_context_has_no_competition_signal(text):
     v = _make_verification("c1", "verified", 75)
     low = _candidate("c1", text)
     plan = ClaimVerificationPlan(
@@ -174,9 +178,12 @@ def test_revenue_decline_true_positives(text):
         "资金净流入",
         "增持股份",
         "公司回购股票",
+        "空单比例较低",
+        "做空力量并未大规模介入",
+        "港股通纳入后流动性改善",
     ],
 )
-def test_positive_capital_no_outflow(text):
+def test_positive_or_low_short_context_has_no_outflow_signal(text):
     v = _make_verification("c1", "verified", 75)
     low = _candidate("c1", text)
     plan = ClaimVerificationPlan(
@@ -188,29 +195,6 @@ def test_positive_capital_no_outflow(text):
     )
     signals = derive_structured_risk_signals_from_plan(plan)
     assert not any(s["name"] == "资金流出" for s in signals)
-
-
-@pytest.mark.parametrize(
-    "text",
-    [
-        "难以被替代",
-        "不被替代",
-        "未被替代",
-        "护城河深厚，难以被替代",
-    ],
-)
-def test_substitution_resistance_no_competition_risk(text):
-    v = _make_verification("c1", "verified", 75)
-    low = _candidate("c1", text)
-    plan = ClaimVerificationPlan(
-        stock="黑芝麻智能",
-        high_credit_claims=[],
-        low_credit_claims=[low],
-        verifications=[v],
-        skipped_files=[],
-    )
-    signals = derive_structured_risk_signals_from_plan(plan)
-    assert not any(s["name"] == "竞争格局恶化" for s in signals)
 
 
 @pytest.mark.parametrize(
@@ -318,28 +302,6 @@ def test_capital_outflow_true_positives(text):
     )
     signals = derive_structured_risk_signals_from_plan(plan)
     assert any(s["name"] == "资金流出" and s["status"] == "verified" for s in signals)
-
-
-@pytest.mark.parametrize(
-    "text",
-    [
-        "空单比例较低",
-        "做空力量并未大规模介入",
-        "港股通纳入后流动性改善",
-    ],
-)
-def test_capital_outflow_positive_or_low_short_context_no_signal(text):
-    v = _make_verification("c1", "verified", 75)
-    low = _candidate("c1", text)
-    plan = ClaimVerificationPlan(
-        stock="黑芝麻智能",
-        high_credit_claims=[],
-        low_credit_claims=[low],
-        verifications=[v],
-        skipped_files=[],
-    )
-    signals = derive_structured_risk_signals_from_plan(plan)
-    assert not any(s["name"] == "资金流出" for s in signals)
 
 
 @pytest.mark.parametrize(

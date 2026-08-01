@@ -28,6 +28,17 @@ def test_query_skill_disabled_sets_status():
     assert ctx.get("search_queries") == []
 
 
+def test_query_skill_cannot_be_enabled_by_process_environment(monkeypatch):
+    monkeypatch.setenv("ENABLE_AGENT_REACH", "1")
+    ctx = SkillContext(input={"stock_name": "黑芝麻智能", "enable_agent_reach": False})
+
+    agent_reach_query_skill(ctx)
+
+    assert ctx.get("agent_reach_enabled") is False
+    assert ctx.get("agent_reach_status") == "disabled"
+    assert ctx.get("search_queries") == []
+
+
 def test_query_skill_enabled_generates_rss_query():
     ctx = SkillContext(input={"stock_name": "黑芝麻智能", "stock_codes": {"黑芝麻智能": "02533"}, "enable_agent_reach": True, "agent_reach_rss_feeds": ["http://example.com/feed"]})
     agent_reach_query_skill(ctx)

@@ -98,12 +98,15 @@ def source_intake_merge_skill(ctx: SkillContext) -> SkillContext:
     agent_reach_enabled = bool(ctx.get("agent_reach_enabled", False))
     source_intake_enabled = bool(ctx.get("source_intake_enabled", False))
 
-    if not agent_reach_enabled and not source_intake_enabled:
-        ctx.set("source_intake_merge_status", "disabled")
-        ctx.set("external_evidence_keep_items", [])
-        ctx.set("external_evidence_demote_items", [])
-        ctx.set("external_evidence_discard_items", [])
+    def _finish(status: str, buckets=None) -> SkillContext:
+        buckets = buckets or {"keep": [], "demote": [], "discard": []}
+        ctx.set("source_intake_merge_status", status)
+        for name, items in buckets.items():
+            ctx.set(f"external_evidence_{name}_items", items)
         return ctx
+
+    if not agent_reach_enabled and not source_intake_enabled:
+        return _finish("disabled")
 
     seen: Dict[str, SynthesisItem] = {}
 
@@ -125,24 +128,12 @@ def source_intake_merge_skill(ctx: SkillContext) -> SkillContext:
     if source_intake_enabled:
         _add_items(ctx.get("source_intake_items", []))
 
-    keep_items: List[SynthesisItem] = []
-    demote_items: List[SynthesisItem] = []
-    discard_items: List[SynthesisItem] = []
-
+    buckets = {"keep": [], "demote": [], "discard": []}
     for item in seen.values():
-        bucket = _to_bucket(item)
-        if bucket == "keep":
-            keep_items.append(item)
-        elif bucket == "demote":
-            demote_items.append(item)
-        else:
-            discard_items.append(item)
+        buckets[_to_bucket(item)].append(item)
 
-    ctx.set("source_intake_merge_status", "ok")
-    ctx.set("external_evidence_keep_items", keep_items)
-    ctx.set("external_evidence_demote_items", demote_items)
-    ctx.set("external_evidence_discard_items", discard_items)
     logger.info(
-        f"[source_intake_merge] keep={len(keep_items)} demote={len(demote_items)} discard={len(discard_items)}"
+        f"[source_intake_merge] keep={len(buckets['keep'])} "
+        f"demote={len(buckets['demote'])} discard={len(buckets['discard'])}"
     )
-    return ctx
+    return _finish("ok", buckets)

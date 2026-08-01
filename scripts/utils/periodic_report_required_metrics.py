@@ -131,13 +131,6 @@ def _empty_tables() -> Dict[str, Any]:
     }
 
 
-def _block_for_usage(relevant_blocks: List[Dict[str, Any]], usage: str) -> Optional[Dict[str, Any]]:
-    for block in relevant_blocks:
-        if block.get("usage") == usage:
-            return block
-    return None
-
-
 def _source_info(blocks: List[Dict[str, Any]], text: str) -> Tuple[str, str, str]:
     """Return (block_id, usage, excerpt) for a row/excerpt derived from blocks or raw text."""
     if blocks:

@@ -302,20 +302,6 @@ def _hk_gross_margin(text: str) -> Optional[Dict[str, Any]]:
     return None
 
 
-def _hk_current_thousand_metric(text: str, label: str) -> Optional[Dict[str, Any]]:
-    """Extract the current-year amount immediately following a HK note label."""
-    for match in re.finditer(re.escape(label), text):
-        window = text[match.end(): match.end() + 180]
-        window = re.sub(r"[（(][^）)]{0,40}[）)]", " ", window)
-        for number_match in re.finditer(r"(?P<paren>\()?(-?[\d,]+(?:\.\d+)?)(?(paren)\))", window):
-            number = number_match.group(number_match.lastindex or 0)
-            if _looks_like_hk_date_fragment(number):
-                continue
-            value = "-" + number if number_match.groupdict().get("paren") else number
-            return _amount_cell(value, "千元")
-    return None
-
-
 def _looks_like_hk_date_fragment(number: str) -> bool:
     try:
         value = Decimal(_normalize_numeric(number))
@@ -810,13 +796,6 @@ def _rate_after(
         if match:
             return _value_cell(match.group("rate"), "%")
     return None
-
-
-def _last_rate_cell(text: str) -> Optional[Dict[str, Any]]:
-    rates = re.findall(r"(-?\d+(?:\.\d+)?)\s*%", text)
-    if not rates:
-        return None
-    return _value_cell(rates[-1], "%")
 
 
 def _drop_empty(values: Dict[str, Any]) -> Dict[str, Any]:

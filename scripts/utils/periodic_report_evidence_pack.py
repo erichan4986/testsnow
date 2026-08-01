@@ -1247,27 +1247,6 @@ def _split_sections(text: str) -> Dict[str, str]:
     return sections
 
 
-def _extract_section_excerpt(content: str, heading: str) -> str:
-    # Drop boilerplate and keep the first substantive chunk.
-    cleaned = _strip_boilerplate(content)
-    # Find first sentence-like chunk after heading.
-    lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
-    result_lines: List[str] = []
-    for line in lines:
-        stripped_heading = _clean_heading(heading)
-        if line == heading or _clean_heading(line) == stripped_heading:
-            continue
-        if _is_boilerplate(line):
-            continue
-        if len(line) >= 12:
-            result_lines.append(line)
-        if len("\n".join(result_lines)) >= _MAX_CHARS_PER_BLOCK:
-            break
-    if not result_lines:
-        return cleaned[:_MAX_CHARS_PER_BLOCK].strip()
-    return "\n".join(result_lines)[:_MAX_CHARS_PER_BLOCK].strip()
-
-
 # ---------------------------------------------------------------------------
 # Table extraction
 # ---------------------------------------------------------------------------

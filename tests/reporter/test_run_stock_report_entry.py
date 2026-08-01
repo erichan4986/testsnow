@@ -3,6 +3,7 @@
 import importlib.util
 import json
 from pathlib import Path
+from types import SimpleNamespace
 
 
 def _load_entry_module():
@@ -215,6 +216,87 @@ def test_zhongjixuchuang_config_has_canonical_a_stock_source_intake():
     assert a_stock.get("iwencai_industry_research", {}).get("enabled") is True
     keywords = a_stock.get("eastmoney_global_news", {}).get("keywords", [])
     assert {"光模块", "800G", "1.6T", "CPO", "AI算力"}.issubset(set(keywords))
+
+
+def test_parse_markdown_post_reads_nested_interactions(tmp_path):
+    mod = _load_entry_module()
+    post_path = tmp_path / "post.md"
+    post_path.write_text(
+        "---\n"
+        "title: 测试标题\n"
+        "source_url: https://example.com/post\n"
+        "interactions:\n"
+        "  likes: 12\n"
+        "  comments: 7\n"
+        "---\n\n"
+        "# 测试标题\n\n正文内容。\n",
+        encoding="utf-8",
+    )
+
+    post = mod._parse_markdown_post(post_path)
+
+    assert post == {
+        "title": "测试标题",
+        "content": "# 测试标题\n\n正文内容。",
+        "url": "https://example.com/post",
+        "like": 12,
+        "comment": 7,
+    }
+
+
+def test_fast_test_without_local_posts_never_fetches_network(tmp_path, monkeypatch):
+    mod = _load_entry_module()
+    monkeypatch.setattr(mod, "_load_xueqiu_data", lambda *args: [])
+    monkeypatch.setattr(mod, "_load_knowledge_posts", lambda *args: [])
+    monkeypatch.setattr(
+        mod,
+        "fetch_all_stocks",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("no fetch")),
+    )
+
+    posts = mod._load_posts(
+        SimpleNamespace(fast_test=True),
+        {"name": "测试股", "code": "300001"},
+        tmp_path,
+        "20260731",
+    )
+
+    assert posts == {"测试股": []}
+
+
+def test_fast_test_reuses_cached_zhihu_data(tmp_path):
+    mod = _load_entry_module()
+    cached = {"total": 42, "report_items": [{"title": "cached"}], "fast_test": True}
+    (tmp_path / "report_input_20260730_测试股.json").write_text(
+        json.dumps({"raw_data": {"测试股": {"zhihu": cached}}}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    result = mod._collect_zhihu(
+        SimpleNamespace(fast_test=True, keyword=[]),
+        {"name": "测试股"},
+        tmp_path,
+        "20260731",
+    )
+
+    assert result == cached
+
+
+def test_named_stock_configs_keep_required_source_features():
+    mod = _load_entry_module()
+    repo_root = Path(__file__).resolve().parents[2]
+    stocks = mod._load_stocks_config(repo_root / "config" / "stocks.json")
+
+    black_sesame = mod._find_stock(stocks, "黑芝麻智能")
+    shengbang = mod._find_stock(stocks, "圣邦股份")
+    zhongjian = mod._find_stock(stocks, "中简科技")
+
+    assert black_sesame["agent_reach"]["enabled"] is True
+    assert black_sesame["source_intake"]["periodic_narrative_cards_synthesis_display"]["enabled"] is True
+    assert shengbang["source_intake"]["periodic_report_fulltext"]["enabled"] is True
+    assert shengbang["source_intake"]["periodic_narrative_cards_synthesis_display"]["enabled"] is True
+    assert zhongjian["source_intake"]["a_stock"]["cninfo_announcements"]["enabled"] is True
+    assert zhongjian["source_intake"]["claim_verification"]["enabled"] is True
 
 
 

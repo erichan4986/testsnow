@@ -110,6 +110,31 @@ def test_merge_dedupes_by_url_prefers_higher_credit():
     assert keep[0].extra["source_credit"] == 95
 
 
+def test_preferred_duplicate_replacement_keeps_first_seen_position():
+    first = _make_item(title="web-a", url="https://example.com/a", source_credit=70)
+    second = _make_item(title="web-b", url="https://example.com/b", source_credit=70)
+    replacement = _make_item(
+        title="official-a",
+        url="https://example.com/a",
+        source_credit=95,
+        source_type="exchange_announcement",
+    )
+    ctx = SkillContext(input={
+        "agent_reach_enabled": True,
+        "source_intake_enabled": True,
+        "agent_reach_keep_items": [first, second],
+        "agent_reach_demote_items": [],
+        "source_intake_items": [replacement],
+    })
+
+    result = source_intake_merge_skill(ctx)
+
+    assert [item.title for item in result.get("external_evidence_keep_items")] == [
+        "official-a",
+        "web-b",
+    ]
+
+
 def test_cninfo_detail_urls_keep_distinct_announcement_ids():
     first = _make_item(
         title="一季报",

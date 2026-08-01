@@ -4737,8 +4737,48 @@ def test_admission_repair_keeps_structural_noise_rejected(usage, text):
         "公司长期研发电池电化学技术，从而打造高精度、低功耗芯片产品，可解决电池状态监测和充电管理问题。",
         "technology_product_progress",
     ),
+    (
+        "business_model",
+        "公司的研发按照项目立项、开发测试和项目发布等顺序进行，公司目前通过直销方式销售。",
+        "business_structure",
+    ),
+    (
+        "goodwill_note",
+        "本报告期内公司完成股权收购交割及并表，支付金额超过可辨认净资产公允价值份额，形成商誉195,651,828.61元。",
+        "financial_quality_explanation",
+    ),
+    (
+        "ar_aging_note",
+        "应收账款无法按期收回的风险 随着经营规模扩大及客户信用政策变动，公司应收账款余额可能保持较大规模。",
+        "financial_quality_explanation",
+    ),
+    (
+        "ar_aging_note",
+        "应收账款无法按期收回的风险 随着公司经营规模的持续扩大、或者受市场环境、"
+        "客户经营情况、信用政策变动等因素影响，公司应收账款余额可能保持较大规模。",
+        "financial_quality_explanation",
+    ),
+    (
+        "ar_aging_note",
+        "如果公司主要客户的财务状况出现恶化，可能出现较大应 收账款不能收回或延期收回的情况，"
+        "进而对公司资金周转和生产经营产生不利影响。",
+        "financial_quality_explanation",
+    ),
+    (
+        "goodwill_note",
+        "泰吉诺主要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，"
+        "所处行业具有研发投入高、技术迭代快、研发周期长等特点，泰吉诺的经营效益受宏观政策、"
+        "经济周期、市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
+        "market_competition_outlook",
+    ),
+    (
+        "goodwill_note",
+        "如果未来由于行业不景气或泰吉诺自身因素导致其未来经营状况未达预期，"
+        "则公司存在商誉减值风险，从而影响公司当期损益。",
+        "financial_quality_explanation",
+    ),
 ))
-def test_additional_complete_relations_do_not_need_legacy_recovery(
+def test_complete_official_relations_map_to_expected_family(
     usage, text, expected_family,
 ):
     result = _build_v2_cards(text, usage)
@@ -4786,32 +4826,6 @@ def test_mid_unit_annual_page_header_keeps_exact_financial_tail():
     assert [card["source_excerpt"] for card in result["cards"]] == [
         "毛利率同比提升2.98个百分点；"
     ]
-
-
-@pytest.mark.parametrize(("usage", "text", "expected_family"), (
-    (
-        "business_model",
-        "公司的研发按照项目立项、开发测试和项目发布等顺序进行，公司目前通过直销方式销售。",
-        "business_structure",
-    ),
-    (
-        "goodwill_note",
-        "本报告期内公司完成股权收购交割及并表，支付金额超过可辨认净资产公允价值份额，形成商誉195,651,828.61元。",
-        "financial_quality_explanation",
-    ),
-    (
-        "ar_aging_note",
-        "应收账款无法按期收回的风险 随着经营规模扩大及客户信用政策变动，公司应收账款余额可能保持较大规模。",
-        "financial_quality_explanation",
-    ),
-))
-def test_business_and_financial_relations_cover_legacy_facts(
-    usage, text, expected_family,
-):
-    result = _build_v2_cards(text, usage)
-
-    assert len(result["cards"]) == 1
-    assert result["cards"][0]["argument_family"] == expected_family
 
 
 def test_mixed_industry_barrier_block_keeps_distinct_company_position_unit():
@@ -4871,39 +4885,3 @@ def test_barrier_block_keeps_concrete_product_delivery_units():
     assert "成熟产品已在国内主流封测厂商实现稳定批量供货" in excerpts
     assert "先进封装材料成功打破国外垄断，进入小批量交付阶段" in excerpts
     assert "新进入者难以快速打开市场" not in excerpts
-
-
-@pytest.mark.parametrize(("usage", "text", "expected_family"), (
-    (
-        "ar_aging_note",
-        "应收账款无法按期收回的风险 随着公司经营规模的持续扩大、或者受市场环境、"
-        "客户经营情况、信用政策变动等因素影响，公司应收账款余额可能保持较大规模。",
-        "financial_quality_explanation",
-    ),
-    (
-        "ar_aging_note",
-        "如果公司主要客户的财务状况出现恶化，可能出现较大应 收账款不能收回或延期收回的情况，"
-        "进而对公司资金周转和生产经营产生不利影响。",
-        "financial_quality_explanation",
-    ),
-    (
-        "goodwill_note",
-        "泰吉诺主要从事高端导热界面材料的研发、生产及销售，并主要应用于半导体集成电路封装领域，"
-        "所处行业具有研发投入高、技术迭代快、研发周期长等特点，泰吉诺的经营效益受宏观政策、"
-        "经济周期、市场竞争、经营管理等多种因素的影响，可能存在业绩不达预期的风险。",
-        "market_competition_outlook",
-    ),
-    (
-        "goodwill_note",
-        "如果未来由于行业不景气或泰吉诺自身因素导致其未来经营状况未达预期，"
-        "则公司存在商誉减值风险，从而影响公司当期损益。",
-        "financial_quality_explanation",
-    ),
-))
-def test_named_financial_risks_keep_complete_official_facts(
-    usage, text, expected_family,
-):
-    result = _build_v2_cards(text, usage)
-
-    assert len(result["cards"]) == 1
-    assert result["cards"][0]["argument_family"] == expected_family
