@@ -223,12 +223,28 @@ class ValuationRenderer:
         if not _safe_cells([summary, source], 2):
             return ""
         display_rows.append(["现金转换率", *ratio["values"], "—"])
+        margin, margin_note = view.get("gross_margin"), ""
+        if isinstance(margin, dict):
+            origins, values = margin.get("origins"), margin.get("values")
+            if (
+                margin.get("metric_key") == "gross_margin" and margin.get("label") == "毛利率"
+                and margin.get("unit") == "%" and _safe_cells(values, 3)
+                and isinstance(origins, list) and len(origins) == 3
+                and all(origin in {"direct", "derived", "missing"} for origin in origins)
+                and all((origin == "missing" and value == "—") or (origin == "derived" and value.endswith("%*"))
+                        or (origin == "direct" and value.endswith("%") and not value.endswith("%*"))
+                        for origin, value in zip(origins, values))
+                and _safe_cells([margin.get("latest_change")], 1)
+            ):
+                display_rows.append(["毛利率", *values, margin["latest_change"]])
+                if "derived" in origins and margin.get("derivation_note") == "* 为同源同年财务字段计算值。":
+                    margin_note = f"> 注：{margin['derivation_note']}"
         return "\n".join([
             "### 近三年财务趋势", "",
             "| 指标 | " + " | ".join(map(str, years)) + " | 最新同比 |",
             "|------|------|------|------|----------|",
             *("| " + " | ".join(row) + " |" for row in display_rows),
-            "", f"> **趋势观察**: {summary}", ">", f"> 数据来源：{source}", "",
+            "", *(line for line in (margin_note, f"> **趋势观察**: {summary}", ">", f"> 数据来源：{source}") if line), "",
         ])
 
     @staticmethod

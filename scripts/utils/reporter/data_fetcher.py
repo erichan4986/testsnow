@@ -163,10 +163,16 @@ def fetch_structured_financial_history_rows(code: str) -> Dict[str, List[Dict[st
     import akshare as ak
     prefix = "SH" if code.startswith(("6", "9")) else "BJ" if code.startswith("8") else "SZ"
     symbol = f"{prefix}{code}"
-    return {
+    rows = {
         "profit": ak.stock_profit_sheet_by_report_em(symbol=symbol).to_dict("records"),
         "cashflow": ak.stock_cash_flow_sheet_by_report_em(symbol=symbol).to_dict("records"),
     }
+    try:
+        rows["indicator"] = ak.stock_financial_abstract(symbol=code).to_dict("records")
+    except Exception as exc:
+        logger.warning("[%s] optional financial indicator unavailable: %s", code, exc)
+        rows["indicator"] = []
+    return rows
 
 
 def fund_flow_daily(ticker_or_code: str, secid_prefix: int = 105, limit: int = 100) -> List[Dict]:

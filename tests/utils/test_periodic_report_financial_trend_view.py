@@ -64,6 +64,15 @@ def _metric_pack(rows=None) -> dict:
     )
 
 
+def _margin_point(year: int, value: str, origin: str = "direct") -> dict:
+    return {
+        "source_type": "structured_financial_api_fact", "stock_code": "300001",
+        "report_year": year, "report_type": "annual", "metric_key": "gross_margin",
+        "unit": "pct", "value_basis": "as_reported", "numeric_value": value,
+        "origin": origin,
+    }
+
+
 def test_financial_trend_view_type_hints_resolve() -> None:
     hints = typing.get_type_hints(trend_view_module._direction)
     assert hints["values"] == list[trend_view_module.Decimal]
@@ -101,6 +110,48 @@ def test_builds_latest_three_year_financial_trend_view() -> None:
     }
     assert view["summary"] == "营业收入连续增长，归母净利润连续下滑，经营现金流连续下滑。"
     assert view["source_label"].startswith("东方财富结构化年度财务数据")
+
+
+def test_adds_optional_gross_margin_with_origin_and_percentage_point_change() -> None:
+    view = build_periodic_report_financial_trend_view(
+        stock_code="300001", metric_series_pack=_metric_pack(),
+        gross_margin_points=[
+            _margin_point(2023, "35.00"),
+            _margin_point(2024, "36.50", "derived"),
+            _margin_point(2025, "38.10"),
+        ],
+    )
+
+    assert view["gross_margin"] == {
+        "metric_key": "gross_margin", "label": "毛利率", "unit": "%",
+        "values": ["35.0%", "36.5%*", "38.1%"],
+        "origins": ["direct", "derived", "direct"],
+        "latest_change": "+1.6pct",
+        "derivation_note": "* 为同源同年财务字段计算值。",
+    }
+    assert view["summary"].endswith("毛利率连续上升。")
+
+
+def test_optional_gross_margin_keeps_missing_year_and_fails_independently() -> None:
+    partial = build_periodic_report_financial_trend_view(
+        stock_code="300001", metric_series_pack=_metric_pack(),
+        gross_margin_points=[_margin_point(2023, "35.00"), _margin_point(2025, "38.10")],
+    )
+    duplicate = build_periodic_report_financial_trend_view(
+        stock_code="300001", metric_series_pack=_metric_pack(),
+        gross_margin_points=[_margin_point(2025, "38.10"), _margin_point(2025, "39.10")],
+    )
+
+    assert partial["status"] == "ready"
+    assert partial["gross_margin"]["values"] == ["35.0%", "—", "38.1%"]
+    assert partial["gross_margin"]["latest_change"] == "—"
+    assert duplicate["status"] == "ready"
+    assert "gross_margin" not in duplicate
+    non_finite = build_periodic_report_financial_trend_view(
+        stock_code="300001", metric_series_pack=_metric_pack(),
+        gross_margin_points=[_margin_point(2025, "NaN")],
+    )
+    assert "gross_margin" not in non_finite
 
 
 def _unavailable() -> dict:

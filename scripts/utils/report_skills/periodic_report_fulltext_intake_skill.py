@@ -321,8 +321,8 @@ def _filing_core_facts_from_cache_rows(
 
 def _metric_series_from_history_cache(
     cache_file: Path, *, stock_code: str, stock_name: str,
-) -> Dict[str, Any]:
-    points, diagnostics = read_structured_financial_history_source_points(
+) -> tuple[Dict[str, Any], List[Dict[str, Any]]]:
+    points, gross_margin_points, diagnostics = read_structured_financial_history_source_points(
         cache_file, expected_stock_code=stock_code,
     )
     result = build_periodic_report_metric_series_pack(
@@ -334,7 +334,7 @@ def _metric_series_from_history_cache(
             "code", "report_type", "report_year", "metric_key", "source_doc"
         )),
     )
-    return result
+    return result, gross_margin_points
 
 
 def build_periodic_report_explanation_pack_from_cache(
@@ -612,12 +612,13 @@ def periodic_report_fulltext_intake_skill(ctx: SkillContext) -> SkillContext:
     history_dir = Path(ctx.get(
         "structured_financial_history_cache_dir", _DEFAULT_HISTORY_CACHE_DIR,
     ))
-    metric_series_pack = _metric_series_from_history_cache(
+    metric_series_pack, gross_margin_points = _metric_series_from_history_cache(
         history_dir / f"{stock_code}.json",
         stock_code=stock_code, stock_name=stock_name,
     )
     financial_trend_view = build_periodic_report_financial_trend_view(
-        stock_code=stock_code, metric_series_pack=metric_series_pack)
+        stock_code=stock_code, metric_series_pack=metric_series_pack,
+        gross_margin_points=gross_margin_points)
     financial_scan_pack = build_periodic_report_financial_scan_pack(
         stock_code=stock_code,
         stock_name=stock_name,

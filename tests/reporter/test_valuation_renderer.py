@@ -164,6 +164,43 @@ def test_render_places_three_year_trend_after_snapshot_and_before_peers():
     assert result.index("### 近三年财务趋势") < result.index("### 同业估值对比")
 
 
+def test_render_adds_optional_gross_margin_and_derivation_note():
+    renderer = ValuationRenderer()
+    ctx = _trend_ctx()
+    ctx["financial_trend_view"]["gross_margin"] = {
+        "metric_key": "gross_margin", "label": "毛利率", "unit": "%",
+        "values": ["35.0%", "36.5%*", "38.1%"],
+        "origins": ["direct", "derived", "direct"], "latest_change": "+1.6pct",
+        "derivation_note": "* 为同源同年财务字段计算值。",
+    }
+
+    result = renderer.render(ctx)
+
+    assert "| 毛利率 | 35.0% | 36.5%* | 38.1% | +1.6pct |" in result
+    assert "* 为同源同年财务字段计算值。" in result
+    assert result.index("| 现金转换率 |") < result.index("| 毛利率 |")
+
+
+def test_render_ignores_invalid_optional_gross_margin_without_losing_base_table():
+    renderer = ValuationRenderer()
+    ctx = _trend_ctx()
+    ctx["financial_trend_view"]["gross_margin"] = {"metric_key": "gross_margin", "values": ["bad"]}
+
+    result = renderer.render(ctx)
+
+    assert "### 近三年财务趋势" in result
+    assert "| 毛利率 |" not in result
+
+    ctx = _trend_ctx()
+    ctx["financial_trend_view"]["gross_margin"] = {
+        "metric_key": "gross_margin", "label": "毛利率", "unit": "%",
+        "values": ["35.0%", "36.5%", "38.1%"],
+        "origins": ["direct", "derived", "direct"], "latest_change": "+1.6pct",
+        "derivation_note": "* 为同源同年财务字段计算值。",
+    }
+    assert "| 毛利率 |" not in renderer.render(ctx)
+
+
 def test_render_keeps_ready_financial_trend_when_live_quote_is_unavailable():
     renderer = ValuationRenderer()
     ctx = _trend_ctx()

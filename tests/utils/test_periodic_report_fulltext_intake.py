@@ -74,6 +74,7 @@ def _write_history_cache(path: Path, *, years=(2024, 2025)) -> None:
             "REPORT_DATE": f"{year}-12-31",
             "TOTAL_OPERATE_INCOME": str(index * 1000000000),
             "PARENT_NETPROFIT": str(index * 100000000),
+            "GROSS_PROFIT": str(index * 400000000),
         })
         cashflow.append({
             "REPORT_DATE": f"{year}-12-31",
@@ -491,6 +492,7 @@ def test_skill_builds_filing_core_facts_from_cache(tmp_path):
     assert trend["status"] == "ready"
     assert trend["years"] == [2023, 2024, 2025]
     assert trend["scoring_eligible"] is False
+    assert trend["gross_margin"]["values"] == ["40.0%*", "40.0%*", "40.0%*"]
     financial_scan = result.get("periodic_report_financial_scan_pack")
     assert financial_scan["schema_version"] == "periodic_report_financial_scan_pack.v1"
     assert financial_scan["status"] in {"partial", "ready"}

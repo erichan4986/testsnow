@@ -131,6 +131,110 @@ def test_hk_admits_eastmoney_operating_business_net_cash_label() -> None:
     }
 
 
+def test_admits_direct_a_and_hk_annual_gross_margin() -> None:
+    a_pack = build_structured_financial_history_cache(
+        stock_code="688385", stock_name="复旦微电", market="A",
+        provider_rows={
+            "profit": [{"REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "100", "PARENT_NETPROFIT": "20"}],
+            "cashflow": [{"REPORT_DATE": "2025-12-31", "NETCASH_OPERATE": "30"}],
+            "indicator": [{"指标": "毛利率", "20251231": "41.23", "20250930": "99.99"}],
+        },
+    )
+    hk_pack = build_structured_financial_history_cache(
+        stock_code="02533", stock_name="黑芝麻智能", market="HK",
+        provider_rows={
+            "profit": [{
+                "REPORT_DATE": "2025-12-31", "REPORT_TYPE": "FY", "CURRENCY": "CNY",
+                "OPERATE_INCOME": "100", "HOLDER_PROFIT": "20", "GROSS_PROFIT_RATIO": "37.50",
+            }],
+            "cashflow": [],
+        },
+    )
+
+    assert a_pack["records"][0]["metrics"]["gross_margin"] == {
+        "value": "41.23", "source_field": "20251231", "origin": "direct",
+    }
+    assert hk_pack["records"][0]["metrics"]["gross_margin"] == {
+        "value": "37.50", "source_field": "GROSS_PROFIT_RATIO", "origin": "direct",
+    }
+    assert "99.99" not in json.dumps(a_pack, ensure_ascii=False)
+
+
+def test_derives_gross_margin_from_same_row_in_fixed_order() -> None:
+    from_profit = build_structured_financial_history_cache(
+        stock_code="300001", stock_name="测试股份", market="A",
+        provider_rows={
+            "profit": [{
+                "REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200",
+                "PARENT_NETPROFIT": "20", "GROSS_PROFIT": "80", "OPERATE_COST": "150",
+            }],
+            "cashflow": [],
+        },
+    )
+    from_cost = build_structured_financial_history_cache(
+        stock_code="300001", stock_name="测试股份", market="A",
+        provider_rows={
+            "profit": [{
+                "REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200",
+                "PARENT_NETPROFIT": "20", "OPERATE_COST": "150",
+            }],
+            "cashflow": [],
+        },
+    )
+
+    assert from_profit["records"][0]["metrics"]["gross_margin"] == {
+        "value": "40.00", "source_field": "derived", "origin": "derived",
+        "formula_version": "gross_margin.v1",
+        "input_fields": ["GROSS_PROFIT", "TOTAL_OPERATE_INCOME"],
+    }
+    assert from_cost["records"][0]["metrics"]["gross_margin"]["value"] == "25.00"
+    assert from_cost["records"][0]["metrics"]["gross_margin"]["input_fields"] == [
+        "OPERATE_COST", "TOTAL_OPERATE_INCOME",
+    ]
+
+
+def test_gross_margin_rejects_total_cost_split_rows_and_direct_conflict() -> None:
+    cases = [
+        {
+            "profit": [{
+                "REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200",
+                "PARENT_NETPROFIT": "20", "TOTAL_OPERATE_COST": "150",
+            }],
+            "cashflow": [],
+        },
+        {
+            "profit": [
+                {"REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200", "PARENT_NETPROFIT": "20"},
+                {"REPORT_DATE": "2025-12-31", "OPERATE_COST": "150"},
+            ],
+            "cashflow": [],
+        },
+    ]
+    for rows in cases:
+        pack = build_structured_financial_history_cache(
+            stock_code="300001", stock_name="测试股份", market="A", provider_rows=rows,
+        )
+        assert "gross_margin" not in pack["records"][0]["metrics"]
+        assert not any(row["code"] == "missing_metric" and row.get("metric_key") == "gross_margin" for row in pack["diagnostics"])
+
+    conflict = build_structured_financial_history_cache(
+        stock_code="300001", stock_name="测试股份", market="A",
+        provider_rows={
+            "profit": [{
+                "REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200",
+                "PARENT_NETPROFIT": "20", "GROSS_PROFIT": "80",
+            }],
+            "cashflow": [],
+            "indicator": [
+                {"指标": "毛利率", "20251231": "40.00"},
+                {"指标": "毛利率", "20251231": "41.00"},
+            ],
+        },
+    )
+    assert "gross_margin" not in conflict["records"][0]["metrics"]
+    assert any(row["code"] == "conflicting_period_values" and row.get("metric_key") == "gross_margin" for row in conflict["diagnostics"])
+
+
 def test_cache_hash_is_stable_and_identical_refresh_is_byte_preserving(tmp_path: Path) -> None:
     kwargs = {
         "stock_code": "688385",
@@ -228,11 +332,12 @@ def test_reader_rejects_hash_valid_record_with_missing_required_field(tmp_path: 
     path = tmp_path / "300001.json"
     path.write_text(json.dumps(pack), encoding="utf-8")
 
-    points, diagnostics = read_structured_financial_history_source_points(
+    points, ratios, diagnostics = read_structured_financial_history_source_points(
         path, expected_stock_code="300001"
     )
 
     assert points == []
+    assert ratios == []
     assert diagnostics == [{"code": "invalid_history_cache_record"}]
 
 
@@ -253,11 +358,12 @@ def test_reader_validates_identity_and_emits_compact_source_points(tmp_path: Pat
     path = tmp_path / "300308.json"
     write_structured_financial_history_cache(path, pack)
 
-    points, diagnostics = read_structured_financial_history_source_points(
+    points, ratios, diagnostics = read_structured_financial_history_source_points(
         path, expected_stock_code="300308"
     )
 
     assert diagnostics == []
+    assert ratios == []
     assert {row["metric_key"] for row in points} == {
         "revenue", "net_profit", "operating_cash_flow"
     }
@@ -269,11 +375,60 @@ def test_reader_validates_identity_and_emits_compact_source_points(tmp_path: Pat
     assert len(revenue["source_block_hash"]) == 64
     assert filing_facts_to_core_facts(points) == []
 
-    bad_points, bad_diagnostics = read_structured_financial_history_source_points(
+    bad_points, bad_ratios, bad_diagnostics = read_structured_financial_history_source_points(
         path, expected_stock_code="688385"
     )
     assert bad_points == []
+    assert bad_ratios == []
     assert bad_diagnostics == [{"code": "history_cache_stock_mismatch"}]
+
+
+def test_reader_separates_direct_and_derived_gross_margin_points(tmp_path: Path) -> None:
+    pack = build_structured_financial_history_cache(
+        stock_code="300001", stock_name="测试股份", market="A",
+        provider_rows={
+            "profit": [
+                {"REPORT_DATE": "2024-12-31", "TOTAL_OPERATE_INCOME": "200", "PARENT_NETPROFIT": "20", "GROSS_PROFIT": "80"},
+                {"REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200", "PARENT_NETPROFIT": "20"},
+            ],
+            "cashflow": [],
+            "indicator": [{"指标": "毛利率", "20251231": "42.50"}],
+        },
+    )
+    path = tmp_path / "300001.json"
+    write_structured_financial_history_cache(path, pack)
+
+    amounts, ratios, diagnostics = read_structured_financial_history_source_points(
+        path, expected_stock_code="300001",
+    )
+
+    assert {row["metric_key"] for row in amounts} == {"revenue", "net_profit"}
+    assert [(row["report_year"], row["unit"], row["numeric_value"], row["origin"]) for row in ratios] == [
+        (2024, "pct", "40.00", "derived"), (2025, "pct", "42.50", "direct"),
+    ]
+    assert ratios[0]["formula_version"] == "gross_margin.v1"
+    assert ratios[0]["input_fields"] == ["GROSS_PROFIT", "TOTAL_OPERATE_INCOME"]
+    assert {row.get("metric_key") for row in diagnostics} == {"operating_cash_flow"}
+
+
+def test_reader_rejects_malformed_optional_gross_margin_cell(tmp_path: Path) -> None:
+    pack = build_structured_financial_history_cache(
+        stock_code="300001", stock_name="测试股份", market="A",
+        provider_rows={"profit": [{
+            "REPORT_DATE": "2025-12-31", "TOTAL_OPERATE_INCOME": "200",
+            "PARENT_NETPROFIT": "20", "GROSS_PROFIT": "80",
+        }], "cashflow": []},
+    )
+    del pack["records"][0]["metrics"]["gross_margin"]["origin"]
+    pack["data_hash"] = hashlib.sha256(json.dumps({
+        key: pack.get(key) for key in ("stock_code", "stock_name", "market", "provider", "records")
+    }, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+    path = tmp_path / "300001.json"
+    path.write_text(json.dumps(pack), encoding="utf-8")
+
+    assert read_structured_financial_history_source_points(
+        path, expected_stock_code="300001",
+    ) == ([], [], [{"code": "invalid_history_cache_record"}])
 
 
 def test_refresh_entry_resolves_config_and_preserves_cache_on_empty_provider(tmp_path: Path, monkeypatch) -> None:

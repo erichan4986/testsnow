@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 if __name__.startswith("utils."):
@@ -20,6 +20,7 @@ _DISPLAY_SERIES_TOKENS = tuple(f":annual:{key}:" for key, _ in _BASE_METRICS) + 
 
 def build_periodic_report_financial_trend_view(
     *, stock_code: str, metric_series_pack: dict[str, Any],
+    gross_margin_points: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     """Return a strict latest-three-year Chapter 2 display view."""
     source = read_periodic_financial_scan_source(
@@ -52,7 +53,7 @@ def build_periodic_report_financial_trend_view(
     )
     if ratio is None:
         return _unavailable(stock_code)
-    return {
+    view = {
         "schema_version": FINANCIAL_TREND_VIEW_SCHEMA_VERSION,
         "status": "ready",
         "display_eligible": True,
@@ -67,6 +68,14 @@ def build_periodic_report_financial_trend_view(
         ) + "。",
         "source_label": _SOURCE_LABEL,
     }
+    margin = _gross_margin_row(gross_margin_points or [], str(stock_code), years)
+    if margin:
+        view["gross_margin"] = margin
+        if all(value != "—" for value in margin["values"]):
+            values = [Decimal(value.rstrip("%*")) for value in margin["values"]]
+            direction = "连续上升" if values[0] < values[1] < values[2] else "连续下降" if values[0] > values[1] > values[2] else "存在波动"
+            view["summary"] = view["summary"].rstrip("。") + f"，毛利率{direction}。"
+    return view
 
 
 def _unavailable(stock_code: str) -> dict[str, Any]:
@@ -111,6 +120,41 @@ def _cash_conversion_row(
         "metric_key": "operating_cash_flow_to_net_profit", "label": "现金转换率",
         "unit": "%", "latest_growth_rate": "—",
         "values": [f"{index[year]:.1f}%" if year in index else "—" for year in years],
+    }
+
+
+def _gross_margin_row(
+    points: list[dict[str, Any]], stock_code: str, years: list[int],
+) -> dict[str, Any] | None:
+    if not points or any(
+        str(point.get("stock_code")) != stock_code or point.get("metric_key") != "gross_margin"
+        or point.get("report_type") != "annual" or point.get("unit") != "pct"
+        or point.get("value_basis") != "as_reported" or point.get("origin") not in {"direct", "derived"}
+        for point in points
+    ):
+        return None
+    index: dict[int, tuple[Decimal, str]] = {}
+    for point in points:
+        year = point.get("report_year")
+        try:
+            value = Decimal(str(point.get("numeric_value") or ""))
+        except (InvalidOperation, ValueError):
+            return None
+        if not value.is_finite():
+            return None
+        if year in index:
+            return None
+        if year in years:
+            index[year] = (value, point["origin"])
+    if not index:
+        return None
+    origins = [index[year][1] if year in index else "missing" for year in years]
+    values = [f"{index[year][0]:.1f}%" + ("*" if index[year][1] == "derived" else "") if year in index else "—" for year in years]
+    latest = "—" if years[-2] not in index or years[-1] not in index else f"{index[years[-1]][0] - index[years[-2]][0]:+.1f}pct"
+    return {
+        "metric_key": "gross_margin", "label": "毛利率", "unit": "%", "values": values,
+        "origins": origins, "latest_change": latest,
+        "derivation_note": "* 为同源同年财务字段计算值。",
     }
 
 
