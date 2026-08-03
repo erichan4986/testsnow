@@ -87,6 +87,20 @@ def test_flags_aiish_transitions_and_strong_assertions():
     assert "strong_assertion_wording" in _codes(result)
 
 
+def test_strong_assertion_check_ignores_negated_disclaimer_but_keeps_real_claim():
+    disclaimer_only = """
+## 四、深度分析
+
+### 4.3 外部观察与待验证变量
+
+> 以下仅为同业背景，不代表目标公司已确认事实。
+"""
+    real_claim = disclaimer_only + "\n公司已确认获得新增订单。\n"
+
+    assert "strong_assertion_wording" not in _codes(check_report_prose_text(disclaimer_only))
+    assert "strong_assertion_wording" in _codes(check_report_prose_text(real_claim))
+
+
 def test_flags_duplicate_4_4_citation_sources():
     text = """
 ## 四、深度分析

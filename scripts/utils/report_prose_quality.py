@@ -64,6 +64,8 @@ STRONG_ASSERTION_PATTERNS = [
     r"已验证",
 ]
 
+_NEGATED_CONFIRMED_FACT_RE = re.compile(r"(?:不代表|不等同于)[^。\n]{0,24}已确认事实")
+
 
 @dataclass
 class ProseIssue:
@@ -317,7 +319,7 @@ def _check_aiish_transitions(sections: dict[str, str]) -> Iterable[ProseIssue]:
 
 def _check_strong_assertions(sections: dict[str, str]) -> Iterable[ProseIssue]:
     hits = []
-    combined = "\n".join(sections.values())
+    combined = _NEGATED_CONFIRMED_FACT_RE.sub("", "\n".join(sections.values()))
     for pattern in STRONG_ASSERTION_PATTERNS:
         for match in re.finditer(pattern, combined):
             hits.append(match.group(0))

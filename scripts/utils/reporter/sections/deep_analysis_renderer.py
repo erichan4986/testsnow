@@ -730,8 +730,8 @@ class DeepAnalysisRenderer:
     ) -> str:
         if not parts:
             return ""
-        lead = (f"同业与行业材料主要集中在{variable}。" if is_peer
-                else f"近期外部材料主要围绕{variable}展开。")
+        lead = (f"据外部材料，{variable}的同业/行业背景包括：" if is_peer
+                else f"外部材料称，{variable}的新增待验证点包括：")
         paragraphs, current = [], lead
         for index, (raw_quote, citation_refs, relation) in enumerate(parts):
             quote = re.sub(r"[，,；;。！？!?：:]$", "", raw_quote.strip())
@@ -739,12 +739,12 @@ class DeepAnalysisRenderer:
             if index == 0:
                 current += cited
             else:
-                separator = "；" if re.match(r"^(?:同时|此外|其中|另外|并且|而且)[，,]", quote) else "；此外，"
+                separator = "；"
                 if relation == "continuation" and len(current) + len(separator) + len(cited) <= _EXTERNAL_PARAGRAPH_CHAR_TARGET:
                     current += separator + cited
                     continue
                 paragraphs.append(f"{current}。")
-                current = f"据外部材料，{cited}"
+                current = f"另据外部材料，{cited}"
         return "\n\n".join((*paragraphs, f"{current}。"))
 
     @staticmethod

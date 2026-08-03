@@ -166,7 +166,7 @@ def test_external_variable_map_separates_and_orders_peer_industry_background():
 
     assert rendered.index("测试股产品完成客户导入") < rendered.index("同业/行业背景（Preview）")
     assert rendered.index("同业/行业背景（Preview）") < rendered.index("行业竞争格局加速分化")
-    assert "同业与行业材料主要集中在竞争格局。行业竞争格局加速分化[^2]。" in rendered
+    assert "据外部材料，竞争格局的同业/行业背景包括：行业竞争格局加速分化[^2]。" in rendered
     assert "同业/行业背景观察：" not in rendered
     assert "#### 同业/行业背景（Preview）" not in rendered
     assert "> **同业/行业背景（Preview）**：" in rendered
@@ -210,7 +210,7 @@ def test_external_variable_map_groups_topics_within_each_entity_scope():
     assert target.index("目标技术一[^31]") < target.index("目标技术二[^33]")
     assert target.index("目标技术二[^33]") < target.index("**财务质量**")
     assert peer.count("**技术与产品**") == 1
-    assert "同业与行业材料主要集中在技术与产品。同业技术[^34]。" in peer
+    assert "据外部材料，技术与产品的同业/行业背景包括：同业技术[^34]。" in peer
     assert "同业/行业背景观察：" not in peer
 
 
@@ -241,8 +241,9 @@ def test_external_variable_map_renders_one_extractively_joined_paragraph_per_top
     ))
 
     assert rendered.count("**技术与产品**") == 1
-    assert "近期外部材料主要围绕技术与产品展开。" in rendered
-    assert "产品进入客户验证[^11]；此外，平台支持多档算力[^12]。" in rendered
+    assert "外部材料称，技术与产品的新增待验证点包括：" in rendered
+    assert "产品进入客户验证[^11]；平台支持多档算力[^12]。" in rendered
+    assert "；此外，" not in rendered
     assert "外部新增待验证变量：" not in rendered
 
 
@@ -268,7 +269,7 @@ def test_external_topic_narrative_honors_separate_paragraphs_and_existing_connec
         disclaimer="仅作观察。", narratives=narratives,
     ))
 
-    assert "产品进入验证[^1]；同时，平台完成迭代[^2]。\n\n据外部材料，竞品推出新方案[^3]。" in rendered
+    assert "产品进入验证[^1]；同时，平台完成迭代[^2]。\n\n另据外部材料，竞品推出新方案[^3]。" in rendered
     assert "；此外，同时" not in rendered
     assert rendered.count("**技术与产品**") == 1
 
@@ -296,8 +297,8 @@ def test_external_variable_map_falls_back_only_for_topic_without_valid_narrative
         narratives=narratives,
     ))
 
-    assert "近期外部材料主要围绕技术与产品展开。" in rendered
-    assert "近期外部材料主要围绕财务质量展开。毛利率仍需验证[^2]。" in rendered
+    assert "外部材料称，技术与产品的新增待验证点包括：" in rendered
+    assert "外部材料称，财务质量的新增待验证点包括：毛利率仍需验证[^2]。" in rendered
     assert "外部新增待验证变量：" not in rendered
 
 
@@ -332,7 +333,7 @@ def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
         (row,), {7: {"source": "外部观察"}}, disclaimer="仅作观察。",
     ))
 
-    assert "近期外部材料主要围绕财务质量展开。收入与毛利均实现增长[^7]；同时，公司持续推进产品迭代并形成贡献[^7]。" in rendered
+    assert "外部材料称，财务质量的新增待验证点包括：收入与毛利均实现增长[^7]；同时，公司持续推进产品迭代并形成贡献[^7]。" in rendered
     assert "外部新增待验证变量：" not in rendered
 
 
@@ -355,8 +356,8 @@ def test_verified_external_topic_wraps_long_fallback_without_dropping_rows():
         rows, {index: {"source": "外部观察"} for index in range(1, 4)}, disclaimer="仅作观察。",
     ))
 
-    assert rendered.count("近期外部材料主要围绕财务质量展开。") == 1
-    assert "\n\n据外部材料，" in rendered
+    assert rendered.count("外部材料称，财务质量的新增待验证点包括：") == 1
+    assert "\n\n另据外部材料，" in rendered
     assert all(text.rstrip("。") in rendered for text in (row.body for row in rows))
     assert max(len(paragraph) for paragraph in rendered.split("\n\n")) <= 260
     assert rendered.count("外部新增待验证变量：") == 0
@@ -1604,7 +1605,7 @@ def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
 
     assert "### 4.3 外部观点与待验证变量（Preview，不参与评分）" in result
     assert "FPGA 2026Q3 客户验证节奏仍待确认[^5]" in result
-    assert "近期外部材料主要围绕技术与产品展开。" in result
+    assert "外部材料称，技术与产品的新增待验证点包括：" in result
     assert "[^5] | **微信公众号精选观察** | 《FPGA 客户验证观察》" in result
     assert "### 4.4" not in result
 
