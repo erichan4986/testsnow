@@ -366,9 +366,18 @@ def test_offline_smoke_patches_quality_gate_to_rule_based(monkeypatch):
     mod = _load_entry_module()
     monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy-key")
 
-    mod._install_offline_smoke_patches()
+    from utils import content_quality_gate
 
-    import content_quality_gate
+    def fail_if_client_initializes(self):
+        raise AssertionError("offline smoke must patch the pipeline quality gate")
+
+    monkeypatch.setattr(
+        content_quality_gate.LLMQualityAssessor,
+        "_init_client",
+        fail_if_client_initializes,
+    )
+
+    mod._install_offline_smoke_patches()
 
     assessor = content_quality_gate.LLMQualityAssessor()
     assert assessor.client is None
@@ -378,10 +387,24 @@ def test_offline_smoke_patches_consolidator_and_synthesizer_llm(monkeypatch):
     mod = _load_entry_module()
     monkeypatch.setenv("DEEPSEEK_API_KEY", "dummy-key")
 
-    mod._install_offline_smoke_patches()
+    from utils import content_consolidator, knowledge_synthesizer
 
-    import content_consolidator
-    import knowledge_synthesizer
+    monkeypatch.setattr(
+        content_consolidator.ContentConsolidator,
+        "_init_llm",
+        lambda self: (_ for _ in ()).throw(
+            AssertionError("offline smoke must patch the pipeline consolidator")
+        ),
+    )
+    monkeypatch.setattr(
+        knowledge_synthesizer.KnowledgeSynthesizer,
+        "_init_client",
+        lambda self: (_ for _ in ()).throw(
+            AssertionError("offline smoke must patch the pipeline synthesizer")
+        ),
+    )
+
+    mod._install_offline_smoke_patches()
 
     consolidator = content_consolidator.ContentConsolidator()
     synthesizer = knowledge_synthesizer.KnowledgeSynthesizer()
@@ -389,12 +412,20 @@ def test_offline_smoke_patches_consolidator_and_synthesizer_llm(monkeypatch):
     assert synthesizer.client is None
 
 
-def test_offline_smoke_patches_data_fetcher_lazy_fetches():
+def test_offline_smoke_patches_data_fetcher_lazy_fetches(monkeypatch):
     mod = _load_entry_module()
 
-    mod._install_offline_smoke_patches()
+    from utils.reporter import data_fetcher
 
-    import reporter.data_fetcher as data_fetcher
+    monkeypatch.setattr(
+        data_fetcher,
+        "fetch_tencent_quote",
+        lambda code: (_ for _ in ()).throw(
+            AssertionError("offline smoke must patch the pipeline data fetcher")
+        ),
+    )
+
+    mod._install_offline_smoke_patches()
 
     assert data_fetcher.fetch_tencent_quote("02533") is None
     assert data_fetcher.fetch_consensus_eps("02533") is None

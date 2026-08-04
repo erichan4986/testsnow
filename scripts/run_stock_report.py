@@ -25,7 +25,6 @@ from dotenv import load_dotenv
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 SCRIPTS_DIR = REPO_ROOT / "scripts"
-UTILS_DIR = SCRIPTS_DIR / "utils"
 if str(SCRIPTS_DIR) not in sys.path:
     sys.path.insert(0, str(SCRIPTS_DIR))
 
@@ -115,11 +114,8 @@ def _install_offline_smoke_patches() -> None:
     ):
         os.environ.pop(key, None)
 
-    if str(UTILS_DIR) not in sys.path:
-        sys.path.insert(0, str(UTILS_DIR))
-
     try:
-        content_quality_gate = importlib.import_module("content_quality_gate")
+        content_quality_gate = importlib.import_module("utils.content_quality_gate")
 
         def _offline_init_client(self):
             self.client = None
@@ -144,7 +140,7 @@ def _install_offline_smoke_patches() -> None:
         os.environ.pop(key, None)
 
     try:
-        content_consolidator = importlib.import_module("content_consolidator")
+        content_consolidator = importlib.import_module("utils.content_consolidator")
 
         def _offline_init_consolidator_llm(self):
             self._client = None
@@ -154,7 +150,7 @@ def _install_offline_smoke_patches() -> None:
         logger.warning("离线 smoke 禁用跨源归纳 LLM 失败: %s", exc)
 
     try:
-        knowledge_synthesizer = importlib.import_module("knowledge_synthesizer")
+        knowledge_synthesizer = importlib.import_module("utils.knowledge_synthesizer")
 
         def _offline_init_synthesizer_client(self):
             self.client = None
@@ -167,13 +163,8 @@ def _install_offline_smoke_patches() -> None:
         pass
 
     try:
-        data_fetcher = importlib.import_module("reporter.data_fetcher")
+        data_fetcher = importlib.import_module("utils.reporter.data_fetcher")
         _patch_data_fetcher_module(data_fetcher)
-        try:
-            utils_data_fetcher = importlib.import_module("utils.reporter.data_fetcher")
-            _patch_data_fetcher_module(utils_data_fetcher)
-        except Exception:
-            pass
     except Exception as exc:
         logger.warning("离线 smoke 禁用 renderer lazy 数据抓取失败: %s", exc)
 
