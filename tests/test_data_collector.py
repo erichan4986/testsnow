@@ -19,19 +19,21 @@ def test_compute_indicators_is_compatibility_wrapper_with_market():
     assert result == payload["indicators"]
 
 
-def test_build_payload_passes_hk_market_to_analyzer(monkeypatch):
+def test_build_payload_passes_market_and_cache_dir_to_analyzer(monkeypatch, tmp_path):
     collector = TechnicalCollector.__new__(TechnicalCollector)
     daily = pd.DataFrame({"open": [10.0] * 30, "high": [11.0] * 30, "low": [9.0] * 30, "close": [10.5] * 30, "volume": [100.0] * 30})
     weekly = daily.iloc[::5].reset_index(drop=True)
     observed = {}
 
-    def fake_analyze(df, df_weekly, code, market):
-        observed.update({"code": code, "market": market})
+    def fake_analyze(df, df_weekly, code, market, cache_dir=None):
+        observed.update({"code": code, "market": market, "cache_dir": cache_dir})
         return {"indicators": {"close": 10.5}, "resonance": {}, "price_target": {"status": "observe", "reason_code": "weekly_range", "direction": "neutral"}, "patterns": [], "levels": {}}
 
     monkeypatch.setattr(collector, "_run_technical_analyzer", fake_analyze)
-    result = collector.build_technical_payload(daily, weekly, code="02533", market="hk")
-    assert observed == {"code": "02533", "market": "hk"}
+    result = collector.build_technical_payload(
+        daily, weekly, code="02533", market="hk", cache_dir=tmp_path,
+    )
+    assert observed == {"code": "02533", "market": "hk", "cache_dir": tmp_path}
     assert result["price_target"]["status"] == "observe"
 
 
@@ -75,6 +77,44 @@ def test_collect_keeps_daily_payload_when_weekly_fetch_fails(monkeypatch):
 
     assert built == [None]
     assert result["indicators"]["close"] == 10.5
+
+
+def test_collect_routes_weekly_source_and_cache_dir(monkeypatch, tmp_path):
+    import data_collector as module
+
+    collector = TechnicalCollector.__new__(TechnicalCollector)
+    daily = pd.DataFrame({
+        "date": pd.to_datetime(["2026-07-01", "2026-07-02"]),
+        "open": [10.0, 10.1], "high": [10.2, 10.3],
+        "low": [9.8, 9.9], "close": [10.1, 10.2], "volume": [100, 110],
+    })
+    daily.attrs.update(data_source="akshare", adjustment="qfq")
+    observed = {"weekly": {}, "build": {}}
+    monkeypatch.setattr(collector, "fetch_kline", lambda *args, **kwargs: daily)
+
+    def fetch_weekly(*args, **kwargs):
+        observed["weekly"].update(kwargs)
+        return None
+
+    monkeypatch.setattr(collector, "fetch_weekly_kline", fetch_weekly)
+    monkeypatch.setattr(
+        collector, "build_technical_payload",
+        lambda *args, **kwargs: (
+            observed["build"].update(kwargs)
+            or {"indicators": {"close": 10.2}, "price_target": None}
+        ),
+    )
+    monkeypatch.setattr(module, "_baidu_fund_flow_history", lambda *args, **kwargs: [])
+    monkeypatch.setattr(module, "_baidu_concept_blocks", lambda *args, **kwargs: [])
+
+    collector.collect("300777", market=0, days=2, cache_dir=tmp_path)
+
+    assert observed["weekly"] == {"weeks": 72, "source": "akshare", "adjustment": "qfq"}
+    assert observed["build"]["cache_dir"] == tmp_path
+
+
+def test_collector_has_no_private_ohlcv_normalizer():
+    assert not hasattr(TechnicalCollector, "_normalize_ohlcv_frame")
 
 @pytest.mark.skipif(
     os.getenv("RUN_LIVE_DATA_TESTS") != "1",

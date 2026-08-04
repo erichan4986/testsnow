@@ -1,5 +1,6 @@
 """Technical data collection skill — wraps TechnicalCollector for pipeline use."""
 
+import logging
 import sys
 from datetime import date, datetime
 from pathlib import Path
@@ -31,8 +32,14 @@ try:
 except ImportError:
     from utils.reporter.technical_state_machine import ensure_technical_judgment
 
+try:
+    from technical_ohlcv_cache import load_ohlcv_cache, write_ohlcv_cache
+except ImportError:
+    from utils.technical_ohlcv_cache import load_ohlcv_cache, write_ohlcv_cache
+
 
 MAX_LOCAL_WIND_STALENESS_DAYS = 7
+logger = logging.getLogger(__name__)
 
 
 def _coerce_date(value):
@@ -209,6 +216,7 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
     market = "hk" if code.startswith("0") and len(code) == 5 else (
         0 if code.startswith(("00", "30")) else (1 if code.startswith(("60", "68")) else 0)
     )
+    cache_dir = ctx.get("technical_ohlcv_cache_dir")
 
     # 优先尝试本地 Wind Excel 数据
     try:
@@ -224,7 +232,7 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
             df_daily = wind_pkg["daily"]
             tech_collector = TechnicalCollector()
             technical_payload = tech_collector.build_technical_payload(
-                df_daily, code=code, market=market,
+                df_daily, code=code, market=market, cache_dir=cache_dir,
             )
             if not isinstance(technical_payload, dict):
                 indicators = tech_collector.compute_indicators(df_daily, code=code, market=market)
@@ -250,12 +258,51 @@ def technical_fetching_skill(ctx: SkillContext) -> SkillContext:
             _set_technical_outputs(tech_data)
             return ctx
 
+    cache = {"status": "missing"}
+    if market != "hk":
+        cache = load_ohlcv_cache("stock", code, market, cache_dir=cache_dir)
+
+    def _use_cache(status: str) -> bool:
+        tech_collector = TechnicalCollector()
+        tech_data = tech_collector.build_collection_payload(
+            cache["daily"], cache.get("weekly"), code=code, market=market,
+            fetched_at=cache["fetched_at"], data_source=f"cache:{cache['source']}",
+            include_optional=False, cache_dir=cache_dir,
+        )
+        if not tech_data:
+            return False
+        ctx.set("technical_cache_status", status)
+        ctx.set("technical_cache_latest_date", cache.get("latest_date", ""))
+        ctx.set("technical_cache_source", cache.get("source", ""))
+        if status == "fallback_after_network_failure":
+            ctx.set("technical_cache_fallback_reason", "network_collection_unavailable")
+        _set_technical_outputs(tech_data)
+        return True
+
+    if cache.get("status") == "same_day" and _use_cache("same_day"):
+        return ctx
+
     # 回退到网络采集
     tech_collector = TechnicalCollector()
-    tech_data = tech_collector.collect(code, market=market, days=120)
+    tech_data = tech_collector.collect(
+        code, market=market, days=120, cache_dir=cache_dir,
+    )
 
     if tech_data:
+        if market != "hk":
+            try:
+                write_ohlcv_cache(
+                    tech_data.get("daily_data"), weekly_data=tech_data.get("weekly_data"),
+                    asset_type="stock", symbol=code, market=market,
+                    source=tech_data.get("data_source", ""),
+                    adjustment=tech_data.get("adjustment", ""),
+                    fetched_at=tech_data.get("fetched_at"), cache_dir=cache_dir,
+                )
+            except OSError as exc:
+                logger.warning("技术行情缓存写入失败: %s", exc)
         _set_technical_outputs(tech_data)
+    elif cache.get("status") == "fallback_eligible" and _use_cache("fallback_after_network_failure"):
+        return ctx
     else:
         _set_technical_outputs(None, "technical_data_unavailable")
 

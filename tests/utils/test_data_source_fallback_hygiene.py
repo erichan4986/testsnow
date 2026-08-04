@@ -1,6 +1,7 @@
 import logging
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import pandas as pd
 import requests
@@ -62,14 +63,15 @@ def test_fetch_kline_logs_akshare_fallback_to_mootdx(monkeypatch, caplog):
             raise ConnectionError("proxy blocked")
 
     class FakeClient:
-        def k(self, *args, **kwargs):
+        def bars(self, *args, **kwargs):
             return pd.DataFrame(
                 {
+                    "datetime": pd.to_datetime(["2026-07-01", "2026-07-02"]),
                     "open": [1.0, 1.1],
                     "high": [1.2, 1.3],
                     "low": [0.9, 1.0],
                     "close": [1.1, 1.2],
-                    "volume": [1000, 1100],
+                    "vol": [1000, 1100],
                 }
             )
 
@@ -83,3 +85,117 @@ def test_fetch_kline_logs_akshare_fallback_to_mootdx(monkeypatch, caplog):
     assert df is not None
     assert df.attrs["data_source"] == "mootdx"
     assert "可选数据源 akshare stock_zh_a_hist 不可用，已交给 mootdx raw" in caplog.text
+
+
+def test_collector_constructor_does_not_initialize_mootdx():
+    with patch.object(data_collector.Quotes, "factory") as factory:
+        collector = TechnicalCollector()
+
+    factory.assert_not_called()
+    assert collector.client is None
+
+
+def test_mootdx_daily_uses_one_native_daily_bars_call(monkeypatch):
+    calls = []
+
+    class FakeClient:
+        def bars(self, **kwargs):
+            calls.append(kwargs)
+            return pd.DataFrame({
+                "datetime": pd.to_datetime(["2026-07-01", "2026-07-02"]),
+                "open": [1.0, 1.1], "high": [1.2, 1.3],
+                "low": [0.9, 1.0], "close": [1.1, 1.2],
+                "vol": [1000, 1100], "volume": [9000, 9100],
+                "amount": [1100, 1320],
+            })
+
+    monkeypatch.setattr(data_collector, "ak", None)
+    collector = TechnicalCollector.__new__(TechnicalCollector)
+    collector.client = FakeClient()
+
+    frame = collector.fetch_kline("300777", market=0, days=2)
+
+    assert len(calls) == 1
+    assert calls[0] == {"symbol": "300777", "frequency": 9, "start": 0, "offset": 2}
+    assert frame.columns.tolist() == ["date", "open", "high", "low", "close", "volume", "amount"]
+    assert frame["date"].dt.strftime("%Y-%m-%d").tolist() == ["2026-07-01", "2026-07-02"]
+    assert frame["volume"].tolist() == [9000, 9100]
+
+
+def test_mootdx_daily_exception_is_not_retried(monkeypatch):
+    calls = 0
+
+    class FakeClient:
+        def bars(self, **kwargs):
+            nonlocal calls
+            calls += 1
+            raise KeyError("datetime")
+
+    monkeypatch.setattr(data_collector, "ak", None)
+    collector = TechnicalCollector.__new__(TechnicalCollector)
+    collector.client = FakeClient()
+
+    assert collector.fetch_kline("300777", market=0, days=120) is None
+    assert calls == 1
+
+
+def test_mootdx_weekly_uses_real_weekly_frequency(monkeypatch):
+    calls = []
+
+    class FakeClient:
+        def bars(self, **kwargs):
+            calls.append(kwargs)
+            return pd.DataFrame({
+                "datetime": pd.to_datetime(["2026-06-26", "2026-07-03"]),
+                "open": [1.0, 1.1], "high": [1.2, 1.3],
+                "low": [0.9, 1.0], "close": [1.1, 1.2], "vol": [5000, 5500],
+            })
+
+    monkeypatch.setattr(data_collector, "ak", None)
+    collector = TechnicalCollector.__new__(TechnicalCollector)
+    collector.client = FakeClient()
+
+    frame = collector.fetch_weekly_kline(
+        "300777", market=0, weeks=2, source="mootdx", adjustment="raw",
+    )
+
+    assert len(frame) == 2
+    assert calls == [{"symbol": "300777", "frequency": 5, "start": 0, "offset": 2}]
+
+
+def test_explicit_qfq_does_not_fall_through_to_raw(monkeypatch):
+    class FakeAk:
+        @staticmethod
+        def stock_zh_a_hist(*args, **kwargs):
+            raise ValueError("bad qfq response")
+
+    class FakeClient:
+        def bars(self, **kwargs):
+            raise AssertionError("explicit qfq must not use mootdx")
+
+    monkeypatch.setattr(data_collector, "ak", FakeAk)
+    collector = TechnicalCollector.__new__(TechnicalCollector)
+    collector.client = FakeClient()
+
+    assert collector.fetch_kline("300777", market=0, days=2, adjustment="qfq") is None
+
+
+def test_akshare_weekly_does_not_initialize_or_fall_through_to_mootdx(monkeypatch):
+    class FakeAk:
+        @staticmethod
+        def stock_zh_a_hist(*args, **kwargs):
+            return pd.DataFrame({
+                "日期": ["2026-06-26", "2026-07-03"],
+                "开盘": [1.0, 1.1], "最高": [1.2, 1.3],
+                "最低": [0.9, 1.0], "收盘": [1.1, 1.2], "成交量": [5000, 5500],
+            })
+
+    monkeypatch.setattr(data_collector, "ak", FakeAk)
+    collector = TechnicalCollector()
+    with patch.object(data_collector.Quotes, "factory") as factory:
+        frame = collector.fetch_weekly_kline(
+            "300777", market=0, weeks=2, source="akshare", adjustment="qfq",
+        )
+
+    factory.assert_not_called()
+    assert frame.attrs == {"data_source": "akshare", "adjustment": "qfq"}

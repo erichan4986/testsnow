@@ -8,6 +8,11 @@ from datetime import datetime, timedelta
 import pandas as pd
 
 try:
+    from technical_ohlcv_cache import normalize_ohlcv_frame
+except ImportError:
+    from .technical_ohlcv_cache import normalize_ohlcv_frame
+
+try:
     from mootdx.quotes import Quotes
 except ImportError:
     Quotes = None
@@ -163,11 +168,19 @@ class TechnicalCollector:
 
     def __init__(self):
         self.client = None
-        if Quotes is not None:
-            try:
-                self.client = Quotes.factory(market="std")
-            except Exception as e:
-                logger.warning(f"mootdx 初始化失败: {e}")
+        self._mootdx_initialized = False
+
+    def _get_mootdx_client(self):
+        if self.client is not None:
+            return self.client
+        if getattr(self, "_mootdx_initialized", False) or Quotes is None:
+            return None
+        self._mootdx_initialized = True
+        try:
+            self.client = Quotes.factory(market="std")
+        except Exception as e:
+            logger.warning(f"mootdx 初始化失败: {e}")
+        return self.client
 
     def fetch_kline(self, code: str, market: int | str = 0, days: int = 120, adjustment: str | None = None) -> Optional[pd.DataFrame]:
         """
@@ -197,100 +210,56 @@ class TechnicalCollector:
                     adjust="qfq",
                     optional=True,
                     source_name="akshare stock_zh_a_hist",
-                    fallback_name="mootdx raw",
+                    fallback_name="mootdx raw" if adjustment is None else None,
                 )
-            if df is not None and not df.empty:
-                column_map = {
-                    "日期": "date", "开盘": "open", "最高": "high",
-                    "最低": "low", "收盘": "close", "成交量": "volume",
-                }
-                df = df.rename(columns=column_map)
-                for col in ["open", "high", "low", "close", "volume"]:
-                    if col not in df.columns:
-                        logger.error(f"akshare 返回数据缺少列: {col}")
-                        df = None
-                        break
-                if df is not None:
-                    if len(df) > days:
-                        df = df.tail(days).reset_index(drop=True)
-                    df.attrs["adjustment"] = "raw" if market == "hk" else "qfq"
-                    df.attrs["data_source"] = "akshare_hk" if market == "hk" else "akshare"
-                    return df
+            normalized = normalize_ohlcv_frame(
+                df, source="akshare_hk" if market == "hk" else "akshare",
+                adjustment="raw" if market == "hk" else "qfq", limit=days,
+            )
+            if normalized is not None:
+                return normalized
 
         if market == "hk":
             logger.warning(f"{code} 港股日K获取失败，跳过 mootdx A股回退")
             return None
-
-        # --- Priority 2: mootdx raw ---
-        if self.client is None:
-            logger.error("mootdx 客户端未初始化")
+        if adjustment == "qfq":
             return None
 
-        multipliers = [2, 5, 10]
-        for mult in multipliers:
-            try:
-                end = datetime.now()
-                begin = end - timedelta(days=days * mult)
-                df = self.client.k(
-                    symbol=code,
-                    begin=begin.strftime("%Y%m%d"),
-                    end=end.strftime("%Y%m%d"),
-                )
-                if df is None or df.empty:
-                    logger.warning(f"{code} K线数据为空 (mult={mult})")
-                    continue
+        # --- Priority 2: mootdx raw ---
+        client = self._get_mootdx_client()
+        if client is None:
+            logger.error("mootdx 客户端未初始化")
+            return None
+        try:
+            df = client.bars(symbol=code, frequency=9, start=0, offset=days)
+        except Exception as e:
+            logger.warning(f"获取 {code} 日K失败: {e}")
+            return None
+        return normalize_ohlcv_frame(
+            df, source="mootdx", adjustment="raw", limit=days,
+        )
 
-                df = df.rename(columns={
-                    "open": "open", "high": "high", "low": "low",
-                    "close": "close", "volume": "volume",
-                })
-
-                if len(df) >= days:
-                    if len(df) > days:
-                        df = df.tail(days).reset_index(drop=True)
-                    df.attrs["adjustment"] = "raw"
-                    df.attrs["data_source"] = "mootdx"
-                    return df
-                else:
-                    logger.warning(
-                        f"{code} 返回 {len(df)} 条，不足目标 {days} 条，"
-                        f"扩大查询范围重试 (mult={mult})"
-                    )
-                    if mult == multipliers[-1]:
-                        df.attrs["adjustment"] = "raw"
-                        df.attrs["data_source"] = "mootdx"
-                        return df.reset_index(drop=True)
-            except Exception as e:
-                logger.error(f"获取 {code} K线失败 (mult={mult}): {e}")
-                continue
-
-        return None
-
-    def fetch_weekly_kline(self, code: str, market: int | str = 0, weeks: int = 72) -> Optional[pd.DataFrame]:
+    def fetch_weekly_kline(
+        self, code: str, market: int | str = 0, weeks: int = 72,
+        source: str | None = None, adjustment: str | None = None,
+    ) -> Optional[pd.DataFrame]:
         """
-        获取周K线数据。
-        优先 mootdx (frequency=1)，回退 akshare。
-        港股: 备选 akshare stock_hk_hist。
+        获取与日线来源/复权方式一致的周K线数据。
         """
-        # --- 优先 1: mootdx ---
-        if market != "hk" and self.client is not None:
+        prefer_mootdx = source == "mootdx" or (source is None and market != "hk")
+        if prefer_mootdx:
+            client = self._get_mootdx_client()
             try:
-                end = datetime.now()
-                begin = end - timedelta(days=weeks * 7 * 2)
-                df = self.client.k(
-                    symbol=code,
-                    begin=begin.strftime("%Y%m%d"),
-                    end=end.strftime("%Y%m%d"),
-                    frequency=1,
-                )
-                if df is not None and not df.empty and all(c in df.columns for c in ["open", "high", "low", "close", "volume"]):
-                    if len(df) > weeks:
-                        df = df.tail(weeks).reset_index(drop=True)
-                    return df
+                df = client.bars(symbol=code, frequency=5, start=0, offset=weeks) if client else None
             except Exception as e:
                 logger.warning(f"mootdx 周线获取失败: {e}")
+                df = None
+            normalized = normalize_ohlcv_frame(
+                df, source="mootdx", adjustment="raw", limit=weeks,
+            )
+            if normalized is not None or source == "mootdx":
+                return normalized
 
-        # --- 回退: akshare ---
         if ak is None:
             logger.warning("akshare 未安装，无法获取周线数据")
             return None
@@ -322,21 +291,10 @@ class TechnicalCollector:
         if df is None or df.empty:
             return None
 
-        # Standardize columns
-        column_map = {
-            "日期": "date", "开盘": "open", "最高": "high",
-            "最低": "low", "收盘": "close", "成交量": "volume",
-        }
-        df = df.rename(columns=column_map)
-        for col in ["open", "high", "low", "close", "volume"]:
-            if col not in df.columns:
-                logger.error(f"周线数据缺少列: {col}")
-                return None
-
-        if len(df) > weeks:
-            df = df.tail(weeks).reset_index(drop=True)
-
-        return df
+        return normalize_ohlcv_frame(
+            df, source="akshare_hk" if market == "hk" else "akshare",
+            adjustment="raw" if market == "hk" else (adjustment or "qfq"), limit=weeks,
+        )
 
     def _compute_indicators_legacy(self, df: pd.DataFrame, code: str | None = None) -> Dict:
         """
@@ -412,7 +370,9 @@ class TechnicalCollector:
             logger.error(f"计算技术指标失败: {e}")
             return {}
 
-    def _run_technical_analyzer(self, df_daily, df_weekly=None, code=None, market=None):
+    def _run_technical_analyzer(
+        self, df_daily, df_weekly=None, code=None, market=None, cache_dir=None,
+    ):
         try:
             from .reporter.technical_analyzer import analyze
         except ImportError:
@@ -423,6 +383,8 @@ class TechnicalCollector:
             "is_hk": market == "hk",
             "adjustment": getattr(df_daily, "attrs", {}).get("adjustment", "raw"),
             "data_source": getattr(df_daily, "attrs", {}).get("data_source", "unknown"),
+            "technical_ohlcv_cache_dir": cache_dir,
+            "index_cache_enabled": market != "hk",
         }
         return analyze(df_daily, df_weekly=df_weekly, quote=quote)
 
@@ -432,12 +394,15 @@ class TechnicalCollector:
         df_weekly: pd.DataFrame | None = None,
         code: str | None = None,
         market: int | str | None = None,
+        cache_dir=None,
     ) -> Dict:
         """Build the sole technical payload and calculate the target once."""
         if df_daily is None or df_daily.empty:
             return {}
         try:
-            result = self._run_technical_analyzer(df_daily, df_weekly, code, market)
+            result = self._run_technical_analyzer(
+                df_daily, df_weekly, code, market, cache_dir=cache_dir,
+            )
         except Exception as exc:
             logger.warning(f"technical_analyzer 失败，回退到 stockstats: {exc}")
             result = {}
@@ -479,45 +444,59 @@ class TechnicalCollector:
         payload = self.build_technical_payload(df, code=code, market=market)
         return payload.get("indicators", {})
 
-    def collect(self, code: str, market: int | str = 0, days: int = 120, adjustment: str | None = None) -> Dict:
+    def build_collection_payload(
+        self, df_daily: pd.DataFrame, df_weekly: pd.DataFrame | None = None, *,
+        code: str, market: int | str = 0, fetched_at: str | None = None,
+        data_source: str | None = None, include_optional: bool = False,
+        cache_dir=None,
+    ) -> Dict:
+        source = data_source or df_daily.attrs.get("data_source", "unknown")
+        if data_source:
+            df_daily = df_daily.copy()
+            df_daily.attrs["data_source"] = data_source
+        try:
+            technical = self.build_technical_payload(
+                df_daily, df_weekly=df_weekly, code=code, market=market,
+                cache_dir=cache_dir,
+            )
+        except Exception as e:
+            logger.warning(f"价格目标分析失败: {e}")
+            technical = {}
+        return {
+            "code": code, "market": market, "days": len(df_daily),
+            "adjustment": df_daily.attrs.get("adjustment", "raw"),
+            "data_source": source, "indicators": technical.get("indicators", {}),
+            "price_target": technical.get("price_target"),
+            "daily_data": df_daily.to_dict(orient="list"),
+            "weekly_data": df_weekly.to_dict(orient="list") if df_weekly is not None else {},
+            "technical": technical,
+            "fund_flow": _baidu_fund_flow_history(code, days=5) if include_optional else [],
+            "concept_blocks": _baidu_concept_blocks(code) if include_optional else {},
+            "fetched_at": fetched_at or datetime.now().astimezone().isoformat(),
+        }
+
+    def collect(
+        self, code: str, market: int | str = 0, days: int = 120,
+        adjustment: str | None = None, cache_dir=None,
+    ) -> Dict:
         """一键采集技术指标（含日线+周线+价格目标）"""
         df_daily = self.fetch_kline(code, market, days, adjustment=adjustment)
         if df_daily is None or df_daily.empty:
             return {}
         # --- 周线、指标、判断与价格目标统一由一个 builder 完成 ---
         try:
-            df_weekly = self.fetch_weekly_kline(code, market, weeks=72)
+            df_weekly = self.fetch_weekly_kline(
+                code, market, weeks=72,
+                source=df_daily.attrs.get("data_source"),
+                adjustment=df_daily.attrs.get("adjustment"),
+            )
         except Exception as e:
             logger.warning(f"周线数据获取失败，保留日线分析: {e}")
             df_weekly = None
-        try:
-            technical_payload = self.build_technical_payload(
-                df_daily, df_weekly=df_weekly, code=code, market=market,
-            )
-        except Exception as e:
-            logger.warning(f"价格目标分析失败: {e}")
-            technical_payload = {}
-
-        indicators = technical_payload.get("indicators", {})
-
-        # --- 新增：资金流向 + 概念板块（百度PAE，零鉴权） ---
-        fund_flow = _baidu_fund_flow_history(code, days=5)
-        concept_blocks = _baidu_concept_blocks(code)
-
-        return {
-            "code": code,
-            "market": market,
-            "days": len(df_daily),
-            "adjustment": df_daily.attrs.get("adjustment", "raw"),
-            "data_source": df_daily.attrs.get("data_source", "unknown"),
-            "indicators": indicators,
-            "price_target": technical_payload.get("price_target"),
-            "daily_data": df_daily.to_dict(orient="list"),
-            "technical": technical_payload,
-            "fund_flow": fund_flow,
-            "concept_blocks": concept_blocks,
-            "fetched_at": datetime.now().isoformat(),
-        }
+        return self.build_collection_payload(
+            df_daily, df_weekly, code=code, market=market, include_optional=True,
+            cache_dir=cache_dir,
+        )
 
 
 import ssl

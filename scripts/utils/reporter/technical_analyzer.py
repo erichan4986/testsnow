@@ -9,6 +9,20 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+try:
+    from ..technical_ohlcv_cache import (
+        load_ohlcv_cache, normalize_ohlcv_frame, write_ohlcv_cache,
+    )
+except ImportError:
+    try:
+        from technical_ohlcv_cache import (
+            load_ohlcv_cache, normalize_ohlcv_frame, write_ohlcv_cache,
+        )
+    except ImportError:
+        from scripts.utils.technical_ohlcv_cache import (
+            load_ohlcv_cache, normalize_ohlcv_frame, write_ohlcv_cache,
+        )
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -288,9 +302,33 @@ def _apply_gap_based_qfq_approximation(df: pd.DataFrame, gap_details: list) -> p
     return df
 
 
-def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
+def _fetch_index_kline(
+    symbol: str, days: int = 120, *, cache_dir=None, now=None,
+    index_cache_enabled: bool = True,
+) -> pd.DataFrame | None:
     """获取指数日K数据。优先 akshare，失败回退 mootdx，再失败返回 None。"""
     from datetime import datetime, timedelta
+
+    cache = {"status": "missing"}
+    if index_cache_enabled:
+        cache = load_ohlcv_cache("index", symbol, "cn", cache_dir=cache_dir, now=now)
+        if cache.get("status") == "same_day":
+            return cache["daily"]
+
+    def finish(frame, source):
+        normalized = normalize_ohlcv_frame(
+            frame, source=source, adjustment="raw", limit=days,
+        )
+        if normalized is not None and index_cache_enabled:
+            try:
+                write_ohlcv_cache(
+                    normalized.to_dict(orient="list"), asset_type="index",
+                    symbol=symbol, market="cn", source=source, adjustment="raw",
+                    cache_dir=cache_dir, now=now,
+                )
+            except OSError as exc:
+                logger.warning("指数 %s 缓存写入失败: %s", symbol, exc)
+        return normalized
 
     # ---- Priority 1: akshare ----
     try:
@@ -320,19 +358,9 @@ def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
         else:
             df = ak.index_zh_a_hist(symbol=symbol, period="daily", start_date=start_date)
 
-        if df is not None and not df.empty:
-            column_map = {
-                "日期": "date", "开盘": "open", "最高": "high",
-                "最低": "low", "收盘": "close", "成交量": "volume",
-            }
-            df = df.rename(columns=column_map)
-            for col in ["open", "high", "low", "close", "volume"]:
-                if col not in df.columns:
-                    logger.warning(f"指数 {symbol} 返回数据缺少列: {col}")
-                    return None
-            if len(df) > days:
-                df = df.tail(days).reset_index(drop=True)
-            return df
+        normalized = finish(df, "akshare_index")
+        if normalized is not None:
+            return normalized
     except Exception as e:
         logger.warning(f"akshare 获取指数 {symbol} 失败: {e}")
 
@@ -340,27 +368,15 @@ def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
     try:
         from mootdx.quotes import Quotes
         client = Quotes.factory(market="std")
-        # market: 0=深圳, 1=上海; 指数代码 symbol 直接传 6 位
-        market_flag = 1 if symbol.startswith(("0", "6")) else 0
-        end = datetime.now()
-        begin = end - timedelta(days=days * 3)
-        df = client.k(
-            symbol=symbol,
-            market=market_flag,
-            begin=begin.strftime("%Y%m%d"),
-            end=end.strftime("%Y%m%d"),
-        )
-        if df is not None and not df.empty and all(c in df.columns for c in ["open", "high", "low", "close", "volume"]):
-            if "date" not in df.columns and df.index.name is not None:
-                df = df.reset_index()
-            if len(df) > days:
-                df = df.tail(days).reset_index(drop=True)
-            logger.info(f"mootdx 获取指数 {symbol} 成功，共 {len(df)} 条")
-            return df
+        df = client.index_bars(symbol=symbol, frequency=9, start=0, offset=days)
+        normalized = finish(df, "mootdx_index")
+        if normalized is not None:
+            logger.info(f"mootdx 获取指数 {symbol} 成功，共 {len(normalized)} 条")
+            return normalized
     except Exception as e:
         logger.warning(f"mootdx 获取指数 {symbol} 失败: {e}")
 
-    return None
+    return cache.get("daily") if cache.get("status") == "fallback_eligible" else None
 
 
 # ---------------------------------------------------------------------------
@@ -891,14 +907,22 @@ def advanced_medium_term_resonance(
     sector_index_state = None
 
     market_meta = mapping.get("market")
+    index_cache_dir = (quote or {}).get("technical_ohlcv_cache_dir")
+    index_cache_enabled = (quote or {}).get("index_cache_enabled", True)
     if market_meta and market_meta.get("code"):
-        df_market = _fetch_index_kline(market_meta["code"], days=daily_count if daily_count else 120)
+        df_market = _fetch_index_kline(
+            market_meta["code"], days=daily_count if daily_count else 120,
+            cache_dir=index_cache_dir, index_cache_enabled=index_cache_enabled,
+        )
         if df_market is not None and not df_market.empty:
             market_index_state = analyze_index_trend(df_market).get("trend_state")
 
     thematic_meta = mapping.get("thematic")
     if thematic_meta and thematic_meta.get("code"):
-        df_theme = _fetch_index_kline(thematic_meta["code"], days=daily_count if daily_count else 120)
+        df_theme = _fetch_index_kline(
+            thematic_meta["code"], days=daily_count if daily_count else 120,
+            cache_dir=index_cache_dir, index_cache_enabled=index_cache_enabled,
+        )
         if df_theme is not None and not df_theme.empty:
             theme_index_state = analyze_index_trend(df_theme).get("trend_state")
 

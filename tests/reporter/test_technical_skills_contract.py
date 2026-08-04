@@ -54,7 +54,9 @@ def test_collected_technical_is_written_back_to_stock_raw():
         mock_collector.return_value.collect.return_value = collected
         result = technical_fetching_skill(ctx)
 
-    mock_collector.return_value.collect.assert_called_once_with("300001", market=0, days=120)
+    mock_collector.return_value.collect.assert_called_once_with(
+        "300001", market=0, days=120, cache_dir=None,
+    )
     assert result.get("technical") == collected
     assert result.get("stock_raw")["technical"] == collected
     assert result.get("daily_data") == collected["daily_data"]
@@ -131,7 +133,9 @@ def test_hk_code_uses_hk_market_contract():
         mock_collector.return_value.collect.return_value = {}
         result = technical_fetching_skill(ctx)
 
-    mock_collector.return_value.collect.assert_called_once_with("02533", market="hk", days=120)
+    mock_collector.return_value.collect.assert_called_once_with(
+        "02533", market="hk", days=120, cache_dir=None,
+    )
     assert result.get("technical") is None
     assert result.get("technical_unavailable_reason") == "technical_data_unavailable"
     assert result.get("stock_raw")["technical_unavailable_reason"] == "technical_data_unavailable"
@@ -231,7 +235,169 @@ def test_hk_code_skips_stale_local_wind_excel_before_network_collector():
         mock_collector.return_value.collect.return_value = collected
         result = technical_fetching_skill(ctx)
 
-    mock_collector.return_value.collect.assert_called_once_with("02533", market="hk", days=120)
+    mock_collector.return_value.collect.assert_called_once_with(
+        "02533", market="hk", days=120, cache_dir=None,
+    )
     mock_collector.return_value.compute_indicators.assert_not_called()
     assert result.get("technical") == collected
     assert result.get("technical_local_data_stale_reason").startswith("wind_excel_stale")
+
+
+def _cached_ohlcv(status="same_day"):
+    daily = pd.DataFrame({
+        "date": pd.to_datetime(["2026-08-01", "2026-08-03"]),
+        "open": [10.0, 10.1], "high": [10.2, 10.3],
+        "low": [9.8, 9.9], "close": [10.1, 10.2], "volume": [100, 110],
+    })
+    return {
+        "status": status, "daily": daily, "weekly": None,
+        "source": "akshare", "adjustment": "qfq",
+        "fetched_at": "2026-08-03T15:00:00+08:00", "latest_date": "2026-08-03",
+    }
+
+
+def _cached_technical_payload():
+    return {
+        "code": "300308", "market": 0,
+        "daily_data": {"close": [10.1, 10.2], "volume": [100, 110]},
+        "weekly_data": {}, "indicators": {"close": 10.2},
+        "price_target": {"direction": "neutral"},
+        "data_source": "cache:akshare", "adjustment": "qfq",
+        "fetched_at": "2026-08-03T15:00:00+08:00",
+    }
+
+
+def test_same_day_a_share_cache_recomputes_without_network(tmp_path):
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创", "stock_codes": {"中际旭创": "300308"},
+        "stock_raw": {}, "technical_ohlcv_cache_dir": tmp_path,
+    })
+    with (
+        patch("report_skills.technical_skills.load_ohlcv_cache", return_value=_cached_ohlcv()) as loader,
+        patch("report_skills.technical_skills.write_ohlcv_cache") as writer,
+        patch("report_skills.technical_skills.TechnicalCollector") as collector,
+    ):
+        collector.return_value.build_collection_payload.return_value = _cached_technical_payload()
+        result = technical_fetching_skill(ctx)
+
+    collector.return_value.collect.assert_not_called()
+    loader.assert_called_once_with("stock", "300308", 0, cache_dir=tmp_path)
+    collector.return_value.build_collection_payload.assert_called_once()
+    kwargs = collector.return_value.build_collection_payload.call_args.kwargs
+    assert kwargs["include_optional"] is False
+    assert kwargs["data_source"] == "cache:akshare"
+    assert kwargs["fetched_at"] == "2026-08-03T15:00:00+08:00"
+    assert kwargs["cache_dir"] == tmp_path
+    writer.assert_not_called()
+    assert result.get("technical_cache_status") == "same_day"
+    assert result.get("technical")["indicators"]["close"] == 10.2
+
+
+def test_recent_cache_falls_back_only_after_network_failure(tmp_path):
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创", "stock_codes": {"中际旭创": "300308"},
+        "stock_raw": {}, "technical_ohlcv_cache_dir": tmp_path,
+    })
+    with (
+        patch(
+            "report_skills.technical_skills.load_ohlcv_cache",
+            return_value=_cached_ohlcv("fallback_eligible"),
+        ),
+        patch("report_skills.technical_skills.write_ohlcv_cache") as writer,
+        patch("report_skills.technical_skills.TechnicalCollector") as collector,
+    ):
+        collector.return_value.collect.return_value = {}
+        collector.return_value.build_collection_payload.return_value = _cached_technical_payload()
+        result = technical_fetching_skill(ctx)
+
+    collector.return_value.collect.assert_called_once_with(
+        "300308", market=0, days=120, cache_dir=tmp_path,
+    )
+    collector.return_value.build_collection_payload.assert_called_once()
+    writer.assert_not_called()
+    assert result.get("technical_cache_status") == "fallback_after_network_failure"
+    assert result.get("technical_cache_fallback_reason") == "network_collection_unavailable"
+
+
+def test_stale_cache_is_not_used_after_network_failure(tmp_path):
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创", "stock_codes": {"中际旭创": "300308"},
+        "stock_raw": {}, "technical_ohlcv_cache_dir": tmp_path,
+    })
+    stale = _cached_ohlcv("stale")
+    stale.update(daily=None, weekly=None)
+    with (
+        patch("report_skills.technical_skills.load_ohlcv_cache", return_value=stale),
+        patch("report_skills.technical_skills.TechnicalCollector") as collector,
+    ):
+        collector.return_value.collect.return_value = {}
+        result = technical_fetching_skill(ctx)
+
+    collector.return_value.build_collection_payload.assert_not_called()
+    assert result.get("technical") is None
+    assert result.get("technical_unavailable_reason") == "technical_data_unavailable"
+
+
+def test_successful_live_a_share_collection_writes_raw_cache(tmp_path):
+    collected = _cached_technical_payload()
+    collected["data_source"] = "akshare"
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创", "stock_codes": {"中际旭创": "300308"},
+        "stock_raw": {}, "technical_ohlcv_cache_dir": tmp_path,
+    })
+    with (
+        patch(
+            "report_skills.technical_skills.load_ohlcv_cache",
+            return_value={"status": "missing"},
+        ),
+        patch("report_skills.technical_skills.write_ohlcv_cache") as writer,
+        patch("report_skills.technical_skills.TechnicalCollector") as collector,
+    ):
+        collector.return_value.collect.return_value = collected
+        result = technical_fetching_skill(ctx)
+
+    writer.assert_called_once_with(
+        collected["daily_data"], weekly_data=collected["weekly_data"],
+        asset_type="stock", symbol="300308", market=0, source="akshare",
+        adjustment="qfq", fetched_at=collected["fetched_at"], cache_dir=tmp_path,
+    )
+    assert result.get("technical") == collected
+
+
+def test_cache_write_failure_keeps_live_result(tmp_path):
+    collected = _cached_technical_payload()
+    collected["data_source"] = "mootdx"
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创", "stock_codes": {"中际旭创": "300308"},
+        "stock_raw": {}, "technical_ohlcv_cache_dir": tmp_path,
+    })
+    with (
+        patch(
+            "report_skills.technical_skills.load_ohlcv_cache",
+            return_value={"status": "missing"},
+        ),
+        patch(
+            "report_skills.technical_skills.write_ohlcv_cache",
+            side_effect=OSError("disk full"),
+        ),
+        patch("report_skills.technical_skills.TechnicalCollector") as collector,
+    ):
+        collector.return_value.collect.return_value = collected
+        result = technical_fetching_skill(ctx)
+
+    assert result.get("technical") == collected
+
+
+def test_hk_path_never_reads_a_share_ohlcv_cache(tmp_path):
+    ctx = SkillContext(input={
+        "stock_name": "港股测试", "stock_codes": {"港股测试": "02533"},
+        "stock_raw": {}, "technical_ohlcv_cache_dir": tmp_path,
+    })
+    with (
+        patch("report_skills.technical_skills.load_ohlcv_cache") as loader,
+        patch("report_skills.technical_skills.TechnicalCollector") as collector,
+    ):
+        collector.return_value.collect.return_value = {}
+        technical_fetching_skill(ctx)
+
+    loader.assert_not_called()
