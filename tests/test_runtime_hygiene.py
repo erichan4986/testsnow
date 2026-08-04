@@ -3,6 +3,7 @@ from __future__ import annotations
 import ast
 import importlib
 import inspect
+import subprocess
 import sys
 from pathlib import Path
 
@@ -144,6 +145,75 @@ def test_batch_e_detached_knowledge_skill_is_absent() -> None:
     assert "test_knowledge_skills.py" not in readme
     assert "report_skills/knowledge_skills.py" not in ci_gate
     assert "report_skills/knowledge_skills.py" not in context_index
+
+
+def test_batch_f1_detached_external_preview_utilities_are_absent() -> None:
+    detached_pairs = (
+        (
+            SCRIPTS_DIR / "utils" / "social_viewpoint_source_packets.py",
+            REPO_ROOT / "tests" / "utils" / "test_social_viewpoint_source_packets.py",
+        ),
+        (
+            SCRIPTS_DIR / "utils" / "curated_external_video_subtitles.py",
+            REPO_ROOT / "tests" / "utils" / "test_curated_external_video_subtitles.py",
+        ),
+        (
+            SCRIPTS_DIR / "utils" / "curated_external_candidate_discovery.py",
+            REPO_ROOT / "tests" / "utils" / "test_curated_external_candidate_discovery.py",
+        ),
+    )
+
+    for runtime_path, test_path in detached_pairs:
+        assert not runtime_path.exists()
+        assert not test_path.exists()
+
+
+def test_batch_f2_public_compatibility_hard_cut() -> None:
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    reporter_init = SCRIPTS_DIR / "utils" / "reporter" / "__init__.py"
+    sections_init = reporter_init.parent / "sections" / "__init__.py"
+
+    for module_name in ("judgment_generator.py", "wechat_sogou_fetcher.py"):
+        assert not (SCRIPTS_DIR / "utils" / module_name).exists()
+        assert module_name not in readme
+
+    reporter_source = reporter_init.read_text(encoding="utf-8")
+    sections_source = sections_init.read_text(encoding="utf-8")
+    assert "from .report_manager import ReportManager" in reporter_source
+    assert "from .constants import" not in reporter_source
+    assert "from .data_fetcher import" not in reporter_source
+    assert "from .scoring_engine import" not in reporter_source
+    assert "SectionRenderer" not in sections_source
+    assert "Renderer" not in sections_source
+    for test_path in (REPO_ROOT / "tests").rglob("*.py"):
+        if test_path.resolve() == Path(__file__).resolve():
+            continue
+        source = test_path.read_text(encoding="utf-8")
+        assert "from scripts.utils.reporter.sections import" not in source
+        assert "from reporter.sections import" not in source
+
+    result = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            (
+                "import sys; sys.path.insert(0, 'scripts'); "
+                "import utils.reporter as reporter; "
+                "from utils.reporter import ReportManager, data_fetcher; "
+                "import utils.reporter.sections as sections; "
+                "from utils.reporter.sections.technical_renderer import TechnicalRenderer; "
+                "assert ReportManager.__module__ == 'utils.reporter.report_manager'; "
+                "assert data_fetcher.__name__ == 'utils.reporter.data_fetcher'; "
+                "assert not hasattr(reporter, 'compute_pillar_scores'); "
+                "assert not hasattr(sections, 'TechnicalRenderer')"
+            ),
+        ],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
 
 
 def test_batch_b_dead_compatibility_surfaces_are_absent() -> None:

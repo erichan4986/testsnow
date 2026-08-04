@@ -393,9 +393,7 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | `content_consolidator.py` | 跨源内容去重聚类 | `ContentConsolidator` 用 LLM 提取 topic tags，按主题聚类，每类保留最高分内容 |
 | `knowledge_synthesizer.py` | 主题综合叙事生成 | `KnowledgeSynthesizer` 将 `SynthesisItem` 合成为行业逻辑/基本面/估值/资金/事件主题叙事，带 `[^n]` 引用 |
 | `zhihu_curator.py` | 知乎内容精编器 | `ZhihuCurator` 三层漏斗：L1 时间截断(365天) → L2 DeepSeek 批量质量评估 → L3 有效性过滤 |
-| `judgment_generator.py` | 精品帖子判断生成器 | `JudgmentGenerator` 调用 LLM 生成推导分析、论据扎实度、共识偏离度，带文件缓存防重复调用 |
 | `parser.py` | 东财股吧 HTML 解析 | `EastmoneyParser` 正则解析帖子列表、标题、作者、时间、阅读量 |
-| `wechat_sogou_fetcher.py` | 搜狗微信文章采集 | `WechatSogouFetcher` 搜索搜狗微信，提取公众号文章标题/URL/摘要 |
 
 ### `scripts/utils/reporter/` — 技术分析引擎
 
@@ -420,7 +418,7 @@ python3 scripts/previews/broker_research_digest_preview.py \
 
 | 文件 | 功能 | 实现方式 |
 |---|---|---|
-| `__init__.py` | 包初始化 + Protocol | `SectionRenderer` 协议定义，重导出所有渲染器 |
+| `__init__.py` | 包初始化 | 渲染器从各自 owner 模块直接导入，避免包级 eager import |
 | `technical_renderer.py` | **技术面分析板块渲染** | `TechnicalRenderer` 支持 compact/full/legacy 三模式，渲染趋势状态、健康度评分、结构健康、通道/箱体、底部信号、市场共振、K线形态、谋士团、背离预警、价格目标、概念板块、资金流向 |
 | `executive_summary_renderer.py` | 执行摘要渲染 | `ExecutiveSummaryRenderer` 调用 LLM 提取多空论点和一句话结论 |
 | `composite_score_renderer.py` | 综合评分渲染 | `CompositeScoreRenderer` 渲染 G=B+M 评分、EV 预期、目标价区间、AI 建议 |

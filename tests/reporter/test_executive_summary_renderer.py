@@ -3,7 +3,7 @@
 from types import SimpleNamespace
 
 import pytest
-from scripts.utils.reporter.sections import ExecutiveSummaryRenderer
+from scripts.utils.reporter.sections.executive_summary_renderer import ExecutiveSummaryRenderer
 from scripts.utils.reporter.executive_summary_view import build_executive_summary_view
 
 

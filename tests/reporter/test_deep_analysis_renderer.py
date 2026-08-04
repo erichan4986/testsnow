@@ -12,7 +12,8 @@ from scripts.utils.deep_analysis_material_snapshot import (
     build_deep_analysis_material_snapshot,
     select_annual_display_rows,
 )
-from scripts.utils.reporter.sections import DeepAnalysisRenderer, ExecutiveSummaryRenderer
+from scripts.utils.reporter.sections.deep_analysis_renderer import DeepAnalysisRenderer
+from scripts.utils.reporter.sections.executive_summary_renderer import ExecutiveSummaryRenderer
 
 
 def _test_external_family(text: str, title: str = "") -> str:

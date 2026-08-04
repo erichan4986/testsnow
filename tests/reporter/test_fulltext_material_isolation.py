@@ -6,7 +6,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
 from reporter.scoring_engine import risk_score_section
-from reporter.sections import ExecutiveSummaryRenderer
+from reporter.sections.executive_summary_renderer import ExecutiveSummaryRenderer
 from report_skills.synthesis_skills import SynthesisSkill
 from skill_pipeline import SkillContext
 from source_adapter import SynthesisItem

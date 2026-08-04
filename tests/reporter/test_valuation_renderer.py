@@ -2,7 +2,7 @@
 
 import pytest
 from unittest.mock import patch
-from scripts.utils.reporter.sections import ValuationRenderer
+from scripts.utils.reporter.sections.valuation_renderer import ValuationRenderer
 
 
 def test_required_keys():

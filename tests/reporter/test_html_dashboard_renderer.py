@@ -1,7 +1,7 @@
 """Tests for HTMLDashboardRenderer."""
 
 import pytest
-from scripts.utils.reporter.sections import HTMLDashboardRenderer
+from scripts.utils.reporter.sections.html_dashboard_renderer import HTMLDashboardRenderer
 
 
 def test_required_keys():

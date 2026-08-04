@@ -1,7 +1,7 @@
 """Tests for RiskRenderer."""
 
 import pytest
-from scripts.utils.reporter.sections import RiskRenderer
+from scripts.utils.reporter.sections.risk_renderer import RiskRenderer
 from scripts.utils.reporter.recommendation_decision import (
     EntryConstraint,
     EvDecision,

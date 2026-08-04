@@ -1,7 +1,7 @@
 """Tests for CompositeScoreRenderer."""
 
 import pytest
-from scripts.utils.reporter.sections import CompositeScoreRenderer
+from scripts.utils.reporter.sections.composite_score_renderer import CompositeScoreRenderer
 
 
 def test_required_keys():
