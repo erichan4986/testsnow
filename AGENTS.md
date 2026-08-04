@@ -184,6 +184,17 @@ Codex may use repository skills under `.agents/skills` when relevant.
 
 重要约束：Codex 在当前环境中不直接调用外部 Claude/Kimi 处理私有仓库上下文。Codex 负责写 design、review prompt、implementation task 和验收报告；用户在本地终端触发 Claude Code；Claude Code 将反馈、notes 或代码 diff 写回仓库；Codex 再读取文件和 diff 继续推进。
 
+### 手动模型切换规则
+
+当用户要求不同模型分别负责设计、实现和审查时，不要由 Codex 在同一轮里通过 subagent 自动完成全部阶段。固定流程是：
+
+1. Codex 写设计、task 或 review prompt，然后停止。
+2. 用户手动切换到实现模型；实现模型写代码和 notes，然后停止。
+3. 用户手动切换到审查模型；审查模型只读检查并写 review notes，然后停止。
+4. 用户切回 Codex 后，Codex 读取真实 diff、测试和 notes，决定修订设计、进入下一批或收口。
+
+除非用户在当前任务中再次明确授权自动多模型编排，否则不得用 Codex subagent 代替上述手动切换；自动指定不同 subagent model 也可能消耗同一侧的 usage，不能视为真正的用户侧模型切换。
+
 ### Fast Quality Mode（默认协作策略）
 
 当前默认目标是**效率和质量优先**，不再以最小化 Codex token 为第一目标。Codex 应更主动承担规划、实现、审查和窄范围修复，Claude Code 主要用于本地执行、第二视角 review、长时间/网络/浏览器/PDF 验证和较大实现任务。
