@@ -51,6 +51,84 @@ def test_render_with_pillar():
     assert "估值健康度" in result
 
 
+def test_dashboard_uses_same_directory_chart_filenames():
+    result = HTMLDashboardRenderer().render({
+        "stock_name": "测试股",
+        "date_str": "20260719",
+        "stock_codes": {},
+        "chart_paths": {
+            "technical": "/tmp/测试股_technical.png",
+            "bullbear": "/tmp/测试股_bullbear.png",
+            "radar": "/tmp/测试股_radar.png",
+            "valuation": "/tmp/测试股_valuation.png",
+        },
+    })
+
+    assert "src='测试股_radar.png'" in result
+    assert "src='测试股_technical.png'" in result
+    assert "src='charts/" not in result
+
+
+def test_dashboard_reads_nested_technical_judgment(monkeypatch):
+    monkeypatch.setattr("scripts.utils.reporter.sections.html_dashboard_renderer.fetch_tencent_quote", lambda _code: None, raising=False)
+    renderer = HTMLDashboardRenderer()
+    ctx = {
+        "stock_name": "TestStock", "date_str": "20260605", "stock_codes": {},
+        "stock_raw": {"technical": {
+            "price_target": {"profit_risk_ratio": 2.0},
+            "indicators": {"_resonance": {"judgment": {
+                "schema": "technical_judgment.v1",
+                "trend": {"state": "strong_up"},
+                "target": {
+                    "direction": "bullish", "producer_status": "ready",
+                    "reason_code": "target_ready", "structure_confidence": "high",
+                    "effective_confidence": "high", "effective_label": "高",
+                    "execution_state": "triggered", "display_mode": "full_targets",
+                    "trigger_checks": {
+                        name: {"status": "pass"}
+                        for name in ("price", "trend", "volume", "momentum")
+                    },
+                },
+                "action": {"state": "follow"},
+            }}},
+        }},
+    }
+
+    result = renderer.render(ctx)
+
+    assert "2.0:1" in result
+    assert "技术判断" in result
+    assert "follow（高）" in result
+
+
+def test_dashboard_fails_closed_for_contradictory_cached_judgment(monkeypatch):
+    monkeypatch.setattr("scripts.utils.reporter.sections.html_dashboard_renderer.fetch_tencent_quote", lambda _code: None, raising=False)
+    renderer = HTMLDashboardRenderer()
+    ctx = {
+        "stock_name": "TestStock", "date_str": "20260605", "stock_codes": {},
+        "stock_raw": {"technical": {"indicators": {"_resonance": {"judgment": {
+            "schema": "technical_judgment.v1",
+            "trend": {"state": "unknown"},
+            "target": {
+                "direction": "neutral", "producer_status": "unavailable",
+                "reason_code": "stale", "structure_confidence": "unavailable",
+                "effective_confidence": "unavailable", "effective_label": "高",
+                "execution_state": "unavailable", "display_mode": "full_targets",
+                "trigger_checks": {
+                    name: {"status": "pass"}
+                    for name in ("price", "trend", "volume", "momentum")
+                },
+            },
+            "action": {"state": "follow"},
+        }}}}},
+    }
+
+    result = renderer.render(ctx)
+
+    assert "follow（高）" not in result
+    assert "unavailable（不可用）" in result
+
+
 def test_render_prefers_synthesis_display(monkeypatch):
     captured = []
 

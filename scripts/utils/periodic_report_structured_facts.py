@@ -9,21 +9,29 @@ from __future__ import annotations
 
 import hashlib
 import re
-from decimal import Decimal, ROUND_HALF_UP
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional, Tuple
 
 if __name__.startswith("utils."):
-    from .periodic_report_required_financial_metrics import _amount_in_wan, _ratio_cell
+    from .periodic_report_contract_utils import percentage_ratio_cell
+    from .periodic_report_required_financial_metrics import _amount_in_wan
 else:
-    from periodic_report_required_financial_metrics import _amount_in_wan, _ratio_cell
+    from periodic_report_contract_utils import percentage_ratio_cell
+    from periodic_report_required_financial_metrics import _amount_in_wan
 
 
 STRUCTURED_FACT_SCHEMA_VERSION = "periodic_report_structured_fact.v1"
 RISK_SIGNAL_SCHEMA_VERSION = "periodic_report_risk_signal.v1"
+CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT = Decimal("50")
 
 _PHASE_A_METRICS: Tuple[Tuple[str, str, str, Tuple[str, ...]], ...] = (
     ("revenue", "profit_quality", "revenue", ("营业收入", "收入", "來自客戶合同的收入", "来自客户合同的收入")),
-    ("net_profit", "profit_quality", "net_profit", ("归属于上市公司股东的净利润",)),
+    (
+        "net_profit",
+        "profit_quality",
+        "net_profit",
+        ("归属于上市公司股东的净利润", "本公司權益持有人應佔年內", "年內虧損"),
+    ),
     (
         "operating_cash_flow",
         "cash_flow_quality",
@@ -58,6 +66,7 @@ def build_periodic_report_structured_fact_pack(
     report_type: str,
     evidence_pack: Dict[str, Any],
     required_financial_metrics: Dict[str, Any],
+    source_doc: str = "",
 ) -> Dict[str, Any]:
     """Build a conservative Phase A structured fact pack."""
     diagnostics: List[Dict[str, Any]] = []
@@ -101,6 +110,7 @@ def build_periodic_report_structured_fact_pack(
             label=matched_label,
             cell=cell,
             anchor=anchor,
+            source_doc=source_doc,
         ))
 
     derived_facts, derived_diagnostics = _build_derived_facts(
@@ -108,6 +118,7 @@ def build_periodic_report_structured_fact_pack(
         stock_code=stock_code,
         report_year=report_year,
         report_type=report_type,
+        source_doc=source_doc,
     )
     diagnostics.extend(derived_diagnostics)
     risk_signals = _build_risk_signals(
@@ -117,7 +128,7 @@ def build_periodic_report_structured_fact_pack(
         report_type=report_type,
     )
 
-    return {
+    pack = {
         "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
         "source_pack_schema_version": evidence_pack.get("schema_version", ""),
         "stock_code": stock_code,
@@ -129,6 +140,9 @@ def build_periodic_report_structured_fact_pack(
         "filing_risk_signals": risk_signals,
         "diagnostics": diagnostics,
     }
+    if source_doc:
+        pack["source_doc"] = source_doc
+    return pack
 
 
 def _filing_fact(
@@ -141,10 +155,12 @@ def _filing_fact(
     label: str,
     cell: Dict[str, Any],
     anchor: Dict[str, str],
+    source_doc: str = "",
 ) -> Dict[str, Any]:
     fact_id = _fact_id(stock_code, report_year, report_type, metric_key)
     unit = str(cell.get("unit") or "")
-    return {
+    normalized_value = _canonical_wan_amount(cell)
+    fact = {
         "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
         "source_type": "periodic_report_filing_fact",
         "fact_id": fact_id,
@@ -155,9 +171,9 @@ def _filing_fact(
         "metric_key": metric_key,
         "label": label,
         "value": f"{cell.get('text', '')}{unit}",
-        "normalized_value": str(cell.get("normalized") or ""),
-        "display_value": _display_financial_amount(str(cell.get("normalized") or "")),
-        "unit": "万元" if str(cell.get("normalized") or "").endswith("万元") else unit,
+        "normalized_value": normalized_value,
+        "display_value": _display_financial_amount(normalized_value),
+        "unit": "万元",
         "currency": "CNY",
         "period": str(report_year),
         "value_basis": "as_reported",
@@ -170,6 +186,16 @@ def _filing_fact(
         "source_credit": 75,
         "knowledge_eligible": False,
     }
+    if source_doc:
+        fact["source_doc"] = source_doc
+    return fact
+
+
+def _canonical_wan_amount(cell: Dict[str, Any]) -> str:
+    amount = _amount_in_wan(cell).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    if amount == Decimal("-0.00"):
+        amount = Decimal("0.00")
+    return f"{amount:.2f}万元"
 
 
 def filing_facts_to_core_facts(
@@ -243,6 +269,7 @@ def _build_derived_facts(
     stock_code: str,
     report_year: int,
     report_type: str,
+    source_doc: str = "",
 ) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
     by_key = {fact.get("metric_key"): fact for fact in filing_facts}
     if not by_key.get("net_profit"):
@@ -258,17 +285,20 @@ def _build_derived_facts(
         diagnostics.append({"code": "non_positive_net_profit_for_cashflow_ratio"})
         return [], diagnostics
 
-    ratio = _ratio_cell(ocf, abs(net_profit))
+    ratio = percentage_ratio_cell(ocf, abs(net_profit))
     if not ratio:
         diagnostics.append({"code": "cashflow_ratio_not_computable"})
         return [], diagnostics
 
     metric_key = "operating_cash_flow_to_net_profit"
-    return [
-        {
+    derived_fact = {
             "schema_version": STRUCTURED_FACT_SCHEMA_VERSION,
             "source_type": "periodic_report_derived_fact",
             "fact_id": _fact_id(stock_code, report_year, report_type, metric_key),
+            "stock_code": stock_code,
+            "report_year": int(report_year),
+            "report_type": report_type,
+            "period": str(report_year),
             "metric_key": metric_key,
             "label": "经营现金流/归母净利润",
             "value": ratio["text"],
@@ -279,9 +309,12 @@ def _build_derived_facts(
                 _fact_id(stock_code, report_year, report_type, "net_profit"),
             ],
             "calculation": "operating_cash_flow / abs(net_profit)",
+            "formula_version": "cash_conversion.v1",
             "knowledge_eligible": False,
         }
-    ], diagnostics
+    if source_doc:
+        derived_fact["source_doc"] = source_doc
+    return [derived_fact], diagnostics
 
 
 def _build_risk_signals(
@@ -303,7 +336,7 @@ def _build_risk_signals(
         return []
 
     ratio_value = _pct_decimal(str(ratio_fact.get("signed_value") or ratio_fact.get("value") or ""))
-    if ratio_value is None or ratio_value >= Decimal("50"):
+    if not is_cashflow_quality_weak(ratio_value):
         return []
 
     return [
@@ -320,6 +353,14 @@ def _build_risk_signals(
             "scoring_eligible": False,
         }
     ]
+
+
+def is_cashflow_quality_weak(ratio_pct: Optional[Decimal]) -> bool:
+    """Return the canonical display-only cashflow-quality threshold result."""
+    return (
+        ratio_pct is not None
+        and ratio_pct < CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT
+    )
 
 
 def _anchor_cell_to_block(
@@ -345,7 +386,7 @@ def _anchor_cell_to_block(
         if text_value in block_text or any(
             candidate and candidate in block_number_compact
             for candidate in text_value_compact_candidates
-        ):
+        ) or _block_contains_equivalent_amount(block_text, label, cell):
             source_excerpt = _bounded_excerpt(block_text, label, text_value)
             return {
                 "source_block_id": str(block["id"]),
@@ -354,6 +395,53 @@ def _anchor_cell_to_block(
                 "source_block_hash": _source_text_hash(block_text),
             }
     return None
+
+
+def _block_contains_equivalent_amount(
+    block_text: str,
+    label: str,
+    cell: Dict[str, Any],
+) -> bool:
+    """Match a rounded summary amount to the same metric in a statement unit."""
+    compact = re.sub(r"\s+", "", str(block_text or ""))
+    label_compact = _compact_text(label)
+    label_pos = compact.find(label_compact)
+    if label_pos < 0:
+        return False
+    tail = compact[label_pos + len(label_compact):label_pos + len(label_compact) + 120]
+    unit_match = re.match(r"[（(]?(亿元|万元|千元|元)[）)]?", tail)
+    if not unit_match:
+        unit_match = re.search(r"(?:单位[:：]?|人民币)(亿元|万元|千元|元)", compact[:label_pos + 40])
+    if not unit_match:
+        return False
+    unit = unit_match.group(1)
+    amount_tail = tail[unit_match.end():] if unit_match.start() == 0 else tail
+    try:
+        target_wan = _amount_in_wan(cell)
+    except (InvalidOperation, TypeError, ValueError):
+        return False
+    tolerance = _amount_rounding_tolerance_wan(cell)
+    factors = {"亿元": Decimal("10000"), "万元": Decimal("1"), "千元": Decimal("0.1"), "元": Decimal("0.0001")}
+    for match in re.finditer(r"(?<![\d.])(\(?-?\d[\d,，]*(?:\.\d+)?\)?)(?![\d.%％])", amount_tail):
+        raw = match.group(1)
+        negative = raw.startswith("(") and raw.endswith(")")
+        try:
+            amount = Decimal(raw.strip("()").replace(",", "").replace("，", ""))
+        except InvalidOperation:
+            continue
+        candidate_wan = -amount * factors[unit] if negative else amount * factors[unit]
+        if abs(candidate_wan - target_wan) <= tolerance:
+            return True
+    return False
+
+
+def _amount_rounding_tolerance_wan(cell: Dict[str, Any]) -> Decimal:
+    text = str(cell.get("text") or "").replace(",", "").replace("，", "")
+    decimals = len(text.rsplit(".", 1)[1]) if "." in text else 0
+    factor = {"亿元": Decimal("10000"), "万元": Decimal("1"), "千元": Decimal("0.1"), "元": Decimal("0.0001")}.get(
+        str(cell.get("unit") or ""), Decimal("1")
+    )
+    return factor * (Decimal("10") ** -decimals) / 2
 
 
 def _source_text_hash(text: str) -> str:

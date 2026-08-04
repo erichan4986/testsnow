@@ -412,7 +412,7 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | `price_adjustment_validator.py` | 除权复权校验 | `detect_price_gaps()` 检测跳空>25%的除权缺口；`validate_adjustment()` 校验复权状态；`apply_qfq_adjustment()` 应用前复权修复 |
 | `scoring_engine.py` | 评分引擎 | `classify_sentiment()` 关键词情绪分类；`compute_pillar_scores()` 五维评分（基本面/估值/情绪/技术/风险）；`ev_expectation()` EV 预期模型；`composite_score_section()`/`risk_score_section()` 综合/风险评分 |
 | `data_fetcher.py` | 外部 API 数据获取 | `fetch_tencent_quote()` 腾讯实时行情；`fetch_consensus_eps()` 东财一致预期；`fetch_financial_abstract()` 财务摘要；`fetch_competitor_metrics()` 竞品指标；`industry_fwd_pe()` 行业前瞻PE |
-| `chart_generator.py` | 图表生成 | `generate_technical_panel()` 技术面板（K线+成交量+指标）；`generate_bull_bear_chart()` 多空情绪图；`generate_radar_chart()` 雷达图；`generate_valuation_comparison()` 估值对比图。Plotly + Kaleido 输出 PNG |
+| `chart_generator.py` | 图表生成 | `generate_decision_chain_chart()` 投资决策链；`generate_technical_panel()` 动态技术面板；`generate_bull_bear_chart()` 多空情绪图；`generate_radar_chart()` Dashboard 雷达图。Plotly + Kaleido 输出 PNG |
 | `constants.py` | 共享常量 | `COMPETITOR_MAP`/`COMPETITOR_CODES`/`INDUSTRY_MAP` 竞品映射 |
 | `technical_config.py` | 技术指标配置 | `load_technical_config()` 加载阈值参数（MA走平阈值、BOLL开口比例、BIAS窗口、RSI阈值），支持 JSON 覆盖 |
 
@@ -427,7 +427,6 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | `valuation_renderer.py` | 估值分析渲染 | `ValuationRenderer` 懒加载实时行情和一致预期，渲染 PE/PB/PS、前瞻估值、财务快照、同业对比 |
 | `deep_analysis_renderer.py` | 深度分析渲染 | `DeepAnalysisRenderer` 渲染核心事实表和主题深度分析（行业逻辑/业绩路径/资金） |
 | `risk_renderer.py` | 风险分析渲染 | `RiskRenderer` 渲染风险因子、关注点、行业特定风险表 |
-| `price_target_renderer.py` | 价格目标渲染 | `PriceTargetRenderer` 渲染方向、置信度、盈亏比、目标价、触发条件 |
 | `html_dashboard_renderer.py` | HTML 仪表盘渲染 | `HTMLDashboardRenderer` 生成单页可视化快览仪表盘 |
 
 ### `scripts/utils/report_skills/` — Skill Pipeline 技能

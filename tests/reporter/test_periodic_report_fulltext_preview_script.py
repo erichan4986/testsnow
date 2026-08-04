@@ -69,6 +69,21 @@ def test_build_preview_markdown_can_render_source_intake_section(tmp_path):
     assert "fact_candidate" not in markdown
 
 
+def test_preview_source_intake_section_sets_explicit_render_gate(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "000001_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+
+    markdown = build_preview_markdown(
+        stock_code="000001",
+        stock_name="测试股",
+        cache_dir=cache_dir,
+        source_intake_section=True,
+    )
+
+    assert "## Source Intake 分层证据观察" in markdown
+
+
 def test_build_preview_markdown_reports_missing_cache(tmp_path):
     markdown = build_preview_markdown(
         stock_code="000001",

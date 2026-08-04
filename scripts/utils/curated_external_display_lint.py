@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 DEFAULT_CURATED_SOURCE_TYPE = "curated_external_analysis_evidence"
 DEFAULT_MAX_CURATED_SOURCE_CREDIT = 65
+CURATED_EXTERNAL_QUOTE_HEADER = "**外部材料原文摘录（Preview，未经官方核验）**"
 
 _STRONG_CONFIRMATION_TERMS = [
     "确认",
@@ -56,6 +57,9 @@ def lint_curated_external_display_text(
         text = str(synthesis.get(field) or "")
         if not text:
             continue
+        has_quote_contract = any(
+            line.strip() == CURATED_EXTERNAL_QUOTE_HEADER for line in text.splitlines()
+        )
         for sentence in _split_sentences(text):
             if not sentence.strip():
                 continue
@@ -89,6 +93,8 @@ def lint_curated_external_display_text(
                 continue
 
             if non_curated:
+                continue
+            if has_quote_contract and sentence.lstrip().startswith(">"):
                 continue
 
             term = _find_strong_confirmation_term(sentence)

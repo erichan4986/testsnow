@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "da0f0889dd8871b7d55d9a93150a3a19dde1a7d3c5fcc3631db80f686fafc5e3",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "9aa38b83f9227edd0e8ca4c6c02b2e78804c4de15a830c7e025a58e505bf0628",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "a5b792d77d928ce04df4362867d9d54ad8096306dc2987363a8ee9904a8ee90f",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "688385",
+  "stock_name": "复旦微电"
+}

@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "ea9feb7f2dd31ac97b27d774338a25babf677bc8ec8d5f8cd45fe79d1272c5f6",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "071ad3e1d23087b5f8d15806fa9eebcec91669eb0edd8be5c99853473659c777",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "e39eea15e0385be70f35cd0a6eacc1a2043accc3b7587f7f590f43fb8c392afa",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "300777",
+  "stock_name": "中简科技"
+}

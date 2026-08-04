@@ -9,10 +9,17 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 
+if __package__:
+    from .annual_argument_schema import CANONICAL_FAMILIES, canonical_family_for_usage, is_high_value_narrative_usage
+    from .periodic_report_coverage_manifest import build_periodic_report_coverage_manifest
+else:
+    from annual_argument_schema import CANONICAL_FAMILIES, canonical_family_for_usage, is_high_value_narrative_usage
+    from periodic_report_coverage_manifest import build_periodic_report_coverage_manifest
+
 
 SCHEMA_VERSION = "periodic_report_evidence_pack.v1"
 
-_MAX_BLOCKS = 30
+_MAX_BLOCKS = 48
 _MAX_CHARS_PER_BLOCK = 2000
 
 # Generic section headings mapped to usage labels.
@@ -48,6 +55,8 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
     (
         "product_capacity_profile",
         (
+            "实施完毕",
+            "均已结项",
             "主要产品及应用",
             "经营范围和主营业务",
             "主要产品",
@@ -137,6 +146,7 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
     (
         "profitability_commentary",
         (
+            "报告期内，公司实现营业收入",
             "毛利率较上年同期提升",
             "毛利率较上年同期增加",
             "毛利率同比提升",
@@ -149,6 +159,8 @@ _KEYWORD_USAGE_PATTERNS: List[Tuple[str, Tuple[str, ...]]] = [
             "规模效应逐步释放",
             "成本规模效应",
             "高端产品出货占比提升",
+            "产品出货较快增长",
+            "综合毛利率",
         ),
     ),
     ("audit_key_matters", ("关键审计事项",)),
@@ -343,21 +355,28 @@ def build_periodic_report_evidence_pack(
     detected_report_type = _detect_report_type(cleaned) if report_type == "auto" else report_type
     audit_status = _detect_audit_status(cleaned, detected_report_type)
 
-    blocks: List[Dict[str, Any]] = []
-    blocks.extend(_extract_section_blocks(cleaned))
-    blocks.extend(_extract_keyword_blocks(cleaned))
-    blocks.extend(_extract_hk_statement_blocks(cleaned))
-    blocks.extend(_extract_hk_narrative_blocks(cleaned))
-    blocks.extend(_extract_table_blocks(cleaned))
-    blocks = _dedupe_and_prioritize_blocks(blocks)
-    blocks = blocks[:_MAX_BLOCKS]
-    blocks = [_trim_block_text(b, _MAX_CHARS_PER_BLOCK) for b in blocks]
+    extracted: List[Dict[str, Any]] = []
+    extracted.extend(_extract_section_blocks(cleaned))
+    extracted.extend(_extract_keyword_blocks(cleaned))
+    extracted.extend(_extract_hk_statement_blocks(cleaned))
+    extracted.extend(_extract_hk_narrative_blocks(cleaned))
+    extracted.extend(_extract_table_blocks(cleaned))
+    prioritized = _dedupe_and_prioritize_blocks(extracted)
+    selected = _select_bounded_blocks(prioritized)
+    document_style = _document_style(cleaned, detected_report_type)
+    coverage = build_periodic_report_coverage_manifest(
+        cleaned, report_type=detected_report_type, document_style=document_style,
+        extracted_candidates=extracted, prioritized_candidates=prioritized, selected_blocks=selected,
+    )
+    blocks = [_trim_block_text(b, _MAX_CHARS_PER_BLOCK) for b in selected]
 
     return {
         "schema_version": SCHEMA_VERSION,
         "report_type": detected_report_type,
         "audit_status": audit_status,
+        "document_style": document_style,
         "blocks": blocks,
+        "coverage_manifest": coverage,
     }
 
 
@@ -1033,7 +1052,18 @@ def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:
             return False
         return any(token in compact for token in ("AI数据中心", "1.6T", "3.2T", "工作计划", "国际化战略", "供应链", "下游市场需求", "产品结构升级", "技术研发投入", "产品线", "国产化替代"))
     if usage == "profitability_commentary":
-        return any(token in compact for token in ("毛利率", "盈利能力", "规模效应"))
+        if all(token in compact for token in ("报告期内，公司实现营业收入", "净利润", "同比")):
+            return True
+        return any(
+            token in compact
+            for token in (
+                "毛利率",
+                "盈利能力",
+                "规模效应",
+                "高端产品出货占比提升",
+                "产品出货较快增长",
+            )
+        )
     if usage == "rd_product_progress":
         return any(
             token in compact
@@ -1060,6 +1090,10 @@ def _is_valid_keyword_excerpt(usage: str, excerpt: str) -> bool:
     )
     if any(token in compact for token in audit_noise):
         return False
+    if "产能" in compact and any(
+        token in compact for token in ("实施完毕", "均已结项")
+    ):
+        return True
     product_markers = (
         "主要产品",
         "主营业务",
@@ -1111,7 +1145,7 @@ def _keyword_window(text: str, position: int, usage: str) -> Tuple[int, int]:
         "product_capacity_profile": 24,
         "sales_certification_model": 8,
         "market_demand_outlook": 14,
-        "competitive_position": 12,
+        "competitive_position": 20,
         "future_strategy": 16,
         "profitability_commentary": 18,
         "rd_product_progress": 16,
@@ -1211,27 +1245,6 @@ def _split_sections(text: str) -> Dict[str, str]:
             continue
         sections[heading] = text[start:end].strip()
     return sections
-
-
-def _extract_section_excerpt(content: str, heading: str) -> str:
-    # Drop boilerplate and keep the first substantive chunk.
-    cleaned = _strip_boilerplate(content)
-    # Find first sentence-like chunk after heading.
-    lines = [line.strip() for line in cleaned.splitlines() if line.strip()]
-    result_lines: List[str] = []
-    for line in lines:
-        stripped_heading = _clean_heading(heading)
-        if line == heading or _clean_heading(line) == stripped_heading:
-            continue
-        if _is_boilerplate(line):
-            continue
-        if len(line) >= 12:
-            result_lines.append(line)
-        if len("\n".join(result_lines)) >= _MAX_CHARS_PER_BLOCK:
-            break
-    if not result_lines:
-        return cleaned[:_MAX_CHARS_PER_BLOCK].strip()
-    return "\n".join(result_lines)[:_MAX_CHARS_PER_BLOCK].strip()
 
 
 # ---------------------------------------------------------------------------
@@ -1586,6 +1599,29 @@ def _trim_block_text(block: Dict[str, Any], max_chars: int) -> Dict[str, Any]:
     return block
 
 
+def _document_style(text: str, report_type: str) -> str:
+    if _looks_like_hk_report(text):
+        return "hkex_annual"
+    return "a_share_annual" if report_type in {"annual", "annual_report"} and any(token in text for token in ("管理层讨论与分析", "报告期内公司", "年度报告全文")) else "unknown"
+
+
+def _has_complete_narrative_clause(text: str) -> bool:
+    return any(len(clause.strip()) >= 24 for clause in re.split(r"[。；;]", re.sub(r"\s+", "", str(text or ""))))
+
+
+def _reserved_narrative_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    return [block for family in CANONICAL_FAMILIES if (block := next((block for block in blocks if canonical_family_for_usage(block.get("usage")) == family and is_high_value_narrative_usage(block.get("usage")) and _has_complete_narrative_clause(block.get("text", ""))), None)) is not None]
+
+
+def _select_bounded_blocks(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    selected_ids = {block["id"] for block in _reserved_narrative_blocks(blocks)}
+    for block in blocks:
+        if len(selected_ids) >= _MAX_BLOCKS:
+            break
+        selected_ids.add(block["id"])
+    return [block for block in blocks if block["id"] in selected_ids]
+
+
 # ---------------------------------------------------------------------------
 # Text cleaning
 # ---------------------------------------------------------------------------
@@ -1637,9 +1673,14 @@ def _is_boilerplate(line: str) -> bool:
 
 
 def _empty_pack(report_type: str) -> Dict[str, Any]:
+    normalized_type = report_type if report_type != "auto" else "unknown"
     return {
         "schema_version": SCHEMA_VERSION,
-        "report_type": report_type if report_type != "auto" else "unknown",
+        "report_type": normalized_type,
         "audit_status": "unknown",
+        "document_style": "unknown",
         "blocks": [],
+        "coverage_manifest": build_periodic_report_coverage_manifest(
+            "", report_type=normalized_type, document_style="unknown",
+            extracted_candidates=[], prioritized_candidates=[], selected_blocks=[]),
     }

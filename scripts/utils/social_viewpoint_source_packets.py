@@ -10,12 +10,12 @@ from typing import Any, Dict, List, Set
 
 try:
     from .curated_external_full_body_viewpoint_claims import (
-        SOURCE_PACKET_SCHEMA_VERSION,
+        SOURCE_INPUT_SCHEMA_VERSION,
         normalized_hash,
     )
 except ImportError:
     from curated_external_full_body_viewpoint_claims import (
-        SOURCE_PACKET_SCHEMA_VERSION,
+        SOURCE_INPUT_SCHEMA_VERSION,
         normalized_hash,
     )
 
@@ -51,7 +51,7 @@ def build_social_source_packets(
         source_kind = str(item.get("source_kind") or "social").strip()
         profile = _social_source_profile(item, source_kind)
         packet = {
-            "schema_version": SOURCE_PACKET_SCHEMA_VERSION,
+            "schema_version": SOURCE_INPUT_SCHEMA_VERSION,
             "source_id": _source_id(source_kind, source_ref),
             "stock_name": stock_name,
             "title": _normalize_text(item.get("title")),

@@ -268,6 +268,58 @@ def test_excerpt_cleaner_only_repairs_pdf_artifacts_when_legacy_mode_enabled() -
     assert "净利润均增长" in legacy_cleaned
 
 
+def test_excerpt_cleaner_repairs_generic_cjk_line_wraps_in_legacy_mode() -> None:
+    from broker_research_digest import clean_broker_research_excerpt_text
+
+    noisy = "受益于终端 对算力基础设施的投入，销售回款 持续增强。"
+
+    cleaned = clean_broker_research_excerpt_text(
+        noisy,
+        repair_legacy_artifacts=True,
+    )
+
+    assert cleaned == "受益于终端对算力基础设施的投入，销售回款持续增强。"
+
+
+def test_digest_selector_drops_irrecoverable_ocr_unit_without_guessing_missing_product() -> None:
+    from broker_research_digest import _select_excerpt_units
+
+    text = (
+        "高速光模块需求快速增长，公司业绩持续增长。"
+        "受益于终端客户投入，公司产品出货持续增长，其中 及1.6T光模块快速放量。"
+        "客户订单和产品结构升级推动收入增长，毛利率有望改善。"
+    )
+
+    excerpt = _select_excerpt_units(text, "broker_core_view")
+
+    assert "高速光模块需求快速增长" in excerpt
+    assert "客户订单和产品结构升级推动收入增长" in excerpt
+    assert "其中 及1.6T" not in excerpt
+    assert "其中及1.6T" not in excerpt
+
+
+def test_legacy_cleaner_drops_damaged_financial_units_instead_of_inventing_values() -> None:
+    from broker_research_digest import clean_broker_research_excerpt_text
+
+    noisy = (
+        "2026年一季度，公司实现营收195. 环比分别增长192.1%、47.3%；"
+        "实现归母净利润57.3亿元，同比增长262.3%。"
+        "扣非后归母净利润为57.2亿元，同环比分别增长57.7%。"
+        "公司单季度销售毛利率为46.1%，创下历史新高。"
+    )
+
+    cleaned = clean_broker_research_excerpt_text(
+        noisy,
+        repair_legacy_artifacts=True,
+    )
+
+    assert "营收195" not in cleaned
+    assert "环比分别增长192.1%" not in cleaned
+    assert "同环比分别增长57.7%" not in cleaned
+    assert "归母净利润57.3亿元，同比增长262.3%" in cleaned
+    assert "销售毛利率为46.1%" in cleaned
+
+
 def test_digest_prefers_clean_repeated_heading_candidate_over_noisy_first_match() -> None:
     from broker_research_digest import build_broker_research_digest_cards
 

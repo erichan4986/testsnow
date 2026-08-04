@@ -10,7 +10,7 @@ from report_quality import check_report_file, check_report_text
 
 def _snapshot_row(**overrides):
     data = {
-        "row_id": "external:reasoning_cards:0",
+        "row_id": "external:argument_cards:reasoning:0",
         "text": "外部观点A",
         "source_layer": "external",
         "claim_status": "external_observation",
@@ -39,6 +39,151 @@ def test_minimal_quality_report_passes():
     result = check_report_file(fixture)
     assert result.passed
     assert result.issues == []
+
+
+def test_deep_report_empty_executive_summary_body_fails():
+    text = """# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+
+### 核心投资论点
+
+**基本面判断**：
+
+**估值与业绩预期**：
+
+**交易状态与风险**：
+
+> **一句话结论**：
+
+### 多空论点对比
+
+![多空图](chart.png)
+
+## 一、综合评分与推荐
+"""
+    result = check_report_text(text)
+    issue = next(i for i in result.issues if i.code == "empty_executive_summary_body")
+    assert issue.severity == "error"
+
+
+def test_deep_report_missing_executive_summary_fails():
+    text = """# 测试股 舆情深度报告
+
+## 一、综合评分与推荐
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+"""
+    result = check_report_text(text)
+    issue = next(i for i in result.issues if i.code == "empty_executive_summary_body")
+    assert issue.severity == "error"
+
+
+def test_deep_report_deterministic_executive_summary_body_passes_gate():
+    text = """# 测试股 舆情深度报告
+
+## 执行摘要
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+
+### 核心投资论点
+
+**基本面判断**：当前基本面评分为 6/10。
+
+## 一、综合评分与推荐
+"""
+    result = check_report_text(text)
+    assert "empty_executive_summary_body" not in {i.code for i in result.issues}
+
+
+def test_deep_report_image_first_executive_summary_body_passes_gate():
+    text = """# 测试股 舆情深度报告
+
+## 执行摘要
+
+> **一句话结论**：谨慎持有，等待趋势确认。
+
+![测试股 投资决策链](测试股_20260719_decision.png)
+
+## 一、综合评分与推荐
+
+### 综合评分: 5.3/10 | EV: +8.00%（谨慎持有）
+"""
+    result = check_report_text(text)
+    assert "empty_executive_summary_body" not in {i.code for i in result.issues}
+
+
+def test_freshness_summary_line_requires_preview_boundary_and_resolved_refs():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    line = (
+        "**近期待验证变量**：外部材料称，客户订单节奏出现变化[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
+    text = fixture.read_text(encoding="utf-8").replace(
+        "## 技术面分析：中期趋势提醒", f"{line}\n\n## 技术面分析：中期趋势提醒", 1,
+    ) + "\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+    result = check_report_text(text)
+    assert "freshness_summary_boundary" not in {issue.code for issue in result.issues}
+
+
+def test_freshness_summary_line_rejects_confirmation_language():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    line = (
+        "**近期待验证变量**：外部材料称，订单已落地[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
+    text = fixture.read_text(encoding="utf-8").replace(
+        "## 技术面分析：中期趋势提醒", f"{line}\n\n## 技术面分析：中期趋势提醒", 1,
+    ) + "\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+    result = check_report_text(text)
+    assert "freshness_summary_unverified_confirmation" in {issue.code for issue in result.issues}
+
+
+def test_freshness_summary_line_outside_executive_summary_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    text = fixture.read_text(encoding="utf-8") + (
+        "\n**近期待验证变量**：外部材料称，客户订单节奏出现变化[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。\n"
+        "\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+    )
+
+    result = check_report_text(text)
+
+    assert "freshness_summary_outside_executive_summary" in {
+        issue.code for issue in result.issues
+    }
+
+
+def test_freshness_summary_line_repeated_outside_executive_summary_fails():
+    fixture = Path(__file__).parent.parent / "fixtures" / "minimal_quality_report.md"
+    line = (
+        "**近期待验证变量**：外部材料称，客户订单节奏出现变化[^4]"
+        "（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。"
+    )
+    text = fixture.read_text(encoding="utf-8").replace(
+        "## 技术面分析：中期趋势提醒", f"{line}\n\n## 技术面分析：中期趋势提醒", 1,
+    ) + f"\n{line}\n\n## 引用来源\n\n- [^4] 微信公众号精选观察 | 《订单观察》\n"
+
+    result = check_report_text(text)
+
+    assert "freshness_summary_outside_executive_summary" in {
+        issue.code for issue in result.issues
+    }
+
+
+def test_lightweight_report_is_outside_executive_summary_body_contract():
+    text = """# 测试股
+
+## 执行摘要
+
+### 综合评分: 6.0/10 | EV: N/A（持有）
+
+## 技术面分析
+"""
+    result = check_report_text(text)
+    assert "empty_executive_summary_body" not in {i.code for i in result.issues}
 
 
 def test_material_snapshot_unresolved_ref_fails():
@@ -225,6 +370,10 @@ def test_weak_trend_high_score_contradiction_fails():
 def test_blocked_entry_strong_recommendation_warns():
     text = """
 # 圣邦股份 舆情深度报告
+
+## 执行摘要
+
+**基本面判断**：当前基本面评分为 6/10。
 
 ## 一、综合评分与推荐
 
@@ -607,6 +756,145 @@ def test_formal_thin_external_variable_narrative_does_not_warn():
     codes = {issue.code for issue in check_report_text(text).issues}
 
     assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_formal_thin_external_argument_v2_narrative_does_not_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部新增待验证变量：上游供给节奏仍可能影响交付弹性[^1]。
+
+> **外部原文依据**：部分原材料仍处于紧张状态。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_formal_thin_canonical_source_units_pass_external_quality_gates():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**财务质量**
+
+外部新增待验证变量：收入与毛利均实现增长[^1]。
+同时，公司持续推进产品迭代并形成贡献[^1]。
+
+> **同业/行业背景（Preview）**：以下内容仅描述同业或行业背景，不代表目标公司已确认事实。
+
+**技术与产品**
+
+同业/行业背景观察：同业产品进入验证窗口[^2]。
+
+## 引用来源
+- [^1] 微信公众号精选观察 | 《公司观察》
+- [^2] 知乎精选观察 | 《行业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "curated_external_missing_inline_footnotes" not in codes
+    assert "external_viewpoint_overcompressed" not in codes
+    assert "external_map_unverified_claim_framing" not in codes
+
+
+def test_formal_thin_grouped_external_topic_narrative_does_not_warn():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为 FPGA 芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**财务质量**
+
+近期外部材料主要围绕财务质量展开。营业收入预计同比增长[^1]；此外，归母净利润预计同比增长[^2]。
+
+## 引用来源
+- [^1] 外部材料精选观察 | 《业绩观察一》
+- [^2] 外部材料精选观察 | 《业绩观察二》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_viewpoint_overcompressed" not in codes
+
+
+def test_external_map_uncertainty_does_not_trigger_strong_confirmation():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为光模块。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部新增待验证变量：供应不确定性可能影响交付[^1]。
+
+> **外部原文依据**：部分原材料仍处于紧张状态。
+
+**本节引用来源：**
+- [^1] 微信公众号精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
 
 
 def test_formal_thin_external_map_missing_structure_warns():
@@ -1307,6 +1595,35 @@ def test_financial_fact_unit_conflict_is_error():
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
     assert "financial_fact_unit_conflict" in codes
+
+
+def test_financial_fact_unit_conflict_ignores_investment_subscription_amount():
+    text = """
+# 复旦微电 舆情深度报告
+
+## 一、公司快照
+
+2026Q1 营业收入 10.32亿，归母净利润 1.48亿。
+
+## 四、深度分析
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。
+
+## 技术面分析：中期趋势提醒
+趋势背景：震荡趋势。日线结构：MA20 附近。周线结构：周线震荡。成交量正常，波动率 BOLL 正常。分析可信度：中。
+
+## 综合风险评分
+### 风险等级: 3.0/10（中风险）
+
+## 风险提示与关注要点
+- 风险因子需跟踪。
+"""
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "financial_fact_unit_conflict" not in codes
 
 
 def test_financial_data_missing_contradiction_is_metric_specific_error():
@@ -2268,6 +2585,44 @@ def test_external_map_body_strong_confirmation_still_triggers():
     assert "external_map_unverified_claim_framing" in codes
 
 
+def test_external_map_peer_preview_strong_wording_does_not_block_target_claims():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+**一句话画像**：公司主营业务为智能驾驶芯片。
+
+### 4.2 研报观点与假设
+
+当前未取得足够可用研报 digest，不展开研报观点与假设。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**客户进展**
+
+外部新增待验证变量：目标公司合作进度仍需后续数据验证[^1]。
+
+> **同业/行业背景（Preview）**：以下内容仅描述同业或行业背景，不代表目标公司已确认事实。
+
+**商业化进展**
+
+同业/行业背景观察：根据双方确定的项目安排，L4 自动驾驶已经不再是单纯技术展示[^2]。
+
+## 引用来源
+- [^1] 微信公众号精选观察 | 《公司观察》
+- [^2] 知乎精选观察 | 《行业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
 def test_external_map_framed_market_share_claim_does_not_trigger():
     text = _quality_shell(
         """
@@ -2289,6 +2644,54 @@ def test_external_map_framed_market_share_claim_does_not_trigger():
 
     result = check_report_text(text)
     codes = {issue.code for issue in result.issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
+def test_external_topic_narrative_lead_frames_market_share_claim():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich"} -->
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+**竞争格局**
+
+近期外部材料主要围绕竞争格局展开。国内高可靠卫星FPGA市占率95%以上[^1]。
+
+## 引用来源
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "external_map_unverified_claim_framing" not in codes
+
+
+def test_external_topic_narrative_frames_each_separate_paragraph():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich"} -->
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。
+
+**竞争格局**
+
+近期外部材料主要围绕竞争格局展开。产品进入客户验证[^1]。
+
+据外部材料，国内高可靠卫星FPGA市占率95%以上[^1]。
+
+## 引用来源
+- [^1] 知乎精选观察 | 《产业观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
 
     assert "external_map_unverified_claim_framing" not in codes
 
@@ -2544,3 +2947,75 @@ def test_annual_broker_4_3_display_only_risk_without_explanation_warns():
 """
     codes = {issue.code for issue in check_report_text(text).issues}
     assert "display_only_risk_without_explanation" in codes
+
+
+def test_new_external_variable_map_requires_inline_footnote_per_visible_variable():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+年报经营摘要[^1]。
+
+### 4.2 研报观点与假设
+
+研报预计盈利改善[^2]。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部材料称上游供给节奏仍需验证。
+
+**客户验证**
+
+外部材料称客户验证节奏仍需观察。[^10]
+
+## 引用来源
+
+- [^1] 公司年报 | 《年度报告》
+- [^2] 券商研报 | 《跟踪报告》
+- [^10] 微信公众号精选观察 | 《客户观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "curated_external_missing_inline_footnotes" in codes
+
+
+def test_new_external_variable_map_accepts_multi_digit_inline_footnote_without_local_source_list():
+    text = _quality_shell(
+        """
+<!-- deep_analysis_profile: {"profile": "formal_thin_external_rich", "formal_thin_layout_variant": "annual_broker_external_checklist"} -->
+
+### 4.1 年报经营摘要
+
+年报经营摘要[^1]。
+
+### 4.2 研报观点与假设
+
+研报预计盈利改善[^2]。
+
+### 4.3 外部观点与待验证变量（Preview，不参与评分）
+
+> 以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或最终建议。
+
+**供应链观察**
+
+外部材料称上游供给节奏仍需验证。[^10]
+
+## 引用来源
+
+- [^1] 公司年报 | 《年度报告》
+- [^2] 券商研报 | 《跟踪报告》
+- [^10] 微信公众号精选观察 | 《供应链观察》
+"""
+    )
+
+    codes = {issue.code for issue in check_report_text(text).issues}
+
+    assert "curated_external_missing_inline_footnotes" not in codes

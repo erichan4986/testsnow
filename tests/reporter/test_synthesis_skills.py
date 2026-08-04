@@ -2,13 +2,51 @@ import hashlib
 import json
 import re
 import sys
+from datetime import date
 from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from skill_pipeline import SkillContext
+import report_skills.synthesis_skills as synthesis_skills_module
 from report_skills.synthesis_skills import SynthesisSkill
 from source_adapter import SynthesisItem
+
+TEST_STOCK_CODES = {
+    "复旦微电": "688385",
+    "黑芝麻智能": "02533",
+    "中简科技": "300777",
+    "中际旭创": "300308",
+    "圣邦股份": "300661",
+    "韦尔股份": "603501",
+    "测试股": "000001",
+}
+EMPTY_KNOWLEDGE_DIR = Path(__file__).resolve().parent / "_empty_knowledge"
+
+
+def _with_stock_identity(payload):
+    result = dict(payload)
+    stock_name = str(result.get("stock_name") or "")
+    if stock_name and "stock_codes" not in result:
+        result["stock_codes"] = {stock_name: TEST_STOCK_CODES[stock_name]}
+    result.setdefault("knowledge_base_dir", str(EMPTY_KNOWLEDGE_DIR))
+    return result
+
+
+def _test_context(payload):
+    return SkillContext(input=_with_stock_identity(payload))
+
+
+def _external_map_context(**overrides):
+    payload = {
+        "stock_name": "测试股",
+        "include_curated_external_argument_pack_in_deep_analysis_display": True,
+        "curated_external_argument_pack_json": "/tmp/test-external-pack.json",
+        "periodic_report_metric_series_pack": {"kind": "metric"},
+        "periodic_report_financial_scan_pack": {"kind": "scan"},
+    }
+    payload.update(overrides)
+    return _test_context(payload)
 
 
 class FakeSynthesizer:
@@ -63,7 +101,7 @@ def test_synthesis_skill_passes_stock_config_to_synthesizer():
         "product_exposure_terms": ["FPGA", "MCU"],
         "competitors": ["紫光国微"],
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_config": stock_config,
         "stock_raw": {
@@ -83,6 +121,76 @@ def test_synthesis_skill_passes_stock_config_to_synthesizer():
     assert all_data["stock_config"] == stock_config
 
 
+def test_curated_external_display_publishes_periodic_external_evidence_map() -> None:
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = _external_map_context()
+    display = {"_sources": [{"source_id": "source:test"}], "marker": "unchanged"}
+    mapped = {"schema_version": "periodic_external_evidence_map.v1", "status": "ready"}
+    result = {"status": "ok", "display": display, "synthesis_text": "外部材料"}
+
+    with patch.object(
+        synthesis_skills_module,
+        "build_curated_external_argument_display",
+        return_value=result,
+    ), patch.object(
+        synthesis_skills_module,
+        "build_periodic_external_evidence_map",
+        return_value=mapped,
+    ) as build_map:
+        skill._build_curated_external_deep_analysis_display(ctx)
+
+    assert ctx.get("periodic_external_evidence_map") == mapped
+    assert ctx.get("deep_analysis_display") == display
+    assert display == {"_sources": [{"source_id": "source:test"}], "marker": "unchanged"}
+    assert build_map.call_args.kwargs == {
+        "stock_code": "000001",
+        "stock_name": "测试股",
+        "metric_series_pack": {"kind": "metric"},
+        "financial_scan_pack": {"kind": "scan"},
+        "validated_external_display": display,
+    }
+
+
+def test_curated_external_display_does_not_map_without_both_periodic_packs() -> None:
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    result = {"status": "ok", "display": {"_sources": []}, "synthesis_text": ""}
+
+    for missing_key in (
+        "periodic_report_metric_series_pack",
+        "periodic_report_financial_scan_pack",
+    ):
+        ctx = _external_map_context(**{missing_key: None})
+        with patch.object(
+            synthesis_skills_module,
+            "build_curated_external_argument_display",
+            return_value=result,
+        ), patch.object(
+            synthesis_skills_module,
+            "build_periodic_external_evidence_map",
+        ) as build_map:
+            skill._build_curated_external_deep_analysis_display(ctx)
+        build_map.assert_not_called()
+        assert ctx.get("periodic_external_evidence_map") is None
+
+
+def test_invalid_curated_external_display_does_not_publish_external_map() -> None:
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = _external_map_context()
+
+    with patch.object(
+        synthesis_skills_module,
+        "build_curated_external_argument_display",
+        return_value={"status": "invalid", "stats": {}},
+    ), patch.object(
+        synthesis_skills_module,
+        "build_periodic_external_evidence_map",
+    ) as build_map:
+        skill._build_curated_external_deep_analysis_display(ctx)
+
+    build_map.assert_not_called()
+    assert ctx.get("periodic_external_evidence_map") is None
+
+
 def test_synthesis_skill_passes_formal_financial_fact_pack_to_synthesizer():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
@@ -100,7 +208,7 @@ def test_synthesis_skill_passes_formal_financial_fact_pack_to_synthesizer():
             "evidence_type": "periodic_report_filing_fact",
         },
     ]
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_filing_core_facts": filing_core_facts,
         "stock_raw": {
@@ -137,7 +245,7 @@ def test_synthesis_skill_passes_formal_financial_explanation_pack_to_synthesizer
             }
         ],
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_explanation_pack": explanation_pack,
         "stock_raw": {
@@ -159,7 +267,7 @@ def test_synthesis_skill_passes_formal_financial_explanation_pack_to_synthesizer
 def test_synthesis_skill_builds_fundflow_pack_and_keeps_raw_fundflow_items():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_raw": {
             "announcements": [{"title": "一季报", "content": "公司披露一季报", "date": "2026-04-30"}],
@@ -185,7 +293,7 @@ def test_synthesis_skill_builds_fundflow_pack_and_keeps_raw_fundflow_items():
 def test_fundflow_pack_keeps_citable_fundflow_sources():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_raw": {
             "announcements": [{"title": "一季报", "content": "公司披露一季报", "date": "2026-04-30"}],
@@ -238,7 +346,7 @@ def test_synthesis_skill_replaces_financial_missing_contradiction_when_fact_pack
             "evidence_type": "periodic_report_filing_fact",
         },
     ]
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_filing_core_facts": filing_core_facts,
         "stock_raw": {
@@ -303,7 +411,7 @@ def test_formal_financial_fact_pack_drops_zero_amounts_and_sanitizer_uses_core_f
             "evidence_type": "periodic_report_filing_fact",
         },
     ]
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "periodic_report_filing_core_facts": filing_core_facts,
         "stock_raw": {
@@ -422,7 +530,7 @@ def test_synthesis_skill_enabled_modern_path_passes_context_to_synthesizer(tmp_p
 
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "黑芝麻智能",
         "enable_claim_verification_context": True,
         "claim_verification_base_dir": str(tmp_path / "empty_kb"),
@@ -543,7 +651,7 @@ def test_periodic_report_excerpt_does_not_enter_synthesis_items():
             "verification_status": "management_view",
         },
     )
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "source_intake_enabled": True,
         "source_intake_items": [periodic_excerpt],
@@ -584,7 +692,7 @@ def test_source_intake_keep_items_enter_baseline_synthesis_items():
             "report_eligible": True,
         },
     )
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中际旭创",
         "source_intake_enabled": True,
         "external_evidence_keep_items": [source_intake_item],
@@ -825,7 +933,7 @@ def test_periodic_report_fulltext_items_do_not_enter_synthesis_items():
             "experimental": True,
         },
     )
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "periodic_report_fulltext_items": [fulltext_item],
         "stock_raw": {
@@ -1399,491 +1507,6 @@ def test_enrich_provenance_mixed_announcement_and_report_is_partially_supported(
     assert fact["source_labels"] == ["公告"]
     assert fact["provenance_status"] == "partially_supported"
 
-# --- curated external evidence card Phase 2 tests ---
-
-import json as _json
-
-
-def _normalized_hash(text: str) -> str:
-    normalized = re.sub(r"\s+", " ", str(text or "")).strip()
-    return hashlib.sha256(normalized.encode("utf-8")).hexdigest()
-
-
-def _write_viewpoint_digest_json(tmp_path, claims, status="ok"):
-    path = tmp_path / "viewpoint_digest.json"
-    path.write_text(
-        _json.dumps(
-            {
-                "schema_version": "curated_external_viewpoint_digest.v1",
-                "status": status,
-                "stock_name": "测试股",
-                "claims": claims,
-                "claims_count": len(claims),
-                "stats": {
-                    "theme_coverage_count": 1,
-                    "theme_coverage_total": 7,
-                    "theme_coverage_ratio": 1 / 7,
-                    "covered_themes": ["800G_rumor"],
-                    "missing_themes": [],
-                },
-                "wrote_knowledge": False,
-                "connected_synthesis": False,
-            },
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
-    return path
-
-
-def _write_viewpoint_narrative_json(tmp_path, paragraphs, citations, status="ok"):
-    path = tmp_path / "viewpoint_narrative.json"
-    path.write_text(
-        _json.dumps(
-            {
-                "schema_version": "curated_external_viewpoint_narrative.v1",
-                "status": status,
-                "stock_name": "测试股",
-                "paragraphs": paragraphs,
-                "paragraphs_count": len(paragraphs),
-                "citations": citations,
-                "stats": {"lint": {"ok": True, "violations": []}},
-                "wrote_knowledge": False,
-                "connected_synthesis": False,
-                "connected_scoring": False,
-                "connected_risk": False,
-            },
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
-    return path
-
-
-def _make_viewpoint_narrative_paragraphs():
-    return [
-        {
-            "heading": "供应链瓶颈与交付疑虑并存",
-            "text": "外部材料提示供应链约束会影响交付弹性，需要和订单转化一起跟踪。",
-            "claim_refs": ["vc1"],
-            "citation_refs": [1],
-        }
-    ]
-
-
-def _make_viewpoint_narrative_citations():
-    return {
-        "1": {
-            "source": "微信公众号精选观察",
-            "author": "测试账号",
-            "title": "外部深度文章",
-            "url": "https://mp.weixin.qq.com/s/viewpoint",
-            "source_type": "curated_external_analysis_evidence",
-            "source_credit": 55,
-            "verification_status": "professional_observation",
-            "claim_id": "vc1",
-            "source_quote_hash": "hash",
-        }
-    }
-
-
-def _make_viewpoint_claim(claim_id="vc1", claim_type="watch_variable", topic="supply_delivery_capacity"):
-    quote = "外部文章提示800G交付计划下调传言仍需跟踪，公司曾否认相关情况。"
-    return {
-        "schema_version": "curated_external_viewpoint_claim.v1",
-        "claim_id": claim_id,
-        "stock_name": "测试股",
-        "claim_type": claim_type,
-        "topic": topic,
-        "claim": "外部文章提示800G交付计划下调传言仍需跟踪。",
-        "source_quote": quote,
-        "source_quote_hash": _normalized_hash(quote),
-        "why_incremental": "baseline未覆盖该交付传言变量。",
-        "baseline_overlap": "none",
-        "source_id": "curated-source:test:1",
-        "source_ref": "https://example.com/viewpoint",
-        "source_title": "中际旭创外部深度观点",
-        "source_account": "测试公众号",
-        "evidence_refs": ["curated-source:test:1"],
-        "evidence_hashes": [
-            {
-                "source_id": "curated-source:test:1",
-                "source_block_hash": "block-hash",
-                "source_quote_hash": _normalized_hash(quote),
-            }
-        ],
-        "verification_status": "professional_observation",
-        "source_credit": 55,
-        "claim_source_credit": 55,
-        "quality_action": "preview_only",
-        "knowledge_eligible": False,
-        "synthesis_display_only": True,
-        "scoring_eligible": False,
-        "risk_score_eligible": False,
-    }
-
-
-def _make_viewpoint_claim_with_text(
-    claim_id,
-    claim,
-    *,
-    topic="supply_delivery_capacity",
-    claim_type="watch_variable",
-    title="外部深度观点",
-):
-    item = _make_viewpoint_claim(claim_id=claim_id, claim_type=claim_type, topic=topic)
-    item["claim"] = claim
-    item["source_quote"] = claim
-    item["source_quote_hash"] = _normalized_hash(claim)
-    item["source_title"] = title
-    item["evidence_hashes"][0]["source_quote_hash"] = _normalized_hash(claim)
-    return item
-
-
-def test_legacy_curated_external_evidence_cards_flag_is_ignored():
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_evidence_cards_in_synthesis_display": True,
-        "curated_external_evidence_cards_json": "/tmp/legacy_cards.json",
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    assert ctx.output.get("deep_analysis_display") is None
-    assert ctx.output.get("curated_external_evidence_cards_status") is None
-    assert ctx.output.get("synthesis_text_with_curated_external_evidence_cards") is None
-
-
-def test_curated_external_viewpoint_digest_enabled_sets_deep_analysis_display(tmp_path):
-    digest_path = _write_viewpoint_digest_json(tmp_path, [_make_viewpoint_claim()])
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
-        "curated_external_viewpoint_digest_json": str(digest_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    display = ctx.output.get("deep_analysis_display")
-    assert display
-    assert ctx.output.get("curated_external_viewpoint_digest_status") == "ok"
-    display_text = "\n".join(str(display.get(key, "")) for key in ("industry_logic", "fundamentals", "events_catalysts"))
-    assert "800G交付计划下调传言" in display_text
-    assert display["citations"][1]["source_type"] == "curated_external_analysis_evidence"
-    assert display["citations"][1]["source"] == "微信公众号精选观察"
-    assert display["_curated_external_taxonomy_version"] == "external_viewpoint.v1"
-    assert "order_capacity_delivery" in display["_curated_external_topic_groups"]
-    assert ctx.output.get("synthesis_display") is None
-    assert "800G交付计划下调传言" not in ctx.output.get("synthesis_text", "")
-    assert ctx.output.get("wrote_knowledge") is None
-
-
-def test_curated_external_viewpoint_narrative_enabled_sets_deep_analysis_display(tmp_path):
-    narrative_path = _write_viewpoint_narrative_json(
-        tmp_path,
-        _make_viewpoint_narrative_paragraphs(),
-        _make_viewpoint_narrative_citations(),
-    )
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
-        "curated_external_viewpoint_narrative_json": str(narrative_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    display = ctx.output.get("deep_analysis_display")
-    assert display
-    assert display["_curated_external_narrative"] is True
-    assert display["_curated_external_narrative_paragraphs"][0]["heading"] == "供应链瓶颈与交付疑虑并存"
-    assert display["citations"][1]["url"] == "https://mp.weixin.qq.com/s/viewpoint"
-    assert ctx.output.get("curated_external_viewpoint_narrative_status") == "ok"
-    assert ctx.output.get("synthesis_display") is None
-    assert "供应链约束" not in ctx.output.get("synthesis_text", "")
-
-
-def test_curated_external_viewpoint_narrative_hydrates_refs_from_claim_ids(tmp_path):
-    narrative_path = _write_viewpoint_narrative_json(
-        tmp_path,
-        [
-            {
-                "heading": "估值分歧",
-                "text": "外部材料提示A股估值处于乐观情景上沿，需跟踪盈利修复假设。",
-                "claim_refs": ["fudan-xq-val-001"],
-            }
-        ],
-        {
-            "1": {
-                "source": "雪球专栏观察",
-                "author": "测试作者",
-                "title": "复旦微电估值分析",
-                "url": "https://xueqiu.com/1606930351/392467740",
-                "source_type": "xueqiu_column_observation",
-                "source_credit": 60,
-                "verification_status": "professional_observation",
-                "claim_id": "fudan-xq-val-001",
-            }
-        },
-    )
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
-        "curated_external_viewpoint_narrative_json": str(narrative_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    display = ctx.output.get("deep_analysis_display")
-    assert display
-    assert display["citations"][1]["source"] == "雪球专栏观察"
-    paragraph = display["_curated_external_narrative_paragraphs"][0]
-    assert paragraph["citation_refs"] == [1]
-    assert "盈利修复假设[^1]" in ctx.output.get("synthesis_text_with_curated_external_viewpoint_narrative", "")
-
-
-def test_curated_external_viewpoint_narrative_preserves_reasoning_cards_and_truncates_excerpt(tmp_path):
-    long_excerpt = "外部原文片段" * 60
-    narrative_path = tmp_path / "viewpoint_narrative_cards.json"
-    narrative_path.write_text(
-        _json.dumps(
-            {
-                "schema_version": "curated_external_viewpoint_narrative.v1",
-                "status": "ok",
-                "stock_name": "复旦微电",
-                "paragraphs": [
-                    {
-                        "heading": "估值分歧",
-                        "text": "外部材料提示估值分歧。",
-                        "claim_refs": ["fudan-xq-val-001"],
-                    }
-                ],
-                "reasoning_cards": [
-                    {
-                        "claim_id": "fudan-xq-val-001",
-                        "display_topic": "valuation_debate",
-                        "claim": "外部观点认为A股估值处于乐观情景上沿",
-                        "source_excerpt": long_excerpt,
-                        "reasoning_steps": ["用紫光国微作盈利参照", "用2026净利和PE交叉验证"],
-                        "numbers_used": ["375-420亿", "46-52元"],
-                        "assumptions": ["2026净利修复到7.5亿"],
-                        "counterpoints": ["军工订单恢复不及预期"],
-                        "verification_need": "跟踪半年报和订单恢复",
-                    }
-                ],
-                "citations": {
-                    "1": {
-                        "source": "雪球专栏观察",
-                        "author": "测试作者",
-                        "title": "复旦微电估值分析",
-                        "url": "https://xueqiu.com/1606930351/392467740",
-                        "source_type": "curated_external_analysis_evidence",
-                        "source_credit": 60,
-                        "verification_status": "professional_observation",
-                        "claim_id": "fudan-xq-val-001",
-                    }
-                },
-                "stats": {"lint": {"ok": True, "violations": []}},
-            },
-            ensure_ascii=False,
-        ),
-        encoding="utf-8",
-    )
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
-        "curated_external_viewpoint_narrative_json": str(narrative_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    display = ctx.output.get("deep_analysis_display")
-    cards = display["_curated_external_reasoning_cards"]
-    assert cards[0]["citation_refs"] == [1]
-    assert len(cards[0]["source_excerpt"]) <= 201
-    assert cards[0]["excerpt_truncated"] is True
-    assert cards[0]["reasoning_steps"] == ["用紫光国微作盈利参照", "用2026净利和PE交叉验证"]
-
-
-def test_curated_external_viewpoint_narrative_has_priority_over_digest(tmp_path):
-    narrative_path = _write_viewpoint_narrative_json(
-        tmp_path,
-        _make_viewpoint_narrative_paragraphs(),
-        _make_viewpoint_narrative_citations(),
-    )
-    digest_path = _write_viewpoint_digest_json(tmp_path, [_make_viewpoint_claim()])
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
-        "curated_external_viewpoint_narrative_json": str(narrative_path),
-        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
-        "curated_external_viewpoint_digest_json": str(digest_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    assert ctx.output.get("deep_analysis_display", {}).get("_curated_external_narrative") is True
-    assert ctx.output.get("curated_external_viewpoint_narrative_status") == "ok"
-
-
-def test_curated_external_viewpoint_narrative_rejects_non_ok_status(tmp_path):
-    narrative_path = _write_viewpoint_narrative_json(
-        tmp_path,
-        _make_viewpoint_narrative_paragraphs(),
-        _make_viewpoint_narrative_citations(),
-        status="lint_failed",
-    )
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_narrative_in_deep_analysis_display": True,
-        "curated_external_viewpoint_narrative_json": str(narrative_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    assert ctx.output.get("deep_analysis_display") is None
-    assert ctx.output.get("curated_external_viewpoint_narrative_status") == "lint_failed"
-
-
-def test_curated_external_viewpoint_digest_rejects_non_ok_status(tmp_path):
-    digest_path = _write_viewpoint_digest_json(tmp_path, [_make_viewpoint_claim()], status="theme_coverage_failed")
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
-        "curated_external_viewpoint_digest_json": str(digest_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    assert ctx.output.get("deep_analysis_display") is None
-    assert ctx.output.get("curated_external_viewpoint_digest_status") == "theme_coverage_failed"
-
-
-def test_curated_external_viewpoint_digest_deduplicates_semantic_clusters(tmp_path):
-    claims = [
-        _make_viewpoint_claim_with_text(
-            "vc1",
-            "市场传言中际旭创因光芯片短缺将800G交付计划从1500万只下调至1200万只，公司虽已否认。",
-            topic="800G交付计划下调传言",
-            title="上游材料预付款暴涨10倍",
-        ),
-        _make_viewpoint_claim_with_text(
-            "vc2",
-            "市场传言光芯片短缺可能导致公司800G交付计划下调，公司否认但仍需跟踪。",
-            topic="供应链风险",
-            title="上游材料预付款暴涨10倍",
-        ),
-        _make_viewpoint_claim_with_text(
-            "vc3",
-            "外部文章指出中际旭创NPO方案预计2027年量产，XPO也有望同步量产。",
-            topic="NPO/XPO新技术进展",
-            claim_type="novel_mechanism",
-            title="光模块行业延续高景气度",
-        ),
-        _make_viewpoint_claim_with_text(
-            "vc4",
-            "Scale Up场景中NPO方案因性能接近CPO且可维护性更好，有望成为主流。",
-            topic="新增长逻辑",
-            claim_type="novel_mechanism",
-            title="ZIA Insight",
-        ),
-    ]
-    digest_path = _write_viewpoint_digest_json(tmp_path, claims)
-
-    skill = SynthesisSkill()
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
-        "curated_external_viewpoint_digest_json": str(digest_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    display = ctx.output.get("deep_analysis_display")
-    display_text = "\n".join(str(display.get(key, "")) for key in ("industry_logic", "fundamentals", "events_catalysts"))
-    assert display_text.count("800G") == 1
-    assert display_text.count("NPO") == 1
-    assert display["_items_count"] == 2
-    assert len(display["citations"]) == 2
-
-
 def test_invalid_ref_core_fact_does_not_affect_output():
     skill = SynthesisSkill()
     result = _build_result_for_provenance(
@@ -1977,6 +1600,103 @@ def _make_fulltext_item():
     )
 
 
+def _v3_external_display(
+    families=("technology_product", "demand_customer", "financial_quality"), *, entity_scope="target",
+):
+    cards = [
+        {"argument_key": f"v3-{index}", "entity_scope": entity_scope, "coverage_families": [family],
+         "primary_family": family, "evidence_units": [{"text": f"测试股的{family}外部观察。"}], "citation_refs": [index]}
+        for index, family in enumerate(families, start=1)
+    ]
+    return {"_curated_external_argument_cards": cards, "citations": {
+        index: {"source": "微信公众号精选观察", "author": f"作者{index}", "url": f"https://example.com/{index}"}
+        for index in range(1, len(cards) + 1)
+    }}
+
+
+def _v3_freshness_display():
+    return {"_curated_external_argument_cards": [{
+        "coverage_families": ["demand_customer"],
+        "evidence_units": [{"text": "外部材料称客户订单节奏出现变化，需等待正式材料验证。"}],
+        "citation_refs": [1],
+    }], "citations": {1: {
+        "source": "微信公众号精选观察", "title": "订单观察", "url": "https://example.com/order",
+        "date": "2026-07-01", "source_credit": 60, "synthesis_display_only": True,
+        "scoring_eligible": False, "risk_score_eligible": False, "quality_action": "preview_only",
+        "verification_status": "professional_observation",
+    }}}
+
+
+def test_synthesis_skill_reserves_freshness_refs_without_mutating_baseline_text():
+    old_fulltext = _make_fulltext_item()
+    old_fulltext.publish_time = "2026-01-01"
+    display = _v3_freshness_display()
+    ctx = SkillContext(input={
+        "report_as_of_date": "2026-07-14",
+        "periodic_report_fulltext_items": [old_fulltext],
+        "broker_research_digest_items": [],
+        "source_intake_items": [],
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+    })
+    skill = SynthesisSkill()
+    overlay = skill._build_evidence_freshness_overlay(
+        ctx, ctx.get("deep_analysis_evidence_profile"), display
+    )
+    baseline = {"industry_logic": "baseline", "citations": {}}
+    skill._reserve_freshness_citations(baseline, overlay, display)
+
+    assert baseline["industry_logic"] == "baseline"
+    assert overlay["summary_candidate"]["citation_refs"] == [1]
+    assert baseline["citations"][1]["synthesis_display_only"] is True
+
+
+def test_freshness_overlay_uses_today_when_report_as_of_date_is_missing():
+    class FixedToday(date):
+        @classmethod
+        def today(cls):
+            return cls(2026, 7, 14)
+
+    old_fulltext = _make_fulltext_item()
+    old_fulltext.publish_time = "2026-01-01"
+    display = _v3_freshness_display()
+    ctx = SkillContext(input={
+        "collected_at": "2024-01-01",
+        "periodic_report_fulltext_items": [old_fulltext],
+        "broker_research_digest_items": [],
+        "source_intake_items": [],
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+    })
+
+    with patch.object(synthesis_skills_module, "date", FixedToday):
+        overlay = SynthesisSkill()._build_evidence_freshness_overlay(
+            ctx, ctx.get("deep_analysis_evidence_profile"), display,
+        )
+
+    assert overlay["as_of_date"] == "2026-07-14"
+    assert overlay["summary_candidate"]["citation_refs"] == [1]
+
+
+def test_synthesis_skill_run_builds_freshness_overlay_from_context_display():
+    old_fulltext = _make_fulltext_item()
+    old_fulltext.publish_time = "2026-01-01"
+    skill = SynthesisSkill()
+    skill._build_evidence_profile = lambda *_args: {"profile": "formal_medium"}
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "report_as_of_date": "2026-07-14",
+        "periodic_report_fulltext_items": [old_fulltext],
+        "broker_research_digest_items": [],
+        "source_intake_items": [],
+        "deep_analysis_display": _v3_freshness_display(),
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert ctx.get("evidence_freshness")["summary_candidate"] is not None
+
+
 class DualSynthesizer:
     """Returns enhanced narrative iff annual-report or broker-research display material is present."""
 
@@ -2066,7 +1786,7 @@ class UnsupportedCoreFactSynthesizer:
 
 
 def _fulltext_ctx(switch, fake):
-    return SkillContext(input={
+    return _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": switch,
         "periodic_report_fulltext_items": [_make_fulltext_item()],
@@ -2195,7 +1915,7 @@ def test_empty_core_facts_fall_back_to_periodic_filing_core_facts():
         "source_labels": ["2025年annual"],
         "evidence_type": "periodic_report_filing_fact",
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "圣邦股份",
         "periodic_report_filing_core_facts": [fallback_fact],
         "stock_raw": {
@@ -2224,7 +1944,7 @@ def test_unsupported_core_facts_fall_back_to_periodic_filing_core_facts():
         "source_labels": ["2025年annual"],
         "evidence_type": "periodic_report_filing_fact",
     }
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "圣邦股份",
         "periodic_report_filing_core_facts": [fallback_fact],
         "stock_raw": {
@@ -2280,7 +2000,7 @@ def test_periodic_report_fulltext_synthesis_no_items_skips_display():
     """Switch on but no eligible fulltext item: behaves like default off."""
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": True,
         "periodic_report_fulltext_items": [],
@@ -2310,7 +2030,7 @@ def test_periodic_report_fulltext_synthesis_rejects_malformed_fulltext_item():
     }
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": True,
         "periodic_report_fulltext_items": [malformed],
@@ -2361,6 +2081,64 @@ def test_periodic_narrative_cards_synthesis_display_keeps_baseline_invariants(tm
     knowledge_input = "\n".join(str(v) for v in ctx.get("synthesis").values())
     assert "客户流失" not in knowledge_input
     assert "narrative cards" not in knowledge_input
+
+
+def test_periodic_narrative_display_reuses_context_material_pack(monkeypatch):
+    card = {
+        "card_id": "annual-argument:cached",
+        "title": "已缓存年报材料",
+        "excerpt": "公司产品完成客户验证。",
+        "report_year": 2025,
+        "report_type": "annual",
+        "source_type": "periodic_report_narrative_evidence",
+        "source_credit": 75,
+        "argument_family": "technology_product_progress",
+        "argument_complete": True,
+        "source_unit_ids": ["rd-0:u0"],
+        "source_units": [],
+    }
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "annual_report_material_pack": {"selected_narrative_cards": [card]},
+        "periodic_narrative_cards_max_display_items": 1,
+    })
+
+    def fail_if_reloaded(**_kwargs):
+        raise AssertionError("should reuse the context material pack")
+
+    monkeypatch.setattr(
+        synthesis_skills_module,
+        "load_periodic_narrative_card_synthesis_items",
+        fail_if_reloaded,
+    )
+
+    items = SynthesisSkill._eligible_periodic_narrative_card_items(ctx)
+
+    assert [item.extra["card_id"] for item in items] == ["annual-argument:cached"]
+
+
+def test_periodic_narrative_display_keeps_default_limit_for_invalid_context_value():
+    cards = [
+        {
+            "card_id": f"annual-argument:{index}",
+            "title": f"已缓存年报材料 {index}",
+            "excerpt": f"公司产品 {index} 完成客户验证。",
+            "report_year": 2025,
+            "report_type": "annual",
+            "source_type": "periodic_report_narrative_evidence",
+            "source_credit": 75,
+        }
+        for index in range(13)
+    ]
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "annual_report_material_pack": {"selected_narrative_cards": cards},
+        "periodic_narrative_cards_max_display_items": "invalid",
+    })
+
+    items = SynthesisSkill._eligible_periodic_narrative_card_items(ctx)
+
+    assert len(items) == 12
 
 
 def test_periodic_narrative_cards_and_fulltext_share_one_display_synthesis(tmp_path):
@@ -2623,7 +2401,7 @@ def test_display_synthesis_dedupes_duplicate_material_before_synthesizer(tmp_pat
     )
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "中简科技",
         "include_periodic_report_fulltext_in_synthesis": True,
         "periodic_report_fulltext_items": [fulltext_item],
@@ -2705,61 +2483,10 @@ def test_fill_citation_metadata_preserves_credit_fields():
     assert meta["verification_status"] == "primary_source"
 
 
-def test_formal_thin_external_rich_skips_legacy_synthesis_with_chat_client(tmp_path):
-    """ formal_thin_external_rich must not call legacy deep-analysis prompts when llm_client.chat exists. """
-    from unittest.mock import MagicMock
-
-    digest_path = _write_viewpoint_digest_json(
-        tmp_path,
-        [
-            _make_viewpoint_claim_with_text("vc1", "外部观点A", topic="technology_route", title="外部A"),
-            _make_viewpoint_claim_with_text("vc2", "外部观点B", topic="order_capacity_delivery", title="外部B"),
-            _make_viewpoint_claim_with_text("vc3", "外部观点C", topic="financial_quality", title="外部C"),
-        ],
-    )
-
-    chat_client = MagicMock()
-    chat_client.chat.return_value = {
-        "industry_logic": "legacy 行业逻辑",
-        "fundamentals": "legacy 基本面",
-        "valuation_debate": "legacy 估值",
-        "funding_sentiment": "legacy 资金",
-        "events_catalysts": "legacy 催化",
-        "core_facts": [],
-        "citations": {},
-    }
-
-    fake = FakeSynthesizer()
-    skill = SynthesisSkill(llm_client=chat_client, synthesizer=fake)
-    ctx = SkillContext(input={
-        "stock_name": "测试股",
-        "include_curated_external_viewpoint_digest_in_deep_analysis_display": True,
-        "curated_external_viewpoint_digest_json": str(digest_path),
-        "stock_raw": {
-            "reports": [],
-            "announcements": [],
-            "fundflow": [],
-            "news": [],
-            "zhihu": {"report_items": []},
-        },
-        "keep_posts": [],
-    })
-    skill.run(ctx)
-
-    profile = ctx.output.get("deep_analysis_evidence_profile", {})
-    assert profile.get("profile") == "formal_thin_external_rich"
-    assert fake.calls == []
-    assert chat_client.chat.call_count == 0
-    synthesis = ctx.output.get("synthesis", {})
-    assert synthesis.get("industry_logic", "") == ""
-    assert synthesis.get("fundamentals", "") == ""
-    assert "legacy" not in str(synthesis.get("valuation_debate", ""))
-
-
 def test_evidence_profile_has_annual_memo_fields():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
-    ctx = SkillContext(input={
+    ctx = _test_context({
         "stock_name": "复旦微电",
         "stock_raw": {
             "announcements": [{"title": "年报", "content": "公司披露年度报告", "date": "2026-04-30"}],
@@ -2808,6 +2535,69 @@ def test_evidence_profile_routes_partial_formal_material_to_formal_medium():
     assert profile["profile"] == "formal_medium"
     assert "formal_support_partial" in profile["reasons"]
     assert "items_present_fallback" not in profile["reasons"]
+
+
+def test_v3_profile_external_only_remains_thin_all():
+    ctx = SkillContext(input={"stock_name": "黑芝麻智能"})
+    ctx.set("curated_external_argument_pack_status", "ok")
+    ctx.set("deep_analysis_display", _v3_external_display())
+    ctx.set("annual_report_memo", {"status": "absent"})
+    ctx.set("broker_research_memo", {"status": "absent"})
+
+    profile = SynthesisSkill._build_evidence_profile(ctx, [])
+
+    assert profile["profile"] == "thin_all"
+
+
+def test_v3_profile_annual_only_external_rich_routes_formal_thin():
+    ctx = SkillContext(input={"stock_name": "复旦微电"})
+    ctx.set("curated_external_argument_pack_status", "ok")
+    ctx.set("deep_analysis_display", _v3_external_display())
+    ctx.set("annual_report_memo", {"status": "ready"})
+    ctx.set("broker_research_memo", {"status": "absent"})
+
+    profile = SynthesisSkill._build_evidence_profile(ctx, [])
+
+    assert profile["profile"] == "formal_thin_external_rich"
+
+
+def test_v3_profile_peer_families_do_not_make_external_rich():
+    ctx = SkillContext(input={"stock_name": "复旦微电"})
+    ctx.set("curated_external_argument_pack_status", "ok")
+    ctx.set("deep_analysis_display", _v3_external_display(entity_scope="peer_or_industry"))
+    ctx.set("annual_report_memo", {"status": "ready"})
+    ctx.set("broker_research_memo", {"status": "absent"})
+
+    profile = SynthesisSkill._build_evidence_profile(ctx, [])
+
+    assert profile["profile"] != "formal_thin_external_rich"
+
+
+def test_v3_profile_six_target_cards_in_one_family_do_not_make_external_rich():
+    ctx = SkillContext(input={"stock_name": "复旦微电"})
+    ctx.set("curated_external_argument_pack_status", "ok")
+    ctx.set("deep_analysis_display", _v3_external_display(("technology_product",) * 6))
+    ctx.set("annual_report_memo", {"status": "ready"})
+    ctx.set("broker_research_memo", {"status": "absent"})
+
+    profile = SynthesisSkill._build_evidence_profile(ctx, [])
+
+    assert profile["profile"] != "formal_thin_external_rich"
+
+
+def test_v3_profile_annual_and_broker_routes_formal_medium():
+    ctx = SkillContext(input={"stock_name": "中际旭创"})
+    ctx.set("curated_external_argument_pack_status", "ok")
+    ctx.set("deep_analysis_display", _v3_external_display())
+    ctx.set("annual_report_memo", {"status": "ready"})
+    ctx.set("broker_research_memo", {
+        "status": "ready", "diagnostics": {"usable_card_count": 3},
+        "institutions": ["测试证券"],
+    })
+
+    profile = SynthesisSkill._build_evidence_profile(ctx, [])
+
+    assert profile["profile"] == "formal_medium"
 
 
 def _broker_digest_item(
@@ -2947,6 +2737,101 @@ def test_build_annual_report_memo_ready_vs_fallback():
     assert memo2["status"] == "deterministic_fallback"
 
 
+def test_build_annual_report_memo_preserves_all_canonical_v2_narrative_cards():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    families = (
+        "business_structure",
+        "operating_progress",
+        "market_competition_outlook",
+        "technology_product_progress",
+        "financial_quality_explanation",
+    )
+    cards = []
+    for index in range(14):
+        family = families[index % len(families)]
+        cards.append({
+            "schema_version": "periodic_report_narrative_evidence_card.v2",
+            "selection_version": "annual_argument_selection.v2",
+            "card_id": f"periodic:v2:{index}",
+            "argument_family": family,
+            "argument_complete": index % 2 == 0,
+            "title": f"年报论据 {index}",
+            "source_block_id": f"block-{index}",
+            "source_unit_ids": [f"unit-{index}"],
+            "source_units": [{
+                "unit_id": f"unit-{index}",
+                "block_id": f"block-{index}",
+                "ordinal": 0,
+                "start_pos": 0,
+                "end_pos": 10,
+                "text": f"年报论据内容 {index}。",
+            }],
+            "source_excerpt": f"年报论据内容 {index}。",
+            "excerpt": f"年报论据内容 {index}。",
+            "fact_anchors": [f"事实锚点 {index}"],
+            "secondary_signals": [],
+            "score_parts": {"anchored_fact": 1},
+            "quality_score": 1,
+            "selection_reason": f"signal:{family}",
+            "source_type": "periodic_report_narrative_evidence",
+            "source_credit": 75,
+            "report_year": 2025,
+            "report_type": "annual",
+        })
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": cards},
+        "formal_financial_fact_pack": {"facts": []},
+        "periodic_narrative_cards_max_display_items": 3,
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    rows = memo["sections"]["annual_report_explanation"]
+    legacy_groups = {
+        "product_business",
+        "operation_update",
+        "management_view",
+        "competitiveness_rd",
+        "financial_explanation",
+    }
+
+    assert len(rows) == 14
+    assert len(ctx.get("annual_report_material_pack")["selected_narrative_cards"]) == 14
+    assert all(row["source_type"] == "periodic_report_narrative_evidence" for row in rows)
+    assert all(row["display_group"] in families for row in rows)
+    assert all("argument_complete" in row for row in rows)
+    assert not legacy_groups.intersection(row["display_group"] for row in rows)
+    assert [row["argument_family"] for row in rows] == [card["argument_family"] for card in cards]
+    assert [row["argument_complete"] for row in rows] == [card["argument_complete"] for card in cards]
+
+
+def test_build_annual_report_memo_marks_formal_financial_rows_as_incomplete_quality_explanations():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "复旦微电",
+        "annual_report_material_pack": {"selected_narrative_cards": []},
+        "formal_financial_fact_pack": {
+            "facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}],
+        },
+        "formal_financial_explanation_pack": {
+            "rows": [{
+                "metric": "营业收入变动原因",
+                "normalized_summary": "收入变化主要系产品销售额增加所致。",
+                "source_doc": "2025年annual",
+                "source_ref": "annual:revenue",
+            }],
+        },
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    rows = memo["sections"]["confirmed"] + memo["sections"]["annual_report_explanation"]
+
+    assert len(rows) == 2
+    assert all(row["display_group"] == "financial_quality_explanation" for row in rows)
+    assert all(row["argument_family"] == "financial_quality_explanation" for row in rows)
+    assert all(row["argument_complete"] is False for row in rows)
+
+
 def test_build_annual_report_memo_uses_in_memory_narrative_cards_without_notes():
     skill = SynthesisSkill(synthesizer=MagicMock())
     ctx = SkillContext(input={
@@ -3005,6 +2890,43 @@ def test_build_annual_report_memo_uses_in_memory_narrative_cards_without_notes()
     assert memo["status"] == "ready"
     assert "车规级EEPROM" in bodies
     assert "先进制程FPGA" in bodies
+
+
+def test_build_annual_report_memo_prefers_current_fulltext_cards_over_stale_pack():
+    skill = SynthesisSkill(synthesizer=MagicMock())
+    ctx = SkillContext(input={
+        "stock_name": "中际旭创",
+        "annual_report_material_pack": {
+            "selected_narrative_cards": [{
+                "card_id": "stale:1",
+                "argument_family": "business_structure",
+                "title": "旧目录摘录",
+                "excerpt": "产品类型 产品介绍 应用领域 产品或终端样图。",
+                "source_block_id": "stale-product-table",
+            }],
+        },
+        "periodic_report_narrative_evidence_cards": {
+            "cards": [{
+                "card_id": "current:1",
+                "argument_family": "financial_quality_explanation",
+                "argument_complete": True,
+                "title": "财务质量与变化原因",
+                "source_excerpt": (
+                    "报告期内，受益于终端客户需求增长，公司产品出货较快增长，"
+                    "运营效率继续提升，营业收入与净利润均同比增长。"
+                ),
+                "source_block_id": "profitability_commentary-0",
+                "source_credit": 75,
+            }],
+        },
+        "formal_financial_fact_pack": {"facts": []},
+    })
+
+    memo = skill._build_annual_report_memo(ctx)
+    bodies = " ".join(row["body"] for row in memo["sections"]["annual_report_explanation"])
+
+    assert "产品出货较快增长" in bodies
+    assert "产品类型 产品介绍" not in bodies
 
 
 def test_build_annual_report_memo_dedupes_duplicate_narrative_card_bodies():
@@ -3291,14 +3213,7 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
                 "institution_count": 2,
             },
         },
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "author": "作者A"},
-                2: {"source": "知乎精选观察", "author": "作者B"},
-            },
-            "_curated_external_narrative_paragraphs": [{"heading": "供应链"}],
-            "_curated_external_topic_groups": {"technology_route": [{"claim": "NPO"}]},
-        },
+        "deep_analysis_display": _v3_external_display(("capacity_delivery",)),
     })
 
     coverage = SynthesisSkill._build_material_coverage_diagnostics(ctx)
@@ -3316,9 +3231,9 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
     assert coverage["broker"]["digest_item_count"] == 5
     assert coverage["broker"]["memo_usable_card_count"] == 2
     assert coverage["broker"]["memo_row_count"] == 2
-    assert coverage["external"]["citation_source_count"] == 2
-    assert coverage["external"]["narrative_paragraph_count"] == 1
-    assert coverage["external"]["topic_group_count"] == 1
+    assert coverage["external"]["citation_source_count"] == 1
+    assert coverage["external"]["argument_card_count"] == 1
+    assert coverage["external"]["argument_coverage_families"] == ["capacity_delivery"]
 
 
 def test_broker_digest_loader_default_budget_matches_research_cache_width():

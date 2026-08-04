@@ -51,8 +51,12 @@ _DEFAULT_CONFIG = {
             "min_matched": 2,
             "total_conditions": 3,
             "lookback": 80,
+            "max_signal_age": 10,
+            "price_tolerance_pct": 0.01,
+            "price_atr_multiplier": 0.5,
             "boll_upper_tolerance": 1.01,
         },
+        "structure_path": {"shock": {"min_range_atr": 1.5, "min_body_range": 0.65, "close_extreme_pct": 0.20}},
         "scoring": {
             "weekly_structure_weight": 30,
             "daily_ma_weight": 25,

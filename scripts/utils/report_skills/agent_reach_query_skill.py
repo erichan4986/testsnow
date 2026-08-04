@@ -8,7 +8,6 @@ Detection-only platforms (youtube, exa_search, wechat) are never targeted by def
 Unsupported platforms (twitter, reddit, bilibili, xiaohongshu, etc.) are removed.
 """
 
-import os
 from typing import Any, Dict, List, Optional
 
 if __name__.startswith("utils."):
@@ -146,9 +145,7 @@ def agent_reach_query_skill(ctx: SkillContext) -> SkillContext:
     stock_codes = ctx.get("stock_codes", {})
     code = stock_codes.get(stock_name, "")
 
-    env_enabled = os.environ.get("ENABLE_AGENT_REACH", "") in ("1", "true", "True")
-    input_enabled = ctx.get("enable_agent_reach", False)
-    agent_reach_enabled = env_enabled or input_enabled
+    agent_reach_enabled = bool(ctx.get("enable_agent_reach", False))
 
     ctx.set("agent_reach_enabled", agent_reach_enabled)
 

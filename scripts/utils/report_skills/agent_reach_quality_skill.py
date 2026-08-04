@@ -425,63 +425,41 @@ def agent_reach_quality_skill(ctx: SkillContext) -> SkillContext:
     items = ctx.get("agent_reach_items", [])
     search_queries = ctx.get("search_queries", [])
 
-    def _write_summary(quality_status: str, counts: dict, warnings: list = None, results: list = None):
-        summary = {
+    def _finish(status: str, buckets=None, results=None, warnings=None) -> SkillContext:
+        buckets = buckets or {"keep": [], "demote": [], "discard": []}
+        results = results or []
+        counts = {name: len(buckets[name]) for name in ("keep", "demote", "discard")}
+        counts["total"] = sum(counts.values())
+        summary = {**counts, "fetch_status": fetch_status, "quality_status": status}
+        ctx.set("agent_reach_quality_status", status)
+        for name, values in buckets.items():
+            ctx.set(f"agent_reach_{name}_items", values)
+        ctx.set("agent_reach_quality_results", results)
+        ctx.set("agent_reach_quality_summary", summary)
+        ctx.set("agent_reach_run_summary", {
             "stock_name": stock_name,
             "date_str": date_str,
             "enabled": agent_reach_enabled,
             "fetch_status": fetch_status,
-            "quality_status": quality_status,
+            "quality_status": status,
             "queries": _build_compact_queries(search_queries),
-            "counts": counts,
+            "counts": summary if status == "ok" else counts,
             "warnings": warnings or [],
-            "results": results or [],
-        }
-        ctx.set("agent_reach_run_summary", summary)
+            "results": [_to_compact_result(row) for row in results] if status == "ok" else [],
+        })
+        return ctx
 
     if not agent_reach_enabled:
-        ctx.set("agent_reach_quality_status", "disabled")
-        ctx.set("agent_reach_keep_items", [])
-        ctx.set("agent_reach_demote_items", [])
-        ctx.set("agent_reach_discard_items", [])
-        ctx.set("agent_reach_quality_results", [])
-        ctx.set("agent_reach_quality_summary", {
-            "keep": 0, "demote": 0, "discard": 0, "total": 0,
-            "fetch_status": "", "quality_status": "disabled",
-        })
-        _write_summary("disabled", {"total": 0, "keep": 0, "demote": 0, "discard": 0})
-        return ctx
+        return _finish("disabled")
 
     # Skipped states: missing_binary, error, or timeout with zero items
     if fetch_status in ("missing_binary", "error") or (fetch_status == "timeout" and not items):
-        ctx.set("agent_reach_quality_status", "skipped")
-        ctx.set("agent_reach_keep_items", [])
-        ctx.set("agent_reach_demote_items", [])
-        ctx.set("agent_reach_discard_items", [])
-        ctx.set("agent_reach_quality_results", [])
-        ctx.set("agent_reach_quality_summary", {
-            "keep": 0, "demote": 0, "discard": 0, "total": 0,
-            "fetch_status": fetch_status, "quality_status": "skipped",
-        })
-        _write_summary("skipped", {"total": 0, "keep": 0, "demote": 0, "discard": 0}, warnings=ctx.get("agent_reach_warnings", []))
-        return ctx
+        return _finish("skipped", warnings=ctx.get("agent_reach_warnings", []))
 
     if not items:
-        ctx.set("agent_reach_quality_status", "empty")
-        ctx.set("agent_reach_keep_items", [])
-        ctx.set("agent_reach_demote_items", [])
-        ctx.set("agent_reach_discard_items", [])
-        ctx.set("agent_reach_quality_results", [])
-        ctx.set("agent_reach_quality_summary", {
-            "keep": 0, "demote": 0, "discard": 0, "total": 0,
-            "fetch_status": fetch_status, "quality_status": "empty",
-        })
-        _write_summary("empty", {"total": 0, "keep": 0, "demote": 0, "discard": 0}, warnings=ctx.get("agent_reach_warnings", []))
-        return ctx
+        return _finish("empty", warnings=ctx.get("agent_reach_warnings", []))
 
-    keep_items = []
-    demote_items = []
-    discard_items = []
+    buckets = {"keep": [], "demote": [], "discard": []}
     quality_results = []
 
     for item in items:
@@ -489,34 +467,10 @@ def agent_reach_quality_skill(ctx: SkillContext) -> SkillContext:
         _annotate_item_quality(item, result)
         action = result["action"]
 
-        if action == "keep":
-            keep_items.append(item)
-        elif action == "demote":
-            demote_items.append(item)
-        else:
-            discard_items.append(item)
-
+        buckets[action if action in buckets else "discard"].append(item)
         quality_results.append(_to_quality_result_dict(item, result, fetch_status))
 
-    summary = {
-        "keep": len(keep_items),
-        "demote": len(demote_items),
-        "discard": len(discard_items),
-        "total": len(items),
-        "fetch_status": fetch_status,
-        "quality_status": "ok",
-    }
-
-    ctx.set("agent_reach_quality_status", "ok")
-    ctx.set("agent_reach_keep_items", keep_items)
-    ctx.set("agent_reach_demote_items", demote_items)
-    ctx.set("agent_reach_discard_items", discard_items)
-    ctx.set("agent_reach_quality_results", quality_results)
-    ctx.set("agent_reach_quality_summary", summary)
-    _write_summary(
-        "ok",
-        summary,
+    return _finish(
+        "ok", buckets, quality_results,
         warnings=ctx.get("agent_reach_warnings", []),
-        results=[_to_compact_result(r) for r in quality_results],
     )
-    return ctx

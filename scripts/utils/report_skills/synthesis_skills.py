@@ -3,6 +3,7 @@
 import hashlib
 import json
 import re
+from datetime import date
 from pathlib import Path
 from typing import Any, Dict, List
 
@@ -11,6 +12,7 @@ if __name__.startswith("utils."):
     from ..knowledge_synthesizer import KnowledgeSynthesizer
     from ..source_adapter import adapt_all
     from ..synthesis_credit import (
+        citation_identity,
         credit_usage_rules_text,
         derive_synthesis_usage,
         format_synthesis_source_line,
@@ -31,17 +33,23 @@ if __name__.startswith("utils."):
         refresh_broker_research_digest_card_notes_from_manifest,
     )
     from ..synthesis_display_deduper import dedupe_synthesis_display_items
-    from ..curated_external_display_lint import lint_curated_external_display_text
-    from ..curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
+    from ..curated_external_display import build_curated_external_argument_display, flatten_synthesis_text
+    from ..periodic_external_evidence_map import build_periodic_external_evidence_map
     from ..industry_news_relevance import build_industry_relevance_manifest
     from ..peer_comparison_material import build_peer_comparison_material
     from ..fundflow_material import build_fundflow_material_pack
-    from ..annual_report_material_pack import build_annual_report_material_pack
+    from ..annual_report_material_pack import (
+        build_annual_report_material_pack,
+        selected_cards_to_synthesis_items,
+    )
+    from ..periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
+    from ..evidence_freshness import build_freshness_overlay, parse_explicit_date
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
     from source_adapter import adapt_all
     from synthesis_credit import (
+        citation_identity,
         credit_usage_rules_text,
         derive_synthesis_usage,
         format_synthesis_source_line,
@@ -62,12 +70,17 @@ else:
         refresh_broker_research_digest_card_notes_from_manifest,
     )
     from synthesis_display_deduper import dedupe_synthesis_display_items
-    from curated_external_display_lint import lint_curated_external_display_text
-    from curated_external_display import build_curated_external_narrative_display, flatten_synthesis_text
+    from curated_external_display import build_curated_external_argument_display, flatten_synthesis_text
+    from periodic_external_evidence_map import build_periodic_external_evidence_map
     from industry_news_relevance import build_industry_relevance_manifest
     from peer_comparison_material import build_peer_comparison_material
     from fundflow_material import build_fundflow_material_pack
-    from annual_report_material_pack import build_annual_report_material_pack
+    from annual_report_material_pack import (
+        build_annual_report_material_pack,
+        selected_cards_to_synthesis_items,
+    )
+    from periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
+    from evidence_freshness import build_freshness_overlay, parse_explicit_date
 
 
 SYNTHESIS_KEYS = [
@@ -77,26 +90,6 @@ SYNTHESIS_KEYS = [
     "funding_sentiment",
     "events_catalysts",
 ]
-
-CURATED_EXTERNAL_TOPIC_ALIASES = {
-    "supply_delivery_capacity": "order_capacity_delivery",
-    "order_capacity": "order_capacity_delivery",
-    "delivery_capacity": "order_capacity_delivery",
-    "supply_chain": "order_capacity_delivery",
-    "technology_route": "technology_route",
-    "tech_route": "technology_route",
-    "industry_logic": "technology_route",
-    "financial_quality": "financial_quality",
-    "fundamentals": "financial_quality",
-    "earnings_quality": "financial_quality",
-    "competition_commercialization": "competition_commercialization",
-    "commercialization": "competition_commercialization",
-    "market_expectation": "market_expectation",
-    "capital_market": "market_expectation",
-    "risk_rumor_rebuttal": "risk_rumor_rebuttal",
-    "watch_variable": "risk_rumor_rebuttal",
-    "dissent": "risk_rumor_rebuttal",
-}
 
 class SynthesisSkill(BaseSkill):
     """LLM 综合叙事生成。"""
@@ -140,13 +133,15 @@ class SynthesisSkill(BaseSkill):
         stock_name_for_annual = ctx.get("stock_name")
         if stock_name_for_annual:
             base_dir = ctx.get("knowledge_base_dir") or Path(__file__).resolve().parents[3] / "knowledge"
+            stock_code_for_annual = str((ctx.get("stock_codes") or {}).get(stock_name_for_annual) or "").strip()
             try:
                 annual_material_pack = build_annual_report_material_pack(
                     stock_name=stock_name_for_annual,
+                    stock_code=stock_code_for_annual,
                     base_dir=base_dir,
-                    max_cards=8,
-                    per_type_limit=2,
                 )
+            except PeriodicNarrativePackStorageError:
+                raise
             except Exception:
                 pass
         if annual_material_pack:
@@ -159,9 +154,7 @@ class SynthesisSkill(BaseSkill):
         items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx)
 
         # Curated external display is independent of baseline synthesis; build it first.
-        self._build_viewpoint_narrative_deep_analysis_display(ctx)
-        if not ctx.get("deep_analysis_display"):
-            self._build_viewpoint_digest_deep_analysis_display(ctx)
+        self._build_curated_external_deep_analysis_display(ctx)
 
         # Evidence-adaptive routing: profile decides which deep-analysis prompts run.
         profile = self._build_evidence_profile(ctx, items)
@@ -176,6 +169,10 @@ class SynthesisSkill(BaseSkill):
             if ctx is not None and formal_first_insufficient:
                 ctx.set("formal_first_sources_insufficient", True)
             baseline = self._empty_baseline_synthesis(stock_raw, items, source_policy=source_policy, formal_first_insufficient=formal_first_insufficient)
+        external_display = ctx.get("deep_analysis_display") or {}
+        freshness = self._build_evidence_freshness_overlay(ctx, profile, external_display)
+        self._reserve_freshness_citations(baseline, freshness, external_display)
+        ctx.set("evidence_freshness", freshness)
         ctx.set("synthesis", baseline)
         core_facts = self._select_core_facts(
             baseline.get("core_facts", []),
@@ -230,6 +227,51 @@ class SynthesisSkill(BaseSkill):
 
         return ctx
 
+    def _build_evidence_freshness_overlay(self, ctx: SkillContext, profile: dict, external_display: dict) -> dict:
+        as_of = parse_explicit_date(ctx.get("report_as_of_date")) or date.today()
+        official_types = {"exchange_announcement", "company_ir", "company_official", "announcement", "official", "confirmed_fact", "periodic_report_excerpt"}
+        official = list(self._eligible_periodic_report_fulltext_items(ctx))
+        official.extend(item for item in (ctx.get("source_intake_items") or []) if (getattr(item, "extra", {}) or {}).get("source_type") in official_types)
+        broker = ctx.get("broker_research_digest_items")
+        if broker is None:
+            broker = self._eligible_broker_research_digest_items(ctx)
+        broker = [item for item in (broker or []) if (getattr(item, "extra", {}) or {}).get("card_type") != "broker_risk_note"]
+        return build_freshness_overlay(
+            profile=str(profile.get("profile") or ""), as_of_date=as_of,
+            official_items=official, broker_items=broker, external_display=external_display or {},
+        )
+
+    @staticmethod
+    def _reserve_freshness_citations(baseline: dict, overlay: dict, external_display: dict) -> None:
+        candidate = (overlay or {}).get("summary_candidate")
+        if not candidate:
+            return
+        source_citations = (external_display or {}).get("citations") or {}
+        citations = baseline.setdefault("citations", {})
+        normalized = {}
+        for key, meta in citations.items():
+            try:
+                normalized[citation_identity(meta, fallback_ref=int(key))] = int(key)
+            except (TypeError, ValueError):
+                continue
+        refs = []
+        for raw_ref in candidate.get("citation_refs") or []:
+            meta = source_citations.get(raw_ref) or source_citations.get(str(raw_ref))
+            if not isinstance(meta, dict):
+                continue
+            identity = citation_identity(meta, fallback_ref=raw_ref)
+            ref_id = normalized.get(identity)
+            if ref_id is None:
+                ref_id = max((int(key) for key in citations if str(key).isdigit()), default=0) + 1
+                citations[ref_id] = dict(meta)
+                normalized[identity] = ref_id
+            refs.append(ref_id)
+        candidate["citation_refs"] = list(dict.fromkeys(refs))
+        candidate["citation_identities"] = [citation_identity(citations[ref], fallback_ref=ref) for ref in candidate["citation_refs"]]
+        if not candidate["citation_refs"]:
+            overlay["summary_candidate"] = None
+            overlay["preface"] = False
+
     @staticmethod
     def _select_core_facts(baseline_core_facts: list, filing_core_facts: list) -> list:
         """Prefer baseline core facts only when at least one is renderable."""
@@ -265,25 +307,33 @@ class SynthesisSkill(BaseSkill):
     @staticmethod
     def _eligible_periodic_narrative_card_items(ctx: SkillContext) -> list:
         """Load persisted periodic-report narrative cards as display-only items."""
+        try:
+            max_cards = max(
+                0,
+                int(ctx.get("periodic_narrative_cards_max_display_items", 12)),
+            )
+        except (TypeError, ValueError):
+            max_cards = 12
+        material_pack = ctx.get("annual_report_material_pack") or {}
+        selected_cards = material_pack.get("selected_narrative_cards")
+        if isinstance(selected_cards, list):
+            return selected_cards_to_synthesis_items(selected_cards)[:max_cards]
         stock_name = ctx.get("stock_name")
         if not stock_name:
             return []
         base_dir = ctx.get("knowledge_base_dir")
         if not base_dir:
             base_dir = Path(__file__).resolve().parents[3] / "knowledge"
-        max_cards = ctx.get("periodic_narrative_cards_max_display_items", 12)
-        try:
-            max_cards = int(max_cards)
-        except (TypeError, ValueError):
-            max_cards = 12
         try:
             return load_periodic_narrative_card_synthesis_items(
                 stock_name=stock_name,
+                stock_code=str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip(),
                 base_dir=base_dir,
                 max_cards=max_cards,
                 use_pack=True,
-                per_type_limit=3,
             )
+        except PeriodicNarrativePackStorageError:
+            raise
         except Exception:
             return []
 
@@ -358,12 +408,6 @@ class SynthesisSkill(BaseSkill):
 
     @staticmethod
     def _annual_narrative_cards(ctx: SkillContext, material: Dict[str, Any]) -> List[Dict[str, Any]]:
-        selected = [
-            c for c in (material.get("selected_narrative_cards") or [])
-            if isinstance(c, dict)
-        ]
-        if selected:
-            return selected
         pack = ctx.get("periodic_report_narrative_evidence_cards") or {}
         cards: List[Dict[str, Any]] = []
         for c in pack.get("cards") or []:
@@ -372,17 +416,16 @@ class SynthesisSkill(BaseSkill):
             excerpt = c.get("excerpt") or c.get("source_excerpt")
             if not excerpt:
                 continue
-            cards.append({
-                "card_id": c.get("card_id"),
-                "card_type": c.get("card_type"),
-                "title": c.get("title"),
-                "excerpt": excerpt,
-                "source_block_id": c.get("source_block_id"),
-                "report_year": c.get("report_year"),
-                "report_type": c.get("report_type"),
-                "source_credit": c.get("source_credit", 75),
-            })
-        return cards
+            card = dict(c)
+            card["excerpt"] = excerpt
+            card.setdefault("source_credit", 75)
+            cards.append(card)
+        if cards:
+            return cards
+        return [
+            c for c in (material.get("selected_narrative_cards") or [])
+            if isinstance(c, dict)
+        ]
 
     @staticmethod
     def _clean_annual_memo_excerpt(text: str, max_chars: int = 300) -> str:
@@ -459,8 +502,21 @@ class SynthesisSkill(BaseSkill):
                 if "营收" in m or "收入" in m or "利润" in m:
                     warnings.append(f"suspicious zero metric: {m}={fact.get('data')}")
 
-        product_types = {"business_model", "rd_product_progress", "technology_platform", "management_market_view", "operation_update"}
-        has_product = any(str(c.get("card_type")) in product_types for c in valid_cards)
+        family_map = {
+            "business_model": "business_structure",
+            "operation_update": "operating_progress",
+            "management_market_view": "market_competition_outlook",
+            "market_outlook": "market_competition_outlook",
+            "technology_platform": "technology_product_progress",
+            "rd_product_progress": "technology_product_progress",
+            "financial_note": "financial_quality_explanation",
+        }
+        def _family(card: Dict[str, Any]) -> str:
+            return str(card.get("argument_family") or family_map.get(str(card.get("card_type") or ""), "business_structure"))
+
+        has_product = any(
+            _family(c) != "financial_quality_explanation" for c in valid_cards
+        )
         has_material = bool(narrative_cards or fact_pack.get("facts") or explanation_pack.get("rows"))
 
         citations: Dict[int, Dict[str, Any]] = {}
@@ -476,14 +532,20 @@ class SynthesisSkill(BaseSkill):
             nxt += 1
             return nxt - 1
 
-        def _annual_row(title, body, iref, src, source_type, citation_key, citation_title="", source_credit=None, display_group=""):
+        def _annual_row(
+            title, body, iref, src, source_type, citation_key, citation_title="",
+            source_credit=None, display_group="", argument_complete=False,
+        ):
             meta: Dict[str, Any] = {"source": "公司年报", "title": citation_title or src, "source_type": source_type}
             if source_credit is not None:
                 meta["source_credit"] = source_credit
             row = {"title": title, "body": body, "internal_refs": [iref],
-                   "citation_refs": [_ref(citation_key, meta)], "source_ref_ids": [src]}
+                   "citation_refs": [_ref(citation_key, meta)], "source_ref_ids": [src],
+                   "source_type": source_type}
             if display_group:
                 row["display_group"] = display_group
+            row["argument_family"] = display_group or "financial_quality_explanation"
+            row["argument_complete"] = bool(argument_complete)
             return row
 
         def _suspicious_zero_metric(metric: object, value: object) -> bool:
@@ -504,6 +566,7 @@ class SynthesisSkill(BaseSkill):
                 confirmed.append(_annual_row(
                     metric, f"{metric}：{f['value']}", f"fact:{metric}", s,
                     "periodic_report_filing_fact", ("fact", s, f["metric"]),
+                    display_group="financial_quality_explanation",
                 ))
 
         explanation_rows: List[Dict[str, Any]] = []
@@ -517,27 +580,19 @@ class SynthesisSkill(BaseSkill):
                     explanation_rows.append(_annual_row(
                         str(m), str(b), f"explanation:{source_ref}", s,
                         "periodic_report_explanation", ("explanation", s, source_ref),
-                        display_group="financial_explanation",
+                        display_group="financial_quality_explanation",
                     ))
 
-        card_group = {
-            "business_model": "product_business",
-            "operation_update": "operation_update",
-            "management_market_view": "management_view",
-            "market_outlook": "management_view",
-            "margin_competitiveness": "competitiveness_rd",
-            "technology_platform": "competitiveness_rd",
-            "rd_product_progress": "competitiveness_rd",
-            "financial_note": "financial_explanation",
-        }
-        for c in valid_cards[:8]:
+        for c in valid_cards:
             title = str(c.get("title") or "年报内容")
             body = str(c.get("excerpt") or c.get("title") or "")
             sid = c.get("source_block_id") or c.get("card_id") or ""
+            family = _family(c)
             explanation_rows.append(_annual_row(
                 title, body, str(c.get("card_id") or ""), str(sid),
                 "periodic_report_narrative_evidence", ("card", sid), title, c.get("source_credit", 75),
-                display_group=card_group.get(str(c.get("card_type") or ""), "product_business"),
+                display_group=family,
+                argument_complete=c.get("argument_complete", False),
             ))
 
         has_usable_rows = bool(confirmed or explanation_rows)
@@ -728,11 +783,7 @@ class SynthesisSkill(BaseSkill):
         ]
 
         deep_display = ctx.get("deep_analysis_display") or {}
-        topic_groups = deep_display.get("_curated_external_topic_groups") or {}
-        topic_claim_count = 0
-        if isinstance(topic_groups, dict):
-            topic_claim_count = sum(len(v) for v in topic_groups.values() if isinstance(v, list))
-
+        argument_cards = deep_display.get("_curated_external_argument_cards") or []
         return {
             "schema": "deep_analysis_material_coverage.v1",
             "annual": {
@@ -776,15 +827,12 @@ class SynthesisSkill(BaseSkill):
             },
             "external": {
                 "citation_source_count": len(deep_display.get("citations") or {}),
-                "reasoning_card_count": len(deep_display.get("_curated_external_reasoning_cards") or []),
-                "narrative_paragraph_count": len(deep_display.get("_curated_external_narrative_paragraphs") or []),
-                "topic_group_count": len(topic_groups) if isinstance(topic_groups, dict) else 0,
-                "topic_claim_count": topic_claim_count,
-                "status": (
-                    ctx.get("curated_external_viewpoint_narrative_status")
-                    or ctx.get("curated_external_viewpoint_digest_status")
-                    or "absent"
-                ),
+                "argument_card_count": len(argument_cards),
+                "argument_coverage_families": sorted({
+                    str(family) for card in argument_cards
+                    for family in card.get("coverage_families") or []
+                }),
+                "status": ctx.get("curated_external_argument_pack_status") or "absent",
             },
         }
 
@@ -850,106 +898,40 @@ class SynthesisSkill(BaseSkill):
                 institutions.append(institution)
         return {"status": "ok", "report_count": len(reports), "institutions": institutions}
 
-    def _build_viewpoint_narrative_deep_analysis_display(self, ctx: SkillContext) -> None:
-        """Build deep-analysis-only display from cached full-body narrative JSON."""
-        enabled = bool(
-            ctx.get("include_curated_external_viewpoint_narrative_in_deep_analysis_display")
-            or getattr(self, "include_curated_external_viewpoint_narrative_in_deep_analysis_display", False)
+    def _build_curated_external_deep_analysis_display(self, ctx: SkillContext) -> None:
+        """Project the persisted canonical argument pack into the external display."""
+        pack_enabled = bool(
+            ctx.get("include_curated_external_argument_pack_in_deep_analysis_display")
+            or getattr(self, "include_curated_external_argument_pack_in_deep_analysis_display", False)
         )
-        if not enabled:
+        if not pack_enabled:
             return
-
-        narrative_json = ctx.get("curated_external_viewpoint_narrative_json") or getattr(
-            self, "curated_external_viewpoint_narrative_json", ""
+        pack_json = ctx.get("curated_external_argument_pack_json") or getattr(
+            self, "curated_external_argument_pack_json", ""
         )
-        if not narrative_json:
-            ctx.set("curated_external_viewpoint_narrative_status", "missing_config")
-            ctx.set(
-                "curated_external_viewpoint_narrative_stats",
-                {"rejection_reasons": ["curated_external_viewpoint_narrative_json not set"]},
-            )
-            return
-
-        result = build_curated_external_narrative_display(narrative_json)
-        ctx.set("curated_external_viewpoint_narrative_status", result.get("status"))
-        ctx.set("curated_external_viewpoint_narrative_stats", result.get("stats") or {})
-        if result.get("lint"):
-            ctx.set("curated_external_viewpoint_narrative_lint", result.get("lint"))
-        if result.get("status") != "ok":
-            return
-
-        display = result.get("display") or {}
-        ctx.set("deep_analysis_display", display)
-        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
-        ctx.set("synthesis_text_with_curated_external_viewpoint_narrative", result.get("synthesis_text") or "")
-        ctx.set("curated_external_viewpoint_narrative_status", "ok")
-
-    def _build_viewpoint_digest_deep_analysis_display(self, ctx: SkillContext) -> None:
-        """Build deep-analysis-only display from cached full-body viewpoint digest."""
-        enabled = bool(
-            ctx.get("include_curated_external_viewpoint_digest_in_deep_analysis_display")
-            or getattr(self, "include_curated_external_viewpoint_digest_in_deep_analysis_display", False)
+        result = build_curated_external_argument_display(
+            pack_json, expected_stock_name=str(ctx.get("stock_name") or "").strip(),
         )
-        if not enabled:
-            return
-
-        digest_json = ctx.get("curated_external_viewpoint_digest_json") or getattr(
-            self, "curated_external_viewpoint_digest_json", ""
-        )
-        if not digest_json:
-            ctx.set("curated_external_viewpoint_digest_status", "missing_config")
-            ctx.set("curated_external_viewpoint_digest_stats", {"rejection_reasons": ["curated_external_viewpoint_digest_json not set"]})
-            return
-
-        try:
-            digest = json.loads(Path(digest_json).read_text(encoding="utf-8"))
-        except Exception as exc:
-            ctx.set("curated_external_viewpoint_digest_status", "reader_error")
-            ctx.set("curated_external_viewpoint_digest_stats", {"rejection_reasons": [str(exc)]})
-            return
-
-        status = str(digest.get("status") or "")
-        ctx.set("curated_external_viewpoint_digest_status", status)
-        ctx.set("curated_external_viewpoint_digest_stats", digest.get("stats") or {})
-        if status != "ok":
-            return
-
-        claims = [
-            claim for claim in (digest.get("claims") or [])
-            if self._is_safe_curated_external_viewpoint_claim(claim)
-        ]
-        if not claims:
-            ctx.set("curated_external_viewpoint_digest_status", "empty")
-            return
-
-        claims = self._dedupe_viewpoint_digest_claims_for_display(claims)
-        display = self._deterministic_viewpoint_digest_display(ctx.get("stock_name"), claims)
-        lint = lint_curated_external_display_text(display)
-        ctx.set("curated_external_viewpoint_digest_lint", lint)
-        if not lint.get("ok"):
-            ctx.set("curated_external_viewpoint_digest_status", "lint_failed")
-            return
-
-        ctx.set("deep_analysis_display", display)
-        ctx.set("deep_analysis_display_sources", display.get("_sources", []))
-        ctx.set("synthesis_text_with_curated_external_viewpoint_digest", flatten_synthesis_text(display))
-        ctx.set("curated_external_viewpoint_digest_status", "ok")
-
-    @staticmethod
-    def _is_safe_curated_external_viewpoint_claim(claim: Dict[str, Any]) -> bool:
-        if not isinstance(claim, dict):
-            return False
-        return (
-            claim.get("schema_version") == "curated_external_viewpoint_claim.v1"
-            and claim.get("quality_action") == "preview_only"
-            and claim.get("knowledge_eligible") is False
-            and claim.get("synthesis_display_only") is True
-            and claim.get("scoring_eligible") is False
-            and claim.get("risk_score_eligible") is False
-            and claim.get("verification_status") == "professional_observation"
-            and str(claim.get("source_quote") or "").strip()
-            and str(claim.get("source_quote_hash") or "").strip()
-        )
+        for suffix in ("status", "stats", "lint"):
+            value = result.get(suffix)
+            if value is not None:
+                ctx.set(f"curated_external_argument_pack_{suffix}", value)
+        if result.get("status") == "ok":
+            display = result.get("display") or {}
+            ctx.set("deep_analysis_display", display)
+            ctx.set("deep_analysis_display_sources", display.get("_sources", []))
+            ctx.set("synthesis_text_with_curated_external_argument_pack", result.get("synthesis_text") or "")
+            metric_pack = ctx.get("periodic_report_metric_series_pack")
+            scan_pack = ctx.get("periodic_report_financial_scan_pack")
+            if metric_pack and scan_pack:
+                stock_name = str(ctx.get("stock_name") or "").strip()
+                ctx.set("periodic_external_evidence_map", build_periodic_external_evidence_map(
+                    stock_code=str((ctx.get("stock_codes") or {}).get(stock_name) or "").strip(),
+                    stock_name=stock_name,
+                    metric_series_pack=metric_pack,
+                    financial_scan_pack=scan_pack,
+                    validated_external_display=display,
+                ))
 
     @staticmethod
     def _build_evidence_profile(ctx: SkillContext, items: list) -> dict:
@@ -1015,31 +997,50 @@ class SynthesisSkill(BaseSkill):
             if any(m in metric for m in useful_fact_metrics):
                 formal_insight_facts += 1
 
-        topic_groups = deep_display.get("_curated_external_topic_groups") or {}
-        reasoning_cards = deep_display.get("_curated_external_reasoning_cards") or []
+        argument_cards = deep_display.get("_curated_external_argument_cards") or []
         citations = deep_display.get("citations", {}) or {}
-        external_topics = len(topic_groups)
-        external_claims = len({str(c.get("claim_id") or i): c for i, c in enumerate(reasoning_cards)})
+        pack_active = ctx.get("curated_external_argument_pack_status") == "ok"
+        external_topics = external_claims = 0
+        if pack_active:
+            target_cards = [
+                card for card in argument_cards
+                if str(card.get("entity_scope") or "").startswith("target")
+            ]
+            external_topics = len({
+                family for card in target_cards
+                for family in card.get("coverage_families") or []
+                if family != "other"
+            })
+            external_claims = len({str(card.get("argument_key") or i) for i, card in enumerate(argument_cards)})
         external_sources = len(citations)
         distinct_authors = len({
             (str(m.get("source") or ""), str(m.get("author") or ""))
             for m in citations.values() if isinstance(m, dict)
         })
-        single_source = external_sources == 1 and (external_topics >= 3 or external_claims >= 6)
+        single_source = external_sources == 1 and external_topics >= 3 if pack_active else False
 
         has_any_formal = any(section_support.values())
         has_any_item = bool(items)
-        has_external_display = bool(deep_display)
-        external_rich = external_topics >= 3 or external_claims >= 6
+        external_rich = pack_active and external_topics >= 3
+        annual_memo = ctx.get("annual_report_memo") or {}
+        broker_memo = ctx.get("broker_research_memo") or {}
+        annual_ready = annual_memo.get("status") == "ready"
+        broker_usable = int(broker_memo.get("diagnostics", {}).get("usable_card_count", 0) or 0)
         reasons: List[str] = []
         if formal_insight_facts >= 5 and section_support["industry"] >= 2 and section_support["fundamentals"] >= 2:
             profile = "formal_rich"
             reasons.append("formal_support_sufficient")
-        elif has_external_display and external_rich and formal_insight_facts < 5:
+        elif pack_active and annual_ready and broker_usable > 0:
+            profile = "formal_medium"
+            reasons.append("annual_and_broker_material_ready")
+        elif pack_active and annual_ready and external_rich and formal_insight_facts < 5:
             profile = "formal_thin_external_rich"
             reasons.append("formal_thin_external_rich")
             if single_source:
                 reasons.append("single_source_external_rich")
+        elif pack_active:
+            profile = "formal_medium" if (has_any_formal or annual_ready or broker_usable) else "thin_all"
+            reasons.append("formal_support_partial" if profile == "formal_medium" else "material_insufficient")
         elif has_any_formal or has_any_item:
             profile = "formal_medium"
             reasons.append("formal_support_partial")
@@ -1055,8 +1056,6 @@ class SynthesisSkill(BaseSkill):
             "catalysts": "timeline" if section_support["catalyst_support"] >= 1 else ("fallback" if legacy_profile else "skipped"),
         }
 
-        annual_memo = ctx.get("annual_report_memo") or {}
-        broker_memo = ctx.get("broker_research_memo") or {}
         return {
             "profile": profile,
             "formal_insight_facts": formal_insight_facts,
@@ -1080,179 +1079,6 @@ class SynthesisSkill(BaseSkill):
                 "annual_broker_external_checklist" if profile == "formal_thin_external_rich" else None
             ),
         }
-
-    def _deterministic_viewpoint_digest_display(self, stock_name: str, claims: list) -> dict:
-        grouped = {
-            "industry_logic": [],
-            "fundamentals": [],
-            "valuation_debate": [],
-            "funding_sentiment": [],
-            "events_catalysts": [],
-        }
-        topic_groups = {}
-        citations = {}
-
-        for ref_id, claim in enumerate(claims, start=1):
-            line = self._format_viewpoint_digest_observation(claim, ref_id)
-            bucket = self._viewpoint_digest_bucket(claim)
-            grouped[bucket].append(line)
-            topic_key = self._external_viewpoint_topic_key(claim)
-            topic_groups.setdefault(topic_key, []).append(
-                self._viewpoint_digest_topic_row(claim, ref_id)
-            )
-            citations[ref_id] = self._viewpoint_digest_citation(claim)
-
-        return {
-            "industry_logic": self._join_curated_external_observations(
-                stock_name,
-                "产业链、竞争格局或技术路径增量观点",
-                grouped["industry_logic"],
-            ),
-            "fundamentals": self._join_curated_external_observations(
-                stock_name,
-                "业绩质量、周期或供需变量",
-                grouped["fundamentals"],
-            ),
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": self._join_curated_external_observations(
-                stock_name,
-                "事件、政策或待验证变量",
-                grouped["events_catalysts"],
-            ),
-            "core_facts": [],
-            "citations": citations,
-            "_curated_external_topic_groups": topic_groups,
-            "_curated_external_taxonomy_version": "external_viewpoint.v1",
-            "_items_count": len(claims),
-            "_sources": list(citations.values()),
-        }
-
-    @classmethod
-    def _dedupe_viewpoint_digest_claims_for_display(cls, claims: list) -> list:
-        """Collapse obvious same-theme repeats while keeping the full digest auditable."""
-        deduped = []
-        seen = set()
-        for claim in claims:
-            key = cls._viewpoint_digest_semantic_key(claim)
-            if key in seen:
-                continue
-            seen.add(key)
-            deduped.append(claim)
-        return deduped
-
-    @staticmethod
-    def _viewpoint_digest_semantic_key(claim: Dict[str, Any]) -> str:
-        text = " ".join(
-            str(claim.get(field) or "")
-            for field in ("topic", "claim", "source_quote", "why_incremental")
-        )
-        lower_text = text.lower()
-
-        if "800g" in lower_text and any(token in text for token in ("1500万", "1200万", "交付计划", "交付下调", "传言")):
-            return "800g_delivery_rumor"
-        if any(token in text for token in ("预付款", "物料", "原材料", "磷化铟", "光芯片", "供应链")):
-            return "material_supply_tightness"
-        if "cpo" in lower_text and any(token in text for token in ("可插拔", "Scale Out", "scale out", "替代")):
-            return "cpo_vs_pluggable"
-        if any(token in text for token in ("NPO", "XPO", "Scale Up", "scale up", "光进铜退")):
-            return "npo_xpo_timeline"
-        if any(token in text for token in ("2026", "2027", "2028")) and any(
-            token in text for token in ("需求指引", "客户需求", "资本开支", "capex", "CapEx")
-        ):
-            return "customer_demand_capex_guide"
-
-        fingerprint_source = str(claim.get("source_quote_hash") or claim.get("claim_id") or claim.get("claim") or "")
-        return f"claim:{fingerprint_source[:32]}"
-
-    @staticmethod
-    def _viewpoint_digest_bucket(claim: Dict[str, Any]) -> str:
-        topic_key = SynthesisSkill._external_viewpoint_topic_key(claim)
-        claim_type = str(claim.get("claim_type") or "")
-        if topic_key in ("financial_quality", "order_capacity_delivery"):
-            return "fundamentals"
-        if topic_key in ("risk_rumor_rebuttal", "market_expectation") or claim_type in ("dissent", "watch_variable"):
-            return "events_catalysts"
-        return "industry_logic"
-
-    @classmethod
-    def _external_viewpoint_topic_key(cls, claim: Dict[str, Any]) -> str:
-        raw_topic = str(claim.get("topic") or claim.get("primary_topic") or "").strip()
-        if raw_topic in CURATED_EXTERNAL_TOPIC_ALIASES:
-            return CURATED_EXTERNAL_TOPIC_ALIASES[raw_topic]
-
-        text = " ".join(
-            str(claim.get(field) or "")
-            for field in ("topic", "claim", "source_quote", "why_incremental", "claim_type")
-        )
-        lower_text = text.lower()
-        if any(token in text for token in ("传言", "否认", "制裁", "清单", "反证", "回应", "1260H")):
-            return "risk_rumor_rebuttal"
-        if any(token in text for token in ("预付款", "交付", "产能", "订单", "供应链", "物料", "客户需求", "需求指引")):
-            return "order_capacity_delivery"
-        if any(token in text for token in ("NPO", "XPO", "CPO", "LPO", "硅光", "可插拔", "光进铜退", "技术路线")):
-            return "technology_route"
-        if any(token in text for token in ("营收", "利润", "毛利率", "费用", "现金流", "亏损", "研发开支")):
-            return "financial_quality"
-        if any(token in text for token in ("竞争", "商业化", "定点", "标杆车型", "市场份额", "客户拓展")):
-            return "competition_commercialization"
-        if any(token in text for token in ("估值", "股价", "市值", "资金", "情绪", "预期差", "机构持仓", "IPO")):
-            return "market_expectation"
-        if any(token in lower_text for token in ("capex", "800g", "1.6t", "scale up", "scale out")):
-            return "technology_route"
-        return "other"
-
-    @classmethod
-    def _viewpoint_digest_topic_row(cls, claim: Dict[str, Any], ref_id: int) -> dict:
-        title = " ".join(str(claim.get("source_title") or claim.get("title") or "外部观点").split())[:80]
-        claim_text = str(claim.get("claim") or "").strip().rstrip("。")
-        why = str(claim.get("why_incremental") or "").strip().rstrip("。")
-        suffix = f"（{why}）" if why else ""
-        return {
-            "heading": title,
-            "text": f"{claim_text}{suffix}。",
-            "citation_refs": [ref_id],
-            "claim_id": claim.get("claim_id", ""),
-            "topic": cls._external_viewpoint_topic_key(claim),
-        }
-
-    @staticmethod
-    def _format_viewpoint_digest_observation(claim: Dict[str, Any], ref_id: int) -> str:
-        title = " ".join(str(claim.get("source_title") or claim.get("title") or "外部观点").split())[:80]
-        claim_text = str(claim.get("claim") or "").strip().rstrip("。")
-        why = str(claim.get("why_incremental") or "").strip().rstrip("。")
-        suffix = f"（{why}）" if why else ""
-        return f"《{title}》观察到：{claim_text}{suffix}[^{ref_id}]"
-
-    @staticmethod
-    def _viewpoint_digest_citation(claim: Dict[str, Any]) -> dict:
-        return {
-            "source": "微信公众号精选观察",
-            "author": claim.get("source_account") or claim.get("account") or "",
-            "title": claim.get("source_title") or claim.get("title") or "外部观点",
-            "url": claim.get("source_ref") or claim.get("url") or "",
-            "source_type": "curated_external_analysis_evidence",
-            "source_credit": claim.get("source_credit", 55),
-            "verification_status": claim.get("verification_status", "professional_observation"),
-            "claim_id": claim.get("claim_id", ""),
-            "source_quote_hash": claim.get("source_quote_hash", ""),
-        }
-
-    @staticmethod
-    def _is_template_fallback_synthesis(synthesis: dict) -> bool:
-        """Detect the generic non-LLM template so curated cards can still render."""
-        if not isinstance(synthesis, dict):
-            return True
-        if synthesis.get("citations"):
-            return False
-        text = "\n".join(str(synthesis.get(key, "")) for key in SYNTHESIS_KEYS)
-        return "LLM 合成未启用或未产生有效输出" in text
-
-    @staticmethod
-    def _join_curated_external_observations(stock_name: str, label: str, lines: list) -> str:
-        if not lines:
-            return ""
-        return f"精选外部材料仅作为专业观察，提示 {stock_name} 的{label}包括：" + "；".join(lines)
 
     def _synthesize(
         self,

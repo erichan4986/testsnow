@@ -1,9 +1,11 @@
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
+REPO_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "utils"))
 
 from periodic_report_extractor import extract_periodic_report, render_markdown
 
@@ -84,7 +86,9 @@ def test_detects_semiannual_report_as_interim_unaudited():
 def test_cli_outputs_json_and_markdown(tmp_path):
     input_path = tmp_path / "annual.txt"
     input_path.write_text(SAMPLE_REPORT, encoding="utf-8")
-    script_path = Path(__file__).parent.parent.parent / "scripts" / "periodic_report_extractor.py"
+    script_path = REPO_ROOT / "scripts" / "periodic_report_extractor.py"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(("scripts/utils", "scripts"))
 
     json_run = subprocess.run(
         [
@@ -97,6 +101,8 @@ def test_cli_outputs_json_and_markdown(tmp_path):
             "--format",
             "json",
         ],
+        cwd=REPO_ROOT,
+        env=env,
         check=True,
         text=True,
         capture_output=True,
@@ -116,6 +122,8 @@ def test_cli_outputs_json_and_markdown(tmp_path):
             "--format",
             "markdown",
         ],
+        cwd=REPO_ROOT,
+        env=env,
         check=True,
         text=True,
         capture_output=True,

@@ -95,10 +95,12 @@ Material and display helpers:
 - Source Intake renderer: `scripts/utils/reporter/sections/source_intake_evidence_renderer.py`
 <!-- path-check: scripts/utils/reporter/sections/source_intake_evidence_renderer.py -->
 
-Knowledge writers:
+Knowledge persistence:
 
-- narrative card notes: `scripts/utils/periodic_report_narrative_card_note_writer.py`
-<!-- path-check: scripts/utils/periodic_report_narrative_card_note_writer.py -->
+- narrative pack store (machine truth): `scripts/utils/periodic_report_narrative_pack_store.py`
+<!-- path-check: scripts/utils/periodic_report_narrative_pack_store.py -->
+- narrative view writer (human-readable projection): `scripts/utils/periodic_report_narrative_view_writer.py`
+<!-- path-check: scripts/utils/periodic_report_narrative_view_writer.py -->
 - filing fact notes, writer-only: `scripts/utils/periodic_report_filing_fact_note_writer.py`
 <!-- path-check: scripts/utils/periodic_report_filing_fact_note_writer.py -->
 

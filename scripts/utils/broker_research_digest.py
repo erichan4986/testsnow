@@ -122,6 +122,18 @@ def _unit_roles(text: str) -> set[str]:
 def _source_unit_damage_reason(text: str) -> str:
     if re.search(r"(?:图\s*\d+[:：]|(?:数据|资料)来源[:：]?|\bWind\b)", text, re.IGNORECASE):
         return "chart_metadata"
+    if re.search(r"其中\s*(?:及|和|与)\s*\d+(?:\.\d+)?[GT]", text, re.IGNORECASE):
+        return "missing_parallel_product"
+    if re.search(
+        r"(?:营业收入|营收|归母净利润|扣非(?:归母)?净利润)\s*\d+\.(?:\s*(?:同比|环比|同环比)|$)",
+        text,
+    ):
+        return "dangling_financial_value"
+    if re.match(r"\s*(?:同比|环比|同环比)分别(?:增长|下降)", text):
+        return "detached_growth_series"
+    for match in re.finditer(r"(?:同比|环比|同环比)分别(?:增长|下降)\s*([^。；;！？!?]*)", text):
+        if len(re.findall(r"\d+(?:\.\d+)?%", match.group(1))) < 2:
+            return "incomplete_paired_growth"
     if re.search(
         r"(?:营业收入|归母净利润|扣非(?:归母)?净利润)\s*\d+(?:\.\d+)?\s*元(?:[，,；;。]|同比|$)",
         text,
@@ -337,7 +349,6 @@ _PDF_OCR_ARTIFACT_REPAIRS = (
     ("盈 展", "盈利扩展"),
     ("核心增 链能力", "核心增长与供应链能力"),
     ("结构升级驱 的业务格局", "结构升级驱动的业务格局"),
-    ("营收195. 环比", "营收195亿元，环比"),
     ("同环比 262.3%", "同环比增长262.3%"),
     ("营业收 382.40", "营业收入382.40"),
     ("超大 互联", "超大互联"),
@@ -357,6 +368,28 @@ _PDF_OCR_ARTIFACT_REPAIRS = (
     ("拉货 动", "拉货波动"),
     ("继 加", "继续增加"),
 )
+
+
+def _filter_irrecoverable_legacy_units(text: str) -> str:
+    text = re.sub(
+        r"(?:(?:20\d{2}年[^，,。；;]{0,12}[，,])?公司)?(?:实现)?"
+        r"(?:营业收入|营收|归母净利润|扣非(?:归母)?净利润)\s*\d+\."
+        r"(?=\s*(?:同比|环比|同环比))",
+        "",
+        text,
+    )
+    text = re.sub(
+        r"(^|[，,。；;])\s*(?:同比|环比|同环比)分别(?:增长|下降)"
+        r"[^，,。；;！？!?]*(?:[，,；;]|$)",
+        r"\1",
+        text,
+    )
+    units = re.findall(r"[^。；;！？!?]+(?:[。；;！？!?]|$)", text)
+    return " ".join(
+        unit.strip()
+        for unit in units
+        if unit.strip() and not _source_unit_damage_reason(unit.strip())
+    )
 
 
 def clean_broker_research_excerpt_text(
@@ -385,6 +418,10 @@ def clean_broker_research_excerpt_text(
     if repair_legacy_artifacts:
         for old, new in _PDF_OCR_ARTIFACT_REPAIRS:
             value = value.replace(old, new)
+        value = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", value)
+        value = _filter_irrecoverable_legacy_units(value)
+        if value.count("“") != value.count("”") or value.count("‘") != value.count("’"):
+            return ""
     value = re.sub(r"(?<=预计)\s*20\s+(?=20\d{2}\s*年)", "", value)
     value = re.sub(r"(20\d{2})\s+年", r"\1年", value)
     value = re.sub(r"(?<=\d)\s+(?=(?:年|亿元|%|pct|倍|G|T))", "", value)
@@ -1077,11 +1114,6 @@ def _has_knowledge_driver_candidate(candidates: List[Dict[str, Any]]) -> bool:
     )
 
 
-def _generic_driver_block_excerpt(text: str) -> str:
-    excerpts = _generic_driver_block_excerpts(text, max_blocks=1)
-    return excerpts[0] if excerpts else ""
-
-
 def _generic_driver_block_excerpts(text: str, max_blocks: int = 3) -> List[str]:
     scored: List[Tuple[int, int, str]] = []
     blocks = [_clean_driver_excerpt(block) for block in _iter_generic_driver_blocks(text)]
@@ -1309,35 +1341,6 @@ def _is_display_only_card(card_type: str, viewpoint_cluster: str, excerpt: str) 
     ):
         return True
     return False
-
-
-def _looks_like_financial_snapshot_without_driver(text: str) -> bool:
-    financial_terms = ("营业收入", "营收", "归母净利润", "扣非", "毛利率", "净利率", "ROE", "现金流")
-    if sum(1 for term in financial_terms if term in text) < 3:
-        return False
-    driver_terms = (
-        "下游",
-        "客户",
-        "订单",
-        "产能",
-        "交付",
-        "产品结构",
-        "高端产品",
-        "新产品",
-        "新品",
-        "导入",
-        "升级",
-        "迭代",
-        "放量",
-        "份额",
-        "景气",
-        "需求",
-        "驱动",
-        "带动",
-        "受益",
-        "业务结构",
-    )
-    return not any(term in text for term in driver_terms)
 
 
 def deduplicate_broker_digest_cards_by_viewpoint(

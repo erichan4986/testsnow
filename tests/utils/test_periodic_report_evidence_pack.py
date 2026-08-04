@@ -8,6 +8,7 @@ import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import periodic_report_evidence_pack as evidence_pack_module
 from periodic_report_evidence_pack import (
     USAGE_PRIORITY,
     build_periodic_report_evidence_pack,
@@ -139,6 +140,54 @@ def _texts_for_usage(pack: dict, usage: str) -> str:
     return "\n".join(block["text"] for block in pack["blocks"] if block["usage"] == usage)
 
 
+def test_extracts_current_year_operating_driver_commentary():
+    report = """
+第三节 管理层讨论与分析
+四、主营业务分析
+1、概述
+报告期内，受益于终端客户需求增长，公司产品出货较快增长，其中高端产品占比持续提高，运营效率继续提升，公司营业收入与净利润均同比增长。
+报告期内，随着产业园三期项目实施完毕，公司高端产品产能进一步提升，为客户规模上量提供保障。
+"""
+
+    text = _texts_for_usage(build_periodic_report_evidence_pack(report), "profitability_commentary")
+
+    assert "产品出货较快增长" in text
+    assert "高端产品产能进一步提升" in text
+
+
+def test_extracts_compact_annual_performance_summary_with_gross_margin():
+    report = """
+第三节 管理层讨论与分析
+五、主营业务分析
+2025年公司实现营业收入约39.82亿元，同比增长10.92%，综合毛利率56.19%，归属于上市公司股东净利润约2.32亿元。
+报告期内，公司继续推进产品升级和重点客户导入。
+"""
+
+    text = _texts_for_usage(build_periodic_report_evidence_pack(report), "profitability_commentary")
+
+    assert "综合毛利率56.19%" in text
+    assert "净利润约2.32亿元" in text
+
+
+def test_extracts_compact_annual_performance_summary_with_yoy_changes():
+    report = """
+第三节 管理层讨论与分析
+四、主营业务分析
+1、概述
+报告期内，公司实现营业收入382.40亿元，同比增长60.25%；实现营业利润135.97亿元，同比
+增加124.74%；归属于上市公司股东的净利润107.97亿元，同比增加108.78%；归属于上市公司
+股东的扣除非经常性损益的净利润107.10亿元，同比增加111.31%；经营活动产生的现金流量净额
+108.96亿元，同比增加244.31%。截至2025年末，公司总资产452.89亿元，总负债136.68亿元，
+净资产316.21亿元，资产负债率30.18%。
+报告期内，受益于终端客户需求增长，公司产品出货较快增长，运营效率继续提升。
+"""
+
+    text = _texts_for_usage(build_periodic_report_evidence_pack(report), "profitability_commentary")
+
+    assert "营业收入382.40亿元" in text
+    assert "同比增加244.31%" in text
+
+
 def test_locates_management_discussion_without_company_specific_terms():
     pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
     usages = [b["usage"] for b in pack["blocks"]]
@@ -215,7 +264,7 @@ def test_extracts_related_party_litigation_subsequent_shareholder_pledge_commitm
 
 def test_caps_block_length_and_count():
     pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
-    assert len(pack["blocks"]) <= 30
+    assert len(pack["blocks"]) <= 48
     for block in pack["blocks"]:
         assert len(block["text"]) <= 2000
 
@@ -226,6 +275,103 @@ def test_stable_ids_for_same_input():
     ids1 = [b["id"] for b in pack1["blocks"]]
     ids2 = [b["id"] for b in pack2["blocks"]]
     assert ids1 == ids2
+
+
+def test_selected_blocks_have_exact_evidence_stage_coverage_ids():
+    pack = build_periodic_report_evidence_pack(SAMPLE_REPORT)
+    selected_decisions = [
+        row for row in pack["coverage_manifest"]["block_decisions"]
+        if row["evidence_disposition"] == "selected_for_producer"
+    ]
+
+    assert pack["coverage_manifest"]["stage"] == "evidence"
+    assert {row["evidence_block_id"] for row in selected_decisions} == {
+        block["id"] for block in pack["blocks"]
+    }
+    assert all(row["coverage_block_id"].startswith("coverage-block:") for row in selected_decisions)
+
+
+def test_capacity_omission_is_audited_without_changing_selected_blocks(monkeypatch):
+    text = "# 年度报告\n" + "经营信息完整。" * 80
+    candidates = [
+        {
+            "id": f"usage_{index}-0",
+            "usage": f"usage_{index}",
+            "section": "年度报告",
+            "title": f"候选{index}",
+            "text": f"第{index}项经营信息。",
+            "source_span": {"start": 8 + index, "end": 9 + index},
+        }
+        for index in range(49)
+    ]
+    monkeypatch.setattr(evidence_pack_module, "_extract_section_blocks", lambda _: candidates)
+    for name in (
+        "_extract_keyword_blocks", "_extract_hk_statement_blocks",
+        "_extract_hk_narrative_blocks", "_extract_table_blocks",
+    ):
+        monkeypatch.setattr(evidence_pack_module, name, lambda _: [])
+
+    pack = build_periodic_report_evidence_pack(text, report_type="annual")
+    omitted = [
+        row for row in pack["coverage_manifest"]["block_decisions"]
+        if row["evidence_disposition"] == "omitted_capacity"
+    ]
+
+    assert len(pack["blocks"]) == 48
+    assert [block["id"] for block in pack["blocks"]] == [f"usage_{index}-0" for index in range(48)]
+    assert len(omitted) == 1
+    assert omitted[0]["evidence_block_id"] == "usage_48-0"
+
+
+def test_empty_evidence_pack_has_unavailable_coverage_manifest():
+    pack = build_periodic_report_evidence_pack("")
+
+    assert pack["blocks"] == []
+    assert pack["coverage_manifest"]["status"] == "unavailable"
+    assert pack["coverage_manifest"]["unavailable_reason"] == "empty_document"
+
+
+def test_document_style_is_envelope_only_and_conservative():
+    assert build_periodic_report_evidence_pack(
+        "管理层讨论与分析\n公司主营业务为测试产品。", report_type="annual"
+    )["document_style"] == "a_share_annual"
+    assert build_periodic_report_evidence_pack(
+        "管理層討論及分析\n本集團業務回顧。", report_type="annual"
+    )["document_style"] == "hkex_annual"
+    assert build_periodic_report_evidence_pack(
+        "季度经营摘要。", report_type="quarterly"
+    )["document_style"] == "unknown"
+
+
+def test_family_reserve_keeps_low_priority_business_narrative():
+    from periodic_report_evidence_pack import _select_bounded_blocks
+
+    blocks = [
+        {"id": f"financial_summary_table-{i}", "usage": "financial_summary_table",
+         "section": "财务", "title": "财务",
+         "text": "营业收入 100 亿元，净利润 10 亿元。",
+         "source_span": {"start": i, "end": i + 1}}
+        for i in range(48)
+    ] + [{
+        "id": "business_overview-0", "usage": "business_overview",
+        "section": "主营业务", "title": "主营业务",
+        "text": "公司主要从事高端光通信收发模块的研发、生产及销售。",
+        "source_span": {"start": 99, "end": 100},
+    }]
+    selected = _select_bounded_blocks(blocks)
+    assert len(selected) == 48
+    assert any(block["id"] == "business_overview-0" for block in selected)
+    assert any(block["usage"] == "financial_summary_table" for block in selected)
+
+
+def test_structural_usage_cannot_consume_a_family_reserve_slot():
+    from periodic_report_evidence_pack import _reserved_narrative_blocks
+
+    blocks = [{"id": "segment_table-0", "usage": "segment_table",
+               "section": "表", "title": "表",
+               "text": "分产品 营业收入 营业成本 毛利率。",
+               "source_span": {"start": 0, "end": 1}}]
+    assert _reserved_narrative_blocks(blocks) == []
 
 
 def test_no_full_report_outside_bounded_blocks():
@@ -608,6 +754,35 @@ def test_competitive_position_window_keeps_preceding_subject_line():
 
     assert "凭借产品的供货能力和品牌认可度，取得良好的市场份额" in competitive_text
     assert not competitive_text.lstrip().startswith("主要的国内供应商")
+
+
+def test_competitive_position_window_keeps_both_wrapped_zhongji_sentences():
+    wrapped_lines = [
+        "光模块头部厂商凭借领先的研发实力及交付能力，竞争优势进一步强化，行业集中度有望持续提升。",
+        "公司持续推进高速光模块产品迭代并强化客户交付能力。",
+        "相关产品已在多个数据中心场景完成验证和导入。",
+        "公司持续完善生产组织和质量管理体系。",
+        "客户需求保持旺盛，订单交付节奏稳定。",
+        "公司继续加大研发投入，提升产品性能和可靠性。",
+        "行业龙头厂商持续加强技术储备和供应链协同。",
+        "公司将持续关注下一代光互连技术的产业化进展。",
+        "海外客户对高速率光模块的需求继续提升。",
+        "行业竞争格局仍处于动态变化过程中。",
+        "公司凭借规模化交付能力保持竞争优势。",
+        "相关产品的客户覆盖范围进一步扩大。",
+        "公司持续优化产品结构和客户结构。",
+        "市场对高速互连产品的技术要求不断提高。",
+        "另一方面，随着 Scale-up、Scale-across 网络快速兴起，硅光等下一代光互连技术需求显著提升，行业面临更复杂的技术挑战。",
+    ]
+    pack = build_periodic_report_evidence_pack("\n".join(wrapped_lines))
+    competitive_text = "\n".join(
+        block["text"] for block in pack["blocks"] if block["usage"] == "competitive_position"
+    )
+
+    assert "光模块头部厂商凭借领先的研发实力及交付能力，竞争优势进一步强化，行业集中度有望持续提升。" in competitive_text
+    assert "另一方面，随着 Scale-up、Scale-across 网络快速兴起，硅光等下一代光互连技术需求显著提升，行业面临更复杂的技术挑战。" in competitive_text
+    assert len(pack["blocks"]) <= 48
+    assert all(len(block["text"]) <= 2000 for block in pack["blocks"])
 
 
 def test_market_demand_window_keeps_wrapped_year_subject_line():
@@ -1107,6 +1282,35 @@ def test_extracts_product_capacity_profile_and_sales_certification_model():
     assert "2000 吨级" in product_text
     assert "合格供方目录" in by_usage["sales_certification_model"]["text"]
     assert "定型认证" in by_usage["sales_certification_model"]["text"]
+
+
+def test_product_capacity_profile_prioritizes_completed_capacity_project():
+    distant_product_sections = []
+    for index in range(3):
+        filler = "\n".join(
+            f"过渡说明 {index}-{line}" for line in range(25)
+        )
+        distant_product_sections.append(
+            f"主要产品\n公司第 {index + 1} 类产品覆盖具体应用场景。\n{filler}"
+        )
+    report = "\n".join((
+        "第三节 管理层讨论与分析",
+        *distant_product_sections,
+        "报告期内，随着“高端产品产业园三期项目”实施完毕，公司所有项目均已结项，",
+        "这将有利于进一步提升公司高端产品产能，为客户技术迭代和规模上量提供保障。",
+    ))
+
+    pack = build_periodic_report_evidence_pack(report)
+    product_blocks = [
+        block for block in pack["blocks"]
+        if block["usage"] == "product_capacity_profile"
+    ]
+
+    assert any(
+        "项目”实施完毕" in block["text"]
+        and "提升公司高端产品产能" in block["text"]
+        for block in product_blocks
+    )
 
 
 def test_extracts_numbered_product_profile_without_stopping_at_subheading():

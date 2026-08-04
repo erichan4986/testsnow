@@ -316,74 +316,19 @@ def composite_score_section(
     如果传入 pillar 则直接使用，否则基于 posts 重新计算。
     如果传入 recommendation_decision，header 和推荐标签直接采用该决策，避免与摘要不一致。
     """
-    if recommendation_decision is not None:
-        header_line = recommendation_decision.render_header()
-        display_rec_cn = recommendation_decision.display_recommendation
-        recommendation_sentence = recommendation_decision.recommendation_sentence
-        # For table bodies, still compute a local pillar if not already provided.
-        if pillar is None:
-            ps = quote.get("ps") if quote else None
-            pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
-        if pillar is None:
-            return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
-    else:
-        if pillar is None:
-            ps = quote.get("ps") if quote else None
-            pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
-        if pillar is None:
-            return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
-        ev = ev_expectation(pillar, consensus)
-        total_score = round(
-            pillar["valuation"] * 0.30 +
-            pillar["technical"] * 0.25 +
-            pillar["sentiment"] * 0.20 +
-            pillar["fundamental"] * 0.15 +
-            pillar["fundflow"] * 0.10,
-            1,
+    if recommendation_decision is None:
+        from .recommendation_decision import build_recommendation_decision
+        recommendation_decision = build_recommendation_decision(
+            stock_name, posts, stock_raw, quote, consensus, industry_fwd_pe, pillar,
         )
-        rec_cn = ev.get("recommendation_cn", "N/A")
-        display_rec_cn = rec_cn
-        entry_guardrail = _entry_quality_guardrail(stock_raw)
-        entry_composite_note = ""
-        if entry_guardrail and entry_guardrail.get("level") == "entry_blocked" and rec_cn in ("强烈看多", "看多"):
-            display_rec_cn = entry_guardrail["composite_label"]
-            entry_composite_note = entry_guardrail["composite_note"]
-        ev_pct = ev.get('ev_pct')
-        ev_str = f"{ev_pct:+.2f}%" if ev_pct is not None else 'N/A'
-        header_line = f"### 综合评分: {total_score}/10 | EV: {ev_str}（{display_rec_cn}）"
-
-        reasons = []
-        if pillar["valuation"] >= 7:
-            reasons.append("估值健康度良好")
-        elif pillar["valuation"] <= 3:
-            reasons.append("估值偏高需警惕")
-
-        if pillar["technical"] >= 7:
-            reasons.append("技术面偏强")
-        elif pillar["technical"] <= 3:
-            reasons.append("技术面偏弱")
-
-        if pillar["fundamental"] >= 7:
-            reasons.append("基本面趋势向上")
-        elif pillar["fundamental"] <= 3:
-            reasons.append("基本面承压")
-
-        bullish_pct = pillar.get("bullish_pct", 0) or 0
-        if bullish_pct > 60:
-            reasons.append(f"社区情绪偏乐观（看多 {bullish_pct:.0f}%）")
-        elif bullish_pct < 30:
-            reasons.append(f"社区情绪偏谨慎（看多 {bullish_pct:.0f}%）")
-
-        recommendation_sentence = (
-            f"**{display_rec_cn}** — 加权 EV {ev.get('ev_pct', 'N/A'):+.2f}%。"
-            f"{'；'.join(reasons)}。"
-            f"{entry_composite_note}"
-            f"当前风险评分请参考「综合风险评分」板块。"
-        ) if ev.get("ev_pct") is not None else (
-            f"**{display_rec_cn}** — {'；'.join(reasons)}。"
-            f"{entry_composite_note}"
-            f"数据不足，无法计算 EV。"
-        )
+    header_line = recommendation_decision.render_header()
+    display_rec_cn = recommendation_decision.display_recommendation
+    recommendation_sentence = recommendation_decision.recommendation_sentence
+    if pillar is None:
+        ps = quote.get("ps") if quote else None
+        pillar = compute_pillar_scores(stock_raw, posts, quote, consensus, industry_fwd_pe, ps)
+    if pillar is None:
+        return "\n## 一、综合评分与推荐\n\n> **数据不足，暂无法评分。**\n\n"
 
     ev = ev_expectation(pillar, consensus)
 
@@ -475,97 +420,6 @@ def composite_score_section(
 
     lines.extend(ev_lines)
     return "\n".join(lines)
-
-
-def _technical_position_guardrail(stock_raw: Dict) -> Optional[Dict]:
-    """Classify technical regime weakness for position-advice capping.
-
-    Returns a dict with level, capped advice, and explanatory note when the
-    technical state is weak; returns None when no guardrail applies.
-
-    Numeric thresholds (score < 30 severe, 30 <= score < 45 moderate) are
-    heuristics tied to the current technical analyzer output and are not a
-    formal cross-module scoring contract.
-    """
-    tech = stock_raw.get("technical", {}) if isinstance(stock_raw, dict) else {}
-    indicators = tech.get("indicators", {}) if isinstance(tech, dict) else {}
-    resonance = indicators.get("_resonance", {}) if isinstance(indicators, dict) else {}
-    trend_state = resonance.get("trend_state", {}) if isinstance(resonance, dict) else {}
-    trend_health = resonance.get("trend_health", {}) if isinstance(resonance, dict) else {}
-
-    stage = trend_state.get("stage", "") if isinstance(trend_state, dict) else ""
-    primary_state = trend_state.get("primary_state", "") if isinstance(trend_state, dict) else ""
-    grade = trend_health.get("grade", "") if isinstance(trend_health, dict) else ""
-    score = trend_health.get("score") if isinstance(trend_health, dict) else None
-
-    def _is_number(value: Any) -> bool:
-        return isinstance(value, (int, float)) and not isinstance(value, bool)
-
-    numeric_score: Optional[float] = None
-    if _is_number(score):
-        try:
-            numeric_score = float(score)
-        except (TypeError, ValueError):
-            numeric_score = None
-
-    # Severe guardrail: broken trend / downtrend / trend failure
-    if (
-        stage == "破坏期"
-        or primary_state == "下降趋势"
-        or grade == "趋势失效"
-        or (numeric_score is not None and numeric_score < 30)
-    ):
-        return {
-            "level": "severe",
-            "advice": "趋势破坏期，以观望或防守仓位为主，建议 0-5%",
-            "note": "技术状态为 下降趋势 / 破坏期，风险分不低估趋势破坏带来的仓位限制。",
-        }
-
-    # Moderate guardrail: weakening trend / elevated breakdown risk
-    if (
-        stage == "转弱期"
-        or grade == "破坏风险高"
-        or (numeric_score is not None and 30 <= numeric_score < 45)
-    ):
-        return {
-            "level": "moderate",
-            "advice": "趋势转弱，控制仓位，建议 5-10%",
-            "note": "技术健康度偏弱，仓位建议已按技术状态降级。",
-        }
-
-    return None
-
-
-def _entry_quality_guardrail(stock_raw: Dict) -> Optional[Dict]:
-    """Classify poor entry quality without changing score or EV math."""
-    tech = stock_raw.get("technical", {}) if isinstance(stock_raw, dict) else {}
-    if not isinstance(tech, dict):
-        return None
-
-    price_target = tech.get("price_target", {})
-    if isinstance(price_target, dict):
-        error_text = str(price_target.get("error", ""))
-        reason = str(price_target.get("reason", ""))
-        if error_text == "关注/不操作" and "盈亏比不足" in reason:
-            return {
-                "level": "entry_blocked",
-                "advice": "当前入场质量不足，建议等待回调或盈亏比改善，仓位 5-10%",
-                "note": "技术面提示关注/不操作或追高风险，仓位建议已按入场质量降级。",
-                "composite_label": "看多但等待入场",
-                "composite_note": "技术面提示当前不适合追高，需等待回调或盈亏比改善。",
-            }
-
-    indicators = tech.get("indicators", {})
-    if not isinstance(indicators, dict):
-        return None
-    if indicators.get("bias_5_extreme_high") or indicators.get("bias_10_extreme_high"):
-        return {
-            "level": "overheated_entry",
-            "advice": "BIAS严重正偏离，追高风险较大，仓位 5-10%",
-            "note": "BIAS处于近期极端高位，仓位建议已按追高风险降级。",
-        }
-
-    return None
 
 
 # Qualitative risk definitions used by risk scoring and structured signal paths.
@@ -824,8 +678,13 @@ def build_risk_assessment(
         if position_advice in ("积极配置，最大仓位 20%", "谨慎持有，仓位 10-15%"):
             position_advice = entry_constraint.position_cap_note
             guardrail_note = entry_constraint.display_note
-    elif entry_constraint.state in ("wait_for_entry", "overheated"):
-        if position_advice == "积极配置，最大仓位 20%":
+    elif entry_constraint.state == "risk_control":
+        position_advice = entry_constraint.position_cap_note
+        guardrail_note = entry_constraint.display_note
+    elif entry_constraint.state in ("wait_for_entry", "wait_for_confirmation", "overheated"):
+        if position_advice == "积极配置，最大仓位 20%" or (
+            entry_constraint.state == "wait_for_confirmation" and position_advice == "谨慎持有，仓位 10-15%"
+        ):
             position_advice = entry_constraint.position_cap_note
             guardrail_note = entry_constraint.display_note
 
@@ -870,6 +729,8 @@ def _entry_constraint_current_risk_factor(entry_constraint: object) -> Optional[
             "status": raw_reason or "价格目标提示关注/不操作",
             "score": 1.5,
         }
+    if state in {"wait_for_confirmation", "risk_control"}:
+        return None
     if state == "overheated":
         return {
             "name": "追高风险",

@@ -62,23 +62,6 @@ _REPORT_INFO_CODE_COLUMN_OPTIONS = ["infoCode", "info_code"]
 _REPORT_RATING_COLUMN_OPTIONS = ["emRatingName", "rating", "评级"]
 _REPORT_EPS_COLUMN_OPTIONS = ["predictThisYearEps", "eps", "预测EPS"]
 _REPORT_TARGET_PRICE_COLUMN_OPTIONS = ["targetPrice", "目标价", "predictNextYearPrice"]
-_REPORT_STOCK_CODE_COLUMN_OPTIONS = [
-    "code",
-    "股票代码",
-    "symbol",
-    "stock_code",
-    "stockCode",
-    "secCode",
-    "securityCode",
-]
-_REPORT_STOCK_NAME_COLUMN_OPTIONS = [
-    "股票简称",
-    "股票名称",
-    "stockName",
-    "securityName",
-    "secName",
-    "name",
-]
 _DEFAULT_DETAIL_CONTENT_CATEGORIES = ["业绩预告", "季度报告", "一季度报告", "三季度报告"]
 _EASTMONEY_REPORT_API = "https://reportapi.eastmoney.com/report/list"
 _EASTMONEY_STOCK_NEWS_API = "https://search-api-web.eastmoney.com/search/jsonp"
@@ -391,34 +374,6 @@ def _contains_stock_reference(text: str, stock_name: str, stock_code: str) -> bo
         if ref and ref in text:
             return True
     return False
-
-
-def _contains_reference_value(value: Any, reference: str) -> bool:
-    if value is None or not reference:
-        return False
-    return reference in str(value).strip()
-
-
-def _report_row_matches_target(row: Dict[str, Any], stock_name: str, stock_code: str) -> bool:
-    """Return True when a research report row clearly belongs to the target stock."""
-    code_values = [
-        row.get(key)
-        for key in _REPORT_STOCK_CODE_COLUMN_OPTIONS
-        if key in row and row.get(key) not in (None, "")
-    ]
-    if code_values and any(_contains_reference_value(value, stock_code) for value in code_values):
-        return True
-
-    stock_name_values = [
-        row.get(key)
-        for key in _REPORT_STOCK_NAME_COLUMN_OPTIONS
-        if key in row and row.get(key) not in (None, "")
-    ]
-    if stock_name_values and any(_contains_reference_value(value, stock_name) for value in stock_name_values):
-        return True
-
-    title = _find_column(row, _REPORT_TITLE_COLUMN_OPTIONS) or ""
-    return _contains_stock_reference(str(title), stock_name, stock_code)
 
 
 def _iter_record_rows(data: Any):

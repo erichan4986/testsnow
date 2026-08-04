@@ -9,6 +9,20 @@ from typing import Dict, List, Optional, Tuple
 import numpy as np
 import pandas as pd
 
+try:
+    from ..technical_ohlcv_cache import (
+        load_ohlcv_cache, normalize_ohlcv_frame, write_ohlcv_cache,
+    )
+except ImportError:
+    try:
+        from technical_ohlcv_cache import (
+            load_ohlcv_cache, normalize_ohlcv_frame, write_ohlcv_cache,
+        )
+    except ImportError:
+        from scripts.utils.technical_ohlcv_cache import (
+            load_ohlcv_cache, normalize_ohlcv_frame, write_ohlcv_cache,
+        )
+
 logger = logging.getLogger(__name__)
 
 try:
@@ -31,7 +45,8 @@ try:
         compute_weekly_trend, find_support_resistance,
         evaluate_sr_transformation,
         detect_trend_structure_health, detect_channel_or_box_structure,
-        evaluate_bottoming_region,
+        evaluate_bottoming_region, build_volume_context,
+        build_structure_path, analyze_terminal_shock,
     )
 except ImportError:
     from technical_structure import (
@@ -40,7 +55,8 @@ except ImportError:
         compute_weekly_trend, find_support_resistance,
         evaluate_sr_transformation,
         detect_trend_structure_health, detect_channel_or_box_structure,
-        evaluate_bottoming_region,
+        evaluate_bottoming_region, build_volume_context,
+        build_structure_path, analyze_terminal_shock,
     )
 
 try:
@@ -48,6 +64,7 @@ try:
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
         evaluate_bias_extreme, evaluate_sell_three_factors,
+        build_technical_judgment,
         detect_false_rebound, detect_false_breakout,
     )
 except ImportError:
@@ -55,20 +72,21 @@ except ImportError:
         classify_trend_state, apply_previous_state,
         compute_trend_health, compute_invalidation,
         evaluate_bias_extreme, evaluate_sell_three_factors,
+        build_technical_judgment,
         detect_false_rebound, detect_false_breakout,
     )
 
 try:
     from .technical_patterns import (
         detect_double_top, detect_double_bottom,
-        detect_boll_overextension, evaluate_candle_at_key_levels,
-        multi_indicator_resonance,
+        classify_macd_histogram, detect_boll_overextension,
+        detect_pivot_divergence, evaluate_candle_at_key_levels,
     )
 except ImportError:
     from technical_patterns import (
         detect_double_top, detect_double_bottom,
-        detect_boll_overextension, evaluate_candle_at_key_levels,
-        multi_indicator_resonance,
+        classify_macd_histogram, detect_boll_overextension,
+        detect_pivot_divergence, evaluate_candle_at_key_levels,
     )
 
 try:
@@ -107,6 +125,24 @@ def _min_confidence(current: str, cap: str) -> str:
     order = {"低": 0, "中": 1, "高": 2}
     reverse = {0: "低", 1: "中", 2: "高"}
     return reverse[min(order.get(current, 0), order.get(cap, 0))]
+
+
+def _volume_window_reliable(
+    df_daily: pd.DataFrame,
+    price_adjustment_validation: dict | None,
+) -> bool:
+    """Whether the latest bar and preceding 20 volume bars avoid an unadjusted price gap."""
+    gaps = (price_adjustment_validation or {}).get("price_gaps") or {}
+    if not gaps.get("possible_exrights_gap"):
+        return True
+    latest_gap = gaps.get("latest_gap") or (price_adjustment_validation or {}).get("latest_gap")
+    gap_date = latest_gap.get("date") if isinstance(latest_gap, dict) else gaps.get("gap_date")
+    if df_daily is None or len(df_daily) < 21 or gap_date is None:
+        return False
+    dates = df_daily["date"] if "date" in df_daily.columns else pd.Series(df_daily.index)
+    parsed_gap = pd.to_datetime(gap_date, errors="coerce")
+    first_date = pd.to_datetime(dates.iloc[-21], errors="coerce")
+    return bool(pd.notna(parsed_gap) and pd.notna(first_date) and parsed_gap < first_date)
 
 
 def _build_advisors(indicators: dict) -> dict:
@@ -188,16 +224,9 @@ def _build_advisors(indicators: dict) -> dict:
         boll_meaning = f"{boll_position}，波动正常"
 
     # MACD
-    macd = indicators.get("macd", 0)
-    macd_hist = indicators.get("macd_hist", 0)
-    if macd > 0 and macd_hist < 0:
-        macd_state = "多头动能衰减"
-    elif macd > 0:
-        macd_state = "多头延续"
-    elif macd < 0 and macd_hist > 0:
-        macd_state = "空头动能衰减"
-    else:
-        macd_state = "空头延续"
+    macd_state = classify_macd_histogram(
+        indicators.get("macd_hist"), indicators.get("macd_hist_prev"),
+    )
 
     # RSI
     rsi_value = indicators.get("rsi_14")
@@ -273,9 +302,33 @@ def _apply_gap_based_qfq_approximation(df: pd.DataFrame, gap_details: list) -> p
     return df
 
 
-def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
+def _fetch_index_kline(
+    symbol: str, days: int = 120, *, cache_dir=None, now=None,
+    index_cache_enabled: bool = True,
+) -> pd.DataFrame | None:
     """获取指数日K数据。优先 akshare，失败回退 mootdx，再失败返回 None。"""
     from datetime import datetime, timedelta
+
+    cache = {"status": "missing"}
+    if index_cache_enabled:
+        cache = load_ohlcv_cache("index", symbol, "cn", cache_dir=cache_dir, now=now)
+        if cache.get("status") == "same_day":
+            return cache["daily"]
+
+    def finish(frame, source):
+        normalized = normalize_ohlcv_frame(
+            frame, source=source, adjustment="raw", limit=days,
+        )
+        if normalized is not None and index_cache_enabled:
+            try:
+                write_ohlcv_cache(
+                    normalized.to_dict(orient="list"), asset_type="index",
+                    symbol=symbol, market="cn", source=source, adjustment="raw",
+                    cache_dir=cache_dir, now=now,
+                )
+            except OSError as exc:
+                logger.warning("指数 %s 缓存写入失败: %s", symbol, exc)
+        return normalized
 
     # ---- Priority 1: akshare ----
     try:
@@ -305,19 +358,9 @@ def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
         else:
             df = ak.index_zh_a_hist(symbol=symbol, period="daily", start_date=start_date)
 
-        if df is not None and not df.empty:
-            column_map = {
-                "日期": "date", "开盘": "open", "最高": "high",
-                "最低": "low", "收盘": "close", "成交量": "volume",
-            }
-            df = df.rename(columns=column_map)
-            for col in ["open", "high", "low", "close", "volume"]:
-                if col not in df.columns:
-                    logger.warning(f"指数 {symbol} 返回数据缺少列: {col}")
-                    return None
-            if len(df) > days:
-                df = df.tail(days).reset_index(drop=True)
-            return df
+        normalized = finish(df, "akshare_index")
+        if normalized is not None:
+            return normalized
     except Exception as e:
         logger.warning(f"akshare 获取指数 {symbol} 失败: {e}")
 
@@ -325,27 +368,15 @@ def _fetch_index_kline(symbol: str, days: int = 120) -> pd.DataFrame | None:
     try:
         from mootdx.quotes import Quotes
         client = Quotes.factory(market="std")
-        # market: 0=深圳, 1=上海; 指数代码 symbol 直接传 6 位
-        market_flag = 1 if symbol.startswith(("0", "6")) else 0
-        end = datetime.now()
-        begin = end - timedelta(days=days * 3)
-        df = client.k(
-            symbol=symbol,
-            market=market_flag,
-            begin=begin.strftime("%Y%m%d"),
-            end=end.strftime("%Y%m%d"),
-        )
-        if df is not None and not df.empty and all(c in df.columns for c in ["open", "high", "low", "close", "volume"]):
-            if "date" not in df.columns and df.index.name is not None:
-                df = df.reset_index()
-            if len(df) > days:
-                df = df.tail(days).reset_index(drop=True)
-            logger.info(f"mootdx 获取指数 {symbol} 成功，共 {len(df)} 条")
-            return df
+        df = client.index_bars(symbol=symbol, frequency=9, start=0, offset=days)
+        normalized = finish(df, "mootdx_index")
+        if normalized is not None:
+            logger.info(f"mootdx 获取指数 {symbol} 成功，共 {len(normalized)} 条")
+            return normalized
     except Exception as e:
         logger.warning(f"mootdx 获取指数 {symbol} 失败: {e}")
 
-    return None
+    return cache.get("daily") if cache.get("status") == "fallback_eligible" else None
 
 
 # ---------------------------------------------------------------------------
@@ -372,6 +403,7 @@ def _compute_base_indicators(df: pd.DataFrame) -> Dict:
         "macd": float(macd_line.iloc[-1]),
         "macd_signal": float(macd_sig.iloc[-1]),
         "macd_hist": float(macd_hist.iloc[-1]),
+        "macd_hist_prev": float(macd_hist.iloc[-2]) if len(macd_hist) >= 2 else None,
         "rsi_14": float(_rsi(close, 14).iloc[-1]),
         "stoch_rsi_k": float(stoch_k.iloc[-1]),
         "stoch_rsi_d": float(stoch_d.iloc[-1]),
@@ -662,6 +694,10 @@ def advanced_medium_term_resonance(
 
     # 6.5 K线形态信号（只在关键位置）
     atr_series = _atr(df_daily)
+    volume_reliable = _volume_window_reliable(df_daily, price_adjustment_validation)
+    volume_context = build_volume_context(df_daily, daily_structure, volume_reliable)
+    structure_path = build_structure_path(df_daily, config)
+    terminal_shock = analyze_terminal_shock(df_daily, atr_series, volume_context, config)
     candle_features = compute_candle_features(df_daily, atr_series)
     candle_signal = evaluate_candle_at_key_levels(
         candle=candle_features,
@@ -674,15 +710,17 @@ def advanced_medium_term_resonance(
     if candle_signal:
         daily_structure["candle_signal"] = candle_signal
 
-    # 7. 简化背离扫描
-    divergence = detect_boll_overextension(df_daily, indicators, weekly_result["weekly_trend"], config)
+    # 7. 动量极端与真实 pivot 背离分开计算
+    overextension = detect_boll_overextension(df_daily, indicators, weekly_result["weekly_trend"], config)
+    _, _, macd_hist_series = _macd(close)
+    divergence = detect_pivot_divergence(df_daily, _rsi(close, 14), macd_hist_series, config)
 
     # 8. 趋势状态机
     trend_state = classify_trend_state(
         weekly_trend=weekly_result["weekly_trend"],
         daily_structure=daily_structure,
         indicators=indicators,
-        divergence=divergence,
+        divergence=overextension,
     )
     apply_previous_state(trend_state, previous_state)
 
@@ -693,6 +731,8 @@ def advanced_medium_term_resonance(
         indicators=indicators,
         config=config,
         df_daily=df_daily,
+        volume_reliable=volume_reliable,
+        volume_context=volume_context,
     )
 
     # 10. 失效条件
@@ -704,22 +744,25 @@ def advanced_medium_term_resonance(
         config=config,
     )
 
-    # Divergence / strong-signal confidence caps based on adjustment quality
-    if divergence and effective_adjustment == "raw" and has_gap:
-        divergence["confidence"] = "低可信度"
-        divergence["action"] = "未使用前复权数据，此预警仅供参考"
+    # Momentum/divergence confidence caps based on adjustment quality
+    scans = [scan for scan in (overextension, divergence) if scan]
+    if scans and effective_adjustment == "raw" and has_gap:
+        for scan in scans:
+            scan["confidence"] = "低可信度"
+            scan["action"] = "未使用前复权数据，此预警仅供参考"
         _resonance["strong_signal_suppressed"] = True
         _resonance["suppressed_signals"] = [
             "divergence_scan",
+            "overextension_scan",
             "bias_extreme",
             "support_resistance_strength",
             "trend_structure_break",
         ]
-    elif divergence and effective_adjustment == "local_qfq_approx":
-        divergence["confidence"] = _min_confidence(
-            divergence.get("confidence", "中"), "中"
-        )
-        divergence["action_note"] = "基于本地近似复权序列，可信度最高为中"
+    elif scans and effective_adjustment == "local_qfq_approx":
+        for scan in scans:
+            if scan.get("confidence") == "强烈":
+                scan["confidence"] = "中度"
+            scan["action_note"] = "基于本地近似复权序列，可信度最高为中"
 
     # 11. 分析可信度
     base_confidence = (
@@ -735,6 +778,8 @@ def advanced_medium_term_resonance(
         limitations.append("周线数据不足20根")
     if not sufficient:
         limitations.append("不满足完整中期趋势分析条件")
+    if trend_health["components"]["volume_confirmation"].get("status") == "unreliable":
+        limitations.append("成交量未完成除权等效调整，量价分项按中性处理")
 
     if effective_adjustment == "raw" and has_gap:
         confidence_level = "低"
@@ -797,6 +842,9 @@ def advanced_medium_term_resonance(
         },
         "daily_structure": daily_structure,
         "trend_health": trend_health,
+        "volume_context": volume_context,
+        "structure_path": structure_path,
+        "terminal_shock": terminal_shock,
         "key_levels": {
             "support_zone": sr_result.get("support_zone"),
             "resistance_zone": sr_result.get("resistance_zone"),
@@ -809,6 +857,7 @@ def advanced_medium_term_resonance(
             stock_trend_state=trend_state,
         ),
         "advisors": _build_advisors(indicators),
+        "overextension_scan": overextension,
         "divergence_scan": divergence,
         "basis_rules": ["周线优先原则", "MA20/MA60 中期结构判定", "有效突破/跌破去抖动规则", "均线为王，谋士辅助"],
         "risk_reminder": "本模块用于日线—周线级别的中期趋势提醒，不用于日内或短线高频择时。",
@@ -858,14 +907,22 @@ def advanced_medium_term_resonance(
     sector_index_state = None
 
     market_meta = mapping.get("market")
+    index_cache_dir = (quote or {}).get("technical_ohlcv_cache_dir")
+    index_cache_enabled = (quote or {}).get("index_cache_enabled", True)
     if market_meta and market_meta.get("code"):
-        df_market = _fetch_index_kline(market_meta["code"], days=daily_count if daily_count else 120)
+        df_market = _fetch_index_kline(
+            market_meta["code"], days=daily_count if daily_count else 120,
+            cache_dir=index_cache_dir, index_cache_enabled=index_cache_enabled,
+        )
         if df_market is not None and not df_market.empty:
             market_index_state = analyze_index_trend(df_market).get("trend_state")
 
     thematic_meta = mapping.get("thematic")
     if thematic_meta and thematic_meta.get("code"):
-        df_theme = _fetch_index_kline(thematic_meta["code"], days=daily_count if daily_count else 120)
+        df_theme = _fetch_index_kline(
+            thematic_meta["code"], days=daily_count if daily_count else 120,
+            cache_dir=index_cache_dir, index_cache_enabled=index_cache_enabled,
+        )
         if df_theme is not None and not df_theme.empty:
             theme_index_state = analyze_index_trend(df_theme).get("trend_state")
 
@@ -918,10 +975,19 @@ def advanced_medium_term_resonance(
                 df_daily=df_daily,
                 df_weekly=df_weekly,
                 current_price=indicators.get("close", 0),
+                is_hk=bool((quote or {}).get("is_hk")),
                 daily_indicators=indicators,
             )
         except Exception:
             pass
+
+    _resonance["judgment"] = build_technical_judgment(
+        resonance=_resonance,
+        price_target=price_target_result,
+        indicators=indicators,
+        daily_data=df_daily,
+        market=(quote or {}).get("market"),
+    )
 
     return {
         "indicators": indicators,

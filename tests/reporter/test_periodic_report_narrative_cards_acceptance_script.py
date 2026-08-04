@@ -1,14 +1,18 @@
 import subprocess
 import sys
+import hashlib
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "previews"))
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts"))
 
+import periodic_report_narrative_cards_acceptance as acceptance_module  # noqa: E402
 from periodic_report_narrative_cards_acceptance import (  # noqa: E402
     analyze_cards_pack,
+    analyze_pack_projection,
     build_acceptance_markdown,
 )
+from periodic_report_narrative_pack_store import write_periodic_report_narrative_pack
 
 
 SAMPLE_REPORT = """
@@ -58,13 +62,6 @@ def test_analyze_cards_pack_counts_distribution_and_quality_flags():
         stock_code="000001",
         stock_name="测试股",
         cards_pack=cards_pack,
-        maintenance_summary={
-            "existing_notes": 3,
-            "refreshable_notes": 2,
-            "moved_or_reindexed_notes": 1,
-            "dangling_notes": 0,
-            "new_candidate_notes": 2,
-        },
     )
 
     assert summary["selected_cards"] == 5
@@ -74,7 +71,22 @@ def test_analyze_cards_pack_counts_distribution_and_quality_flags():
     assert summary["quality_flags"]["short_excerpts"] == 1
     assert summary["quality_flags"]["dangling_start_excerpts"] == 1
     assert summary["quality_flags"]["table_fragment_excerpts"] == 1
-    assert summary["maintenance"]["moved_or_reindexed_notes"] == 1
+
+
+def test_analyze_cards_pack_uses_v2_argument_family_for_distribution():
+    summary = analyze_cards_pack(
+        stock_code="000001",
+        stock_name="测试股",
+        cards_pack={
+            "cards": [{
+                "schema_version": "periodic_report_narrative_evidence_card.v2",
+                "argument_family": "business_structure",
+                "source_excerpt": "公司主营业务覆盖航空航天和新能源客户。",
+            }],
+        },
+    )
+
+    assert summary["card_type_counts"] == {"business_structure": 1}
 
 
 def test_analyze_cards_pack_does_not_flag_valid_temporal_sentence_starters():
@@ -110,7 +122,7 @@ def test_build_acceptance_markdown_from_local_cache(tmp_path):
     assert "测试股" in markdown
     assert "card_type distribution" in markdown
     assert "quality flags" in markdown
-    assert "business_model" in markdown
+    assert "business_structure" in markdown
 
 
 def test_cli_writes_acceptance_markdown_without_touching_knowledge(tmp_path):
@@ -149,4 +161,164 @@ def test_cli_writes_acceptance_markdown_without_touching_knowledge(tmp_path):
     assert str(output) in result.stdout
     assert output.exists()
     assert "dry_run_only：true" in output.read_text(encoding="utf-8")
+    assert "pack shadow" not in output.read_text(encoding="utf-8")
     assert not list(knowledge_dir.rglob("*.md"))
+
+
+def _build_and_store_cards_pack(tmp_path):
+    cache_dir = tmp_path / "periodic_reports"
+    cache_dir.mkdir()
+    (cache_dir / "测试股_2025_annual_jina.txt").write_text(SAMPLE_REPORT, encoding="utf-8")
+    from periodic_report_evidence_pack import build_periodic_report_evidence_pack
+    from periodic_report_narrative_evidence_cards import build_periodic_report_narrative_evidence_cards
+
+    evidence = build_periodic_report_evidence_pack(SAMPLE_REPORT, report_type="annual")
+    cards_pack = build_periodic_report_narrative_evidence_cards(
+        stock_code="000001",
+        stock_name="测试股",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence,
+        raw_text=SAMPLE_REPORT,
+    )
+    stored = write_periodic_report_narrative_pack(
+        stock_name="测试股", stock_code="000001", card_pack=cards_pack, base_dir=tmp_path,
+    )
+    return cache_dir, cards_pack, stored
+
+
+def test_analyze_pack_projection_is_deterministic_and_read_only(tmp_path):
+    _, cards_pack, stored = _build_and_store_cards_pack(tmp_path)
+    before_pack = stored.pack_path.read_bytes()
+    before_manifest = stored.manifest_path.read_bytes()
+
+    result = analyze_pack_projection(
+        stock_code="000001",
+        stock_name="测试股",
+        cards_pack=cards_pack,
+        knowledge_base_dir=tmp_path,
+    )
+
+    assert result["producer_pack_parity"] is True
+    assert result["projection_deterministic"] is True
+    assert result["pack_bytes_unchanged"] is True
+    assert result["manifest_bytes_unchanged"] is True
+    assert result["projection_cards_sha256_matches"] is True
+    assert result["projection_total_cards"] == len(cards_pack["cards"])
+    assert 0 <= result["projection_displayed_cards"] <= len(cards_pack["cards"])
+    assert result["v1_actionable_needs_recovery_count"] == 0
+    assert result["v1_adapter_use_count"] == 0
+    assert stored.pack_path.read_bytes() == before_pack
+    assert stored.manifest_path.read_bytes() == before_manifest
+    assert not list(tmp_path.rglob("periodic_narrative_views/*.md"))
+
+    drifted = dict(cards_pack, selection_version="future-selection")
+    assert analyze_pack_projection(
+        stock_code="000001", stock_name="测试股", cards_pack=drifted,
+        knowledge_base_dir=tmp_path,
+    )["producer_pack_parity"] is False
+
+
+def test_pack_shadow_alias_and_pack_projection_render_new_read_only_audit(tmp_path):
+    cache_dir, _, _ = _build_and_store_cards_pack(tmp_path)
+
+    for kwargs in ({"pack_shadow": True}, {"pack_projection": True}, {
+        "pack_shadow": True, "pack_projection": True,
+    }):
+        markdown = build_acceptance_markdown(
+            stocks=[("000001", "测试股")], cache_dir=cache_dir,
+            report_type="annual", report_year=2025,
+            knowledge_base_dir=tmp_path, **kwargs,
+        )
+        assert "### pack projection" in markdown
+        assert "- producer_pack_parity: True" in markdown
+        assert "- projection_deterministic: True" in markdown
+        assert "active_v2_parity" not in markdown
+        assert "selected_material_parity" not in markdown
+        assert "knowledge maintenance" not in markdown
+    assert not list(tmp_path.rglob("periodic_narrative_views/*.md"))
+
+
+def test_cli_pack_projection_is_read_only(tmp_path):
+    cache_dir, _, stored = _build_and_store_cards_pack(tmp_path)
+    output = tmp_path / "acceptance.md"
+    script = Path(acceptance_module.__file__)
+    before = (stored.pack_path.read_bytes(), stored.manifest_path.read_bytes())
+
+    result = subprocess.run(
+        [sys.executable, str(script), "--stock", "000001:测试股", "--cache-dir",
+         str(cache_dir), "--knowledge-base-dir", str(tmp_path), "--pack-projection",
+         "--output", str(output)],
+        cwd=Path(__file__).parent.parent.parent, text=True, capture_output=True, check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "### pack projection" in output.read_text(encoding="utf-8")
+    assert (stored.pack_path.read_bytes(), stored.manifest_path.read_bytes()) == before
+    assert not list(tmp_path.rglob("periodic_narrative_views/*.md"))
+
+
+def _projection_gate(*, recovery: int = 0, adapters: int = 0) -> dict:
+    return {
+        "producer_pack_parity": True,
+        "projection_deterministic": True,
+        "pack_bytes_unchanged": True,
+        "manifest_bytes_unchanged": True,
+        "projection_cards_sha256_matches": True,
+        "v1_actionable_needs_recovery_count": recovery,
+        "v1_adapter_use_count": adapters,
+    }
+
+
+def _legacy_note(base: Path, stock: str, name: str, schema: str) -> Path:
+    path = base / "10-Stocks" / stock / "periodic_narrative_cards" / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(
+        "---\nsource_type: periodic_report_narrative_evidence\n"
+        f"schema_version: {schema}\n---\n",
+        encoding="utf-8",
+    )
+    return path
+
+
+def test_archive_manifest_is_deterministic_and_lists_notes_only_after_global_gate(
+    tmp_path: Path,
+) -> None:
+    v1 = _legacy_note(
+        tmp_path, "甲公司", "2025-annual-business-model-0.md",
+        "periodic_report_narrative_evidence_card.v1",
+    )
+    v2 = _legacy_note(
+        tmp_path, "乙公司", "2025-annual-business-structure-0.md",
+        "periodic_report_narrative_evidence_card.v2",
+    )
+    stocks = [("000001", "甲公司"), ("000002", "乙公司")]
+    projections = {name: _projection_gate() for _code, name in stocks}
+
+    first = acceptance_module.build_archive_manifest(
+        stocks=stocks, knowledge_base_dir=tmp_path, projections=projections
+    )
+    second = acceptance_module.build_archive_manifest(
+        stocks=stocks, knowledge_base_dir=tmp_path, projections=projections
+    )
+
+    assert first == second
+    assert first["dry_run_only"] is True
+    assert first["requires_explicit_confirmation"] is True
+    assert first["all_stock_gates_passed"] is True
+    assert [item["path"] for item in first["archive_eligible"]] == sorted([
+        str(v1.relative_to(tmp_path)),
+        str(v2.relative_to(tmp_path)),
+    ])
+    hashes = {item["path"]: item["sha256"] for item in first["archive_eligible"]}
+    assert hashes[str(v1.relative_to(tmp_path))] == hashlib.sha256(v1.read_bytes()).hexdigest()
+    assert first["stocks"][0]["v1_note_count"] == 1
+    assert first["stocks"][1]["v2_note_count"] == 1
+
+    blocked = acceptance_module.build_archive_manifest(
+        stocks=stocks,
+        knowledge_base_dir=tmp_path,
+        projections={"甲公司": _projection_gate(recovery=1), "乙公司": _projection_gate()},
+    )
+    assert blocked["all_stock_gates_passed"] is False
+    assert blocked["archive_eligible"] == []

@@ -25,10 +25,6 @@ _RELEVANT_USAGES = frozenset({
 })
 
 
-class RequiredMetricsError(Exception):
-    """Raised when required metrics extraction encounters an unrecoverable error."""
-
-
 def build_required_business_metrics(
     evidence_pack: Dict[str, Any],
     raw_text: Optional[str] = None,
@@ -129,13 +125,6 @@ def _empty_tables() -> Dict[str, Any]:
         "inventory": {"headers_found": [], "present": False, "row_count": 0, "source_block_ids": []},
         "customer_supplier": {"headers_found": [], "present": False, "row_count": 0, "source_block_ids": []},
     }
-
-
-def _block_for_usage(relevant_blocks: List[Dict[str, Any]], usage: str) -> Optional[Dict[str, Any]]:
-    for block in relevant_blocks:
-        if block.get("usage") == usage:
-            return block
-    return None
 
 
 def _source_info(blocks: List[Dict[str, Any]], text: str) -> Tuple[str, str, str]:

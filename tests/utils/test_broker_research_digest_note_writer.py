@@ -197,7 +197,8 @@ def test_broker_digest_writer_repairs_ocr_artifacts_in_persisted_excerpt(
     assert "收入稳增长与盈利扩展" in text
     assert "核心增长与供应链能力" in text
     assert "结构升级驱动的业务格局" in text
-    assert "营收195亿元，环比" in text
+    assert "营收195" not in text
+    assert "环比分别增长" not in text
     assert "同环比增长262.3%" in text
     assert "营业收入382.40亿元" in text
     assert "超大互联场景" in text
@@ -252,7 +253,7 @@ def test_broker_digest_writer_refreshes_current_note_missing_cleaner_version(
     )
     path = _notes_dir(tmp_path) / "2026-05-12-国信证券-broker-core-view-abc123.md"
 
-    stale = path.read_text(encoding="utf-8").replace("excerpt_cleaner_version: broker_ocr_v2\n", "")
+    stale = path.read_text(encoding="utf-8").replace("excerpt_cleaner_version: broker_ocr_v3\n", "")
     path.write_text(stale, encoding="utf-8")
 
     plan = write_broker_research_digest_card_notes(
@@ -265,7 +266,7 @@ def test_broker_digest_writer_refreshes_current_note_missing_cleaner_version(
     refreshed = path.read_text(encoding="utf-8")
     assert len(plan.written) == 1
     assert plan.skipped_existing == []
-    assert "excerpt_cleaner_version: broker_ocr_v2" in refreshed
+    assert "excerpt_cleaner_version: broker_ocr_v3" in refreshed
     assert "高速光模块出货比例提升" in refreshed
     assert "高速光模 块" not in refreshed
 
@@ -363,7 +364,7 @@ def test_broker_digest_writer_keeps_existing_note_with_selection_diagnostics(
         "schema_version: broker_research_digest_card.v1\n"
         "card_id: broker:abc123\n"
         "selection_reason: selected_best_heading_candidate\n"
-        "excerpt_cleaner_version: broker_ocr_v2\n"
+        "excerpt_cleaner_version: broker_ocr_v3\n"
         "selection_version: broker_digest_v3_3\n"
         "---\n\n"
         "## Broker Research Excerpt\n\n"

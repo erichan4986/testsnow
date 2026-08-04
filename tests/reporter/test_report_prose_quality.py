@@ -87,6 +87,20 @@ def test_flags_aiish_transitions_and_strong_assertions():
     assert "strong_assertion_wording" in _codes(result)
 
 
+def test_strong_assertion_check_ignores_negated_disclaimer_but_keeps_real_claim():
+    disclaimer_only = """
+## 四、深度分析
+
+### 4.3 外部观察与待验证变量
+
+> 以下仅为同业背景，不代表目标公司已确认事实。
+"""
+    real_claim = disclaimer_only + "\n公司已确认获得新增订单。\n"
+
+    assert "strong_assertion_wording" not in _codes(check_report_prose_text(disclaimer_only))
+    assert "strong_assertion_wording" in _codes(check_report_prose_text(real_claim))
+
+
 def test_flags_duplicate_4_4_citation_sources():
     text = """
 ## 四、深度分析
@@ -176,6 +190,62 @@ def test_flags_theme_reexpanded_outside_owner_in_multiple_paragraphs():
     assert issue.section == "4.2"
     assert "高速光互连技术路线" in issue.evidence
     assert '"offending_section": "4.2"' in issue.evidence
+
+
+def test_allows_multiple_cited_external_v2_deltas_with_adjacent_evidence():
+    text = """
+## 四、深度分析
+
+### 4.1 官方材料确认
+
+800G 是正式材料中的产品路线。
+
+### 4.2 机构观点
+
+机构假设需要订单兑现。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+**供应链交付**
+
+相对正式材料/机构假设，外部材料新增的待验证点：800G交付节奏仍需验证[^1]。
+
+> **外部原文依据**：外部文章记录上游物料紧张和交付安排。
+
+**同业路线**
+
+外部新增待验证变量：NPO路线进入验证窗口[^2]。
+
+> **缓存材料摘录**：缓存文章讨论同业NPO验证节奏。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" not in _codes(result)
+
+
+def test_external_v2_delta_without_adjacent_evidence_still_warns():
+    text = """
+## 四、深度分析
+
+### 4.1 官方材料确认
+
+800G 是正式材料中的产品路线。
+
+### 4.2 机构观点
+
+机构假设需要订单兑现。
+
+### 4.3 外部观察与待验证变量（Preview，不参与评分）
+
+相对正式材料/机构假设，外部材料新增的待验证点：800G交付节奏仍需验证[^1]。
+
+外部新增待验证变量：800G客户认证节奏仍需验证[^2]。
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "theme_reexpanded_outside_owner" in _codes(result)
 
 
 def test_allows_single_borrowed_theme_table_row_without_reexpanded_warning():
@@ -272,3 +342,97 @@ def test_duplicate_4_4_citations_fall_back_to_source_author_title_when_url_missi
     assert "duplicate_4_4_citation_source" in _codes(result)
     issue = next(i for i in result.issues if i.code == "duplicate_4_4_citation_source")
     assert "雪球专栏观察|研究员A|同一篇无URL文章" in issue.evidence
+
+
+def test_flags_duplicate_4_4_sources_from_terminal_global_citations():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+同一来源被两个脚注分别引用[^1][^2]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+- [^2] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+"""
+
+    result = check_report_prose_text(text)
+
+    issue = next(i for i in result.issues if i.code == "duplicate_4_4_citation_source")
+    assert "https://example.com/a" in issue.evidence
+
+
+def test_terminal_global_citations_use_source_author_title_without_url():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+同一无 URL 来源被两个脚注分别引用[^1][^2]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **雪球专栏观察** | 作者: 研究员A | 《同一篇无URL文章》
+- [^2] | **雪球专栏观察** | 作者: 研究员A | 《同一篇无URL文章》
+"""
+
+    result = check_report_prose_text(text)
+
+    issue = next(i for i in result.issues if i.code == "duplicate_4_4_citation_source")
+    assert "雪球专栏观察|研究员A|同一篇无URL文章" in issue.evidence
+
+
+def test_repeated_4_4_use_of_one_ref_is_not_a_duplicate_source():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+同一脚注在不同条件中重复使用[^1]，但仍是同一个引用编号[^1]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "duplicate_4_4_citation_source" not in _codes(result)
+
+
+def test_terminal_duplicate_sources_unused_by_4_4_are_ignored():
+    text = """
+## 四、深度分析
+
+### 4.4 上行 / 下行条件与股价推演
+
+本节只引用独立来源[^1]。
+
+## 综合风险评分
+
+风险正文。
+
+## 引用来源
+
+- [^1] | **公司年报** | 《年度报告》 | https://example.com/annual
+- [^2] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+- [^3] | **微信公众号精选观察** | 作者: A | 《同一篇文章》 | https://example.com/a
+"""
+
+    result = check_report_prose_text(text)
+
+    assert "duplicate_4_4_citation_source" not in _codes(result)

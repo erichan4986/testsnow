@@ -1,0 +1,32 @@
+{
+  "archive_batch": "20260716-pack-first-completion",
+  "archived_at": "2026-07-16T06:24:09.725069+00:00",
+  "notes": [
+    {
+      "archived_path": "10-Stocks/赛微微电/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-business-model-0.md",
+      "original_path": "10-Stocks/赛微微电/periodic_narrative_cards/2025-annual-business-model-0.md",
+      "sha256": "c690972c96fdd660e3cae3ca4d6e5283bd6a7afdf864a89039e4cb4668f3b0d2",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/赛微微电/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-business-model-1.md",
+      "original_path": "10-Stocks/赛微微电/periodic_narrative_cards/2025-annual-business-model-1.md",
+      "sha256": "650b7807579216c13541e8911f0c32dc6680cdad87fddf7209cca1850ab77834",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/赛微微电/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-rd-product-progress-0.md",
+      "original_path": "10-Stocks/赛微微电/periodic_narrative_cards/2025-annual-rd-product-progress-0.md",
+      "sha256": "4c6d6b170aa29c63cea3149023c8e6b903c060afc5b4d4afbec0ab243c35287c",
+      "version": "v1"
+    },
+    {
+      "archived_path": "10-Stocks/赛微微电/periodic_narrative_cards/_legacy_archive/20260716-pack-first-completion/2025-annual-rd-product-progress-1.md",
+      "original_path": "10-Stocks/赛微微电/periodic_narrative_cards/2025-annual-rd-product-progress-1.md",
+      "sha256": "20bbd9bffaaef994acc81feb8cee350b2b0383b8c977cc85a0539c8ced068521",
+      "version": "v1"
+    }
+  ],
+  "schema_version": "periodic_narrative_archive_receipt.v1",
+  "source_manifest": "/tmp/annual-producer-6c-archive-manifest.json"
+}

@@ -1,0 +1,2418 @@
+{
+  "schema_version": "curated_external_argument_pack.v4",
+  "status": "ready",
+  "stock_name": "中际旭创",
+  "validator_version": "external_argument_validator.v4",
+  "source_documents": [
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:6c122438c5835111",
+      "stock_name": "中际旭创",
+      "title": "中际旭创：1.6T预期未减少，800G需求明显增加",
+      "account": "水灵",
+      "publish_time": "2026-07-13 09:25",
+      "source_kind": "media",
+      "source_ref": "https://www.c114.com.cn/news/6564/a1313773.html",
+      "source_url": "https://www.c114.com.cn/news/6564/a1313773.html",
+      "raw_content_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+      "canonical_text": "中际旭创在近期的投资者关系活动中表示，当前订单业务依然强劲，未见客户需求指向下降的趋势。公司指出2027年至2028年预计有更高带宽的交换芯片产品推出，推动业务需求加速。公司透露当前订单已覆盖2026年全年，部分延伸至2027年。1.6T市场需求预计不会放缓，800G需求则较此前预期增长明显。从客户结构看，CSP、NewCloud以及AI模型公司对800G和1.6T均有需求。当前阶段以800G和1.6T为主，2027年需求增速非常强劲。部分客户确有需求下调，但同时有新的AI模型客户上调1.6T需求。2027年价格已基本确定，市场降价幅度可控。目前能够生产1.6T和800G的厂商不多，实际能交付的供应商有限。行业整体增速极快，DSP芯片、VCSEL芯片、PCB等原材料均出现不同程度紧张。中际旭创通过协议锁定产能等方式推动供应链管理。NPO方面，许多客户兴趣浓厚。3.2T批量供应预计要到2028年。",
+      "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "中际旭创在近期的投资者关系活动中表示，当前订单业务依然强劲，未见客户需求指向下降的趋势。公司指出2027年至2028年预计有更高带宽的交换芯片产品推出，推动业务需求加速。公司透露当前订单已覆盖2026年全年，部分延伸至2027年。1.6T市场需求预计不会放缓，800G需求则较此前预期增长明显。从客户结构看，CSP、NewCloud以及AI模型公司对800G和1.6T均有需求。当前阶段以800G和1.6T为主，2027年需求增速非常强劲。部分客户确有需求下调，但同时有新的AI模型客户上调1.6T需求。2027年价格已基本确定，市场降价幅度可控。目前能够生产1.6T和800G的厂商不多，实际能交付的供应商有限。行业整体增速极快，DSP芯片、VCSEL芯片、PCB等原材料均出现不同程度紧张。中际旭创通过协议锁定产能等方式推动供应链管理。NPO方面，许多客户兴趣浓厚。3.2T批量供应预计要到2028年。",
+          "start": 0,
+          "end": 403,
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:d109143dc56cf924",
+      "stock_name": "中际旭创",
+      "title": "中际旭创：对上半年经营情况和行业需求都非常有信心",
+      "account": "澎湃新闻",
+      "publish_time": "2026-07-13 08:42",
+      "source_kind": "media",
+      "source_ref": "https://finance.eastmoney.com/a/202607133802746037.html",
+      "source_url": "https://finance.eastmoney.com/a/202607133802746037.html",
+      "raw_content_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+      "canonical_text": "中际旭创于7月12日晚召开电话会议，由副总裁、董事会秘书王军回应市场传闻。公司称二季度业绩严重不及预期的传言没有任何依据。公司尚未发布半年报但对2026年半年度经营情况和行业需求都非常有信心。1.6T光模块需求方面，2027年行业整体1.6T需求依然强劲，与此前预期数量区间一致，且客户数量增加。需求变化主要体现在结构上，部分客户下调需求但同时也有新增云厂商及AI大模型客户上调了1.6T需求。目前在手订单已覆盖2026年全年，部分已下到2027年。800G需求较此前预期出现明显增加。国内AI数据中心需求快速增长，集中在800G和400G。能大批量交付1.6T和800G的厂商不多，大规模交付能力才是最宝贵的。",
+      "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "中际旭创于7月12日晚召开电话会议，由副总裁、董事会秘书王军回应市场传闻。公司称二季度业绩严重不及预期的传言没有任何依据。公司尚未发布半年报但对2026年半年度经营情况和行业需求都非常有信心。1.6T光模块需求方面，2027年行业整体1.6T需求依然强劲，与此前预期数量区间一致，且客户数量增加。需求变化主要体现在结构上，部分客户下调需求但同时也有新增云厂商及AI大模型客户上调了1.6T需求。目前在手订单已覆盖2026年全年，部分已下到2027年。800G需求较此前预期出现明显增加。国内AI数据中心需求快速增长，集中在800G和400G。能大批量交付1.6T和800G的厂商不多，大规模交付能力才是最宝贵的。",
+          "start": 0,
+          "end": 306,
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:309b01a511e8ae7f",
+      "stock_name": "中际旭创",
+      "title": "中际旭创：1.6T产品已经在量产出货且预计会保持每个季度出货量环比提升",
+      "account": "格隆汇",
+      "publish_time": "2026-04-24",
+      "source_kind": "media",
+      "source_ref": "https://dxpress.gelonghui.com/live/2419906",
+      "source_url": "https://dxpress.gelonghui.com/live/2419906",
+      "raw_content_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+      "canonical_text": "中际旭创在投资者关系活动记录中表示，其1.6T产品已进入量产出货阶段，预计每季度出货量将保持环比增长。公司已收到部分客户2026年全年订单。公司计划加强新产品开发和高端产品交付能力。中际旭创预计2026年业绩将保持增长趋势。公司也在积极开发下一代产品，准备6.4T NPO和12.8T XPO模块的研发和客户送样。目前硅光技术占1.6T和800G产品线的比重均超过一半。",
+      "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "中际旭创在投资者关系活动记录中表示，其1.6T产品已进入量产出货阶段，预计每季度出货量将保持环比增长。公司已收到部分客户2026年全年订单。公司计划加强新产品开发和高端产品交付能力。中际旭创预计2026年业绩将保持增长趋势。公司也在积极开发下一代产品，准备6.4T NPO和12.8T XPO模块的研发和客户送样。目前硅光技术占1.6T和800G产品线的比重均超过一半。",
+          "start": 0,
+          "end": 185,
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:analysis:af6623ca3b5116db",
+      "stock_name": "中际旭创",
+      "title": "中际旭创的NPO-CPO之路初探",
+      "account": "9apb27",
+      "publish_time": "2026-02-12",
+      "source_kind": "analysis",
+      "source_ref": "https://guba.sina.cn/view_10376_182941.html",
+      "source_url": "https://guba.sina.cn/view_10376_182941.html",
+      "raw_content_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+      "canonical_text": "NPO（近封装光学）是中际旭创的强催化，CPO（共封装光学）短期影响有限。NPO将光引擎与交换芯片封装于同一基板，功耗降低20%-30%。中际旭创与头部CSP厂商定制合作，预计2026年送样、2027年量产。公司800G CPO自研测试，1.6T产品计划2026年Q2送英伟达认证。核心主线为硅光自制加NPO。公司采用硅光加NPO加CPO全路线覆盖策略。公司800G光模块单价约1500元，1.6T约3000元。",
+      "document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "NPO（近封装光学）是中际旭创的强催化，CPO（共封装光学）短期影响有限。NPO将光引擎与交换芯片封装于同一基板，功耗降低20%-30%。中际旭创与头部CSP厂商定制合作，预计2026年送样、2027年量产。公司800G CPO自研测试，1.6T产品计划2026年Q2送英伟达认证。核心主线为硅光自制加NPO。公司采用硅光加NPO加CPO全路线覆盖策略。公司800G光模块单价约1500元，1.6T约3000元。",
+          "start": 0,
+          "end": 206,
+          "block_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:analysis:ae1f0ad135fef689",
+      "stock_name": "中际旭创",
+      "title": "中际旭创与华工科技在技术水平上谁领先？",
+      "account": "福星的方蕊",
+      "publish_time": "2026-07-19 17:47",
+      "source_kind": "analysis",
+      "source_ref": "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+      "source_url": "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+      "raw_content_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+      "canonical_text": "文章发布于2026年7月19日，作者“福星的方蕊”，发表在华工科技股吧。内容是对两家公司技术水平的对比分析，分为两个维度：\n\n一、短期成熟产品（800G/1.6T、当下商用市场）\n\n中际旭创优势：量产规模和良率全球第一。1.6T光模块全球市占率在55%到70%之间，是英伟达GB200/GB300的核心标配，月产能超过50万只，良率稳定在95%以上。与海外头部云厂商绑定最深，拥有英伟达三年长协，是微软和谷歌的核心供应商，采用传统可插拔硅光加DSP方案。封装集成工艺成熟，擅长将硅光芯片做成标准化模块。\n\n华工科技短板（成熟产品阶段）：1.6T放量节奏比中际慢6到12个月，产能规模更小。海外北美客户订单体量远小于中际，主力供货国内算力中心和华为昇腾集群。800G/1.6T主打无DSP线性直驱路线，适配国产化机房，海外渗透率偏低。\n\n二、下一代前沿技术（3.2T CPO/NPO、硅光全栈自研、自主可控）\n\n华工科技独家领先点：号称全球唯一实现3.2T CPO/NPO规模化商用交付。2025年9月建成全球首条3.2T专用产线，2026年Q1起批量供货，领先行业1到2年；中际旭创仅完成样品送测，规划2027年量产。拥有全栈IDM自研闭环，自研硅光微环调制器、量子点激光器，采用无DSP线性直驱架构，功耗比传统方案降低50%到70%，能效达到5pJ/bit。磷化铟和硅光两大核心芯片自主流片，国产化率90%以上。液冷CPO一体化方案独家落地，适配英伟达Rubin高密度液冷集群和华为昇腾950超节点。参与下一代算力架构标准制定，获得英伟达Compute Preferred最高认证。\n\n中际旭创前沿技术短板：3.2T仍停留在样品验证阶段，无规模化产线。底层硅光微环、量子点激光器不自研，依赖外部采购。坚持传统DSP方案，功耗优化空间弱于华工的无DSP架构。CPO/NPO布局偏保守，不切入柜内高密度液冷互联核心赛道。\n\n三、两条路线本质区别总结\n\n如果看当下赚钱、海外AI大厂出货和成熟1.6T商用能力，中际旭创在技术、产能和订单方面综合实力更强，是“当前算力模块龙头”。但如果看3.2T下一代CPO/NPO、硅光芯片全自研、国产自主可控和低功耗液冷前沿路线，华工科技技术等级明显领先，技术代差领先同行一年以上，完全贴合国内光模块扶持政策。",
+      "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "文章发布于2026年7月19日，作者“福星的方蕊”，发表在华工科技股吧。内容是对两家公司技术水平的对比分析，分为两个维度：",
+          "start": 0,
+          "end": 61,
+          "block_hash": "sha256:69e8581f0f3b275f907ef78f4632dd5daa432bde60e10aa74d3ed6ba77b82690"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:1",
+          "block_ordinal": 1,
+          "block_kind": "heading",
+          "text": "一、短期成熟产品（800G/1.6T、当下商用市场）",
+          "start": 63,
+          "end": 89,
+          "block_hash": "sha256:9c47121aebbeed6caa5dced6d42e5070a5003957bc60e6250e36f0356ef7c3a8"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+          "block_ordinal": 2,
+          "block_kind": "narrative",
+          "text": "中际旭创优势：量产规模和良率全球第一。1.6T光模块全球市占率在55%到70%之间，是英伟达GB200/GB300的核心标配，月产能超过50万只，良率稳定在95%以上。与海外头部云厂商绑定最深，拥有英伟达三年长协，是微软和谷歌的核心供应商，采用传统可插拔硅光加DSP方案。封装集成工艺成熟，擅长将硅光芯片做成标准化模块。",
+          "start": 91,
+          "end": 251,
+          "block_hash": "sha256:5c1706460bb908a7e4315330c8a7900c4f69fb05282aa645cdea6a8b89010c7f"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:3",
+          "block_ordinal": 3,
+          "block_kind": "narrative",
+          "text": "华工科技短板（成熟产品阶段）：1.6T放量节奏比中际慢6到12个月，产能规模更小。海外北美客户订单体量远小于中际，主力供货国内算力中心和华为昇腾集群。800G/1.6T主打无DSP线性直驱路线，适配国产化机房，海外渗透率偏低。",
+          "start": 253,
+          "end": 366,
+          "block_hash": "sha256:bc9d9d3ae5365d69290d25b605b4300dfb071b6736b535eb0cf543246485579b"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:4",
+          "block_ordinal": 4,
+          "block_kind": "heading",
+          "text": "二、下一代前沿技术（3.2T CPO/NPO、硅光全栈自研、自主可控）",
+          "start": 368,
+          "end": 403,
+          "block_hash": "sha256:d79110f7de9cfd412bbc5eb37992a6d6d7ae99b364200f2f769687c046e5d85d"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "block_kind": "narrative",
+          "text": "华工科技独家领先点：号称全球唯一实现3.2T CPO/NPO规模化商用交付。2025年9月建成全球首条3.2T专用产线，2026年Q1起批量供货，领先行业1到2年；中际旭创仅完成样品送测，规划2027年量产。拥有全栈IDM自研闭环，自研硅光微环调制器、量子点激光器，采用无DSP线性直驱架构，功耗比传统方案降低50%到70%，能效达到5pJ/bit。磷化铟和硅光两大核心芯片自主流片，国产化率90%以上。液冷CPO一体化方案独家落地，适配英伟达Rubin高密度液冷集群和华为昇腾950超节点。参与下一代算力架构标准制定，获得英伟达Compute Preferred最高认证。",
+          "start": 405,
+          "end": 692,
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:6",
+          "block_ordinal": 6,
+          "block_kind": "narrative",
+          "text": "中际旭创前沿技术短板：3.2T仍停留在样品验证阶段，无规模化产线。底层硅光微环、量子点激光器不自研，依赖外部采购。坚持传统DSP方案，功耗优化空间弱于华工的无DSP架构。CPO/NPO布局偏保守，不切入柜内高密度液冷互联核心赛道。",
+          "start": 694,
+          "end": 809,
+          "block_hash": "sha256:e337e06de99bd8982071b7875a2b3b299e1e78de6ef5407a2cccacfd23207ed1"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:7",
+          "block_ordinal": 7,
+          "block_kind": "heading",
+          "text": "三、两条路线本质区别总结",
+          "start": 811,
+          "end": 823,
+          "block_hash": "sha256:d15113df8156750dd97deafd777d9d9b9d3e6f4b13b204a3a1967ec7132737f6"
+        },
+        {
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:8",
+          "block_ordinal": 8,
+          "block_kind": "narrative",
+          "text": "如果看当下赚钱、海外AI大厂出货和成熟1.6T商用能力，中际旭创在技术、产能和订单方面综合实力更强，是“当前算力模块龙头”。但如果看3.2T下一代CPO/NPO、硅光芯片全自研、国产自主可控和低功耗液冷前沿路线，华工科技技术等级明显领先，技术代差领先同行一年以上，完全贴合国内光模块扶持政策。",
+          "start": 825,
+          "end": 971,
+          "block_hash": "sha256:c3363b6a538abd4d906cf0b3fc074ee02c7bbb28430388c972d4f20fd2015669"
+        }
+      ]
+    }
+  ],
+  "baseline_fingerprint": "sha256:44842f081efa176f7bced9d68518fa421eaa31977983c64890c1d42d8b4285d4",
+  "cards": [
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:642dbfded17ff2ba",
+      "argument_key": "commercialization:target:642dbfded17ff2ba",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "commercialization",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:2:0:9e4a8e5992d25abc",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+          "block_ordinal": 2,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 19,
+          "text": "中际旭创优势：量产规模和良率全球第一。",
+          "unit_hash": "sha256:d4ccdcf3c2b76d0f554fdc9b2456034bfc349665861228509e4a8e5992d25abc",
+          "block_hash": "sha256:5c1706460bb908a7e4315330c8a7900c4f69fb05282aa645cdea6a8b89010c7f",
+          "coverage_families": [
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:2:0:9e4a8e5992d25abc"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:1e72b88d7247535c",
+      "argument_key": "competitive_landscape:target:1e72b88d7247535c",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "competitive_landscape",
+      "coverage_families": [
+        "competitive_landscape",
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:2:1:9beb88cab677fdc8",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+          "block_ordinal": 2,
+          "unit_ordinal": 1,
+          "start": 19,
+          "end": 84,
+          "text": "1.6T光模块全球市占率在55%到70%之间，是英伟达GB200/GB300的核心标配，月产能超过50万只，良率稳定在95%以上。",
+          "unit_hash": "sha256:7336586e11f531511c8d8e3ae139cc2d485a4af6ece4287f9beb88cab677fdc8",
+          "block_hash": "sha256:5c1706460bb908a7e4315330c8a7900c4f69fb05282aa645cdea6a8b89010c7f",
+          "coverage_families": [
+            "competitive_landscape",
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:2:1:9beb88cab677fdc8"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:cf3bbbd0c8e715b7",
+      "argument_key": "technology_product:target:cf3bbbd0c8e715b7",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:2:2:b7327e9bf87fcec6",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+          "block_ordinal": 2,
+          "unit_ordinal": 2,
+          "start": 84,
+          "end": 136,
+          "text": "与海外头部云厂商绑定最深，拥有英伟达三年长协，是微软和谷歌的核心供应商，采用传统可插拔硅光加DSP方案。",
+          "unit_hash": "sha256:eb67b4751f0e814fd008cd69fccd02a245c2cfdac66b7ec4b7327e9bf87fcec6",
+          "block_hash": "sha256:5c1706460bb908a7e4315330c8a7900c4f69fb05282aa645cdea6a8b89010c7f",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:2",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:2:2:b7327e9bf87fcec6"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:c66414c251296823",
+      "argument_key": "commercialization:target:c66414c251296823",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "commercialization",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:2:773cf705d296bd4f",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "unit_ordinal": 2,
+          "start": 82,
+          "end": 104,
+          "text": "中际旭创仅完成样品送测，规划2027年量产。",
+          "unit_hash": "sha256:dc5286ce74025fc3b9532dc6fb951ddb20c6b3477607b5a2773cf705d296bd4f",
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33",
+          "coverage_families": [
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:2:773cf705d296bd4f"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:98c553b197cf48bf",
+      "argument_key": "technology_product:target:98c553b197cf48bf",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:6:0:9ee5dfa12262bb91",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:6",
+          "block_ordinal": 6,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 33,
+          "text": "中际旭创前沿技术短板：3.2T仍停留在样品验证阶段，无规模化产线。",
+          "unit_hash": "sha256:fe1e95312bb833a77de5dd59e5f9e6684c04d34824cc71da9ee5dfa12262bb91",
+          "block_hash": "sha256:e337e06de99bd8982071b7875a2b3b299e1e78de6ef5407a2cccacfd23207ed1",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:6",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:6:0:9ee5dfa12262bb91"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:ab16266691faa178",
+      "argument_key": "technology_product:target:ab16266691faa178",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization",
+        "demand_customer",
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:8:0:d738c445a70bdd7d",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:8",
+          "block_ordinal": 8,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 62,
+          "text": "如果看当下赚钱、海外AI大厂出货和成熟1.6T商用能力，中际旭创在技术、产能和订单方面综合实力更强，是“当前算力模块龙头”。",
+          "unit_hash": "sha256:a460fd703f532d6a8583413bbcbcc60b1e80ecf82b1f49a3d738c445a70bdd7d",
+          "block_hash": "sha256:c3363b6a538abd4d906cf0b3fc074ee02c7bbb28430388c972d4f20fd2015669",
+          "coverage_families": [
+            "technology_product",
+            "commercialization",
+            "demand_customer",
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:8",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:8:0:d738c445a70bdd7d"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:a48a7e3e06ce3804",
+      "argument_key": "technology_product:target:a48a7e3e06ce3804",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "valuation_expectation"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:0:8b041a615797d7a8",
+          "source_id": "curated-source:analysis:af6623ca3b5116db",
+          "document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 37,
+          "text": "NPO（近封装光学）是中际旭创的强催化，CPO（共封装光学）短期影响有限。",
+          "unit_hash": "sha256:dd7ce6d40df004a34277bd583a39864be69002f3904cdc458b041a615797d7a8",
+          "block_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "coverage_families": [
+            "technology_product",
+            "valuation_expectation"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+            "anchor_block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:0:8b041a615797d7a8"
+          },
+          "citation_refs": [
+            2
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:1:f62775aa2514bcd9",
+          "source_id": "curated-source:analysis:af6623ca3b5116db",
+          "document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 37,
+          "end": 69,
+          "text": "NPO将光引擎与交换芯片封装于同一基板，功耗降低20%-30%。",
+          "unit_hash": "sha256:c42db1650071527b7e7f0069fc58d51f3d0aacdf007bf253f62775aa2514bcd9",
+          "block_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+            "anchor_block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:1:f62775aa2514bcd9"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://guba.sina.cn/view_10376_182941.html",
+          "curated-source:analysis:af6623ca3b5116db"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:9c9f7af443bedf78",
+      "argument_key": "commercialization:target_with_peer_context:9c9f7af443bedf78",
+      "entity_scope": "target_with_peer_context",
+      "target_entity": "中际旭创",
+      "primary_family": "commercialization",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:2:e311c39a0b148c48",
+          "source_id": "curated-source:analysis:af6623ca3b5116db",
+          "document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 69,
+          "end": 104,
+          "text": "中际旭创与头部CSP厂商定制合作，预计2026年送样、2027年量产。",
+          "unit_hash": "sha256:42479695cb0ba974cb9e4dc94d4b8f80c49d6dd2e82c59f3e311c39a0b148c48",
+          "block_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "coverage_families": [
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_peer_relation",
+            "owner_surface": "头部CSP厂商定制",
+            "anchor_type": "explicit_relation",
+            "anchor_value": "头部CSP厂商定制",
+            "anchor_document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+            "anchor_block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:2:e311c39a0b148c48"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://guba.sina.cn/view_10376_182941.html",
+          "curated-source:analysis:af6623ca3b5116db"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:7041fbbe6e7198e5",
+      "argument_key": "technology_product:target:7041fbbe6e7198e5",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:3:074a02300f240139",
+          "source_id": "curated-source:analysis:af6623ca3b5116db",
+          "document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 104,
+          "end": 141,
+          "text": "公司800G CPO自研测试，1.6T产品计划2026年Q2送英伟达认证。",
+          "unit_hash": "sha256:d22a082b6730f0071befd81824af832dd3d7b36033b982e0074a02300f240139",
+          "block_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+            "anchor_block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:3:074a02300f240139"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://guba.sina.cn/view_10376_182941.html",
+          "curated-source:analysis:af6623ca3b5116db"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:05e81a98ca13ed0c",
+      "argument_key": "technology_product:target:05e81a98ca13ed0c",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:5:1b82653e88fe5019",
+          "source_id": "curated-source:analysis:af6623ca3b5116db",
+          "document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 155,
+          "end": 177,
+          "text": "公司采用硅光加NPO加CPO全路线覆盖策略。",
+          "unit_hash": "sha256:fcee78949e1f599c0b1d625b2cdcecc95b54a236b3d683851b82653e88fe5019",
+          "block_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+            "anchor_block_id": "curated-source:analysis:af6623ca3b5116db:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:af6623ca3b5116db:0:5:1b82653e88fe5019"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://guba.sina.cn/view_10376_182941.html",
+          "curated-source:analysis:af6623ca3b5116db"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:50f93b1126efd785",
+      "argument_key": "technology_product:target:50f93b1126efd785",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:0:a17d00787b7dc4e8",
+          "source_id": "curated-source:media:309b01a511e8ae7f",
+          "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 51,
+          "text": "中际旭创在投资者关系活动记录中表示，其1.6T产品已进入量产出货阶段，预计每季度出货量将保持环比增长。",
+          "unit_hash": "sha256:c1ced5a205f93d3dc5a24be451e63f87a12de7436e333ecaa17d00787b7dc4e8",
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+            "anchor_block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:0:a17d00787b7dc4e8"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://dxpress.gelonghui.com/live/2419906",
+          "curated-source:media:309b01a511e8ae7f"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:876c3f4affd55159",
+      "argument_key": "demand_customer:target:876c3f4affd55159",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "demand_customer",
+      "coverage_families": [
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:1:670cbccdc2270cec",
+          "source_id": "curated-source:media:309b01a511e8ae7f",
+          "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 51,
+          "end": 70,
+          "text": "公司已收到部分客户2026年全年订单。",
+          "unit_hash": "sha256:0946f4509062d3bdc4faf2e22e72437e5c628378ed28429a670cbccdc2270cec",
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+            "anchor_block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:1:670cbccdc2270cec"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://dxpress.gelonghui.com/live/2419906",
+          "curated-source:media:309b01a511e8ae7f"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:5fa86c39973f399d",
+      "argument_key": "technology_product:target:5fa86c39973f399d",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:2:a5b7c862b6ab1c73",
+          "source_id": "curated-source:media:309b01a511e8ae7f",
+          "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 70,
+          "end": 91,
+          "text": "公司计划加强新产品开发和高端产品交付能力。",
+          "unit_hash": "sha256:3764aca99d4eca9e4cd50c74268af6cfd38b020c6f0109a6a5b7c862b6ab1c73",
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "coverage_families": [
+            "technology_product",
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+            "anchor_block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:2:a5b7c862b6ab1c73"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://dxpress.gelonghui.com/live/2419906",
+          "curated-source:media:309b01a511e8ae7f"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:6de67cfe85f0be03",
+      "argument_key": "financial_quality:target:6de67cfe85f0be03",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:3:fe30f4967fca473a",
+          "source_id": "curated-source:media:309b01a511e8ae7f",
+          "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 91,
+          "end": 112,
+          "text": "中际旭创预计2026年业绩将保持增长趋势。",
+          "unit_hash": "sha256:20fe4c7795cf8d2725469fdfedc3756c125b68d79e2aad44fe30f4967fca473a",
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+            "anchor_block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:3:fe30f4967fca473a"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://dxpress.gelonghui.com/live/2419906",
+          "curated-source:media:309b01a511e8ae7f"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:a84a89568f57dc5a",
+      "argument_key": "technology_product:target:a84a89568f57dc5a",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization",
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:4:7b4178164f03df09",
+          "source_id": "curated-source:media:309b01a511e8ae7f",
+          "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 112,
+          "end": 157,
+          "text": "公司也在积极开发下一代产品，准备6.4T NPO和12.8T XPO模块的研发和客户送样。",
+          "unit_hash": "sha256:8cae927ef1c9c5bfecb7f48d7bd6d9dde991be34b62d63587b4178164f03df09",
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "coverage_families": [
+            "technology_product",
+            "commercialization",
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+            "anchor_block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:4:7b4178164f03df09"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:5:043d6d1f27238424",
+          "source_id": "curated-source:media:309b01a511e8ae7f",
+          "document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 157,
+          "end": 185,
+          "text": "目前硅光技术占1.6T和800G产品线的比重均超过一半。",
+          "unit_hash": "sha256:8956b688f695a09729111dc614c228d902be6fdba6fc393f043d6d1f27238424",
+          "block_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+            "anchor_block_id": "curated-source:media:309b01a511e8ae7f:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:309b01a511e8ae7f:0:5:043d6d1f27238424"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://dxpress.gelonghui.com/live/2419906",
+          "curated-source:media:309b01a511e8ae7f"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:4fceee74f140a3bd",
+      "argument_key": "demand_customer:target:4fceee74f140a3bd",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "demand_customer",
+      "coverage_families": [
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:0:b211df724e376975",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 44,
+          "text": "中际旭创在近期的投资者关系活动中表示，当前订单业务依然强劲，未见客户需求指向下降的趋势。",
+          "unit_hash": "sha256:114fd36b3fdaad2fd810aae8133fbbfdc1148fd8e2afe240b211df724e376975",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "中际旭创",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:0:b211df724e376975"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.c114.com.cn/news/6564/a1313773.html",
+          "curated-source:media:6c122438c5835111"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:7ed5eb37c2498ded",
+      "argument_key": "technology_product:target:7ed5eb37c2498ded",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:1:6d6f6c4b412f45c5",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 44,
+          "end": 85,
+          "text": "公司指出2027年至2028年预计有更高带宽的交换芯片产品推出，推动业务需求加速。",
+          "unit_hash": "sha256:11c21aacc2ecced6475101ef42ebe78d7f5f07962894b2606d6f6c4b412f45c5",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "technology_product",
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:1:6d6f6c4b412f45c5"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.c114.com.cn/news/6564/a1313773.html",
+          "curated-source:media:6c122438c5835111"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:298937a2e008add0",
+      "argument_key": "demand_customer:target:298937a2e008add0",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "demand_customer",
+      "coverage_families": [
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:2:65ae7676d454200c",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 85,
+          "end": 115,
+          "text": "公司透露当前订单已覆盖2026年全年，部分延伸至2027年。",
+          "unit_hash": "sha256:b4ba369d76ffc7b8da5d66474188e9717a05808f65266a7d65ae7676d454200c",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:2:65ae7676d454200c"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:3:df866e1241f117df",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 115,
+          "end": 147,
+          "text": "1.6T市场需求预计不会放缓，800G需求则较此前预期增长明显。",
+          "unit_hash": "sha256:7e9048ce3285357c43b51928a81d46dd887a6e505bf3524ddf866e1241f117df",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:3:df866e1241f117df"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:4:90bb36c991c1055e",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 147,
+          "end": 189,
+          "text": "从客户结构看，CSP、NewCloud以及AI模型公司对800G和1.6T均有需求。",
+          "unit_hash": "sha256:e0ff816192754e845b67332fecead9262bfa95e44983fc7390bb36c991c1055e",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:4:90bb36c991c1055e"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:5:43cca036c3b41d48",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 189,
+          "end": 220,
+          "text": "当前阶段以800G和1.6T为主，2027年需求增速非常强劲。",
+          "unit_hash": "sha256:b5bae55dfbe9d3af27385d9d424fa2dca9d8feb3d54cb12a43cca036c3b41d48",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:5:43cca036c3b41d48"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:6:5e2e06e7c9797feb",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 220,
+          "end": 252,
+          "text": "部分客户确有需求下调，但同时有新的AI模型客户上调1.6T需求。",
+          "unit_hash": "sha256:25d6d0311900551ee67528ca8c164f3e813b0948cd74fce75e2e06e7c9797feb",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:6:5e2e06e7c9797feb"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.c114.com.cn/news/6564/a1313773.html",
+          "curated-source:media:6c122438c5835111"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:c1ec53b1ca4797b1",
+      "argument_key": "capacity_delivery:target:c1ec53b1ca4797b1",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "capacity_delivery",
+      "coverage_families": [
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:8:b91710ea3a69c84a",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 8,
+          "start": 274,
+          "end": 307,
+          "text": "目前能够生产1.6T和800G的厂商不多，实际能交付的供应商有限。",
+          "unit_hash": "sha256:9e4db48fc96bba3ece0c2ef043ecadee40427b61d73a2502b91710ea3a69c84a",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:8:b91710ea3a69c84a"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.c114.com.cn/news/6564/a1313773.html",
+          "curated-source:media:6c122438c5835111"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:0cdcaff83041cda7",
+      "argument_key": "demand_customer:target:0cdcaff83041cda7",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "demand_customer",
+      "coverage_families": [
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:2:fe5650edcf2e50ca",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 61,
+          "end": 96,
+          "text": "公司尚未发布半年报但对2026年半年度经营情况和行业需求都非常有信心。",
+          "unit_hash": "sha256:789ac80a5302b518f08383f45bf3a1b9b388206169884740fe5650edcf2e50ca",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:2:fe5650edcf2e50ca"
+          },
+          "citation_refs": [
+            5
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:3:efb832b5e725ea46",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 96,
+          "end": 148,
+          "text": "1.6T光模块需求方面，2027年行业整体1.6T需求依然强劲，与此前预期数量区间一致，且客户数量增加。",
+          "unit_hash": "sha256:b52926237406e8ae2f712b4178e13915dce4d1bbfdf89edeefb832b5e725ea46",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:3:efb832b5e725ea46"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://finance.eastmoney.com/a/202607133802746037.html",
+          "curated-source:media:d109143dc56cf924"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:bd3e4630a7cef839",
+      "argument_key": "demand_customer:target:bd3e4630a7cef839",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "demand_customer",
+      "coverage_families": [
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:5:d0eea5c130f27906",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 197,
+          "end": 225,
+          "text": "目前在手订单已覆盖2026年全年，部分已下到2027年。",
+          "unit_hash": "sha256:b629f43f1fb3eb7ffb02ecff78323f0e0dc805de7d87f313d0eea5c130f27906",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:5:d0eea5c130f27906"
+          },
+          "citation_refs": [
+            5
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:6:eea8ce91f5f92479",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 225,
+          "end": 243,
+          "text": "800G需求较此前预期出现明显增加。",
+          "unit_hash": "sha256:422097e375d236b23f324545609c6d29b7d94c58e96e41daeea8ce91f5f92479",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:6:eea8ce91f5f92479"
+          },
+          "citation_refs": [
+            5
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:7:b1afa53e3ba95cd8",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 7,
+          "start": 243,
+          "end": 271,
+          "text": "国内AI数据中心需求快速增长，集中在800G和400G。",
+          "unit_hash": "sha256:3d63c829bfb97c54ece4b7384fe7d50b15689479aad7bde8b1afa53e3ba95cd8",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:7:b1afa53e3ba95cd8"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://finance.eastmoney.com/a/202607133802746037.html",
+          "curated-source:media:d109143dc56cf924"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:680056f49b8253a6",
+      "argument_key": "capacity_delivery:target:680056f49b8253a6",
+      "entity_scope": "target",
+      "target_entity": "中际旭创",
+      "primary_family": "capacity_delivery",
+      "coverage_families": [
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:8:db69c02c4280f349",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 8,
+          "start": 271,
+          "end": 306,
+          "text": "能大批量交付1.6T和800G的厂商不多，大规模交付能力才是最宝贵的。",
+          "unit_hash": "sha256:fa456bd3a383d0110f94fca10ed2e1719f7c440f89e39831db69c02c4280f349",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "中际旭创",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "中际旭创",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:8:db69c02c4280f349"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://finance.eastmoney.com/a/202607133802746037.html",
+          "curated-source:media:d109143dc56cf924"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:b30d51c75d095ac3",
+      "argument_key": "technology_product:peer_or_industry:b30d51c75d095ac3",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:3:0:3520b272455f2874",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:3",
+          "block_ordinal": 3,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 41,
+          "text": "华工科技短板（成熟产品阶段）：1.6T放量节奏比中际慢6到12个月，产能规模更小。",
+          "unit_hash": "sha256:30412381e641f23a7da5900cdde6cf450fc3391c500a9fa03520b272455f2874",
+          "block_hash": "sha256:bc9d9d3ae5365d69290d25b605b4300dfb071b6736b535eb0cf543246485579b",
+          "coverage_families": [
+            "technology_product",
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "explicit_peer_surface",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:3",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:3:0:3520b272455f2874"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:b761aa63cbbf23d1",
+      "argument_key": "technology_product:peer_or_industry:b761aa63cbbf23d1",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "competitive_landscape",
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:0:9ee6faa4e5f06c7a",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 38,
+          "text": "华工科技独家领先点：号称全球唯一实现3.2T CPO/NPO规模化商用交付。",
+          "unit_hash": "sha256:afe081b1bf0a6a73994fa3ee332fd4cc4d19711c1ee9c1279ee6faa4e5f06c7a",
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33",
+          "coverage_families": [
+            "technology_product",
+            "competitive_landscape",
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "explicit_peer_surface",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:0:9ee6faa4e5f06c7a"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:3d0ec39d62785f28",
+      "argument_key": "competitive_landscape:peer_or_industry:3d0ec39d62785f28",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "competitive_landscape",
+      "coverage_families": [
+        "competitive_landscape"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:1:57c612244ea8fb64",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "unit_ordinal": 1,
+          "start": 38,
+          "end": 82,
+          "text": "2025年9月建成全球首条3.2T专用产线，2026年Q1起批量供货，领先行业1到2年；",
+          "unit_hash": "sha256:9f7b990a1d980af7b09413257bf687ae69158c1881a43eaa57c612244ea8fb64",
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33",
+          "coverage_families": [
+            "competitive_landscape"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "block_primary_owner",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:1:57c612244ea8fb64"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:9ec416cad46a0248",
+      "argument_key": "technology_product:peer_or_industry:9ec416cad46a0248",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:3:c2df74d37c5db4b0",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "unit_ordinal": 3,
+          "start": 104,
+          "end": 175,
+          "text": "拥有全栈IDM自研闭环，自研硅光微环调制器、量子点激光器，采用无DSP线性直驱架构，功耗比传统方案降低50%到70%，能效达到5pJ/bit。",
+          "unit_hash": "sha256:76de6cdbba6b655948c0be48bcc15519a89df1f1011dc75dc2df74d37c5db4b0",
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "block_primary_owner",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:3:c2df74d37c5db4b0"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:0b81734eebbed8fd",
+      "argument_key": "technology_product:peer_or_industry:0b81734eebbed8fd",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:4:9d7d9d7f1708514a",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "unit_ordinal": 4,
+          "start": 175,
+          "end": 202,
+          "text": "磷化铟和硅光两大核心芯片自主流片，国产化率90%以上。",
+          "unit_hash": "sha256:be9019fbc1c5c6bf00bda7e8d13561363f8834c235c9ddf89d7d9d7f1708514a",
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "block_primary_owner",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:4:9d7d9d7f1708514a"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:357f087c7330720c",
+      "argument_key": "technology_product:peer_or_industry:357f087c7330720c",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:5:4934e82e3edea7ff",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+          "block_ordinal": 5,
+          "unit_ordinal": 5,
+          "start": 202,
+          "end": 246,
+          "text": "液冷CPO一体化方案独家落地，适配英伟达Rubin高密度液冷集群和华为昇腾950超节点。",
+          "unit_hash": "sha256:1927c422431ab6e5b91a324bec770a9a0ff83eb20ac521544934e82e3edea7ff",
+          "block_hash": "sha256:2fedd21705b11f94b40f223e3c5fefaaf865f1a97c6eb1325868e64686380e33",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "block_primary_owner",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:5",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:5:5:4934e82e3edea7ff"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:c4e0c6862228383c",
+      "argument_key": "technology_product:peer_or_industry:c4e0c6862228383c",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "competitive_landscape",
+        "policy_geopolitics"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:8:1:13c538b53531b156",
+          "source_id": "curated-source:analysis:ae1f0ad135fef689",
+          "document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+          "block_id": "curated-source:analysis:ae1f0ad135fef689:block:8",
+          "block_ordinal": 8,
+          "unit_ordinal": 1,
+          "start": 62,
+          "end": 146,
+          "text": "但如果看3.2T下一代CPO/NPO、硅光芯片全自研、国产自主可控和低功耗液冷前沿路线，华工科技技术等级明显领先，技术代差领先同行一年以上，完全贴合国内光模块扶持政策。",
+          "unit_hash": "sha256:c53a57c0cb8003a1ed5108c6ac2c78f7dd4187264c97fb7013c538b53531b156",
+          "block_hash": "sha256:c3363b6a538abd4d906cf0b3fc074ee02c7bbb28430388c972d4f20fd2015669",
+          "coverage_families": [
+            "technology_product",
+            "competitive_landscape",
+            "policy_geopolitics"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_peer",
+            "owner_surface": "华工科技",
+            "anchor_type": "explicit_peer_surface",
+            "anchor_value": "华工科技",
+            "anchor_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+            "anchor_block_id": "curated-source:analysis:ae1f0ad135fef689:block:8",
+            "anchor_unit_id": "external-unit:curated-source:analysis:ae1f0ad135fef689:8:1:13c538b53531b156"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+          "curated-source:analysis:ae1f0ad135fef689"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:90e071f7f0326a7e",
+      "argument_key": "technology_product:peer_or_industry:90e071f7f0326a7e",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "capacity_delivery"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:6c122438c5835111:0:9:f7aeabe77a39507c",
+          "source_id": "curated-source:media:6c122438c5835111",
+          "document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "block_id": "curated-source:media:6c122438c5835111:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 9,
+          "start": 307,
+          "end": 347,
+          "text": "行业整体增速极快，DSP芯片、VCSEL芯片、PCB等原材料均出现不同程度紧张。",
+          "unit_hash": "sha256:69d7864b33668d4fc5d40fa472a79b82e834549d5975004bf7aeabe77a39507c",
+          "block_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+          "coverage_families": [
+            "technology_product",
+            "capacity_delivery"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "industry_context",
+            "owner_surface": "",
+            "anchor_type": "industry_subject",
+            "anchor_value": "行业",
+            "anchor_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+            "anchor_block_id": "curated-source:media:6c122438c5835111:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:6c122438c5835111:0:9:f7aeabe77a39507c"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.c114.com.cn/news/6564/a1313773.html",
+          "curated-source:media:6c122438c5835111"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:48f29079a0b97a41",
+      "argument_key": "demand_customer:peer_or_industry:48f29079a0b97a41",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "demand_customer",
+      "coverage_families": [
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:4:1a973fa9c5b65275",
+          "source_id": "curated-source:media:d109143dc56cf924",
+          "document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "block_id": "curated-source:media:d109143dc56cf924:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 148,
+          "end": 197,
+          "text": "需求变化主要体现在结构上，部分客户下调需求但同时也有新增云厂商及AI大模型客户上调了1.6T需求。",
+          "unit_hash": "sha256:1343578bbb010661177b9a306d37ca9ef9db1ab024609f501a973fa9c5b65275",
+          "block_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+          "coverage_families": [
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "industry_context",
+            "owner_surface": "",
+            "anchor_type": "industry_subject",
+            "anchor_value": "需求",
+            "anchor_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+            "anchor_block_id": "curated-source:media:d109143dc56cf924:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:d109143dc56cf924:0:4:1a973fa9c5b65275"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://finance.eastmoney.com/a/202607133802746037.html",
+          "curated-source:media:d109143dc56cf924"
+        ]
+      ]
+    }
+  ],
+  "citations": {
+    "1": {
+      "source": "外部材料精选观察",
+      "author": "福星的方蕊",
+      "title": "中际旭创与华工科技在技术水平上谁领先？",
+      "url": "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+      "source_ref": "https://caifuhao.eastmoney.com/news/20260719174709880639180",
+      "source_id": "curated-source:analysis:ae1f0ad135fef689",
+      "source_document_hash": "sha256:420a67b73ed74da3cae6fd806d2717dedfd6839959aeb9612e087514ee67d729",
+      "publish_time": "2026-07-19 17:47",
+      "source_kind": "analysis",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "2": {
+      "source": "外部材料精选观察",
+      "author": "9apb27",
+      "title": "中际旭创的NPO-CPO之路初探",
+      "url": "https://guba.sina.cn/view_10376_182941.html",
+      "source_ref": "https://guba.sina.cn/view_10376_182941.html",
+      "source_id": "curated-source:analysis:af6623ca3b5116db",
+      "source_document_hash": "sha256:9ce921f9dcf74d982ccb6cd0f7042f09cac223f4d96c15227ccd9d9a2ea16612",
+      "publish_time": "2026-02-12",
+      "source_kind": "analysis",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "3": {
+      "source": "外部材料精选观察",
+      "author": "格隆汇",
+      "title": "中际旭创：1.6T产品已经在量产出货且预计会保持每个季度出货量环比提升",
+      "url": "https://dxpress.gelonghui.com/live/2419906",
+      "source_ref": "https://dxpress.gelonghui.com/live/2419906",
+      "source_id": "curated-source:media:309b01a511e8ae7f",
+      "source_document_hash": "sha256:d795f6989c1af5818a862bf7b27f99732a572e6007eef9610f2238b757a796e7",
+      "publish_time": "2026-04-24",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "4": {
+      "source": "外部材料精选观察",
+      "author": "水灵",
+      "title": "中际旭创：1.6T预期未减少，800G需求明显增加",
+      "url": "https://www.c114.com.cn/news/6564/a1313773.html",
+      "source_ref": "https://www.c114.com.cn/news/6564/a1313773.html",
+      "source_id": "curated-source:media:6c122438c5835111",
+      "source_document_hash": "sha256:c3054fb600f08cd117b884f071ac757800ccc722460a3327900c6484d32e555d",
+      "publish_time": "2026-07-13 09:25",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "5": {
+      "source": "外部材料精选观察",
+      "author": "澎湃新闻",
+      "title": "中际旭创：对上半年经营情况和行业需求都非常有信心",
+      "url": "https://finance.eastmoney.com/a/202607133802746037.html",
+      "source_ref": "https://finance.eastmoney.com/a/202607133802746037.html",
+      "source_id": "curated-source:media:d109143dc56cf924",
+      "source_document_hash": "sha256:a1f5967d2ddf254af1da46b170fb84fc24247045aa6928f801bc8b036e600116",
+      "publish_time": "2026-07-13 08:42",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    }
+  },
+  "diagnostics": {
+    "source_unit_count": 57,
+    "target_unit_count": 31,
+    "peer_unit_count": 9,
+    "rejected_by_reason": {
+      "unclassified": 7,
+      "incomplete": 10
+    },
+    "rejected_source_documents": {},
+    "selector_batch_count": 1,
+    "selector_request_count": 2,
+    "accepted_target_card_count": 22,
+    "accepted_peer_card_count": 9,
+    "accepted_count": 31
+  },
+  "narrative_plan": {
+    "schema_version": "curated_external_narrative_plan.v1",
+    "groups": [
+      {
+        "scope_bucket": "target",
+        "primary_family": "commercialization",
+        "card_ids": [
+          "external-card:642dbfded17ff2ba",
+          "external-card:c66414c251296823",
+          "external-card:9c9f7af443bedf78"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "competitive_landscape",
+        "card_ids": [
+          "external-card:1e72b88d7247535c"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "technology_product",
+        "card_ids": [
+          "external-card:cf3bbbd0c8e715b7",
+          "external-card:98c553b197cf48bf",
+          "external-card:ab16266691faa178",
+          "external-card:a48a7e3e06ce3804",
+          "external-card:7041fbbe6e7198e5",
+          "external-card:05e81a98ca13ed0c",
+          "external-card:50f93b1126efd785",
+          "external-card:5fa86c39973f399d",
+          "external-card:a84a89568f57dc5a",
+          "external-card:7ed5eb37c2498ded"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "demand_customer",
+        "card_ids": [
+          "external-card:876c3f4affd55159",
+          "external-card:4fceee74f140a3bd",
+          "external-card:298937a2e008add0",
+          "external-card:0cdcaff83041cda7",
+          "external-card:bd3e4630a7cef839"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "financial_quality",
+        "card_ids": [
+          "external-card:6de67cfe85f0be03"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "capacity_delivery",
+        "card_ids": [
+          "external-card:c1ec53b1ca4797b1",
+          "external-card:680056f49b8253a6"
+        ]
+      },
+      {
+        "scope_bucket": "peer_or_industry",
+        "primary_family": "technology_product",
+        "card_ids": [
+          "external-card:b30d51c75d095ac3",
+          "external-card:b761aa63cbbf23d1",
+          "external-card:9ec416cad46a0248",
+          "external-card:0b81734eebbed8fd",
+          "external-card:357f087c7330720c",
+          "external-card:c4e0c6862228383c",
+          "external-card:90e071f7f0326a7e"
+        ]
+      },
+      {
+        "scope_bucket": "peer_or_industry",
+        "primary_family": "competitive_landscape",
+        "card_ids": [
+          "external-card:3d0ec39d62785f28"
+        ]
+      },
+      {
+        "scope_bucket": "peer_or_industry",
+        "primary_family": "demand_customer",
+        "card_ids": [
+          "external-card:48f29079a0b97a41"
+        ]
+      }
+    ]
+  }
+}

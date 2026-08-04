@@ -1,35 +1,20 @@
 """Data loading and quality gate skills."""
 
 import logging
-import sys
-from pathlib import Path
 
 if __name__.startswith("utils."):
     from ..skill_pipeline import skill, SkillContext
-else:
-    from skill_pipeline import skill, SkillContext
-
-# Module-level imports so tests can patch them via unittest.mock
-try:
-    from content_quality_gate import ContentQualityGate
-except ImportError:
-    utils_dir = Path(__file__).parent.parent
-    if str(utils_dir) not in sys.path:
-        sys.path.insert(0, str(utils_dir))
-    from content_quality_gate import ContentQualityGate
-
-try:
-    from reporter.data_fetcher import (
+    from ..content_quality_gate import ContentQualityGate
+    from ..reporter.data_fetcher import (
         fetch_tencent_quote,
         fetch_consensus_eps,
         industry_fwd_pe,
         fetch_ps,
         fetch_competitor_metrics,
     )
-except ImportError:
-    utils_dir = Path(__file__).parent.parent
-    if str(utils_dir) not in sys.path:
-        sys.path.insert(0, str(utils_dir))
+else:
+    from skill_pipeline import skill, SkillContext
+    from content_quality_gate import ContentQualityGate
     from reporter.data_fetcher import (
         fetch_tencent_quote,
         fetch_consensus_eps,

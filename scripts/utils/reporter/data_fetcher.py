@@ -146,6 +146,35 @@ def hk_key_indicators(secucode: str, page_size: int = 4) -> List[Dict]:
     )
 
 
+def fetch_structured_financial_history_rows(code: str) -> Dict[str, List[Dict[str, Any]]]:
+    """Fetch raw annual-statement rows; field admission belongs to the adapter."""
+    code = str(code or "").upper().replace(".HK", "")
+    if _is_hk_code(code):
+        secucode = f"{code}.HK"
+        return {
+            "profit": hk_key_indicators(secucode, page_size=16),
+            "cashflow": eastmoney_datacenter(
+                report_name="RPT_HKSK_FN_CASHFLOW", filter_str=f'(SECUCODE="{secucode}")',
+                page_size=500, sort_columns="REPORT_DATE", sort_types="-1",
+            ),
+        }
+    if not _is_standard_a_share_code(code):
+        raise ValueError(f"unsupported stock code: {code}")
+    import akshare as ak
+    prefix = "SH" if code.startswith(("6", "9")) else "BJ" if code.startswith("8") else "SZ"
+    symbol = f"{prefix}{code}"
+    rows = {
+        "profit": ak.stock_profit_sheet_by_report_em(symbol=symbol).to_dict("records"),
+        "cashflow": ak.stock_cash_flow_sheet_by_report_em(symbol=symbol).to_dict("records"),
+    }
+    try:
+        rows["indicator"] = ak.stock_financial_abstract(symbol=code).to_dict("records")
+    except Exception as exc:
+        logger.warning("[%s] optional financial indicator unavailable: %s", code, exc)
+        rows["indicator"] = []
+    return rows
+
+
 def fund_flow_daily(ticker_or_code: str, secid_prefix: int = 105, limit: int = 100) -> List[Dict]:
     """
     东财 push2his 日级资金流 — 主力/大单/中单/小单净流入
@@ -828,26 +857,3 @@ def industry_fwd_pe(stock_name: str) -> Optional[float]:
     if not fwd_pes:
         return None
     return sum(fwd_pes) / len(fwd_pes)
-
-
-def fetch_index_bars(client, symbol: str, market: str = "std", days: int = 60):
-    """获取指数日K数据。兼容 mootdx 两种 API 签名。"""
-    if client is None:
-        logger.warning("mootdx client 未初始化，无法获取指数数据")
-        return None
-    try:
-        try:
-            df = client.index_bars(symbol=symbol, market=market, frequency="9", offset=days)
-        except TypeError:
-            df = client.index_bars(symbol=symbol, frequency="9", offset=days)
-        if df is None or df.empty:
-            return None
-        df = df.reset_index()
-        if "datetime" in df.columns:
-            df["date"] = pd.to_datetime(df["datetime"])
-        elif "date" in df.columns:
-            df["date"] = pd.to_datetime(df["date"])
-        return df
-    except Exception as e:
-        logger.warning(f"获取指数 {symbol} 数据失败: {e}")
-        return None

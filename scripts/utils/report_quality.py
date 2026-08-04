@@ -15,8 +15,10 @@ from typing import Any, Iterable, List
 
 try:
     from .source_direct_relevance import OPERATING_VARIABLE_TERMS
+    from .evidence_freshness import has_unnegated_strong_confirmation
 except ImportError:
     from source_direct_relevance import OPERATING_VARIABLE_TERMS
+    from evidence_freshness import has_unnegated_strong_confirmation
 
 
 @dataclass
@@ -214,6 +216,8 @@ def check_report_text(
 
     issues.extend(_check_required_signals(normalized))
     issues.extend(_check_contradictions(normalized, profile))
+    issues.extend(_check_empty_executive_summary_body(text))
+    issues.extend(_check_freshness_summary_line(text))
     issues.extend(_check_curated_external_inline_footnotes(text, profile))
     issues.extend(_check_industry_chain_claims(text, industry_relevance_manifest))
     issues.extend(_check_peer_comparison_quality(text, peer_comparison_material))
@@ -246,6 +250,42 @@ def _check_malformed_citation_markers(text: str) -> List[QualityIssue]:
             evidence=", ".join(sorted(set(malformed))[:5]),
         )
     ]
+
+
+def _check_freshness_summary_line(text: str) -> List[QualityIssue]:
+    summary = _extract_markdown_section(text, "执行摘要")
+    lines = [line.strip() for line in summary.splitlines() if "**近期待验证变量**" in line]
+    total_count = str(text or "").count("**近期待验证变量**")
+    issues: List[QualityIssue] = []
+    if total_count > len(lines):
+        issues.append(QualityIssue(
+            code="freshness_summary_outside_executive_summary",
+            severity="error",
+            message="近期待验证变量只能出现在执行摘要中。",
+        ))
+    if len(lines) > 1:
+        issues.append(QualityIssue(
+            code="freshness_summary_multiple",
+            severity="error",
+            message="执行摘要最多只能有一条近期待验证变量。",
+        ))
+    for line in lines[:1]:
+        refs = re.findall(r"\[\^(\d+)\]", line)
+        missing = [term for term in ("外部待验证", "不替代官方确认", "不参与评分", "风险评分", "目标价") if term not in line]
+        if not refs or missing:
+            issues.append(QualityIssue(
+                code="freshness_summary_boundary",
+                severity="error",
+                message="执行摘要近期待验证变量缺少完整 citation 或 display-only 边界免责声明。",
+                evidence=f"missing={missing}; refs={refs}",
+            ))
+        if has_unnegated_strong_confirmation(line):
+            issues.append(QualityIssue(
+                code="freshness_summary_unverified_confirmation",
+                severity="error",
+                message="执行摘要外部待验证变量使用了未被否定的强确认表述。",
+            ))
+    return issues
 
 
 def _check_deep_analysis_material_snapshot(text: str, snapshot: Any) -> List[QualityIssue]:
@@ -374,6 +414,8 @@ def _external_snapshot_row_is_framed(text: str, row_text: str) -> bool:
         "不等同于官方确认",
         "需验证",
         "待验证",
+        "近期外部材料主要围绕",
+        "同业与行业材料主要集中在",
     )
     return any(term in matching_line for term in framing_terms)
 
@@ -571,18 +613,29 @@ def _check_curated_external_inline_footnotes(text: str, profile: dict | None = N
     if not section:
         return
 
-    if "本节引用来源" not in section or not re.search(r"(?m)^-\s*\[\^\d+\]", section):
+    if "本节引用来源" in section and re.search(r"(?m)^-\s*\[\^\d+\]", section):
+        body = section.split("本节引用来源", 1)[0]
+        if not re.search(r"\[\^\d+\]", body):
+            yield QualityIssue(
+                code="curated_external_missing_inline_footnotes",
+                severity="error",
+                message=f"{section_id} 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
+            )
         return
 
-    body = section.split("本节引用来源", 1)[0]
-    if re.search(r"\[\^\d+\]", body):
-        return
-
-    yield QualityIssue(
-        code="curated_external_missing_inline_footnotes",
-        severity="error",
-        message=f"{section_id} 外部观察有本节引用来源，但正文段落缺少 inline footnote，引用不可追溯。",
-    )
+    body = section.split("## 引用来源", 1)[0]
+    for match in re.finditer(r"(?m)^\*\*([^*\n]+)\*\*\s*$", body):
+        tail = body[match.end():]
+        paragraph = next((line.strip() for line in tail.splitlines() if line.strip()), "")
+        if not paragraph:
+            continue
+        if paragraph.startswith(("#", ">", "- ", "* ", "|", "**")) or not re.search(r"\[\^\d+\]", paragraph):
+            yield QualityIssue(
+                code="curated_external_missing_inline_footnotes",
+                severity="error",
+                message=f"{section_id} 外部变量“{match.group(1)}”缺少正文 inline footnote，引用不可追溯。",
+            )
+            return
 
 
 _INDUSTRY_CHAIN_TRIGGER_TERMS = [
@@ -766,10 +819,16 @@ def _check_product_industry_mismatch(text: str) -> Iterable[QualityIssue]:
 
 def _check_financial_fact_unit_sanity(text: str) -> Iterable[QualityIssue]:
     normalized = _normalize(text)
-    has_small_core_amount = re.search(
+    small_amount_pattern = re.compile(
         r"(营业收入|归母净利润|净利润|经营现金流[^|。\n]*)[^。\n|]*\|?[^。\n|]{0,20}\d+(?:\.\d+)?万元",
-        normalized,
     )
+    has_small_core_amount = next((
+        match for match in small_amount_pattern.finditer(normalized)
+        if not re.search(
+            r"战略配售|获配|认购|出资|投资(?:成本|金额|收益)",
+            normalized[max(0, match.start() - 12):match.end() + 12],
+        )
+    ), None)
     has_yi_amount = re.search(
         r"(营业收入|归母净利润|净利润|经营现金流[^。,\n]*)[^。,\n]{0,20}\d+(?:\.\d+)?亿",
         normalized,
@@ -841,6 +900,25 @@ def _check_financial_profit_direction_contradictions(text: str) -> Iterable[Qual
             message="报告同时出现净利同比下滑信号与正式章节利润高增/增长表述，需统一财务口径或显式解释差异。",
             evidence=f"negative={negative_profit_signal.group(0)}; positive={positive_profit_wording.group(0)}",
         )
+
+
+def _check_empty_executive_summary_body(text: str) -> Iterable[QualityIssue]:
+    if "## 一、综合评分与推荐" not in text:
+        return
+    section = _extract_markdown_section(text, "执行摘要")
+    body_patterns = (
+        r"\*\*基本面判断\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+        r"\*\*估值与业绩预期\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+        r"\*\*交易状态与风险\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+        r">[ \t]*\*\*一句话结论\*\*[ \t]*[：:][ \t]*\S[^\n]*",
+    )
+    if any(re.search(pattern, section) for pattern in body_patterns):
+        return
+    yield QualityIssue(
+        code="empty_executive_summary_body",
+        severity="error",
+        message="深度报告执行摘要只有评分、标题或图表，缺少可读正文。",
+    )
 
 
 def _check_header_config_missing(text: str) -> Iterable[QualityIssue]:
@@ -1083,10 +1161,15 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
             severity="error",
             message=f"{section_id} 外部观点地图缺少 display-only / 不参与评分免责声明。",
         )
-    # Scan only the claim body, excluding the blockquote disclaimer, for
-    # strong confirmation terms.  The disclaimer itself contains words like
-    # "确认" and must not trigger an unverified-claim framing error.
-    claim_body = re.sub(r"(?m)^>.*$", "", section).strip()
+    # The peer/industry suffix is explicitly display-only context, not a
+    # target-company claim. Keep its wording auditable without letting it
+    # satisfy or trip the target-claim confirmation gate.
+    target_section = re.split(
+        r"(?m)^>\s*\*\*同业/行业背景（Preview）\*\*",
+        section,
+        maxsplit=1,
+    )[0]
+    claim_body = re.sub(r"(?m)^>.*$", "", target_section).strip()
     low_credit_only = not re.search(r"来源[:：]\s*(?:公告|年报|研报|官方|交易所)", section)
     if low_credit_only:
         confirmation_terms = ("确认", "已经", "确定", "进入供应链", "订单落地", "客户为")
@@ -1111,7 +1194,7 @@ def _check_external_map_disclaimer_and_framing(text: str, profile: dict | None) 
             if not market_position_term:
                 continue
             has_external_framing = re.search(
-                r"外部材料称|外部观点称|据外部材料|据外部观点|该说法需|需(?:正式)?验证|待(?:正式)?验证|未经官方确认|不等同于官方确认|未确认",
+                r"外部材料称|外部观点称|据外部材料|据外部观点|近期外部材料主要围绕|同业与行业材料主要集中在|该说法需|需(?:正式)?验证|待(?:正式)?验证|未经官方确认|不等同于官方确认|未确认",
                 normalized_line,
             )
             if has_external_framing:
@@ -1133,6 +1216,7 @@ def _strip_negative_confirmation_phrases(text: str) -> str:
         r"未经官方确认",
         r"官方未确认",
         r"未确认",
+        r"(?:不|未|无法|难以)确定(?:性)?",
     )
     for pattern in patterns:
         text = re.sub(pattern, "", text)
@@ -1265,7 +1349,38 @@ def _check_external_viewpoint_overcompressed(text: str, profile: dict | None = N
             and re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
             and re.search(r"\[\^\d+\]", section)
         )
-        if has_variable_table or has_variable_narrative:
+        has_argument_v2_narrative = (
+            re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(
+                r"(?m)^(?:相对正式材料/机构假设，外部材料新增的待验证点|外部新增待验证变量)："
+                r"[^\n]*\[\^\d+\][。；]?\s*$",
+                section,
+            )
+            and re.search(r"(?m)^> \*\*(?:外部原文依据|缓存材料摘录)\*\*：\S", section)
+        )
+        has_canonical_source_narrative = (
+            re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(
+                r"(?m)^(?:相对正式材料/机构假设，外部材料新增的待验证点|外部新增待验证变量|"
+                r"同业/行业背景观察)：[^\n]*\[\^\d+\][。；;]?\s*$",
+                section,
+            )
+        )
+        has_grouped_topic_narrative = (
+            re.search(r"(?m)^\*\*[^*\n]{2,120}\*\*\s*$", section)
+            and re.search(
+                r"(?m)^(?:近期外部材料主要围绕[^。\n]{2,80}展开|"
+                r"同业与行业材料主要集中在[^。\n]{2,80})。[^\n]*\[\^\d+\]",
+                section,
+            )
+        )
+        if any((
+            has_variable_table,
+            has_variable_narrative,
+            has_argument_v2_narrative,
+            has_canonical_source_narrative,
+            has_grouped_topic_narrative,
+        )):
             missing = []
         else:
             markers = (

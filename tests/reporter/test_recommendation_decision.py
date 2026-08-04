@@ -41,6 +41,26 @@ def _pillar(**overrides):
     return defaults
 
 
+def _complete_judgment(action="wait_for_confirmation", trend="strong_up"):
+    execution = "triggered" if action == "follow" else "pending"
+    display = "full_targets" if action == "follow" else "core_targets"
+    statuses = {name: "pass" for name in ("price", "trend", "volume", "momentum")}
+    if action != "follow":
+        statuses["price"] = "pending"
+    return {
+        "schema": "technical_judgment.v1",
+        "trend": {"state": trend},
+        "target": {
+            "direction": "bullish", "producer_status": "ready",
+            "reason_code": "target_ready", "structure_confidence": "high",
+            "effective_confidence": "high", "execution_state": execution,
+            "display_mode": display,
+            "trigger_checks": {name: {"status": status} for name, status in statuses.items()},
+        },
+        "action": {"state": action},
+    }
+
+
 def test_missing_ev_renders_na_without_percent():
     decision = build_recommendation_decision(
         stock_name="黑芝麻智能",
@@ -123,6 +143,57 @@ def test_macd_blocked_entry_any_reason_triggers_wait():
     assert decision.entry_constraint.state == "wait_for_entry"
     assert decision.display_recommendation == "看多但等待入场"
     assert decision.recommendation_sentence != ""
+
+
+def test_legal_judgment_overrides_legacy_target_error_text():
+    stock_raw = {
+        "technical": {
+            "price_target": {"error": "关注/不操作", "reason": "旧中文文案"},
+            "indicators": {"_resonance": {"judgment": _complete_judgment()}},
+        }
+    }
+    decision = build_recommendation_decision(
+        stock_name="中际旭创", posts=[], stock_raw=stock_raw,
+        quote={"price": 100.0}, consensus={"eps_current": 5.0, "eps_next": 6.0},
+        industry_fwd_pe=20.0, pillar=_pillar(),
+    )
+
+    assert decision.entry_constraint.state == "wait_for_confirmation"
+    assert decision.display_recommendation == "看多但等待确认"
+
+
+def test_malformed_judgment_cannot_bypass_severe_legacy_trend():
+    malformed = _complete_judgment(action="follow", trend="unknown")
+    stock_raw = {"technical": {"indicators": {"_resonance": {
+        "judgment": malformed,
+        "trend_state": {"stage": "破坏期", "primary_state": "下降趋势"},
+        "trend_health": {"score": 20, "grade": "趋势失效"},
+    }}}}
+
+    decision = build_recommendation_decision(
+        stock_name="测试股", posts=[], stock_raw=stock_raw,
+        quote={"price": 100.0}, consensus={"eps_current": 5.0, "eps_next": 6.0},
+        industry_fwd_pe=20.0, pillar=_pillar(),
+    )
+
+    assert decision.entry_constraint.state == "severe_technical"
+
+
+def test_follow_judgment_still_applies_bias_overheat_guardrail():
+    stock_raw = {"technical": {"indicators": {
+        "bias_5_extreme_high": True,
+        "bias_10_extreme_high": False,
+        "_resonance": {"judgment": _complete_judgment(action="follow")},
+    }}}
+
+    decision = build_recommendation_decision(
+        stock_name="测试股", posts=[], stock_raw=stock_raw,
+        quote={"price": 100.0}, consensus={"eps_current": 5.0, "eps_next": 6.0},
+        industry_fwd_pe=20.0, pillar=_pillar(),
+    )
+
+    assert decision.entry_constraint.state == "overheated"
+    assert decision.display_recommendation == "看多但避免追高"
 
 
 def test_overheated_bias_downgrades_label():
@@ -579,7 +650,7 @@ def test_composite_score_legacy_fallback_does_not_render_na_percent():
     assert "EV: N/A%" not in result
 
 
-def _assembly_ctx_with_curated_paragraph(paragraph):
+def _assembly_ctx_with_curated_card(card):
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -600,15 +671,14 @@ def _assembly_ctx_with_curated_paragraph(paragraph):
             "pillar_scores": _pillar(),
             "synthesis": {"valuation_debate": "", "fundamentals": ""},
             "deep_analysis_display": {
-                "_curated_external_narrative": True,
-                "_curated_external_narrative_paragraphs": [paragraph],
+                "_curated_external_argument_cards": [card],
                 "citations": {},
             },
         }
     )
 
 
-def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_note():
+def test_assembly_structured_external_card_adds_display_only_risk_note():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -616,10 +686,10 @@ def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_no
             sys.path.insert(0, str(path))
     from utils.report_skills.assembly_skills import ReportAssemblySkill
 
-    ctx = _assembly_ctx_with_curated_paragraph(
+    ctx = _assembly_ctx_with_curated_card(
         {
-            "heading": "财务质量信号：研发费用收缩值得警惕",
-            "text": "这段正文本身不会作为正式风险评分输入。",
+            "primary_family": "financial_quality",
+            "evidence_units": [{"text": "外部材料提示研发费用收缩值得警惕。"}],
             "citation_refs": [1],
         }
     )
@@ -629,7 +699,7 @@ def test_assembly_structured_curated_narrative_heading_adds_display_only_risk_no
     assert "不计入综合风险评分" in markdown
 
 
-def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_text():
+def test_assembly_does_not_infer_display_only_risk_note_from_structured_evidence_text():
     scripts_dir = Path(__file__).parent.parent.parent / "scripts"
     utils_dir = scripts_dir / "utils"
     for path in (scripts_dir, utils_dir):
@@ -637,10 +707,10 @@ def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_t
             sys.path.insert(0, str(path))
     from utils.report_skills.assembly_skills import ReportAssemblySkill
 
-    ctx = _assembly_ctx_with_curated_paragraph(
+    ctx = _assembly_ctx_with_curated_card(
         {
-            "heading": "产品进展：车型拓展线索",
-            "text": "正文里出现毛利率承压风险等词，但没有结构化风险主题。",
+            "primary_family": "technology_product",
+            "evidence_units": [{"text": "正文里出现毛利率承压风险等词，但没有结构化风险主题。"}],
             "citation_refs": [1],
         }
     )
@@ -648,3 +718,34 @@ def test_assembly_does_not_infer_display_only_risk_note_from_curated_paragraph_t
 
     assert "外部观察说明" not in markdown
     assert "不计入综合风险评分" not in markdown
+
+
+def test_assembly_collects_structured_risk_card_without_changing_risk_score_input():
+    scripts_dir = Path(__file__).parent.parent.parent / "scripts"
+    for path in (scripts_dir, scripts_dir / "utils"):
+        if str(path) not in sys.path:
+            sys.path.insert(0, str(path))
+    from utils.report_skills.assembly_skills import ReportAssemblySkill
+    from utils.skill_pipeline import SkillContext
+
+    ctx = SkillContext(input={
+        "display_only_external_risks": [{"name": "显式风险", "source_kind": "manual"}],
+        "curated_external_analysis_items": [{
+            "title": "独立风险输入", "source_kind": "curated",
+            "content": "独立输入保留。", "display_only_risk_signal": True,
+        }],
+        "deep_analysis_display": {
+            "_curated_external_argument_cards": [{
+                "primary_family": "capacity_delivery",
+                "evidence_units": [{"text": "外部材料提示上游供给仍可能约束交付。"}],
+            }],
+        },
+    })
+
+    rows = ReportAssemblySkill._collect_display_only_external_risks(
+        ctx, DisplayOnlyExternalRiskSignal,
+    )
+
+    assert {row.name for row in rows} == {"显式风险", "独立风险输入", "capacity_delivery"}
+    assert all(row.source_kind for row in rows)
+    assert {row.name: row.source_kind for row in rows}["capacity_delivery"] == "curated_external_argument"

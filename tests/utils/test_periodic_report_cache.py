@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import builtins
@@ -10,7 +11,8 @@ from pathlib import Path
 import pytest
 
 
-sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
+REPO_ROOT = Path(__file__).parent.parent.parent
+sys.path.insert(0, str(REPO_ROOT / "scripts" / "utils"))
 
 from periodic_report_cache import (  # noqa: E402
     cache_periodic_report,
@@ -147,6 +149,8 @@ def test_periodic_report_cache_cli_registers_text_input(tmp_path: Path) -> None:
     source = tmp_path / "source.txt"
     source.write_text("圣邦股份 年报文本\n信号链与电源管理产品矩阵。\n", encoding="utf-8")
     cache_dir = tmp_path / "cache"
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(("scripts/utils", "scripts"))
 
     completed = subprocess.run(
         [
@@ -165,7 +169,8 @@ def test_periodic_report_cache_cli_registers_text_input(tmp_path: Path) -> None:
             "--cache-dir",
             str(cache_dir),
         ],
-        cwd=Path(__file__).parent.parent.parent,
+        cwd=REPO_ROOT,
+        env=env,
         text=True,
         capture_output=True,
         check=True,

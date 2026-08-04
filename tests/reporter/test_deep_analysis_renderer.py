@@ -4,10 +4,61 @@ import re
 
 import pytest
 from scripts.utils.deep_analysis_material_snapshot import (
+    ExternalNarrativePart,
+    ExternalTopicNarrative,
+    MaterialRow,
+    MaterialSnapshot,
     build_chapter4_view_model,
     build_deep_analysis_material_snapshot,
+    select_annual_display_rows,
 )
-from scripts.utils.reporter.sections import DeepAnalysisRenderer
+from scripts.utils.reporter.sections import DeepAnalysisRenderer, ExecutiveSummaryRenderer
+
+
+def _test_external_family(text: str, title: str = "") -> str:
+    value = f"{title} {text}"
+    if re.search(r"供给|供应|交付|预付款|订单", value):
+        return "capacity_delivery"
+    if re.search(r"技术|产品|FPGA|NPO|XPO|芯片", value, re.I):
+        return "technology_product"
+    if re.search(r"客户|需求|市场", value):
+        return "demand_customer"
+    if re.search(r"收入|利润|毛利率|财务", value):
+        return "financial_quality"
+    return "other"
+
+
+def _external_argument_row(claim, evidence, *, ref=None, refs=None, key, title="外部待验证变量"):
+    citation_refs = list(refs if refs is not None else [ref])
+    family = _test_external_family(claim, title)
+    return {
+        "schema_version": "curated_external_argument_card.v4",
+        "argument_key": key,
+        "entity_scope": "target",
+        "coverage_families": [family],
+        "primary_family": family,
+        "evidence_units": [{
+            "schema_version": "curated_external_evidence_unit.v2",
+            "unit_id": f"unit:{key}", "source_id": "source:fixture",
+            "document_hash": "fixture", "block_id": "block:fixture", "block_ordinal": 0,
+            "unit_ordinal": 0, "start": 0, "end": len(evidence), "unit_hash": "fixture", "block_hash": "fixture",
+            "text": evidence,
+            "evidence_status": "source_unit_verified",
+            "citation_refs": citation_refs,
+            "scope_provenance": {
+                "schema_version": "curated_external_scope_provenance.v2", "origin": "explicit_target",
+                "anchor_unit_id": f"unit:{key}", "proof_kind": "explicit_stock_name",
+                "proof_value": "fixture-target",
+            },
+        }],
+        "citation_refs": citation_refs,
+    }
+
+
+
+
+def _render(renderer, ctx):
+    return renderer.render(ctx)
 
 
 def test_required_keys():
@@ -19,6 +70,389 @@ def test_render_missing_keys():
     renderer = DeepAnalysisRenderer()
     assert renderer.render({}) == ""
     assert renderer.render({"stock_name": "Test"}) == ""
+
+
+def test_visible_citations_keep_reserved_executive_summary_refs():
+    citations = {
+        1: {"source": "年报"},
+        2: {"source": "外部观察"},
+        3: {"source": "未使用"},
+    }
+    visible = DeepAnalysisRenderer._visible_citations_only(
+        citations, "正文[^1]", reserved_refs=(2,)
+    )
+    assert set(visible) == {1, 2}
+
+
+def test_alias_offset_citation_by_identity_only():
+    renderer = DeepAnalysisRenderer()
+    text = "外部变量[^12]；其他材料[^13]"
+    aliases = {
+        12: {"source": "外部观察", "url": "https://example.com/a"},
+        13: {"source": "其他", "url": "https://example.com/b"},
+    }
+    reserved = {
+        4: {"source": "外部观察", "url": "https://example.com/a"},
+    }
+    assert renderer._alias_reserved_citations(text, aliases, reserved) == "外部变量[^4]；其他材料[^13]"
+
+
+def test_external_variable_preface_is_only_added_when_freshness_gate_allows_it():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "external:1", "外部材料称订单节奏需跟踪。", "external", "external_observation",
+        (1,), (), title="订单变量", body="外部材料称订单节奏需跟踪。", render_role="external_variable",
+    )
+    with_preface = renderer._formal_medium_external_variable_map(
+        (row,), {1: {"source": "微信公众号精选观察"}}, preface=True,
+    )
+    without_preface = renderer._formal_medium_external_variable_map(
+        (row,), {1: {"source": "微信公众号精选观察"}}, preface=False,
+    )
+    assert any("正式材料的时间点较早" in line for line in with_preface)
+    assert not any("正式材料的时间点较早" in line for line in without_preface)
+
+
+def test_external_argument_v2_renders_delta_and_full_evidence_without_truncation():
+    renderer = DeepAnalysisRenderer()
+    evidence = "外部文章记录上游物料供应偏紧，并列出客户认证、交付安排和公司回应的完整上下文。"
+    rows = (
+        MaterialRow(
+            "external:argument_cards_v2:0", "交付变量", "external", "external_observation", (1,), (),
+            title="供应链交付", body="中际旭创800G交付节奏仍需验证。", render_role="external_variable",
+            external_claim="中际旭创800G交付节奏仍需验证。", external_evidence=evidence,
+            evidence_status="source_quote_verified", owner_relation="owner_delta", argument_key="delivery",
+        ),
+        MaterialRow(
+            "external:argument_cards_v2:1", "行业变量", "external", "external_observation", (2,), (),
+            title="同业路线", body="同业NPO路线进入验证窗口。", render_role="external_variable",
+            external_claim="同业NPO路线进入验证窗口。", external_evidence="缓存文章讨论同业验证节奏。",
+            evidence_status="cached_excerpt", owner_relation="outside_owner", argument_key="peer-route",
+        ),
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {1: {"source": "微信公众号精选观察"}, 2: {"source": "知乎精选观察"}},
+        disclaimer="仅作观察。",
+    ))
+
+    assert "相对正式材料/机构假设，外部材料新增的待验证点：中际旭创800G交付节奏仍需验证[^1]。" in rendered
+    assert "外部新增待验证变量：同业NPO路线进入验证窗口[^2]。" in rendered
+    assert f"> **外部原文依据**：{evidence}" in rendered
+    assert "> **缓存材料摘录**：缓存文章讨论同业验证节奏。" in rendered
+    assert "..." not in rendered
+
+
+def test_external_variable_map_separates_and_orders_peer_industry_background():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:peer", "行业竞争格局加速分化。", "external", "external_observation", (2,), (),
+            title="竞争格局", body="行业竞争格局加速分化。", render_role="external_variable",
+            external_claim="行业竞争格局加速分化。", evidence_status="source_unit_verified",
+            entity_scope="peer_or_industry", argument_key="peer",
+        ),
+        MaterialRow(
+            "external:target", "测试股产品完成客户导入。", "external", "external_observation", (1,), (),
+            title="客户导入", body="测试股产品完成客户导入。", render_role="external_variable",
+            external_claim="测试股产品完成客户导入。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="target",
+        ),
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, disclaimer="仅作观察。",
+    ))
+
+    assert rendered.index("测试股产品完成客户导入") < rendered.index("同业/行业背景（Preview）")
+    assert rendered.index("同业/行业背景（Preview）") < rendered.index("行业竞争格局加速分化")
+    assert "据外部材料，竞争格局的同业/行业背景包括：行业竞争格局加速分化[^2]。" in rendered
+    assert "同业/行业背景观察：" not in rendered
+    assert "#### 同业/行业背景（Preview）" not in rendered
+    assert "> **同业/行业背景（Preview）**：" in rendered
+
+
+def test_external_variable_map_groups_topics_within_each_entity_scope():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:tech-1", "目标技术一。", "external", "external_observation", (11,), (),
+            title="技术与产品", body="目标技术一。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key="tech-1",
+        ),
+        MaterialRow(
+            "external:financial", "目标财务。", "external", "external_observation", (12,), (),
+            title="财务质量", body="目标财务。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key="financial",
+        ),
+        MaterialRow(
+            "external:tech-2", "目标技术二。", "external", "external_observation", (13,), (),
+            title="技术与产品", body="目标技术二。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key="tech-2",
+        ),
+        MaterialRow(
+            "external:peer-tech", "同业技术。", "external", "external_observation", (14,), (),
+            title="技术与产品", body="同业技术。", render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="peer_or_industry", argument_key="peer-tech",
+        ),
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows,
+        {ref: {"source": "外部观察"} for ref in range(11, 15)},
+        citation_offset=20,
+        disclaimer="仅作观察。",
+    ))
+    target, peer = rendered.split("> **同业/行业背景（Preview）**", 1)
+
+    assert target.count("**技术与产品**") == 1
+    assert target.count("**财务质量**") == 1
+    assert target.index("目标技术一[^31]") < target.index("目标技术二[^33]")
+    assert target.index("目标技术二[^33]") < target.index("**财务质量**")
+    assert peer.count("**技术与产品**") == 1
+    assert "据外部材料，技术与产品的同业/行业背景包括：同业技术[^34]。" in peer
+    assert "同业/行业背景观察：" not in peer
+
+
+def test_external_variable_map_renders_one_extractively_joined_paragraph_per_topic():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:one", "产品进入客户验证。", "external", "external_observation", (1,), (),
+            title="技术与产品", body="产品进入客户验证。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="tech:one", external_family="technology_product",
+            external_unit_ids=("u1",),
+        ),
+        MaterialRow(
+            "external:two", "平台支持多档算力。", "external", "external_observation", (2,), (),
+            title="技术与产品", body="平台支持多档算力。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="tech:two", external_family="technology_product",
+            external_unit_ids=("u2",),
+        ),
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("tech:one", "u1", "产品进入客户验证。", "first", (1,)),
+        ExternalNarrativePart("tech:two", "u2", "平台支持多档算力。", "continuation", (2,)),
+    )),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, citation_offset=10,
+        disclaimer="仅作观察。", narratives=narratives,
+    ))
+
+    assert rendered.count("**技术与产品**") == 1
+    assert "外部材料称，技术与产品的新增待验证点包括：" in rendered
+    assert "产品进入客户验证[^11]；平台支持多档算力[^12]。" in rendered
+    assert "；此外，" not in rendered
+    assert "外部新增待验证变量：" not in rendered
+
+
+def test_external_topic_narrative_honors_separate_paragraphs_and_existing_connectors():
+    renderer = DeepAnalysisRenderer()
+    rows = tuple(
+        MaterialRow(
+            f"external:{index}", text, "external", "external_observation", (index,), (),
+            title="技术与产品", body=text, evidence_status="source_unit_verified",
+            entity_scope="target", argument_key=f"tech:{index}", external_family="technology_product",
+            external_unit_ids=(f"u{index}",),
+        )
+        for index, text in enumerate(("产品进入验证。", "同时，平台完成迭代。", "竞品推出新方案。"), 1)
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("tech:1", "u1", "产品进入验证。", "first", (1,)),
+        ExternalNarrativePart("tech:2", "u2", "同时，平台完成迭代。", "continuation", (2,)),
+        ExternalNarrativePart("tech:3", "u3", "竞品推出新方案。", "separate", (3,)),
+    )),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {index: {"source": "外部"} for index in range(1, 4)},
+        disclaimer="仅作观察。", narratives=narratives,
+    ))
+
+    assert "产品进入验证[^1]；同时，平台完成迭代[^2]。\n\n另据外部材料，竞品推出新方案[^3]。" in rendered
+    assert "；此外，同时" not in rendered
+    assert rendered.count("**技术与产品**") == 1
+
+
+def test_external_variable_map_falls_back_only_for_topic_without_valid_narrative():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "external:tech", "技术路线进入验证。", "external", "external_observation", (1,), (),
+            title="技术与产品", body="技术路线进入验证。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="tech", external_family="technology_product", external_unit_ids=("u1",),
+        ),
+        MaterialRow(
+            "external:financial", "毛利率仍需验证。", "external", "external_observation", (2,), (),
+            title="财务质量", body="毛利率仍需验证。", evidence_status="source_unit_verified",
+            entity_scope="target", argument_key="financial", external_family="financial_quality", external_unit_ids=("u2",),
+        ),
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", (
+        ExternalNarrativePart("tech", "u1", "技术路线进入验证。", "first", (1,)),
+    )),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, disclaimer="仅作观察。",
+        narratives=narratives,
+    ))
+
+    assert "外部材料称，技术与产品的新增待验证点包括：" in rendered
+    assert "外部材料称，财务质量的新增待验证点包括：毛利率仍需验证[^2]。" in rendered
+    assert "外部新增待验证变量：" not in rendered
+
+
+def test_external_variable_map_empty_narrative_skips_topic_without_raw_fallback():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "external:duplicate", "重复事实。", "external", "external_observation", (1,), (),
+        title="技术与产品", body="重复事实。", evidence_status="source_unit_verified",
+        entity_scope="target", argument_key="duplicate", external_family="technology_product",
+        external_unit_ids=("u1",),
+    )
+    narratives = (ExternalTopicNarrative("target", "technology_product", ()),)
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        (row,), {1: {"source": "外部观察"}}, disclaimer="仅作观察。", narratives=narratives,
+    ))
+
+    assert "**技术与产品**" not in rendered
+    assert "重复事实" not in rendered
+
+
+def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "external:multiline", "业绩原因", "external", "external_observation", (7,), (),
+        title="财务质量", body="收入与毛利均实现增长。\n同时，公司持续推进产品迭代并形成贡献。",
+        render_role="external_variable", evidence_status="source_unit_verified",
+        entity_scope="target", argument_key="financial-quality",
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        (row,), {7: {"source": "外部观察"}}, disclaimer="仅作观察。",
+    ))
+
+    assert "外部材料称，财务质量的新增待验证点包括：收入与毛利均实现增长[^7]；同时，公司持续推进产品迭代并形成贡献[^7]。" in rendered
+    assert "外部新增待验证变量：" not in rendered
+
+
+def test_verified_external_topic_wraps_long_fallback_without_dropping_rows():
+    renderer = DeepAnalysisRenderer()
+    rows = tuple(
+        MaterialRow(
+            f"external:{index}", text, "external", "external_observation", (index,), (),
+            title="财务质量", body=text, render_role="external_variable",
+            evidence_status="source_unit_verified", entity_scope="target", argument_key=f"financial:{index}",
+        )
+        for index, text in enumerate((
+            "营业收入改善，客户需求和产品结构共同形成支撑" * 4 + "。",
+            "归母净利润增长，经营杠杆和投资收益共同贡献" * 4 + "。",
+            "扣非净利润改善，主营业务盈利质量仍需持续验证" * 4 + "。",
+        ), 1)
+    )
+
+    rendered = "\n".join(renderer._formal_medium_external_variable_map(
+        rows, {index: {"source": "外部观察"} for index in range(1, 4)}, disclaimer="仅作观察。",
+    ))
+
+    assert rendered.count("外部材料称，财务质量的新增待验证点包括：") == 1
+    assert "\n\n另据外部材料，" in rendered
+    assert all(text.rstrip("。") in rendered for text in (row.body for row in rows))
+    assert max(len(paragraph) for paragraph in rendered.split("\n\n")) <= 260
+    assert rendered.count("外部新增待验证变量：") == 0
+
+
+def test_annual_portrait_prefers_a_complete_sentence():
+    renderer = DeepAnalysisRenderer()
+    rows = [
+        {"body": "公司主营业务为高端光通信收发模块，为客户提供低成"},
+        {"body": "公司主营业务为高端光通信收发模块，服务云计算数据中心客户"},
+    ]
+
+    assert renderer._select_annual_portrait_row(rows) == rows[1]
+
+
+def test_annual_portrait_requires_company_scope():
+    renderer = DeepAnalysisRenderer()
+    narrow = {"body": "公司NFC产品广泛应用于金融POS、智能门锁和门禁等市场。"}
+    company = {"body": "公司主营业务为芯片设计，并为多个行业客户提供产品与系统解决方案。"}
+
+    assert renderer._select_annual_portrait_row([narrow]) is None
+    assert renderer._select_annual_portrait_row([narrow, company]) == company
+
+
+def test_annual_portrait_accepts_company_product_matrix_without_terminal_punctuation():
+    renderer = DeepAnalysisRenderer()
+    matrix = {
+        "body": "在子系列产品基础上，公司开发了FPGA、RF-FPGA、PSoC、RFSoC、FPAI等多个系列产品类型，逻辑资源从50K至4000K，算力从4TOPS至128TOPS，广泛应用于工业控制、测试测量、电力能源、消费电子、音视频、人工智能、卫星通信以及高可靠等领域，为客户提供低成本、低功耗、高性能、高可靠性的多元产品矩阵，全面匹配多样化应用需求。安全与识别产品线拥有多个芯片方向，是国内领先供应商",
+    }
+
+    assert renderer._select_annual_portrait_row([matrix]) == matrix
+
+
+def test_annual_portrait_falls_back_after_an_ineligible_business_pool():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow("annual:narrow", "公司NFC产品广泛应用于门禁市场。", "annual", "formal_explanation", (1,), ("annual:narrow",), body="公司NFC产品广泛应用于门禁市场。", render_role="business_structure"),
+        MaterialRow("annual:operating", "报告期内，公司主营业务覆盖芯片设计、测试及系统解决方案。", "annual", "formal_explanation", (2,), ("annual:operating",), body="报告期内，公司主营业务覆盖芯片设计、测试及系统解决方案。", render_role="operating_progress"),
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(
+        rows,
+        fallback="无材料",
+    ))
+    portrait = rendered.split("**一句话画像**", 1)[1].split("**业务结构**", 1)[0]
+
+    assert "主营业务覆盖芯片设计、测试及系统解决方案" in portrait
+
+
+def test_compact_annual_text_never_cuts_an_over_limit_sentence():
+    sentence = "公司主营业务为高端光通信收发模块的研发、生产及销售，" + "产品服务于云计算数据中心、数据通信和电信传输客户，" * 5 + "形成稳定合作关系。"
+
+    assert len(sentence) > 140
+    assert DeepAnalysisRenderer._compact_annual_text(sentence, 140) == sentence.rstrip("。")
+
+
+def test_annual_profile_dedupes_rows_that_compact_to_the_same_visible_sentence():
+    renderer = DeepAnalysisRenderer()
+    sentence = "公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心客户。"
+    long_tail = "同时，公司持续布局下一代高速产品并扩大研发投入，" + "推进产品验证、客户导入、产能建设、供应链协同和海外交付能力提升，" * 4 + "形成长期竞争力。"
+    rows = (
+        MaterialRow("annual:business", sentence, "annual", "formal_explanation", (1,), ("annual:business",), title="业务结构", body=sentence, render_role="business_structure", source_credit="official"),
+        MaterialRow("annual:market", sentence + long_tail, "annual", "formal_explanation", (2,), ("annual:market",), title="经营变化", body=sentence + long_tail, render_role="market_competition_outlook", source_credit="official"),
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(
+        rows,
+        fallback="无材料",
+    ))
+
+    assert rendered.count(sentence.rstrip("。")) == 1
+
+
+def test_annual_material_profile_keeps_preselected_financial_performance_fact():
+    renderer = DeepAnalysisRenderer()
+    row = MaterialRow(
+        "annual:profit",
+        "财务质量与变化原因：归属于上市公司股东的净利润约为2.32亿元，较上年同期减少59.42%。",
+        "annual",
+        "formal_explanation",
+        (1,),
+        ("annual:profit",),
+        title="财务质量与变化原因",
+        body="归属于上市公司股东的净利润约为2.32亿元，较上年同期减少59.42%。",
+        render_role="financial_quality_explanation",
+        source_credit="official",
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(
+        (row,), fallback="无材料",
+    ))
+
+    assert "**财务变化原因**" in rendered
+    assert "净利润约为2.32亿元，较上年同期减少59.42%" in rendered
+    assert "财务质量与变化原因：" not in rendered
 
 
 def test_render_basic():
@@ -34,9 +468,35 @@ def test_render_basic():
             "citations": {},
         },
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert isinstance(result, str)
     assert len(result) > 0
+
+
+def test_legacy_render_keeps_inline_refs_but_omits_local_source_lists():
+    renderer = DeepAnalysisRenderer()
+    result = _render(renderer, {
+        "stock_name": "测试股",
+        "synthesis": {
+            "industry_logic": "行业逻辑来自正式材料[^1]。",
+            "fundamentals": "业绩路径来自研报假设[^2]。",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {
+                1: {"source": "公司年报", "title": "年度报告"},
+                2: {"source": "券商研报", "title": "业绩点评"},
+            },
+        },
+        "core_facts": [],
+    })
+
+    assert "行业逻辑来自正式材料[^1]" in result
+    assert "业绩路径来自研报假设[^2]" in result
+    assert "**本节引用来源：**" not in result
+    assert result.count("## 引用来源") == 1
+    assert "- [^1] | **公司年报**" in result
+    assert "- [^2] | **券商研报**" in result
     assert "## 四、深度分析" in result
     assert "4.1 产业逻辑与竞争格局" in result
 
@@ -60,7 +520,7 @@ def test_render_embeds_material_coverage_diagnostics_comment():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "<!-- deep_analysis_material_coverage:" in result
     assert '"raw_report_count": 3' in result
@@ -81,7 +541,7 @@ def test_deep_analysis_renders_controlled_fallbacks_for_empty_sections():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 4.1 产业逻辑与竞争格局" in result
     assert "当前正式材料不足以形成可验证的产业逻辑与竞争格局判断" in result
@@ -105,7 +565,7 @@ def test_deep_analysis_funding_only_renders_events_fallback():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 4.3 资金面与催化剂时间线" in result
     assert "资金面内容。" in result
@@ -126,7 +586,7 @@ def test_deep_analysis_events_only_renders_funding_fallback():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 4.3 资金面与催化剂时间线" in result
     assert "催化剂内容。" in result
@@ -146,11 +606,14 @@ def test_curated_external_display_is_addendum_not_replacement():
             "citations": {1: {"source": "雪球", "title": "baseline title"}},
         },
         "deep_analysis_display": {
-            "industry_logic": "精选外部材料仅作为专业观察，提示中际旭创产业线索：800G需求增长[^1]",
-            "fundamentals": "",
-            "valuation_debate": "精选外部材料仅作为专业观察，不直接形成估值结论；估值仍应回到官方财务、市场价格和评分模型。",
-            "funding_sentiment": "精选外部材料不直接生成资金面判断，资金面仍以交易数据、资金流和市场指标为准。",
-            "events_catalysts": "",
+            "_curated_external_argument_cards": [
+                _external_argument_row(
+                    "外部材料提示 800G 需求增长。",
+                    "800G需求增长。",
+                    ref=1,
+                    key="demand:800g",
+                )
+            ],
             "citations": {
                 1: {
                     "source": "微信公众号精选观察",
@@ -161,7 +624,7 @@ def test_curated_external_display_is_addendum_not_replacement():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 4.1 产业逻辑与竞争格局" in result
     assert "baseline 产业逻辑[^1]" in result
@@ -169,354 +632,21 @@ def test_curated_external_display_is_addendum_not_replacement():
     assert "800G需求增长[^2]" in result
     assert result.index("baseline 产业逻辑") < result.index("### 4.4 外部观点与待验证变量（Preview）")
     assert "不直接形成估值结论" not in result
-    assert "- [^1] 雪球" in result
+    assert "- [^1] | **雪球**" in result
 
 
-def test_curated_external_narrative_reasoning_cards_not_rendered_visible():
-    renderer = DeepAnalysisRenderer()
-    excerpt = "外部原文片段" * 20
-    ctx = {
-        "stock_name": "复旦微电",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑[^1]",
-            "fundamentals": "baseline 业绩路径",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {1: {"source": "公告", "title": "年报"}},
-        },
-        "deep_analysis_display": {
-            "industry_logic": "外部材料提示估值分歧[^1]",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {
-                1: {
-                    "source": "雪球专栏观察",
-                    "title": "复旦微电估值分析",
-                    "source_type": "curated_external_analysis_evidence",
-                    "verification_status": "professional_observation",
-                    "claim_id": "fudan-xq-val-001",
-                }
-            },
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "估值分歧",
-                    "text": "外部材料提示估值分歧。",
-                    "citation_refs": [1],
-                }
-            ],
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim_id": "fudan-xq-val-001",
-                    "display_topic": "valuation_debate",
-                    "claim": "外部观点认为A股估值处于乐观情景上沿",
-                    "source_excerpt": excerpt,
-                    "reasoning_steps": ["用紫光国微作盈利参照", "用2026净利和PE交叉验证"],
-                    "numbers_used": ["375-420亿", "46-52元"],
-                    "assumptions": ["2026净利修复到7.5亿"],
-                    "counterpoints": ["军工订单恢复不及预期"],
-                    "verification_need": "跟踪半年报和订单恢复",
-                    "citation_refs": [1],
-                }
-            ],
-        },
-    }
-
-    result = renderer.render(ctx)
-
-    assert "**观点卡片：**" not in result
-    assert "**观点**：外部观点认为A股估值处于乐观情景上沿" not in result
-    assert "**推理步骤**：" not in result
-    assert "**关键数字**：" not in result
-    assert "外部材料提示估值分歧[^2]" in result
-    assert "- [^2] 雪球专栏观察" in result
 
 
-def test_curated_external_narrative_renders_flat_planned_paragraphs():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑[^1]",
-            "fundamentals": "",
-            "citations": {1: {"source": "研报", "title": "baseline title"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "topic": "supply_delivery_capacity",
-                    "heading": "预付款与物料瓶颈",
-                    "text": "外部材料提示上游材料预付款激增，可能反映磷化铟衬底与光芯片供应紧张。",
-                    "citation_refs": [1],
-                },
-                {
-                    "topic": "technology_route",
-                    "heading": "NPO/XPO 技术路线",
-                    "text": "外部材料提示 NPO/XPO 在 Scale-up 场景可能成为下一代互连增量。",
-                    "citation_refs": [2],
-                },
-            ],
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "title": "上游材料预付款观察",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-                2: {
-                    "source": "微信公众号精选观察",
-                    "title": "NPO/XPO 外部分析",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-            },
-        },
-    }
-
-    result = renderer.render(ctx)
-
-    assert "### 4.4 精选外部观察（Preview）" in result
-    assert "#### 4.4.1" not in result
-    assert "#### 4.4.2" not in result
-    assert "**预付款与物料瓶颈**" in result
-    assert "磷化铟衬底与光芯片供应紧张[^2]" in result
-    assert "**NPO/XPO 技术路线**" in result
-    assert "下一代互连增量[^3]" in result
-    assert result.index("预付款与物料瓶颈") < result.index("NPO/XPO 技术路线")
-    assert "- [^2] 微信公众号精选观察" in result
-    assert "- [^3] 微信公众号精选观察" in result
 
 
-def test_curated_external_narrative_merges_duplicate_display_citations():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑[^1]",
-            "citations": {1: {"source": "研报", "title": "baseline title"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "交付变量",
-                    "text": "第一段引用同一篇外部文章。",
-                    "citation_refs": [1],
-                },
-                {
-                    "heading": "供应链变量",
-                    "text": "第二段也引用同一篇外部文章。",
-                    "citation_refs": [2],
-                },
-            ],
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "author": "作者A",
-                    "title": "同一篇文章",
-                    "url": "https://example.com/same",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-                2: {
-                    "source": "微信公众号精选观察",
-                    "author": "作者A",
-                    "title": "同一篇文章",
-                    "url": "https://example.com/same",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-            },
-        },
-    }
-
-    result = renderer.render(ctx)
-    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "第一段引用同一篇外部文章[^2]" in result
-    assert "第二段也引用同一篇外部文章[^2]" in result
-    assert "第二段也引用同一篇外部文章[^3]" not in result
-    assert local_sources.count("https://example.com/same") == 1
-    assert "- [^2] 微信公众号精选观察" in local_sources
-    assert "- [^3] 微信公众号精选观察" not in local_sources
 
 
-def test_curated_external_narrative_dedupes_repeated_body_footnotes_after_merge():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑[^1]",
-            "citations": {1: {"source": "研报", "title": "baseline title"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "供应链变量",
-                    "text": "外部材料提示同一来源不应重复刷脚注。",
-                    "citation_refs": [1, 1, 3, 1],
-                },
-            ],
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "author": "作者A",
-                    "title": "同一篇文章",
-                    "url": "https://example.com/same",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-                3: {
-                    "source": "微信公众号精选观察",
-                    "author": "作者A",
-                    "title": "同一篇文章",
-                    "url": "https://example.com/same",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-            },
-        },
-    }
-
-    result = renderer.render(ctx)
-    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "外部材料提示同一来源不应重复刷脚注[^2]。" in result
-    assert "[^2][^2]" not in result
-    assert local_sources.count("https://example.com/same") == 1
 
 
-def test_curated_external_topic_groups_keep_taxonomy_fallback():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "测试股",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑[^1]",
-            "citations": {1: {"source": "研报", "title": "baseline title"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_topic_groups": {
-                "order_capacity_delivery": [
-                    {
-                        "heading": "交付变量",
-                        "text": "外部材料提示交付节奏仍需跟踪。",
-                        "citation_refs": [1],
-                    }
-                ],
-                "technology_route": [
-                    {
-                        "heading": "技术路线",
-                        "text": "外部材料提示技术路线仍有分歧。",
-                        "citation_refs": [2],
-                    }
-                ],
-            },
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "title": "交付观察",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-                2: {
-                    "source": "微信公众号精选观察",
-                    "title": "技术观察",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-            },
-        },
-    }
-
-    result = renderer.render(ctx)
-
-    assert "### 4.4 外部观点与待验证变量（Preview）" in result
-    assert "#### 4.4.1 订单、产能与交付节奏" in result
-    assert "#### 4.4.2 产业链与技术路线分歧" in result
-    assert "交付变量" in result
-    assert "技术路线" in result
 
 
-def test_curated_external_grouped_addendum_merges_duplicate_display_citations():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "测试股",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑[^1]",
-            "citations": {1: {"source": "研报", "title": "baseline title"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_topic_groups": {
-                "order_capacity_delivery": [
-                    {
-                        "heading": "交付变量",
-                        "text": "第一条引用同一来源。",
-                        "citation_refs": [1],
-                    },
-                    {
-                        "heading": "供应链变量",
-                        "text": "第二条也引用同一来源。",
-                        "citation_refs": [2],
-                    },
-                ],
-            },
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "author": "作者A",
-                    "title": "同一篇文章",
-                    "url": "https://example.com/same",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-                2: {
-                    "source": "微信公众号精选观察",
-                    "author": "作者A",
-                    "title": "同一篇文章",
-                    "url": "https://example.com/same",
-                    "source_type": "curated_external_analysis_evidence",
-                },
-            },
-        },
-    }
-
-    result = renderer.render(ctx)
-    local_sources = result.split("**本节引用来源：**", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "第一条引用同一来源[^2]" in result
-    assert "第二条也引用同一来源[^2]" in result
-    assert "第二条也引用同一来源[^3]" not in result
-    assert local_sources.count("https://example.com/same") == 1
 
 
-def test_curated_external_unknown_topic_does_not_fall_into_market_expectation():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "测试股",
-        "synthesis": {"industry_logic": "baseline", "citations": {}},
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "topic": "misc",
-                    "heading": "泛泛观察",
-                    "text": "外部材料只是描述行业背景，没有估值、股价、资金或情绪线索。",
-                    "citation_refs": [1],
-                }
-            ],
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "title": "泛泛观察",
-                    "source_type": "curated_external_analysis_evidence",
-                }
-            },
-        },
-    }
-
-    result = renderer.render(ctx)
-
-    assert "### 4.4 精选外部观察（Preview）" in result
-    assert "#### 4.4.1 其他待验证观察" not in result
-    assert "#### 4.4.1" not in result
-    assert "资本市场预期与情绪温度" not in result
-    assert "泛泛观察" in result
 
 
 def test_render_with_core_facts():
@@ -531,7 +661,7 @@ def test_render_with_core_facts():
             {"fact_id": 1, "fact": "营收增长", "data": "10%", "confidence": "高", "provenance_status": "supported", "source_labels": ["公告"], "evidence_type": "official"},
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "## 三、核心事实基座" in result
     assert "营收增长" in result
 
@@ -556,7 +686,7 @@ def test_render_core_facts_evidence_column():
             },
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "| # | 事实 | 数据/来源 | 证据 | 置信度 |" in result
     assert "雪球、研报 (mixed)" in result
 
@@ -574,7 +704,7 @@ def test_render_old_style_fact_omits_missing_ref_from_core_base():
             {"fact_id": 2, "fact": "毛利提升", "data": "51%", "confidence": "高"},
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "营收增长" in result
     assert "毛利提升" not in result
     assert "未绑定引用 (unknown)" not in result
@@ -600,7 +730,7 @@ def test_render_evidence_cell_no_numbered_citations():
             },
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     evidence_section = result.split("| # | 事实 | 数据/来源 | 证据 | 置信度 |")[1].split("## 四、深度分析")[0]
     assert "[^" not in evidence_section
 
@@ -625,7 +755,7 @@ def test_render_partially_supported_evidence_cell():
             },
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "雪球 (community, 部分引用无效)" in result
 
 
@@ -658,7 +788,7 @@ def test_render_invalid_ref_omitted_from_core_base():
             },
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "营收增长" in result
     assert "毛利提升" not in result
     assert "引用无效 (unknown)" not in result
@@ -692,7 +822,7 @@ def test_render_verified_claim_summary_section():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 事实核验摘要" in result
     assert "2026年第一季度营业收入下降约50%-60%" in result
@@ -725,7 +855,7 @@ def test_render_verified_claim_summary_accepts_real_summary_bucket_names():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 事实核验摘要" in result
     assert "| 客户需求量阶段性减少导致收入下降约50%-60% | 已验证 | 中简科技2026年第一季度报告 | 84 |" in result
@@ -755,7 +885,7 @@ def test_verified_claim_summary_excludes_unverified_and_malformed_rows():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 事实核验摘要" in result
     assert "有效核验事实" in result
@@ -784,7 +914,7 @@ def test_verified_claim_summary_sanitizes_citations_urls_and_agent_reach_labels(
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     section = result.split("### 事实核验摘要")[1].split("### 4.1")[0]
 
     assert "[^" not in section
@@ -811,7 +941,7 @@ def test_verified_claim_summary_defaults_missing_source_and_handles_bad_confiden
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "| 官方核验事实 | 已验证 | 高信用来源 | — |" in result
 
@@ -832,7 +962,7 @@ def test_supported_claim_summary_defaults_missing_source_to_partial_support_sour
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "| 一季报净利润同比增长106.96% | 部分支持，非官方确认 | 部分支持来源 | 54 |" in result
     assert "| 一季报净利润同比增长106.96% | 部分支持，非官方确认 | 高信用来源 | 54 |" not in result
@@ -855,7 +985,7 @@ def test_verified_claim_summary_strips_title_prefix_from_source():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "Title:" not in result
     assert "| 官方核验事实 | 已验证 | 99999999.PDF | 84 |" in result
@@ -878,7 +1008,7 @@ def test_verified_claim_summary_maps_known_cninfo_pdf_titles():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "1225106812.PDF" not in result
     assert "| 客户需求量阶段性减少导致收入下降约50%-60% | 已验证 | 2026年第一季度业绩预告 | 84 |" in result
@@ -908,7 +1038,7 @@ def test_verified_claim_summary_caps_rows_and_does_not_mutate_inputs():
     original_synthesis = dict(synthesis)
     original_core_facts = [dict(row) for row in core_facts]
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     section = result.split("### 事实核验摘要")[1].split("### 4.1")[0]
 
     assert section.count("| 核验事实") == 6
@@ -944,7 +1074,7 @@ def test_render_core_facts_all_invalid_shows_empty_state():
             {"fact_id": 2, "fact": "毛利提升", "data": "51%", "confidence": "高", "provenance_status": "missing_ref"},
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "## 三、核心事实基座" in result
     assert "当前未形成可由高信用来源支撑的核心事实基座" in result
     assert "| # | 事实 | 数据/来源 | 证据 | 置信度 |" not in result
@@ -961,7 +1091,7 @@ def test_render_core_facts_mixed_invalid_omits_unsupported_rows():
             {"fact_id": 2, "fact": "毛利提升", "data": "51%", "confidence": "高", "provenance_status": "invalid_ref"},
         ],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "| # | 事实 | 数据/来源 | 证据 | 置信度 |" in result
     assert "营收增长" in result
     assert "毛利提升" not in result
@@ -977,7 +1107,7 @@ def test_render_claim_summary_uses_neutral_title():
             "verified": [{"claim_text": "营收下降", "status": "verified", "verified_by_titles": ["公告"], "confidence": 84}],
         },
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "### 官方事实核验摘要" not in result
     assert "### 事实核验摘要" in result
 
@@ -991,7 +1121,7 @@ def test_render_supported_claim_status_label():
             "supported": [{"claim_text": "研发费用增长", "status": "supported", "verified_by_titles": ["公告"], "confidence": 76}],
         },
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "部分支持，非官方确认" in result
     assert "| 研发费用增长 | 部分支持，非官方确认 |" in result
 
@@ -1016,7 +1146,7 @@ def test_render_prefers_synthesis_display():
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "enhanced 年报全文 行业逻辑" in result
     assert "baseline 行业逻辑" not in result
     assert "定期报告叙事卡片" in result
@@ -1049,7 +1179,7 @@ def test_render_does_not_use_social_synthesis_display_for_main_analysis():
         "core_facts": [],
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "baseline 正式源行业逻辑" in result
     assert "雪球/知乎 display 行业逻辑" not in result
@@ -1066,7 +1196,7 @@ def test_render_falls_back_to_synthesis_when_no_display():
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "baseline 行业逻辑" in result
 
 
@@ -1088,7 +1218,7 @@ def test_render_prefers_deep_analysis_display():
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "deep_analysis_display 行业逻辑" in result
     assert "synthesis_display 行业逻辑" not in result
     assert "baseline 行业逻辑" not in result
@@ -1103,7 +1233,14 @@ def test_render_deep_analysis_display_with_curated_external_sources_adds_preview
             "citations": {},
         },
         "deep_analysis_display": {
-            "industry_logic": "微信观察内容[^1]。",
+            "_curated_external_argument_cards": [
+                _external_argument_row(
+                    "外部材料提示需求仍待验证。",
+                    "微信观察内容。",
+                    ref=1,
+                    key="demand:wechat",
+                )
+            ],
             "citations": {
                 1: {
                     "source": "微信公众号精选观察",
@@ -1115,13 +1252,104 @@ def test_render_deep_analysis_display_with_curated_external_sources_adds_preview
         "core_facts": [],
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "精选外部材料仅作为专业观察" in result
     assert "不参与评分、风险评分或最终建议" in result
     assert "baseline 行业逻辑" in result
     assert "### 4.4 外部观点与待验证变量（Preview）" in result
     assert result.index("### 4.1 产业逻辑与竞争格局") < result.index("### 4.4 外部观点与待验证变量（Preview）")
+
+
+def test_formal_medium_public_render_ends_after_external_variables():
+    renderer = DeepAnalysisRenderer()
+    rows = (
+        MaterialRow(
+            "annual:1", "主营业务", "annual", "formal_fact", (1,), ("annual:1",),
+            title="主营业务", body="公司主营业务为芯片设计。",
+            render_role="business_structure", source_credit="official",
+        ),
+        MaterialRow(
+            "broker:1", "增长假设", "broker", "professional_analysis", (2,), ("broker:1",),
+            title="增长假设", body="研报预计产品放量。", render_role="broker_assumption",
+            attribution="测试证券", source_credit="professional",
+        ),
+        MaterialRow(
+            "external:1", "验证变量", "external", "external_observation", (3,), ("external:1",),
+            title="客户验证", body="外部材料称客户验证节奏仍需观察。",
+            render_role="external_variable", source_credit="external_low_credit",
+        ),
+    )
+    snapshot = MaterialSnapshot(
+        "deep_analysis_material_snapshot.v1", rows,
+        {1: {"source": "公司年报"}, 2: {"source": "券商研报"}, 3: {"source": "外部观察"}}, {},
+    )
+    view_model = build_chapter4_view_model(snapshot, "formal_medium")
+
+    result = renderer.render({
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "synthesis": {"industry_logic": "正式材料基线。", "citations": {}},
+        "core_facts": [],
+        "deep_analysis_material_snapshot": snapshot,
+        "chapter4_view_model": view_model,
+    })
+
+    assert "### 4.1 官方材料确认：业务与财务基座" in result
+    assert "### 4.2 机构观点与盈利假设" in result
+    assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
+    assert "### 4.4" not in result
+    assert "官方确认：" not in result
+    assert "机构假设：" not in result
+    assert "外部待验证：" not in result
+    assert "若机构关于需求、产品放量或盈利弹性的假设兑现" not in result
+
+
+def test_formal_rich_v3_addendum_renders_exact_evidence_and_deduped_source():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "测试股",
+        "deep_analysis_evidence_profile": {"profile": "formal_rich"},
+        "synthesis": {
+            "industry_logic": "正式材料基线。",
+            "fundamentals": "",
+            "valuation_debate": "",
+            "funding_sentiment": "",
+            "events_catalysts": "",
+            "citations": {},
+        },
+        "deep_analysis_display": {
+            "_curated_external_argument_cards": [
+                _external_argument_row(
+                    "外部材料称交付节奏仍需验证。",
+                    "外部文章记录上游供给偏紧。",
+                    ref=1,
+                    key="delivery:one",
+                ),
+                _external_argument_row(
+                    "外部材料称客户验证节奏仍需观察。",
+                    "同一文章记录客户验证进展。",
+                    ref=2,
+                    key="delivery:two",
+                ),
+            ],
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "同一文章", "url": "https://example.com/shared", "source_type": "curated_external_analysis_evidence"},
+                2: {"source": "微信公众号精选观察", "title": "同一文章", "url": "https://example.com/shared", "source_type": "curated_external_analysis_evidence"},
+            },
+        },
+        "core_facts": [],
+    }
+
+    result = _render(renderer, ctx)
+
+    assert "### 4.4 外部观点与待验证变量（Preview）" in result
+    assert "**供应链与交付**" in result
+    assert "上游供给偏紧" in result
+    assert "外部原文依据" not in result
+    assert "**本节引用来源：**" not in result
+    assert result.count("## 引用来源") == 1
+    assert result.count("https://example.com/shared") == 1
 
 
 def test_render_uses_synthesis_display_when_no_deep_analysis():
@@ -1138,7 +1366,7 @@ def test_render_uses_synthesis_display_when_no_deep_analysis():
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "synthesis_display 行业逻辑" in result
     assert "baseline 行业逻辑" not in result
 
@@ -1156,11 +1384,14 @@ def test_curated_external_addendum_includes_citation_url():
             "citations": {},
         },
         "deep_analysis_display": {
-            "industry_logic": "精选外部材料仅作为专业观察，提示中际旭创产业线索：《外部标题》观察到内容[^1]",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
+            "_curated_external_argument_cards": [
+                _external_argument_row(
+                    "外部材料提示供应链交付仍待验证。",
+                    "《外部标题》观察到内容。",
+                    ref=1,
+                    key="delivery:url",
+                )
+            ],
             "citations": {
                 1: {
                     "source": "微信公众号精选观察",
@@ -1173,56 +1404,36 @@ def test_curated_external_addendum_includes_citation_url():
         },
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "### 4.4 外部观点与待验证变量（Preview）" in result
     assert "https://mp.weixin.qq.com/s/example" in result
     assert "[^1]" in result
 
 
-def test_curated_external_narrative_addendum_renders_paragraphs_not_bullets():
+def test_curated_external_addendum_separates_peer_background_after_target_cards():
     renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "synthesis": {
-            "industry_logic": "baseline 产业逻辑。",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {},
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "供应链瓶颈与交付疑虑并存",
-                    "text": "外部材料提示供应链约束会影响交付弹性，需要和订单转化一起跟踪。",
-                    "citation_refs": [1],
-                }
-            ],
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "author": "测试账号",
-                    "title": "外部深度文章",
-                    "url": "https://mp.weixin.qq.com/s/viewpoint",
-                    "source_type": "curated_external_analysis_evidence",
-                    "source_credit": 55,
-                }
-            },
+    target = _external_argument_row(
+        "测试股产品完成客户导入。", "测试股产品完成客户导入。", ref=1, key="target",
+    )
+    peer = _external_argument_row(
+        "行业竞争格局加速分化。", "行业竞争格局加速分化。", ref=2, key="peer",
+    )
+    peer["entity_scope"] = "peer_or_industry"
+    display = {
+        "_curated_external_argument_cards": [peer, target],
+        "citations": {
+            1: {"source": "微信公众号精选观察", "title": "目标观察", "source_type": "curated_external_analysis_evidence"},
+            2: {"source": "微信公众号精选观察", "title": "行业观察", "source_type": "curated_external_analysis_evidence"},
         },
     }
 
-    result = renderer.render(ctx)
+    rendered = renderer._curated_external_addendum(display)
 
-    assert "### 4.4 精选外部观察（Preview）" in result
-    assert "#### 4.4.1" not in result
-    assert "**供应链瓶颈与交付疑虑并存**" in result
-    assert "外部材料提示供应链约束会影响交付弹性" in result
-    assert "- **供应链瓶颈与交付疑虑并存**" not in result
-    assert "[^1]" in result
-    assert "https://mp.weixin.qq.com/s/viewpoint" in result
+    assert rendered.index("测试股产品完成客户导入") < rendered.index("同业/行业背景（Preview）")
+    assert rendered.index("同业/行业背景（Preview）") < rendered.index("行业竞争格局加速分化")
+
+
 
 
 def test_formal_rich_profile_renders_legacy_headings_and_badge():
@@ -1243,7 +1454,7 @@ def test_formal_rich_profile_renders_legacy_headings_and_badge():
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "<!-- deep_analysis_profile:" in result
     assert "深度分析形态：正式材料丰富" in result
     assert "### 4.1 产业逻辑与竞争格局" in result
@@ -1251,192 +1462,24 @@ def test_formal_rich_profile_renders_legacy_headings_and_badge():
     assert "### 4.3 资金面与催化剂时间线" in result
 
 
-def test_formal_thin_external_rich_profile_renders_new_layout():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "formal_financial_fact_pack": {
-            "facts": [
-                {"metric": "营业收入", "value": "39.82亿元"},
-                {"metric": "归母净利润", "value": "2.32亿元，同比下降59.42%"},
-            ],
-        },
-        "deep_analysis_display": {
-            "industry_logic": "",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "测试外部", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_topic_groups": {
-                "technology_route": [{"heading": "路线", "text": "外部观点A[^1]", "citation_refs": [1]}],
-                "order_capacity_delivery": [{"heading": "交付", "text": "外部观点B[^1]", "citation_refs": [1]}],
-                "financial_quality": [{"heading": "业绩", "text": "外部观点C[^1]", "citation_refs": [1]}],
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim_id": "c1",
-                    "claim": "外部观点A",
-                    "assumptions": ["假设A"],
-                    "counterpoints": ["反方A"],
-                    "verification_need": "验证A",
-                    "citation_refs": [1],
-                },
-            ],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-    assert "深度分析形态：正式材料薄但外部观点丰富" in result
-    assert "<!-- deep_analysis_profile:" in result
-    assert "### 4.1 正式材料要点" in result
-    assert "### 4.2 外部观点地图（Preview，不参与评分）" in result
-    assert "### 4.3 待验证清单" in result
-    assert "### 4.1 产业逻辑与竞争格局" not in result
-    assert "### 4.2 业绩路径与多空分歧" not in result
-    assert "### 4.3 资金面与催化剂时间线" not in result
-    assert "外部材料称：外部观点A[^1]" in result
-    assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
-    assert "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |" in result
 
 
-def test_formal_thin_external_map_frames_claims_and_keeps_numbers():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "39.82亿元"}]},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "雪球专栏观察", "title": "测试外部", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim_id": "c1",
-                    "claim": "国内高可靠卫星FPGA市占率95%以上；单星价值300-500万元",
-                    "reasoning_steps": ["需核对95%口径"],
-                    "counterpoints": ["官方未披露市占率"],
-                    "verification_need": "需等待公告或第三方行业数据验证",
-                    "citation_refs": [1],
-                },
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "外部材料称：国内高可靠卫星FPGA市占率95%以上；单星价值300-500万元[^1]" in result
-    assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
-    assert "95%" in result
-    assert "300-500万元" in result
 
 
-def test_annual_broker_layout_merges_external_map_and_checklist():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "雪球专栏观察", "title": "外部观察", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部称FPGA订单修复",
-                    "reasoning_steps": ["跟踪订单披露"],
-                    "counterpoints": ["公司未披露订单客户"],
-                    "verification_need": "需要公告或财报拆分验证",
-                    "citation_refs": [1],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "### 4.3 外部观点与待验证变量（Preview，不参与评分）" in result
-    assert "### 4.4 待验证清单" not in result
-    assert "| 变量 | 为什么重要 | 需要什么证据 | 来源层级 |" not in result
-    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" not in result
-    assert "下一步看什么" not in result
-    assert "**外部称FPGA订单修复**" in result
-    assert "**外部观点链**" not in result
-    assert "**反方约束**" not in result
-    assert "**待验证证据**" not in result
 
 
-def test_suspicious_zero_financial_core_facts_are_not_visible():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [
-            {
-                "fact_id": 1,
-                "fact": "营业收入",
-                "data": "0.00亿元",
-                "confidence": "高",
-                "provenance_status": "supported",
-                "source_labels": ["公司年报"],
-            },
-            {
-                "fact_id": 2,
-                "fact": "FPGA产品线",
-                "data": "覆盖FPGA、PSoC、FPAI",
-                "confidence": "高",
-                "provenance_status": "supported",
-                "source_labels": ["公司年报"],
-            },
-        ],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "营业收入 | 0.00亿元" not in result
-    assert "FPGA产品线" in result
 
 
-def test_annual_memo_confirmed_rows_hide_suspicious_zero_financial_values():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["sections"]["confirmed"] = [
-        {"title": "营业收入", "body": "0.00亿元", "citation_refs": [1]},
-        {"title": "产品线", "body": "公司已建立FPGA、安全与识别芯片等产品线", "citation_refs": [1]},
-    ]
-    memo["validation"]["warnings"] = ["财务指标抽取出现 0 值异常，相关指标已从可见事实中过滤。"]
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
 
-    result = renderer.render(ctx)
 
-    assert "**营业收入**：0.00亿元" not in result
-    assert "公司已建立FPGA、安全与识别芯片等产品线" in result
-    assert "财务指标抽取出现 0 值异常" not in result
-    assert "**validation warning**" not in result
+
+
+
+
+
+
+
+
 
 
 def test_thin_all_profile_renders_material_insufficient_layout():
@@ -1448,7 +1491,7 @@ def test_thin_all_profile_renders_material_insufficient_layout():
         "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "10亿元"}]},
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "深度分析形态：材料不足" in result
     assert "### 4.1 正式材料要点" in result
     assert "当前可用于深度基本面分析的正式材料不足" in result
@@ -1463,6 +1506,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["annual:card:business_model:0"],
             "citation_refs": [1],
             "source_ref_ids": ["periodic_report_narrative_evidence:business_model:0"],
+            "argument_family": "business_structure",
+            "argument_complete": True,
         },
         {
             "title": "研发与产品进展",
@@ -1470,6 +1515,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["annual:card:rd_product_progress:0"],
             "citation_refs": [2],
             "source_ref_ids": ["periodic_report_narrative_evidence:rd_product_progress:0"],
+            "argument_family": "technology_product_progress",
+            "argument_complete": True,
         },
         {
             "title": "管理层市场判断",
@@ -1477,6 +1524,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["annual:card:management_market_view:0"],
             "citation_refs": [3],
             "source_ref_ids": ["periodic_report_narrative_evidence:management_market_view:0"],
+            "argument_family": "market_competition_outlook",
+            "argument_complete": True,
         },
         {
             "title": "营业收入",
@@ -1484,6 +1533,8 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
             "internal_refs": ["fact:营业收入"],
             "citation_refs": [4],
             "source_ref_ids": ["periodic_report_filing_fact:revenue"],
+            "argument_family": "financial_quality_explanation",
+            "argument_complete": False,
         },
     ]
     if forbidden_card:
@@ -1515,418 +1566,125 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
     }
 
 
-def test_formal_thin_annual_memo_renders_sections():
+def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
     renderer = DeepAnalysisRenderer()
     ctx = {
         "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
         "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
         "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "测试外部", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim_id": "c1",
-                    "claim": "外部观点A",
-                    "assumptions": ["假设A"],
-                    "counterpoints": ["反方A"],
-                    "verification_need": "验证A",
-                    "citation_refs": [1],
-                },
+            "_curated_external_argument_cards": [
+                _external_argument_row(
+                    "外部材料提示 FPGA 2026Q3 客户验证仍需观察。",
+                    "外部文章记录 FPGA 2026Q3 客户验证节奏仍待确认。",
+                    ref=1,
+                    key="technology:validation",
+                )
             ],
+            "citations": {
+                1: {
+                    "source": "微信公众号精选观察",
+                    "title": "FPGA 客户验证观察",
+                    "source_type": "curated_external_analysis_evidence",
+                }
+            },
+            "_curated_external_topic_narratives": [{
+                "scope_bucket": "target", "primary_family": "technology_product", "parts": [{
+                    "argument_key": "technology:validation", "unit_id": "unit:technology:validation",
+                    "quote": "外部文章记录 FPGA 2026Q3 客户验证节奏仍待确认。",
+                    "relation": "first", "citation_refs": [1],
+                }],
+            }],
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
-    assert "### 4.1 年报经营摘要" in result
-    assert "**一句话画像**" in result
-    assert "**官方材料边界**" not in result
-    assert "**已确认**" not in result
-    assert "**年报经营线索**" not in result
-    assert "营业收入 39.82 亿元" in result
-    assert "公司增长主线来自 FPGA" in result
 
+    result = _render(renderer, ctx)
 
-def test_formal_thin_broker_absence_keeps_heading():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-            "broker_memo_status": "absent",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "deep_analysis_display": {
-            "citations": {},
-            "_curated_external_reasoning_cards": [],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-    assert "### 4.2 研报观点与假设" in result
-    assert "当前未取得足够可用研报 digest，不展开研报观点与假设" in result
     assert "### 4.3 外部观点与待验证变量（Preview，不参与评分）" in result
-    assert "### 4.4 待验证清单" not in result
+    assert "FPGA 2026Q3 客户验证节奏仍待确认[^5]" in result
+    assert "外部材料称，技术与产品的新增待验证点包括：" in result
+    assert "[^5] | **微信公众号精选观察** | 《FPGA 客户验证观察》" in result
+    assert "### 4.4" not in result
 
 
-def test_formal_thin_broker_memo_renders_with_snapshot_annual_offset_citations():
+def test_formal_thin_owner_filter_keeps_full_snapshot_external_citation_offset():
     renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-            "broker_memo_status": "single_institution",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {
-            "schema": "broker_research_memo.v1",
-            "status": "single_institution",
-            "source_layer": "broker_research",
-            "institutions": ["测试证券"],
-            "sections": [
-                {
-                    "title": "产业与产品判断",
-                    "body": "券商认为 800G 放量支撑增长。",
-                    "internal_refs": ["broker:card:core"],
-                    "citation_refs": [1],
-                    "source_ref_ids": ["broker_research_digest:core"],
-                }
-            ],
-            "forecast_ranges": [
-                {
-                    "metric": "归母净利润",
-                    "period": "2026E",
-                    "range": "券商预测区间 10-12 亿元",
-                    "internal_refs": ["broker:card:forecast"],
-                    "citation_refs": [2],
-                    "source_ref_ids": ["broker_research_digest:forecast"],
-                }
-            ],
-            "risks": [
-                {
-                    "body": "研报提示：若下游需求低于假设，盈利预测需下修。",
-                    "internal_refs": ["broker:card:risk"],
-                    "citation_refs": [3],
-                    "source_ref_ids": ["broker_research_digest:risk"],
-                }
-            ],
-            "validation": {"entered_scoring": False, "entered_target_price": False},
-            "citations": {
-                1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"},
-                2: {"source": "券商研报", "title": "盈利预测", "author": "测试证券"},
-                3: {"source": "券商研报", "title": "风险提示", "author": "测试证券"},
+    duplicate = "新一代 FPGA 进入客户验证阶段。"
+    update = "新一代 FPGA 预计于2026Q3完成下一轮客户认证。"
+    evidence_units = []
+    for index, text in enumerate((duplicate, update), 1):
+        evidence_units.append({
+            "schema_version": "curated_external_evidence_unit.v2",
+            "unit_id": f"unit:technology:{index}", "source_id": "source:fixture",
+            "document_hash": "fixture", "block_id": "block:fixture", "block_ordinal": 0,
+            "unit_ordinal": index - 1, "start": 0, "end": len(text),
+            "unit_hash": f"fixture:{index}", "block_hash": "fixture", "text": text,
+            "evidence_status": "source_unit_verified", "citation_refs": [index],
+            "scope_provenance": {
+                "schema_version": "curated_external_scope_provenance.v2", "origin": "explicit_target",
+                "anchor_unit_id": f"unit:technology:{index}", "proof_kind": "explicit_stock_name",
+                "proof_value": "fixture-target",
             },
-        },
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-
-    assert "### 4.2 研报观点与假设" in result
-    assert "单篇研报观点 / 单机构观点" in result
-    assert "当前未取得足够可用研报 digest" not in result
-    assert "测试证券研报认为：800G 放量支撑增长" in result
-    assert "券商认为 800G 放量支撑增长" not in result
-    assert "券商预测区间 10-12 亿元" in result
-    assert "盈利预测需下修" in result
-    assert "[^5]" in result
-    assert "[^6]" in result
-    assert "- [^5] | **券商研报** | 作者: 测试证券 | 《核心观点》" in result
-    assert "- [^6] | **券商研报** | 作者: 测试证券 | 《盈利预测》" in result
-
-
-def test_formal_thin_global_citations_exclude_unused_external_refs():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": {
-            "schema": "annual_report_memo.v1",
-            "status": "deterministic_fallback",
-            "source_layer": "annual_report",
-            "sections": {"confirmed": [], "annual_report_explanation": [], "not_disclosed": [], "inconclusive": []},
-            "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
-            "citations": {},
-        },
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "知乎精选观察", "title": "已使用", "source_type": "curated_external_analysis_evidence"},
-                2: {"source": "雪球精选观察", "title": "未使用", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部材料称技术路线存在分歧",
-                    "assumptions": ["需验证"],
-                    "verification_need": "公告验证",
-                    "citation_refs": [1],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-
-    assert "已使用" in result
-    assert "未使用" not in result
-
-
-def test_formal_thin_external_map_preserves_citations_after_compaction():
-    renderer = DeepAnalysisRenderer()
-    long_claim = (
-        "国内FPGA三巨头路线对比：复旦微电走高可靠赛道，紫光同创专注5G通信，"
-        "安路科技主攻民用中低端，外部材料同时引用多组收入、亏损和研发强度数字，"
-        "并进一步比较客户壁垒、通信份额、研发投入、民用产品线和高可靠场景的路线差异"
-    )
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "知乎精选观察", "title": "三巨头路线", "source_type": "curated_external_analysis_evidence"},
-                2: {"source": "雪球评论观察", "title": "FPAI观点", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": long_claim,
-                    "assumptions": ["需验证"],
-                    "verification_need": "公告验证",
-                    "citation_refs": [1],
-                },
-                {
-                    "claim": (
-                        "FPAI芯片=SoC+NPU+FPGA三核异构，实现端侧物理AI全链路闭环，"
-                        "旗舰产品FMZQ400TAI卧龙架构，FPGA业务收入14.14亿、增长25.3%、"
-                        "毛利率74.82%，还讨论 RF-FPGA、RFSoC 和端侧物理 AI 场景"
-                    ),
-                    "assumptions": ["需验证"],
-                    "verification_need": "公告验证",
-                    "citation_refs": [2],
-                },
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-    claim_lines = [line for line in section43.splitlines() if line.startswith("- 外部材料称：")]
-
-    assert len(claim_lines) == 2
-    assert all(re.search(r"\[\^\d+\]", row) for row in claim_lines)
-    assert not re.search(r"\[\^\d+(?:\.\.\.|(?!\]))", section43)
-
-
-def test_formal_thin_global_citations_exclude_unrendered_external_cards():
-    renderer = DeepAnalysisRenderer()
-    cards = []
-    citations = {}
-    for i in range(1, 8):
-        cards.append({
-            "claim": f"外部材料称观点{i}",
-            "assumptions": ["需验证"],
-            "verification_need": "公告验证",
-            "citation_refs": [i],
         })
-        citations[i] = {
-            "source": "雪球精选观察",
-            "title": f"外部材料{i}",
-            "source_type": "curated_external_analysis_evidence",
-        }
     ctx = {
         "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": {
-            "schema": "annual_report_memo.v1",
-            "status": "deterministic_fallback",
-            "source_layer": "annual_report",
-            "sections": {"confirmed": [], "annual_report_explanation": [], "not_disclosed": [], "inconclusive": []},
-            "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
-            "citations": {},
-        },
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": citations,
-            "_curated_external_reasoning_cards": cards,
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "外部材料称：观点6" in result
-    assert "外部材料称：观点7" not in result
-    assert "外部材料6" in result
-    assert "外部材料7" not in result
-
-
-def test_formal_thin_snapshot_preserves_external_ref_numbers_when_filtering_unused_refs():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": {
-            "schema": "annual_report_memo.v1",
-            "status": "deterministic_fallback",
-            "source_layer": "annual_report",
-            "sections": {"confirmed": [], "annual_report_explanation": [], "not_disclosed": [], "inconclusive": []},
-            "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
-            "citations": {},
-        },
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "知乎精选观察", "title": "未使用", "source_type": "curated_external_analysis_evidence"},
-                2: {"source": "雪球精选观察", "title": "已使用", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部材料称技术路线存在分歧",
-                    "assumptions": ["需验证"],
-                    "verification_need": "公告验证",
-                    "citation_refs": [2],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "[^2]" in result
-    assert "- [^2] | **雪球精选观察** | 《已使用》" in result
-    assert "未使用" not in result
-
-
-def test_formal_thin_global_citations_exclude_unused_annual_refs():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(forbidden_card=False),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "雪球评论" not in result
-    assert "source_type" not in result
-
-
-def test_annual_memo_rows_render_citation_refs():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
         "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {"status": "absent", "citations": {}},
         "deep_analysis_display": {
-            "citations": {},
-            "_curated_external_reasoning_cards": [],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-    assert "[^1]" in result
-    assert "[^4]" in result
-    assert "- [^1] 公司年报" in result or "- [^4] 公司年报" in result
-
-
-def test_annual_memo_validation_warnings_use_single_heading():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["validation"]["warnings"] = [
-        "suspicious zero metric: 营业收入=0.00亿元",
-        "suspicious zero metric: 归母净利润=0.00亿元",
-    ]
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "deep_analysis_display": {
-            "citations": {},
-            "_curated_external_reasoning_cards": [],
+            "_curated_external_argument_cards": [{
+                "schema_version": "curated_external_argument_card.v4",
+                "argument_key": "technology:update", "entity_scope": "target",
+                "coverage_families": ["technology_product"], "primary_family": "technology_product",
+                "evidence_units": evidence_units, "citation_refs": [1, 2],
+            }],
+            "citations": {
+                1: {"source": "微信公众号精选观察", "title": "重复产品观察"},
+                2: {"source": "微信公众号精选观察", "title": "客户认证更新"},
+            },
+            "_curated_external_topic_narratives": [{
+                "scope_bucket": "target", "primary_family": "technology_product", "parts": [
+                    {"argument_key": "technology:update", "unit_id": "unit:technology:1", "quote": duplicate, "relation": "first"},
+                    {"argument_key": "technology:update", "unit_id": "unit:technology:2", "quote": update, "relation": "continuation"},
+                ],
+            }],
         },
         "core_facts": [],
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
-    assert "**validation warning**" not in result
-    assert "财务指标抽取出现 0 值异常" not in result
-    assert "营业收入=0.00亿元" not in result
-    assert "归母净利润=0.00亿元" not in result
+    assert duplicate.rstrip("。") not in result.split("### 4.3", 1)[1]
+    assert f"{update[:-1]}[^6]。" in result
+    assert "[^5] | **微信公众号精选观察**" not in result
+    assert "[^6] | **微信公众号精选观察** | 《客户认证更新》" in result
+    assert "### 4.4" not in result
 
 
-def test_annual_memo_unavailable_renders_fallback_no_legacy():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": {
-            "schema": "annual_report_memo.v1",
-            "status": "absent",
-            "source_layer": "annual_report",
-            "sections": {"confirmed": [], "annual_report_explanation": [], "not_disclosed": [], "inconclusive": []},
-            "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
-            "citations": {},
-        },
-        "deep_analysis_display": {
-            "citations": {},
-            "_curated_external_reasoning_cards": [],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-    assert "### 4.1 年报经营摘要" in result
-    assert "当前未取得足够年报材料" in result
-    assert "### 4.1 产业逻辑与竞争格局" not in result
-    assert "### 4.2 业绩路径与多空分歧" not in result
-    assert "### 4.3 资金面与催化剂时间线" not in result
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 def test_formal_rich_keeps_legacy_headings():
@@ -1945,462 +1703,29 @@ def test_formal_rich_keeps_legacy_headings():
         "annual_report_memo": _annual_memo_fixture(),
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
     assert "### 4.1 产业逻辑与竞争格局" in result
     assert "### 4.2 业绩路径与多空分歧" in result
     assert "### 4.3 资金面与催化剂时间线" in result
     assert "### 4.1 年报经营摘要" not in result
 
 
-def test_formal_medium_uses_source_layer_headings_with_medium_badge():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "测试股",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {
-            "industry_logic": "产业逻辑有限[^1]",
-            "fundamentals": "业绩线索有限",
-            "valuation_debate": "估值分歧待补充",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {1: {"source": "公告", "title": "年报"}},
-        },
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {
-            "schema": "broker_research_memo.v1",
-            "status": "ready",
-            "source_layer": "broker_research",
-            "institutions": ["测试证券"],
-            "sections": [
-                {
-                    "title": "产业与产品判断",
-                    "body": "券商认为 800G 放量支撑增长。",
-                    "citation_refs": [1],
-                }
-            ],
-            "forecast_ranges": [],
-            "risks": [
-                {
-                    "body": "研报提示：若需求低于假设，盈利预测需下修。",
-                    "citation_refs": [2],
-                }
-            ],
-            "citations": {
-                1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"},
-                2: {"source": "券商研报", "title": "风险提示", "author": "测试证券"},
-            },
-        },
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "外部观察", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部材料提示供应链约束影响交付弹性",
-                    "reasoning_steps": ["跟踪预付款和交付数据"],
-                    "counterpoints": ["公司公告未确认供应链瓶颈"],
-                    "verification_need": "需要公告、订单或财报拆分验证",
-                    "citation_refs": [1],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-
-    assert "深度分析形态：正式材料中等" in result
-    assert "### 4.1 官方材料确认：业务与财务基座" in result
-    assert "### 4.2 机构观点与盈利假设" in result
-    assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
-    assert "### 4.4 上行 / 下行条件与股价推演" in result
-    assert "### 4.1 产业逻辑与竞争格局" not in result
-    assert "### 4.2 业绩路径与多空分歧" not in result
-    assert "### 4.3 资金面与催化剂时间线" not in result
-    assert "公司增长主线来自 FPGA" in result
-    assert "测试证券研报认为：800G 放量支撑增长" in result
-    assert "券商认为 800G 放量支撑增长" not in result
-    assert "外部材料称：供应链约束影响交付弹性" in result
-    assert "外部材料称：外部材料提示" not in result
-    assert "官方确认" in result
-    assert "机构假设" in result
-    assert "外部待验证" in result
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
-    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" not in section44
-    assert "**推演结论**" not in section44
-    assert "**官方确认：" in section44
-    assert "**机构假设：" in section44
-    assert "**外部待验证：" in section44
-    assert "外部材料称：供应链约束影响交付弹性" in section44
-    assert "外部材料提示供应链约束影响交付弹性" not in section44
-    assert "未知" not in section44
-    assert "券商研报 | 作者: 测试证券 | 《核心观点》" in section44
-    assert "当前可用于深度基本面分析的正式材料不足" not in result
 
 
-def test_formal_medium_renderer_uses_prebuilt_view_model_not_raw_material_payloads():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "测试股",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {
-            "industry_logic": "",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {},
-        },
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {
-            "status": "ready",
-            "sections": [{
-                "title": "产品放量",
-                "body": "券商认为 800G 放量支撑增长。",
-                "citation_refs": [1],
-            }],
-            "forecast_ranges": [],
-            "risks": [],
-            "citations": {
-                1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"},
-            },
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative_paragraphs": [{
-                "heading": "供应链观察",
-                "text": "外部材料提示供应链约束影响交付弹性。",
-                "citation_refs": [1],
-            }],
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "供应链观察"},
-            },
-        },
-        "core_facts": [],
-    }
-    snapshot = build_deep_analysis_material_snapshot(ctx)
-    ctx["chapter4_view_model"] = build_chapter4_view_model(
-        snapshot,
-        ctx["deep_analysis_evidence_profile"],
-    )
-    ctx["annual_report_memo"] = {
-        "status": "ready",
-        "sections": {"annual_report_explanation": [{"title": "MUTATED_ANNUAL", "body": "MUTATED_ANNUAL", "citation_refs": [1]}]},
-        "citations": {1: {"source": "公司年报", "title": "MUTATED_ANNUAL"}},
-    }
-    ctx["broker_research_memo"] = {
-        "status": "ready",
-        "sections": [{"title": "MUTATED_BROKER", "body": "MUTATED_BROKER", "citation_refs": [1]}],
-        "citations": {1: {"source": "券商研报", "title": "MUTATED_BROKER"}},
-    }
-    ctx["deep_analysis_display"] = {
-        "_curated_external_narrative_paragraphs": [{"heading": "MUTATED_EXTERNAL", "text": "MUTATED_EXTERNAL", "citation_refs": [1]}],
-        "citations": {1: {"source": "微信公众号精选观察", "title": "MUTATED_EXTERNAL"}},
-    }
-
-    result = renderer.render(ctx)
-
-    assert "公司增长主线来自 FPGA" in result
-    assert "测试证券研报认为：800G 放量支撑增长" in result
-    assert "外部材料称：供应链约束影响交付弹性" in result
-    assert "MUTATED_ANNUAL" not in result
-    assert "MUTATED_BROKER" not in result
-    assert "MUTATED_EXTERNAL" not in result
 
 
-def test_formal_medium_global_citations_include_visible_4_4_refs():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {
-            "industry_logic": "产业逻辑[^1]",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {1: {"source": "研报", "title": "baseline title"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "供应链观察",
-                    "text": "外部材料提示供应链约束会影响交付弹性。",
-                    "citation_refs": [1],
-                }
-            ],
-            "citations": {
-                1: {
-                    "source": "微信公众号精选观察",
-                    "author": "测试账号",
-                    "title": "外部深度文章",
-                    "source_type": "curated_external_analysis_evidence",
-                }
-            },
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    global_refs = result.split("## 引用来源", 1)[1]
-    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
-
-    assert "### 4.3 外部观察与待验证变量（Preview，不参与评分）" in result
-    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" not in section43
-    assert "下一步看什么" not in section43
-    assert "跟踪客户验证、量产时间和产品收入" not in section43
-    assert "外部材料称：供应链约束会影响交付弹性" in result
-    assert "外部材料称：外部材料提示" not in result
-    assert "外部材料称：供应链约束会影响交付弹性[^2]" in result
-    assert "该说法需以公告、财报拆分或行业第三方数据验证" not in result
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
-    assert "外部待验证" in section44
-    assert "外部材料称：供应链约束会影响交付弹性[^2]" in section44
-    assert "未知" not in section44
-    assert "- [^2] | **微信公众号精选观察** | 作者: 测试账号 | 《外部深度文章》" in global_refs
 
 
-def test_formal_medium_external_refs_dedupe_same_source_in_4_3_and_4_4():
-    renderer = DeepAnalysisRenderer()
-    duplicate_source = {
-        "source": "微信公众号精选观察",
-        "author": "半导体产业纵横",
-        "title": "上游材料预付款暴涨10倍！中际旭创Q1营收194.96亿元",
-        "url": "https://mp.weixin.qq.com/s/same-source",
-        "source_type": "curated_external_analysis_evidence",
-    }
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: duplicate_source,
-                2: dict(duplicate_source),
-                3: {"source": "微信公众号精选观察", "title": "光通信观察", "url": "https://mp.weixin.qq.com/s/other"},
-            },
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "供应链观察",
-                    "text": "外部文章指出，中际旭创预付款增长可能反映上游光芯片供给紧张。",
-                    "citation_refs": [1, 2, 3],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "[^5][^6][^7]" not in section43
-    assert "[^5][^6][^7]" not in section44
-    assert "[^5][^7]" in section43
-    assert "[^5][^7]" in section44
-    assert section43.count("半导体产业纵横") == 1
-    assert section44.count("半导体产业纵横") == 1
 
 
-def test_external_variable_map_cleans_source_intro_prefixes():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "供应链观察", "source_type": "curated_external_analysis_evidence"},
-                2: {"source": "微信公众号精选观察", "title": "技术路线", "source_type": "curated_external_analysis_evidence"},
-                3: {"source": "微信公众号精选观察", "title": "需求指引", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {"claim": "，中际旭创当前面临供应链紧张状况", "citation_refs": [1]},
-                {"claim": "外部文章指出，中际旭创下一代互连技术布局获得客户认可", "citation_refs": [2]},
-                {"claim": "外部信息显示，部分下游客户已给出需求指引", "citation_refs": [3]},
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
-
-    assert "外部材料称：中际旭创当前面临供应链紧张状况" in section43
-    assert "外部材料称：中际旭创下一代互连技术布局获得客户认可" in section43
-    assert "外部材料称：部分下游客户已给出需求指引" in section43
-    assert "外部材料称：，" not in section43
-    assert "外部材料称：外部文章指出" not in section43
-    assert "外部材料称：外部信息显示" not in section43
 
 
-def test_external_variable_map_keeps_enough_claim_context_after_compaction():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "供应链观察", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部文章指出，中际旭创当前面临明显的供应链紧张状况，海外客户拉货节奏、上游光芯片供给、交付排产、库存管理、资本开支节奏和订单交付节奏均需要持续跟踪，尽管公司否认交付计划下调传言，但原材料端压力信号已逐步显现，预付款项变化值得跟踪。",
-                    "citation_refs": [1],
-                },
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观察与待验证变量（Preview，不参与评分）", 1)[1].split("### 4.4", 1)[0]
-
-    assert "原材料端压力信号已逐步显现" in section43
 
 
-def test_formal_medium_official_material_filters_disclosure_noise_for_portrait():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务与产品",
-            "body": "报告期内公司从事的主要业务公司需遵守《深圳证券交易所上市公司自律监管指引第4号——创业板行业信息披露》中的通信相关业务披露要求，公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心、数据通信、5G无线网络、电信传输和固网接入等领域的客户。公司注重技术研发，并推动产品向高速率、小型化、低功耗、低成本方向发展。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "采购模式以直接销售模式为主，包含客户认证和售后服务流程。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "和代理销售，但以直接销售模式为主，即直接面向下游客户进行高速光模块产品推介、签订合同并交付、提供售后技术支持与服务。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "（二）经营模式 1、采购模式公司生产的100G高速光模块产品所需原材料主要包括光器件、集成电路芯片以及结构件等。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "公司为云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
-            "citation_refs": [1],
-        },
-    ]
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
-
-    assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section41
-    assert "100G、200G、400G、800G和1.6T高速光模块" in section41
-    assert section41.count("公司主营业务为高端光通信收发模块研发、生产及销售") == 1
-    assert "..." not in section41
-    assert "监管指引" not in section41
-    assert "披露要求" not in section41
-    assert "采购模式" not in section41
-    assert "直接销售模式" not in section41
-    assert "代理销售" not in section41
-    assert "经营模式" not in section41
 
 
-def test_formal_medium_official_material_keeps_financial_section_financial():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务与产品",
-            "body": "公司主营业务为高端光通信收发模块的研发、生产及销售，产品服务于云计算数据中心和数据通信客户。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "费用与研发",
-            "body": "费用与研发投入说明：公司主营业务为高端光通信收发模块的研发、生产及销售，产品服务于云计算数据中心、数据通信。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "营业收入",
-            "body": "收入变化原因：主要系 800G 高速光模块销售增长及产品结构升级所致。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "毛利率",
-            "body": "毛利率变化原因：主要系产品结构改善及高端产品占比提升所致。",
-            "citation_refs": [1],
-        },
-    ]
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
-    financial = section41.split("**财务基座**", 1)[1].split("**本节引用来源：**", 1)[0]
-
-    assert "收入变化原因" in financial
-    assert "毛利率变化原因" in financial
-    assert "公司主营业务为高端光通信收发模块" not in financial
 
 
-def test_formal_medium_official_material_includes_confirmed_financial_base():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["sections"]["confirmed"] = [
-        {"title": "2025年全年营收", "body": "382.40亿元", "citation_refs": [1]},
-        {"title": "2025年全年经营现金流量净额", "body": "108.96亿元", "citation_refs": [1]},
-    ]
-    memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务与产品",
-            "body": "公司主营业务为高端光通信收发模块研发、生产及销售，产品服务于云计算数据中心和数据通信客户。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "营业收入",
-            "body": "收入变化原因：主要系 800G 高速光模块销售增长及产品结构升级所致。",
-            "citation_refs": [1],
-        },
-    ]
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section41 = result.split("### 4.1 官方材料确认：业务与财务基座", 1)[1].split("### 4.2", 1)[0]
-
-    assert "**财务基座**" in section41
-    assert "2025年全年营收：382.40亿元" in section41
-    assert "2025年全年经营现金流量净额：108.96亿元" in section41
-    assert "**财务变化原因**" not in section41
 
 
 def test_formal_rich_does_not_emit_unused_annual_memo_citations():
@@ -2421,7 +1746,7 @@ def test_formal_rich_does_not_emit_unused_annual_memo_citations():
         "annual_report_memo": memo,
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "Annual Memo Only Source" not in result
     assert "公司增长主线来自 FPGA" not in result
@@ -2452,7 +1777,7 @@ def test_formal_rich_sanitizes_pe_spread_in_deep_analysis_table():
         },
         "core_facts": [],
     }
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "高于新易盛约15倍" not in result
     assert "新易盛为 68.29 倍" in result
@@ -2496,7 +1821,7 @@ def test_formal_rich_sanitizes_forward_pe_and_ps_spread_in_deep_analysis_table()
         "core_facts": [],
     }
 
-    result = renderer.render(ctx)
+    result = _render(renderer, ctx)
 
     assert "Forward PE高于新易盛约8.5倍" not in result
     assert "PS(市销率)低于新易盛约15.6倍" not in result
@@ -2504,480 +1829,28 @@ def test_formal_rich_sanitizes_forward_pe_and_ps_spread_in_deep_analysis_table()
     assert "中际旭创 PS(市销率) 为 63.53 倍，新易盛为 79.12 倍，低约 15.6 个 PS 倍数点" in result
 
 
-def test_annual_memo_rejects_forbidden_source():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture(forbidden_card=True)
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "deep_analysis_display": {
-            "citations": {},
-            "_curated_external_reasoning_cards": [],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-    assert "雪球上有人认为" not in result
-    # The forbidden card should not be in annual_report_explanation rows.
-    assert any("雪球" in str(r.get("body", "")) for r in memo["sections"]["annual_report_explanation"]) is False
 
 
-def test_formal_thin_annual_memo_projects_to_readable_business_profile():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务与产品",
-            "body": "公司建立 FPGA 芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集成电路测试服务等产品线，应用于通信、工业控制、人工智能和卫星通信。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "FPGA 产品覆盖 PSoC、RFSoC、FPAI 等系列，逻辑资源从 50K 至 4000K，算力从 4TOPS 至 128TOPS。",
-            "citation_refs": [2],
-        },
-        {
-            "title": "管理层市场判断",
-            "body": "2025 年半导体行业景气度结构性分化，FPGA 在通信、卫星通信、工业控制、人工智能及高可靠领域应用良好。",
-            "citation_refs": [3],
-        },
-    ]
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
-
-    assert "**一句话画像**" in section41
-    assert "**一句话画像**：" not in section41
-    assert re.search(r"\*\*一句话画像\*\*\n- .+\[\^\d+\]", section41)
-    assert "**业务结构**" in section41
-    assert "**官方材料边界**" not in section41
-    assert "**年报经营线索**" not in section41
-    assert section41.count("主营业务与产品") <= 1
-    assert "FPGA 产品覆盖" in section41
-    assert "2025 年半导体行业景气度结构性分化" in section41
 
 
-def test_formal_thin_annual_memo_prefers_company_portrait_over_narrow_product_line():
-    renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务与产品",
-            "body": "复旦微电的存储芯片产品线可提供多种接口、各型封装、全面容量的非挥发存储器产品。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "1、主要业务 复旦微电是一家从事超大规模集成电路的设计、开发、测试，并为客户提供系统解决方案的专业公司，公司已建立FPGA芯片、安全与识别芯片、非挥发存储器、智能电表芯片和集成电路测试服务等产品线。",
-            "citation_refs": [2],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "2、主要产品及服务情况 2.1 FPGA芯片 FPGA是一种硬件可重构的集成电路芯片，适用于通信、人工智能和工业控制。",
-            "citation_refs": [3],
-        },
-        {
-            "title": "研发与产品进展",
-            "body": "（FPGA）芯片 2、 报告期内获得的研发成果截至报告期末，公司拥有境内外发明专利225项。",
-            "citation_refs": [4],
-        },
-    ]
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": memo,
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section41 = result.split("### 4.1 年报经营摘要", 1)[1].split("### 4.2", 1)[0]
-    portrait = section41.split("**一句话画像**", 1)[1].split("**业务结构**", 1)[0]
-
-    assert "从事超大规模集成电路的设计、开发、测试" in portrait
-    assert "存储芯片产品线可提供" not in portrait
-    assert "1、主要业务" not in section41
-    assert "2、主要产品及服务情况" not in section41
-    assert "2.1 FPGA芯片" not in section41
-    assert "（FPGA）芯片 2、" not in section41
 
 
-def test_formal_thin_external_map_renders_variable_table_not_reasoning_card_template():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "外部变量", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "外部材料讨论高可靠 FPGA 订单和卫星通信需求弹性",
-                    "reasoning_steps": ["先识别变量", "再核对订单口径"],
-                    "counterpoints": ["公司公告未披露订单客户"],
-                    "verification_need": "观察公告、订单、财报拆分",
-                    "citation_refs": [1],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "| 待验证变量 | 外部材料在说什么 | 与正式材料 / 研报假设的关系 | 下一步看什么 |" not in section43
-    assert "下一步看什么" not in section43
-    assert "跟踪客户验证、量产时间和产品收入" not in section43
-    assert "**高可靠 FPGA 订单和卫星通信需求弹性**" in section43
-    assert "**支持线索**" not in section43
-    assert "**反方约束**" not in section43
-    assert "**待验证证据**" not in section43
-    assert "外部材料称：高可靠 FPGA 订单和卫星通信需求弹性" in section43
-    assert "外部材料称：外部材料讨论" not in section43
-    assert "处理口径" not in section43
 
 
-def test_formal_thin_external_map_keeps_long_claim_readable_without_handling_label():
-    renderer = DeepAnalysisRenderer()
-    long_claim = (
-        "外部材料讨论供应链瓶颈与交付疑虑并存，预付款激增释放预警信号。"
-        "文章认为 2026 年 Q1 预付款项环比增长超 10 倍，可能反映磷化铟衬底、光芯片等核心物料供给缺口。"
-        "公司回应订单获取与产品交付正常有序，但市场仍需要观察正式公告和财报拆分。"
-        "如果上游供给继续偏紧，订单兑现节奏和毛利率弹性都会受到影响。"
-    )
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {
-                1: {"source": "微信公众号精选观察", "title": "外部变量", "source_type": "curated_external_analysis_evidence"},
-            },
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": long_claim,
-                    "citation_refs": [1],
-                }
-            ],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "外部材料称：供应链瓶颈与交付疑虑并存" in section43
-    assert "核心物料供给缺口" in section43
-    assert "正式公告和财报拆分" in section43
-    assert "若核心物..." not in section43
-    assert "..." not in section43
-    assert "处理口径" not in section43
-    assert re.search(r"\[\^\d+\]", section43)
 
 
-def test_formal_thin_external_map_prefers_narrative_paragraphs_over_short_cards():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "FPAI 产品与 AI 端侧场景",
-                    "text": "外部材料讨论 FPAI 芯片集成 SoC、NPU 与 FPGA 三类模块，强调端侧物理 AI 闭环、4-128TOPS 算力区间和 FPGA 业务收入、毛利率等线索。该观点不是公司正式预测，但比单句产品标题更能说明外部材料为何关注复旦微电。",
-                    "citation_refs": [1],
-                }
-            ],
-            "_curated_external_reasoning_cards": [
-                {
-                    "claim": "A股唯一能量产亿门级高端FPGA的企业",
-                    "citation_refs": [1],
-                }
-            ],
-            "citations": {
-                1: {"source": "雪球专栏观察", "title": "物理AI观察", "source_type": "curated_external_analysis_evidence"},
-            },
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "**FPAI 产品与 AI 端侧场景**" in section43
-    assert "端侧物理 AI 闭环" in section43
-    assert "比单句产品标题更能说明外部材料为何关注复旦微电" in section43
-    assert "A股唯一能量产亿门级高端FPGA的企业" not in section43
 
 
-def test_formal_thin_external_map_softens_unverified_order_landing_wording():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "复旦微电",
-        "deep_analysis_evidence_profile": {
-            "profile": "formal_thin_external_rich",
-            "formal_thin_layout_variant": "annual_broker_external_checklist",
-        },
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "_curated_external_narrative": True,
-            "_curated_external_narrative_paragraphs": [
-                {
-                    "heading": "星载高可靠芯片订单落地情况",
-                    "text": "有外部观点认为，复旦微电是卫星通信潜在参与者。但该线索尚待验证，需跟踪后续订单落地情况。",
-                    "citation_refs": [1],
-                }
-            ],
-            "citations": {
-                1: {"source": "雪球专栏观察", "title": "卫星观察", "source_type": "curated_external_analysis_evidence"},
-            },
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section43 = result.split("### 4.3 外部观点与待验证变量（Preview，不参与评分）", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "订单落地" not in section43
-    assert "后续订单进展" in section43
-    assert "尚待验证" in section43
-    assert re.search(r"\[\^\d+\]", section43)
 
 
-def test_formal_medium_broker_projection_deduplicates_attribution_and_summarizes_assumptions():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {
-            "schema": "broker_research_memo.v1",
-            "status": "ready",
-            "sections": [
-                {"title": "产业与产品判断", "body": "国金证券认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长。", "citation_refs": [1]},
-                {"title": "盈利预测", "body": "西南证券认为：毛利率改善和产品结构升级推动盈利弹性。", "citation_refs": [2]},
-            ],
-            "forecast_ranges": [],
-            "risks": [{"body": "研报提示：风险提示：若客户资本开支放缓，盈利预测存在下修风险。", "citation_refs": [3]}],
-            "citations": {
-                1: {"source": "券商研报", "title": "国金研报", "author": "国金证券"},
-                2: {"source": "券商研报", "title": "西南研报", "author": "西南证券"},
-                3: {"source": "券商研报", "title": "山西研报", "author": "山西证券"},
-            },
-        },
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
-
-    assert "**机构共识**" in section42
-    assert "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |" not in section42
-    assert "**主要分歧 / 反方风险**" in section42
-    assert "券商认为：国金证券认为" not in section42
-    assert "研报研报提示" not in section42
-    assert "风险研报提示" not in section42
-    assert "国金证券研报认为：800G 和 1.6T 放量支撑 AI 数据中心需求增长" in section42
-    assert "山西证券研报提示：若客户资本开支放缓" in section42
-    assert "若机构假设兑现，支撑业绩增长和估值消化" not in section42
-    assert "需等待公告、财报拆分、订单或客户数据验证" not in section42
-    assert "后续需要财报、订单和客户资本开支验证" not in section42
 
 
-def test_formal_medium_broker_projection_summarizes_raw_earnings_recaps():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {
-            "schema": "broker_research_memo.v1",
-            "status": "ready",
-            "sections": [
-                {
-                    "title": "产业与产品判断",
-                    "body": "业绩简评 2026 年 4 月 17 日，中际旭创发布 2026 年一季报：2026Q1 实现营业收入 194.96 亿元，同比+191.1%，环比+47.3%；归母净利润57.35亿元，同比+262.3%；▌ 800G 和 1.6T 放量，预计 20 2027 年需求继续增长，NPO/Scale-up 新技术路线有望继续卡位。",
-                    "citation_refs": [1],
-                },
-            ],
-            "forecast_ranges": [],
-            "risks": [],
-            "citations": {1: {"source": "券商研报", "title": "国金研报", "author": "国金证券"}},
-        },
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section42 = result.split("### 4.2 机构观点与盈利假设", 1)[1].split("### 4.3", 1)[0]
-
-    assert "| 假设 | 机构观点 | 业绩含义 | 反方约束 | 验证证据 |" not in section42
-    assert "国金证券研报认为：2026Q1营业收入194.96亿元" in section42
-    assert "归母净利润57.35亿元" in section42
-    assert "800G 和 1.6T 放量" in section42
-    assert "预计2027年需求继续增长" in section42
-    assert "NPO/Scale-up 新技术路线有望继续卡位" in section42
-    assert "中际旭创发布" not in section42
-    assert "发布 2026 年一季报" not in section42
-    assert "验证重点是出货节奏、毛利率和客户资本开支" not in section42
-    assert "研报关注" not in section42
-    assert "▌" not in section42
-    assert "202027" not in section42
-    assert "20 2027" not in section42
-    assert "业绩简评" not in section42
-    assert "经营分析" not in section42
 
 
-def test_formal_medium_price_path_has_key_variable_and_deterministic_conclusion():
-    renderer = DeepAnalysisRenderer()
-    annual_memo = _annual_memo_fixture()
-    annual_memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务与产品",
-            "body": "公司主营业务为高端光通信收发模块研发、生产及销售，面向云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
-            "citation_refs": [1],
-        }
-    ]
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": annual_memo,
-        "broker_research_memo": {
-            "schema": "broker_research_memo.v1",
-            "status": "ready",
-            "sections": [{"title": "产品放量", "body": "研报认为 800G 和 1.6T 放量是盈利弹性核心。", "citation_refs": [1]}],
-            "forecast_ranges": [],
-            "risks": [],
-            "citations": {1: {"source": "券商研报", "title": "核心观点", "author": "测试证券"}},
-        },
-        "deep_analysis_display": {
-            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
-            "_curated_external_reasoning_cards": [{"claim": "外部材料提示供应链紧张影响800G交付节奏", "citation_refs": [1]}],
-        },
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "| 来源层级 | 关键变量 | 上行条件 | 下行条件 | 观察证据 |" not in section44
-    assert "**推演结论**" not in section44
-    assert "不直接修改目标价、评分、风险评分或最终推荐" in section44
-    assert "**官方确认：业务覆盖 / 产品线**" in section44
-    assert "**机构假设：产品放量**" in section44
-    assert "**外部待验证：供应链 / 技术路线**" in section44
-    assert "**官方确认：高速光模块放量**" not in section44
-    assert "**外部待验证：高速光模块放量**" not in section44
-    assert "若年报/公告确认的产品线、经营变化和财务解释继续兑现" in section44
-    assert "若机构假设落空" in section44
-    assert "若被证伪或长期无正式证据" in section44
 
 
-def test_formal_medium_price_path_external_evidence_is_not_hard_truncated():
-    renderer = DeepAnalysisRenderer()
-    long_claim = (
-        "外部材料提示中际旭创当前面临明显的供应链紧张状况，尽管公司否认交付计划下调传言，"
-        "但原材料端压力信号已逐步显现。2026年Q1公司预付款项环比增长超10倍至14.9亿元，"
-        "外部文章认为这可能反映磷化铟衬底、光芯片等核心物料供给缺口。"
-    )
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {
-            "citations": {1: {"source": "微信公众号精选观察", "title": "供应链观察"}},
-            "_curated_external_reasoning_cards": [{"claim": long_claim, "citation_refs": [1]}],
-        },
-        "core_facts": [],
-    }
-    result = renderer.render(ctx)
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "磷化铟衬底、光芯片等核心物料供给缺口" in section44
-    assert "光芯片等核..." not in section44
-    assert "..." not in section44
 
 
-def test_formal_medium_price_path_prefers_business_evidence_over_financial_noise():
-    renderer = DeepAnalysisRenderer()
-    annual_memo = _annual_memo_fixture()
-    annual_memo["sections"]["annual_report_explanation"] = [
-        {
-            "title": "费用与研发",
-            "body": "费用与研发投入说明：公司员工薪酬和研发费用有所增加。",
-            "citation_refs": [1],
-        },
-        {
-            "title": "主营业务与产品",
-            "body": "公司主营业务为高端光通信收发模块研发、生产及销售，面向云数据中心客户提供100G、200G、400G、800G和1.6T高速光模块。",
-            "citation_refs": [2],
-        },
-    ]
-    ctx = {
-        "stock_name": "中际旭创",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {"industry_logic": "", "fundamentals": "", "valuation_debate": "", "funding_sentiment": "", "events_catalysts": "", "citations": {}},
-        "annual_report_memo": annual_memo,
-        "broker_research_memo": {"status": "absent", "citations": {}},
-        "deep_analysis_display": {"citations": {}, "_curated_external_reasoning_cards": []},
-        "core_facts": [],
-    }
-
-    result = renderer.render(ctx)
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
-
-    assert "公司主营业务为高端光通信收发模块研发、生产及销售" in section44
-    assert "费用与研发投入说明" not in section44
 
 
 def test_annual_portrait_selection_uses_generic_company_scope_not_chip_keywords():
@@ -2992,82 +1865,75 @@ def test_annual_portrait_selection_uses_generic_company_scope_not_chip_keywords(
     assert portrait["body"].startswith("公司从事精密设备")
 
 
-def test_broker_consensus_uses_assumption_titles_for_generic_sector():
-    renderer = DeepAnalysisRenderer()
+def test_annual_selector_preserves_business_prefix_before_mode_noise():
+    row = MaterialRow(
+        row_id="annual:business-mode",
+        text="主营业务与产品：公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
+        source_layer="annual",
+        claim_status="formal_explanation",
+        citation_refs=(1,),
+        source_ref_ids=("annual:business-mode",),
+        title="主营业务与产品",
+        body="公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
+        render_role="business_structure",
+        source_credit="official",
+    )
 
-    consensus = renderer._broker_consensus_sentence([
-        {"assumption": "产能利用率", "view": "研报认为产能利用率改善。"},
-        {"assumption": "海外渠道", "view": "研报认为海外渠道扩张。"},
-    ])
+    selected, _ = select_annual_display_rows((row,))
 
-    assert consensus == "研报关注点集中在产能利用率、海外渠道。"
-
-
-def test_official_row_cleaner_preserves_generic_business_prefix_before_mode_noise():
-    renderer = DeepAnalysisRenderer()
-
-    cleaned = renderer._clean_formal_medium_official_row({
-        "title": "主营业务与产品",
-        "body": "公司提供工业控制设备并服务大型制造客户，经营模式包括直销和经销。",
-    })
-
-    assert cleaned is not None
-    assert cleaned["body"] == "公司提供工业控制设备并服务大型制造客户"
+    assert len(selected) == 1
+    assert selected[0].body == "公司提供工业控制设备并服务大型制造客户"
 
 
-def test_formal_medium_price_path_uses_material_titles_in_generic_sector():
-    renderer = DeepAnalysisRenderer()
-    ctx = {
-        "stock_name": "通用设备公司",
-        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
-        "synthesis": {
-            "industry_logic": "",
-            "fundamentals": "",
-            "valuation_debate": "",
-            "funding_sentiment": "",
-            "events_catalysts": "",
-            "citations": {},
-        },
-        "annual_report_memo": {
-            "status": "ready",
-            "sections": {
-                "confirmed": [],
-                "annual_report_explanation": [{
-                    "title": "渠道扩张",
-                    "body": "公司新增直营网点并覆盖更多区域客户。",
-                    "display_group": "operation_update",
-                    "citation_refs": [1],
-                }],
-                "not_disclosed": [],
-                "inconclusive": [],
-            },
-            "citations": {1: {"source": "公司年报", "title": "年度报告"}},
-        },
-        "broker_research_memo": {
-            "status": "ready",
-            "sections": [{
-                "title": "产能利用率",
-                "body": "研报认为产能利用率提升将改善盈利表现。",
-                "citation_refs": [1],
-            }],
-            "forecast_ranges": [],
-            "risks": [],
-            "citations": {1: {"source": "券商研报", "title": "跟踪报告", "author": "测试证券"}},
-        },
-        "deep_analysis_display": {
-            "_curated_external_narrative_paragraphs": [{
-                "heading": "海外认证",
-                "text": "外部文章称新产品正在推进海外认证。",
-                "citation_refs": [1],
-            }],
-            "citations": {1: {"source": "微信公众号精选观察", "title": "海外市场观察"}},
-        },
-        "core_facts": [],
-    }
 
-    result = renderer.render(ctx)
-    section44 = result.split("### 4.4 上行 / 下行条件与股价推演", 1)[1].split("## 引用来源", 1)[0]
 
-    assert "**官方确认：渠道扩张**" in section44
-    assert "**机构假设：产能利用率**" in section44
-    assert "**外部待验证：海外认证**" in section44
+
+
+
+
+
+
+
+
+
+
+
+
+def test_external_claim_blocks_keep_all_boundary_units_and_citations():
+    lines = []
+    claim = "外部材料称：第一句。第二句；第三句。第四句；第五句。[^4][^5]"
+
+    DeepAnalysisRenderer._append_external_variable_paragraph(lines, "变量", claim)
+
+    blocks = [line for line in lines if "[^4][^5]" in line]
+    assert blocks == [
+        "外部材料称：第一句。第二句；第三句。[^4][^5]",
+        "外部材料称：第四句；第五句。[^4][^5]",
+    ]
+    assert all(block.startswith("外部材料称：") for block in blocks)
+    assert "".join(block.replace("外部材料称：", "").replace("[^4][^5]", "") for block in blocks) == claim.replace("外部材料称：", "").replace("[^4][^5]", "")
+
+
+def test_external_claim_blocks_drop_only_exact_duplicate_boundary_units():
+    lines = []
+    claim = "外部材料称：相同判断。独立证据；相同判断。进一步验证。[^9]"
+
+    DeepAnalysisRenderer._append_external_variable_paragraph(lines, "变量", claim)
+
+    blocks = [line for line in lines if "[^9]" in line]
+    rendered = "".join(block.replace("外部材料称：", "").replace("[^9]", "") for block in blocks)
+    assert blocks == [
+        "外部材料称：相同判断。独立证据；进一步验证。[^9]",
+    ]
+    assert rendered.count("相同判断") == 1
+    assert "独立证据；" in rendered
+    assert "进一步验证。" in rendered
+
+
+def test_external_claim_blocks_keep_no_boundary_claim_as_one_cited_paragraph():
+    lines = []
+    claim = "外部材料称：一段没有句读边界的完整观察[^3]"
+
+    DeepAnalysisRenderer._append_external_variable_paragraph(lines, "变量", claim)
+
+    assert [line for line in lines if "[^3]" in line] == [claim]

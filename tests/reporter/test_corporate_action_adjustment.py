@@ -36,6 +36,14 @@ def _make_exrights_df(days=130, exrights_date="2026-06-05", split_ratio=1.4):
     return df
 
 
+def _disable_market_fetch(monkeypatch, analyzer_module):
+    monkeypatch.setattr(
+        analyzer_module,
+        "_fetch_index_kline",
+        lambda *args, **kwargs: None,
+    )
+
+
 def test_corporate_action_lowers_confidence(monkeypatch):
     import sys as _sys
     from pathlib import Path
@@ -47,6 +55,7 @@ def test_corporate_action_lowers_confidence(monkeypatch):
     monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", lambda df, *a, **k: None)
     # Also disable gap-based approximation so no repair happens at all
     monkeypatch.setattr(ta_mod, "_apply_gap_based_qfq_approximation", lambda df, *a, **k: df.copy())
+    _disable_market_fetch(monkeypatch, ta_mod)
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(
@@ -59,13 +68,67 @@ def test_corporate_action_lowers_confidence(monkeypatch):
     assert resonance["corporate_action_warning"]["has_recent_action"] is True
     assert resonance["price_data_lineage"]["effective_adjustment"] == "raw"
     assert resonance["price_data_lineage"]["price_adjustment_applied"] is False
+    volume = resonance["trend_health"]["components"]["volume_confirmation"]
+    assert volume["score"] == 5
+    assert volume["status"] == "unreliable"
+    assert "成交量未完成除权等效调整，量价分项按中性处理" in resonance["analysis_confidence"]["limitations"]
 
 
-def test_qfq_maintains_medium_confidence():
+def test_volume_window_reliability_uses_latest_twenty_one_bars():
     import sys as _sys
     from pathlib import Path
     _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    from technical_analyzer import _volume_window_reliable
+
+    df = _make_exrights_df(days=40, exrights_date="2099-01-01")
+    first_window_date = df["date"].iloc[-21]
+    inside = df["date"].iloc[-5]
+    before = first_window_date - pd.Timedelta(days=1)
+
+    def validation(date):
+        return {"price_gaps": {
+            "possible_exrights_gap": True,
+            "latest_gap": {"date": str(date)},
+        }}
+
+    assert _volume_window_reliable(df, validation(inside)) is False
+    assert _volume_window_reliable(df, validation(before)) is True
+    assert _volume_window_reliable(df, validation("not-a-date")) is False
+    assert _volume_window_reliable(df, None) is True
+
+
+def test_unresolved_gap_caps_both_momentum_and_pivot_scans(monkeypatch):
+    import sys as _sys
+    from pathlib import Path
+    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    import technical_analyzer as ta_mod
+
+    monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", lambda df, *a, **k: None)
+    monkeypatch.setattr(ta_mod, "_apply_gap_based_qfq_approximation", lambda df, *a, **k: df.copy())
+    monkeypatch.setattr(ta_mod, "detect_boll_overextension", lambda *a, **k: {
+        "family": "momentum_extreme", "type": "超卖预警", "confidence": "强烈", "action": "观察",
+    })
+    monkeypatch.setattr(ta_mod, "detect_pivot_divergence", lambda *a, **k: {
+        "family": "pivot_divergence", "type": "底背离观察", "confidence": "强烈", "action": "观察",
+    })
+    _disable_market_fetch(monkeypatch, ta_mod)
+
+    resonance = ta_mod.advanced_medium_term_resonance(
+        _make_exrights_df(), quote={"adjustment": "raw", "code": "688018"},
+    )["resonance"]
+
+    assert resonance["overextension_scan"]["confidence"] == "低可信度"
+    assert resonance["divergence_scan"]["confidence"] == "低可信度"
+
+
+def test_qfq_maintains_medium_confidence(monkeypatch):
+    import sys as _sys
+    from pathlib import Path
+    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
+    import technical_analyzer as ta_mod
     from technical_analyzer import advanced_medium_term_resonance
+
+    _disable_market_fetch(monkeypatch, ta_mod)
 
     df = _make_exrights_df()
     result = advanced_medium_term_resonance(
@@ -95,6 +158,7 @@ def test_raw_gap_local_repair_caps_confidence(monkeypatch):
         return df.copy()
 
     monkeypatch.setattr(ta_mod, "apply_qfq_adjustment", fake_repair)
+    _disable_market_fetch(monkeypatch, ta_mod)
 
     result = advanced_medium_term_resonance(
         df_daily=df,
@@ -170,10 +234,7 @@ def test_candle_location_strict_in_zone():
 
 
 def test_renderer_shows_corporate_action_warning():
-    import sys as _sys
-    from pathlib import Path
-    _sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
-    from sections.technical_renderer import TechnicalRenderer
+    from scripts.utils.reporter.sections.technical_renderer import TechnicalRenderer
 
     ctx = {
         "stock_name": "乐鑫科技",
@@ -201,32 +262,3 @@ def test_renderer_shows_corporate_action_warning():
     assert "数据提醒" in output
     assert "除权断点" in output
     assert "本地近似复权" in output
-
-
-def test_collector_attrs_carry_adjustment():
-    import pandas as pd
-
-    # Verify df.attrs pattern works end-to-end
-    fake_df = pd.DataFrame({
-        "date": ["2026-01-01"],
-        "open": [100.0], "high": [101.0], "low": [99.0],
-        "close": [100.5], "volume": [10000],
-    })
-    fake_df.attrs["adjustment"] = "qfq"
-    fake_df.attrs["data_source"] = "akshare"
-    assert fake_df.attrs["adjustment"] == "qfq"
-    assert fake_df.attrs["data_source"] == "akshare"
-
-    fake_df2 = pd.DataFrame({
-        "date": ["2026-01-01"],
-        "open": [100.0], "high": [101.0], "low": [99.0],
-        "close": [100.5], "volume": [10000],
-    })
-    fake_df2.attrs["adjustment"] = "raw"
-    fake_df2.attrs["data_source"] = "mootdx"
-    assert fake_df2.attrs["adjustment"] == "raw"
-    assert fake_df2.attrs["data_source"] == "mootdx"
-
-    # Verify attrs don't pollute columns
-    assert "adjustment" not in fake_df.columns
-    assert "data_source" not in fake_df.columns

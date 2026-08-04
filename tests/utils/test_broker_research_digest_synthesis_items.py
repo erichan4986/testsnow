@@ -126,6 +126,51 @@ def test_reader_repairs_common_pdf_ocr_artifacts_from_existing_notes(tmp_path: P
     assert "净利 均" not in items[0].content
 
 
+def test_reader_cleans_legacy_note_without_fabricating_missing_broker_values(
+    tmp_path: Path,
+) -> None:
+    _write_broker_note(
+        tmp_path,
+        excerpt=(
+            "受益于终端 对算力基础设施的投入，销售回款 持续增强。"
+            "其中 及1.6T光模块快速放量。"
+            "公司实现营收195. 环比分别增长192.1%、47.3%；"
+            "实现归母净利润57.3亿元，同比增长262.3%。"
+            "公司单季度销售毛利率为46.1%，创下历史新高。"
+        ),
+        institution="山西证券",
+    )
+
+    items = load_broker_research_digest_synthesis_items(
+        stock_name="测试股",
+        base_dir=tmp_path,
+    )
+
+    assert len(items) == 1
+    content = items[0].content
+    assert "终端对算力基础设施" in content
+    assert "销售回款持续增强" in content
+    assert "其中及1.6T" not in content
+    assert "营收195" not in content
+    assert "归母净利润57.3亿元，同比增长262.3%" in content
+    assert "销售毛利率为46.1%" in content
+
+
+def test_reader_rejects_legacy_excerpt_with_unclosed_quotation() -> None:
+    from broker_research_digest import clean_broker_research_excerpt_text
+
+    damaged = (
+        "公司围绕数据中心需求构建产品体系。"
+        "业务呈现“存量高景气与结构升级驱动的格局。"
+        "公司产品服务于云计算客户。"
+    )
+
+    assert clean_broker_research_excerpt_text(
+        damaged,
+        repair_legacy_artifacts=True,
+    ) == ""
+
+
 def test_reader_rejects_non_broker_source_type(tmp_path: Path) -> None:
     _write_broker_note(
         tmp_path,

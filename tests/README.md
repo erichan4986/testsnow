@@ -18,9 +18,10 @@ Curated external / 4.4 focused regression:
 ```bash
 python3 -m pytest \
   tests/utils/test_curated_external_full_body_viewpoint_claims.py \
-  tests/utils/test_curated_external_viewpoint_narrative.py \
+  tests/utils/test_curated_external_argument_cards.py \
+  tests/utils/test_curated_external_display.py \
+  tests/utils/test_curated_external_display_lint.py \
   tests/reporter/test_curated_external_full_body_viewpoint_preview.py \
-  tests/reporter/test_curated_external_viewpoint_narrative_preview.py \
   tests/reporter/test_synthesis_skills.py \
   tests/reporter/test_deep_analysis_renderer.py \
   -q

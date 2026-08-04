@@ -1,18 +1,253 @@
 """Tests for ExecutiveSummaryRenderer."""
 
+from types import SimpleNamespace
+
 import pytest
 from scripts.utils.reporter.sections import ExecutiveSummaryRenderer
+from scripts.utils.reporter.executive_summary_view import build_executive_summary_view
+
+
+def _decision_fixture():
+    return SimpleNamespace(
+        render_header=lambda: "### 综合评分: 6.1/10 | EV: +8.00%（谨慎持有）",
+        recommendation_sentence="当前建议谨慎持有，并等待更好的入场条件。",
+        entry_constraint=SimpleNamespace(
+            display_note="当前入场质量不足。",
+            position_cap_note="建议仓位 5-10%。",
+        ),
+        risk=SimpleNamespace(
+            level="中等风险",
+            position_advice="控制仓位。",
+        ),
+    )
+
+
+def _view_context(image_path=None):
+    ctx = {
+        "stock_name": "测试股",
+        "date_str": "20260719",
+        "recommendation_decision": SimpleNamespace(
+            total_score=5.3,
+            ev=SimpleNamespace(ev_display="+8.00%", targets={"base": 42.0}),
+            display_recommendation="谨慎持有",
+            recommendation_sentence="谨慎持有，等待趋势确认。",
+            entry_constraint=SimpleNamespace(position_cap_note="建议仓位 5-10%。"),
+            risk=SimpleNamespace(level="中等风险", position_advice="控制仓位。"),
+        ),
+        "pillar": {"fundamental": 7.0, "fwd_pe": 28.0, "eps_growth": 20.0},
+        "stock_raw": {
+            "technical": {
+                "indicators": {
+                    "_resonance": {
+                        "trend_state": {"stage": "转弱期"},
+                        "trend_health": {"grade": "转弱观察", "score": 47},
+                    }
+                }
+            }
+        },
+        "evidence_freshness": {
+            "summary_candidate": {
+                "claim": "客户订单节奏仍需验证",
+                "citation_refs": [4],
+            }
+        },
+        "chart_paths": {"executive_summary": image_path} if image_path else {},
+    }
+    ctx["executive_summary_view"] = build_executive_summary_view(ctx)
+    return ctx
+
+
+def test_view_projection_prefers_image_and_omits_legacy_summary_blocks():
+    result = ExecutiveSummaryRenderer().render(
+        _view_context("/tmp/测试股_20260719_decision.png")
+    )
+
+    assert "> **一句话结论**：谨慎持有，等待趋势确认。" in result
+    assert "![测试股 投资决策链](/tmp/测试股_20260719_decision.png)" in result
+    assert "**近期待验证变量**" in result and "[^4]" in result
+    assert "**基本面判断**" not in result
+    assert "**估值与业绩预期**" not in result
+    assert "### 多空论点对比" not in result
+
+
+def test_view_projection_falls_back_to_compact_text_chain():
+    result = ExecutiveSummaryRenderer().render(_view_context())
+
+    assert "**基本面**：结构化基本面信号中性偏强" in result
+    assert "**估值**：盈利增长正在消化估值" in result
+    assert "**技术与风险**：转弱观察 / 转弱期" in result
+    assert "**当前行动**：谨慎持有。" in result
+    assert "**基本面判断**" not in result
 
 
 def test_required_keys():
     renderer = ExecutiveSummaryRenderer()
-    assert renderer.required_keys() == ["stock_name", "synthesis"]
+    assert renderer.required_keys() == ["stock_name"]
+
+
+def test_render_without_synthesis_still_has_deterministic_summary(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda *args, **kwargs: [],
+    )
+    renderer = ExecutiveSummaryRenderer()
+
+    result = renderer.render({"stock_name": "测试股"})
+
+    assert "**基本面判断**：" in result
+    assert "**估值与业绩预期**：" in result
+    assert "**交易状态与风险**：" in result
+    assert "> **一句话结论**：" in result
+    assert "尚未形成可由高信用来源支撑的核心事实基座" in result
+
+
+def test_deterministic_summary_uses_supported_core_fact_and_structured_valuation(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda *args, **kwargs: [],
+    )
+    ctx = {
+        "stock_name": "测试股",
+        "synthesis": {},
+        "core_facts": [{
+            "fact": "2025年营业收入",
+            "data": "同比增长16.2%",
+            "provenance_status": "verified",
+        }],
+        "pillar": {
+            "valuation": 6.0,
+            "technical": 4.0,
+            "sentiment": 5.0,
+            "fundamental": 8.0,
+            "fundflow": 5.0,
+            "fwd_pe": 42.8,
+            "eps_growth": 65.5,
+        },
+        "recommendation_decision": _decision_fixture(),
+    }
+
+    result = ExecutiveSummaryRenderer().render(ctx)
+
+    assert "2025年营业收入：同比增长16.2%" in result
+    assert "Forward PE 42.8 倍" in result
+    assert "预期 EPS 增速 65.5%" in result
+    assert "当前入场质量不足" in result
+    assert "风险等级为中等风险。" in result
+    assert "当前建议谨慎持有，并等待更好的入场条件。" in result
+
+
+def test_summary_rounds_consensus_values_and_frames_unsupported_score():
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "中际旭创",
+        "pillar": {
+            "valuation": 7.0,
+            "technical": 4.7,
+            "sentiment": 3.0,
+            "fundamental": 10.0,
+            "fundflow": 5.0,
+            "fwd_pe": 45.7466,
+            "eps_growth": 65.4705,
+        },
+    })
+
+    assert "Forward PE 45.7 倍" in result
+    assert "预期 EPS 增速 65.5%" in result
+    assert "45.7466" not in result
+    assert "65.4705" not in result
+    assert (
+        "当前基本面评分为 10/10，反映结构化基本面输入；"
+        "高信用核心事实基座尚未完整形成，因此该评分不构成正式材料确认。"
+    ) in result
+
+
+def test_summary_renders_one_framed_freshness_candidate_after_fundamental_judgment():
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "synthesis": {},
+        "evidence_freshness": {
+            "summary_candidate": {
+                "claim": "外部材料称客户订单节奏出现变化，需等待正式材料验证。",
+                "citation_refs": [4, 5],
+            }
+        },
+    })
+
+    assert "**近期待验证变量**：外部材料称，客户订单节奏出现变化，需等待正式材料验证。[^4][^5]（外部待验证，不替代官方确认，不参与评分、风险评分或目标价）。" in result
+    assert result.count("**近期待验证变量**") == 1
+
+
+def test_summary_omits_freshness_candidate_when_overlay_is_empty():
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "synthesis": {},
+        "evidence_freshness": {"summary_candidate": None},
+    })
+    assert "**近期待验证变量**" not in result
+
+
+def test_summary_deduplicates_entry_text_and_punctuates_risk_sentence():
+    decision = SimpleNamespace(
+        render_header=lambda: "### 综合评分: 5.9/10 | EV: +45.69%（风险控制优先）",
+        recommendation_sentence="风险控制优先。",
+        entry_constraint=SimpleNamespace(
+            state="risk_control",
+            display_note="技术方向偏空，以防守或观望为主。",
+            position_cap_note="技术方向偏空，以防守或观望为主，建议 0-5%",
+        ),
+        risk=SimpleNamespace(level="低风险"),
+    )
+
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "中际旭创",
+        "recommendation_decision": decision,
+    })
+
+    assert result.count("技术方向偏空，以防守或观望为主") == 1
+    assert "建议 0-5%。风险等级为低风险。" in result
+    assert "0-5%风险等级" not in result
+
+
+def test_summary_bridges_positive_consensus_and_constrained_entry():
+    decision = _decision_fixture()
+    decision.entry_constraint.state = "wait_for_entry"
+
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "pillar": {"fwd_pe": 42.8, "eps_growth": 20.0},
+        "recommendation_decision": decision,
+    })
+
+    assert "一致预期仍显示盈利增长空间" in result
+    assert "当前技术入场条件未满足，仓位继续受上述约束" in result
+
+
+def test_deterministic_summary_states_when_consensus_is_missing(monkeypatch):
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
+        lambda *args, **kwargs: [],
+    )
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "synthesis": {},
+        "pillar": {
+            "valuation": 4.0,
+            "technical": 5.0,
+            "sentiment": 5.0,
+            "fundamental": 5.0,
+            "fundflow": 5.0,
+        },
+    })
+
+    assert "估值判断证据不足" in result
+    assert "暂按观望处理" in result
 
 
 def test_render_missing_keys_returns_empty():
     renderer = ExecutiveSummaryRenderer()
     assert renderer.render({}) == ""
-    assert renderer.render({"stock_name": "Test"}) == ""
+    result = renderer.render({"stock_name": "Test"})
+    assert "## 执行摘要" in result
+    assert "**基本面判断**：" in result
 
 
 def test_render_basic():
@@ -331,10 +566,6 @@ def test_render_prefers_synthesis_display(monkeypatch):
         "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
         spy_extract,
     )
-    monkeypatch.setattr(
-        "scripts.utils.reporter.sections.executive_summary_renderer._extract_conclusion",
-        lambda stock_name, text: "",
-    )
 
     renderer = ExecutiveSummaryRenderer()
     ctx = {
@@ -361,10 +592,6 @@ def test_render_falls_back_to_synthesis_when_no_display(monkeypatch):
     monkeypatch.setattr(
         "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
         lambda text, direction, claim_verification_summary=None: captured.append(text) or [],
-    )
-    monkeypatch.setattr(
-        "scripts.utils.reporter.sections.executive_summary_renderer._extract_conclusion",
-        lambda stock_name, text: "",
     )
 
     renderer = ExecutiveSummaryRenderer()

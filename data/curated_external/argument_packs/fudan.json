@@ -1,0 +1,1092 @@
+{
+  "schema_version": "curated_external_argument_pack.v4",
+  "status": "ready",
+  "stock_name": "复旦微电",
+  "validator_version": "external_argument_validator.v4",
+  "source_documents": [
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:24c0eccfb4b73e07",
+      "stock_name": "复旦微电",
+      "title": "科创板芯片龙头，净利预增313%-416%",
+      "account": "郭辉",
+      "publish_time": "2026-07-08 10:09",
+      "source_kind": "media",
+      "source_ref": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "source_url": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "raw_content_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+      "canonical_text": "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元，同比增幅高达313%至416%。扣非净利润预计为3.5亿至4.5亿元，同比增长91.98%至146.83%。公司上半年行业景气度回升及下游客户需求增长推动各产品线收入与毛利实现增长。FPGA系列、NFC射频、RFID产品、车规级MCU及多种解决方案已成为营收增长的重要动力。归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。公司已推出国内首款亿门级和十亿门级FPGA系列产品。在AI融合方向推出了首款FPAI（FPGA+AI）产品，集成CPU、FPGA、NPU三大处理单元，覆盖4TOPS至128TOPS的谱系化产品矩阵。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+      "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元，同比增幅高达313%至416%。扣非净利润预计为3.5亿至4.5亿元，同比增长91.98%至146.83%。公司上半年行业景气度回升及下游客户需求增长推动各产品线收入与毛利实现增长。FPGA系列、NFC射频、RFID产品、车规级MCU及多种解决方案已成为营收增长的重要动力。归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。公司已推出国内首款亿门级和十亿门级FPGA系列产品。在AI融合方向推出了首款FPAI（FPGA+AI）产品，集成CPU、FPGA、NPU三大处理单元，覆盖4TOPS至128TOPS的谱系化产品矩阵。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+          "start": 0,
+          "end": 386,
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:4af7d9111f44a16b",
+      "stock_name": "复旦微电",
+      "title": "半导体超级上行周期再催化！复旦微电半年净利最高暴增416%",
+      "account": "王子敬",
+      "publish_time": "2026-07-07 19:19",
+      "source_kind": "media",
+      "source_ref": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "source_url": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "raw_content_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+      "canonical_text": "复旦微电于7月7日发布2026年半年度业绩预告。公司上半年预计归母净利润达8亿至10亿元，同比增幅为313%至416%。一季度净利润1.48亿元，推算二季度净利润约6.52亿至8.52亿元。三重驱动因素：行业周期回暖，多产品线放量，投资收益增厚。FPGA受益于AI算力与工业控制需求，高端产品渗透率提升。车规级MCU加速国产替代已形成收入贡献。该业绩是国内半导体设计行业周期触底回升的又一核心信号。",
+      "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日发布2026年半年度业绩预告。公司上半年预计归母净利润达8亿至10亿元，同比增幅为313%至416%。一季度净利润1.48亿元，推算二季度净利润约6.52亿至8.52亿元。三重驱动因素：行业周期回暖，多产品线放量，投资收益增厚。FPGA受益于AI算力与工业控制需求，高端产品渗透率提升。车规级MCU加速国产替代已形成收入贡献。该业绩是国内半导体设计行业周期触底回升的又一核心信号。",
+          "start": 0,
+          "end": 199,
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:07fbf8fb0f768dd3",
+      "stock_name": "复旦微电",
+      "title": "复旦微电发布半年业绩预告，归母净利润最高预增416%",
+      "account": "全球半导体观察",
+      "publish_time": "2026-07-08 09:53",
+      "source_kind": "media",
+      "source_ref": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "source_url": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "raw_content_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+      "canonical_text": "复旦微电于7月7日披露2026年半年度业绩预告。营业收入预计22至24亿元，同比增长19.64%至30.52%。归母净利润预计8至10亿元，同比增幅313.19%至416.49%。三方面增长原因：行业回暖半导体景气度回升，技术迭代FPGA芯片、NFC射频、RFID识别、车规级MCU等新品落地，投资收益约4.7亿元。公司主营FPGA、安全识别芯片、存储、车规控制芯片等，覆盖工业、汽车电子、AI和通信等多个赛道。",
+      "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日披露2026年半年度业绩预告。营业收入预计22至24亿元，同比增长19.64%至30.52%。归母净利润预计8至10亿元，同比增幅313.19%至416.49%。三方面增长原因：行业回暖半导体景气度回升，技术迭代FPGA芯片、NFC射频、RFID识别、车规级MCU等新品落地，投资收益约4.7亿元。公司主营FPGA、安全识别芯片、存储、车规控制芯片等，覆盖工业、汽车电子、AI和通信等多个赛道。",
+          "start": 0,
+          "end": 206,
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:12547d42f50dbc37",
+      "stock_name": "复旦微电",
+      "title": "复旦微电上半年归母净利预增至高4倍 投资盛合晶微浮盈4.7亿元",
+      "account": "郭辉/财联社",
+      "publish_time": "2026-07-07 21:50",
+      "source_kind": "media",
+      "source_ref": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "source_url": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "raw_content_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+      "canonical_text": "复旦微电于7月7日晚间发布公告，预计2026年上半年营收约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元增幅达313%至416%。FPGA市场需求较好，部分料号处于供需紧平衡状态。FPAI芯片集成CPU、FPGA和NPU三大处理单元，可覆盖4TOPS至128TOPS的谱系化产品矩阵。公司通过战略配售以约6000万元获配盛合晶微304万股，账面收益达8.89倍。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+      "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "复旦微电于7月7日晚间发布公告，预计2026年上半年营收约22至24亿元，同比增长19.64%至30.52%。归母净利润预计为8亿至10亿元增幅达313%至416%。FPGA市场需求较好，部分料号处于供需紧平衡状态。FPAI芯片集成CPU、FPGA和NPU三大处理单元，可覆盖4TOPS至128TOPS的谱系化产品矩阵。公司通过战略配售以约6000万元获配盛合晶微304万股，账面收益达8.89倍。财政部已批复同意复芯凡高向国盛投资协议转让1.0673亿股。",
+          "start": 0,
+          "end": 229,
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14"
+        }
+      ]
+    }
+  ],
+  "baseline_fingerprint": "sha256:1fd79ce7e36d860c03faca8343aa38e2b3880907012b9646337d80458bd87783",
+  "cards": [
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:32ef70610253dca8",
+      "argument_key": "financial_quality:target:32ef70610253dca8",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:0:01965945b310a707",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 24,
+          "text": "复旦微电于7月7日披露2026年半年度业绩预告。",
+          "unit_hash": "sha256:72b6c5e325ead650947c46b326c7832a8982ca763892af3d01965945b310a707",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:0:01965945b310a707"
+          },
+          "citation_refs": [
+            1
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:1:3371a5a5bda8f426",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 24,
+          "end": 56,
+          "text": "营业收入预计22至24亿元，同比增长19.64%至30.52%。",
+          "unit_hash": "sha256:8eaa1185eb25ce23ddcc3409ba7a0d938e75aaaa57074aa63371a5a5bda8f426",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:1:3371a5a5bda8f426"
+          },
+          "citation_refs": [
+            1
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:2:e7b5592d6a0c4663",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 56,
+          "end": 90,
+          "text": "归母净利润预计8至10亿元，同比增幅313.19%至416.49%。",
+          "unit_hash": "sha256:79161c2c78b7ffb53c329bb69445995ff4784485232c7221e7b5592d6a0c4663",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:2:e7b5592d6a0c4663"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.dramx.com/News/IC/20260708-40746.html",
+          "curated-source:media:07fbf8fb0f768dd3"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:b7717e733a7bfc81",
+      "argument_key": "technology_product:target:b7717e733a7bfc81",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:3:5658654be8d588c8",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 90,
+          "end": 158,
+          "text": "三方面增长原因：行业回暖半导体景气度回升，技术迭代FPGA芯片、NFC射频、RFID识别、车规级MCU等新品落地，投资收益约4.7亿元。",
+          "unit_hash": "sha256:a3a4a77a8eabf80256a250c5cf244eb86cd120d94bfe90b05658654be8d588c8",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:3:5658654be8d588c8"
+          },
+          "citation_refs": [
+            1
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:4:b901c9b9532a2fe7",
+          "source_id": "curated-source:media:07fbf8fb0f768dd3",
+          "document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 158,
+          "end": 206,
+          "text": "公司主营FPGA、安全识别芯片、存储、车规控制芯片等，覆盖工业、汽车电子、AI和通信等多个赛道。",
+          "unit_hash": "sha256:80685242b87a096752b7feec94c578858a990c28641dd8c8b901c9b9532a2fe7",
+          "block_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+            "anchor_block_id": "curated-source:media:07fbf8fb0f768dd3:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:07fbf8fb0f768dd3:0:4:b901c9b9532a2fe7"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.dramx.com/News/IC/20260708-40746.html",
+          "curated-source:media:07fbf8fb0f768dd3"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:bcda7ad4208e7e82",
+      "argument_key": "financial_quality:target:bcda7ad4208e7e82",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:0:d8e11c2e1704b142",
+          "source_id": "curated-source:media:12547d42f50dbc37",
+          "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 55,
+          "text": "复旦微电于7月7日晚间发布公告，预计2026年上半年营收约22至24亿元，同比增长19.64%至30.52%。",
+          "unit_hash": "sha256:12110494d7d3f99e0f4454feb22bf78276a9b04e05f39f44d8e11c2e1704b142",
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+            "anchor_block_id": "curated-source:media:12547d42f50dbc37:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:0:d8e11c2e1704b142"
+          },
+          "citation_refs": [
+            2
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:1:4366e8b9e2755f05",
+          "source_id": "curated-source:media:12547d42f50dbc37",
+          "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 55,
+          "end": 83,
+          "text": "归母净利润预计为8亿至10亿元增幅达313%至416%。",
+          "unit_hash": "sha256:4b879facb6cc58cbfd2bf8829ad92bc2ed75f0dcf35c3d934366e8b9e2755f05",
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+            "anchor_block_id": "curated-source:media:12547d42f50dbc37:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:1:4366e8b9e2755f05"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+          "curated-source:media:12547d42f50dbc37"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:3ab47dff949c86c1",
+      "argument_key": "technology_product:target:3ab47dff949c86c1",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:3:6f907e27d15c3dc0",
+          "source_id": "curated-source:media:12547d42f50dbc37",
+          "document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "block_id": "curated-source:media:12547d42f50dbc37:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 108,
+          "end": 160,
+          "text": "FPAI芯片集成CPU、FPGA和NPU三大处理单元，可覆盖4TOPS至128TOPS的谱系化产品矩阵。",
+          "unit_hash": "sha256:e2b8463aed6c70e1f09a7e9429e87ad4f3eec09146e220b46f907e27d15c3dc0",
+          "block_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+            "anchor_block_id": "curated-source:media:12547d42f50dbc37:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:12547d42f50dbc37:0:3:6f907e27d15c3dc0"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+          "curated-source:media:12547d42f50dbc37"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:ab16b4d1aafa9a69",
+      "argument_key": "financial_quality:target:ab16b4d1aafa9a69",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality",
+        "technology_product",
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:0:dd53a983dc8f5b9d",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 57,
+          "text": "复旦微电于7月7日晚间公告，预计2026年上半年实现营业收入约22至24亿元，同比增长19.64%至30.52%。",
+          "unit_hash": "sha256:f6bd4ccf1c66a397cdbf602b4bc1f71baab1e9af0252bb8cdd53a983dc8f5b9d",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:0:dd53a983dc8f5b9d"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:1:1241a0893a926979",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 57,
+          "end": 89,
+          "text": "归母净利润预计为8亿至10亿元，同比增幅高达313%至416%。",
+          "unit_hash": "sha256:ef13dda9de0a417cf66fd62cdd0380727b86d37dd34f094b1241a0893a926979",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:1:1241a0893a926979"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:2:15843fb8bc740c27",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 89,
+          "end": 127,
+          "text": "扣非净利润预计为3.5亿至4.5亿元，同比增长91.98%至146.83%。",
+          "unit_hash": "sha256:93acd347bef43f0e5ae606a2508d32406ace67c0e4bf12b015843fb8bc740c27",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:2:15843fb8bc740c27"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:3:1b56e72d309feb45",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 127,
+          "end": 164,
+          "text": "公司上半年行业景气度回升及下游客户需求增长推动各产品线收入与毛利实现增长。",
+          "unit_hash": "sha256:d74dd89151c4c5cb50160f93f74706e1618749b641d6d4901b56e72d309feb45",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product",
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:3:1b56e72d309feb45"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:4:1c49e72ad7c20473",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 164,
+          "end": 210,
+          "text": "FPGA系列、NFC射频、RFID产品、车规级MCU及多种解决方案已成为营收增长的重要动力。",
+          "unit_hash": "sha256:89919ed7864fa843487c25822f440cebab1ed9f9c6cf75f11c49e72ad7c20473",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:4:1c49e72ad7c20473"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:5:ed23e591cc7377d6",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 210,
+          "end": 257,
+          "text": "归母净利润大幅增长还与战略配售收益有关，约6000万元获配盛合晶微304万股贡献约4.7亿元。",
+          "unit_hash": "sha256:2c0174f98d68193e042b748813fb26f9361e6d0552207332ed23e591cc7377d6",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:5:ed23e591cc7377d6"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+          "curated-source:media:24c0eccfb4b73e07"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:218005a49aa73deb",
+      "argument_key": "technology_product:target:218005a49aa73deb",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:6:7630d533fa4dc07a",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 257,
+          "end": 283,
+          "text": "公司已推出国内首款亿门级和十亿门级FPGA系列产品。",
+          "unit_hash": "sha256:731cbd8e678c185c4e86962f5afd7dd48be73a35901812267630d533fa4dc07a",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:6:7630d533fa4dc07a"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:7:64f3f0f36e034056",
+          "source_id": "curated-source:media:24c0eccfb4b73e07",
+          "document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 7,
+          "start": 283,
+          "end": 356,
+          "text": "在AI融合方向推出了首款FPAI（FPGA+AI）产品，集成CPU、FPGA、NPU三大处理单元，覆盖4TOPS至128TOPS的谱系化产品矩阵。",
+          "unit_hash": "sha256:5eaf953d4026c8c80daa4a86a035aeff33181b25040199b064f3f0f36e034056",
+          "block_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+            "anchor_block_id": "curated-source:media:24c0eccfb4b73e07:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:24c0eccfb4b73e07:0:7:64f3f0f36e034056"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+          "curated-source:media:24c0eccfb4b73e07"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:f56e2295693ea299",
+      "argument_key": "financial_quality:target:f56e2295693ea299",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:0:a1e51c084cf1d281",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 24,
+          "text": "复旦微电于7月7日发布2026年半年度业绩预告。",
+          "unit_hash": "sha256:b59b7e108bcd83ffe0aa599a00df2d236e45d20a9a7cedb6a1e51c084cf1d281",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "复旦微电",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:0:a1e51c084cf1d281"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:1:0053109ee8fefacb",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 24,
+          "end": 60,
+          "text": "公司上半年预计归母净利润达8亿至10亿元，同比增幅为313%至416%。",
+          "unit_hash": "sha256:763c82766ee4dc22aa0cbff482621561ac0c6348ce5d658a0053109ee8fefacb",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:1:0053109ee8fefacb"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:2:6140f60ceffcc38b",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 60,
+          "end": 95,
+          "text": "一季度净利润1.48亿元，推算二季度净利润约6.52亿至8.52亿元。",
+          "unit_hash": "sha256:1cba1d3586a42399426131ccaee095034f95fce37ffaa87b6140f60ceffcc38b",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:2:6140f60ceffcc38b"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+          "curated-source:media:4af7d9111f44a16b"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:c43e4d92468117f5",
+      "argument_key": "financial_quality:target:c43e4d92468117f5",
+      "entity_scope": "target",
+      "target_entity": "复旦微电",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality",
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:5:c1dbd4bb28d5a38b",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 152,
+          "end": 172,
+          "text": "车规级MCU加速国产替代已形成收入贡献。",
+          "unit_hash": "sha256:a743116e274d3de5070bd462b10ae9d4c7c6569f6e3b6ce2c1dbd4bb28d5a38b",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:5:c1dbd4bb28d5a38b"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:6:aee153c8d8bff14f",
+          "source_id": "curated-source:media:4af7d9111f44a16b",
+          "document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 172,
+          "end": 199,
+          "text": "该业绩是国内半导体设计行业周期触底回升的又一核心信号。",
+          "unit_hash": "sha256:8abf0cc90b1af12af4074d642c770d94ac84f5f59bf0dc45aee153c8d8bff14f",
+          "block_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "复旦微电",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "复旦微电",
+            "anchor_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+            "anchor_block_id": "curated-source:media:4af7d9111f44a16b:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:4af7d9111f44a16b:0:6:aee153c8d8bff14f"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+          "curated-source:media:4af7d9111f44a16b"
+        ]
+      ]
+    }
+  ],
+  "citations": {
+    "1": {
+      "source": "外部材料精选观察",
+      "author": "全球半导体观察",
+      "title": "复旦微电发布半年业绩预告，归母净利润最高预增416%",
+      "url": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "source_ref": "https://www.dramx.com/News/IC/20260708-40746.html",
+      "source_id": "curated-source:media:07fbf8fb0f768dd3",
+      "source_document_hash": "sha256:27b758a9066e08e13cab0642d1d7e376d6fe5bda367060f8224d13c7e9157a8c",
+      "publish_time": "2026-07-08 09:53",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "2": {
+      "source": "外部材料精选观察",
+      "author": "郭辉/财联社",
+      "title": "复旦微电上半年归母净利预增至高4倍 投资盛合晶微浮盈4.7亿元",
+      "url": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "source_ref": "https://www.163.com/dy/article/L191SQEG05198CJN.html",
+      "source_id": "curated-source:media:12547d42f50dbc37",
+      "source_document_hash": "sha256:3d964d8fbe3942dfa4606d0b60b89cc1335a90fb9d78aff9df808996c70b6a14",
+      "publish_time": "2026-07-07 21:50",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "3": {
+      "source": "外部材料精选观察",
+      "author": "郭辉",
+      "title": "科创板芯片龙头，净利预增313%-416%",
+      "url": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "source_ref": "https://m.21jingji.com/article/20260708/herald/ba4b6e10f40c4f0a48c0bc9f75a4ba8f.html",
+      "source_id": "curated-source:media:24c0eccfb4b73e07",
+      "source_document_hash": "sha256:fbaa044aebf174f3471608be42f1e5bbaba38d3cbd52db352a958e1aa7d78b51",
+      "publish_time": "2026-07-08 10:09",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "4": {
+      "source": "外部材料精选观察",
+      "author": "王子敬",
+      "title": "半导体超级上行周期再催化！复旦微电半年净利最高暴增416%",
+      "url": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "source_ref": "https://stock.jrj.com.cn/2026/07/07191957732987.shtml",
+      "source_id": "curated-source:media:4af7d9111f44a16b",
+      "source_document_hash": "sha256:d170becd13f33bc23dc42ef6f1545af049e7a2985e42f36e20028e5379095ff4",
+      "publish_time": "2026-07-07 19:19",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    }
+  },
+  "diagnostics": {
+    "source_unit_count": 27,
+    "target_unit_count": 21,
+    "peer_unit_count": 0,
+    "rejected_by_reason": {
+      "unclassified": 3,
+      "incomplete": 3
+    },
+    "rejected_source_documents": {},
+    "selector_batch_count": 0,
+    "selector_request_count": 1,
+    "accepted_target_card_count": 8,
+    "accepted_peer_card_count": 0,
+    "accepted_count": 8
+  },
+  "narrative_plan": {
+    "schema_version": "curated_external_narrative_plan.v1",
+    "groups": [
+      {
+        "scope_bucket": "target",
+        "primary_family": "financial_quality",
+        "card_ids": [
+          "external-card:32ef70610253dca8",
+          "external-card:bcda7ad4208e7e82",
+          "external-card:ab16b4d1aafa9a69",
+          "external-card:f56e2295693ea299",
+          "external-card:c43e4d92468117f5"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "technology_product",
+        "card_ids": [
+          "external-card:b7717e733a7bfc81",
+          "external-card:3ab47dff949c86c1",
+          "external-card:218005a49aa73deb"
+        ]
+      }
+    ]
+  }
+}

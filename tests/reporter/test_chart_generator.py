@@ -3,14 +3,18 @@ import pytest
 import sys
 from pathlib import Path
 import tempfile
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils" / "reporter"))
 from chart_generator import (
+    _wrap_cjk,
+    generate_decision_chain_chart,
     generate_technical_panel,
     generate_bull_bear_chart,
     generate_radar_chart,
-    generate_valuation_comparison,
 )
+from executive_summary_view import ExecutiveSummaryViewModel, SummaryNode
+import chart_generator as chart_module
 
 
 _KALEIDO_BROWSER_AVAILABLE = None
@@ -36,21 +40,93 @@ def _has_kaleido_browser():
 
 
 @pytest.fixture(autouse=True)
-def require_kaleido_browser():
+def require_kaleido_browser(request):
+    browser_free_tests = {
+        "test_generate_decision_chain_chart_uses_fixed_canvas",
+        "test_wrap_cjk_keeps_numeric_tokens_intact_and_limits_lines",
+        "test_technical_panel_omits_scalar_momentum_panels",
+        "test_technical_panel_uses_price_and_aligned_volume",
+        "test_technical_panel_rejects_insufficient_or_single_panel",
+    }
+    if request.node.name in browser_free_tests:
+        return
     if not _has_kaleido_browser():
         pytest.skip("Kaleido/Chrome image export is unavailable in this environment")
+
+
+def _daily_series(n=60, include_volume=True):
+    close = [100.0 + index * 0.1 for index in range(n)]
+    data = {
+        "close": close,
+        "open": [value - 0.2 for value in close],
+        "high": [value + 0.5 for value in close],
+        "low": [value - 0.5 for value in close],
+    }
+    if include_volume:
+        data["volume"] = [1000 + index * 5 for index in range(n)]
+    return data
+
+
+def _capture_subplots(monkeypatch):
+    captured = {}
+    original = chart_module.make_subplots
+
+    def wrapper(*args, **kwargs):
+        captured["kwargs"] = kwargs
+        captured["figure"] = original(*args, **kwargs)
+        return captured["figure"]
+
+    monkeypatch.setattr(chart_module, "make_subplots", wrapper)
+    monkeypatch.setattr("plotly.graph_objects.Figure.write_image", lambda *args, **kwargs: None)
+    return captured
+
+
+def test_technical_panel_omits_scalar_momentum_panels(monkeypatch, tmp_path):
+    captured = _capture_subplots(monkeypatch)
+
+    result = generate_technical_panel(
+        "测试股",
+        _daily_series(),
+        [],
+        {"macd": 0.5, "macd_hist": 0.2, "rsi": 55.0},
+        str(tmp_path / "tech.png"),
+    )
+
+    assert result == str(tmp_path / "tech.png")
+    names = {trace.name for trace in captured["figure"].data}
+    assert not names.intersection({"MACD", "MACD柱状", "MACD信号线", "RSI"})
+
+
+def test_technical_panel_uses_price_and_aligned_volume(monkeypatch, tmp_path):
+    captured = _capture_subplots(monkeypatch)
+
+    generate_technical_panel("测试股", _daily_series(), [], {}, str(tmp_path / "tech.png"))
+
+    assert captured["kwargs"]["rows"] == 2
+    assert captured["kwargs"]["subplot_titles"] == ("价格与均线", "成交量")
+
+
+def test_technical_panel_rejects_insufficient_or_single_panel(monkeypatch, tmp_path):
+    write_image = monkeypatch.setattr(
+        "plotly.graph_objects.Figure.write_image", lambda *args, **kwargs: None
+    )
+
+    short = generate_technical_panel(
+        "测试股", _daily_series(20), [], {}, str(tmp_path / "short.png")
+    )
+    price_only = generate_technical_panel(
+        "测试股", _daily_series(include_volume=False), [], {"rsi": 55.0},
+        str(tmp_path / "price-only.png"),
+    )
+
+    assert short is None
+    assert price_only is None
 
 
 def test_generate_technical_panel_creates_png():
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test_tech.png"
-        daily_data = {
-            "close": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0],
-            "volume": [1000, 2000, 1500, 1800, 1200, 1600, 1400, 1700, 1300, 1900],
-            "open": [99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0],
-            "high": [101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0, 110.0],
-            "low": [98.0, 99.0, 100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0],
-        }
+        daily_data = _daily_series()
         result = generate_technical_panel(
             stock_name="测试股",
             daily_data=daily_data,
@@ -81,11 +157,8 @@ def test_generate_technical_panel_creates_png():
 def test_generate_technical_panel_with_precomputed_ma():
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test_tech_ma.png"
-        daily_data = {
-            "close": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0],
-            "volume": [1000] * 10,
-        }
-        precomputed_ma5 = [None, None, None, None, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0]
+        daily_data = _daily_series()
+        precomputed_ma5 = [None] * 4 + [100.2 + index * 0.1 for index in range(56)]
         result = generate_technical_panel(
             stock_name="测试股",
             daily_data=daily_data,
@@ -100,18 +173,15 @@ def test_generate_technical_panel_with_precomputed_ma():
 def test_generate_technical_panel_macd_signal_computed():
     with tempfile.TemporaryDirectory() as tmpdir:
         output_path = Path(tmpdir) / "test_tech_macd.png"
-        daily_data = {
-            "close": [100.0, 101.0, 102.0, 103.0, 104.0, 105.0, 106.0, 107.0, 108.0, 109.0],
-            "volume": [1000] * 10,
-        }
-        macd_series = [0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1.0]
+        daily_data = _daily_series()
+        macd_series = [0.1 + index * 0.01 for index in range(60)]
         result = generate_technical_panel(
             stock_name="测试股",
             daily_data=daily_data,
             patterns=[],
             indicators={
                 "macd": macd_series,
-                "macd_hist": [0.05] * 10,
+                "macd_hist": [0.05] * 60,
                 "rsi": 55.0,
             },
             output_path=str(output_path),
@@ -162,18 +232,44 @@ def test_generate_radar_chart_creates_png_and_matches_path():
         assert Path(result) == output_path
 
 
-def test_generate_valuation_comparison_creates_png():
+def _summary_view():
+    return ExecutiveSummaryViewModel(
+        stock_name="中际旭创",
+        date_str="20260719",
+        total_score="5.3 / 10",
+        ev="+39.48%",
+        recommendation="风险控制优先",
+        recommendation_sentence="风险控制优先，等待趋势确认。",
+        risk_level="中等风险",
+        position_cap="0-5%",
+        fundamental=SummaryNode("结构化基本面信号较强", "基本面评分 10/10", True),
+        valuation=SummaryNode("盈利增长正在消化估值", "Forward PE 37.8x｜预期 EPS 增速 +65.5%", True),
+        technical=SummaryNode("趋势失效 / 破坏期", "趋势健康度 26/100｜风险中等｜仓位 0-5%", True),
+        action="风险控制优先",
+    )
+
+
+def test_generate_decision_chain_chart_creates_fixed_portrait_png():
     with tempfile.TemporaryDirectory() as tmpdir:
-        output_path = Path(tmpdir) / "test_val.png"
-        metrics = {
-            "测试股": {"forward_pe": 70.0, "ps": 15.0},
-            "竞品A": {"forward_pe": 120.0, "ps": 8.0},
-            "竞品B": {"forward_pe": 200.0, "ps": 5.0},
-        }
-        result = generate_valuation_comparison(
-            stock_name="测试股",
-            competitor_metrics=metrics,
-            output_path=str(output_path),
-        )
+        output_path = Path(tmpdir) / "decision.png"
+
+        result = generate_decision_chain_chart(_summary_view(), str(output_path))
+
+        assert Path(result) == output_path
         assert output_path.exists()
         assert output_path.stat().st_size > 10_000
+
+
+def test_generate_decision_chain_chart_uses_fixed_canvas():
+    with patch("plotly.graph_objects.Figure.write_image") as write_image:
+        generate_decision_chain_chart(_summary_view(), "/tmp/decision.png")
+
+    write_image.assert_called_once_with("/tmp/decision.png", width=1240, height=1600, scale=1)
+
+
+def test_wrap_cjk_keeps_numeric_tokens_intact_and_limits_lines():
+    wrapped = _wrap_cjk("Forward PE 37.8x 与预期 EPS 增速 +65.5%共同构成估值参考", width=18, max_lines=2)
+
+    assert "37.8x" in wrapped
+    assert "+65.5%" in wrapped
+    assert len(wrapped.split("<br>")) <= 2

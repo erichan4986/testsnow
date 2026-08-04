@@ -5,6 +5,7 @@ pointing to local sample text files.
 """
 
 import json
+import os
 import subprocess
 import sys
 from pathlib import Path
@@ -300,7 +301,7 @@ def test_prepare_default_no_knowledge(tmp_path: Path) -> None:
 
 
 def test_prepare_with_write_knowledge(tmp_path: Path) -> None:
-    """--write-knowledge should persist notes and report count."""
+    """--write-knowledge should persist one pack and one human view."""
     sample = _write_sample_report(tmp_path)
     config = tmp_path / "stocks.json"
     config.write_text(
@@ -331,15 +332,22 @@ def test_prepare_with_write_knowledge(tmp_path: Path) -> None:
     )
 
     assert result["wrote_knowledge"] is True
-    assert result["knowledge_written_count"] > 0
-    notes = list(
-        (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").rglob("*.md")
-    )
-    assert len(notes) == result["knowledge_written_count"]
+    assert result["knowledge_written_count"] == 0
+    stock_root = knowledge_dir / "10-Stocks" / "测试股份"
+    assert not (stock_root / "periodic_narrative_cards").exists()
+    pack_output = result["knowledge_outputs"]["periodic_narrative_pack"]
+    assert pack_output["state"] == "bootstrap"
+    assert Path(pack_output["pack_path"]).exists()
+    assert Path(pack_output["manifest_path"]).exists()
+    view_output = result["knowledge_outputs"]["periodic_narrative_view"]
+    assert view_output["state"] == "created"
+    assert Path(view_output["view_path"]).exists()
+    assert view_output["total_cards"] == result["cards_count"]
+    assert view_output["displayed_cards"] <= view_output["total_cards"]
+    assert result["knowledge_outputs"]["legacy_note_count"] == 0
 
 
-def test_prepare_with_write_knowledge_refreshes_existing_notes(tmp_path: Path) -> None:
-    """--write-knowledge should refresh existing cards after extractor cleanup changes."""
+def test_prepare_with_write_knowledge_is_idempotent_for_view(tmp_path: Path) -> None:
     sample = _write_sample_report(tmp_path)
     config = tmp_path / "stocks.json"
     config.write_text(
@@ -368,12 +376,8 @@ def test_prepare_with_write_knowledge_refreshes_existing_notes(tmp_path: Path) -
         base_dir=knowledge_dir,
         preview_output=str(preview_path),
     )
-    notes = sorted(
-        (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").rglob("*.md")
-    )
-    assert notes
-    stale_note = notes[0]
-    stale_note.write_text(stale_note.read_text(encoding="utf-8") + "\nSTALE BODY\n", encoding="utf-8")
+    first_view = Path(first["knowledge_outputs"]["periodic_narrative_view"]["view_path"])
+    first_bytes = first_view.read_bytes()
 
     second = prepare_annual_report_materials(
         stock="测试股份",
@@ -385,8 +389,10 @@ def test_prepare_with_write_knowledge_refreshes_existing_notes(tmp_path: Path) -
         preview_output=str(preview_path),
     )
 
-    assert second["knowledge_written_count"] == first["knowledge_written_count"]
-    assert "STALE BODY" not in stale_note.read_text(encoding="utf-8")
+    assert first["knowledge_written_count"] == second["knowledge_written_count"] == 0
+    assert second["knowledge_outputs"]["periodic_narrative_view"]["state"] == "unchanged"
+    assert first_view.read_bytes() == first_bytes
+    assert not (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").exists()
 
 
 def test_prepare_custom_preview_output(tmp_path: Path) -> None:
@@ -440,6 +446,26 @@ def test_prepare_failure_no_market(tmp_path: Path) -> None:
 
 
 # --- CLI subprocess tests ---
+
+
+def test_cli_help_survives_inherited_pythonpath() -> None:
+    env = os.environ.copy()
+    env["PYTHONPATH"] = os.pathsep.join(("scripts/utils", "scripts"))
+    result = subprocess.run(
+        [
+            sys.executable,
+            str(REPO_ROOT / "scripts" / "prepare_annual_report_materials.py"),
+            "--help",
+        ],
+        cwd=REPO_ROOT,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+    assert result.returncode == 0, result.stderr
+    assert "Prepare annual report cache" in result.stdout
 
 
 def test_cli_runs_with_stock_and_year(tmp_path: Path) -> None:
@@ -552,8 +578,7 @@ def test_cli_with_write_knowledge(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     payload = json.loads(result.stdout)
     assert payload["wrote_knowledge"] is True
-    assert payload["knowledge_written_count"] > 0
-    notes = list(
-        (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").rglob("*.md")
-    )
-    assert len(notes) == payload["knowledge_written_count"]
+    assert payload["knowledge_written_count"] == 0
+    assert not (knowledge_dir / "10-Stocks" / "测试股份" / "periodic_narrative_cards").exists()
+    assert Path(payload["knowledge_outputs"]["periodic_narrative_pack"]["pack_path"]).exists()
+    assert Path(payload["knowledge_outputs"]["periodic_narrative_view"]["view_path"]).exists()

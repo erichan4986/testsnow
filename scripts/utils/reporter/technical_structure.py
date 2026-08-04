@@ -7,15 +7,224 @@ from typing import Dict
 import numpy as np
 import pandas as pd
 
+try:
+    from .technical_indicators import atr as _atr
+except ImportError:
+    from technical_indicators import atr as _atr
+
 __all__ = [
     "compute_bias", "compute_boll_state", "compute_candle_features",
     "compute_ma_direction", "resample_daily_to_weekly",
     "compute_weekly_trend", "find_support_resistance",
-    "evaluate_sr_transformation", "detect_trend_structure_health",
+    "evaluate_sr_transformation", "confirmed_swing_indices", "detect_trend_structure_health",
     "detect_channel_or_box_structure", "evaluate_bottoming_region",
+    "build_volume_context", "build_structure_path", "analyze_terminal_shock",
 ]
 
 logger = logging.getLogger(__name__)
+
+
+def confirmed_swing_indices(
+    values: pd.Series,
+    left: int,
+    right: int,
+    kind: str,
+) -> list[int]:
+    """Return strictly confirmed swing positions without using right-edge bars."""
+    series = pd.to_numeric(values, errors="coerce").reset_index(drop=True)
+    indices = []
+    for i in range(left, len(series) - right):
+        center = series.iloc[i]
+        neighbors = pd.concat((series.iloc[i - left:i], series.iloc[i + 1:i + right + 1]))
+        if pd.isna(center) or neighbors.isna().any():
+            continue
+        if (kind == "low" and center < neighbors.min()) or (kind == "high" and center > neighbors.max()):
+            indices.append(i)
+    return indices
+
+
+def _finite(value: object) -> float | None:
+    """Return a finite float without treating malformed market data as a value."""
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return None
+    return number if np.isfinite(number) else None
+
+
+def _source_dates(df_daily: pd.DataFrame) -> pd.Series | None:
+    """Normalize real source dates; positional indices are never reportable dates."""
+    dates = df_daily.get("date")
+    if dates is None and isinstance(df_daily.index, pd.DatetimeIndex):
+        dates = pd.Series(df_daily.index, index=df_daily.index)
+    if dates is None:
+        return None
+    dates = pd.to_datetime(dates, errors="coerce").reset_index(drop=True)
+    return None if dates.isna().any() else dates
+
+
+def build_volume_context(
+    df_daily: pd.DataFrame | None,
+    daily_structure: Dict | None,
+    volume_reliable: bool = True,
+) -> dict:
+    """Describe the completed-day volume context using the preceding 20 bars only."""
+    empty = {"status": "insufficient", "ratio": None, "price_change": None, "context": "unknown"}
+    if not volume_reliable:
+        return {**empty, "status": "unreliable"}
+    if df_daily is None or len(df_daily) < 21 or not {"close", "volume"}.issubset(df_daily.columns):
+        return empty
+    window = df_daily.tail(21)
+    close = pd.to_numeric(window["close"], errors="coerce")
+    volume = pd.to_numeric(window["volume"], errors="coerce")
+    if close.iloc[-2:].isna().any() or volume.isna().any() or (volume <= 0).any():
+        return empty
+    baseline = float(volume.iloc[:-1].mean())
+    if baseline <= 0:
+        return empty
+    change = float(close.iloc[-1] - close.iloc[-2])
+    position = (daily_structure or {}).get("price_vs_ma20")
+    context = "bullish" if change > 0 and position == "站上" else "bearish" if change < 0 and position == "跌破" else "mixed"
+    return {
+        "status": "ready", "ratio": float(volume.iloc[-1] / baseline),
+        "price_change": change, "context": context,
+    }
+
+
+def build_structure_path(df_daily: pd.DataFrame | None, config: Dict | None) -> dict:
+    """Build a source-ordered path from confirmed pivots plus the latest close."""
+    unavailable_relation = {"status": "unavailable", "previous": None, "latest": None, "materiality_pct": None}
+    empty = {
+        "status": "unavailable", "as_of": None, "pivot_sequence": [], "segments": [], "limitations": [],
+        "pivot_relations": {"high": dict(unavailable_relation), "low": dict(unavailable_relation)},
+    }
+    if df_daily is None or not {"high", "low", "close"}.issubset(df_daily.columns):
+        return {**empty, "limitations": ["OHLC 数据不足"]}
+    dates = _source_dates(df_daily)
+    if dates is None:
+        return {**empty, "limitations": ["缺少可解析交易日期"]}
+    cfg = ((config or {}).get("technical") or {}).get("divergence") or {}
+    lookback = int(cfg.get("lookback", 80))
+    left, right = int(cfg.get("swing_left", 3)), int(cfg.get("swing_right", 3))
+    frame = df_daily.tail(max(1, lookback)).reset_index(drop=True)
+    dates = dates.tail(len(frame)).reset_index(drop=True)
+    date_text = dates.dt.strftime("%Y-%m-%d")
+    high = pd.to_numeric(frame["high"], errors="coerce")
+    low = pd.to_numeric(frame["low"], errors="coerce")
+    close = pd.to_numeric(frame["close"], errors="coerce")
+    if high.isna().any() or low.isna().any() or close.isna().any() or len(frame) < left + right + 2:
+        return {**empty, "as_of": date_text.iloc[-1], "limitations": ["结构数据不足"]}
+
+    high_indices = set(confirmed_swing_indices(high, left, right, "high"))
+    low_indices = set(confirmed_swing_indices(low, left, right, "low"))
+    dual_indices = high_indices & low_indices
+    limitations = ["dual_extreme_bar_omitted"] if dual_indices else []
+    candidates = [
+        {"idx": index, "kind": kind, "price": float(high.iloc[index] if kind == "high" else low.iloc[index]), "date": date_text.iloc[index]}
+        for kind, indices in (("high", high_indices), ("low", low_indices))
+        for index in indices - dual_indices
+        if index < len(frame) - 1
+    ]
+    candidates.sort(key=lambda item: item["idx"])
+    pivots = []
+    for candidate in candidates:
+        if pivots and pivots[-1]["kind"] == candidate["kind"]:
+            more_extreme = candidate["price"] > pivots[-1]["price"] if candidate["kind"] == "high" else candidate["price"] < pivots[-1]["price"]
+            if more_extreme:
+                pivots[-1] = candidate
+            continue
+        pivots.append(candidate)
+
+    atr = _atr(frame)
+    tolerance = float(cfg.get("price_tolerance_pct", 0.01))
+    multiplier = float(cfg.get("price_atr_multiplier", 0.5))
+
+    def segment(start: dict, end_price: float, end_idx: int, end_date: str, end_kind: str) -> dict:
+        change_pct = (end_price / start["price"] - 1.0) if start["price"] else 0.0
+        atr_value = _finite(atr.iloc[end_idx]) or 0.0
+        threshold = max(tolerance, multiplier * atr_value / max(abs(end_price), 1e-9))
+        move = "up" if change_pct > threshold else "down" if change_pct < -threshold else "flat"
+        return {
+            "start_date": start["date"], "end_date": end_date,
+            "start_price": start["price"], "end_price": end_price,
+            "start_kind": start["kind"], "end_kind": end_kind,
+            "change_pct": float(change_pct), "move": move,
+        }
+
+    def relation(kind: str) -> dict:
+        points = [pivot for pivot in pivots if pivot["kind"] == kind]
+        if len(points) < 2:
+            return dict(unavailable_relation)
+        previous, latest = points[-2:]
+        previous_price, latest_price = _finite(previous["price"]), _finite(latest["price"])
+        atr_value = _finite(atr.iloc[latest["idx"]])
+        if previous_price in {None, 0.0} or latest_price in {None, 0.0} or atr_value is None:
+            return dict(unavailable_relation)
+        threshold = max(tolerance, multiplier * atr_value / abs(latest_price))
+        change = latest_price / previous_price - 1.0
+        status = "higher" if change > threshold else "lower" if change < -threshold else "flat"
+        point = lambda item: {"date": item["date"], "price": float(item["price"])}
+        return {
+            "status": status, "previous": point(previous), "latest": point(latest),
+            "materiality_pct": float(threshold),
+        }
+
+    segments = [
+        segment(start, end["price"], end["idx"], end["date"], end["kind"])
+        for start, end in zip(pivots, pivots[1:])
+    ]
+    if pivots:
+        segments.append(segment(pivots[-1], float(close.iloc[-1]), len(frame) - 1, date_text.iloc[-1], "latest_close"))
+    return {
+        "status": "ready" if len(pivots) >= 2 else "sparse", "as_of": date_text.iloc[-1],
+        "pivot_sequence": [{key: value for key, value in pivot.items() if key != "idx"} for pivot in pivots],
+        "segments": segments, "pivot_relations": {"high": relation("high"), "low": relation("low")},
+        "limitations": limitations,
+    }
+
+
+def analyze_terminal_shock(
+    df_daily: pd.DataFrame | None,
+    atr_series: pd.Series | None,
+    volume_context: dict | None,
+    config: Dict | None,
+) -> dict:
+    """Identify a directional terminal shock using prior-row ATR only."""
+    empty = {"status": "unavailable", "direction": "unknown", "facts": [], "volume_status": "insufficient"}
+    required = {"open", "high", "low", "close"}
+    if df_daily is None or len(df_daily) < 2 or not required.issubset(df_daily.columns) or atr_series is None:
+        return empty
+    row, previous = df_daily.iloc[-1], df_daily.iloc[-2]
+    values = [_finite(row.get(key)) for key in ("open", "high", "low", "close")]
+    open_, high, low, close, previous_close = (*values, _finite(previous.get("close")))
+    prior_atr = _finite(pd.to_numeric(atr_series, errors="coerce").shift(1).iloc[-1])
+    if None in (open_, high, low, close, previous_close, prior_atr) or high <= low or prior_atr <= 0:
+        return empty
+    true_range = max(high - low, abs(high - previous_close), abs(low - previous_close))
+    range_atr_ratio = true_range / prior_atr
+    body_ratio = abs(close - open_) / (high - low)
+    close_location = (close - low) / (high - low)
+    shock_cfg = (((config or {}).get("technical") or {}).get("structure_path") or {}).get("shock") or {}
+    minimum_range = float(shock_cfg.get("min_range_atr", 1.5))
+    minimum_body = float(shock_cfg.get("min_body_range", 0.65))
+    extreme = float(shock_cfg.get("close_extreme_pct", 0.2))
+    down = close < open_ and close < previous_close and close_location <= extreme
+    up = close > open_ and close > previous_close and close_location >= 1 - extreme
+    direction = "down" if down else "up" if up else "mixed"
+    volume = volume_context or {}
+    status = "ready" if direction in {"down", "up"} and range_atr_ratio >= minimum_range and body_ratio >= minimum_body else "ordinary"
+    facts = []
+    if status == "ready":
+        facts.append(f"日内振幅为前一日ATR的{range_atr_ratio:.1f}倍，实体占比{body_ratio:.0%}")
+        facts.append("收盘接近日内低位" if direction == "down" else "收盘接近日内高位")
+        if volume.get("status") == "ready" and _finite(volume.get("ratio")) is not None:
+            facts.append(f"量能比{float(volume['ratio']):.1f}×此前20日均量")
+    return {
+        "status": status, "direction": direction, "facts": facts,
+        "range_atr_ratio": float(range_atr_ratio), "body_ratio": float(body_ratio),
+        "close_location": float(close_location), "volume_ratio": volume.get("ratio"),
+        "volume_status": volume.get("status", "insufficient"),
+    }
 
 
 def evaluate_sr_transformation(
@@ -354,7 +563,7 @@ def find_support_resistance(
                 drop = price - future_min
                 if drop >= reverse_threshold:
                     valid.append(price)
-        return pd.Series(valid)
+        return pd.Series(valid, dtype=float)
 
     max_prices_raw = recent_high[local_max_mask].dropna()
     min_prices_raw = recent_low[local_min_mask].dropna()
@@ -362,7 +571,7 @@ def find_support_resistance(
     max_prices = _valid_touches(max_prices_raw, is_support=False)
     min_prices = _valid_touches(min_prices_raw, is_support=True)
 
-    if len(max_prices) < min_touches or len(min_prices) < min_touches:
+    if len(max_prices) < min_touches and len(min_prices) < min_touches:
         diagnostics.update({
             "bars": len(df),
             "recent_bars": len(recent),
@@ -498,26 +707,16 @@ def detect_trend_structure_health(
         }
 
     df = df_daily.iloc[-lookback:].copy().reset_index(drop=True)
-    lows = df["low"].values
     dates = df["date"] if "date" in df.columns else pd.Series(df.index)
 
     # 计算 ATR（简化版，用 high-low）
     atr = (df["high"] - df["low"]).rolling(14).mean().iloc[-1]
     threshold = max(tolerance_pct, atr_multiplier * (atr / df["close"].iloc[-1] if df["close"].iloc[-1] != 0 else 0))
 
-    # 找 confirmed swing lows
-    swing_lows = []
-    n = len(df)
-    for i in range(swing_left, n - swing_right):
-        is_low = True
-        for j in range(1, swing_left + 1):
-            if lows[i - j] <= lows[i]:
-                is_low = False; break
-        for j in range(1, swing_right + 1):
-            if lows[i + j] <= lows[i]:
-                is_low = False; break
-        if is_low:
-            swing_lows.append({"idx": i, "price": float(lows[i]), "date": str(dates.iloc[i]) if hasattr(dates.iloc[i], 'strftime') else str(dates.iloc[i])})
+    swing_lows = [
+        {"idx": i, "price": float(df["low"].iloc[i]), "date": str(dates.iloc[i])}
+        for i in confirmed_swing_indices(df["low"], swing_left, swing_right, "low")
+    ]
 
     if len(swing_lows) < 2:
         return {

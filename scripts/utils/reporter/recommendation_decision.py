@@ -8,6 +8,8 @@ report's recommendation, EV, entry constraint, and risk assessment.
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
+from .technical_state_machine import is_valid_technical_judgment
+
 
 def _total_score_from_pillar(pillar: Dict[str, Any]) -> Optional[float]:
     """Compute the canonical weighted total score from pillar values."""
@@ -92,6 +94,27 @@ def _is_number(value: Any) -> bool:
     return isinstance(value, (int, float)) and not isinstance(value, bool)
 
 
+def _judgment_entry_constraint(resonance: Dict) -> EntryConstraint | None:
+    judgment = resonance.get("judgment") if isinstance(resonance, dict) else None
+    if not is_valid_technical_judgment(judgment):
+        return None
+    trend = judgment.get("trend") if isinstance(judgment.get("trend"), dict) else {}
+    target = judgment.get("target") if isinstance(judgment.get("target"), dict) else {}
+    action = judgment.get("action") if isinstance(judgment.get("action"), dict) else {}
+    if action.get("state") not in {"follow", "wait_for_entry", "wait_for_confirmation", "risk_control", "unavailable"}:
+        return None
+    reason = str(target.get("reason_code") or action.get("state"))
+    if action["state"] == "risk_control":
+        if trend.get("state") in {"down", "invalid"}:
+            return EntryConstraint("severe_technical", "风险控制优先", "技术趋势已失效或转入下行，风险控制优先。", "趋势破坏期，以观望或防守仓位为主，建议 0-5%", "technical_judgment", reason)
+        return EntryConstraint("risk_control", "风险控制优先", "技术方向偏空，以防守或观望为主。", "技术方向偏空，以防守或观望为主，建议 0-5%", "technical_judgment", reason)
+    if action["state"] == "wait_for_entry":
+        return EntryConstraint("wait_for_entry", "但等待入场", "技术目标尚未满足入场条件。", "当前入场质量不足，建议等待回调或盈亏比改善，仓位 5-10%", "technical_judgment", reason)
+    if action["state"] in {"wait_for_confirmation", "unavailable"}:
+        return EntryConstraint("wait_for_confirmation", "但等待确认", "技术信号尚待确认，暂不提高仓位。", "技术信号尚待确认，建议仓位 5-10%", "technical_judgment", reason)
+    return EntryConstraint("ok", "", "", "", "technical_judgment", reason)
+
+
 def _classify_entry_constraint(stock_raw: Dict) -> EntryConstraint:
     """Classify entry/technical constraint from raw technical payload.
 
@@ -109,6 +132,9 @@ def _classify_entry_constraint(stock_raw: Dict) -> EntryConstraint:
     resonance = indicators.get("_resonance", {}) if isinstance(indicators, dict) else {}
     if not isinstance(resonance, dict):
         resonance = {}
+    judgment_constraint = _judgment_entry_constraint(resonance)
+    if judgment_constraint is not None and judgment_constraint.state != "ok":
+        return judgment_constraint
 
     trend_state = resonance.get("trend_state", {}) if isinstance(resonance, dict) else {}
     if not isinstance(trend_state, dict):
@@ -129,7 +155,7 @@ def _classify_entry_constraint(stock_raw: Dict) -> EntryConstraint:
             numeric_score = None
 
     # Severe technical breakdown
-    if (
+    if judgment_constraint is None and (
         stage == "破坏期"
         or primary_state == "下降趋势"
         or grade == "趋势失效"
@@ -145,7 +171,7 @@ def _classify_entry_constraint(stock_raw: Dict) -> EntryConstraint:
         )
 
     price_target = tech.get("price_target", {}) if isinstance(tech, dict) else {}
-    if isinstance(price_target, dict):
+    if judgment_constraint is None and isinstance(price_target, dict):
         error_text = str(price_target.get("error", ""))
         reason = str(price_target.get("reason", ""))
         if error_text == "关注/不操作":
@@ -169,6 +195,8 @@ def _classify_entry_constraint(stock_raw: Dict) -> EntryConstraint:
             source="bias",
             raw_reason="bias_5_extreme_high" if bias_5 else "bias_10_extreme_high",
         )
+    if judgment_constraint is not None:
+        return judgment_constraint
 
     # Moderate weak trend
     if (
@@ -208,6 +236,10 @@ def _apply_entry_constraint(raw_label: str, constraint: EntryConstraint) -> str:
 
     if constraint.state == "wait_for_entry":
         return "看多但等待入场"
+    if constraint.state == "wait_for_confirmation":
+        return "看多但等待确认"
+    if constraint.state == "risk_control":
+        return "风险控制优先"
     if constraint.state == "overheated":
         return "看多但避免追高"
     if constraint.state == "severe_technical":

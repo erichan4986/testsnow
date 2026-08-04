@@ -1,0 +1,15 @@
+{
+  "periods": [
+    {
+      "cards_sha256": "a742aa05d5b5146d677b1a3205d1d6be5b26a296607fa1feabcee178aa91abf5",
+      "pack_path": "periodic_narrative_packs/2025-annual.json",
+      "payload_sha256": "e5b842104fd34f109c62b408ce90c26f7926602654fc09929d152a804b66e74d",
+      "report_type": "annual",
+      "report_year": 2025
+    }
+  ],
+  "periods_sha256": "6a5f2242c92cc89a874a1406fe10538c0c8cb9d743729db67c7f1bcb5a871f8f",
+  "schema_version": "periodic_report_narrative_pack_manifest.v1",
+  "stock_code": "688325",
+  "stock_name": "赛微微电"
+}

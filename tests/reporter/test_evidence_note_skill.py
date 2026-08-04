@@ -9,6 +9,9 @@ from skill_pipeline import SkillContext
 from source_adapter import SynthesisItem
 from report_skills.evidence_note_skill import evidence_note_writer_skill
 
+REPO_ROOT = Path(__file__).resolve().parents[2]
+EXPECTED_KNOWLEDGE_DIR = (REPO_ROOT / "knowledge").resolve()
+
 
 def _make_item(
     title="黑芝麻智能华山A2000U、A2000X获ISO 26262 ASIL-D最高功能安全认证",
@@ -98,7 +101,7 @@ def test_noop_status_summary_has_stable_shape(monkeypatch):
     assert summary["skipped_existing_count"] == 0
     assert summary["filtered_count"] == 0
     assert summary["dry_run"] is True
-    assert summary["base_dir"].endswith("/testsnow/knowledge")
+    assert Path(summary["base_dir"]).resolve() == EXPECTED_KNOWLEDGE_DIR
     assert summary["reason"] == "disabled"
     assert summary["collected_at"] == ""
 
@@ -300,7 +303,7 @@ def test_default_base_dir_resolves_to_repo_root_knowledge(monkeypatch):
     # Do not set knowledge_base_dir
     evidence_note_writer_skill(ctx)
 
-    assert str(captured["base_dir"]).endswith("/testsnow/knowledge")
+    assert Path(captured["base_dir"]).resolve() == EXPECTED_KNOWLEDGE_DIR
 
 
 def test_summary_counts_match_plan(tmp_path):

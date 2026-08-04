@@ -66,6 +66,32 @@ REALISTIC_FINANCIAL_TABLE_WITH_BARE_RATE = """
 经营活动产生的现金流量净额 27,420,497.61 233,896,798.98 -88.28
 """
 
+A_SHARE_FINANCIAL_TABLE_IN_WAN = """
+主要会计数据和财务指标
+单位：万元 币种：人民币
+营业收入 398,226.11 359,022.38 10.92 353,625.94
+归属于上市公司股东的净利润 23,233.76 57,259.51 -59.42 71,949.44
+经营活动产生的现金流量净额 78,416.32 73,246.56 7.06 -70,816.66
+"""
+
+A_SHARE_TABLE_WITH_EXPLICIT_SUMMARY_UNITS = """
+主要会计数据和财务指标
+营业收入 398,226.11 359,022.38 10.92 353,625.94
+归属于上市公司股东的净利润 23,233.76 57,259.51 -59.42 71,949.44
+报告期内，公司实现营业收入约为39.82亿元，同比增长10.92%；实现归属于上市公司股东
+的净利润约为2.32亿元，较上年同期减少59.42%。
+"""
+
+A_SHARE_TABLE_WITH_ADJUSTED_PROFIT_SENTENCE = """
+主要会计数据和财务指标
+单位：万元 币种：人民币
+营业收入 359,022.38 353,625.94 1.53 353,890.89
+归属于上市公司股东的净利润 57,259.51 71,949.44 -20.42 107,684.33
+经营活动产生的现金流量净额 73,246.56 -70,816.66 不适用 32,128.55
+
+2024年度，剔除调整项目后归属于上市公司股东的净利润为626,808,711.76元，同比减少25.37%。
+"""
+
 REALISTIC_INVENTORY_NOTE_WITH_RMB_UNITS = """
 于 2025 年 12 月 31 日，存货账面价值为人民币 59,651.98 万元，占公司期末资产总额的 24.21%。
 项目 期末余额 期初余额
@@ -112,6 +138,7 @@ HK_BLACK_SESAME_FINANCIAL_TEXT = """
 毛利 337,089 194,708
 研發開支 (1,417,423) (1,435,156)
 經營虧損 (1,448,320) (1,753,982)
+本公司權益持有人應佔年內虧損 (1,424,700) 313,315
 年內經調整虧損淨額 （非國際財務報告準則計量） (1,075,674) (1,304,251)
 全年營收人民幣 8.22 億元，同比增長 73.4%，毛利率為 41.0%，與去年相比保持穩定。
 
@@ -211,6 +238,36 @@ def test_extracts_yingjixin_financial_risk_metrics_from_raw_text():
     assert metrics["supplier_concentration"]["largest_percentage"]["text"] == "32.56%"
     assert metrics["leverage_liquidity"]["short_term_borrowings"]["normalized"] == "7004.00万元"
     assert metrics["goodwill_risk"]["goodwill_yoy"]["text"] == "1390.40%"
+
+
+def test_a_share_table_uses_nearest_wan_unit_header() -> None:
+    pack = build_periodic_report_evidence_pack(A_SHARE_FINANCIAL_TABLE_IN_WAN)
+    metrics = build_required_financial_risk_metrics(
+        pack, raw_text=A_SHARE_FINANCIAL_TABLE_IN_WAN,
+    )
+
+    assert metrics["profit_quality"]["revenue"]["normalized"] == "398226.11万元"
+    assert metrics["profit_quality"]["net_profit"]["normalized"] == "23233.76万元"
+    assert metrics["cash_flow_quality"]["operating_cash_flow"]["normalized"] == "78416.32万元"
+
+
+def test_explicit_summary_units_outrank_unitless_table_rows() -> None:
+    pack = build_periodic_report_evidence_pack(A_SHARE_TABLE_WITH_EXPLICIT_SUMMARY_UNITS)
+    metrics = build_required_financial_risk_metrics(
+        pack, raw_text=A_SHARE_TABLE_WITH_EXPLICIT_SUMMARY_UNITS,
+    )
+
+    assert metrics["profit_quality"]["revenue"]["normalized"] == "39.82亿元"
+    assert metrics["profit_quality"]["net_profit"]["normalized"] == "2.32亿元"
+
+
+def test_adjusted_profit_sentence_does_not_override_core_table_metric() -> None:
+    pack = build_periodic_report_evidence_pack(A_SHARE_TABLE_WITH_ADJUSTED_PROFIT_SENTENCE)
+    metrics = build_required_financial_risk_metrics(
+        pack, raw_text=A_SHARE_TABLE_WITH_ADJUSTED_PROFIT_SENTENCE,
+    )
+
+    assert metrics["profit_quality"]["net_profit"]["normalized"] == "57259.51万元"
 
 
 def test_extracts_shengbang_profit_inventory_financial_assets_and_goodwill():
@@ -391,6 +448,7 @@ def test_extracts_hk_traditional_chinese_financial_risk_metrics():
     assert metrics["profit_quality"]["gross_profit"]["normalized"] == "33708.90万元"
     assert metrics["profit_quality"]["gross_margin"]["text"] == "41.0%"
     assert metrics["profit_quality"]["operating_loss"]["normalized"] == "-144832.00万元"
+    assert metrics["profit_quality"]["net_profit"]["normalized"] == "-142470.00万元"
     assert metrics["profit_quality"]["adjusted_net_loss"]["normalized"] == "-107567.40万元"
     assert metrics["profit_quality"]["rd_expense"]["normalized"] == "-141742.30万元"
     assert metrics["cash_flow_quality"]["operating_cash_flow"]["normalized"] == "-98537.30万元"

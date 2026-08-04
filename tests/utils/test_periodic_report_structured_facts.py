@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import re
 import sys
+from decimal import Decimal
 from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
@@ -10,8 +11,11 @@ sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"
 from periodic_report_evidence_pack import build_periodic_report_evidence_pack
 from periodic_report_required_financial_metrics import build_required_financial_risk_metrics
 from periodic_report_structured_facts import (
+    CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT,
+    _display_financial_amount,
     build_periodic_report_structured_fact_pack,
     filing_facts_to_core_facts,
+    is_cashflow_quality_weak,
 )
 
 
@@ -25,6 +29,13 @@ SIGNED_CASHFLOW_TEXT = """
 营业收入 1,000,000,000.00 900,000,000.00 11.11%
 归属于上市公司股东的净利润 100,000,000.00 80,000,000.00 25.00%
 经营活动产生的现金流量净额 -20,000,000.00 50,000,000.00 -140.00%
+"""
+
+EXPLICIT_YI_FINANCIAL_TEXT = """
+主要会计数据和财务指标
+报告期内，公司实现营业收入约为39.82亿元，同比增长10.92%；
+实现归属于上市公司股东的净利润约为2.32亿元，同比减少59.42%；
+经营活动产生的现金流量净额为7.84亿元，同比增长7.06%。
 """
 
 
@@ -84,6 +95,55 @@ def test_builds_phase_a_filing_facts_with_evidence_refs() -> None:
     assert revenue["source_block_id"]
     assert revenue["evidence_refs"] == [revenue["source_block_id"]]
     assert "营业收入" in revenue["source_excerpt"]
+
+
+def test_explicit_yi_amounts_are_canonicalized_to_wan_for_compute_contract() -> None:
+    pack = _fact_pack(EXPLICIT_YI_FINANCIAL_TEXT, stock_code="688385")
+    facts = {fact["metric_key"]: fact for fact in pack["filing_facts"]}
+
+    assert facts["revenue"]["normalized_value"] == "398200.00万元"
+    assert facts["revenue"]["unit"] == "万元"
+    assert facts["revenue"]["display_value"] == "39.82亿元"
+    assert facts["net_profit"]["normalized_value"] == "23200.00万元"
+    assert facts["operating_cash_flow"]["normalized_value"] == "78400.00万元"
+
+
+def test_rounded_yi_summary_anchors_to_equivalent_yuan_statement_values() -> None:
+    raw_text = """
+报告期内，公司实现营业收入382.40亿元；实现归属于上市公司股东的净利润107.97亿元；
+经营活动产生的现金流量净额108.96亿元。
+"""
+    evidence_pack = {
+        "schema_version": "periodic_report_evidence_pack.v1",
+        "blocks": [{
+            "id": "financial_summary_table-0",
+            "usage": "financial_summary_table",
+            "text": (
+                "营业收入（元）38,239,935,640.67 归属于上市公司股东的净利润（元）"
+                "10,797,254,300.45 经营活动产生的现金流量净额（元）10,896,126,160.03"
+            ),
+        }],
+    }
+    financial_metrics = build_required_financial_risk_metrics(
+        evidence_pack,
+        raw_text=raw_text,
+    )
+
+    pack = build_periodic_report_structured_fact_pack(
+        stock_code="300308",
+        stock_name="中际旭创",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        required_financial_metrics=financial_metrics,
+    )
+
+    facts = {fact["metric_key"]: fact for fact in pack["filing_facts"]}
+    assert set(facts) == {"revenue", "net_profit", "operating_cash_flow"}
+    assert facts["revenue"]["display_value"] == "382.40亿元"
+    assert facts["net_profit"]["display_value"] == "107.97亿元"
+    assert facts["operating_cash_flow"]["display_value"] == "108.96亿元"
+    assert {fact["source_block_id"] for fact in facts.values()} == {"financial_summary_table-0"}
 
 
 def test_filing_facts_convert_to_supported_core_facts() -> None:
@@ -197,6 +257,13 @@ def test_cashflow_quality_signal_fires_for_negative_ocf_positive_profit() -> Non
     ]
 
 
+def test_cashflow_quality_predicate_owns_exact_existing_threshold() -> None:
+    assert CASHFLOW_QUALITY_WEAK_THRESHOLD_PCT == Decimal("50")
+    assert is_cashflow_quality_weak(Decimal("49.99")) is True
+    assert is_cashflow_quality_weak(Decimal("50")) is False
+    assert is_cashflow_quality_weak(None) is False
+
+
 def test_no_healthy_ratio_when_net_profit_is_non_positive() -> None:
     raw_text = """
 主要会计数据和财务指标
@@ -275,14 +342,16 @@ def test_missing_net_profit_uses_missing_diagnostic_not_non_positive() -> None:
     assert "non_positive_net_profit_for_cashflow_ratio" not in codes
 
 
-def test_hk_revenue_and_negative_ocf_anchor_to_statement_blocks_without_net_profit() -> None:
+def test_hk_revenue_loss_and_negative_ocf_anchor_to_statement_blocks() -> None:
     pack = _fact_pack(HK_REPORT_WITH_CURRENT_STATEMENTS, stock_code="02533")
 
     facts = {fact["metric_key"]: fact for fact in pack["filing_facts"]}
 
-    assert set(facts) == {"revenue", "operating_cash_flow"}
+    assert set(facts) == {"revenue", "net_profit", "operating_cash_flow"}
     assert facts["revenue"]["source_block_id"] == "hk_income_statement_table-0"
     assert facts["revenue"]["normalized_value"] == "82232.80万元"
+    assert facts["net_profit"]["source_block_id"] == "hk_income_statement_table-0"
+    assert facts["net_profit"]["normalized_value"] == "-120000.00万元"
     assert "收入 822,328" in facts["revenue"]["source_excerpt"]
     assert "收入增長" not in facts["revenue"]["source_excerpt"]
 
@@ -293,5 +362,42 @@ def test_hk_revenue_and_negative_ocf_anchor_to_statement_blocks_without_net_prof
     assert pack["derived_facts"] == []
     assert pack["filing_risk_signals"] == []
     codes = {diagnostic["code"] for diagnostic in pack["diagnostics"]}
-    assert "missing_required_metric" in codes
-    assert "missing_net_profit_for_cashflow_ratio" in codes
+    assert "missing_required_metric" not in codes
+    assert "non_positive_net_profit_for_cashflow_ratio" in codes
+
+
+def test_structured_facts_preserve_source_doc_and_derived_period_metadata() -> None:
+    evidence_pack = build_periodic_report_evidence_pack(
+        SIGNED_CASHFLOW_TEXT,
+        report_type="annual",
+    )
+    financial_metrics = build_required_financial_risk_metrics(
+        evidence_pack,
+        raw_text=SIGNED_CASHFLOW_TEXT,
+    )
+
+    pack = build_periodic_report_structured_fact_pack(
+        stock_code="300001",
+        stock_name="测试股份",
+        report_year=2025,
+        report_type="annual",
+        evidence_pack=evidence_pack,
+        required_financial_metrics=financial_metrics,
+        source_doc="测试股份_2025_annual_jina.txt",
+    )
+
+    assert pack["source_doc"] == "测试股份_2025_annual_jina.txt"
+    assert {fact["source_doc"] for fact in pack["filing_facts"]} == {
+        "测试股份_2025_annual_jina.txt"
+    }
+    ratio = pack["derived_facts"][0]
+    assert ratio["source_doc"] == "测试股份_2025_annual_jina.txt"
+    assert ratio["stock_code"] == "300001"
+    assert ratio["report_year"] == 2025
+    assert ratio["report_type"] == "annual"
+    assert ratio["period"] == "2025"
+    assert ratio["formula_version"] == "cash_conversion.v1"
+
+
+def test_invalid_financial_display_value_fails_safe() -> None:
+    assert _display_financial_amount("not-a-number万元") == "not-a-number万元"

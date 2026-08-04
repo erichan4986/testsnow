@@ -12,8 +12,10 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from typing import Any, Dict, Iterable, List, Optional
 
 if __name__.startswith("utils."):
+    from .periodic_report_contract_utils import percentage_ratio_cell
     from .periodic_report_required_metrics import _normalize_numeric, _value_cell
 else:
+    from periodic_report_contract_utils import percentage_ratio_cell
     from periodic_report_required_metrics import _normalize_numeric, _value_cell
 
 
@@ -115,6 +117,10 @@ def _extract_hk_profit_quality(text: str) -> Dict[str, Any]:
         or summary_gross_profit
         or _hk_thousand_metric(text, "毛利")
     )
+    net_profit = (
+        _hk_thousand_metric(text, "本公司權益持有人應佔年內")
+        or _hk_thousand_metric(text, "年內虧損")
+    )
     operating_loss = _hk_thousand_metric(text, "經營虧損")
     adjusted_loss = adjusted_loss or _hk_thousand_metric(text, "經調整虧損淨額") or _hk_thousand_metric(text, "年內經調整虧損淨額")
     rd_expense = rd_expense or _hk_thousand_metric(text, "研發開支")
@@ -125,6 +131,7 @@ def _extract_hk_profit_quality(text: str) -> Dict[str, Any]:
         "revenue_yoy": revenue_yoy,
         "gross_profit": gross_profit,
         "gross_margin": gross_margin,
+        "net_profit": net_profit,
         "operating_loss": operating_loss,
         "adjusted_net_loss": adjusted_loss,
         "rd_expense": rd_expense,
@@ -292,20 +299,6 @@ def _hk_gross_margin(text: str) -> Optional[Dict[str, Any]]:
         match = re.search(pattern, text)
         if match:
             return _value_cell(match.group("rate"), "%")
-    return None
-
-
-def _hk_current_thousand_metric(text: str, label: str) -> Optional[Dict[str, Any]]:
-    """Extract the current-year amount immediately following a HK note label."""
-    for match in re.finditer(re.escape(label), text):
-        window = text[match.end(): match.end() + 180]
-        window = re.sub(r"[（(][^）)]{0,40}[）)]", " ", window)
-        for number_match in re.finditer(r"(?P<paren>\()?(-?[\d,]+(?:\.\d+)?)(?(paren)\))", window):
-            number = number_match.group(number_match.lastindex or 0)
-            if _looks_like_hk_date_fragment(number):
-                continue
-            value = "-" + number if number_match.groupdict().get("paren") else number
-            return _amount_cell(value, "千元")
     return None
 
 
@@ -512,16 +505,50 @@ def _extract_corporate_actions(text: str) -> Dict[str, Any]:
 
 
 def _line_metric(text: str, label: str) -> tuple[Optional[Dict[str, Any]], Optional[Dict[str, Any]]]:
-    for line in _candidate_lines(text, label):
+    candidates = []
+    for index, line in enumerate(_candidate_lines(text, label)):
+        if _is_adjusted_metric_candidate(text, line, label):
+            continue
         tail = line[line.find(label) + len(label):] if label in line else line
         tokens = _number_tokens(tail)
         if len(tokens) < 2:
             continue
-        amount = _amount_cell(tokens[0][0], tokens[0][1] or "元")
+        explicit_unit = tokens[0][1] if tokens[0][1] in {"亿元", "万元", "千元", "元"} else ""
+        contextual_unit = _nearest_table_amount_unit(text, line) if not explicit_unit else ""
+        candidates.append((0 if explicit_unit else 1 if contextual_unit else 2, index, tokens, explicit_unit or contextual_unit or "元"))
+    for _, _, tokens, unit in sorted(candidates):
+        amount = _amount_cell(tokens[0][0], unit)
         rate_token = _rate_token_from_financial_row(tokens)
         rate = _value_cell(rate_token, "%") if rate_token is not None else None
         return amount, rate
     return None, None
+
+
+def _is_adjusted_metric_candidate(text: str, line: str, label: str) -> bool:
+    qualifiers = ("剔除", "经调整", "經調整", "调整后", "調整後")
+    label_index = line.find(label)
+    if label_index >= 0 and any(token in line[max(0, label_index - 48):label_index] for token in qualifiers):
+        return True
+
+    prefixes = []
+    start = 0
+    while line and (position := text.find(line, start)) >= 0:
+        prefixes.append(text[max(0, position - 48):position])
+        start = position + max(1, len(line))
+    return bool(prefixes) and all(any(token in prefix for token in qualifiers) for prefix in prefixes)
+
+
+def _nearest_table_amount_unit(text: str, line: str, max_context: int = 600) -> str:
+    """Infer a unit only from the nearest table header in the same text block."""
+    start = 0
+    matches = []
+    while line and (position := text.find(line, start)) >= 0:
+        context = text[max(0, position - max_context):position].rsplit("\n\n", 1)[-1]
+        markers = list(re.finditer(r"单位\s*[:：]\s*(亿元|万元|千元|元)", context))
+        if markers:
+            matches.append((len(context) - markers[-1].end(), markers[-1].group(1)))
+        start = position + max(1, len(line))
+    return min(matches, default=(0, ""))[1]
 
 
 def _candidate_lines(text: str, label: str) -> List[str]:
@@ -771,13 +798,6 @@ def _rate_after(
     return None
 
 
-def _last_rate_cell(text: str) -> Optional[Dict[str, Any]]:
-    rates = re.findall(r"(-?\d+(?:\.\d+)?)\s*%", text)
-    if not rates:
-        return None
-    return _value_cell(rates[-1], "%")
-
-
 def _drop_empty(values: Dict[str, Any]) -> Dict[str, Any]:
     return {key: value for key, value in values.items() if value not in (None, [], {})}
 
@@ -827,11 +847,11 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
     inventory_impairment_allowance = _amount_in_wan(inventory.get("inventory_impairment_allowance"))
 
     if revenue and revenue != 0 and rd_expense:
-        derived["rd_expense_to_revenue"] = _ratio_cell(abs(rd_expense), revenue)
+        derived["rd_expense_to_revenue"] = percentage_ratio_cell(abs(rd_expense), revenue)
     if gross_profit and gross_profit != 0 and rd_expense:
-        derived["rd_expense_to_gross_profit"] = _ratio_cell(abs(rd_expense), gross_profit)
+        derived["rd_expense_to_gross_profit"] = percentage_ratio_cell(abs(rd_expense), gross_profit)
     if monetary_funds and monetary_funds != 0 and operating_cash_flow:
-        derived["operating_cash_outflow_to_cash"] = _ratio_cell(
+        derived["operating_cash_outflow_to_cash"] = percentage_ratio_cell(
             abs(operating_cash_flow), monetary_funds
         )
     if revenue and revenue != 0:
@@ -841,7 +861,7 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
         if bills_receivable:
             total_receivables += bills_receivable
         if total_receivables:
-            derived["receivables_to_revenue"] = _ratio_cell(total_receivables, revenue)
+            derived["receivables_to_revenue"] = percentage_ratio_cell(total_receivables, revenue)
 
     cash_and_fv = Decimal("0")
     if monetary_funds:
@@ -849,7 +869,7 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
     if fair_value_financial_assets:
         cash_and_fv += fair_value_financial_assets
     if cash_and_fv and cash_and_fv != 0 and acquisition_consideration:
-        derived["acquisition_to_cash_and_fv_assets"] = _ratio_cell(
+        derived["acquisition_to_cash_and_fv_assets"] = percentage_ratio_cell(
             acquisition_consideration, cash_and_fv
         )
 
@@ -858,21 +878,8 @@ def _build_derived_financial_metrics(metrics: Dict[str, Any]) -> Dict[str, Any]:
         and inventory_balance != 0
         and inventory_impairment_allowance
     ):
-        derived["inventory_impairment_allowance_to_inventory_if_available"] = _ratio_cell(
+        derived["inventory_impairment_allowance_to_inventory_if_available"] = percentage_ratio_cell(
             abs(inventory_impairment_allowance), inventory_balance
         )
 
     return _drop_empty(derived)
-
-
-def _ratio_cell(numerator: Decimal, denominator: Decimal) -> Optional[Dict[str, Any]]:
-    """Return a percentage ratio cell or None when the ratio cannot be computed."""
-    if denominator == 0:
-        return None
-    try:
-        ratio = (numerator / denominator) * Decimal("100")
-        ratio = ratio.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
-        text = f"{ratio}%"
-        return {"text": text, "unit": "%", "normalized": text}
-    except (InvalidOperation, ValueError, ZeroDivisionError):
-        return None

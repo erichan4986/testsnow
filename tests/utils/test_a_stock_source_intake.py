@@ -506,6 +506,7 @@ def test_eastmoney_stock_news_adapter_marks_professional_observation():
         stock_code="300777",
         source_config={"enabled": True, "max_items": 5, "provider": "eastmoney_raw"},
         stock_name="中简科技",
+        today=date(2026, 6, 24),
         em_get=fake_em_get,
     )
 
@@ -770,7 +771,7 @@ def test_eastmoney_global_news_filters_keywords_and_stays_out_of_knowledge():
     assert "4.3" not in items[0].extra["allowed_sections"]
 
 
-def test_eastmoney_global_news_attaches_industry_chain_metadata_for_4_3():
+def test_eastmoney_global_news_attaches_industry_chain_metadata_for_4_1():
     from a_stock_source_intake import _adapt_eastmoney_global_news
 
     fake_ak = MagicMock()
@@ -832,7 +833,7 @@ def test_eastmoney_global_news_attaches_industry_chain_metadata_for_4_3():
 
     assert len(items) == 1
     assert items[0].extra["relevance_class"] == "industry_chain_relevant"
-    assert "4.3" in items[0].extra["allowed_sections"]
+    assert items[0].extra["allowed_sections"] == ["4.1"]
     assert items[0].extra["relevance_chain"]["chain_id"] == "memory_capacity_to_cis_pricing"
 
 
@@ -1437,6 +1438,7 @@ def test_medium_credit_items_are_not_confirmed_fact():
         stock_code="300777",
         source_config={"enabled": True, "max_items": 5, "provider": "eastmoney_raw"},
         stock_name="中简科技",
+        today=date(2026, 6, 24),
         em_get=lambda *args, **kwargs: FakeNewsResponse(),
     )
     assert news_items[0].extra["source_credit"] == 65

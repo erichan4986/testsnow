@@ -61,6 +61,28 @@ def load_stocks_config(config_path: str = None) -> list:
         return json.load(f)
 
 
+def _generate_deep_reports(stocks, stocks_data, collected_data, output_dir):
+    from utils.stock_reporter import PerStockReporter
+
+    stock_codes = {stock["name"]: stock["code"] for stock in stocks}
+    agent_reach_configs = {
+        stock["name"]: stock["agent_reach"]
+        for stock in stocks
+        if stock.get("agent_reach")
+    }
+    reporter = PerStockReporter(
+        stocks_data=stocks_data,
+        stock_codes=stock_codes,
+        raw_data=collected_data,
+        agent_reach_configs=agent_reach_configs,
+    )
+    paths = []
+    for stock in stocks:
+        md_path, html_path = reporter.generate_stock_report(stock["name"], str(output_dir))
+        paths.extend(path for path in (md_path, html_path) if path)
+    return paths
+
+
 def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
     """
     主执行流程
@@ -218,20 +240,12 @@ def run_monitor(use_xueqiu: bool = False, xueqiu_cdp_url: str = None):
     # 4. 生成个股深度报告
     logger.info("\n生成个股深度报告...")
     try:
-        from utils.stock_reporter import PerStockReporter
-        stock_codes = {s["name"]: s["code"] for s in stocks}
-        agent_reach_configs = {
-            s["name"]: s["agent_reach"]
-            for s in stocks
-            if s.get("agent_reach")
-        }
-        reporter = PerStockReporter(
-            stocks_data=stocks_data,
-            stock_codes=stock_codes,
-            raw_data=collected_data,
-            agent_reach_configs=agent_reach_configs,
+        report_paths = _generate_deep_reports(
+            stocks,
+            stocks_data,
+            collected_data,
+            report_mgr.report_dir,
         )
-        report_paths = reporter.generate_all_reports(output_dir=report_mgr.report_dir)
         for rp in report_paths:
             logger.info(f"  报告已生成: {rp}")
     except Exception as e:

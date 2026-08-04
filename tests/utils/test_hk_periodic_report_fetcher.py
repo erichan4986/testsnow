@@ -87,6 +87,23 @@ SAMPLE_TITLE_SEARCH_ZH_RESPONSE = {
     """
 }
 
+SAMPLE_MULTI_YEAR_ANNUAL_RESPONSE = {
+    "result": """
+    [
+      {
+        "TITLE": "2025年報",
+        "DATE_TIME": "27/04/2026 16:48",
+        "FILE_LINK": "/listedco/listconews/sehk/2026/0427/2026042701017_c.pdf"
+      },
+      {
+        "TITLE": "2024年報",
+        "DATE_TIME": "25/04/2025 17:13",
+        "FILE_LINK": "/listedco/listconews/sehk/2025/0425/2025042501584_c.pdf"
+      }
+    ]
+    """
+}
+
 
 def test_resolve_hkex_stock_id_finds_black_sesame():
     import json
@@ -145,6 +162,27 @@ def test_find_hk_periodic_report_prefers_chinese_annual_result_wrapper():
     assert report["pdf_url"] == (
         "https://www1.hkexnews.hk/listedco/listconews/sehk/2026/0427/2026042701017_c.pdf"
     )
+
+
+def test_find_hk_periodic_report_selects_requested_title_year():
+    report = find_hk_periodic_report(
+        SAMPLE_MULTI_YEAR_ANNUAL_RESPONSE,
+        report_type="annual",
+        lang="ZH",
+        report_year=2024,
+    )
+
+    assert report is not None
+    assert report["title"] == "2024年報"
+
+
+def test_find_hk_periodic_report_returns_none_without_requested_title_year():
+    assert find_hk_periodic_report(
+        SAMPLE_MULTI_YEAR_ANNUAL_RESPONSE,
+        report_type="annual",
+        lang="ZH",
+        report_year=2023,
+    ) is None
 
 
 def test_find_hk_periodic_report_interim():
@@ -219,6 +257,18 @@ def test_discover_hkex_periodic_report_resolves_stock_id_and_pdf_url():
     assert result["report_year"] == 2025
     assert result["report_type"] == "annual"
     assert result["search_url"] == loaded_search_urls[0]
+
+
+def test_discover_hkex_periodic_report_rejects_only_different_year_results():
+    import json
+
+    with pytest.raises(ValueError, match="No HKEX annual report found for 02533 2023"):
+        discover_hkex_periodic_report(
+            stock_code="02533",
+            report_year=2023,
+            active_stock_loader=lambda lang="ZH": json.dumps(SAMPLE_ACTIVE_STOCK_SHORT_JSON),
+            title_search_loader=lambda url: SAMPLE_MULTI_YEAR_ANNUAL_RESPONSE,
+        )
 
 
 def test_discover_hkex_periodic_report_rejects_missing_stock_id():

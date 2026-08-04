@@ -1,5 +1,8 @@
 import sys
+import importlib
 from pathlib import Path
+
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
@@ -9,6 +12,8 @@ from report_skills.agent_reach_quality_skill import (
 )
 from source_adapter import SynthesisItem
 from skill_pipeline import SkillContext
+
+quality_module = importlib.import_module("report_skills.agent_reach_quality_skill")
 
 
 def _make_item(**kwargs) -> SynthesisItem:
@@ -176,6 +181,65 @@ def test_quality_skill_empty_items_empty_status():
     assert ctx.get("agent_reach_quality_status") == "empty"
 
 
+@pytest.mark.parametrize(
+    ("inputs", "expected_status", "expected_fetch", "expected_enabled"),
+    [
+        ({"agent_reach_enabled": False}, "disabled", "", False),
+        (
+            {
+                "agent_reach_enabled": True,
+                "agent_reach_status": "missing_binary",
+                "agent_reach_items": [],
+                "agent_reach_warnings": ["missing"],
+            },
+            "skipped",
+            "missing_binary",
+            True,
+        ),
+        (
+            {"agent_reach_enabled": True, "agent_reach_status": "ok", "agent_reach_items": []},
+            "empty",
+            "ok",
+            True,
+        ),
+    ],
+)
+def test_quality_terminal_states_share_complete_output_shape(
+    inputs, expected_status, expected_fetch, expected_enabled
+):
+    ctx = SkillContext(input={"stock_name": "黑芝麻智能", **inputs})
+
+    agent_reach_quality_skill(ctx)
+
+    assert set(ctx.output) == {
+        "agent_reach_quality_status",
+        "agent_reach_keep_items",
+        "agent_reach_demote_items",
+        "agent_reach_discard_items",
+        "agent_reach_quality_results",
+        "agent_reach_quality_summary",
+        "agent_reach_run_summary",
+    }
+    assert ctx.get("agent_reach_quality_status") == expected_status
+    assert ctx.get("agent_reach_keep_items") == []
+    assert ctx.get("agent_reach_demote_items") == []
+    assert ctx.get("agent_reach_discard_items") == []
+    assert ctx.get("agent_reach_quality_results") == []
+    assert ctx.get("agent_reach_quality_summary") == {
+        "keep": 0,
+        "demote": 0,
+        "discard": 0,
+        "total": 0,
+        "fetch_status": expected_fetch,
+        "quality_status": expected_status,
+    }
+    run_summary = ctx.get("agent_reach_run_summary")
+    assert run_summary["enabled"] is expected_enabled
+    assert run_summary["fetch_status"] == expected_fetch
+    assert run_summary["quality_status"] == expected_status
+    assert run_summary["counts"] == {"total": 0, "keep": 0, "demote": 0, "discard": 0}
+
+
 def test_quality_results_do_not_include_full_content():
     item = _make_item(
         title="黑芝麻智能财报",
@@ -220,6 +284,27 @@ def test_quality_skill_annotates_items_for_evidence_notes():
     assert scored_item.extra["agent_reach_quality_score"] > 0
     assert scored_item.extra["agent_reach_quality_action"] in ("keep", "demote")
     assert scored_item.extra["agent_reach_quality_reasons"]
+
+
+def test_unknown_quality_action_fails_closed_to_discard(monkeypatch):
+    item = _make_item(title="黑芝麻智能材料", content="黑芝麻智能营收增长35%。")
+    monkeypatch.setattr(
+        quality_module,
+        "score_agent_reach_item",
+        lambda *_args, **_kwargs: {"score": 50, "action": "unexpected", "reasons": []},
+    )
+    ctx = SkillContext(input={
+        "stock_name": "黑芝麻智能",
+        "agent_reach_enabled": True,
+        "agent_reach_status": "ok",
+        "agent_reach_items": [item],
+    })
+
+    agent_reach_quality_skill(ctx)
+
+    assert ctx.get("agent_reach_keep_items") == []
+    assert ctx.get("agent_reach_demote_items") == []
+    assert ctx.get("agent_reach_discard_items") == [item]
 
 
 def test_official_seed_url_calibrated_reasons():

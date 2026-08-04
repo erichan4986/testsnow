@@ -3,6 +3,8 @@
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
+from ..technical_state_machine import is_valid_technical_judgment
+
 
 class HTMLDashboardRenderer:
     """单页 HTML Dashboard（视觉速览）。"""
@@ -92,10 +94,17 @@ class HTMLDashboardRenderer:
             ev_pct_str = "N/A"
             ev_color = "text-gray-600"
 
-        # 价格目标 / 盈亏比
-        pt = stock_raw.get("price_target")
+        # 价格目标 / 盈亏比与技术判断都位于嵌套 technical payload。
+        technical = stock_raw.get("technical", {}) if isinstance(stock_raw, dict) else {}
+        pt = technical.get("price_target", {}) if isinstance(technical, dict) else {}
         pr_ratio = pt.get("profit_risk_ratio") if pt else None
         pr_text = f"{pr_ratio}:1" if pr_ratio else "N/A"
+        resonance = technical.get("indicators", {}).get("_resonance", {}) if isinstance(technical, dict) else {}
+        judgment = resonance.get("judgment", {}) if isinstance(resonance, dict) else {}
+        judgment = judgment if is_valid_technical_judgment(judgment) else {}
+        target_judgment = judgment.get("target", {}) if isinstance(judgment, dict) else {}
+        action_judgment = judgment.get("action", {}) if isinstance(judgment, dict) else {}
+        technical_text = f"{action_judgment.get('state', 'unavailable')}（{target_judgment.get('effective_label', '不可用')}）"
 
         # AI 推荐
         ai_rec = "关注/不操作"
@@ -234,6 +243,7 @@ class HTMLDashboardRenderer:
                 {_card("AI推荐", ai_rec, "green" if "积极" in ai_rec or "关注" in ai_rec else "yellow")}
                 {_card("EV", ev_pct_str, "green" if ev_pct and ev_pct > 0 else "red" if ev_pct and ev_pct < 0 else "yellow")}
                 {_card("盈亏比", pr_text, "blue")}
+                {_card("技术判断", technical_text, "blue")}
                 {_card("操作建议", op_rec, "green" if "积极" in op_rec or "关注" in op_rec else "yellow" if "观望" in op_rec else "red")}
             </div>
         </div>
@@ -241,14 +251,14 @@ class HTMLDashboardRenderer:
         <!-- 技术面分析 -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">技术面分析</h2>
-            {"<img src='charts/" + tech_img + "' alt='技术面分析' class='w-full rounded-xl mb-4'/>" if tech_img else "<p class='text-gray-400 text-sm'>暂无技术面图表</p>"}
+            {"<img src='" + tech_img + "' alt='技术面分析' class='w-full rounded-xl mb-4'/>" if tech_img else "<p class='text-gray-400 text-sm'>暂无技术面图表</p>"}
             <p class="text-sm text-gray-600">综合技术评分: <span class="font-bold text-blue-600">{(pillar.get('technical', 0) if pillar else 'N/A')}</span> / 10</p>
         </div>
 
         <!-- 多空观点拆解 -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">多空观点拆解</h2>
-            {"<img src='charts/" + bb_img + "' alt='多空论点对比' class='w-full rounded-xl mb-4'/>" if bb_img else "<p class='text-gray-400 text-sm'>暂无多空对比图表</p>"}
+            {"<img src='" + bb_img + "' alt='多空论点对比' class='w-full rounded-xl mb-4'/>" if bb_img else "<p class='text-gray-400 text-sm'>暂无多空对比图表</p>"}
             <div class="grid md:grid-cols-2 gap-4 mt-4">
                 {_arg_card("bullish", bullish_args)}
                 {_arg_card("bearish", bearish_args)}
@@ -260,7 +270,7 @@ class HTMLDashboardRenderer:
             <h2 class="text-lg font-bold text-gray-900 mb-4">五维评分雷达</h2>
             <div class="flex flex-col md:flex-row gap-6">
                 <div class="md:w-1/2">
-                    {"<img src='charts/" + radar_img + "' alt='五维评分雷达图' class='w-full rounded-xl'/>" if radar_img else "<p class='text-gray-400 text-sm'>暂无雷达图</p>"}
+                    {"<img src='" + radar_img + "' alt='五维评分雷达图' class='w-full rounded-xl'/>" if radar_img else "<p class='text-gray-400 text-sm'>暂无雷达图</p>"}
                 </div>
                 <div class="md:w-1/2">
                     {radar_cards}
@@ -271,7 +281,7 @@ class HTMLDashboardRenderer:
         <!-- 同业估值对比 -->
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 mb-6">
             <h2 class="text-lg font-bold text-gray-900 mb-4">同业估值对比</h2>
-            {"<img src='charts/" + val_img + "' alt='同业估值对比' class='w-full rounded-xl'/>" if val_img else "<p class='text-gray-400 text-sm'>暂无估值对比图表</p>"}
+            {"<img src='" + val_img + "' alt='同业估值对比' class='w-full rounded-xl'/>" if val_img else "<p class='text-gray-400 text-sm'>暂无估值对比图表</p>"}
         </div>
 
         <!-- 操作建议 -->

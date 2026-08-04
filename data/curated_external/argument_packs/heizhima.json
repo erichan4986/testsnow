@@ -1,0 +1,1415 @@
+{
+  "schema_version": "curated_external_argument_pack.v4",
+  "status": "ready",
+  "stock_name": "黑芝麻智能",
+  "validator_version": "external_argument_validator.v4",
+  "source_documents": [
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:806dc83b21f1f9a0",
+      "stock_name": "黑芝麻智能",
+      "title": "从车规芯片到端侧AI全场景：黑芝麻智能十年技术演进与算力版图重构",
+      "account": "智驾前沿/网通社",
+      "publish_time": "2026-07-19 09:45",
+      "source_kind": "media",
+      "source_ref": "https://auto.news18a.com/news/storys_277147.html",
+      "source_url": "https://auto.news18a.com/news/storys_277147.html",
+      "raw_content_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+      "canonical_text": "华山A1000是国内首款支持L2/L2+级辅助驾驶的车规级SoC，16nm工艺，物理算力58TOPS，搭载于吉利银河E8、领克07/08 EM-P、东风奕派eπ007等车型。武当C1200系列是跨域计算芯片，基于7nm车规工艺，单芯片覆盖智驾、座舱、车身控制及网关四大功能域。2026年4月武当C1296获东风定点，搭载于天元智舱Plus平台，率先装车奕派007，成为国内首个实现量产的舱驾一体本土芯片平台。华山A2000系列是第三代高算力芯片平台，含A2000N/L/U/X四款，旗舰A2000X单芯片算力达1000TOPS，搭载自研九韶NPU架构，深度适配VLA大模型，已获头部车企定点预计年内量产。SesameX具身智能计算平台提供48-600TOPS梯度算力。2026年初战略收购亿智电子，形成0.5-1000TOPS完整产品矩阵。2025年具身智能业务营收近亿元毛利率48.7%。",
+      "document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "华山A1000是国内首款支持L2/L2+级辅助驾驶的车规级SoC，16nm工艺，物理算力58TOPS，搭载于吉利银河E8、领克07/08 EM-P、东风奕派eπ007等车型。武当C1200系列是跨域计算芯片，基于7nm车规工艺，单芯片覆盖智驾、座舱、车身控制及网关四大功能域。2026年4月武当C1296获东风定点，搭载于天元智舱Plus平台，率先装车奕派007，成为国内首个实现量产的舱驾一体本土芯片平台。华山A2000系列是第三代高算力芯片平台，含A2000N/L/U/X四款，旗舰A2000X单芯片算力达1000TOPS，搭载自研九韶NPU架构，深度适配VLA大模型，已获头部车企定点预计年内量产。SesameX具身智能计算平台提供48-600TOPS梯度算力。2026年初战略收购亿智电子，形成0.5-1000TOPS完整产品矩阵。2025年具身智能业务营收近亿元毛利率48.7%。",
+          "start": 0,
+          "end": 395,
+          "block_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:f08c023d048fc485",
+      "stock_name": "黑芝麻智能",
+      "title": "黑芝麻智能CES发布关键进展：自动驾驶芯片量产、AI影像芯片搭载量破5亿",
+      "account": "每日经济新闻",
+      "publish_time": "2026-01-07 19:41",
+      "source_kind": "media",
+      "source_ref": "https://www.sohu.com/a/973602993_115362",
+      "source_url": "https://www.sohu.com/a/973602993_115362",
+      "raw_content_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+      "canonical_text": "黑芝麻智能在CES 2026上宣布多项关键进展。华山A2000自动驾驶芯片已通过美国审查，正式进入全球市场。武当C1296芯片提供单芯片舱驾一体方案，已与东风汽车等伙伴推出量产计划。SesameX机器人计算平台在海外首次展示。AI影像芯片全球累计搭载量已突破5亿台。公司完成了对亿智电子的战略控股收购。",
+      "document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:f08c023d048fc485:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "黑芝麻智能在CES 2026上宣布多项关键进展。华山A2000自动驾驶芯片已通过美国审查，正式进入全球市场。武当C1296芯片提供单芯片舱驾一体方案，已与东风汽车等伙伴推出量产计划。SesameX机器人计算平台在海外首次展示。AI影像芯片全球累计搭载量已突破5亿台。公司完成了对亿智电子的战略控股收购。",
+          "start": 0,
+          "end": 151,
+          "block_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:research:d2c3f793a0c39741",
+      "stock_name": "黑芝麻智能",
+      "title": "中国为全球智驾芯片行业核心增量 双轨竞争下内卷加剧",
+      "account": "观研天下",
+      "publish_time": "2026-07-02 20:00",
+      "source_kind": "research",
+      "source_ref": "https://www.sohu.com/a/1044920382_122014422",
+      "source_url": "https://www.sohu.com/a/1044920382_122014422",
+      "raw_content_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+      "canonical_text": "全球智能驾驶芯片市场2024年超100亿美元，预计2027年达283亿美元，CAGR超40%。中国占全球约46%市场份额。市场竞争呈双轨结构：第三方芯片供应商和车企自研芯片。黑芝麻智能A1000为58TOPS部署于吉利银河E8，A2000为580TOPS覆盖乘用车和商用车。高端市场英伟达Thor系列700-1000TOPS已进入量产。2026年3月中国乘用车智驾域控SoC安装量70.7万颗，英伟达市占率39.4%，地平线11.3%，黑芝麻智能市占率同比提升。本土SoC供应商合计市占率25.1%同比增7.6个百分点。舱驾融合成为确定性发展主线。",
+      "document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "全球智能驾驶芯片市场2024年超100亿美元，预计2027年达283亿美元，CAGR超40%。中国占全球约46%市场份额。市场竞争呈双轨结构：第三方芯片供应商和车企自研芯片。黑芝麻智能A1000为58TOPS部署于吉利银河E8，A2000为580TOPS覆盖乘用车和商用车。高端市场英伟达Thor系列700-1000TOPS已进入量产。2026年3月中国乘用车智驾域控SoC安装量70.7万颗，英伟达市占率39.4%，地平线11.3%，黑芝麻智能市占率同比提升。本土SoC供应商合计市占率25.1%同比增7.6个百分点。舱驾融合成为确定性发展主线。",
+          "start": 0,
+          "end": 274,
+          "block_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:media:8bd9a55eae3dc282",
+      "stock_name": "黑芝麻智能",
+      "title": "华山武当双线发力，黑芝麻智能全系核心产品亮相WAIC 2026",
+      "account": "老李头/热点科技",
+      "publish_time": "2026-07-19 11:01",
+      "source_kind": "media",
+      "source_ref": "https://www.itheat.com/view/62419.html",
+      "source_url": "https://www.itheat.com/view/62419.html",
+      "raw_content_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+      "canonical_text": "WAIC 2026展会上黑芝麻智能展示华山A2000家族和武当系列产品。A2000家族：A2000N约200TOPS，A2000L为400TOPS，A2000U提升至700TOPS，A2000X旗舰款提供1000TOPS。武当C1236侧重将智驾域做到极高性价比单芯片落地。C1296是行业首颗支持多域融合计算芯片，覆盖智驾、智能座舱、车身控制等多域功能。华山A1000系列是当前量产主力，展出一汽红旗与亿咖通联合打造的华山A1000L泊车控制器。智能汽车行业需要一整套面向下一代AI模型设计的端侧算力平台。",
+      "document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "WAIC 2026展会上黑芝麻智能展示华山A2000家族和武当系列产品。A2000家族：A2000N约200TOPS，A2000L为400TOPS，A2000U提升至700TOPS，A2000X旗舰款提供1000TOPS。武当C1236侧重将智驾域做到极高性价比单芯片落地。C1296是行业首颗支持多域融合计算芯片，覆盖智驾、智能座舱、车身控制等多域功能。华山A1000系列是当前量产主力，展出一汽红旗与亿咖通联合打造的华山A1000L泊车控制器。智能汽车行业需要一整套面向下一代AI模型设计的端侧算力平台。",
+          "start": 0,
+          "end": 254,
+          "block_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50"
+        }
+      ]
+    },
+    {
+      "schema_version": "curated_external_source_document.v1",
+      "normalization_version": "external_source_document.v1",
+      "source_id": "curated-source:analysis:43778dcf26ce8e60",
+      "stock_name": "黑芝麻智能",
+      "title": "股价腰斩、盈利承压：中国智驾芯片三巨头短期承压不改长期价值",
+      "account": "老姚",
+      "publish_time": "2026",
+      "source_kind": "analysis",
+      "source_ref": "https://www.laoyaoba.com/html/share/news/1051422",
+      "source_url": "https://www.laoyaoba.com/html/share/news/1051422",
+      "raw_content_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+      "canonical_text": "2025年下半年至2026年6月受车市需求放缓、车企价格战及自研芯片冲击，中国智驾芯片三巨头股价普遍腰斩。黑芝麻智能面临的核心挑战：毛利率41%远低于地平线64.5%，研发烧钱率172%，营收规模仅为地平线21.8%，大客户自研替代风险，国际巨头降维打击。但长期价值仍被看好。黑芝麻华山A2000芯片预计2026年下半年量产装车直接对标英伟达Thor。武当C1296已实现舱驾一体量产突破。具身智能业务成为新增长点2025年营收近亿元。",
+      "document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+      "boundary_status": "preserved",
+      "blocks": [
+        {
+          "block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+          "block_ordinal": 0,
+          "block_kind": "narrative",
+          "text": "2025年下半年至2026年6月受车市需求放缓、车企价格战及自研芯片冲击，中国智驾芯片三巨头股价普遍腰斩。黑芝麻智能面临的核心挑战：毛利率41%远低于地平线64.5%，研发烧钱率172%，营收规模仅为地平线21.8%，大客户自研替代风险，国际巨头降维打击。但长期价值仍被看好。黑芝麻华山A2000芯片预计2026年下半年量产装车直接对标英伟达Thor。武当C1296已实现舱驾一体量产突破。具身智能业务成为新增长点2025年营收近亿元。",
+          "start": 0,
+          "end": 218,
+          "block_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5"
+        }
+      ]
+    }
+  ],
+  "baseline_fingerprint": "sha256:ca542fea0db4ce679e44cfbf563c9175147663e743bc284f4222bbfb268b37a8",
+  "cards": [
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:8bc42b05a33ed76f",
+      "argument_key": "technology_product:target:8bc42b05a33ed76f",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "demand_customer",
+        "valuation_expectation"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:0:ef13e42da7cd606e",
+          "source_id": "curated-source:analysis:43778dcf26ce8e60",
+          "document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 53,
+          "text": "2025年下半年至2026年6月受车市需求放缓、车企价格战及自研芯片冲击，中国智驾芯片三巨头股价普遍腰斩。",
+          "unit_hash": "sha256:11816d626c4a1ffac53e74f652b6225466b559d89eeac04eef13e42da7cd606e",
+          "block_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "coverage_families": [
+            "technology_product",
+            "demand_customer",
+            "valuation_expectation"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+            "anchor_block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:0:ef13e42da7cd606e"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.laoyaoba.com/html/share/news/1051422",
+          "curated-source:analysis:43778dcf26ce8e60"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:09cd2082e2ef23f7",
+      "argument_key": "financial_quality:target:09cd2082e2ef23f7",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality",
+        "technology_product",
+        "demand_customer"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:1:2c1f5fc71705eb70",
+          "source_id": "curated-source:analysis:43778dcf26ce8e60",
+          "document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 53,
+          "end": 128,
+          "text": "黑芝麻智能面临的核心挑战：毛利率41%远低于地平线64.5%，研发烧钱率172%，营收规模仅为地平线21.8%，大客户自研替代风险，国际巨头降维打击。",
+          "unit_hash": "sha256:1ac7b73ee5cfce977813dc74b5f7ca9eb3ded2409dece31e2c1f5fc71705eb70",
+          "block_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "coverage_families": [
+            "financial_quality",
+            "technology_product",
+            "demand_customer"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+            "anchor_block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:1:2c1f5fc71705eb70"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.laoyaoba.com/html/share/news/1051422",
+          "curated-source:analysis:43778dcf26ce8e60"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:660bacf3a6ac1a33",
+      "argument_key": "technology_product:target:660bacf3a6ac1a33",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:3:520bb1667f58b950",
+          "source_id": "curated-source:analysis:43778dcf26ce8e60",
+          "document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 138,
+          "end": 176,
+          "text": "黑芝麻华山A2000芯片预计2026年下半年量产装车直接对标英伟达Thor。",
+          "unit_hash": "sha256:a2483258acfe6c3ee17b1f1337b3833df4de3f892fe6e8a0520bb1667f58b950",
+          "block_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+            "anchor_block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:3:520bb1667f58b950"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.laoyaoba.com/html/share/news/1051422",
+          "curated-source:analysis:43778dcf26ce8e60"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:8fee57f6b5746e13",
+      "argument_key": "commercialization:target:8fee57f6b5746e13",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "commercialization",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:4:995359ce62b6f0c0",
+          "source_id": "curated-source:analysis:43778dcf26ce8e60",
+          "document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 176,
+          "end": 195,
+          "text": "武当C1296已实现舱驾一体量产突破。",
+          "unit_hash": "sha256:9ab3217a34528115594c0c4c808a71f89e4b0b8a98de5f1d995359ce62b6f0c0",
+          "block_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "coverage_families": [
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+            "anchor_block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:4:995359ce62b6f0c0"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.laoyaoba.com/html/share/news/1051422",
+          "curated-source:analysis:43778dcf26ce8e60"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:42e79d062d241a36",
+      "argument_key": "financial_quality:target:42e79d062d241a36",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:5:87853886a6f132ab",
+          "source_id": "curated-source:analysis:43778dcf26ce8e60",
+          "document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 195,
+          "end": 218,
+          "text": "具身智能业务成为新增长点2025年营收近亿元。",
+          "unit_hash": "sha256:29ba20a572a356c8259b8032a49da904a3bad33294f9a56687853886a6f132ab",
+          "block_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+            "anchor_block_id": "curated-source:analysis:43778dcf26ce8e60:block:0",
+            "anchor_unit_id": "external-unit:curated-source:analysis:43778dcf26ce8e60:0:5:87853886a6f132ab"
+          },
+          "citation_refs": [
+            1
+          ]
+        }
+      ],
+      "citation_refs": [
+        1
+      ],
+      "source_identity": [
+        [
+          "https://www.laoyaoba.com/html/share/news/1051422",
+          "curated-source:analysis:43778dcf26ce8e60"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:77e72f73a9485bc5",
+      "argument_key": "technology_product:target:77e72f73a9485bc5",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:1:23e58dd5187ec3de",
+          "source_id": "curated-source:media:806dc83b21f1f9a0",
+          "document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 87,
+          "end": 138,
+          "text": "武当C1200系列是跨域计算芯片，基于7nm车规工艺，单芯片覆盖智驾、座舱、车身控制及网关四大功能域。",
+          "unit_hash": "sha256:65404008bb7826ca25789cf0ebd4ca881312c5ff4d91f4b323e58dd5187ec3de",
+          "block_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+            "anchor_block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:1:23e58dd5187ec3de"
+          },
+          "citation_refs": [
+            2
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:2:f808a4aa39212d2b",
+          "source_id": "curated-source:media:806dc83b21f1f9a0",
+          "document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 138,
+          "end": 204,
+          "text": "2026年4月武当C1296获东风定点，搭载于天元智舱Plus平台，率先装车奕派007，成为国内首个实现量产的舱驾一体本土芯片平台。",
+          "unit_hash": "sha256:ca4277cdba1cbb98bcf7ca5f334c96717f3f27d9d2bfffe7f808a4aa39212d2b",
+          "block_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+            "anchor_block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:2:f808a4aa39212d2b"
+          },
+          "citation_refs": [
+            2
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:3:d93c4099c41dfd0f",
+          "source_id": "curated-source:media:806dc83b21f1f9a0",
+          "document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 204,
+          "end": 302,
+          "text": "华山A2000系列是第三代高算力芯片平台，含A2000N/L/U/X四款，旗舰A2000X单芯片算力达1000TOPS，搭载自研九韶NPU架构，深度适配VLA大模型，已获头部车企定点预计年内量产。",
+          "unit_hash": "sha256:a300d0421126e2d0248dccec3b9d3ac9c438e40456ab2440d93c4099c41dfd0f",
+          "block_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+            "anchor_block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:3:d93c4099c41dfd0f"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://auto.news18a.com/news/storys_277147.html",
+          "curated-source:media:806dc83b21f1f9a0"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:e4e766977f6effca",
+      "argument_key": "technology_product:target:e4e766977f6effca",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:5:60574f77dd52bdc9",
+          "source_id": "curated-source:media:806dc83b21f1f9a0",
+          "document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 334,
+          "end": 370,
+          "text": "2026年初战略收购亿智电子，形成0.5-1000TOPS完整产品矩阵。",
+          "unit_hash": "sha256:7b3439affacd61124ecadc98b1eb6a2ba3acc7a35fe2035660574f77dd52bdc9",
+          "block_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+            "anchor_block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:5:60574f77dd52bdc9"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://auto.news18a.com/news/storys_277147.html",
+          "curated-source:media:806dc83b21f1f9a0"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:c35161f65827397e",
+      "argument_key": "financial_quality:target:c35161f65827397e",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "financial_quality",
+      "coverage_families": [
+        "financial_quality"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:6:5df3d4ab6659c318",
+          "source_id": "curated-source:media:806dc83b21f1f9a0",
+          "document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 370,
+          "end": 395,
+          "text": "2025年具身智能业务营收近亿元毛利率48.7%。",
+          "unit_hash": "sha256:2facb4e9aed9693c24572c6e382b80e06bbe2609f01a049b5df3d4ab6659c318",
+          "block_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+          "coverage_families": [
+            "financial_quality"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+            "anchor_block_id": "curated-source:media:806dc83b21f1f9a0:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:806dc83b21f1f9a0:0:6:5df3d4ab6659c318"
+          },
+          "citation_refs": [
+            2
+          ]
+        }
+      ],
+      "citation_refs": [
+        2
+      ],
+      "source_identity": [
+        [
+          "https://auto.news18a.com/news/storys_277147.html",
+          "curated-source:media:806dc83b21f1f9a0"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:8871fd50db993435",
+      "argument_key": "technology_product:target:8871fd50db993435",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:0:fd188385bc868f00",
+          "source_id": "curated-source:media:8bd9a55eae3dc282",
+          "document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 36,
+          "text": "WAIC 2026展会上黑芝麻智能展示华山A2000家族和武当系列产品。",
+          "unit_hash": "sha256:85c110aac6d0d62de2bfaf40b104c9030ad80a41739e0b0cfd188385bc868f00",
+          "block_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+            "anchor_block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:0:fd188385bc868f00"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://www.itheat.com/view/62419.html",
+          "curated-source:media:8bd9a55eae3dc282"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:2952c190ff82dd45",
+      "argument_key": "technology_product:target:2952c190ff82dd45",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:2:c83b31165da7f02c",
+          "source_id": "curated-source:media:8bd9a55eae3dc282",
+          "document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 111,
+          "end": 137,
+          "text": "武当C1236侧重将智驾域做到极高性价比单芯片落地。",
+          "unit_hash": "sha256:2d9bff064e151b68353ea58368515e239f89a51efe051cbbc83b31165da7f02c",
+          "block_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+            "anchor_block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:2:c83b31165da7f02c"
+          },
+          "citation_refs": [
+            3
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:3:55b7dd18eb3b65e0",
+          "source_id": "curated-source:media:8bd9a55eae3dc282",
+          "document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 3,
+          "start": 137,
+          "end": 178,
+          "text": "C1296是行业首颗支持多域融合计算芯片，覆盖智驾、智能座舱、车身控制等多域功能。",
+          "unit_hash": "sha256:bc010ddeefeea0db185f14ea77b2396509a8fac10e1fbf6255b7dd18eb3b65e0",
+          "block_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+            "anchor_block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:3:55b7dd18eb3b65e0"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://www.itheat.com/view/62419.html",
+          "curated-source:media:8bd9a55eae3dc282"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:cc75f076e09332f3",
+      "argument_key": "commercialization:target_with_peer_context:cc75f076e09332f3",
+      "entity_scope": "target_with_peer_context",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "commercialization",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:4:d8c44353b365e93d",
+          "source_id": "curated-source:media:8bd9a55eae3dc282",
+          "document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 178,
+          "end": 224,
+          "text": "华山A1000系列是当前量产主力，展出一汽红旗与亿咖通联合打造的华山A1000L泊车控制器。",
+          "unit_hash": "sha256:68985c29b23548e7f735ab397d7199699eb5b059bc786bfad8c44353b365e93d",
+          "block_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+          "coverage_families": [
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_peer_relation",
+            "owner_surface": "亿咖通",
+            "anchor_type": "explicit_relation",
+            "anchor_value": "亿咖通",
+            "anchor_document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+            "anchor_block_id": "curated-source:media:8bd9a55eae3dc282:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:8bd9a55eae3dc282:0:4:d8c44353b365e93d"
+          },
+          "citation_refs": [
+            3
+          ]
+        }
+      ],
+      "citation_refs": [
+        3
+      ],
+      "source_identity": [
+        [
+          "https://www.itheat.com/view/62419.html",
+          "curated-source:media:8bd9a55eae3dc282"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:30d695498e2d555f",
+      "argument_key": "technology_product:target:30d695498e2d555f",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product",
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:f08c023d048fc485:0:1:b2b21093c7d99d95",
+          "source_id": "curated-source:media:f08c023d048fc485",
+          "document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+          "block_id": "curated-source:media:f08c023d048fc485:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 24,
+          "end": 54,
+          "text": "华山A2000自动驾驶芯片已通过美国审查，正式进入全球市场。",
+          "unit_hash": "sha256:55228715fc71bbef7d07ec667e9f55a3c078f7849411bb64b2b21093c7d99d95",
+          "block_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+            "anchor_block_id": "curated-source:media:f08c023d048fc485:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:f08c023d048fc485:0:1:b2b21093c7d99d95"
+          },
+          "citation_refs": [
+            4
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:f08c023d048fc485:0:2:f245866aec93ecc7",
+          "source_id": "curated-source:media:f08c023d048fc485",
+          "document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+          "block_id": "curated-source:media:f08c023d048fc485:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 2,
+          "start": 54,
+          "end": 91,
+          "text": "武当C1296芯片提供单芯片舱驾一体方案，已与东风汽车等伙伴推出量产计划。",
+          "unit_hash": "sha256:4b0de1097cc212a00b56a02f6e6f287efb1acdfc258d83bef245866aec93ecc7",
+          "block_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+          "coverage_families": [
+            "technology_product",
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+            "anchor_block_id": "curated-source:media:f08c023d048fc485:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:f08c023d048fc485:0:2:f245866aec93ecc7"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.sohu.com/a/973602993_115362",
+          "curated-source:media:f08c023d048fc485"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:afae67cc94acd881",
+      "argument_key": "technology_product:target:afae67cc94acd881",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:media:f08c023d048fc485:0:4:e94da229b3161a31",
+          "source_id": "curated-source:media:f08c023d048fc485",
+          "document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+          "block_id": "curated-source:media:f08c023d048fc485:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 113,
+          "end": 133,
+          "text": "AI影像芯片全球累计搭载量已突破5亿台。",
+          "unit_hash": "sha256:cf63d286d2d8ad4e54cb2d483e1685ff7ff671c4c3af36c0e94da229b3161a31",
+          "block_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+            "anchor_block_id": "curated-source:media:f08c023d048fc485:block:0",
+            "anchor_unit_id": "external-unit:curated-source:media:f08c023d048fc485:0:4:e94da229b3161a31"
+          },
+          "citation_refs": [
+            4
+          ]
+        }
+      ],
+      "citation_refs": [
+        4
+      ],
+      "source_identity": [
+        [
+          "https://www.sohu.com/a/973602993_115362",
+          "curated-source:media:f08c023d048fc485"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:419695580f05d491",
+      "argument_key": "competitive_landscape:target:419695580f05d491",
+      "entity_scope": "target",
+      "target_entity": "黑芝麻智能",
+      "primary_family": "competitive_landscape",
+      "coverage_families": [
+        "competitive_landscape"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:5:a8ae2babc705d1fa",
+          "source_id": "curated-source:research:d2c3f793a0c39741",
+          "document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 5,
+          "start": 168,
+          "end": 231,
+          "text": "2026年3月中国乘用车智驾域控SoC安装量70.7万颗，英伟达市占率39.4%，地平线11.3%，黑芝麻智能市占率同比提升。",
+          "unit_hash": "sha256:7a9942c532650074309ea9a6a9ac4a783040e00b8e4d87b8a8ae2babc705d1fa",
+          "block_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "coverage_families": [
+            "competitive_landscape"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "explicit_target",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "explicit_target_surface",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+            "anchor_block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+            "anchor_unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:5:a8ae2babc705d1fa"
+          },
+          "citation_refs": [
+            5
+          ]
+        },
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:6:08c73ee14e4a3eb5",
+          "source_id": "curated-source:research:d2c3f793a0c39741",
+          "document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 6,
+          "start": 231,
+          "end": 260,
+          "text": "本土SoC供应商合计市占率25.1%同比增7.6个百分点。",
+          "unit_hash": "sha256:cdbc865e5b9bbb101716140b0a5215071f8c145177c54a6708c73ee14e4a3eb5",
+          "block_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "coverage_families": [
+            "competitive_landscape"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "target_document_context",
+            "owner_surface": "黑芝麻智能",
+            "anchor_type": "document_or_block_owner",
+            "anchor_value": "黑芝麻智能",
+            "anchor_document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+            "anchor_block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+            "anchor_unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:6:08c73ee14e4a3eb5"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://www.sohu.com/a/1044920382_122014422",
+          "curated-source:research:d2c3f793a0c39741"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:44281ed5ffdd9495",
+      "argument_key": "technology_product:peer_or_industry:44281ed5ffdd9495",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "technology_product",
+      "coverage_families": [
+        "technology_product"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:0:53fc113d42e97f1f",
+          "source_id": "curated-source:research:d2c3f793a0c39741",
+          "document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 0,
+          "start": 0,
+          "end": 47,
+          "text": "全球智能驾驶芯片市场2024年超100亿美元，预计2027年达283亿美元，CAGR超40%。",
+          "unit_hash": "sha256:9227d6a5d800098eb353e5b61fc0f8e16471abf26ee8071153fc113d42e97f1f",
+          "block_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "coverage_families": [
+            "technology_product"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "industry_context",
+            "owner_surface": "",
+            "anchor_type": "industry_subject",
+            "anchor_value": "全球智能驾驶芯片市场",
+            "anchor_document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+            "anchor_block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+            "anchor_unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:0:53fc113d42e97f1f"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://www.sohu.com/a/1044920382_122014422",
+          "curated-source:research:d2c3f793a0c39741"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:013f22bd79fbe4a2",
+      "argument_key": "competitive_landscape:peer_or_industry:013f22bd79fbe4a2",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "competitive_landscape",
+      "coverage_families": [
+        "competitive_landscape"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:1:dc095c8d8786a21b",
+          "source_id": "curated-source:research:d2c3f793a0c39741",
+          "document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 1,
+          "start": 47,
+          "end": 61,
+          "text": "中国占全球约46%市场份额。",
+          "unit_hash": "sha256:dc03c0e57892a0393ffe2f7e838f4d42cf3ba505526960b8dc095c8d8786a21b",
+          "block_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "coverage_families": [
+            "competitive_landscape"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "industry_context",
+            "owner_surface": "",
+            "anchor_type": "industry_subject",
+            "anchor_value": "中国占全球约46%市场",
+            "anchor_document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+            "anchor_block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+            "anchor_unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:1:dc095c8d8786a21b"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://www.sohu.com/a/1044920382_122014422",
+          "curated-source:research:d2c3f793a0c39741"
+        ]
+      ]
+    },
+    {
+      "schema_version": "curated_external_argument_card.v4",
+      "card_id": "external-card:835160559bb62d9e",
+      "argument_key": "commercialization:peer_or_industry:835160559bb62d9e",
+      "entity_scope": "peer_or_industry",
+      "target_entity": "",
+      "primary_family": "commercialization",
+      "coverage_families": [
+        "commercialization"
+      ],
+      "evidence_units": [
+        {
+          "schema_version": "curated_external_evidence_unit.v2",
+          "unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:4:459e0b4a35c2d444",
+          "source_id": "curated-source:research:d2c3f793a0c39741",
+          "document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+          "block_ordinal": 0,
+          "unit_ordinal": 4,
+          "start": 137,
+          "end": 168,
+          "text": "高端市场英伟达Thor系列700-1000TOPS已进入量产。",
+          "unit_hash": "sha256:456030d7e35b342bad30cb93971183af91dfa8063a578668459e0b4a35c2d444",
+          "block_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+          "coverage_families": [
+            "commercialization"
+          ],
+          "argument_status": "admitted",
+          "scope_provenance": {
+            "schema_version": "curated_external_scope_provenance.v2",
+            "resolver_version": "external_scope_resolver.v2",
+            "origin": "industry_context",
+            "owner_surface": "",
+            "anchor_type": "industry_subject",
+            "anchor_value": "高端市场",
+            "anchor_document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+            "anchor_block_id": "curated-source:research:d2c3f793a0c39741:block:0",
+            "anchor_unit_id": "external-unit:curated-source:research:d2c3f793a0c39741:0:4:459e0b4a35c2d444"
+          },
+          "citation_refs": [
+            5
+          ]
+        }
+      ],
+      "citation_refs": [
+        5
+      ],
+      "source_identity": [
+        [
+          "https://www.sohu.com/a/1044920382_122014422",
+          "curated-source:research:d2c3f793a0c39741"
+        ]
+      ]
+    }
+  ],
+  "citations": {
+    "1": {
+      "source": "外部材料精选观察",
+      "author": "老姚",
+      "title": "股价腰斩、盈利承压：中国智驾芯片三巨头短期承压不改长期价值",
+      "url": "https://www.laoyaoba.com/html/share/news/1051422",
+      "source_ref": "https://www.laoyaoba.com/html/share/news/1051422",
+      "source_id": "curated-source:analysis:43778dcf26ce8e60",
+      "source_document_hash": "sha256:7ac6b52f1103c91d985956ebf7129dd88b258242c37adf919a954cef96c9a4f5",
+      "publish_time": "2026",
+      "source_kind": "analysis",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "2": {
+      "source": "外部材料精选观察",
+      "author": "智驾前沿/网通社",
+      "title": "从车规芯片到端侧AI全场景：黑芝麻智能十年技术演进与算力版图重构",
+      "url": "https://auto.news18a.com/news/storys_277147.html",
+      "source_ref": "https://auto.news18a.com/news/storys_277147.html",
+      "source_id": "curated-source:media:806dc83b21f1f9a0",
+      "source_document_hash": "sha256:6accb2498df1be518ec23dff4c9b9c41a8c55d66ab46095ed69aaadd66906c61",
+      "publish_time": "2026-07-19 09:45",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "3": {
+      "source": "外部材料精选观察",
+      "author": "老李头/热点科技",
+      "title": "华山武当双线发力，黑芝麻智能全系核心产品亮相WAIC 2026",
+      "url": "https://www.itheat.com/view/62419.html",
+      "source_ref": "https://www.itheat.com/view/62419.html",
+      "source_id": "curated-source:media:8bd9a55eae3dc282",
+      "source_document_hash": "sha256:f60994da794e8650e0ed99f0b0aa167274b01a93a27e2d26a934899779890b50",
+      "publish_time": "2026-07-19 11:01",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "4": {
+      "source": "外部材料精选观察",
+      "author": "每日经济新闻",
+      "title": "黑芝麻智能CES发布关键进展：自动驾驶芯片量产、AI影像芯片搭载量破5亿",
+      "url": "https://www.sohu.com/a/973602993_115362",
+      "source_ref": "https://www.sohu.com/a/973602993_115362",
+      "source_id": "curated-source:media:f08c023d048fc485",
+      "source_document_hash": "sha256:ccdcf1c027db4b4d019db1f94c5bca28a999e66501b3812ad05faec1dab68613",
+      "publish_time": "2026-01-07 19:41",
+      "source_kind": "media",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    },
+    "5": {
+      "source": "外部材料精选观察",
+      "author": "观研天下",
+      "title": "中国为全球智驾芯片行业核心增量 双轨竞争下内卷加剧",
+      "url": "https://www.sohu.com/a/1044920382_122014422",
+      "source_ref": "https://www.sohu.com/a/1044920382_122014422",
+      "source_id": "curated-source:research:d2c3f793a0c39741",
+      "source_document_hash": "sha256:23e099b7e2521c18f0eb26e6272ff6fd092def6d352c268460f876403be2064f",
+      "publish_time": "2026-07-02 20:00",
+      "source_kind": "research",
+      "source_type": "curated_external_analysis_evidence",
+      "source_credit": 55,
+      "verification_status": "professional_observation",
+      "quality_action": "preview_only",
+      "synthesis_display_only": true,
+      "knowledge_eligible": false,
+      "scoring_eligible": false,
+      "risk_score_eligible": false
+    }
+  },
+  "diagnostics": {
+    "source_unit_count": 33,
+    "target_unit_count": 19,
+    "peer_unit_count": 3,
+    "rejected_by_reason": {
+      "unclassified": 10,
+      "incomplete": 1
+    },
+    "rejected_source_documents": {},
+    "selector_batch_count": 1,
+    "selector_request_count": 2,
+    "accepted_target_card_count": 14,
+    "accepted_peer_card_count": 3,
+    "accepted_count": 17
+  },
+  "narrative_plan": {
+    "schema_version": "curated_external_narrative_plan.v1",
+    "groups": [
+      {
+        "scope_bucket": "target",
+        "primary_family": "technology_product",
+        "card_ids": [
+          "external-card:8bc42b05a33ed76f",
+          "external-card:660bacf3a6ac1a33",
+          "external-card:77e72f73a9485bc5",
+          "external-card:e4e766977f6effca",
+          "external-card:8871fd50db993435",
+          "external-card:2952c190ff82dd45",
+          "external-card:30d695498e2d555f",
+          "external-card:afae67cc94acd881"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "financial_quality",
+        "card_ids": [
+          "external-card:09cd2082e2ef23f7",
+          "external-card:42e79d062d241a36",
+          "external-card:c35161f65827397e"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "commercialization",
+        "card_ids": [
+          "external-card:8fee57f6b5746e13",
+          "external-card:cc75f076e09332f3"
+        ]
+      },
+      {
+        "scope_bucket": "target",
+        "primary_family": "competitive_landscape",
+        "card_ids": [
+          "external-card:419695580f05d491"
+        ]
+      },
+      {
+        "scope_bucket": "peer_or_industry",
+        "primary_family": "technology_product",
+        "card_ids": [
+          "external-card:44281ed5ffdd9495"
+        ]
+      },
+      {
+        "scope_bucket": "peer_or_industry",
+        "primary_family": "competitive_landscape",
+        "card_ids": [
+          "external-card:013f22bd79fbe4a2"
+        ]
+      },
+      {
+        "scope_bucket": "peer_or_industry",
+        "primary_family": "commercialization",
+        "card_ids": [
+          "external-card:835160559bb62d9e"
+        ]
+      }
+    ]
+  }
+}

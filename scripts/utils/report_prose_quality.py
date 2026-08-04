@@ -64,6 +64,8 @@ STRONG_ASSERTION_PATTERNS = [
     r"已验证",
 ]
 
+_NEGATED_CONFIRMED_FACT_RE = re.compile(r"(?:不代表|不等同于)[^。\n]{0,24}已确认事实")
+
 
 @dataclass
 class ProseIssue:
@@ -115,7 +117,7 @@ def check_report_prose_text(text: str, path: str = "<memory>") -> ProseQualityRe
     issues.extend(_check_aiish_transitions(main_sections))
     issues.extend(_check_strong_assertions(main_sections))
     if "4.4" in sections:
-        issues.extend(_check_duplicate_4_4_citations(sections["4.4"]))
+        issues.extend(_check_duplicate_4_4_citations(sections["4.4"], text))
 
     # Current checker is advisory: warnings should not fail the report pipeline.
     return ProseQualityResult(path=path, passed=True, issues=issues)
@@ -242,13 +244,33 @@ def _borrowed_theme_prose_hits(body: str, terms: list[str]) -> list[dict]:
     hits = []
     for paragraph in _iter_prose_paragraphs(body):
         matched_terms = _matched_terms(paragraph, terms)
-        if matched_terms:
+        if matched_terms and not _is_external_v2_delta_paragraph(body, paragraph):
             hits.append({
                 "text": paragraph,
                 "terms": matched_terms,
                 "chars": len(_strip_markdown(paragraph)),
             })
     return hits
+
+
+def _is_external_v2_delta_paragraph(body: str, paragraph: str) -> bool:
+    if not re.match(
+        r"^(?:相对正式材料/机构假设，外部材料新增的待验证点：|外部新增待验证变量：)",
+        paragraph,
+    ):
+        return False
+    if len(_strip_markdown(paragraph)) > BORROWED_THEME_SENTENCE_CHARS:
+        return False
+    if not re.search(r"\[\^\d+\](?:。)?$", paragraph):
+        return False
+    start = body.find(paragraph)
+    if start < 0:
+        return False
+    tail = body[start + len(paragraph):]
+    return bool(re.match(
+        r"^\s*\n\s*\n>\s+\*\*(?:外部原文依据|缓存材料摘录)\*\*：\S",
+        tail,
+    ))
 
 
 def _borrowed_theme_table_hits(body: str, terms: list[str]) -> list[dict]:
@@ -297,7 +319,7 @@ def _check_aiish_transitions(sections: dict[str, str]) -> Iterable[ProseIssue]:
 
 def _check_strong_assertions(sections: dict[str, str]) -> Iterable[ProseIssue]:
     hits = []
-    combined = "\n".join(sections.values())
+    combined = _NEGATED_CONFIRMED_FACT_RE.sub("", "\n".join(sections.values()))
     for pattern in STRONG_ASSERTION_PATTERNS:
         for match in re.finditer(pattern, combined):
             hits.append(match.group(0))
@@ -310,27 +332,46 @@ def _check_strong_assertions(sections: dict[str, str]) -> Iterable[ProseIssue]:
         )
 
 
-def _check_duplicate_4_4_citations(section_body: str) -> Iterable[ProseIssue]:
-    urls = re.findall(r"https?://[^\s|）)]+", section_body)
-    counts: dict[str, int] = {}
-    for url in urls:
-        counts[url] = counts.get(url, 0) + 1
-    duplicates = [f"{url} x{count}" for url, count in counts.items() if count > 1]
+def _check_duplicate_4_4_citations(
+    section_body: str, report_text: str = ""
+) -> Iterable[ProseIssue]:
+    definitions = _citation_definition_lines(section_body)
+    if not definitions:
+        global_match = re.search(
+            r"(?ms)^## 引用来源[ \t]*\r?\n(.*?)(?=^##[ \t]|\Z)", report_text
+        )
+        cited_ids = set(re.findall(r"\[\^(\d+)\]", section_body))
+        definitions = [
+            (ref_id, line)
+            for ref_id, line in _citation_definition_lines(
+                global_match.group(1) if global_match else ""
+            )
+            if ref_id in cited_ids
+        ]
 
-    fallback_counts: dict[str, int] = {}
-    for line in section_body.splitlines():
-        key = _citation_fallback_key(line)
+    counts: dict[str, int] = {}
+    for _, line in definitions:
+        urls = re.findall(r"https?://[^\s|）)]+", line)
+        key = urls[0] if urls else _citation_fallback_key(line)
         if key:
-            fallback_counts[key] = fallback_counts.get(key, 0) + 1
-    duplicates.extend(f"{key} x{count}" for key, count in fallback_counts.items() if count > 1)
+            counts[key] = counts.get(key, 0) + 1
+    duplicates = [f"{key} x{count}" for key, count in counts.items() if count > 1]
     if duplicates:
         yield ProseIssue(
             code="duplicate_4_4_citation_source",
             severity="warning",
             section="4.4",
-            message="4.4 引用列表存在同源重复，建议合并同一 URL 或同一文章来源。",
+            message="4.4 使用的引用存在同源重复，建议合并同一 URL 或同一文章来源。",
             evidence="; ".join(duplicates[:10]),
         )
+
+
+def _citation_definition_lines(text: str) -> list[tuple[str, str]]:
+    return [
+        (match.group(1), line)
+        for line in text.splitlines()
+        if (match := re.match(r"^\s*-\s+\[\^(\d+)\]", line))
+    ]
 
 
 def _citation_fallback_key(line: str) -> str:
@@ -339,8 +380,9 @@ def _citation_fallback_key(line: str) -> str:
     if re.search(r"https?://", line):
         return ""
 
-    source_match = re.match(r"^\s*-\s+\[\^\d+\]\s*([^|]+)", line)
-    source = source_match.group(1).strip() if source_match else ""
+    payload = re.sub(r"^\s*-\s+\[\^\d+\]\s*", "", line).lstrip("| ")
+    source = payload.split("|", 1)[0].strip()
+    source = re.sub(r"[*_`]", "", source).strip()
     author_match = re.search(r"作者:\s*([^|《]+)", line)
     author = author_match.group(1).strip() if author_match else ""
     title_match = re.search(r"《([^》]+)》", line)
@@ -369,6 +411,7 @@ def _is_non_prose_line(line: str) -> bool:
         or line.startswith("- ")
         or line.startswith("> ")
         or line.startswith("#")
+        or re.fullmatch(r"\*\*[^*]+\*\*", line) is not None
         or line.startswith("**本节引用来源")
         or re.match(r"^\[\^\d+\]:", line) is not None
     )

@@ -1,0 +1,5401 @@
+{
+  "cards": [
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:340863e9cf5bf2c458aa",
+      "fact_anchors": [
+        "2025",
+        "2024",
+        "73.4%",
+        "56.8%",
+        "毛利",
+        "其他收益"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_income_statement_table-0",
+      "source_credit": 75,
+      "source_excerpt": "下表載列截至 2025 年及 2024 年12 月31 日止年度的比較數字： 截至 12 月31 日止年度 2025 年 2024 年 人民幣千元 人民幣千元 收入 822,328 474,252 銷售成本 (485,239) (279,544) 毛利 337,089 194,708 銷售開支 (87,894) (120,797) 一般及行政開支 (298,329) (368,819) 研發開支 (1,417,423) (1,435,156) 金融資產減值虧損淨額 (9,897) (29,067) 其他收入 16,071 14,740 其他收益╱ （虧損） 淨額 12,063 (9,591) 經營虧損 (1,448,320) (1,753,982) 財務收入 58,175 41,084 財務成本 (33,595) (18,074) 財務收入淨額 24,580 23,010 應佔使用權益法入賬的聯營公司的虧損淨額 (939) (2,325) 向投資者發行的金融工具的公允價值變動 Ð 2,046,612 除所得稅前 （虧損） ╱利潤 (1,424,679) 313,315 所得稅開支 (21) – 本公司權益持有人應佔年內 （虧損） ╱利潤 (1,424,700) 313,315 非國際財務報告準則計量 經調整虧損淨額 (1,075,674) (1,304,251) 12 黑芝麻智能國際控股有限公司 2025 年年度報告 管理層討論及分析 （續） 收入 我們的收入由截至 2024 年12 月31 日止年度的人民幣 474.3 百萬元增加 73.4% 至截至 2025 年12 月31 日止年度的人民幣 822.3 百萬 元，主要是由於下列各項收入增長所推動： 輔助駕駛產品及解決方案 我們的輔助駕駛產品及解決方案收入由截至 2024 年12 月31 日止年度的人民幣 438.0 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 686.9 百萬元，主要是由於 (i) 在乘用車領域，標配我們華山系列芯片的新款車型上市且銷量表現強勁，我們 高階輔助駕駛芯片及解決方案銷量持續提升；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_income_statement_table-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 912,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "下表載列截至 2025 年及 2024 年12 月31 日止年度的比較數字： 截至 12 月31 日止年度 2025 年 2024 年 人民幣千元 人民幣千元 收入 822,328 474,252 銷售成本 (485,239) (279,544) 毛利 337,089 194,708 銷售開支 (87,894) (120,797) 一般及行政開支 (298,329) (368,819) 研發開支 (1,417,423) (1,435,156) 金融資產減值虧損淨額 (9,897) (29,067) 其他收入 16,071 14,740 其他收益╱ （虧損） 淨額 12,063 (9,591) 經營虧損 (1,448,320) (1,753,982) 財務收入 58,175 41,084 財務成本 (33,595) (18,074) 財務收入淨額 24,580 23,010 應佔使用權益法入賬的聯營公司的虧損淨額 (939) (2,325) 向投資者發行的金融工具的公允價值變動 Ð 2,046,612 除所得稅前 （虧損） ╱利潤 (1,424,679) 313,315 所得稅開支 (21) – 本公司權益持有人應佔年內 （虧損） ╱利潤 (1,424,700) 313,315 非國際財務報告準則計量 經調整虧損淨額 (1,075,674) (1,304,251) 12 黑芝麻智能國際控股有限公司 2025 年年度報告 管理層討論及分析 （續） 收入 我們的收入由截至 2024 年12 月31 日止年度的人民幣 474.3 百萬元增加 73.4% 至截至 2025 年12 月31 日止年度的人民幣 822.3 百萬 元，主要是由於下列各項收入增長所推動： 輔助駕駛產品及解決方案 我們的輔助駕駛產品及解決方案收入由截至 2024 年12 月31 日止年度的人民幣 438.0 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 686.9 百萬元，主要是由於 (i) 在乘用車領域，標配我們華山系列芯片的新款車型上市且銷量表現強勁，我們 高階輔助駕駛芯片及解決方案銷量持續提升；",
+          "unit_id": "hk_income_statement_table-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:cccf6bfe98e0cacaa0c5",
+      "fact_anchors": [
+        "L2-L3",
+        "市場",
+        "競爭"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_income_statement_table-0",
+      "source_credit": 75,
+      "source_excerpt": "(ii) 在L2-L3 商用車領域，我們市場競爭力進一步提升，在客戶數量和客單價 均錄得顯著增長；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_income_statement_table-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 962,
+          "ordinal": 1,
+          "start_pos": 913,
+          "text": "(ii) 在L2-L3 商用車領域，我們市場競爭力進一步提升，在客戶數量和客單價 均錄得顯著增長；",
+          "unit_id": "hk_income_statement_table-0:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:f43300430415c53b4e7c",
+      "fact_anchors": [
+        "2024",
+        "7.9%",
+        "2025",
+        "73.6%",
+        "56.8%",
+        "12.4%",
+        "平台",
+        "發佈"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_income_statement_table-0",
+      "source_credit": 75,
+      "source_excerpt": "智能影像解決方案 我們的智能影像解決方案收入由截至 2024 年12 月31 日止年度的人民幣 36.3 百萬元增加 7.9% ，至截至 2025 年12 月31 日止年度 的人民幣 39.2 百萬元，主要是我們智能影像解決方案產品拓展至如 AI 眼鏡等領域。 具身智能解決方案 我們的具身智能解決方案，截至 2025 年12 月31 日止年度的收入為人民幣 96.3 百萬元，主要是由於在 2025 年成功發佈 SesameX 全棧計算平台，積極通過多元化佈局尋找新的增長點，獲取多家機器人頭部客戶大量訂單。 銷售成本 我們的銷售成本由截至 2024 年12 月31 日止年度的人民幣 279.5 百萬元增加 73.6% 至截至 2025 年12 月31 日止年度的人民幣 485.2 百萬元，主要是受下列各項因素影響： 輔助駕駛產品及解決方案 輔助駕駛產品及解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 274.2 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 429.8 百萬元，此情況與輔助駕駛產品及解決方案收入的增長趨勢大致相符。 智能影像解決方案 智能影像解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 5.3 百萬元增加 12.4% 至截至 2025 年12 月31 日止年度的 人民幣 6.0 百萬元，此情況與智能影像解決方案收入的增長趨勢大致相符。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_income_statement_table-0:u3",
+        "hk_income_statement_table-0:u4",
+        "hk_income_statement_table-0:u5",
+        "hk_income_statement_table-0:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1122,
+          "ordinal": 3,
+          "start_pos": 992,
+          "text": "智能影像解決方案 我們的智能影像解決方案收入由截至 2024 年12 月31 日止年度的人民幣 36.3 百萬元增加 7.9% ，至截至 2025 年12 月31 日止年度 的人民幣 39.2 百萬元，主要是我們智能影像解決方案產品拓展至如 AI 眼鏡等領域。",
+          "unit_id": "hk_income_statement_table-0:u3"
+        },
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1247,
+          "ordinal": 4,
+          "start_pos": 1123,
+          "text": "具身智能解決方案 我們的具身智能解決方案，截至 2025 年12 月31 日止年度的收入為人民幣 96.3 百萬元，主要是由於在 2025 年成功發佈 SesameX 全棧計算平台，積極通過多元化佈局尋找新的增長點，獲取多家機器人頭部客戶大量訂單。",
+          "unit_id": "hk_income_statement_table-0:u4"
+        },
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1489,
+          "ordinal": 5,
+          "start_pos": 1248,
+          "text": "銷售成本 我們的銷售成本由截至 2024 年12 月31 日止年度的人民幣 279.5 百萬元增加 73.6% 至截至 2025 年12 月31 日止年度的人民幣 485.2 百萬元，主要是受下列各項因素影響： 輔助駕駛產品及解決方案 輔助駕駛產品及解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 274.2 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 429.8 百萬元，此情況與輔助駕駛產品及解決方案收入的增長趨勢大致相符。",
+          "unit_id": "hk_income_statement_table-0:u5"
+        },
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1613,
+          "ordinal": 6,
+          "start_pos": 1490,
+          "text": "智能影像解決方案 智能影像解決方案的銷售成本由截至 2024 年12 月31 日止年度的人民幣 5.3 百萬元增加 12.4% 至截至 2025 年12 月31 日止年度的 人民幣 6.0 百萬元，此情況與智能影像解決方案收入的增長趨勢大致相符。",
+          "unit_id": "hk_income_statement_table-0:u6"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:d0a221b56dc7bb32ccb3",
+      "fact_anchors": [
+        "2025",
+        "解決方案",
+        "服務"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "signal_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_income_statement_table-0",
+      "source_credit": 75,
+      "source_excerpt": "具身智能解決方案 具身智能解決方案的銷售成本，截至 2025 年12 月31 日止年度為人民幣 49.4 百萬元，主要是獲取與我們 SesameX 全棧計算平 台適配的輔助技術服務。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_income_statement_table-0:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1705,
+          "ordinal": 7,
+          "start_pos": 1614,
+          "text": "具身智能解決方案 具身智能解決方案的銷售成本，截至 2025 年12 月31 日止年度為人民幣 49.4 百萬元，主要是獲取與我們 SesameX 全棧計算平 台適配的輔助技術服務。",
+          "unit_id": "hk_income_statement_table-0:u7"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:15185aebebf5eeaf8e30",
+      "fact_anchors": [
+        "2025",
+        "2024",
+        "73.1%",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_income_statement_table-0",
+      "source_credit": 75,
+      "source_excerpt": "13 2025 年年度報告 黑芝麻智能國際控股有限公司 管理層討論及分析 （續） 毛利及毛利率 由於上述原因，我們的整體毛利由截至 2024 年12 月31 日止年度的人民幣 194.7 百萬元增加 73.1% 至截至 2025 年12 月31 日止年 度的人民幣 337.1 百萬元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_income_statement_table-0:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1849,
+          "ordinal": 8,
+          "start_pos": 1706,
+          "text": "13 2025 年年度報告 黑芝麻智能國際控股有限公司 管理層討論及分析 （續） 毛利及毛利率 由於上述原因，我們的整體毛利由截至 2024 年12 月31 日止年度的人民幣 194.7 百萬元增加 73.1% 至截至 2025 年12 月31 日止年 度的人民幣 337.1 百萬元。",
+          "unit_id": "hk_income_statement_table-0:u8"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:8fc5208946fd8b0ed4ee",
+      "fact_anchors": [
+        "2024",
+        "2025",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_income_statement_table-0",
+      "source_credit": 75,
+      "source_excerpt": "我們輔助駕駛產品及解決方案的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至 2025 年12 月31 日止",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_income_statement_table-0:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_income_statement_table-0",
+          "end_pos": 1912,
+          "ordinal": 9,
+          "start_pos": 1849,
+          "text": "我們輔助駕駛產品及解決方案的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至 2025 年12 月31 日止",
+          "unit_id": "hk_income_statement_table-0:u9"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:cbae2945e86ee8fa2e6d",
+      "fact_anchors": [
+        "行業"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "全球智能汽車行業在快速變化， AI 技術從實驗室真正走向了現實場景，具身智能的風口也轉瞬而至。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 102,
+          "ordinal": 2,
+          "start_pos": 55,
+          "text": "全球智能汽車行業在快速變化， AI 技術從實驗室真正走向了現實場景，具身智能的風口也轉瞬而至。",
+          "unit_id": "hk_product_progress-0:u2"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:db6b07007a992ea25408",
+      "fact_anchors": [
+        "A1000",
+        "芯片",
+        "搭載"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "搭載 A1000 家族 芯片的車型不斷出貨，從吉利銀河到東風奕派再到紅旗，我們的技術實實在在地走進了千家萬戶，這款芯片也拿到了 「中國 芯」 整車芯應用卓越產品獎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 293,
+          "ordinal": 6,
+          "start_pos": 211,
+          "text": "搭載 A1000 家族 芯片的車型不斷出貨，從吉利銀河到東風奕派再到紅旗，我們的技術實實在在地走進了千家萬戶，這款芯片也拿到了 「中國 芯」 整車芯應用卓越產品獎。",
+          "unit_id": "hk_product_progress-0:u6"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:3fa34822b6a93bcb8e92",
+      "fact_anchors": [
+        "C1200",
+        "芯片",
+        "認證",
+        "實現"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "C1200 家族芯片實現了艙駕一體方案的商業落地，還通過了自主可控認證，幫行業找到了降本 的新路徑。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 344,
+          "ordinal": 7,
+          "start_pos": 294,
+          "text": "C1200 家族芯片實現了艙駕一體方案的商業落地，還通過了自主可控認證，幫行業找到了降本 的新路徑。",
+          "unit_id": "hk_product_progress-0:u7"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:dafbcad85dd033f75889",
+      "fact_anchors": [
+        "A2000",
+        "芯片",
+        "突破"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "這一年，我們也迎來了一個關鍵突破－ A2000 芯片。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 372,
+          "ordinal": 8,
+          "start_pos": 345,
+          "text": "這一年，我們也迎來了一個關鍵突破－ A2000 芯片。",
+          "unit_id": "hk_product_progress-0:u8"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:f689ba14ce25955110d0",
+      "fact_anchors": [
+        "A2000",
+        "芯片",
+        "平台",
+        "量產"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "作為國內唯一堅持打造開放平台的高性能智 能駕駛芯片， A2000 會全力支持主機廠自研核心智駕方案的落地以及第三方生態夥伴的技術創新，目前芯片已拿到頭部車 企定點，後面會有更多定點落地，預期今年開始量產。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u10"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 539,
+          "ordinal": 10,
+          "start_pos": 437,
+          "text": "作為國內唯一堅持打造開放平台的高性能智 能駕駛芯片， A2000 會全力支持主機廠自研核心智駕方案的落地以及第三方生態夥伴的技術創新，目前芯片已拿到頭部車 企定點，後面會有更多定點落地，預期今年開始量產。",
+          "unit_id": "hk_product_progress-0:u10"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:3d7b815d61b8ec74ed83",
+      "fact_anchors": [
+        "A2000",
+        "行業"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "作為行業主流高階智駕計算平台之一， A2000 成為我們未來增長的 重要引擎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u11"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 578,
+          "ordinal": 11,
+          "start_pos": 539,
+          "text": "作為行業主流高階智駕計算平台之一， A2000 成為我們未來增長的 重要引擎。",
+          "unit_id": "hk_product_progress-0:u11"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:05804716d05c104289c0",
+      "fact_anchors": [
+        "行業"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "11 月， SesameX 多維具身智能平台正式發佈，面對大模型推動的具身智 能商業化落地大潮， SesameX 是行業首個專注在具身智能商業化部署的專屬計算平台，這意味著我們從 「做汽車的大腦」 ，開始轉向 「做智能世界的大腦」 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u13"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 723,
+          "ordinal": 13,
+          "start_pos": 606,
+          "text": "11 月， SesameX 多維具身智能平台正式發佈，面對大模型推動的具身智 能商業化落地大潮， SesameX 是行業首個專注在具身智能商業化部署的專屬計算平台，這意味著我們從 「做汽車的大腦」 ，開始轉向 「做智能世界的大腦」 。",
+          "unit_id": "hk_product_progress-0:u13"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:56e25cd85900c1fa07bd",
+      "fact_anchors": [
+        "2025"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-0",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，我們做了組織和管理的全面升級，隨著組織的優化和更多 優秀人才的不斷加入，我們收穫了一個更加高效、更充滿活力的組織，整個團隊對未來充滿信心，幹勁十足，這為我們接 下來持續高速、規模化發展打下了基礎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-0:u16"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-0",
+          "end_pos": 910,
+          "ordinal": 16,
+          "start_pos": 805,
+          "text": "2025 年，我們做了組織和管理的全面升級，隨著組織的優化和更多 優秀人才的不斷加入，我們收穫了一個更加高效、更充滿活力的組織，整個團隊對未來充滿信心，幹勁十足，這為我們接 下來持續高速、規模化發展打下了基礎。",
+          "unit_id": "hk_product_progress-0:u16"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:ef32a8538a2f11b0bf51",
+      "fact_anchors": [
+        "A2000",
+        "L2",
+        "L3",
+        "L4",
+        "芯片",
+        "合作"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "一方面，用 A2000 芯片推動 L2/L3 級輔助駕駛規模化落地，同時 佈局 L4 級Robotaxi 場景，積極開拓生態系統，目前公司已經與元戎啟行、蘿蔔快跑等行業領先企業達成戰略合作；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-1:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 125,
+          "ordinal": 1,
+          "start_pos": 30,
+          "text": "一方面，用 A2000 芯片推動 L2/L3 級輔助駕駛規模化落地，同時 佈局 L4 級Robotaxi 場景，積極開拓生態系統，目前公司已經與元戎啟行、蘿蔔快跑等行業領先企業達成戰略合作；",
+          "unit_id": "hk_product_progress-1:u1"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:634561f81ad839a15e4f",
+      "fact_anchors": [
+        "A1000",
+        "C1200",
+        "芯片",
+        "量產"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "另一方 面，擴大 A1000 系列和 C1200 系列芯片的量產規模，讓更多普通車型也能用上高階智駕功能。 具身智能領域，擴大客戶與場景的覆蓋範圍。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-1:u2",
+        "hk_product_progress-1:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 178,
+          "ordinal": 2,
+          "start_pos": 125,
+          "text": "另一方 面，擴大 A1000 系列和 C1200 系列芯片的量產規模，讓更多普通車型也能用上高階智駕功能。",
+          "unit_id": "hk_product_progress-1:u2"
+        },
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 199,
+          "ordinal": 3,
+          "start_pos": 179,
+          "text": "具身智能領域，擴大客戶與場景的覆蓋範圍。",
+          "unit_id": "hk_product_progress-1:u3"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:3a8de6446ace0ecf1b65",
+      "fact_anchors": [
+        "A2000"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "持續迭代產品， A2000 家族全系列產品將很快 亮相；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-1:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 328,
+          "ordinal": 7,
+          "start_pos": 300,
+          "text": "持續迭代產品， A2000 家族全系列產品將很快 亮相；",
+          "unit_id": "hk_product_progress-1:u7"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:e63fd89448b5783629e1",
+      "fact_anchors": [
+        "模型",
+        "研發"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "面向下一代大模型全新一代的 NPU 架構正在緊鑼密鼓的研發中；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-1:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 359,
+          "ordinal": 8,
+          "start_pos": 328,
+          "text": "面向下一代大模型全新一代的 NPU 架構正在緊鑼密鼓的研發中；",
+          "unit_id": "hk_product_progress-1:u8"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:4af16202c3833a6d4532",
+      "fact_anchors": [
+        "芯片"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "基於更先進制程的芯片產品已經在規劃中，確保公 司始終處於端側 AI 技術前沿；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-1:u9"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 398,
+          "ordinal": 9,
+          "start_pos": 359,
+          "text": "基於更先進制程的芯片產品已經在規劃中，確保公 司始終處於端側 AI 技術前沿；",
+          "unit_id": "hk_product_progress-1:u9"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:4b8d3c32a24e1c0252d7",
+      "fact_anchors": [
+        "2026",
+        "戰略"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-1",
+      "source_credit": 75,
+      "source_excerpt": "2026 年，我們會把戰略變成行動，把佈局變成業績，和所有夥伴一起，抓住全域智 能的機遇，走得更遠、更穩。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-1:u14"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-1",
+          "end_pos": 549,
+          "ordinal": 14,
+          "start_pos": 496,
+          "text": "2026 年，我們會把戰略變成行動，把佈局變成業績，和所有夥伴一起，抓住全域智 能的機遇，走得更遠、更穩。",
+          "unit_id": "hk_product_progress-1:u14"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:667ea00c549510f4d554",
+      "fact_anchors": [
+        "2026",
+        "競爭"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "2026 年本公司研發工作將圍繞 「產品化落地、技術演進、平台升級」 三大核心，持續夯實核心競爭力，推動關鍵技術 從研發向產業化的快速轉化。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-2:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 70,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2026 年本公司研發工作將圍繞 「產品化落地、技術演進、平台升級」 三大核心，持續夯實核心競爭力，推動關鍵技術 從研發向產業化的快速轉化。",
+          "unit_id": "hk_product_progress-2:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:96bef650c04766594ad1",
+      "fact_anchors": [
+        "2026",
+        "芯片",
+        "SoC",
+        "驗證"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "本公司將完成下一代智能視覺處理 IP 的實驗與驗證，交付下一代神經網絡加速 (NPU) IP 至SoC 團隊，推動 2026 年內完成新款芯片流片，啟動市場推廣，啟動最新一代更靈活、更高效的 NPU 架構設計。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-2:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 175,
+          "ordinal": 1,
+          "start_pos": 70,
+          "text": "本公司將完成下一代智能視覺處理 IP 的實驗與驗證，交付下一代神經網絡加速 (NPU) IP 至SoC 團隊，推動 2026 年內完成新款芯片流片，啟動市場推廣，啟動最新一代更靈活、更高效的 NPU 架構設計。",
+          "unit_id": "hk_product_progress-2:u1"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:0f8d19567b7e37f1e1c6",
+      "fact_anchors": [
+        "A2000",
+        "平台",
+        "模型",
+        "實現"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "針對現有平台，完善 A2000 與GPU 精度匹配的內核開發，升級模型適配與精度校準工具鏈，實現訓練與推理精度一 致；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-2:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 235,
+          "ordinal": 2,
+          "start_pos": 176,
+          "text": "針對現有平台，完善 A2000 與GPU 精度匹配的內核開發，升級模型適配與精度校準工具鏈，實現訓練與推理精度一 致；",
+          "unit_id": "hk_product_progress-2:u2"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:c4fa7e1dbb1db5f2a59b",
+      "fact_anchors": [
+        "A2000",
+        "50%",
+        "芯片",
+        "工藝",
+        "實現"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "強化 A2000 全流程工具鏈能力，優化性能調優、原型算子及固件開發工具，推出無縫集成主流 AUTOSAR 的芯片 支持套件與可視化配置工具，助力客戶自研系統開發與集成效率提升 50% 以上。為提前佈局未來技術賽道與實現供 應鏈穩定，本公司還將積極開展國產工藝計算芯片和工具鏈的預研工作。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-2:u3",
+        "hk_product_progress-2:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 331,
+          "ordinal": 3,
+          "start_pos": 235,
+          "text": "強化 A2000 全流程工具鏈能力，優化性能調優、原型算子及固件開發工具，推出無縫集成主流 AUTOSAR 的芯片 支持套件與可視化配置工具，助力客戶自研系統開發與集成效率提升 50% 以上。",
+          "unit_id": "hk_product_progress-2:u3"
+        },
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 379,
+          "ordinal": 4,
+          "start_pos": 331,
+          "text": "為提前佈局未來技術賽道與實現供 應鏈穩定，本公司還將積極開展國產工藝計算芯片和工具鏈的預研工作。",
+          "unit_id": "hk_product_progress-2:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "operating_progress",
+      "card_id": "annual-argument:5d481316dae9c659a2ec",
+      "fact_anchors": [
+        "2025",
+        "收入",
+        "增長"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:operating_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "總體而言， 2025 年本集團收入、毛利實現穩步增長，虧損幅度有所收窄，業務結構持續優化。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-2:u5"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 425,
+          "ordinal": 5,
+          "start_pos": 380,
+          "text": "總體而言， 2025 年本集團收入、毛利實現穩步增長，虧損幅度有所收窄，業務結構持續優化。",
+          "unit_id": "hk_product_progress-2:u5"
+        }
+      ],
+      "title": "经营变化"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:f04348a74480c46f63f8",
+      "fact_anchors": [
+        "2025"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-2",
+      "source_credit": 75,
+      "source_excerpt": "2025 年末，本公司已簽訂有關億智電子的收購協議，本公司產品線將進一步向端側 AI 領域延伸， 為未來拓展更廣泛的應用場景奠定基礎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-2:u8"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-2",
+          "end_pos": 562,
+          "ordinal": 8,
+          "start_pos": 495,
+          "text": "2025 年末，本公司已簽訂有關億智電子的收購協議，本公司產品線將進一步向端側 AI 領域延伸， 為未來拓展更廣泛的應用場景奠定基礎。",
+          "unit_id": "hk_product_progress-2:u8"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:02486536597237a30c03",
+      "fact_anchors": [
+        "Q100",
+        "芯片",
+        "SoC",
+        "認證"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-3",
+      "source_credit": 75,
+      "source_excerpt": "本集 團所有量產的 SoC 均通過基於 AEC-Q100 標準的可靠性設計，包括加速環境測試、加速壽命模擬、封裝組裝測試、芯 片製造過程監控與測試及電氣驗證等關鍵測試，以確保我們的車規級高算力 SoC 的使用壽命及可靠性。截至報告期 末，本集團及旗下產品已通過多項行業認可的安全性及可靠性認證及測試，黑芝麻智能是國內首家集齊了功能安全 專家認證、功能安全流程認證、功能安全產品認證、軟件功能安全流程認證、 ASPICE 認證、 AEC-Q100 可靠性認證 的輔助駕駛芯片公司，標誌著本集團能夠為客戶提供完整的，全方位的安全產品，滿足全球市場客戶的嚴格要求。 汽車功能安全 公司已獲得 ISO 26262 ASIL-D 認證，奠定了堅實的基礎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-3:u1",
+        "hk_product_progress-3:u2",
+        "hk_product_progress-3:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-3",
+          "end_pos": 159,
+          "ordinal": 1,
+          "start_pos": 48,
+          "text": "本集 團所有量產的 SoC 均通過基於 AEC-Q100 標準的可靠性設計，包括加速環境測試、加速壽命模擬、封裝組裝測試、芯 片製造過程監控與測試及電氣驗證等關鍵測試，以確保我們的車規級高算力 SoC 的使用壽命及可靠性。",
+          "unit_id": "hk_product_progress-3:u1"
+        },
+        {
+          "block_id": "hk_product_progress-3",
+          "end_pos": 327,
+          "ordinal": 2,
+          "start_pos": 159,
+          "text": "截至報告期 末，本集團及旗下產品已通過多項行業認可的安全性及可靠性認證及測試，黑芝麻智能是國內首家集齊了功能安全 專家認證、功能安全流程認證、功能安全產品認證、軟件功能安全流程認證、 ASPICE 認證、 AEC-Q100 可靠性認證 的輔助駕駛芯片公司，標誌著本集團能夠為客戶提供完整的，全方位的安全產品，滿足全球市場客戶的嚴格要求。",
+          "unit_id": "hk_product_progress-3:u2"
+        },
+        {
+          "block_id": "hk_product_progress-3",
+          "end_pos": 370,
+          "ordinal": 3,
+          "start_pos": 328,
+          "text": "汽車功能安全 公司已獲得 ISO 26262 ASIL-D 認證，奠定了堅實的基礎。",
+          "unit_id": "hk_product_progress-3:u3"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:4b31251b741c6ec19c33",
+      "fact_anchors": [
+        "A1000",
+        "C1200",
+        "A2000",
+        "芯片",
+        "認證"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-3",
+      "source_credit": 75,
+      "source_excerpt": "同時，我們的多個產品 線均經過 ISO 26262 產品認證，包括 A1000 家族芯片、 C1200 家族芯片、 A2000 芯片、 BST RTOS 操作系統，山海 AI 工具鏈等，表明其已完全滿足汽車功能安全最 高標準，具備支撐最高等級 ASIL-D 輔助駕駛產品開發的核心能力。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-3:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-3",
+          "end_pos": 513,
+          "ordinal": 4,
+          "start_pos": 370,
+          "text": "同時，我們的多個產品 線均經過 ISO 26262 產品認證，包括 A1000 家族芯片、 C1200 家族芯片、 A2000 芯片、 BST RTOS 操作系統，山海 AI 工具鏈等，表明其已完全滿足汽車功能安全最 高標準，具備支撐最高等級 ASIL-D 輔助駕駛產品開發的核心能力。",
+          "unit_id": "hk_product_progress-3:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:80b2578afa172ae32ee9",
+      "fact_anchors": [
+        "C1200",
+        "芯片",
+        "認證"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-3",
+      "source_credit": 75,
+      "source_excerpt": "此外，我們在 C1200 跨域家族芯片上產品獲得了國密二級認證，為行業 提供了標桿級的產品典範，支持客戶和市場的安全應用與准入。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-3:u6"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-3",
+          "end_pos": 677,
+          "ordinal": 6,
+          "start_pos": 613,
+          "text": "此外，我們在 C1200 跨域家族芯片上產品獲得了國密二級認證，為行業 提供了標桿級的產品典範，支持客戶和市場的安全應用與准入。",
+          "unit_id": "hk_product_progress-3:u6"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:0b3631a8fcc93bff2198",
+      "fact_anchors": [
+        "CL2",
+        "認證",
+        "交付",
+        "合作"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_product_progress-3",
+      "source_credit": 75,
+      "source_excerpt": "軟件與系統安全 公司已獲得了 ASPICE CL2 等級認證證書，標誌著黑芝麻智能的軟件開發流程體 系與成熟度達到了行業領先水平，能夠通過完善的軟件開發管理流程和體系保 證軟件產品的高質量交付，滿足全球整車廠與合作夥伴對軟件質量的要求。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_product_progress-3:u7"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_product_progress-3",
+          "end_pos": 796,
+          "ordinal": 7,
+          "start_pos": 678,
+          "text": "軟件與系統安全 公司已獲得了 ASPICE CL2 等級認證證書，標誌著黑芝麻智能的軟件開發流程體 系與成熟度達到了行業領先水平，能夠通過完善的軟件開發管理流程和體系保 證軟件產品的高質量交付，滿足全球整車廠與合作夥伴對軟件質量的要求。",
+          "unit_id": "hk_product_progress-3:u7"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:275f2ee373f247ce5cad",
+      "fact_anchors": [
+        "管理層"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_cash_flow_table-0",
+      "source_credit": 75,
+      "source_excerpt": "董事會定期檢討及釐定董事及高級管理層的薪酬及薪酬待遇，並聽取薪酬委員會的建議，其中會考慮可資比較公司支付的 薪金、董事的時間投入及責任以及本集團的表現。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_cash_flow_table-0:u19"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_cash_flow_table-0",
+          "end_pos": 1222,
+          "ordinal": 19,
+          "start_pos": 1146,
+          "text": "董事會定期檢討及釐定董事及高級管理層的薪酬及薪酬待遇，並聽取薪酬委員會的建議，其中會考慮可資比較公司支付的 薪金、董事的時間投入及責任以及本集團的表現。",
+          "unit_id": "hk_cash_flow_table-0:u19"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:5f6f38405f350741219b",
+      "fact_anchors": [
+        "管理層"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_cash_flow_table-0",
+      "source_credit": 75,
+      "source_excerpt": "同日， SPV （本公司的間接全資附屬公司） 、管理層股東、現有股東、僱員合夥企業及目標公司訂立增資協議，據此， SPV 以人民幣 2,021.8838 萬元認購目標公司新增註冊資本人民幣 2,021.8838 萬元 （相當於增資事項後目標公司經",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_cash_flow_table-0:u25"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_cash_flow_table-0",
+          "end_pos": 1939,
+          "ordinal": 25,
+          "start_pos": 1816,
+          "text": "同日， SPV （本公司的間接全資附屬公司） 、管理層股東、現有股東、僱員合夥企業及目標公司訂立增資協議，據此， SPV 以人民幣 2,021.8838 萬元認購目標公司新增註冊資本人民幣 2,021.8838 萬元 （相當於增資事項後目標公司經",
+          "unit_id": "hk_cash_flow_table-0:u25"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:99016646294a7ac095f8",
+      "fact_anchors": [
+        "解決方案"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_business_overview-0",
+      "source_credit": 75,
+      "source_excerpt": "SoC ，為智能汽車提供創新且具性價比的計算解決方案 機器人平台 SESAMEX TM • 業界首個 「全棧自進化 • 全腦智能平台」 ，融合感知、認知、決 策、控制與安全閉環的全場景機器人商業化部署計算平台 瀚海中間件 智能瀚海 ®輔助",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_business_overview-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_business_overview-0",
+          "end_pos": 119,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "SoC ，為智能汽車提供創新且具性價比的計算解決方案 機器人平台 SESAMEX TM • 業界首個 「全棧自進化 • 全腦智能平台」 ，融合感知、認知、決 策、控制與安全閉環的全場景機器人商業化部署計算平台 瀚海中間件 智能瀚海 ®輔助",
+          "unit_id": "hk_business_overview-0:u0"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:94ff6b479db5b445c1ec",
+      "fact_anchors": [
+        "SoC"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_business_overview-1",
+      "source_credit": 75,
+      "source_excerpt": "SoC 的解決方案，專注開發車規級自動駕駛 SoC 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_business_overview-1:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_business_overview-1",
+          "end_pos": 27,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "SoC 的解決方案，專注開發車規級自動駕駛 SoC 。",
+          "unit_id": "hk_business_overview-1:u0"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:8ab1ca9272228bdfd754",
+      "fact_anchors": [
+        "2025",
+        "供應商"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-0",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，本公司通過發佈 SesameX 平台，完成了從智能駕駛領軍者向端側 AI 全棧芯片供應商的跨越。 SesameX 平台 以「全腦智能」 體系引領具身智能新範式，通過 Kalos 、Aura 、Liora 三款核心模組為機器人提供從基礎控制到高階認 知的全棧算力。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-0:u0",
+        "hk_customer_ecosystem-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-0",
+          "end_pos": 55,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2025 年，本公司通過發佈 SesameX 平台，完成了從智能駕駛領軍者向端側 AI 全棧芯片供應商的跨越。",
+          "unit_id": "hk_customer_ecosystem-0:u0"
+        },
+        {
+          "block_id": "hk_customer_ecosystem-0",
+          "end_pos": 138,
+          "ordinal": 1,
+          "start_pos": 56,
+          "text": "SesameX 平台 以「全腦智能」 體系引領具身智能新範式，通過 Kalos 、Aura 、Liora 三款核心模組為機器人提供從基礎控制到高階認 知的全棧算力。",
+          "unit_id": "hk_customer_ecosystem-0:u1"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:439c8ddee227c387c331",
+      "fact_anchors": [
+        "2025",
+        "營收"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "operating_progress",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-0",
+      "source_credit": 75,
+      "source_excerpt": "2025 年本公司具身智能解決方案業務營收人民幣 96.3 百萬元， 同比實現大幅增長。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-0",
+          "end_pos": 301,
+          "ordinal": 4,
+          "start_pos": 257,
+          "text": "2025 年本公司具身智能解決方案業務營收人民幣 96.3 百萬元， 同比實現大幅增長。",
+          "unit_id": "hk_customer_ecosystem-0:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:b550e6853d415c3cc673",
+      "fact_anchors": [
+        "競爭"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-1",
+      "source_credit": 75,
+      "source_excerpt": "秉持誠信經營的理念，本集團嚴格遵守 《中華人民共和國刑法》 《中華人民共和國反不正當競爭法》 《關於禁止商業賄 賂行為的暫行規定》 等反貪污、反勒索及反欺詐方面的法律法規，杜絕任何形式違反商業道德的行為。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-1:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-1",
+          "end_pos": 102,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "秉持誠信經營的理念，本集團嚴格遵守 《中華人民共和國刑法》 《中華人民共和國反不正當競爭法》 《關於禁止商業賄 賂行為的暫行規定》 等反貪污、反勒索及反欺詐方面的法律法規，杜絕任何形式違反商業道德的行為。",
+          "unit_id": "hk_customer_ecosystem-1:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:385c997da502d03815bc",
+      "fact_anchors": [
+        "我們制定了 適用於本集團公司所有管理人員、員工 "
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-1",
+      "source_credit": 75,
+      "source_excerpt": "我們制定了 適用於本集團公司所有管理人員、員工 （全職和兼職） 和外部第三方 （如顧問或承包商） 的《反賄賂反腐敗政策》 ，以規 範員工及第三方的商業道德行為，塑造專業、公正和誠信的企業形象。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-1:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-1",
+          "end_pos": 198,
+          "ordinal": 1,
+          "start_pos": 102,
+          "text": "我們制定了 適用於本集團公司所有管理人員、員工 （全職和兼職） 和外部第三方 （如顧問或承包商） 的《反賄賂反腐敗政策》 ，以規 範員工及第三方的商業道德行為，塑造專業、公正和誠信的企業形象。",
+          "unit_id": "hk_customer_ecosystem-1:u1"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:bd9b4b58f56164c18f40",
+      "fact_anchors": [
+        "供應商"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-1",
+      "source_credit": 75,
+      "source_excerpt": "本集團亦將商業道德的管理延伸至第三方，包括代理商、分銷商、供應商或合作夥伴等，致力促進第三方了解並遵 守有效的反賄賂和反腐敗政策。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-1:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-1",
+          "end_pos": 285,
+          "ordinal": 3,
+          "start_pos": 220,
+          "text": "本集團亦將商業道德的管理延伸至第三方，包括代理商、分銷商、供應商或合作夥伴等，致力促進第三方了解並遵 守有效的反賄賂和反腐敗政策。",
+          "unit_id": "hk_customer_ecosystem-1:u3"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:5fd670c2b7b565b4f09d",
+      "fact_anchors": [
+        "業務",
+        "解決方案"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-2",
+      "source_credit": 75,
+      "source_excerpt": "將具身智能解決方案業務作為戰略性新業務，與高階智能駕駛共同構成本公司發展核心雙引擎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-2:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-2",
+          "end_pos": 42,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "將具身智能解決方案業務作為戰略性新業務，與高階智能駕駛共同構成本公司發展核心雙引擎。",
+          "unit_id": "hk_customer_ecosystem-2:u0"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "business_structure",
+      "card_id": "annual-argument:eb80aca48a0a6949fc51",
+      "fact_anchors": [
+        "2026",
+        "應用",
+        "服務"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress"
+      ],
+      "selection_reason": "usage_primary:business_structure",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_customer_ecosystem-2",
+      "source_credit": 75,
+      "source_excerpt": "2026 年本公司將推 動SesameX 平台在物流、製造、服務等場景的規模化部署，依託 Kalos 、Aura 、Liora 三大系列，覆蓋不同複雜度與 形態的機器人需求，構建 「機器人全腦體系」 。生態協同方面，在具身智能終端等領域打造出標桿項目，繼續推進頭 部機器人企業的合作，落地工業機器人、巡檢機器人、靈巧手、垃圾分類機械臂等應用方案。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_customer_ecosystem-2:u1",
+        "hk_customer_ecosystem-2:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_customer_ecosystem-2",
+          "end_pos": 144,
+          "ordinal": 1,
+          "start_pos": 43,
+          "text": "2026 年本公司將推 動SesameX 平台在物流、製造、服務等場景的規模化部署，依託 Kalos 、Aura 、Liora 三大系列，覆蓋不同複雜度與 形態的機器人需求，構建 「機器人全腦體系」 。",
+          "unit_id": "hk_customer_ecosystem-2:u1"
+        },
+        {
+          "block_id": "hk_customer_ecosystem-2",
+          "end_pos": 216,
+          "ordinal": 2,
+          "start_pos": 144,
+          "text": "生態協同方面，在具身智能終端等領域打造出標桿項目，繼續推進頭 部機器人企業的合作，落地工業機器人、巡檢機器人、靈巧手、垃圾分類機械臂等應用方案。",
+          "unit_id": "hk_customer_ecosystem-2:u2"
+        }
+      ],
+      "title": "业务结构"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:93a44046895a94d97d17",
+      "fact_anchors": [
+        "2026",
+        "A2000",
+        "L3",
+        "L4"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "2026 年是本公司智能駕駛業務規模化放量，以及面向下一階段技術發展佈局的關鍵之年，本公司將以華山 A2000 芯片為核心，完成方案適配及量產工作，助力合作夥伴實現 L3 級高級輔助駕駛規模化落地，同步佈局 L4 級Robotaxi 等場景，推動年內與蘿蔔快跑合作量產，並加速與其他 L4 頭部企業的合作落地。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-0",
+          "end_pos": 155,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2026 年是本公司智能駕駛業務規模化放量，以及面向下一階段技術發展佈局的關鍵之年，本公司將以華山 A2000 芯片為核心，完成方案適配及量產工作，助力合作夥伴實現 L3 級高級輔助駕駛規模化落地，同步佈局 L4 級Robotaxi 等場景，推動年內與蘿蔔快跑合作量產，並加速與其他 L4 頭部企業的合作落地。",
+          "unit_id": "hk_market_outlook-0:u0"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:f95506a782b35be72c76",
+      "fact_anchors": [
+        "L2-L3",
+        "L4",
+        "批量",
+        "實現"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "推進工程機械、清掃車、無人物流及 輕卡等商用車領域的批量出貨，實現 L2-L3 級商用車與 L4 級無人物流場景的規模化滲透。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-0",
+          "end_pos": 218,
+          "ordinal": 1,
+          "start_pos": 155,
+          "text": "推進工程機械、清掃車、無人物流及 輕卡等商用車領域的批量出貨，實現 L2-L3 級商用車與 L4 級無人物流場景的規模化滲透。",
+          "unit_id": "hk_market_outlook-0:u1"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:c2fd0b29649bd013fe94",
+      "fact_anchors": [
+        "A2000",
+        "平台",
+        "量產"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "market_competition_outlook"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-0",
+      "source_credit": 75,
+      "source_excerpt": "依託 A2000 通過美國相關審 查的全球市場准入優勢，加速海外整車項目量產應用，打造行業最開放、最好用的高階計算平台。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-0:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-0",
+          "end_pos": 278,
+          "ordinal": 2,
+          "start_pos": 218,
+          "text": "依託 A2000 通過美國相關審 查的全球市場准入優勢，加速海外整車項目量產應用，打造行業最開放、最好用的高階計算平台。",
+          "unit_id": "hk_market_outlook-0:u2"
+        }
+      ],
+      "title": "技术与产品进展"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:821ed1f28ee582d69cc3",
+      "fact_anchors": [
+        "2025"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，本公司的智能影像解決方案持續迭代升級，在端側 AI 影像領域持續取得商業化進展。年內與理想汽車達成 合作，為其首款 AI 眼鏡 Livis 提供定制化影像算法，覆蓋高動態範圍 (HDR) 融合、多幀降噪、視頻防抖及人像優化等 核心功能，產品已進入量產階段。同時，本公司目前正在與多家頭部客戶合作開發 AI 眼鏡，預期更多的 AI 眼鏡會應 用本公司國際領先的影像算法。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-1:u0",
+        "hk_market_outlook-1:u1",
+        "hk_market_outlook-1:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-1",
+          "end_pos": 47,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2025 年，本公司的智能影像解決方案持續迭代升級，在端側 AI 影像領域持續取得商業化進展。",
+          "unit_id": "hk_market_outlook-1:u0"
+        },
+        {
+          "block_id": "hk_market_outlook-1",
+          "end_pos": 135,
+          "ordinal": 1,
+          "start_pos": 47,
+          "text": "年內與理想汽車達成 合作，為其首款 AI 眼鏡 Livis 提供定制化影像算法，覆蓋高動態範圍 (HDR) 融合、多幀降噪、視頻防抖及人像優化等 核心功能，產品已進入量產階段。",
+          "unit_id": "hk_market_outlook-1:u1"
+        },
+        {
+          "block_id": "hk_market_outlook-1",
+          "end_pos": 191,
+          "ordinal": 2,
+          "start_pos": 135,
+          "text": "同時，本公司目前正在與多家頭部客戶合作開發 AI 眼鏡，預期更多的 AI 眼鏡會應 用本公司國際領先的影像算法。",
+          "unit_id": "hk_market_outlook-1:u2"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:94d8e58e8c79ad36b832",
+      "fact_anchors": [
+        "本公司在 AI 影像領域已有多年的技術積累，相關"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-1",
+      "source_credit": 75,
+      "source_excerpt": "本公司在 AI 影像領域已有多年的技術積累，相關解決方案累計搭載設備超過 5億台。 依託本公司在端側 AI 影像領域形成的技術優勢，本公司正加快推進端側大模型與 AI Agent 相關技術佈局，推動影像 能力由圖像處理向多模態理解與智能決策延伸，構建新一代智能影像技術體系。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-1:u3",
+        "hk_market_outlook-1:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-1",
+          "end_pos": 232,
+          "ordinal": 3,
+          "start_pos": 191,
+          "text": "本公司在 AI 影像領域已有多年的技術積累，相關解決方案累計搭載設備超過 5億台。",
+          "unit_id": "hk_market_outlook-1:u3"
+        },
+        {
+          "block_id": "hk_market_outlook-1",
+          "end_pos": 328,
+          "ordinal": 4,
+          "start_pos": 233,
+          "text": "依託本公司在端側 AI 影像領域形成的技術優勢，本公司正加快推進端側大模型與 AI Agent 相關技術佈局，推動影像 能力由圖像處理向多模態理解與智能決策延伸，構建新一代智能影像技術體系。",
+          "unit_id": "hk_market_outlook-1:u4"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:a9413ffa25fff96e9228",
+      "fact_anchors": [
+        "2026",
+        "2T",
+        "0T",
+        "市場"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-2",
+      "source_credit": 75,
+      "source_excerpt": "2026 年本公司將完成對珠海億智電子科技有限公司 （「億智電子 」）的收購，圍繞 「芯片 +算法 +場景」 為核心策略，打通 入門級算力的增量市場，覆蓋智能駕駛、智能硬件等多元場景。雙方將整合研發資源，在核心 IP 、算法優化、工具 鏈等方面實現共享，提升端側 AI 芯片的能效比與場景適配性。依託億智電子在 AI SoC 芯片設計經驗及 AI 算法優勢， 與黑芝麻智能的車載產品線形成互補，共同定義並協作研發 2T-10T 算力的車載產品，覆蓋前視一體機、行車記錄 儀、駕駛員監測系統 (DMS) 等細分場景。在智能硬件方面，億智電子的下一代 AI SoC 芯片，有望從智能雲台、運動 數碼視頻 (DV) 、AI 眼鏡等現有應用，向 AI 陪伴玩具、掃地機器人、割草機器人等場景橫向拓展。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-2:u0",
+        "hk_market_outlook-2:u1",
+        "hk_market_outlook-2:u2",
+        "hk_market_outlook-2:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-2",
+          "end_pos": 92,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2026 年本公司將完成對珠海億智電子科技有限公司 （「億智電子 」）的收購，圍繞 「芯片 +算法 +場景」 為核心策略，打通 入門級算力的增量市場，覆蓋智能駕駛、智能硬件等多元場景。",
+          "unit_id": "hk_market_outlook-2:u0"
+        },
+        {
+          "block_id": "hk_market_outlook-2",
+          "end_pos": 148,
+          "ordinal": 1,
+          "start_pos": 92,
+          "text": "雙方將整合研發資源，在核心 IP 、算法優化、工具 鏈等方面實現共享，提升端側 AI 芯片的能效比與場景適配性。",
+          "unit_id": "hk_market_outlook-2:u1"
+        },
+        {
+          "block_id": "hk_market_outlook-2",
+          "end_pos": 257,
+          "ordinal": 2,
+          "start_pos": 148,
+          "text": "依託億智電子在 AI SoC 芯片設計經驗及 AI 算法優勢， 與黑芝麻智能的車載產品線形成互補，共同定義並協作研發 2T-10T 算力的車載產品，覆蓋前視一體機、行車記錄 儀、駕駛員監測系統 (DMS) 等細分場景。",
+          "unit_id": "hk_market_outlook-2:u2"
+        },
+        {
+          "block_id": "hk_market_outlook-2",
+          "end_pos": 346,
+          "ordinal": 3,
+          "start_pos": 257,
+          "text": "在智能硬件方面，億智電子的下一代 AI SoC 芯片，有望從智能雲台、運動 數碼視頻 (DV) 、AI 眼鏡等現有應用，向 AI 陪伴玩具、掃地機器人、割草機器人等場景橫向拓展。",
+          "unit_id": "hk_market_outlook-2:u3"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:92ae8225c8c615ee125f",
+      "fact_anchors": [
+        "2026",
+        "市場"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_market_outlook-2",
+      "source_credit": 75,
+      "source_excerpt": "至此本公司產品矩 陣將實現高中低全系列覆蓋，能夠為智能汽車、機器人以及各類 AIoT 終端提供從雲側到端側、從車規到消費級的完 整AI 推理芯片解決方案，這將顯著增強跨場景協同效應，為 2026 年及未來的泛端側 AI 市場奠定了堅實基礎。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_market_outlook-2:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_market_outlook-2",
+          "end_pos": 466,
+          "ordinal": 4,
+          "start_pos": 346,
+          "text": "至此本公司產品矩 陣將實現高中低全系列覆蓋，能夠為智能汽車、機器人以及各類 AIoT 終端提供從雲側到端側、從車規到消費級的完 整AI 推理芯片解決方案，這將顯著增強跨場景協同效應，為 2026 年及未來的泛端側 AI 市場奠定了堅實基礎。",
+          "unit_id": "hk_market_outlook-2:u4"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:57b8be12f331cee55c9c",
+      "fact_anchors": [
+        "2025",
+        "73.4%",
+        "41.0%",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "technology_product_progress",
+        "operating_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "2025 年，本公司在智能汽車計算芯片領域持續鞏固領先地位，同時在具身智能等端側人工智能 （「AI 」）創新業務實現戰略 性突破，全年營收人民幣 8.22 億元，同比增長 73.4% ，毛利率為 41.0% ，與去年相比保持穩定。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-0",
+          "end_pos": 115,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "2025 年，本公司在智能汽車計算芯片領域持續鞏固領先地位，同時在具身智能等端側人工智能 （「AI 」）創新業務實現戰略 性突破，全年營收人民幣 8.22 億元，同比增長 73.4% ，毛利率為 41.0% ，與去年相比保持穩定。",
+          "unit_id": "hk_financial_commentary-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:5dfce834e85ca8bb1a0c",
+      "fact_anchors": [
+        "毛利"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-0",
+      "source_credit": 75,
+      "source_excerpt": "得益於具身智能解決方案 業務高速增長，高階輔助駕駛產品及解決方案隨規模放量帶來的毛利提升和運營成本的降低，全年經營性虧損同比收窄",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-0",
+          "end_pos": 179,
+          "ordinal": 1,
+          "start_pos": 115,
+          "text": "得益於具身智能解決方案 業務高速增長，高階輔助駕駛產品及解決方案隨規模放量帶來的毛利提升和運營成本的降低，全年經營性虧損同比收窄",
+          "unit_id": "hk_financial_commentary-0:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:f4a0996317922aade994",
+      "fact_anchors": [
+        "2024",
+        "73.1%",
+        "2025",
+        "毛利",
+        "由於"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "由於上述原因，我們的整體毛利由截至 2024 年12 月31 日止年度的人民幣 194.7 百萬元增加 73.1% 至截至 2025 年12 月31 日止年 度的人民幣 337.1 百萬元。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-1:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-1",
+          "end_pos": 95,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "由於上述原因，我們的整體毛利由截至 2024 年12 月31 日止年度的人民幣 194.7 百萬元增加 73.1% 至截至 2025 年12 月31 日止年 度的人民幣 337.1 百萬元。",
+          "unit_id": "hk_financial_commentary-1:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:e425e7fb1a7239d4d884",
+      "fact_anchors": [
+        "2024",
+        "2025",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-1",
+      "source_credit": 75,
+      "source_excerpt": "我們輔助駕駛產品及解決方案的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至 2025",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-1:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-1",
+          "end_pos": 147,
+          "ordinal": 1,
+          "start_pos": 95,
+          "text": "我們輔助駕駛產品及解決方案的毛利率保持相對穩定，截至 2024 年12 月31 日止年度與截至 2025",
+          "unit_id": "hk_financial_commentary-1:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:20336703ce109e6fd3c8",
+      "fact_anchors": [
+        "2024",
+        "2025",
+        "85.4%",
+        "84.7%",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-2",
+      "source_credit": 75,
+      "source_excerpt": "我們智能影像解決方案業務的毛利率同樣保持相對穩定，截至 2024 年12 月31 日止年度與截 至2025 年12 月31 日止年度的分別為 85.4% 與84.7% 。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-2:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-2",
+          "end_pos": 107,
+          "ordinal": 1,
+          "start_pos": 22,
+          "text": "我們智能影像解決方案業務的毛利率同樣保持相對穩定，截至 2024 年12 月31 日止年度與截 至2025 年12 月31 日止年度的分別為 85.4% 與84.7% 。",
+          "unit_id": "hk_financial_commentary-2:u1"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:238d4a9dd1e2936c4c26",
+      "fact_anchors": [
+        "市場",
+        "競爭"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-2",
+      "source_credit": 75,
+      "source_excerpt": "我們在毛利率穩定的同時，本公司產品在市場中亦保持有利競爭力。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-2:u2"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-2",
+          "end_pos": 137,
+          "ordinal": 2,
+          "start_pos": 107,
+          "text": "我們在毛利率穩定的同時，本公司產品在市場中亦保持有利競爭力。",
+          "unit_id": "hk_financial_commentary-2:u2"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:bf9d5c1f25d197804573",
+      "fact_anchors": [
+        "2025",
+        "48.7%",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-2",
+      "source_credit": 75,
+      "source_excerpt": "此外，我們的新業務具身智能解決方案的毛利率截至 2025 年12 月31 日止年度為 48.7% ，我們在入局新業務初期獲取了可觀 的毛利率。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-2:u3"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-2",
+          "end_pos": 209,
+          "ordinal": 3,
+          "start_pos": 138,
+          "text": "此外，我們的新業務具身智能解決方案的毛利率截至 2025 年12 月31 日止年度為 48.7% ，我們在入局新業務初期獲取了可觀 的毛利率。",
+          "unit_id": "hk_financial_commentary-2:u3"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:a1a9ca7fcc523af61787",
+      "fact_anchors": [
+        "2024",
+        "2025",
+        "41.1%",
+        "毛利率",
+        "毛利"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "hk_financial_commentary-2",
+      "source_credit": 75,
+      "source_excerpt": "我們的整體毛利率保持相對穩定，截至 2024 年12 月31 日止年度及截至 2025 年12 月31 日止年度分別為 41.1% 及",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "hk_financial_commentary-2:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "hk_financial_commentary-2",
+          "end_pos": 276,
+          "ordinal": 4,
+          "start_pos": 209,
+          "text": "我們的整體毛利率保持相對穩定，截至 2024 年12 月31 日止年度及截至 2025 年12 月31 日止年度分別為 41.1% 及",
+          "unit_id": "hk_financial_commentary-2:u4"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:ebc372e319ed2b18d50c",
+      "fact_anchors": [
+        "認為"
+      ],
+      "quality_score": 2,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 1,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "signal_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "contingencies_litigation-0",
+      "source_credit": 75,
+      "source_excerpt": "於報告期內，本公司已在所有重大方面遵守與其業務相關的適用法律及法規，且並未涉及任何董事認為將單獨或合共對其 整體業務產生重大不利影響的違規事件。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "contingencies_litigation-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "contingencies_litigation-0",
+          "end_pos": 81,
+          "ordinal": 1,
+          "start_pos": 9,
+          "text": "於報告期內，本公司已在所有重大方面遵守與其業務相關的適用法律及法規，且並未涉及任何董事認為將單獨或合共對其 整體業務產生重大不利影響的違規事件。",
+          "unit_id": "contingencies_litigation-0:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "financial_quality_explanation",
+      "card_id": "annual-argument:7bc8c7597976eb973bca",
+      "fact_anchors": [
+        "2025",
+        "2024",
+        "73.4%",
+        "56.8%",
+        "其他收益",
+        "由於"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress",
+        "market_competition_outlook",
+        "business_structure"
+      ],
+      "selection_reason": "financial_override:financial_quality_explanation",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "government_grant_note-0",
+      "source_credit": 75,
+      "source_excerpt": "其他收益╱ （虧損） 淨額 12,063 (9,591) 經營虧損 (1,448,320) (1,753,982) 財務收入 58,175 41,084 財務成本 (33,595) (18,074) 財務收入淨額 24,580 23,010 應佔使用權益法入賬的聯營公司的虧損淨額 (939) (2,325) 向投資者發行的金融工具的公允價值變動 Ð 2,046,612 除所得稅前 （虧損） ╱利潤 (1,424,679) 313,315 所得稅開支 (21) – 本公司權益持有人應佔年內 （虧損） ╱利潤 (1,424,700) 313,315 非國際財務報告準則計量 經調整虧損淨額 (1,075,674) (1,304,251) 12 黑芝麻智能國際控股有限公司 2025 年年度報告 管理層討論及分析 （續） 收入 我們的收入由截至 2024 年12 月31 日止年度的人民幣 474.3 百萬元增加 73.4% 至截至 2025 年12 月31 日止年度的人民幣 822.3 百萬 元，主要是由於下列各項收入增長所推動： 輔助駕駛產品及解決方案 我們的輔助駕駛產品及解決方案收入由截至 2024 年12 月31 日止年度的人民幣 438.0 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 686.9 百萬元，主要是由於 (i) 在乘用車領域，標配我們華山系列芯片的新款車型上市且銷量表現強勁，我們 高階輔助駕駛芯片及解決方案銷量持續提升；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "government_grant_note-0:u0"
+      ],
+      "source_units": [
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 641,
+          "ordinal": 0,
+          "start_pos": 0,
+          "text": "其他收益╱ （虧損） 淨額 12,063 (9,591) 經營虧損 (1,448,320) (1,753,982) 財務收入 58,175 41,084 財務成本 (33,595) (18,074) 財務收入淨額 24,580 23,010 應佔使用權益法入賬的聯營公司的虧損淨額 (939) (2,325) 向投資者發行的金融工具的公允價值變動 Ð 2,046,612 除所得稅前 （虧損） ╱利潤 (1,424,679) 313,315 所得稅開支 (21) – 本公司權益持有人應佔年內 （虧損） ╱利潤 (1,424,700) 313,315 非國際財務報告準則計量 經調整虧損淨額 (1,075,674) (1,304,251) 12 黑芝麻智能國際控股有限公司 2025 年年度報告 管理層討論及分析 （續） 收入 我們的收入由截至 2024 年12 月31 日止年度的人民幣 474.3 百萬元增加 73.4% 至截至 2025 年12 月31 日止年度的人民幣 822.3 百萬 元，主要是由於下列各項收入增長所推動： 輔助駕駛產品及解決方案 我們的輔助駕駛產品及解決方案收入由截至 2024 年12 月31 日止年度的人民幣 438.0 百萬元增加 56.8% 至截至 2025 年12 月31 日止年度的人民幣 686.9 百萬元，主要是由於 (i) 在乘用車領域，標配我們華山系列芯片的新款車型上市且銷量表現強勁，我們 高階輔助駕駛芯片及解決方案銷量持續提升；",
+          "unit_id": "government_grant_note-0:u0"
+        }
+      ],
+      "title": "财务质量与变化原因"
+    },
+    {
+      "argument_complete": false,
+      "argument_family": "market_competition_outlook",
+      "card_id": "annual-argument:b317eb233583353e8a2d",
+      "fact_anchors": [
+        "L2-L3",
+        "市場",
+        "競爭"
+      ],
+      "quality_score": 3,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 0,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:market_competition_outlook",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "government_grant_note-0",
+      "source_credit": 75,
+      "source_excerpt": "(ii) 在L2-L3 商用車領域，我們市場競爭力進一步提升，在客戶數量和客單價 均錄得顯著增長；",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "government_grant_note-0:u1"
+      ],
+      "source_units": [
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 691,
+          "ordinal": 1,
+          "start_pos": 642,
+          "text": "(ii) 在L2-L3 商用車領域，我們市場競爭力進一步提升，在客戶數量和客單價 均錄得顯著增長；",
+          "unit_id": "government_grant_note-0:u1"
+        }
+      ],
+      "title": "管理层判断与行业展望"
+    },
+    {
+      "argument_complete": true,
+      "argument_family": "technology_product_progress",
+      "card_id": "annual-argument:365043b2a99419679c54",
+      "fact_anchors": [
+        "2024",
+        "7.9%",
+        "2025",
+        "平台",
+        "發佈"
+      ],
+      "quality_score": 7,
+      "report_type": "annual",
+      "report_year": 2025,
+      "schema_version": "periodic_report_narrative_evidence_card.v2",
+      "score_parts": {
+        "anchored_fact": 2,
+        "argument_complete": 4,
+        "source_unit_count": 1
+      },
+      "secondary_signals": [
+        "operating_progress",
+        "business_structure"
+      ],
+      "selection_reason": "usage_primary:technology_product_progress",
+      "selection_version": "annual_argument_selection.v2",
+      "source_block_id": "government_grant_note-0",
+      "source_credit": 75,
+      "source_excerpt": "智能影像解決方案 我們的智能影像解決方案收入由截至 2024 年12 月31 日止年度的人民幣 36.3 百萬元增加 7.9% ，至截至 2025 年12 月31 日止年度 的人民幣 39.2 百萬元，主要是我們智能影像解決方案產品拓展至如 AI 眼鏡等領域。 具身智能解決方案 我們的具身智能解決方案，截至 2025 年12 月31 日止年度的收入為人民幣 96.3 百萬元，主要是由於在 2025 年成功發佈 SesameX 全棧計算平台，積極通過多元化佈局尋找新的增長點，獲取多家機器人頭部客戶大量訂單。",
+      "source_type": "periodic_report_narrative_evidence",
+      "source_unit_ids": [
+        "government_grant_note-0:u3",
+        "government_grant_note-0:u4"
+      ],
+      "source_units": [
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 851,
+          "ordinal": 3,
+          "start_pos": 721,
+          "text": "智能影像解決方案 我們的智能影像解決方案收入由截至 2024 年12 月31 日止年度的人民幣 36.3 百萬元增加 7.9% ，至截至 2025 年12 月31 日止年度 的人民幣 39.2 百萬元，主要是我們智能影像解決方案產品拓展至如 AI 眼鏡等領域。",
+          "unit_id": "government_grant_note-0:u3"
+        },
+        {
+          "block_id": "government_grant_note-0",
+          "end_pos": 976,
+          "ordinal": 4,
+          "start_pos": 852,
+          "text": "具身智能解決方案 我們的具身智能解決方案，截至 2025 年12 月31 日止年度的收入為人民幣 96.3 百萬元，主要是由於在 2025 年成功發佈 SesameX 全棧計算平台，積極通過多元化佈局尋找新的增長點，獲取多家機器人頭部客戶大量訂單。",
+          "unit_id": "government_grant_note-0:u4"
+        }
+      ],
+      "title": "技术与产品进展"
+    }
+  ],
+  "integrity": {
+    "card_count": 60,
+    "cards_sha256": "c28bf4b357c538bb705bed7d9cd569c59608d2ca34c6efb1bc8f4af5782ba203",
+    "payload_sha256": "c0ec9675e516afb3e8d59f67721a0fcd0905e65278c22bad0084a8663dd55eb4",
+    "producer_diagnostics_sha256": "3ac34a1ee41c44c54b6286656665517ec0b342817f0709dcd5abfcb085eaaae3",
+    "source_unit_count": 76
+  },
+  "producer_diagnostics": {
+    "admission_invariant_violation": false,
+    "admitted_by_family": {
+      "business_structure": 7,
+      "financial_quality_explanation": 12,
+      "market_competition_outlook": 18,
+      "operating_progress": 1,
+      "technology_product_progress": 22
+    },
+    "argument_complete_counts": {
+      "atomic": 54,
+      "complete": 6
+    },
+    "candidate_explosion": false,
+    "candidate_explosion_block_ids": [],
+    "candidates_by_family": {
+      "business_structure": 7,
+      "financial_quality_explanation": 12,
+      "market_competition_outlook": 18,
+      "operating_progress": 1,
+      "technology_product_progress": 22
+    },
+    "cards": [
+      {
+        "card_id": "annual-argument:340863e9cf5bf2c458aa",
+        "fact_anchors": [
+          "2025",
+          "2024",
+          "73.4%",
+          "56.8%",
+          "毛利",
+          "其他收益"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_income_statement_table-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:cccf6bfe98e0cacaa0c5",
+        "fact_anchors": [
+          "L2-L3",
+          "市場",
+          "競爭"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_income_statement_table-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f43300430415c53b4e7c",
+        "fact_anchors": [
+          "2024",
+          "7.9%",
+          "2025",
+          "73.6%",
+          "56.8%",
+          "12.4%",
+          "平台",
+          "發佈"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_income_statement_table-0:u3",
+          "hk_income_statement_table-0:u4",
+          "hk_income_statement_table-0:u5",
+          "hk_income_statement_table-0:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:d0a221b56dc7bb32ccb3",
+        "fact_anchors": [
+          "2025",
+          "解決方案",
+          "服務"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "signal_primary:business_structure",
+        "source_unit_ids": [
+          "hk_income_statement_table-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:15185aebebf5eeaf8e30",
+        "fact_anchors": [
+          "2025",
+          "2024",
+          "73.1%",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_income_statement_table-0:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:8fc5208946fd8b0ed4ee",
+        "fact_anchors": [
+          "2024",
+          "2025",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_income_statement_table-0:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:cbae2945e86ee8fa2e6d",
+        "fact_anchors": [
+          "行業"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_product_progress-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:db6b07007a992ea25408",
+        "fact_anchors": [
+          "A1000",
+          "芯片",
+          "搭載"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-0:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3fa34822b6a93bcb8e92",
+        "fact_anchors": [
+          "C1200",
+          "芯片",
+          "認證",
+          "實現"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-0:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:dafbcad85dd033f75889",
+        "fact_anchors": [
+          "A2000",
+          "芯片",
+          "突破"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-0:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f689ba14ce25955110d0",
+        "fact_anchors": [
+          "A2000",
+          "芯片",
+          "平台",
+          "量產"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-0:u10"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3d7b815d61b8ec74ed83",
+        "fact_anchors": [
+          "A2000",
+          "行業"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_product_progress-0:u11"
+        ]
+      },
+      {
+        "card_id": "annual-argument:05804716d05c104289c0",
+        "fact_anchors": [
+          "行業"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_product_progress-0:u13"
+        ]
+      },
+      {
+        "card_id": "annual-argument:56e25cd85900c1fa07bd",
+        "fact_anchors": [
+          "2025"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_product_progress-0:u16"
+        ]
+      },
+      {
+        "card_id": "annual-argument:ef32a8538a2f11b0bf51",
+        "fact_anchors": [
+          "A2000",
+          "L2",
+          "L3",
+          "L4",
+          "芯片",
+          "合作"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-1:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:634561f81ad839a15e4f",
+        "fact_anchors": [
+          "A1000",
+          "C1200",
+          "芯片",
+          "量產"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-1:u2",
+          "hk_product_progress-1:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:3a8de6446ace0ecf1b65",
+        "fact_anchors": [
+          "A2000"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-1:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e63fd89448b5783629e1",
+        "fact_anchors": [
+          "模型",
+          "研發"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-1:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4af16202c3833a6d4532",
+        "fact_anchors": [
+          "芯片"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-1:u9"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4b8d3c32a24e1c0252d7",
+        "fact_anchors": [
+          "2026",
+          "戰略"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_product_progress-1:u14"
+        ]
+      },
+      {
+        "card_id": "annual-argument:667ea00c549510f4d554",
+        "fact_anchors": [
+          "2026",
+          "競爭"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_product_progress-2:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:96bef650c04766594ad1",
+        "fact_anchors": [
+          "2026",
+          "芯片",
+          "SoC",
+          "驗證"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-2:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0f8d19567b7e37f1e1c6",
+        "fact_anchors": [
+          "A2000",
+          "平台",
+          "模型",
+          "實現"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-2:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c4fa7e1dbb1db5f2a59b",
+        "fact_anchors": [
+          "A2000",
+          "50%",
+          "芯片",
+          "工藝",
+          "實現"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-2:u3",
+          "hk_product_progress-2:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5d481316dae9c659a2ec",
+        "fact_anchors": [
+          "2025",
+          "收入",
+          "增長"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:operating_progress",
+        "source_unit_ids": [
+          "hk_product_progress-2:u5"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f04348a74480c46f63f8",
+        "fact_anchors": [
+          "2025"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-2:u8"
+        ]
+      },
+      {
+        "card_id": "annual-argument:02486536597237a30c03",
+        "fact_anchors": [
+          "Q100",
+          "芯片",
+          "SoC",
+          "認證"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-3:u1",
+          "hk_product_progress-3:u2",
+          "hk_product_progress-3:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:4b31251b741c6ec19c33",
+        "fact_anchors": [
+          "A1000",
+          "C1200",
+          "A2000",
+          "芯片",
+          "認證"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-3:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:80b2578afa172ae32ee9",
+        "fact_anchors": [
+          "C1200",
+          "芯片",
+          "認證"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-3:u6"
+        ]
+      },
+      {
+        "card_id": "annual-argument:0b3631a8fcc93bff2198",
+        "fact_anchors": [
+          "CL2",
+          "認證",
+          "交付",
+          "合作"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_product_progress-3:u7"
+        ]
+      },
+      {
+        "card_id": "annual-argument:275f2ee373f247ce5cad",
+        "fact_anchors": [
+          "管理層"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_cash_flow_table-0:u19"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5f6f38405f350741219b",
+        "fact_anchors": [
+          "管理層"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_cash_flow_table-0:u25"
+        ]
+      },
+      {
+        "card_id": "annual-argument:99016646294a7ac095f8",
+        "fact_anchors": [
+          "解決方案"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "hk_business_overview-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:94ff6b479db5b445c1ec",
+        "fact_anchors": [
+          "SoC"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_business_overview-1:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:8ab1ca9272228bdfd754",
+        "fact_anchors": [
+          "2025",
+          "供應商"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-0:u0",
+          "hk_customer_ecosystem-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:439c8ddee227c387c331",
+        "fact_anchors": [
+          "2025",
+          "營收"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "operating_progress",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-0:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:b550e6853d415c3cc673",
+        "fact_anchors": [
+          "競爭"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-1:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:385c997da502d03815bc",
+        "fact_anchors": [
+          "我們制定了 適用於本集團公司所有管理人員、員工 "
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-1:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:bd9b4b58f56164c18f40",
+        "fact_anchors": [
+          "供應商"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-1:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5fd670c2b7b565b4f09d",
+        "fact_anchors": [
+          "業務",
+          "解決方案"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-2:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:eb80aca48a0a6949fc51",
+        "fact_anchors": [
+          "2026",
+          "應用",
+          "服務"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress"
+        ],
+        "selection_reason": "usage_primary:business_structure",
+        "source_unit_ids": [
+          "hk_customer_ecosystem-2:u1",
+          "hk_customer_ecosystem-2:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:93a44046895a94d97d17",
+        "fact_anchors": [
+          "2026",
+          "A2000",
+          "L3",
+          "L4"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_market_outlook-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f95506a782b35be72c76",
+        "fact_anchors": [
+          "L2-L3",
+          "L4",
+          "批量",
+          "實現"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_market_outlook-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:c2fd0b29649bd013fe94",
+        "fact_anchors": [
+          "A2000",
+          "平台",
+          "量產"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "market_competition_outlook"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "hk_market_outlook-0:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:821ed1f28ee582d69cc3",
+        "fact_anchors": [
+          "2025"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_market_outlook-1:u0",
+          "hk_market_outlook-1:u1",
+          "hk_market_outlook-1:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:94d8e58e8c79ad36b832",
+        "fact_anchors": [
+          "本公司在 AI 影像領域已有多年的技術積累，相關"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_market_outlook-1:u3",
+          "hk_market_outlook-1:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a9413ffa25fff96e9228",
+        "fact_anchors": [
+          "2026",
+          "2T",
+          "0T",
+          "市場"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_market_outlook-2:u0",
+          "hk_market_outlook-2:u1",
+          "hk_market_outlook-2:u2",
+          "hk_market_outlook-2:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:92ae8225c8c615ee125f",
+        "fact_anchors": [
+          "2026",
+          "市場"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_market_outlook-2:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:57b8be12f331cee55c9c",
+        "fact_anchors": [
+          "2025",
+          "73.4%",
+          "41.0%",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "technology_product_progress",
+          "operating_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:5dfce834e85ca8bb1a0c",
+        "fact_anchors": [
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:f4a0996317922aade994",
+        "fact_anchors": [
+          "2024",
+          "73.1%",
+          "2025",
+          "毛利",
+          "由於"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-1:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:e425e7fb1a7239d4d884",
+        "fact_anchors": [
+          "2024",
+          "2025",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-1:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:20336703ce109e6fd3c8",
+        "fact_anchors": [
+          "2024",
+          "2025",
+          "85.4%",
+          "84.7%",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-2:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:238d4a9dd1e2936c4c26",
+        "fact_anchors": [
+          "市場",
+          "競爭"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "hk_financial_commentary-2:u2"
+        ]
+      },
+      {
+        "card_id": "annual-argument:bf9d5c1f25d197804573",
+        "fact_anchors": [
+          "2025",
+          "48.7%",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-2:u3"
+        ]
+      },
+      {
+        "card_id": "annual-argument:a1a9ca7fcc523af61787",
+        "fact_anchors": [
+          "2024",
+          "2025",
+          "41.1%",
+          "毛利率",
+          "毛利"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "hk_financial_commentary-2:u4"
+        ]
+      },
+      {
+        "card_id": "annual-argument:ebc372e319ed2b18d50c",
+        "fact_anchors": [
+          "認為"
+        ],
+        "score_parts": {
+          "anchored_fact": 1,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "signal_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "contingencies_litigation-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:7bc8c7597976eb973bca",
+        "fact_anchors": [
+          "2025",
+          "2024",
+          "73.4%",
+          "56.8%",
+          "其他收益",
+          "由於"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress",
+          "market_competition_outlook",
+          "business_structure"
+        ],
+        "selection_reason": "financial_override:financial_quality_explanation",
+        "source_unit_ids": [
+          "government_grant_note-0:u0"
+        ]
+      },
+      {
+        "card_id": "annual-argument:b317eb233583353e8a2d",
+        "fact_anchors": [
+          "L2-L3",
+          "市場",
+          "競爭"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 0,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:market_competition_outlook",
+        "source_unit_ids": [
+          "government_grant_note-0:u1"
+        ]
+      },
+      {
+        "card_id": "annual-argument:365043b2a99419679c54",
+        "fact_anchors": [
+          "2024",
+          "7.9%",
+          "2025",
+          "平台",
+          "發佈"
+        ],
+        "score_parts": {
+          "anchored_fact": 2,
+          "argument_complete": 4,
+          "source_unit_count": 1
+        },
+        "secondary_signals": [
+          "operating_progress",
+          "business_structure"
+        ],
+        "selection_reason": "usage_primary:technology_product_progress",
+        "source_unit_ids": [
+          "government_grant_note-0:u3",
+          "government_grant_note-0:u4"
+        ]
+      }
+    ],
+    "missing_families": [],
+    "rejection_counts": {
+      "boilerplate": 0,
+      "incomplete": 21,
+      "invalid_unit": 0,
+      "no_anchor": 47,
+      "ocr_damage": 0,
+      "reused_source_units": 0,
+      "table_noise": 7
+    },
+    "source_blocks_seen": 19,
+    "source_unit_decisions": [
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:340863e9cf5bf2c458aa"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 0,
+        "source_text_hash": "9fe2743f14d054a2419772b8cc131de6f12ee2f3553b845f8d159a1f60c0930b",
+        "source_unit_id": "hk_income_statement_table-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:cccf6bfe98e0cacaa0c5"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 1,
+        "source_text_hash": "2172dfb1308c32b2fc50122e9a648f0a329d80b8a16198edeed2b7f422d7654f",
+        "source_unit_id": "hk_income_statement_table-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 2,
+        "source_text_hash": "acec415d7aff8cc47ad55dee385c328a5ab1ec6da506135b1b1f821a4eeca490",
+        "source_unit_id": "hk_income_statement_table-0:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f43300430415c53b4e7c"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 3,
+        "source_text_hash": "ebc5cd2c8dcb4dd7aff91ad45971a661defcccd06b2bc8784700a79d25a7d7ed",
+        "source_unit_id": "hk_income_statement_table-0:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f43300430415c53b4e7c"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 4,
+        "source_text_hash": "caea3d2f771fb265b312e653a6e33cb7fa88344fe80436547dd0e249b066f594",
+        "source_unit_id": "hk_income_statement_table-0:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f43300430415c53b4e7c"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 5,
+        "source_text_hash": "8d4dd61ebdc457b2649e8b0d532d393b1a2228dd2dd202980a2d030833c01427",
+        "source_unit_id": "hk_income_statement_table-0:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f43300430415c53b4e7c"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 6,
+        "source_text_hash": "103101044d9f5e69ff2ba61e3ab3901b4a1628379357afcb9787da08a287faba",
+        "source_unit_id": "hk_income_statement_table-0:u6"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:d0a221b56dc7bb32ccb3"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 7,
+        "source_text_hash": "1e143b2a9f76bb1e9a12eba645cb967ffe63021e83b7a9b53dad5ec684504d1d",
+        "source_unit_id": "hk_income_statement_table-0:u7"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:15185aebebf5eeaf8e30"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 8,
+        "source_text_hash": "f8750c31b513e6a2ff03091fa658e542ccbdc4411a1d376e596bc65913e6b444",
+        "source_unit_id": "hk_income_statement_table-0:u8"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:8fc5208946fd8b0ed4ee"
+        ],
+        "source_block_id": "hk_income_statement_table-0",
+        "source_order": 9,
+        "source_text_hash": "b4ab9d7d6d3e7509aec6ade3235f750ff08821e052bbd6f6ca35a84969644e80",
+        "source_unit_id": "hk_income_statement_table-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 0,
+        "source_text_hash": "22e6e7ad91eb538f154e1b9797f2b92fa4d491237ad5086491614dba78d8d515",
+        "source_unit_id": "hk_product_progress-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 1,
+        "source_text_hash": "895a6950eb3109e618377646b18a8659077f2b0ba0f072297c69ba452db29824",
+        "source_unit_id": "hk_product_progress-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:cbae2945e86ee8fa2e6d"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 2,
+        "source_text_hash": "080523da49c02844a9672dbe9fa47b24d90725bb67cc087a60e1856c6f089815",
+        "source_unit_id": "hk_product_progress-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 3,
+        "source_text_hash": "8a824c63781662fc54eed1498a668538ad1a01f961460061cef986b83a56f842",
+        "source_unit_id": "hk_product_progress-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 4,
+        "source_text_hash": "3f26d22cd281761f53bd6c9a55b887d2908745ccb55e0aebf913f630416284c0",
+        "source_unit_id": "hk_product_progress-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 5,
+        "source_text_hash": "4f704ee7002b3e597a56ce79340d344e0177de3926515cdb1c10733caa3a301b",
+        "source_unit_id": "hk_product_progress-0:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:db6b07007a992ea25408"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 6,
+        "source_text_hash": "82b274c9a3c891b11814c8b43246dd83ceb347cdb91dcc6e124d7664757b99cc",
+        "source_unit_id": "hk_product_progress-0:u6"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3fa34822b6a93bcb8e92"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 7,
+        "source_text_hash": "6132f93cdd5a2a21ded5750c5a7700c62306a312ac92a82f5ead9052eb8d0d4f",
+        "source_unit_id": "hk_product_progress-0:u7"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:dafbcad85dd033f75889"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 8,
+        "source_text_hash": "2071b1871d1defabda41467f27ca827fb70c051ede58a17ebe3b01aba9f1af95",
+        "source_unit_id": "hk_product_progress-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 9,
+        "source_text_hash": "b05273592aeb031aa5adbf56fdef3859220e2fd967162721ad755af67066029d",
+        "source_unit_id": "hk_product_progress-0:u9"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f689ba14ce25955110d0"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 10,
+        "source_text_hash": "18a151cb9bd8ef925bc156de25e5a90bb32f0d2166b3bc95e2f1652309983c9b",
+        "source_unit_id": "hk_product_progress-0:u10"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3d7b815d61b8ec74ed83"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 11,
+        "source_text_hash": "a05fd64c94fe34c70093f9185810cd73511036394f9b6f3b87c19d1a0698becc",
+        "source_unit_id": "hk_product_progress-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 12,
+        "source_text_hash": "16c3583131aba9fe0f9698c8dd618c3997443df98cc2e980764e004901799482",
+        "source_unit_id": "hk_product_progress-0:u12"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:05804716d05c104289c0"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 13,
+        "source_text_hash": "3171f9eb797460bb15e368a3fac09d49624213edcda8a7873d5aabd89d80f3bf",
+        "source_unit_id": "hk_product_progress-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 14,
+        "source_text_hash": "0940d80a6894a2bc70a30d9e795f47fd0a3deb783c52e5ca7e7529eb3c0452c6",
+        "source_unit_id": "hk_product_progress-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 15,
+        "source_text_hash": "ff179400c5bf4ab5e75be7166b36e7052223c275a021dcf265f5018e23ba9232",
+        "source_unit_id": "hk_product_progress-0:u15"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:56e25cd85900c1fa07bd"
+        ],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 16,
+        "source_text_hash": "90bffecd49810465ddf75f13f1bb0a05e9f9fa45838c1a235c01ec68f66d6a4f",
+        "source_unit_id": "hk_product_progress-0:u16"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 17,
+        "source_text_hash": "7850ee3f25f184cde113b910754fe37fe169b2d4913c6c953c81f9b4173aa81d",
+        "source_unit_id": "hk_product_progress-0:u17"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-0",
+        "source_order": 18,
+        "source_text_hash": "52a357a15e606742db15223a780fc64fb5660ea0d3ecf6735d8c1402f42fd21d",
+        "source_unit_id": "hk_product_progress-0:u18"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 0,
+        "source_text_hash": "c4e30cbc0b80ca2c618ab1672d8efa74c8f8ac04a52c77149808a3c31b04de7e",
+        "source_unit_id": "hk_product_progress-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:ef32a8538a2f11b0bf51"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 1,
+        "source_text_hash": "1426154bbdcbcfb13107a6fd390f4f41e462f71da262eac53268c8ffcea5361e",
+        "source_unit_id": "hk_product_progress-1:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:634561f81ad839a15e4f"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 2,
+        "source_text_hash": "df84305cbb00c2ab8bfabc1d54627a93f0863108a227326a0789e1d3cdd1e137",
+        "source_unit_id": "hk_product_progress-1:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:634561f81ad839a15e4f"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 3,
+        "source_text_hash": "16604c7699d0207b024c91cb0a4d21bd7a87235de1666ecd4d7a9a8b34ce7f72",
+        "source_unit_id": "hk_product_progress-1:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 4,
+        "source_text_hash": "796f5a4619330b86037f037fd0b1ad00bf70ca330c9e602b59106aa7f5f2b2ab",
+        "source_unit_id": "hk_product_progress-1:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 5,
+        "source_text_hash": "dd411ecfe9ba82c2348dc4b75cdde99b51d5f9aff987177d3859240dab1023c6",
+        "source_unit_id": "hk_product_progress-1:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 6,
+        "source_text_hash": "94c37584a15f0b39a439f55c14a340bec855bc88ecac984ee646d41e51f886cc",
+        "source_unit_id": "hk_product_progress-1:u6"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:3a8de6446ace0ecf1b65"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 7,
+        "source_text_hash": "5acc52ef2199c943bc866c57a046d610c1308a74f1c955643c6163d909fe401a",
+        "source_unit_id": "hk_product_progress-1:u7"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e63fd89448b5783629e1"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 8,
+        "source_text_hash": "532d0a857acdbc990d65c4987cfe07c0cb9c2ec996817d1a9ae72c25772cd1c8",
+        "source_unit_id": "hk_product_progress-1:u8"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4af16202c3833a6d4532"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 9,
+        "source_text_hash": "0854df795677652101b09e5084ea9fa3fdc4ff554423f032187f40371f425504",
+        "source_unit_id": "hk_product_progress-1:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 10,
+        "source_text_hash": "0447ac6ab207f956e714107260c8d2aa5aaacffdff0f720ba2a1e034bc1441b4",
+        "source_unit_id": "hk_product_progress-1:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 11,
+        "source_text_hash": "e87aef37429ef569acf1100301a4169838e6f220e71ca1b05f551130379b3f74",
+        "source_unit_id": "hk_product_progress-1:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 12,
+        "source_text_hash": "a069d6d50588ea86359f545ed21e6d3bdb559498917987a5ac404e51bd5bd937",
+        "source_unit_id": "hk_product_progress-1:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 13,
+        "source_text_hash": "81e001a9f165fc4fd72648cccc6751bce52e112552ae8c62d5cc688eb2678e79",
+        "source_unit_id": "hk_product_progress-1:u13"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4b8d3c32a24e1c0252d7"
+        ],
+        "source_block_id": "hk_product_progress-1",
+        "source_order": 14,
+        "source_text_hash": "d55a9fed4a1798533fbf0b8150e7f54a539b6b6678acd2f5d2eccc46c7431c94",
+        "source_unit_id": "hk_product_progress-1:u14"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:667ea00c549510f4d554"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 0,
+        "source_text_hash": "4b429b89beabdc2afd334eef994c1001c64bb758b2d76da8951a3848f7ea5b34",
+        "source_unit_id": "hk_product_progress-2:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:96bef650c04766594ad1"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 1,
+        "source_text_hash": "c920735e27c0f0d4734c8e1803811193057489e7028a995c4e47fa5553f5ae27",
+        "source_unit_id": "hk_product_progress-2:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:0f8d19567b7e37f1e1c6"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 2,
+        "source_text_hash": "6ac8cfbf93013ef96b5f495bd1e0e639f99144eafb1f652247ae5df2540cbacb",
+        "source_unit_id": "hk_product_progress-2:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c4fa7e1dbb1db5f2a59b"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 3,
+        "source_text_hash": "e2d0f2cc757cb97413c50d00631c2dfed0061cc7652139fa7ea4d846ff5bc740",
+        "source_unit_id": "hk_product_progress-2:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c4fa7e1dbb1db5f2a59b"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 4,
+        "source_text_hash": "7a18eef5b60b0cabb2f5071663879da42e5bd31bd3c2f29c598656e1d62edc92",
+        "source_unit_id": "hk_product_progress-2:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5d481316dae9c659a2ec"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 5,
+        "source_text_hash": "aca05d02126cd66176bf2f97a164a19e8d48c41215d3849f7cb19784ed482e66",
+        "source_unit_id": "hk_product_progress-2:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 6,
+        "source_text_hash": "43e66eb78d30168650ffbf292d5dc43726ed1d6792be5e90ee14ef6995943e11",
+        "source_unit_id": "hk_product_progress-2:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 7,
+        "source_text_hash": "3a3c6de242729861a64868d2cb184a537c63a2e2a35ffacfb03ff55288bcd4bb",
+        "source_unit_id": "hk_product_progress-2:u7"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f04348a74480c46f63f8"
+        ],
+        "source_block_id": "hk_product_progress-2",
+        "source_order": 8,
+        "source_text_hash": "759e479d07a5c7d3f04cf25ef9ca17fb2532515485565754d85b7e4781ea7cdd",
+        "source_unit_id": "hk_product_progress-2:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_anchor",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 0,
+        "source_text_hash": "d4078dcc03f388e01ce0d8473e8e5dae4b5f9a49ea0f2dd12d040a43b039c437",
+        "source_unit_id": "hk_product_progress-3:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:02486536597237a30c03"
+        ],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 1,
+        "source_text_hash": "27c548fb5b1f001587957103d7b459a4cffdec15e6f4705ea96fa4494ea72d69",
+        "source_unit_id": "hk_product_progress-3:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:02486536597237a30c03"
+        ],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 2,
+        "source_text_hash": "828a19ad786004e8077e706787ca1ad398ff61c575d2fb30398078657c62a13c",
+        "source_unit_id": "hk_product_progress-3:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:02486536597237a30c03"
+        ],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 3,
+        "source_text_hash": "14fde6b9b6e52ba68fbe6594bcb28f04539af471a22ae685f7db6289f8350b36",
+        "source_unit_id": "hk_product_progress-3:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:4b31251b741c6ec19c33"
+        ],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 4,
+        "source_text_hash": "dfff8cda987e15f252ec552e54975971b3438a1012ce3ae21ffa145757765102",
+        "source_unit_id": "hk_product_progress-3:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 5,
+        "source_text_hash": "2db57823d0437843637cd0b33964d59452dd5186fbcea9614e29b60fbc8b4c92",
+        "source_unit_id": "hk_product_progress-3:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:80b2578afa172ae32ee9"
+        ],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 6,
+        "source_text_hash": "25beb5c33fc9a791cb4ff83df4acbc9d33e423b50b63bcb19c0b6d231a07328d",
+        "source_unit_id": "hk_product_progress-3:u6"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:0b3631a8fcc93bff2198"
+        ],
+        "source_block_id": "hk_product_progress-3",
+        "source_order": 7,
+        "source_text_hash": "4fd0fac259e55ba64b3a2541ba043df9f874ba72a7b2ccb5edeb28857a2a83c9",
+        "source_unit_id": "hk_product_progress-3:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 0,
+        "source_text_hash": "9e3e7f0a8b6d9dfbd3bc8bc6149eff2586b3bb39e3ae56535a149f3b9cd27634",
+        "source_unit_id": "hk_cash_flow_table-0:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 1,
+        "source_text_hash": "f2a3a552a040ea699abd1c1a963da935fe3f3fe854d2fc4c42821b779f20aadb",
+        "source_unit_id": "hk_cash_flow_table-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 2,
+        "source_text_hash": "e75850a3adc871ace5ca53935c5010ab48e641415671d31e586c6e3767c4d41a",
+        "source_unit_id": "hk_cash_flow_table-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 3,
+        "source_text_hash": "1e236d2ea8a4249a58505fa6dff18a993bfe5540174ccb5230b7975cada22349",
+        "source_unit_id": "hk_cash_flow_table-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 4,
+        "source_text_hash": "258921b71f196971cc1521055c2dc8ffd41e58a4e5995c7c5b2ecb5418eb8cee",
+        "source_unit_id": "hk_cash_flow_table-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 5,
+        "source_text_hash": "68ec6301ae081817e51bf36484adf45b66ad24e1244edee1c9846dee226dece2",
+        "source_unit_id": "hk_cash_flow_table-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 6,
+        "source_text_hash": "43538307163158aacb092fb59be2584b77c27ba2bccf97b8d7687705fed1fe89",
+        "source_unit_id": "hk_cash_flow_table-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 7,
+        "source_text_hash": "fafaa7fc41c76cb85bf3cd3ec0452f3013edbb56d7199c09751ce8f34ebb721e",
+        "source_unit_id": "hk_cash_flow_table-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 8,
+        "source_text_hash": "067b6b3b4d13db37cefd4bfec7a47cb9891116649601e4b593830ee9218d186c",
+        "source_unit_id": "hk_cash_flow_table-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 9,
+        "source_text_hash": "af1cadf5bc7e9f316522e84bd83c7598758c010416bfdd2037095bfa318be010",
+        "source_unit_id": "hk_cash_flow_table-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 10,
+        "source_text_hash": "1ba4a13b2ebacd98c7dd25445c5714a58014086308c1d888ef104e0ba5c85798",
+        "source_unit_id": "hk_cash_flow_table-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 11,
+        "source_text_hash": "df486ec583063312afed6a6340baf62a821224c5b88ddafbc88b5ea1665fad91",
+        "source_unit_id": "hk_cash_flow_table-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 12,
+        "source_text_hash": "b1893b13917d564679f94528b214eb142585bfeb45307be81bd8060edb08c03c",
+        "source_unit_id": "hk_cash_flow_table-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 13,
+        "source_text_hash": "482dbaeb16b98559e54960301db9e291989cd177cdb97230a09d3caecec2ba69",
+        "source_unit_id": "hk_cash_flow_table-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 14,
+        "source_text_hash": "484fb096b5baa4db29c25e2e73fff362fe2933f0a6d7a26f7d2459e9e84c9f6e",
+        "source_unit_id": "hk_cash_flow_table-0:u14"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 15,
+        "source_text_hash": "9409f73539a8c3288fd491bc84c7a5848591c7613724923843f4fe699f3f6c76",
+        "source_unit_id": "hk_cash_flow_table-0:u15"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 16,
+        "source_text_hash": "5f6b8211d9608ec2a6a520ba902a3866c71f48db4cf07142272900e232b0f907",
+        "source_unit_id": "hk_cash_flow_table-0:u16"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 17,
+        "source_text_hash": "b408bb06c347643b3e362b417c2f0b859d683d3dea16175d7133a560614e7087",
+        "source_unit_id": "hk_cash_flow_table-0:u17"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 18,
+        "source_text_hash": "025fab29fe06e20a2dd356c0f14953a1d5b87619865732af2abe91c92e60a21a",
+        "source_unit_id": "hk_cash_flow_table-0:u18"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:275f2ee373f247ce5cad"
+        ],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 19,
+        "source_text_hash": "ff08af7c779e2b2881a964be35e289a8793cf02575aad758e98f2971a606cbe2",
+        "source_unit_id": "hk_cash_flow_table-0:u19"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 20,
+        "source_text_hash": "8b79ccdc3ce55a3a23973af0e155441769e4ff66330bbf734d3f137de8760d60",
+        "source_unit_id": "hk_cash_flow_table-0:u20"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 21,
+        "source_text_hash": "784627c327e135e5610163e5dc590312544dc6304c7d35dc4af1db8973dfc2c5",
+        "source_unit_id": "hk_cash_flow_table-0:u21"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 22,
+        "source_text_hash": "318109064111cd9625e5dd4be03f6f5961bf579c2bb5ef7a43acbb2d62bc2afb",
+        "source_unit_id": "hk_cash_flow_table-0:u22"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 23,
+        "source_text_hash": "71bbd35166d3ae36f812bf5961b032829dc3386bf65a695d298faa24639c4ff2",
+        "source_unit_id": "hk_cash_flow_table-0:u23"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 24,
+        "source_text_hash": "3108d9b5ffa26a1fbdbc731e571121bc66364bf23b1e9dbc96a3709b914b4afc",
+        "source_unit_id": "hk_cash_flow_table-0:u24"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5f6f38405f350741219b"
+        ],
+        "source_block_id": "hk_cash_flow_table-0",
+        "source_order": 25,
+        "source_text_hash": "b5c930f1c2bd61070dd11a1d7ce8b19543903d29376a2c296c15d8d79f8e25a6",
+        "source_unit_id": "hk_cash_flow_table-0:u25"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:99016646294a7ac095f8"
+        ],
+        "source_block_id": "hk_business_overview-0",
+        "source_order": 0,
+        "source_text_hash": "1bc4cae36b6115168b739ab684d37c4af68a2e392367d3718efada07a28b150e",
+        "source_unit_id": "hk_business_overview-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:94ff6b479db5b445c1ec"
+        ],
+        "source_block_id": "hk_business_overview-1",
+        "source_order": 0,
+        "source_text_hash": "ea4de70c9787f04756afa51854eadf9c7d88d681c196bf0531bf836e9758be83",
+        "source_unit_id": "hk_business_overview-1:u0"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_business_overview-1",
+        "source_order": 1,
+        "source_text_hash": "0a27606fade12030a05032e9961ef70f6db7365e78436829a9978f19ae55390a",
+        "source_unit_id": "hk_business_overview-1:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_business_overview-1",
+        "source_order": 2,
+        "source_text_hash": "3227a8aa81bec55ce6db462260ea2d53e1179f9c17f52cb25caa6a3cd2615dcd",
+        "source_unit_id": "hk_business_overview-1:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_business_overview-1",
+        "source_order": 3,
+        "source_text_hash": "8fd85625e09ea7c9572e3774117462869d7637dd178b11380875643c55084f82",
+        "source_unit_id": "hk_business_overview-1:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:8ab1ca9272228bdfd754"
+        ],
+        "source_block_id": "hk_customer_ecosystem-0",
+        "source_order": 0,
+        "source_text_hash": "85af55d1069dc3d8b00306658e77664333933307b775d5dfbc4f542551984090",
+        "source_unit_id": "hk_customer_ecosystem-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:8ab1ca9272228bdfd754"
+        ],
+        "source_block_id": "hk_customer_ecosystem-0",
+        "source_order": 1,
+        "source_text_hash": "d4ad25dd17c5b86006b250321508243f5bd66388b204138bfcec578d2f1b7d46",
+        "source_unit_id": "hk_customer_ecosystem-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_customer_ecosystem-0",
+        "source_order": 2,
+        "source_text_hash": "af44324428da8f7004b1a4a44da18f77b9d2edfcc001993476ca048a0b9475ab",
+        "source_unit_id": "hk_customer_ecosystem-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_customer_ecosystem-0",
+        "source_order": 3,
+        "source_text_hash": "01bac57e1196a66081487ec04b0eacec47dff5404a58eefba024402d0f4edd5e",
+        "source_unit_id": "hk_customer_ecosystem-0:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:439c8ddee227c387c331"
+        ],
+        "source_block_id": "hk_customer_ecosystem-0",
+        "source_order": 4,
+        "source_text_hash": "a7d7c308a67ae6fa6305adf358146ee6a9e64c940f5ba4560a67cb4bbf2d5ffc",
+        "source_unit_id": "hk_customer_ecosystem-0:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b550e6853d415c3cc673"
+        ],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 0,
+        "source_text_hash": "d923ed98a381d3fdfc2a232756aa7e834c0b3b77c0c8a7c306dd3ebd30c117fb",
+        "source_unit_id": "hk_customer_ecosystem-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:385c997da502d03815bc"
+        ],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 1,
+        "source_text_hash": "1db84bcb85eb58a4638a1059c30127e7f64c8446c79992d9bc99be2d11ca9327",
+        "source_unit_id": "hk_customer_ecosystem-1:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 2,
+        "source_text_hash": "9949cc6c691ac61e8775a0c93cc8b7ac5253f041d87aaaf876558c132a486f51",
+        "source_unit_id": "hk_customer_ecosystem-1:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:bd9b4b58f56164c18f40"
+        ],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 3,
+        "source_text_hash": "4e38c6b852903ecab0a48c9646139336a5152eec65130d551ed2810d817b2071",
+        "source_unit_id": "hk_customer_ecosystem-1:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 4,
+        "source_text_hash": "7e64d5aaebaa771e18a78087c2a2ad386e84bea56eddd4ce73405f3e85789bb7",
+        "source_unit_id": "hk_customer_ecosystem-1:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 5,
+        "source_text_hash": "9fbcc6cb95d639fa228b1575c1068851a98ada9e75b1f3b2803b92d73d5a16cc",
+        "source_unit_id": "hk_customer_ecosystem-1:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_customer_ecosystem-1",
+        "source_order": 6,
+        "source_text_hash": "8cfe136831694cd7bdef878ac39279419fe04a8a89c1f2707af05d89cb2c29ba",
+        "source_unit_id": "hk_customer_ecosystem-1:u6"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5fd670c2b7b565b4f09d"
+        ],
+        "source_block_id": "hk_customer_ecosystem-2",
+        "source_order": 0,
+        "source_text_hash": "665473e9a6ffa67c0ecba022a280699146eb5f5f3bfdfe9cb1f09434c87998e8",
+        "source_unit_id": "hk_customer_ecosystem-2:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:eb80aca48a0a6949fc51"
+        ],
+        "source_block_id": "hk_customer_ecosystem-2",
+        "source_order": 1,
+        "source_text_hash": "d43f94431cfd0d554d2d70e3154cb58e5880c34ef4d687c4a29f117c62c2943b",
+        "source_unit_id": "hk_customer_ecosystem-2:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:eb80aca48a0a6949fc51"
+        ],
+        "source_block_id": "hk_customer_ecosystem-2",
+        "source_order": 2,
+        "source_text_hash": "30195b2519652707ccc143280c1b11cdd9528b1c50a1e45fd2c2d17ac5eb0567",
+        "source_unit_id": "hk_customer_ecosystem-2:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:93a44046895a94d97d17"
+        ],
+        "source_block_id": "hk_market_outlook-0",
+        "source_order": 0,
+        "source_text_hash": "0f3c7ad6b7b23defd67b07e1175207a06608cb31819d1c9df95c6d05d6322863",
+        "source_unit_id": "hk_market_outlook-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f95506a782b35be72c76"
+        ],
+        "source_block_id": "hk_market_outlook-0",
+        "source_order": 1,
+        "source_text_hash": "0278f458d0c3abce85b5949c182f20d38cfb2851771d37348841b6f4410b61b0",
+        "source_unit_id": "hk_market_outlook-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:c2fd0b29649bd013fe94"
+        ],
+        "source_block_id": "hk_market_outlook-0",
+        "source_order": 2,
+        "source_text_hash": "7c60759038db433fff2401e56d121c8372edc0d89b5d498e2eb24c2ac7611a6c",
+        "source_unit_id": "hk_market_outlook-0:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:821ed1f28ee582d69cc3"
+        ],
+        "source_block_id": "hk_market_outlook-1",
+        "source_order": 0,
+        "source_text_hash": "d0760b974fdd6f8d9d53b659fbbef4456f2c37c91fd258103de2e7d0a89dc3be",
+        "source_unit_id": "hk_market_outlook-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:821ed1f28ee582d69cc3"
+        ],
+        "source_block_id": "hk_market_outlook-1",
+        "source_order": 1,
+        "source_text_hash": "a648f908efd14c2ecafcfe7392470fc4fda9a802764ebebcabb7fdd4b7fd421a",
+        "source_unit_id": "hk_market_outlook-1:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:821ed1f28ee582d69cc3"
+        ],
+        "source_block_id": "hk_market_outlook-1",
+        "source_order": 2,
+        "source_text_hash": "9f566f54a772785a8bb01007ca7dc9eb52c24c3b7fbfd2480f6493f2296e57fa",
+        "source_unit_id": "hk_market_outlook-1:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:94d8e58e8c79ad36b832"
+        ],
+        "source_block_id": "hk_market_outlook-1",
+        "source_order": 3,
+        "source_text_hash": "ac48759c6216aea3aa3ab22cb639956ef2c7ffb94c6c4bc96fcc145751c542f7",
+        "source_unit_id": "hk_market_outlook-1:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:94d8e58e8c79ad36b832"
+        ],
+        "source_block_id": "hk_market_outlook-1",
+        "source_order": 4,
+        "source_text_hash": "a2086b3c640579d8dc9d483976b3612673346034ba797320c2f4e6c5bc6bb890",
+        "source_unit_id": "hk_market_outlook-1:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_market_outlook-1",
+        "source_order": 5,
+        "source_text_hash": "c810f14441ad47775c68547cac8c833722dc0b892cb18e8b8dc013aa1f1f1ff3",
+        "source_unit_id": "hk_market_outlook-1:u5"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a9413ffa25fff96e9228"
+        ],
+        "source_block_id": "hk_market_outlook-2",
+        "source_order": 0,
+        "source_text_hash": "c778a91ca979a637b866c8a5f50ce23ee6ed20e9440101d7480780735450347d",
+        "source_unit_id": "hk_market_outlook-2:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a9413ffa25fff96e9228"
+        ],
+        "source_block_id": "hk_market_outlook-2",
+        "source_order": 1,
+        "source_text_hash": "2e45bfc1dd1f5992ba5a3af84fb552c1ca8facce1c3138392cce222046bf5927",
+        "source_unit_id": "hk_market_outlook-2:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a9413ffa25fff96e9228"
+        ],
+        "source_block_id": "hk_market_outlook-2",
+        "source_order": 2,
+        "source_text_hash": "cd4ac8378a0377add723aaa0354c389ba60699c770fb92dfd2b05290b68ec48f",
+        "source_unit_id": "hk_market_outlook-2:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a9413ffa25fff96e9228"
+        ],
+        "source_block_id": "hk_market_outlook-2",
+        "source_order": 3,
+        "source_text_hash": "f682e4e6cb305dbb56ec7cc459142dc9235f95007c1655766b9bfe685b12b190",
+        "source_unit_id": "hk_market_outlook-2:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:92ae8225c8c615ee125f"
+        ],
+        "source_block_id": "hk_market_outlook-2",
+        "source_order": 4,
+        "source_text_hash": "5f20ec56f7243397e386245c3b8498e74033e96257d124212de694300de21396",
+        "source_unit_id": "hk_market_outlook-2:u4"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:57b8be12f331cee55c9c"
+        ],
+        "source_block_id": "hk_financial_commentary-0",
+        "source_order": 0,
+        "source_text_hash": "63cb8d0f11b88b56f9b47bb6bb1ed95c89be469371102ee93e24490444fa095c",
+        "source_unit_id": "hk_financial_commentary-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:5dfce834e85ca8bb1a0c"
+        ],
+        "source_block_id": "hk_financial_commentary-0",
+        "source_order": 1,
+        "source_text_hash": "8e5a442639d2e642e6ed04467f1efcdc330cc992c8f2a98b504c795a14a4d6be",
+        "source_unit_id": "hk_financial_commentary-0:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:f4a0996317922aade994"
+        ],
+        "source_block_id": "hk_financial_commentary-1",
+        "source_order": 0,
+        "source_text_hash": "f081989938868d61150b9d544e32a11802a84ccac9a263b567683514a6a74d4c",
+        "source_unit_id": "hk_financial_commentary-1:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:e425e7fb1a7239d4d884"
+        ],
+        "source_block_id": "hk_financial_commentary-1",
+        "source_order": 1,
+        "source_text_hash": "cf9b15bb30e01e2960d9cdc5342c9af7661d6233f68953db5c85fcc1028a5854",
+        "source_unit_id": "hk_financial_commentary-1:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "hk_financial_commentary-2",
+        "source_order": 0,
+        "source_text_hash": "2fb1850981f152078814756b082c16dd256d193341767e5d55bb5232c7942508",
+        "source_unit_id": "hk_financial_commentary-2:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:20336703ce109e6fd3c8"
+        ],
+        "source_block_id": "hk_financial_commentary-2",
+        "source_order": 1,
+        "source_text_hash": "c0d6603c750b166a86350e1ef01818885603d7ad78e38845714e1b33d9edf110",
+        "source_unit_id": "hk_financial_commentary-2:u1"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:238d4a9dd1e2936c4c26"
+        ],
+        "source_block_id": "hk_financial_commentary-2",
+        "source_order": 2,
+        "source_text_hash": "fed32f67fa1476e882079bf34a2330b5c3faa4afb38eaae947255a60c845f249",
+        "source_unit_id": "hk_financial_commentary-2:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:bf9d5c1f25d197804573"
+        ],
+        "source_block_id": "hk_financial_commentary-2",
+        "source_order": 3,
+        "source_text_hash": "ee43be0b9505ac309f6ad93015a5ac35ea39afe60665ad76ee1a7001f4054100",
+        "source_unit_id": "hk_financial_commentary-2:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:a1a9ca7fcc523af61787"
+        ],
+        "source_block_id": "hk_financial_commentary-2",
+        "source_order": 4,
+        "source_text_hash": "08ff1c8ac475ca785e9545fcf2a8239bc95d3602f329524c3fadd11d338e7b5b",
+        "source_unit_id": "hk_financial_commentary-2:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 0,
+        "source_text_hash": "e8f8b05f97a1bb13c0bf877d2720aee1fde8ff0a4372ee87a62385b000b00f52",
+        "source_unit_id": "contingencies_litigation-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:ebc372e319ed2b18d50c"
+        ],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 1,
+        "source_text_hash": "28e3048bd81ee7997165571608a6dfbe35de7339618c620466051aa9c14c771f",
+        "source_unit_id": "contingencies_litigation-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 2,
+        "source_text_hash": "2a9e40833a9a6780a88bdcfdf52e032655fc3c0930233c9a75cf6f173669a830",
+        "source_unit_id": "contingencies_litigation-0:u2"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 3,
+        "source_text_hash": "ea76ac6ee86d1efa45ae576c497904ff43c147cb3fd0939a40f07394a258bf28",
+        "source_unit_id": "contingencies_litigation-0:u3"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 4,
+        "source_text_hash": "176ba5c1db5548030078f8e71b658942e93e7ed3a00ae2d26d0dda73b20f5c2a",
+        "source_unit_id": "contingencies_litigation-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "table_or_ocr",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 5,
+        "source_text_hash": "2a5866c03d55b1b5e1ac93fe459c5e86036c2cd37a2385705109a19849879a63",
+        "source_unit_id": "contingencies_litigation-0:u5"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 6,
+        "source_text_hash": "4070c681c84b48fa9832e897cc4c30547a130b6c09021c0cce80afd55e95707a",
+        "source_unit_id": "contingencies_litigation-0:u6"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 7,
+        "source_text_hash": "e2c437bc421cc55e4ef0dadd65158043aa7be826271326f85614d49d84e4f4ce",
+        "source_unit_id": "contingencies_litigation-0:u7"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 8,
+        "source_text_hash": "90aee67e12c0361fed4f3599405f3060ff846f85d63e9d1136027fc2350431fa",
+        "source_unit_id": "contingencies_litigation-0:u8"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 9,
+        "source_text_hash": "49cf5e8dd25cddc0c809707dd8d2ee172dda1a24a3fbd76324a7582e37acb3c5",
+        "source_unit_id": "contingencies_litigation-0:u9"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 10,
+        "source_text_hash": "cb71faef145feaeb993dae77ace52dc0ecb508fd262d3bd2d60fb66f68f7f950",
+        "source_unit_id": "contingencies_litigation-0:u10"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 11,
+        "source_text_hash": "d0ba11409eab60ab6af440305958c84a2d3f123e20e060e396c5aff5ed17c5fb",
+        "source_unit_id": "contingencies_litigation-0:u11"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 12,
+        "source_text_hash": "cdd32c9baa2ffac0dc45371ce820fd03255411e6040c972643cfc2f5aec896d6",
+        "source_unit_id": "contingencies_litigation-0:u12"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 13,
+        "source_text_hash": "96c06cbccee9fb9f01c77d74b7a98006250882cd77931aa3c750b29d47baec9c",
+        "source_unit_id": "contingencies_litigation-0:u13"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "no_family_signal",
+        "selected_by_card_ids": [],
+        "source_block_id": "contingencies_litigation-0",
+        "source_order": 14,
+        "source_text_hash": "36b547eff3b12ebe8b17611621b2babbd1e4bc0eb6c9c9ae02c889230223f1b0",
+        "source_unit_id": "contingencies_litigation-0:u14"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:7bc8c7597976eb973bca"
+        ],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 0,
+        "source_text_hash": "e8f3a50974bfa582cf76ed2eb1ccec8b4ee3920b8e17914fb8585459922a16ce",
+        "source_unit_id": "government_grant_note-0:u0"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:b317eb233583353e8a2d"
+        ],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 1,
+        "source_text_hash": "2172dfb1308c32b2fc50122e9a648f0a329d80b8a16198edeed2b7f422d7654f",
+        "source_unit_id": "government_grant_note-0:u1"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 2,
+        "source_text_hash": "acec415d7aff8cc47ad55dee385c328a5ab1ec6da506135b1b1f821a4eeca490",
+        "source_unit_id": "government_grant_note-0:u2"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:365043b2a99419679c54"
+        ],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 3,
+        "source_text_hash": "ebc5cd2c8dcb4dd7aff91ad45971a661defcccd06b2bc8784700a79d25a7d7ed",
+        "source_unit_id": "government_grant_note-0:u3"
+      },
+      {
+        "disposition": "selected",
+        "reason": "selected",
+        "selected_by_card_ids": [
+          "annual-argument:365043b2a99419679c54"
+        ],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 4,
+        "source_text_hash": "caea3d2f771fb265b312e653a6e33cb7fa88344fe80436547dd0e249b066f594",
+        "source_unit_id": "government_grant_note-0:u4"
+      },
+      {
+        "disposition": "rejected",
+        "reason": "not_self_contained",
+        "selected_by_card_ids": [],
+        "source_block_id": "government_grant_note-0",
+        "source_order": 5,
+        "source_text_hash": "c80dff3aea0f0f2c785e0131b893a4853f5dfdf2c65824756ca67f9496da2058",
+        "source_unit_id": "government_grant_note-0:u5"
+      }
+    ],
+    "source_unit_decisions_version": "annual_source_unit_decisions.v1",
+    "source_units_seen": 151,
+    "usable_units": 91,
+    "v1_adapter_use_count": 0
+  },
+  "producer_schema_version": "periodic_report_narrative_evidence_cards.v2",
+  "report_type": "annual",
+  "report_year": 2025,
+  "schema_version": "periodic_report_narrative_material_pack.v1",
+  "selection_version": "annual_argument_selection.v2",
+  "stock_code": "02533",
+  "stock_name": "黑芝麻智能"
+}

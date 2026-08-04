@@ -1,6 +1,6 @@
 """综合评分板块渲染器。"""
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 
 class CompositeScoreRenderer:
@@ -47,14 +47,5 @@ class CompositeScoreRenderer:
             pillar=pillar,
             recommendation_decision=recommendation_decision,
         )
-
-        chart_paths = ctx.get("chart_paths", ctx.get("_chart_paths", {}))
-        radar_chart = chart_paths.get("radar")
-        if radar_chart:
-            md += (
-                "\n\n### 五维评分雷达图\n\n"
-                f'<p align="center"><img src="{radar_chart}" alt="{stock_name} 五维评分雷达图" '
-                'style="max-width: 360px; width: 70%; height: auto;" /></p>\n'
-            )
 
         return md
