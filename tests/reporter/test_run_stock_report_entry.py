@@ -2,8 +2,11 @@
 
 import importlib.util
 import json
+import os
 from pathlib import Path
 from types import SimpleNamespace
+
+import pytest
 
 
 def _load_entry_module():
@@ -102,7 +105,7 @@ def test_configured_stock_entry_wires_reporter_without_network(tmp_path, monkeyp
     assert raw_payload["stock_codes"] == {"测试股": "300001"}
 
 
-def test_unknown_stock_requires_bootstrap_flag(tmp_path, capsys):
+def test_unknown_stock_names_config_path_without_removed_bootstrap_flag(tmp_path, capsys):
     mod = _load_entry_module()
     config_path = tmp_path / "stocks.json"
     _write_config(config_path, [])
@@ -111,91 +114,32 @@ def test_unknown_stock_requires_bootstrap_flag(tmp_path, capsys):
 
     captured = capsys.readouterr()
     assert exit_code == 2
-    assert "--bootstrap-config" in captured.err
     assert "新股票" in captured.err
+    assert str(config_path) in captured.err
+    assert "--bootstrap-config" not in captured.err
 
 
-def test_bootstrap_preview_writes_tmp_config_without_mutating_config(tmp_path):
+@pytest.mark.parametrize(
+    "option",
+    [
+        "--bootstrap-config",
+        "--write-config",
+        "--bootstrap-output",
+        "--code",
+        "--xueqiu-code",
+        "--gid",
+    ],
+)
+def test_removed_bootstrap_options_are_rejected(option):
     mod = _load_entry_module()
-    config_path = tmp_path / "stocks.json"
-    preview_path = tmp_path / "preview.json"
-    _write_config(config_path, [])
+    argv = ["--stock", "新股票", option]
+    if option in {"--bootstrap-output", "--code", "--xueqiu-code", "--gid"}:
+        argv.append("value")
 
-    exit_code = mod.main(
-        [
-            "--stock",
-            "新股票",
-            "--config",
-            str(config_path),
-            "--bootstrap-config",
-            "--bootstrap-output",
-            str(preview_path),
-            "--code",
-            "300999",
-            "--xueqiu-code",
-            "SZ300999",
-            "--keyword",
-            "先进封装",
-        ]
-    )
+    with pytest.raises(SystemExit) as exc_info:
+        mod._parse_args(argv)
 
-    assert exit_code == 0
-    assert json.loads(config_path.read_text(encoding="utf-8")) == []
-    preview = json.loads(preview_path.read_text(encoding="utf-8"))
-    assert preview["name"] == "新股票"
-    assert preview["code"] == "300999"
-    assert preview["xueqiu_code"] == "SZ300999"
-    assert preview["keywords"] == ["新股票", "先进封装"]
-    assert preview["source_intake"]["enabled"] is True
-    assert preview["source_intake"]["a_stock"]["enabled"] is True
-    assert preview["source_intake"]["a_stock"]["cninfo_announcements"]["enabled"] is True
-    assert preview["source_intake"]["a_stock"]["eastmoney_research_reports"]["enabled"] is True
-    assert preview["source_intake"]["a_stock"]["eastmoney_global_news"]["enabled"] is True
-    assert preview["source_intake"]["a_stock"]["iwencai_industry_research"]["enabled"] is True
-    assert "先进封装" in preview["source_intake"]["a_stock"]["eastmoney_global_news"]["keywords"]
-
-
-def test_bootstrap_write_config_requires_code(tmp_path, capsys):
-    mod = _load_entry_module()
-    config_path = tmp_path / "stocks.json"
-    _write_config(config_path, [])
-
-    exit_code = mod.main(["--stock", "新股票", "--config", str(config_path), "--bootstrap-config", "--write-config"])
-
-    captured = capsys.readouterr()
-    assert exit_code == 2
-    assert "--code" in captured.err
-    assert json.loads(config_path.read_text(encoding="utf-8")) == []
-
-
-def test_bootstrap_write_config_appends_reviewed_stock(tmp_path):
-    mod = _load_entry_module()
-    config_path = tmp_path / "stocks.json"
-    _write_config(config_path, [{"name": "已有", "code": "000001"}])
-
-    exit_code = mod.main(
-        [
-            "--stock",
-            "新股票",
-            "--config",
-            str(config_path),
-            "--bootstrap-config",
-            "--write-config",
-            "--code",
-            "300999",
-            "--xueqiu-code",
-            "SZ300999",
-            "--keyword",
-            "先进封装",
-        ]
-    )
-
-    stocks = json.loads(config_path.read_text(encoding="utf-8"))
-    assert exit_code == 0
-    assert [stock["name"] for stock in stocks] == ["已有", "新股票"]
-    assert stocks[-1]["gid"] == "300999"
-    assert stocks[-1]["source_intake"]["enabled"] is True
-    assert stocks[-1]["source_intake"]["a_stock"]["eastmoney_research_reports"]["enabled"] is True
+    assert exc_info.value.code == 2
 
 
 def test_zhongjixuchuang_config_has_canonical_a_stock_source_intake():
@@ -280,6 +224,56 @@ def test_fast_test_reuses_cached_zhihu_data(tmp_path):
     )
 
     assert result == cached
+
+
+def test_cached_value_prefers_exact_filename_over_newer_fallback(tmp_path):
+    mod = _load_entry_module()
+    exact = tmp_path / "cache_20260804_测试股.json"
+    fallback = tmp_path / "cache_20260803_测试股.json"
+    exact.write_text(json.dumps({"value": "exact"}), encoding="utf-8")
+    fallback.write_text(json.dumps({"value": "newer"}), encoding="utf-8")
+    fallback.touch()
+
+    value, path = mod._load_cached_value(
+        tmp_path,
+        exact.name,
+        "cache_*_测试股.json",
+        lambda payload: payload.get("value"),
+        str,
+    )
+
+    assert value == "exact"
+    assert path == exact
+
+
+def test_cached_zhihu_skips_malformed_and_wrong_typed_candidates(tmp_path):
+    mod = _load_entry_module()
+    expected = {"total": 3, "report_items": []}
+    (tmp_path / "report_input_20260802_测试股.json").write_text(
+        json.dumps({"raw_data": {"测试股": {"zhihu": expected}}}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    (tmp_path / "report_input_20260803_测试股.json").write_text(
+        json.dumps({"raw_data": {"测试股": {"zhihu": []}}}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+    (tmp_path / "report_input_20260804_测试股.json").write_text("{broken", encoding="utf-8")
+
+    result = mod._load_cached_zhihu_data(tmp_path, "测试股", "20260804")
+
+    assert result == expected
+
+
+def test_xueqiu_cache_filters_non_mapping_posts(tmp_path):
+    mod = _load_entry_module()
+    (tmp_path / "xueqiu_data_20260804_测试股.json").write_text(
+        json.dumps({"posts": [{"title": "保留"}, "丢弃", 1, None]}, ensure_ascii=False),
+        encoding="utf-8",
+    )
+
+    result = mod._load_xueqiu_data(tmp_path, "测试股", "20260804")
+
+    assert result == [{"title": "保留"}]
 
 
 def test_named_stock_configs_keep_required_source_features():
@@ -416,16 +410,55 @@ def test_offline_smoke_patches_data_fetcher_lazy_fetches(monkeypatch):
     mod = _load_entry_module()
 
     from utils.reporter import data_fetcher
+    from utils.report_skills import data_skills
 
-    monkeypatch.setattr(
-        data_fetcher,
+    names = (
         "fetch_tencent_quote",
-        lambda code: (_ for _ in ()).throw(
-            AssertionError("offline smoke must patch the pipeline data fetcher")
-        ),
+        "fetch_consensus_eps",
+        "industry_fwd_pe",
+        "fetch_ps",
+        "fetch_competitor_metrics",
     )
+    for module in (data_fetcher, data_skills):
+        for name in names:
+            monkeypatch.setattr(
+                module,
+                name,
+                lambda *args, **kwargs: (_ for _ in ()).throw(
+                    AssertionError("offline smoke must patch every lazy fetch owner")
+                ),
+            )
 
     mod._install_offline_smoke_patches()
 
-    assert data_fetcher.fetch_tencent_quote("02533") is None
-    assert data_fetcher.fetch_consensus_eps("02533") is None
+    for module in (data_fetcher, data_skills):
+        for name in names:
+            assert getattr(module, name)("02533") is None
+
+
+def test_disable_functions_supports_mixed_call_signatures():
+    mod = _load_entry_module()
+    module = SimpleNamespace(one=lambda value: value, many=lambda *args, **kwargs: args)
+
+    mod._disable_functions(module, ("one", "many"))
+
+    assert module.one("value") is None
+    assert module.many("value", another=True) is None
+
+
+def test_offline_smoke_clears_key_restored_by_quality_gate_import(monkeypatch):
+    mod = _load_entry_module()
+    real_import_module = mod.importlib.import_module
+
+    def import_module(name):
+        module = real_import_module(name)
+        if name == "utils.content_quality_gate":
+            os.environ["DEEPSEEK_API_KEY"] = "restored-by-dotenv"
+        return module
+
+    monkeypatch.setattr(mod.importlib, "import_module", import_module)
+    monkeypatch.setenv("DEEPSEEK_API_KEY", "initial")
+
+    mod._install_offline_smoke_patches()
+
+    assert "DEEPSEEK_API_KEY" not in os.environ

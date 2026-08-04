@@ -1962,8 +1962,8 @@ def test_unsupported_core_facts_fall_back_to_periodic_filing_core_facts():
     assert ctx.get("synthesis")["core_facts"][0]["provenance_status"] == "missing_ref"
 
 
-def test_periodic_report_fulltext_knowledge_persistence_would_receive_baseline():
-    """Knowledge writer reads ctx['synthesis'] which must stay baseline."""
+def test_display_only_fulltext_does_not_mutate_baseline_synthesis():
+    """Display-only fulltext material must stay out of baseline synthesis."""
     fake = DualSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)
     ctx = _fulltext_ctx(True, fake)

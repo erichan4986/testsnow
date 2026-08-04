@@ -108,6 +108,44 @@ def test_batch_a_active_owners_remain() -> None:
     )
 
 
+def test_batch_d_bootstrap_entry_surface_is_absent() -> None:
+    path = "scripts/run_stock_report.py"
+    source = (REPO_ROOT / path).read_text(encoding="utf-8")
+    assert _top_level_definitions(path).isdisjoint(
+        {
+            "_write_stocks_config",
+            "_default_bootstrap_output",
+            "_build_default_a_stock_source_intake",
+            "_build_bootstrap_stock",
+            "_handle_bootstrap",
+        }
+    )
+    for option in (
+        "--bootstrap-config",
+        "--write-config",
+        "--bootstrap-output",
+        "--code",
+        "--xueqiu-code",
+        "--gid",
+    ):
+        assert option not in source
+
+
+def test_batch_e_detached_knowledge_skill_is_absent() -> None:
+    module_path = SCRIPTS_DIR / "utils" / "report_skills" / "knowledge_skills.py"
+    package_source = (module_path.parent / "__init__.py").read_text(encoding="utf-8")
+    readme = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    ci_gate = (REPO_ROOT / "tools" / "ci_grep_gates.sh").read_text(encoding="utf-8")
+    context_index = (REPO_ROOT / "docs" / "agent_workflow" / "context_index.md").read_text(encoding="utf-8")
+
+    assert not module_path.exists()
+    assert "KnowledgePersistenceSkill" not in package_source
+    assert "knowledge_skills.py" not in readme
+    assert "test_knowledge_skills.py" not in readme
+    assert "report_skills/knowledge_skills.py" not in ci_gate
+    assert "report_skills/knowledge_skills.py" not in context_index
+
+
 def test_batch_b_dead_compatibility_surfaces_are_absent() -> None:
     expected_absent = {
         "scripts/utils/reporter/data_fetcher.py": {

@@ -441,7 +441,6 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | `synthesis_skills.py` | LLM 综合技能 | `SynthesisSkill` 调用 LLM 生成综合叙事，或模板降级 |
 | `chart_skills.py` | 图表生成技能 | `ChartGenerationSkill` 生成技术面板/多空图/雷达图；`TechnicalAnalysisSkill` 技术分析图表 |
 | `assembly_skills.py` | 报告组装技能 | `ReportAssemblySkill` 编排所有 section renderer 输出最终 Markdown + HTML |
-| `knowledge_skills.py` | 知识沉淀技能 | `KnowledgePersistenceSkill` 将分析结果持久化到知识库 |
 
 ### `tests/` — 测试套件
 
@@ -472,7 +471,7 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | **配置** | `test_technical_config.py` |
 | **图表生成** | `test_chart_generator.py`, `test_stock_reporter_charts.py` |
 | **渲染器** | `test_technical_renderer.py`, `test_composite_score_renderer.py`, `test_executive_summary_renderer.py`, `test_valuation_renderer.py`, `test_risk_renderer.py`, `test_deep_analysis_renderer.py`, `test_html_dashboard_renderer.py` |
-| **Skill Pipeline** | `test_analysis_skills.py`, `test_assembly_skills.py`, `test_chart_skills.py`, `test_data_skills.py`, `test_knowledge_skills.py`, `test_synthesis_skills.py`, `test_pipeline_integration.py`, `test_skill_pipeline_observability.py` |
+| **Skill Pipeline** | `test_analysis_skills.py`, `test_assembly_skills.py`, `test_chart_skills.py`, `test_data_skills.py`, `test_synthesis_skills.py`, `test_pipeline_integration.py`, `test_skill_pipeline_observability.py` |
 
 ---
 

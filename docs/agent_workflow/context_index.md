@@ -222,8 +222,6 @@ Do not casually change these without an explicit task boundary:
 <!-- path-check: scripts/utils/knowledge_synthesizer.py -->
 - `scripts/utils/reporter/scoring_engine.py`
 <!-- path-check: scripts/utils/reporter/scoring_engine.py -->
-- `scripts/utils/report_skills/knowledge_skills.py`
-<!-- path-check: scripts/utils/report_skills/knowledge_skills.py -->
 - `scripts/utils/reporter/sections/risk_renderer.py`
 <!-- path-check: scripts/utils/reporter/sections/risk_renderer.py -->
 - `scripts/utils/reporter/technical_analyzer.py`

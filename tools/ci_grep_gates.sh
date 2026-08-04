@@ -23,7 +23,6 @@ echo "[gate a] periodic report / broker research material-layer isolation ..."
 CORE_LEAK_FILES=(
   "$ROOT/scripts/utils/reporter/scoring_engine.py"
   "$ROOT/scripts/utils/reporter/sections/risk_renderer.py"
-  "$ROOT/scripts/utils/report_skills/knowledge_skills.py"
   "$ROOT/scripts/utils/periodic_report_filing_fact_note_writer.py"
 )
 HELPER_LEAK_FILES=(
@@ -61,7 +60,6 @@ echo "[gate c] curated external display-only isolation ..."
 CORE_CURATED_FILES=(
   "$ROOT/scripts/utils/reporter/scoring_engine.py"
   "$ROOT/scripts/utils/reporter/sections/risk_renderer.py"
-  "$ROOT/scripts/utils/report_skills/knowledge_skills.py"
   "$ROOT/scripts/utils/knowledge_synthesizer.py"
 )
 CURATED_LEAK_HITS=""

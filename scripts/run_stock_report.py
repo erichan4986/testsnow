@@ -45,6 +45,21 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 _CITATION_RE = re.compile(r"\[\^?\d+\]")
+_OFFLINE_API_KEYS = ("DEEPSEEK_API_KEY", "MOONSHOT_API_KEY", "OPENAI_API_KEY", "OPENAI_BASE_URL")
+_OFFLINE_DATA_FETCHES = (
+    "fetch_tencent_quote", "fetch_consensus_eps", "industry_fwd_pe",
+    "fetch_ps", "fetch_competitor_metrics",
+)
+
+
+def _clear_offline_api_keys() -> None:
+    for key in _OFFLINE_API_KEYS:
+        os.environ.pop(key, None)
+
+
+def _disable_functions(module, names: tuple[str, ...]) -> None:
+    for name in names:
+        setattr(module, name, lambda *args, **kwargs: None)
 
 
 def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
@@ -69,20 +84,6 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--no-pdf", action="store_true", help="跳过 PDF 导出")
 
     parser.add_argument("--keyword", action="append", default=[], help="补充知乎/材料搜索关键词，可重复")
-    parser.add_argument("--code", default="", help="bootstrap 新股票时填写交易代码")
-    parser.add_argument("--xueqiu-code", default="", help="bootstrap 新股票时填写雪球代码，如 SZ300308/HK02533")
-    parser.add_argument("--gid", default="", help="bootstrap 新股票时填写行情 gid，默认使用 --code")
-    parser.add_argument(
-        "--bootstrap-config",
-        action="store_true",
-        help="股票未配置时生成配置草稿；默认只写 /tmp 预览，不跑报告。",
-    )
-    parser.add_argument("--write-config", action="store_true", help="配合 --bootstrap-config，把草稿追加写入 config/stocks.json")
-    parser.add_argument(
-        "--bootstrap-output",
-        default="",
-        help="bootstrap 预览输出路径，默认 /tmp/<stock>_stock_config_preview.json",
-    )
     args = parser.parse_args([] if argv is None else argv)
     args._default_raw_dir = default_raw_dir
     args._default_report_dir = default_report_dir
@@ -106,13 +107,7 @@ def _install_offline_smoke_patches() -> None:
     run_stock_report.py --offline-smoke. Production report generation is
     unchanged.
     """
-    for key in (
-        "DEEPSEEK_API_KEY",
-        "MOONSHOT_API_KEY",
-        "OPENAI_API_KEY",
-        "OPENAI_BASE_URL",
-    ):
-        os.environ.pop(key, None)
+    _clear_offline_api_keys()
 
     try:
         content_quality_gate = importlib.import_module("utils.content_quality_gate")
@@ -131,13 +126,7 @@ def _install_offline_smoke_patches() -> None:
 
     # content_quality_gate auto-loads .env at import time, so remove keys again
     # before modules that initialize their own LLM clients are imported later.
-    for key in (
-        "DEEPSEEK_API_KEY",
-        "MOONSHOT_API_KEY",
-        "OPENAI_API_KEY",
-        "OPENAI_BASE_URL",
-    ):
-        os.environ.pop(key, None)
+    _clear_offline_api_keys()
 
     try:
         content_consolidator = importlib.import_module("utils.content_consolidator")
@@ -164,7 +153,7 @@ def _install_offline_smoke_patches() -> None:
 
     try:
         data_fetcher = importlib.import_module("utils.reporter.data_fetcher")
-        _patch_data_fetcher_module(data_fetcher)
+        _disable_functions(data_fetcher, _OFFLINE_DATA_FETCHES)
     except Exception as exc:
         logger.warning("离线 smoke 禁用 renderer lazy 数据抓取失败: %s", exc)
 
@@ -183,11 +172,7 @@ def _install_offline_smoke_patches() -> None:
     try:
         from utils.report_skills import data_skills
 
-        data_skills.fetch_tencent_quote = lambda code: None
-        data_skills.fetch_consensus_eps = lambda code: None
-        data_skills.industry_fwd_pe = lambda stock_name: None
-        data_skills.fetch_ps = lambda code, quote: None
-        data_skills.fetch_competitor_metrics = lambda stock_name, stock_codes, stock_config=None: None
+        _disable_functions(data_skills, _OFFLINE_DATA_FETCHES)
     except Exception as exc:
         logger.warning("离线 smoke 禁用行情/同业数据失败: %s", exc)
 
@@ -206,19 +191,12 @@ def _install_offline_smoke_patches() -> None:
     try:
         from utils.report_skills import chart_skills
 
-        chart_skills.generate_technical_panel = lambda *args, **kwargs: None
-        chart_skills.generate_radar_chart = lambda *args, **kwargs: None
-        chart_skills.generate_bull_bear_chart = lambda *args, **kwargs: None
+        _disable_functions(
+            chart_skills,
+            ("generate_technical_panel", "generate_radar_chart", "generate_bull_bear_chart"),
+        )
     except Exception as exc:
         logger.warning("离线 smoke 禁用图表生成失败: %s", exc)
-
-
-def _patch_data_fetcher_module(module) -> None:
-    module.fetch_tencent_quote = lambda code: None
-    module.fetch_consensus_eps = lambda code: None
-    module.industry_fwd_pe = lambda stock_name: None
-    module.fetch_ps = lambda code, quote: None
-    module.fetch_competitor_metrics = lambda stock_name, stock_codes, stock_config=None: None
 
 
 def _load_stocks_config(config_path: Path) -> list[dict[str, Any]]:
@@ -231,10 +209,6 @@ def _load_stocks_config(config_path: Path) -> list[dict[str, Any]]:
     if not isinstance(payload, list):
         raise ValueError(f"配置文件顶层必须是股票列表: {config_path}")
     return [item for item in payload if isinstance(item, dict)]
-
-
-def _write_stocks_config(config_path: Path, stocks: list[dict[str, Any]]) -> None:
-    config_path.write_text(json.dumps(stocks, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
 
 
 def _find_stock(stocks: list[dict[str, Any]], query: str) -> dict[str, Any] | None:
@@ -263,126 +237,6 @@ def _dedupe_keep_order(values: list[str]) -> list[str]:
     return result
 
 
-def _default_bootstrap_output(stock_name: str) -> Path:
-    return Path("/tmp") / f"{stock_name}_stock_config_preview.json"
-
-
-def _build_default_a_stock_source_intake(keywords: list[str]) -> dict[str, Any]:
-    theme_keywords = _dedupe_keep_order([
-        *keywords,
-        "半导体",
-        "AI算力",
-        "机器人",
-        "汽车芯片",
-        "光通信",
-    ])
-    research_queries = [f"{keyword} 行业研究报告" for keyword in keywords[1:] or keywords[:1]]
-    research_queries.extend([
-        "产业链 深度报告",
-        "行业 中期策略",
-        "国产替代 研究报告",
-    ])
-    return {
-        "enabled": True,
-        "a_stock": {
-            "enabled": True,
-            "cninfo_announcements": {
-                "enabled": True,
-                "lookback_days": 365,
-                "max_items": 12,
-                "categories": [
-                    "年度报告",
-                    "季度报告",
-                    "业绩预告",
-                    "权益分派",
-                    "投资者关系活动",
-                    "风险提示",
-                ],
-                "read_detail_content": True,
-                "detail_content_categories": [
-                    "业绩预告",
-                    "季度报告",
-                    "一季度报告",
-                    "三季度报告",
-                    "风险提示",
-                ],
-                "max_detail_items": 3,
-                "detail_max_chars": 6000,
-            },
-            "eastmoney_stock_news": {
-                "enabled": False,
-                "max_items": 10,
-                "lookback_days": 30,
-            },
-            "eastmoney_research_reports": {
-                "enabled": True,
-                "max_items": 8,
-            },
-            "eastmoney_global_news": {
-                "enabled": True,
-                "max_items": 5,
-                "lookback_days": 30,
-                "keywords": theme_keywords,
-            },
-            "iwencai_industry_research": {
-                "enabled": True,
-                "max_items": 8,
-                "max_items_per_query": 3,
-                "recent_days": 90,
-                "fallback_days": 180,
-                "queries": _dedupe_keep_order(research_queries),
-            },
-        },
-        "evidence_notes": {
-            "enabled": True,
-            "dry_run": False,
-        },
-        "periodic_report_fulltext": {
-            "enabled": True,
-            "report_type": "annual_report",
-        },
-        "claim_verification": {
-            "enabled": True,
-            "risk_signals": True,
-            "max_verified": 6,
-            "max_supported": 4,
-            "max_unverified": 6,
-        },
-    }
-
-
-def _build_bootstrap_stock(args: argparse.Namespace) -> dict[str, Any]:
-    keywords = _dedupe_keep_order([args.stock, *args.keyword])
-    return {
-        "name": args.stock,
-        "code": args.code,
-        "xueqiu_code": args.xueqiu_code,
-        "gid": args.gid or args.code,
-        "keywords": keywords,
-        "source_intake": _build_default_a_stock_source_intake(keywords),
-        "needs_review": True,
-    }
-
-
-def _handle_bootstrap(args: argparse.Namespace, config_path: Path, stocks: list[dict[str, Any]]) -> int:
-    if args.write_config and not args.code:
-        print("写入 config 前必须显式提供 --code，避免把半成品股票配置落库。", file=sys.stderr)
-        return 2
-
-    stock = _build_bootstrap_stock(args)
-    if args.write_config:
-        stocks.append(stock)
-        _write_stocks_config(config_path, stocks)
-        logger.info("已追加新股票配置: %s", config_path)
-        return 0
-
-    output_path = Path(args.bootstrap_output) if args.bootstrap_output else _default_bootstrap_output(args.stock)
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    output_path.write_text(json.dumps(stock, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    logger.info("已生成股票配置预览: %s", output_path)
-    return 0
-
-
 def _stock_for_fetcher(stock: dict[str, Any]) -> dict[str, str]:
     return {
         "name": str(stock.get("name", "")).strip(),
@@ -409,53 +263,51 @@ def _empty_zhihu_data() -> dict[str, Any]:
     }
 
 
-def _load_cached_zhihu_data(raw_dir: Path, stock_name: str, date_str: str) -> dict[str, Any]:
-    candidates = [raw_dir / f"report_input_{date_str}_{stock_name}.json"]
-    latest = sorted(
-        raw_dir.glob(f"report_input_*_{stock_name}.json"),
-        key=lambda p: p.stat().st_mtime,
+def _load_cached_value(
+    raw_dir: Path, exact_name: str, pattern: str, selector: Any,
+    expected_type: type, label: str = "缓存",
+) -> tuple[Any, Path | None]:
+    for path in sorted(
+        raw_dir.glob(pattern),
+        key=lambda path: (path.name == exact_name, path.stat().st_mtime),
         reverse=True,
-    )
-    candidates.extend([p for p in latest if p not in candidates])
-
-    for path in candidates:
-        if not path.exists():
-            continue
+    ):
         try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            zhihu_data = payload.get("raw_data", {}).get(stock_name, {}).get("zhihu")
-            if isinstance(zhihu_data, dict):
-                logger.info("  快速测试复用知乎缓存: %s", path.name)
-                return zhihu_data
+            value = selector(json.loads(path.read_text(encoding="utf-8")))
+            if isinstance(value, expected_type):
+                return value, path
         except Exception as exc:
-            logger.warning("读取知乎缓存失败 %s: %s", path.name, exc)
+            logger.warning("读取%s失败 %s: %s", label, path.name, exc)
+    return None, None
+
+
+def _load_cached_zhihu_data(raw_dir: Path, stock_name: str, date_str: str) -> dict[str, Any]:
+    zhihu_data, path = _load_cached_value(
+        raw_dir,
+        f"report_input_{date_str}_{stock_name}.json",
+        f"report_input_*_{stock_name}.json",
+        lambda payload: payload.get("raw_data", {}).get(stock_name, {}).get("zhihu"),
+        dict,
+        "知乎缓存",
+    )
+    if path:
+        logger.info("  快速测试复用知乎缓存: %s", path.name)
+        return zhihu_data
     return {}
 
 
 def _load_xueqiu_data(raw_dir: Path, stock_name: str, date_str: str) -> list[dict[str, Any]]:
-    candidate = raw_dir / f"xueqiu_data_{date_str}_{stock_name}.json"
-    candidates = []
-    if candidate.exists():
-        candidates.append(candidate)
-    candidates.extend(
-        p
-        for p in sorted(
-            raw_dir.glob(f"xueqiu_data_*_{stock_name}.json"),
-            key=lambda path: path.stat().st_mtime,
-            reverse=True,
-        )
-        if p not in candidates
+    posts, path = _load_cached_value(
+        raw_dir,
+        f"xueqiu_data_{date_str}_{stock_name}.json",
+        f"xueqiu_data_*_{stock_name}.json",
+        lambda payload: payload.get("posts", []),
+        list,
+        "雪球缓存",
     )
-
-    for path in candidates:
-        try:
-            payload = json.loads(path.read_text(encoding="utf-8"))
-            posts = payload.get("posts", [])
-            if isinstance(posts, list):
-                logger.info("从缓存加载 [%s] 雪球数据: %s 条 (%s)", stock_name, len(posts), path.name)
-                return [post for post in posts if isinstance(post, dict)]
-        except Exception as exc:
-            logger.warning("读取雪球缓存失败 %s: %s", path.name, exc)
+    if path:
+        logger.info("从缓存加载 [%s] 雪球数据: %s 条 (%s)", stock_name, len(posts), path.name)
+        return [post for post in posts if isinstance(post, dict)]
     logger.info("未找到任何雪球缓存文件")
     return []
 
@@ -660,17 +512,10 @@ def main(argv: list[str] | None = None) -> int:
 
     stock = _find_stock(stocks, args.stock)
     if stock is None:
-        if args.bootstrap_config:
-            return _handle_bootstrap(args, config_path, stocks)
         print(
-            f"未找到股票配置: {args.stock}。请先运行 --bootstrap-config 生成配置草稿，"
-            "补齐 code/xueqiu_code/关键词后再生成正式报告。",
+            f"未找到股票配置: {args.stock}。请检查并补充配置文件: {config_path}",
             file=sys.stderr,
         )
-        return 2
-
-    if args.bootstrap_config:
-        print(f"股票已存在于配置中: {stock.get('name')}", file=sys.stderr)
         return 2
 
     return _run_report(args, stock)
