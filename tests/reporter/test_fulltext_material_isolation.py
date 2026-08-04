@@ -241,11 +241,6 @@ def test_material_layer_fulltext_is_allowed_in_display_renderer(monkeypatch) -> 
         "reporter.sections.executive_summary_renderer._extract_thesis_points",
         lambda text, direction, claim_verification_summary=None: captured.append(text) or [],
     )
-    monkeypatch.setattr(
-        "reporter.sections.executive_summary_renderer._extract_conclusion",
-        lambda stock_name, text: "",
-    )
-
     renderer = ExecutiveSummaryRenderer()
     renderer.render({
         "stock_name": "测试股",

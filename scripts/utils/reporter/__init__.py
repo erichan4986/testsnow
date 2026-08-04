@@ -31,7 +31,6 @@ from .scoring_engine import (
     ev_expectation,
     composite_score_section,
     risk_score_section,
-    valuation_industry_judgment,
 )
 
 # 协调器（从原文件延迟导入，避免循环依赖）

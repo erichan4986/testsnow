@@ -106,3 +106,43 @@ def test_batch_a_active_owners_remain() -> None:
     } <= _top_level_definitions(
         "scripts/utils/report_skills/periodic_report_fulltext_intake_skill.py"
     )
+
+
+def test_batch_b_dead_compatibility_surfaces_are_absent() -> None:
+    expected_absent = {
+        "scripts/utils/reporter/data_fetcher.py": {
+            "stock_quote_eastmoney",
+            "fund_flow_daily",
+        },
+        "scripts/utils/reporter/scoring_engine.py": {
+            "valuation_industry_judgment",
+        },
+        "scripts/utils/reporter/sections/executive_summary_renderer.py": {
+            "_extract_conclusion",
+        },
+    }
+    for path, names in expected_absent.items():
+        assert _top_level_definitions(path).isdisjoint(names), path
+
+    sys.path.insert(0, str(SCRIPTS_DIR))
+    try:
+        reporter = importlib.import_module("utils.reporter")
+    finally:
+        sys.path.remove(str(SCRIPTS_DIR))
+    assert not hasattr(reporter, "valuation_industry_judgment")
+
+    assert "fetch_tencent_quote" in _top_level_definitions(
+        "scripts/utils/reporter/data_fetcher.py"
+    )
+    assert "compute_pillar_scores" in _top_level_definitions(
+        "scripts/utils/reporter/scoring_engine.py"
+    )
+    assert "_deterministic_conclusion" in _top_level_definitions(
+        "scripts/utils/reporter/sections/executive_summary_renderer.py"
+    )
+    assert "_baidu_fund_flow_history" in _top_level_definitions(
+        "scripts/utils/data_collector.py"
+    )
+    assert "_bridge_technical_fund_flow" in _top_level_definitions(
+        "scripts/utils/report_skills/technical_skills.py"
+    )

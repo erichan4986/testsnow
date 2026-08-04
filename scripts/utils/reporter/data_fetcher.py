@@ -89,47 +89,6 @@ def hk_stock_quote_tencent(code: str) -> Optional[Dict[str, Any]]:
     }
 
 
-def stock_quote_eastmoney(ticker_or_code: str, secid_prefix: int = 105) -> Dict:
-    """
-    东财 push2 实时行情 — 美股+港股统一接口
-    港股: stock_quote_eastmoney("02533", 116)
-    返回: price/high/low/open/volume/amount/turnover_rate/change_pct/name
-    """
-    import requests
-    url = "https://push2.eastmoney.com/api/qt/stock/get"
-    params = {
-        "secid": f"{secid_prefix}.{ticker_or_code}",
-        "fields": "f43,f44,f45,f46,f47,f48,f55,f57,f58,f59,f60,f170",
-    }
-    r = requests.get(url, timeout=10)
-    d = r.json().get("data")
-    if not d:
-        return {}
-
-    dec = d.get("f59", 3)
-    divisor = 10 ** dec
-
-    def _p(key):
-        v = d.get(key)
-        if v is None or v == "-":
-            return None
-        return round(v / divisor, dec)
-
-    return {
-        "code": d.get("f57"),
-        "name": d.get("f58"),
-        "price": _p("f43"),
-        "high": _p("f44"),
-        "low": _p("f45"),
-        "open": _p("f46"),
-        "volume": d.get("f47"),
-        "amount": d.get("f48"),
-        "turnover_rate": d.get("f55"),
-        "prev_close": _p("f60"),
-        "change_pct": round(d["f170"] / 100, 2) if d.get("f170") is not None else None,
-    }
-
-
 def hk_key_indicators(secucode: str, page_size: int = 4) -> List[Dict]:
     """
     东财 GMAININDICATOR 关键财务指标（港股，中文）
@@ -173,41 +132,6 @@ def fetch_structured_financial_history_rows(code: str) -> Dict[str, List[Dict[st
         logger.warning("[%s] optional financial indicator unavailable: %s", code, exc)
         rows["indicator"] = []
     return rows
-
-
-def fund_flow_daily(ticker_or_code: str, secid_prefix: int = 105, limit: int = 100) -> List[Dict]:
-    """
-    东财 push2his 日级资金流 — 主力/大单/中单/小单净流入
-    港股: fund_flow_daily("02533", 116)
-    """
-    import requests
-    url = "https://push2his.eastmoney.com/api/qt/stock/fflow/daykline/get"
-    params = {
-        "secid": f"{secid_prefix}.{ticker_or_code}",
-        "klt": 101,
-        "fields1": "f1,f2,f3,f7",
-        "fields2": "f51,f52,f53,f54,f55,f56,f57",
-        "lmt": limit,
-    }
-    r = requests.get(url, timeout=15)
-    d = r.json()
-    data = d.get("data")
-    if not data or not data.get("klines"):
-        return []
-
-    result = []
-    for line in data["klines"]:
-        parts = line.split(",")
-        result.append({
-            "date": parts[0],
-            "main_net": float(parts[1]),
-            "small_net": float(parts[2]),
-            "mid_net": float(parts[3]),
-            "big_net": float(parts[4]),
-            "super_big_net": float(parts[5]),
-            "main_pct": float(parts[6]) if len(parts) > 6 and parts[6] else 0,
-        })
-    return result
 
 
 def _manual_financials_for_code(code: str) -> Optional[Dict[str, Any]]:

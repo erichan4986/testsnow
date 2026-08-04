@@ -222,16 +222,6 @@ def _extract_thesis_points(
     return _guard_claim_verification_points(points, direction, claim_verification_summary)
 
 
-def _extract_conclusion(stock_name: str, text: str) -> str:
-    """保留旧测试与外部调用的兼容入口；摘要结论已改由结构化 decision 提供。"""
-    if not text:
-        return ""
-    try:
-        return _llm_extract_thesis(text).get("conclusion", "")
-    except Exception:
-        return ""
-
-
 # ---------------------------------------------------------------------------
 # PE(TTM) spread sanitizer
 # ---------------------------------------------------------------------------
