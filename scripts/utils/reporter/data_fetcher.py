@@ -857,26 +857,3 @@ def industry_fwd_pe(stock_name: str) -> Optional[float]:
     if not fwd_pes:
         return None
     return sum(fwd_pes) / len(fwd_pes)
-
-
-def fetch_index_bars(client, symbol: str, market: str = "std", days: int = 60):
-    """获取指数日K数据。兼容 mootdx 两种 API 签名。"""
-    if client is None:
-        logger.warning("mootdx client 未初始化，无法获取指数数据")
-        return None
-    try:
-        try:
-            df = client.index_bars(symbol=symbol, market=market, frequency="9", offset=days)
-        except TypeError:
-            df = client.index_bars(symbol=symbol, frequency="9", offset=days)
-        if df is None or df.empty:
-            return None
-        df = df.reset_index()
-        if "datetime" in df.columns:
-            df["date"] = pd.to_datetime(df["datetime"])
-        elif "date" in df.columns:
-            df["date"] = pd.to_datetime(df["date"])
-        return df
-    except Exception as e:
-        logger.warning(f"获取指数 {symbol} 数据失败: {e}")
-        return None

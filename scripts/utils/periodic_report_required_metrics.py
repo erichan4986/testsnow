@@ -25,10 +25,6 @@ _RELEVANT_USAGES = frozenset({
 })
 
 
-class RequiredMetricsError(Exception):
-    """Raised when required metrics extraction encounters an unrecoverable error."""
-
-
 def build_required_business_metrics(
     evidence_pack: Dict[str, Any],
     raw_text: Optional[str] = None,

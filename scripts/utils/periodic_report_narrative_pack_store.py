@@ -88,18 +88,6 @@ def _integrity(envelope: Dict[str, Any]) -> Dict[str, Any]:
     }
 
 
-def v2_note_card_fingerprint(card: Dict[str, Any]) -> str:
-    fields = (
-        "schema_version", "selection_version", "card_id", "argument_family", "argument_complete",
-        "title", "report_year", "report_type", "source_type", "source_credit", "source_block_id",
-        "source_unit_ids", "source_units", "fact_anchors", "secondary_signals", "score_parts",
-        "quality_score", "selection_reason",
-    )
-    payload = {field: deepcopy(card.get(field)) for field in fields}
-    payload["source_excerpt_hash"] = normalized_source_excerpt_hash(card.get("source_excerpt"))
-    return _hash(payload)
-
-
 def validate_periodic_narrative_pack_envelope(
     envelope: Dict[str, Any], *, stock_name: str = "", stock_code: str = "",
     report_year: object = None, report_type: object = None,

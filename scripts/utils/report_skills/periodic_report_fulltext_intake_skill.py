@@ -284,24 +284,6 @@ def _fulltext_items_from_cache_rows(
     )]
 
 
-def build_periodic_report_filing_core_facts_from_cache(
-    *,
-    stock_code: str,
-    stock_name: str,
-    cache_dir: Union[str, Path],
-    report_type: str = "annual_report",
-) -> List[Dict[str, Any]]:
-    """Build deterministic core facts from the latest local periodic report cache."""
-    rows = _load_periodic_report_cache_rows(
-        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
-        report_type=report_type, latest_only=True,
-    )
-    return _filing_core_facts_from_cache_rows(
-        rows, stock_code=stock_code, stock_name=stock_name,
-        report_type=report_type,
-    )
-
-
 def _filing_core_facts_from_cache_rows(
     rows: List[Dict[str, Any]], *, stock_code: str, stock_name: str,
     report_type: str,
@@ -337,21 +319,6 @@ def _metric_series_from_history_cache(
     return result, gross_margin_points
 
 
-def build_periodic_report_explanation_pack_from_cache(
-    *,
-    stock_code: str,
-    stock_name: str,
-    cache_dir: Union[str, Path],
-    report_type: str = "annual_report",
-) -> Dict[str, Any]:
-    """Build a deterministic financial explanation pack from local report text."""
-    rows = _load_periodic_report_cache_rows(
-        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
-        report_type=report_type, latest_only=True,
-    )
-    return _explanation_pack_from_cache_rows(rows, stock_name=stock_name)
-
-
 def _explanation_pack_from_cache_rows(
     rows: List[Dict[str, Any]], *, stock_name: str,
 ) -> Dict[str, Any]:
@@ -360,25 +327,6 @@ def _explanation_pack_from_cache_rows(
         return {}
     return build_formal_financial_explanation_pack(
         latest["raw_text"], stock_name=stock_name, source_doc=latest["path"].name,
-    )
-
-
-def build_periodic_report_narrative_cards_from_cache(
-    *,
-    stock_code: str,
-    stock_name: str,
-    cache_dir: Union[str, Path],
-    report_type: str = "annual_report",
-    max_total_cards: int = 12,
-) -> Dict[str, Any]:
-    """Build deterministic narrative cards from local report text without writing notes."""
-    rows = _load_periodic_report_cache_rows(
-        stock_code=stock_code, stock_name=stock_name, cache_dir=cache_dir,
-        report_type=report_type, latest_only=True,
-    )
-    return _narrative_cards_from_cache_rows(
-        rows, stock_code=stock_code, stock_name=stock_name,
-        report_type=report_type, max_total_cards=max_total_cards,
     )
 
 

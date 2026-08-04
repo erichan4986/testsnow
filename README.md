@@ -427,7 +427,6 @@ python3 scripts/previews/broker_research_digest_preview.py \
 | `valuation_renderer.py` | 估值分析渲染 | `ValuationRenderer` 懒加载实时行情和一致预期，渲染 PE/PB/PS、前瞻估值、财务快照、同业对比 |
 | `deep_analysis_renderer.py` | 深度分析渲染 | `DeepAnalysisRenderer` 渲染核心事实表和主题深度分析（行业逻辑/业绩路径/资金） |
 | `risk_renderer.py` | 风险分析渲染 | `RiskRenderer` 渲染风险因子、关注点、行业特定风险表 |
-| `price_target_renderer.py` | 价格目标渲染 | `PriceTargetRenderer` 渲染方向、置信度、盈亏比、目标价、触发条件 |
 | `html_dashboard_renderer.py` | HTML 仪表盘渲染 | `HTMLDashboardRenderer` 生成单页可视化快览仪表盘 |
 
 ### `scripts/utils/report_skills/` — Skill Pipeline 技能

@@ -19,7 +19,6 @@ from .curated_external_analysis_renderer import CuratedExternalAnalysisRenderer
 from .risk_renderer import RiskRenderer
 from .html_dashboard_renderer import HTMLDashboardRenderer
 from .technical_renderer import TechnicalRenderer
-from .price_target_renderer import PriceTargetRenderer
 
 __all__ = [
     "SectionRenderer",
@@ -32,5 +31,4 @@ __all__ = [
     "RiskRenderer",
     "HTMLDashboardRenderer",
     "TechnicalRenderer",
-    "PriceTargetRenderer",
 ]

@@ -54,11 +54,6 @@ def build_external_source_document(packet: Mapping[str, Any]) -> dict:
     }
 
 
-def build_external_source_documents(packets: Iterable[Mapping[str, Any]]) -> list[dict]:
-    """Canonicalize valid source packets in their caller-provided order."""
-    return [build_external_source_document(packet) for packet in packets if isinstance(packet, Mapping)]
-
-
 def validate_external_source_document(document: Mapping[str, Any]) -> dict:
     """Fail closed when source/document/block identity cannot be reconstructed."""
     if not isinstance(document, Mapping) or document.get("schema_version") != SOURCE_DOCUMENT_SCHEMA:
