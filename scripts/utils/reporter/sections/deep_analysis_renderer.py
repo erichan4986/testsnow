@@ -137,7 +137,6 @@ class DeepAnalysisRenderer:
         annual_material_rows = ()
         external_material_rows = ()
         external_topic_narratives = ()
-        annual_material_citations = {}
         annual_citation_offset = chapter4_citation_offset
         broker_citation_offset = chapter4_citation_offset
         external_citation_offset = chapter4_citation_offset
@@ -148,13 +147,10 @@ class DeepAnalysisRenderer:
                 profile,
             )
         elif profile_name == "formal_thin_external_rich":
-            annual_memo = ctx.get("annual_report_memo") or {}
-            broker_memo = ctx.get("broker_research_memo") or {}
-            material_snapshot = self._material_snapshot(ctx, True)
+            material_snapshot = ctx.get("deep_analysis_material_snapshot") or build_deep_analysis_material_snapshot(ctx)
             annual_material_rows, _ = select_annual_display_rows(
                 row for row in material_snapshot.rows if row.source_layer == "annual"
             )
-            annual_material_citations = material_snapshot.citations
             broker_owner_rows = tuple(
                 row for row in material_snapshot.rows
                 if row.source_layer == "broker" and row.body and row.attribution
@@ -180,12 +176,11 @@ class DeepAnalysisRenderer:
             profile=profile,
             chapter4_view_model=chapter4_view_model,
             chapter4_citation_offset=chapter4_citation_offset,
-            curated_external_display=curated_display if profile_name == "formal_rich" else deep_analysis_display,
+            curated_external_display=curated_display,
             curated_citation_offset=external_citation_offset,
             annual_citation_offset=annual_citation_offset,
             broker_citation_offset=broker_citation_offset,
             annual_material_rows=annual_material_rows,
-            annual_material_citations=annual_material_citations,
             external_material_rows=external_material_rows,
             external_topic_narratives=external_topic_narratives,
         )
@@ -350,7 +345,6 @@ class DeepAnalysisRenderer:
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
         annual_material_rows: tuple[MaterialRow, ...] = (),
-        annual_material_citations: Dict[int, Any] | None = None,
         external_material_rows: tuple[MaterialRow, ...] = (),
         external_topic_narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> str:
@@ -383,11 +377,10 @@ class DeepAnalysisRenderer:
             ))
         elif profile_name == "formal_thin_external_rich":
             lines.extend(self._formal_thin_external_rich_body(
-                ctx, curated_external_display,
+                ctx,
                 annual_citation_offset=annual_citation_offset,
                 broker_citation_offset=broker_citation_offset,
                 annual_material_rows=annual_material_rows,
-                annual_material_citations=annual_material_citations or {},
                 external_material_rows=external_material_rows,
                 external_topic_narratives=external_topic_narratives,
             ))
@@ -490,28 +483,24 @@ class DeepAnalysisRenderer:
     ) -> List[str]:
         """Render formal-medium reports as source-layer-first analysis."""
         lines: List[str] = []
-        citations = view_model.citations
 
         lines.extend(["### 4.1 官方材料确认：业务与财务基座", ""])
         lines.extend(self._annual_material_profile_section(
             view_model.section("4.1").rows,
             citation_offset,
             fallback="当前未取得足够官方材料，无法形成业务与财务基座。",
-            include_confirmed_financial_rows=True,
             financial_label="财务基座",
         ))
 
         lines.extend(["### 4.2 机构观点与盈利假设", ""])
         lines.extend(self._formal_medium_broker_assumption_section(
             view_model.section("4.2").rows,
-            citations,
             citation_offset,
         ))
 
         external_section = view_model.section("4.3")
         external_map = self._formal_medium_external_variable_map(
             external_section.rows,
-            citations,
             citation_offset,
             external_section.disclaimer,
             preface=preface,
@@ -533,34 +522,52 @@ class DeepAnalysisRenderer:
         citation_offset: int = 0,
         *,
         fallback: str,
-        include_confirmed_financial_rows: bool = True,
         financial_label: str = "财务变化原因",
     ) -> List[str]:
         """Format already-selected annual MaterialRows for Chapter 4.1."""
-        sections = {"confirmed": [], "annual_report_explanation": []}
-        for material_row in material_rows:
-            row = {
-                "title": material_row.title,
-                "body": material_row.body,
-                "display_group": material_row.render_role,
-                "citation_refs": list(material_row.citation_refs),
-                "argument_complete": material_row.argument_complete,
-                "editorial_slot": material_row.editorial_slot,
-            }
-            section = "confirmed" if material_row.claim_status == "formal_fact" else "annual_report_explanation"
-            sections[section].append(row)
-        return self._annual_report_business_profile_section(
-            {"status": "ready" if material_rows else "absent", "sections": sections},
-            citation_offset,
-            fallback=fallback,
-            include_confirmed_financial_rows=include_confirmed_financial_rows,
-            financial_label=financial_label,
+        lines: List[str] = []
+        portrait = next((row for row in material_rows if row.editorial_slot == "portrait"), None)
+        seen = set()
+        if portrait:
+            body = self._compact_annual_text(portrait.body, 140)
+            seen.add(re.sub(r"\s+", "", body))
+            refs = [ref + citation_offset for ref in portrait.citation_refs]
+            lines.extend(["**一句话画像**", f"- {attach_refs_to_sentence(body, refs)}", ""])
+
+        groups = (
+            ("业务结构", {"business_structure"}),
+            ("经营变化", {"operating_progress", "market_competition_outlook"}),
+            ("研发与产品进展", {"technology_product_progress"}),
+            (financial_label, {"financial_quality_explanation"}),
         )
+        for label, roles in groups:
+            rows = [row for row in material_rows if row.render_role in roles]
+            if label == financial_label:
+                rows.extend(row for row in material_rows if row.claim_status == "formal_fact" and row not in rows)
+            visible = []
+            for row in rows:
+                body = self._compact_annual_text(row.body, 140)
+                key = re.sub(r"\s+", "", body)
+                if not key or key in seen:
+                    continue
+                seen.add(key)
+                if (
+                    label == financial_label
+                    and is_informative_variable_title(row.title)
+                    and row.title not in body
+                    and "原因" not in body
+                ):
+                    body = f"{row.title}：{body}"
+                visible.append((body, [ref + citation_offset for ref in row.citation_refs]))
+            if visible:
+                lines.extend([f"**{label}**"])
+                lines.extend(f"- {attach_refs_to_sentence(body, refs)}" for body, refs in visible)
+                lines.append("")
+        return lines or [fallback, ""]
 
     def _formal_medium_broker_assumption_section(
         self,
         material_rows: tuple[MaterialRow, ...],
-        citations: Dict[int, Any],
         citation_offset: int = 0,
     ) -> List[str]:
         """Render broker research as attributed assumptions, not official facts."""
@@ -611,7 +618,6 @@ class DeepAnalysisRenderer:
     def _formal_medium_external_variable_map(
         self,
         material_rows: tuple[MaterialRow, ...],
-        citations: Dict[int, Any],
         citation_offset: int = 0,
         disclaimer: str = "",
         preface: bool = False,
@@ -758,11 +764,9 @@ class DeepAnalysisRenderer:
     def _formal_thin_external_rich_body(
         self,
         ctx: Dict[str, Any],
-        curated_display: Dict[str, Any] | None,
         annual_citation_offset: int = 0,
         broker_citation_offset: int = 0,
         annual_material_rows: tuple[MaterialRow, ...] = (),
-        annual_material_citations: Dict[int, Any] | None = None,
         external_material_rows: tuple[MaterialRow, ...] = (),
         external_topic_narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> List[str]:
@@ -779,7 +783,6 @@ class DeepAnalysisRenderer:
         lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
         map_md = self._formal_medium_external_variable_map(
             external_material_rows,
-            annual_material_citations or {},
             citation_offset=annual_citation_offset,
             disclaimer="以下内容为外部材料梳理，仅作为专业观察，不等同于官方确认事实；不参与评分、风险评分或目标价。",
             heading="### 4.3 外部观点与待验证变量（Preview，不参与评分）",
@@ -792,12 +795,6 @@ class DeepAnalysisRenderer:
         ])
 
         return lines
-
-    @staticmethod
-    def _material_snapshot(ctx: Dict[str, Any], enabled: bool) -> Any:
-        if not enabled:
-            return None
-        return ctx.get("deep_analysis_material_snapshot") or build_deep_analysis_material_snapshot(ctx)
 
     @staticmethod
     def _max_snapshot_ref(snapshot: Any, layers: set[str]) -> int:
@@ -870,81 +867,6 @@ class DeepAnalysisRenderer:
             "",
         ])
         return lines
-
-    def _annual_report_business_profile_section(
-        self,
-        memo: Dict[str, Any],
-        citation_offset: int = 0,
-        fallback: str = "当前未取得足够年报材料，无法形成业务画像。",
-        include_confirmed_financial_rows: bool = True,
-        financial_label: str = "财务变化原因",
-    ) -> List[str]:
-        """Project annual memo rows into a compact business profile."""
-        lines: List[str] = []
-        secs = memo.get("sections") or {}
-        if (memo or {}).get("status") not in {"ready", "deterministic_fallback"}:
-            return [fallback, ""]
-
-        explanation_rows = [
-            dict(row)
-            for row in (secs.get("annual_report_explanation") or [])
-            if isinstance(row, dict) and str(row.get("body") or "").strip()
-        ]
-        confirmed_rows = [
-            r for r in (secs.get("confirmed") or [])
-            if isinstance(r, dict) and not self._is_suspicious_zero_annual_row(r)
-        ]
-
-        product_rows = self._annual_rows_by_group(explanation_rows, "business_structure")
-        operating_rows = self._annual_rows_by_group(explanation_rows, "operating_progress")
-        technology_rows = self._annual_rows_by_group(explanation_rows, "technology_product_progress")
-        portrait_row = next((row for row in explanation_rows if row.get("editorial_slot") == "portrait"), None)
-        if portrait_row is None:
-            portrait_row = self._select_annual_portrait_row(product_rows) or self._select_annual_portrait_row(operating_rows)
-            portrait_row = portrait_row or self._select_annual_portrait_row(technology_rows)
-        if portrait_row:
-            refs = self._display_refs(portrait_row, citation_offset)
-            portrait = self._compact_annual_text(str(portrait_row.get("body") or ""), 140)
-            lines.extend(["**一句话画像**", f"- {attach_refs_to_sentence(portrait, refs)}", ""])
-
-        portrait_key = self._annual_row_text_key(portrait_row) if portrait_row else ""
-        seen_display_keys = {portrait_key} if portrait_key else set()
-        financial_rows = self._annual_rows_by_group(explanation_rows, "financial_quality_explanation")
-        if include_confirmed_financial_rows:
-            financial_rows.extend(confirmed_rows)
-        groups = (
-            ("业务结构", product_rows),
-            ("经营变化", operating_rows + self._annual_rows_by_group(explanation_rows, "market_competition_outlook")),
-            ("研发与产品进展", technology_rows),
-            (financial_label, financial_rows),
-        )
-        for label, rows in groups:
-            visible_rows = []
-            for row in rows:
-                key = self._annual_row_text_key(row)
-                if not key or key in seen_display_keys:
-                    continue
-                seen_display_keys.add(key)
-                visible_rows.append(row)
-            rows = visible_rows
-            if not rows:
-                continue
-            lines.append(f"**{label}**")
-            for row in rows:
-                refs = self._display_refs(row, citation_offset)
-                body = self._annual_row_visible_body(row, include_title=(label == financial_label))
-                lines.append(f"- {attach_refs_to_sentence(body, refs)}")
-            lines.append("")
-        if not lines and not (confirmed_rows or explanation_rows):
-            lines.extend([fallback, ""])
-        return lines
-
-    @staticmethod
-    def _is_suspicious_zero_annual_row(row: Dict[str, Any]) -> bool:
-        return DeepAnalysisRenderer._is_suspicious_zero_financial_fact({
-            "fact": row.get("title"),
-            "data": row.get("body"),
-        })
 
     @staticmethod
     def _broker_row_author(row: Dict[str, Any], memo: Dict[str, Any]) -> str:
@@ -1027,64 +949,6 @@ class DeepAnalysisRenderer:
         value = re.sub(r"\s*([，,；;。])\s*", r"\1", value)
         value = re.sub(r"\s+", " ", value)
         return value.strip(" ：:；;。")
-
-    def _annual_rows_by_group(self, rows: List[Dict[str, Any]], group: str) -> List[Dict[str, Any]]:
-        return [
-            row for row in rows
-            if str(row.get("argument_family") or row.get("display_group") or "").strip() == group
-        ]
-
-    @staticmethod
-    def _annual_row_text_key(row: Dict[str, Any] | None) -> str:
-        if not isinstance(row, dict):
-            return ""
-        return re.sub(r"\s+", "", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))
-
-    def _annual_row_visible_body(self, row: Dict[str, Any], include_title: bool = False) -> str:
-        body = self._compact_annual_text(str(row.get("body") or ""), 140)
-        title = str(row.get("title") or "").strip()
-        if include_title and is_informative_variable_title(title) and title not in body and "原因" not in body:
-            return f"{title}：{body}"
-        return body
-
-    @staticmethod
-    def _select_annual_portrait_row(rows: List[Dict[str, Any]]) -> Dict[str, Any] | None:
-        rows = [row for row in rows if (re.search(r"[。！？；;]$", str(row.get("body") or "").strip()) or re.search(r"(?:客户|市场|领域|需求|解决方案|产品线|业务)$", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))) and re.search(r"(?:主营业务|主要业务|增长主线|是一家从事|公司.{0,12}(?:从事|建立|开发)|报告期内，公司)", DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or "")))]
-        if not rows:
-            return None
-
-        def score(row: Dict[str, Any]) -> int:
-            body = DeepAnalysisRenderer._compact_annual_text(str(row.get("body") or ""))
-            value = 0
-            if "公司" in body:
-                value += 3
-            if "主营业务" in body:
-                value += 5
-            if "从事" in body:
-                value += 4
-            value += min(5, sum(
-                1 for term in ("设计", "开发", "研发", "制造", "生产", "测试", "系统解决方案")
-                if term in body
-            ))
-            if "产品线" in body:
-                value += 2
-            if any(term in body for term in ("客户", "应用", "行业", "市场")):
-                value += 2
-            if "介绍" in body and len(body) < 60:
-                value -= 3
-            return value
-
-        return max(rows, key=score)
-
-    @staticmethod
-    def _display_refs(row: Dict[str, Any], offset: int = 0) -> List[int]:
-        refs: List[int] = []
-        for ref in row.get("citation_refs") or []:
-            try:
-                refs.append(int(ref) + offset)
-            except (TypeError, ValueError):
-                continue
-        return refs
 
     @staticmethod
     def _compact_annual_text(text: str, limit: int = 140) -> str:
@@ -1402,13 +1266,6 @@ class DeepAnalysisRenderer:
             if not is_formal_display_source(meta):
                 return False
         return True
-
-    @staticmethod
-    def _truncate_title(title: Any, max_chars: int) -> str:
-        text = str(title or "")
-        if len(text) <= max_chars:
-            return text
-        return text[: max_chars - 3].rstrip() + "..."
 
     def _verified_claim_summary_section(self, summary: Any) -> str:
         """Render verified/supported claim verification rows as read-only facts."""

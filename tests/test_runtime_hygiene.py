@@ -254,3 +254,20 @@ def test_batch_b_dead_compatibility_surfaces_are_absent() -> None:
     assert "_bridge_technical_fund_flow" in _top_level_definitions(
         "scripts/utils/report_skills/technical_skills.py"
     )
+
+
+def test_batch_g1_duplicate_chapter4_annual_projection_is_absent() -> None:
+    source = (
+        SCRIPTS_DIR / "utils" / "reporter" / "sections" / "deep_analysis_renderer.py"
+    ).read_text(encoding="utf-8")
+    for name in (
+        "_annual_report_business_profile_section",
+        "_annual_rows_by_group",
+        "_annual_row_text_key",
+        "_annual_row_visible_body",
+        "_select_annual_portrait_row",
+        "_is_suspicious_zero_annual_row",
+        "_material_snapshot",
+        "_truncate_title",
+    ):
+        assert f"def {name}(" not in source

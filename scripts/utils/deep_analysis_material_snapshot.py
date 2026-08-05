@@ -389,6 +389,12 @@ def _merge_core_financial_facts(rows: Iterable[MaterialRow]) -> MaterialRow:
 def _project_annual_display_row(row: MaterialRow) -> tuple[MaterialRow | None, str]:
     if not row.body or not row.citation_refs:
         return None, "empty"
+    if (
+        row.claim_status == "formal_fact"
+        and "0.00亿元" in row.body
+        and any(term in row.title for term in ("营收", "营业收入", "收入", "利润", "净利润", "现金流"))
+    ):
+        return None, "suspicious_zero_financial_fact"
     kept = []
     reasons = []
     for segment in re.split(r"(?<=[。！？；;])", row.body):

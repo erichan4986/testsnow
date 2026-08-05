@@ -105,10 +105,10 @@ def test_external_variable_preface_is_only_added_when_freshness_gate_allows_it()
         (1,), (), title="订单变量", body="外部材料称订单节奏需跟踪。", render_role="external_variable",
     )
     with_preface = renderer._formal_medium_external_variable_map(
-        (row,), {1: {"source": "微信公众号精选观察"}}, preface=True,
+        (row,), preface=True,
     )
     without_preface = renderer._formal_medium_external_variable_map(
-        (row,), {1: {"source": "微信公众号精选观察"}}, preface=False,
+        (row,), preface=False,
     )
     assert any("正式材料的时间点较早" in line for line in with_preface)
     assert not any("正式材料的时间点较早" in line for line in without_preface)
@@ -133,8 +133,7 @@ def test_external_argument_v2_renders_delta_and_full_evidence_without_truncation
     )
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        rows, {1: {"source": "微信公众号精选观察"}, 2: {"source": "知乎精选观察"}},
-        disclaimer="仅作观察。",
+        rows, disclaimer="仅作观察。",
     ))
 
     assert "相对正式材料/机构假设，外部材料新增的待验证点：中际旭创800G交付节奏仍需验证[^1]。" in rendered
@@ -162,7 +161,7 @@ def test_external_variable_map_separates_and_orders_peer_industry_background():
     )
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, disclaimer="仅作观察。",
+        rows, disclaimer="仅作观察。",
     ))
 
     assert rendered.index("测试股产品完成客户导入") < rendered.index("同业/行业背景（Preview）")
@@ -200,7 +199,6 @@ def test_external_variable_map_groups_topics_within_each_entity_scope():
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
         rows,
-        {ref: {"source": "外部观察"} for ref in range(11, 15)},
         citation_offset=20,
         disclaimer="仅作观察。",
     ))
@@ -237,7 +235,7 @@ def test_external_variable_map_renders_one_extractively_joined_paragraph_per_top
     )),)
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, citation_offset=10,
+        rows, citation_offset=10,
         disclaimer="仅作观察。", narratives=narratives,
     ))
 
@@ -266,8 +264,7 @@ def test_external_topic_narrative_honors_separate_paragraphs_and_existing_connec
     )),)
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        rows, {index: {"source": "外部"} for index in range(1, 4)},
-        disclaimer="仅作观察。", narratives=narratives,
+        rows, disclaimer="仅作观察。", narratives=narratives,
     ))
 
     assert "产品进入验证[^1]；同时，平台完成迭代[^2]。\n\n另据外部材料，竞品推出新方案[^3]。" in rendered
@@ -294,8 +291,7 @@ def test_external_variable_map_falls_back_only_for_topic_without_valid_narrative
     )),)
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        rows, {1: {"source": "外部A"}, 2: {"source": "外部B"}}, disclaimer="仅作观察。",
-        narratives=narratives,
+        rows, disclaimer="仅作观察。", narratives=narratives,
     ))
 
     assert "外部材料称，技术与产品的新增待验证点包括：" in rendered
@@ -314,7 +310,7 @@ def test_external_variable_map_empty_narrative_skips_topic_without_raw_fallback(
     narratives = (ExternalTopicNarrative("target", "technology_product", ()),)
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        (row,), {1: {"source": "外部观察"}}, disclaimer="仅作观察。", narratives=narratives,
+        (row,), disclaimer="仅作观察。", narratives=narratives,
     ))
 
     assert "**技术与产品**" not in rendered
@@ -331,7 +327,7 @@ def test_verified_external_multiline_unit_keeps_inline_refs_on_each_paragraph():
     )
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        (row,), {7: {"source": "外部观察"}}, disclaimer="仅作观察。",
+        (row,), disclaimer="仅作观察。",
     ))
 
     assert "外部材料称，财务质量的新增待验证点包括：收入与毛利均实现增长[^7]；同时，公司持续推进产品迭代并形成贡献[^7]。" in rendered
@@ -354,7 +350,7 @@ def test_verified_external_topic_wraps_long_fallback_without_dropping_rows():
     )
 
     rendered = "\n".join(renderer._formal_medium_external_variable_map(
-        rows, {index: {"source": "外部观察"} for index in range(1, 4)}, disclaimer="仅作观察。",
+        rows, disclaimer="仅作观察。",
     ))
 
     assert rendered.count("外部材料称，财务质量的新增待验证点包括：") == 1
@@ -364,35 +360,7 @@ def test_verified_external_topic_wraps_long_fallback_without_dropping_rows():
     assert rendered.count("外部新增待验证变量：") == 0
 
 
-def test_annual_portrait_prefers_a_complete_sentence():
-    renderer = DeepAnalysisRenderer()
-    rows = [
-        {"body": "公司主营业务为高端光通信收发模块，为客户提供低成"},
-        {"body": "公司主营业务为高端光通信收发模块，服务云计算数据中心客户"},
-    ]
-
-    assert renderer._select_annual_portrait_row(rows) == rows[1]
-
-
-def test_annual_portrait_requires_company_scope():
-    renderer = DeepAnalysisRenderer()
-    narrow = {"body": "公司NFC产品广泛应用于金融POS、智能门锁和门禁等市场。"}
-    company = {"body": "公司主营业务为芯片设计，并为多个行业客户提供产品与系统解决方案。"}
-
-    assert renderer._select_annual_portrait_row([narrow]) is None
-    assert renderer._select_annual_portrait_row([narrow, company]) == company
-
-
-def test_annual_portrait_accepts_company_product_matrix_without_terminal_punctuation():
-    renderer = DeepAnalysisRenderer()
-    matrix = {
-        "body": "在子系列产品基础上，公司开发了FPGA、RF-FPGA、PSoC、RFSoC、FPAI等多个系列产品类型，逻辑资源从50K至4000K，算力从4TOPS至128TOPS，广泛应用于工业控制、测试测量、电力能源、消费电子、音视频、人工智能、卫星通信以及高可靠等领域，为客户提供低成本、低功耗、高性能、高可靠性的多元产品矩阵，全面匹配多样化应用需求。安全与识别产品线拥有多个芯片方向，是国内领先供应商",
-    }
-
-    assert renderer._select_annual_portrait_row([matrix]) == matrix
-
-
-def test_annual_portrait_falls_back_after_an_ineligible_business_pool():
+def test_annual_profile_does_not_select_an_unassigned_portrait():
     renderer = DeepAnalysisRenderer()
     rows = (
         MaterialRow("annual:narrow", "公司NFC产品广泛应用于门禁市场。", "annual", "formal_explanation", (1,), ("annual:narrow",), body="公司NFC产品广泛应用于门禁市场。", render_role="business_structure"),
@@ -403,9 +371,27 @@ def test_annual_portrait_falls_back_after_an_ineligible_business_pool():
         rows,
         fallback="无材料",
     ))
-    portrait = rendered.split("**一句话画像**", 1)[1].split("**业务结构**", 1)[0]
 
-    assert "主营业务覆盖芯片设计、测试及系统解决方案" in portrait
+    assert "**一句话画像**" not in rendered
+    assert "公司NFC产品广泛应用于门禁市场" in rendered
+    assert "主营业务覆盖芯片设计、测试及系统解决方案" in rendered
+
+
+def test_annual_profile_renders_the_selector_assigned_portrait_once():
+    renderer = DeepAnalysisRenderer()
+    portrait = "公司主营业务覆盖芯片设计、测试及系统解决方案。"
+    rows = (
+        MaterialRow(
+            "annual:portrait", portrait, "annual", "formal_explanation", (1,),
+            ("annual:portrait",), body=portrait, render_role="business_structure",
+            editorial_slot="portrait",
+        ),
+    )
+
+    rendered = "\n".join(renderer._annual_material_profile_section(rows, fallback="无材料"))
+
+    assert rendered.count("**一句话画像**") == 1
+    assert rendered.count(portrait.rstrip("。")) == 1
 
 
 def test_compact_annual_text_never_cuts_an_over_limit_sentence():
@@ -1567,6 +1553,49 @@ def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) ->
     }
 
 
+def test_formal_thin_preserves_single_institution_broker_sections_forecast_risk_and_refs():
+    renderer = DeepAnalysisRenderer()
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
+        "annual_report_memo": _annual_memo_fixture(),
+        "broker_research_memo": {
+            "status": "single_institution",
+            "sections": [{
+                "title": "产品判断", "body": "FPGA产品有望进入放量阶段。",
+                "author": "测试证券", "citation_refs": [1],
+            }],
+            "forecast_ranges": [{
+                "metric": "归母净利润", "period": "2026年", "range": "12至14亿元",
+                "author": "测试证券", "citation_refs": [2],
+            }],
+            "risks": [{
+                "body": "客户验证进度可能不及预期。", "author": "测试证券",
+                "citation_refs": [3],
+            }],
+            "citations": {
+                1: {"source": "测试证券", "author": "测试证券", "title": "产品判断研报"},
+                2: {"source": "测试证券", "author": "测试证券", "title": "盈利预测研报"},
+                3: {"source": "测试证券", "author": "测试证券", "title": "风险提示研报"},
+            },
+        },
+        "deep_analysis_display": {},
+        "core_facts": [],
+    }
+
+    result = _render(renderer, ctx)
+
+    assert "**单篇研报观点 / 单机构观点**" in result
+    assert "**产品判断**：测试证券研报认为：FPGA产品有望进入放量阶段" in result
+    assert "测试证券研报预计：归母净利润 2026年 12至14亿元" in result
+    assert "测试证券研报提示：客户验证进度可能不及预期" in result
+    assert all(ref in result for ref in ("[^5]", "[^6]", "[^7]"))
+    assert "[^5] | **测试证券** | 作者: 测试证券 | 《产品判断研报》" in result
+    assert "[^6] | **测试证券** | 作者: 测试证券 | 《盈利预测研报》" in result
+    assert "[^7] | **测试证券** | 作者: 测试证券 | 《风险提示研报》" in result
+
+
 def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
     renderer = DeepAnalysisRenderer()
     ctx = {
@@ -1852,18 +1881,6 @@ def test_formal_rich_sanitizes_forward_pe_and_ps_spread_in_deep_analysis_table()
 
 
 
-
-
-def test_annual_portrait_selection_uses_generic_company_scope_not_chip_keywords():
-    renderer = DeepAnalysisRenderer()
-    rows = [
-        {"body": "光模块、FPGA、安全与识别、智能电表产品线介绍。"},
-        {"body": "公司从事精密设备设计、开发、测试，并提供系统解决方案，面向多个行业客户。"},
-    ]
-
-    portrait = renderer._select_annual_portrait_row(rows)
-
-    assert portrait["body"].startswith("公司从事精密设备")
 
 
 def test_annual_selector_preserves_business_prefix_before_mode_noise():

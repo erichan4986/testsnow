@@ -699,6 +699,28 @@ def test_select_annual_display_rows_filters_formal_fact_noise_before_admission()
     assert diagnostics["annual_rejected_by_reason"] == {"audit_boilerplate": 1}
 
 
+def test_select_annual_display_rows_rejects_suspicious_zero_fact_but_keeps_explanation():
+    rows = (
+        _annual_display_row(
+            "营业收入：0.00亿元", status="formal_fact",
+            role="financial_quality_explanation", row_id="annual:zero-fact",
+            title="营业收入", ref=1,
+        ),
+        _annual_display_row(
+            "营业收入为0.00亿元，主要系该业务尚未形成规模化销售所致。",
+            status="formal_explanation", role="financial_quality_explanation",
+            row_id="annual:zero-explanation", title="经营变化", ref=2,
+        ),
+    )
+
+    selected, diagnostics = select_annual_display_rows(rows)
+
+    assert [row.row_id for row in selected] == ["annual:zero-explanation"]
+    assert diagnostics["annual_rejected_by_reason"] == {
+        "suspicious_zero_financial_fact": 1,
+    }
+
+
 def test_select_annual_display_rows_uses_body_not_title_for_noise_and_role_admission():
     rows = [
         _annual_display_row(
