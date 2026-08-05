@@ -1,6 +1,7 @@
 """Tests for DeepAnalysisRenderer."""
 
 import re
+from types import SimpleNamespace
 
 import pytest
 from scripts.utils.deep_analysis_material_snapshot import (
@@ -1485,72 +1486,44 @@ def test_thin_all_profile_renders_material_insufficient_layout():
     assert "### 4.2" not in result
 
 
-def _annual_memo_fixture(status: str = "ready", forbidden_card: bool = False) -> dict:
-    cards = [
-        {
-            "title": "主营业务与产品",
-            "body": "公司增长主线来自 FPGA 与智能电表 MCU。",
-            "internal_refs": ["annual:card:business_model:0"],
-            "citation_refs": [1],
-            "source_ref_ids": ["periodic_report_narrative_evidence:business_model:0"],
-            "argument_family": "business_structure",
-            "argument_complete": True,
-        },
-        {
-            "title": "研发与产品进展",
-            "body": "新一代 FPGA 进入客户验证阶段。",
-            "internal_refs": ["annual:card:rd_product_progress:0"],
-            "citation_refs": [2],
-            "source_ref_ids": ["periodic_report_narrative_evidence:rd_product_progress:0"],
-            "argument_family": "technology_product_progress",
-            "argument_complete": True,
-        },
-        {
-            "title": "管理层市场判断",
-            "body": "管理层认为工业与汽车电子需求保持韧性。",
-            "internal_refs": ["annual:card:management_market_view:0"],
-            "citation_refs": [3],
-            "source_ref_ids": ["periodic_report_narrative_evidence:management_market_view:0"],
-            "argument_family": "market_competition_outlook",
-            "argument_complete": True,
-        },
-        {
-            "title": "营业收入",
-            "body": "营业收入 39.82 亿元。",
-            "internal_refs": ["fact:营业收入"],
-            "citation_refs": [4],
-            "source_ref_ids": ["periodic_report_filing_fact:revenue"],
-            "argument_family": "financial_quality_explanation",
-            "argument_complete": False,
-        },
-    ]
-    if forbidden_card:
-        cards.append({
-            "title": "雪球观点",
-            "body": "雪球上有人认为公司订单饱满。[^5]",
-            "internal_refs": ["annual:card:forbidden:0"],
-            "citation_refs": [5],
-            "source_ref_ids": ["periodic_report_narrative_evidence:forbidden:0"],
-        })
+def _annual_material_fixture() -> dict:
     return {
-        "schema": "annual_report_memo.v1",
-        "status": status,
-        "source_layer": "annual_report",
-        "sections": {
-            "confirmed": [cards[3]],
-            "annual_report_explanation": cards[:3],
-            "not_disclosed": [{"title": "未充分披露项", "body": "重要客户、订单、产能、供应链、管理层指引或细分拆分未在正式材料中充分披露。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
-            "inconclusive": [{"title": "不能下结论", "body": "不得用营收/利润推断主力资金或市场行为。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
+        "formal_financial_fact_pack": {
+            "facts": [{"metric": "营业收入", "value": "39.82 亿元", "source": "2025年度报告"}],
         },
-        "validation": {"warnings": [], "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
-        "citations": {
-            1: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_narrative_evidence"},
-            2: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_narrative_evidence"},
-            3: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_narrative_evidence"},
-            4: {"source": "公司年报", "title": "2025年度报告", "source_type": "periodic_report_filing_fact"},
-            5: {"source": "雪球", "title": "雪球评论", "source_type": "social_media"},
-        },
+        "periodic_report_narrative_evidence_cards": {"cards": [
+            {
+                "card_id": "business", "title": "主营业务与产品",
+                "source_excerpt": "公司增长主线来自 FPGA 与智能电表 MCU。",
+                "source_block_id": "periodic_report_narrative_evidence:business_model:0",
+                "argument_family": "business_structure", "argument_complete": True,
+            },
+            {
+                "card_id": "product", "title": "研发与产品进展",
+                "source_excerpt": "新一代 FPGA 进入客户验证阶段。",
+                "source_block_id": "periodic_report_narrative_evidence:rd_product_progress:0",
+                "argument_family": "technology_product_progress", "argument_complete": True,
+            },
+            {
+                "card_id": "market", "title": "管理层市场判断",
+                "source_excerpt": "管理层认为工业与汽车电子需求保持韧性。",
+                "source_block_id": "periodic_report_narrative_evidence:management_market_view:0",
+                "argument_family": "market_competition_outlook", "argument_complete": True,
+            },
+        ]},
     }
+
+
+def _broker_material_item(card_type: str, content: str, cluster: str, title: str) -> SimpleNamespace:
+    return SimpleNamespace(
+        title=title, content=content, author="测试证券",
+        extra={
+            "source_type": "broker_research", "claim_status": "professional_analysis",
+            "confirmed_fact": False, "scoring_eligible": False, "risk_score_eligible": False,
+            "institution": "测试证券", "card_type": card_type,
+            "viewpoint_cluster": cluster,
+        },
+    )
 
 
 def test_formal_thin_preserves_single_institution_broker_sections_forecast_risk_and_refs():
@@ -1559,27 +1532,12 @@ def test_formal_thin_preserves_single_institution_broker_sections_forecast_risk_
         "stock_name": "复旦微电",
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
         "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {
-            "status": "single_institution",
-            "sections": [{
-                "title": "产品判断", "body": "FPGA产品有望进入放量阶段。",
-                "author": "测试证券", "citation_refs": [1],
-            }],
-            "forecast_ranges": [{
-                "metric": "归母净利润", "period": "2026年", "range": "12至14亿元",
-                "author": "测试证券", "citation_refs": [2],
-            }],
-            "risks": [{
-                "body": "客户验证进度可能不及预期。", "author": "测试证券",
-                "citation_refs": [3],
-            }],
-            "citations": {
-                1: {"source": "测试证券", "author": "测试证券", "title": "产品判断研报"},
-                2: {"source": "测试证券", "author": "测试证券", "title": "盈利预测研报"},
-                3: {"source": "测试证券", "author": "测试证券", "title": "风险提示研报"},
-            },
-        },
+        **_annual_material_fixture(),
+        "broker_research_digest_items": [
+            _broker_material_item("broker_product_driver", "FPGA产品有望进入放量阶段。", "product", "产品判断研报"),
+            _broker_material_item("broker_earnings_forecast", "12至14亿元", "forecast", "盈利预测研报"),
+            _broker_material_item("broker_risk_note", "客户验证进度可能不及预期。", "risk", "风险提示研报"),
+        ],
         "deep_analysis_display": {},
         "core_facts": [],
     }
@@ -1587,13 +1545,13 @@ def test_formal_thin_preserves_single_institution_broker_sections_forecast_risk_
     result = _render(renderer, ctx)
 
     assert "**单篇研报观点 / 单机构观点**" in result
-    assert "**产品判断**：测试证券研报认为：FPGA产品有望进入放量阶段" in result
-    assert "测试证券研报预计：归母净利润 2026年 12至14亿元" in result
+    assert "**产业与产品判断**：测试证券研报认为：FPGA产品有望进入放量阶段" in result
+    assert "测试证券研报预计：研报盈利预测 未拆分 测试证券认为：12至14亿元" in result
     assert "测试证券研报提示：客户验证进度可能不及预期" in result
     assert all(ref in result for ref in ("[^5]", "[^6]", "[^7]"))
-    assert "[^5] | **测试证券** | 作者: 测试证券 | 《产品判断研报》" in result
-    assert "[^6] | **测试证券** | 作者: 测试证券 | 《盈利预测研报》" in result
-    assert "[^7] | **测试证券** | 作者: 测试证券 | 《风险提示研报》" in result
+    assert "[^5] | **券商研报** | 作者: 测试证券 | 《产品判断研报》" in result
+    assert "[^6] | **券商研报** | 作者: 测试证券 | 《盈利预测研报》" in result
+    assert "[^7] | **券商研报** | 作者: 测试证券 | 《风险提示研报》" in result
 
 
 def _formal_thin_broker_snapshot(*rows):
@@ -1640,7 +1598,6 @@ def test_formal_thin_broker_uses_snapshot_rows_global_refs_and_source_order():
             "citations": {ref: {"source": "基线", "title": f"基线{ref}"} for ref in range(1, 5)},
         },
         "deep_analysis_material_snapshot": snapshot,
-        "broker_research_memo": {"status": "absent", "citations": {}},
         "deep_analysis_display": {},
         "core_facts": [],
     }
@@ -1672,7 +1629,6 @@ def test_formal_thin_broker_generic_attribution_is_not_duplicated():
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
         "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
         "deep_analysis_material_snapshot": snapshot,
-        "broker_research_memo": {"status": "absent", "citations": {}},
         "deep_analysis_display": {},
         "core_facts": [],
     }
@@ -1683,13 +1639,12 @@ def test_formal_thin_broker_generic_attribution_is_not_duplicated():
     assert "研报研报预计" not in result
 
 
-def test_formal_thin_empty_broker_snapshot_fails_closed_despite_raw_memo_status():
+def test_formal_thin_empty_broker_snapshot_fails_closed():
     ctx = {
         "stock_name": "复旦微电",
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
         "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
         "deep_analysis_material_snapshot": _formal_thin_broker_snapshot(),
-        "broker_research_memo": {"status": "single_institution", "citations": {}},
         "deep_analysis_display": {},
         "core_facts": [],
     }
@@ -1706,8 +1661,7 @@ def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
         "stock_name": "复旦微电",
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
         "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
+        **_annual_material_fixture(),
         "deep_analysis_display": {
             "_curated_external_argument_cards": [
                 _external_argument_row(
@@ -1767,8 +1721,7 @@ def test_formal_thin_owner_filter_keeps_full_snapshot_external_citation_offset()
         "stock_name": "复旦微电",
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
         "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
-        "annual_report_memo": _annual_memo_fixture(),
-        "broker_research_memo": {"status": "absent", "citations": {}},
+        **_annual_material_fixture(),
         "deep_analysis_display": {
             "_curated_external_argument_cards": [{
                 "schema_version": "curated_external_argument_card.v4",
@@ -1834,7 +1787,7 @@ def test_formal_rich_keeps_legacy_headings():
             "events_catalysts": "",
             "citations": {1: {"source": "公告", "title": "年报"}},
         },
-        "annual_report_memo": _annual_memo_fixture(),
+        **_annual_material_fixture(),
         "core_facts": [],
     }
     result = _render(renderer, ctx)
@@ -1862,10 +1815,10 @@ def test_formal_rich_keeps_legacy_headings():
 
 
 
-def test_formal_rich_does_not_emit_unused_annual_memo_citations():
+def test_formal_rich_does_not_emit_unused_annual_material_citations():
     renderer = DeepAnalysisRenderer()
-    memo = _annual_memo_fixture()
-    memo["citations"][1]["title"] = "Annual Memo Only Source"
+    annual = _annual_material_fixture()
+    annual["periodic_report_narrative_evidence_cards"]["cards"][0]["title"] = "Annual Material Only Source"
     ctx = {
         "stock_name": "中际旭创",
         "deep_analysis_evidence_profile": {"profile": "formal_rich"},
@@ -1877,12 +1830,12 @@ def test_formal_rich_does_not_emit_unused_annual_memo_citations():
             "events_catalysts": "",
             "citations": {1: {"source": "公告", "title": "正式引用"}},
         },
-        "annual_report_memo": memo,
+        **annual,
         "core_facts": [],
     }
     result = _render(renderer, ctx)
 
-    assert "Annual Memo Only Source" not in result
+    assert "Annual Material Only Source" not in result
     assert "公司增长主线来自 FPGA" not in result
 
 

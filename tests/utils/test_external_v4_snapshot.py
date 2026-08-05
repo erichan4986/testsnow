@@ -40,14 +40,9 @@ def _display(tmp_path) -> dict:
 def test_snapshot_reads_v4_exact_unit_text_and_preserves_external_offset(tmp_path):
     snapshot = build_deep_analysis_material_snapshot({
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
-        "annual_report_memo": {
-            "status": "ready",
-            "sections": {"confirmed": [{
-                "title": "营业收入", "body": "营业收入10亿元。", "citation_refs": [1],
-            }]},
-            "citations": {1: {"title": "公司年报"}},
+        "formal_financial_fact_pack": {
+            "facts": [{"metric": "营业收入", "value": "10亿元", "source": "公司年报"}],
         },
-        "broker_research_memo": {},
         "deep_analysis_display": _display(tmp_path),
     })
 

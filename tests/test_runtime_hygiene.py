@@ -285,3 +285,22 @@ def test_batch_g2_formal_thin_broker_raw_memo_bypass_is_absent() -> None:
         'ctx.get("broker_research_memo")',
     ):
         assert token not in source
+
+
+def test_batch_h1_chapter4_memo_intermediate_schemas_are_absent() -> None:
+    sources = "\n".join(
+        (SCRIPTS_DIR / path).read_text(encoding="utf-8")
+        for path in (
+            "utils/deep_analysis_material_snapshot.py",
+            "utils/report_skills/synthesis_skills.py",
+        )
+    )
+    for token in (
+        "annual_report_memo.v1",
+        "broker_research_memo.v1",
+        "def _build_annual_report_memo(",
+        "def _build_broker_research_memo(",
+        'ctx.get("annual_report_memo")',
+        'ctx.get("broker_research_memo")',
+    ):
+        assert token not in sources

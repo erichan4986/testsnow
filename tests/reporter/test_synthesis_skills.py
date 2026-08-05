@@ -2532,6 +2532,69 @@ def test_evidence_profile_has_annual_memo_fields():
     assert "formal_thin_layout_variant" in profile
 
 
+def _formal_diagnostics(*, annual="absent", broker="absent", usable=0, institutions=()):
+    return {
+        "annual_status": annual,
+        "annual_confirmed_row_count": 0,
+        "annual_explanation_row_count": 0,
+        "annual_warning_count": 0,
+        "formal_citation_candidate_count": int(annual == "ready") + usable,
+        "broker_status": broker,
+        "broker_input_item_count": usable,
+        "broker_usable_card_count": usable,
+        "broker_content_families": [],
+        "broker_institutions": list(institutions),
+    }
+
+
+def test_synthesis_run_publishes_formal_diagnostics_without_memo_contexts():
+    skill = SynthesisSkill(synthesizer=FakeSynthesizer())
+    ctx = _test_context({
+        "stock_name": "复旦微电",
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+        "broker_research_digest_items": [],
+    })
+
+    skill.run(ctx)
+
+    assert ctx.get("chapter4_formal_material_diagnostics")["broker_status"] == "absent"
+    assert ctx.get("annual_report_memo") is None
+    assert ctx.get("broker_research_memo") is None
+
+
+def test_synthesis_run_preserves_preloaded_broker_items_without_loader_call():
+    item = _broker_digest_item()
+    skill = SynthesisSkill(synthesizer=FakeSynthesizer())
+    ctx = _test_context({
+        "stock_name": "中际旭创",
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+        "broker_research_digest_items": [item],
+    })
+
+    with patch.object(skill, "_eligible_broker_research_digest_items") as loader:
+        skill.run(ctx)
+
+    loader.assert_not_called()
+    assert ctx.get("broker_research_digest_items") == [item]
+
+
+def test_synthesis_run_loads_broker_items_once_and_stores_empty_result():
+    skill = SynthesisSkill(synthesizer=FakeSynthesizer())
+    ctx = _test_context({
+        "stock_name": "中际旭创",
+        "stock_raw": {"reports": [], "announcements": [], "fundflow": [], "news": [], "zhihu": {"report_items": []}},
+        "keep_posts": [],
+    })
+
+    with patch.object(skill, "_eligible_broker_research_digest_items", return_value=[]) as loader:
+        skill.run(ctx)
+
+    loader.assert_called_once_with(ctx)
+    assert ctx.get("broker_research_digest_items") == []
+
+
 def test_evidence_profile_routes_partial_formal_material_to_formal_medium():
     skill = SynthesisSkill(synthesizer=MagicMock())
     ctx = SkillContext(input={"stock_name": "测试股"})
@@ -2541,8 +2604,7 @@ def test_evidence_profile_routes_partial_formal_material_to_formal_medium():
             {"metric": "归母净利润", "value": "1亿元"},
         ]
     })
-    ctx.set("annual_report_memo", {"status": "absent"})
-    ctx.set("broker_research_memo", {"status": "absent"})
+    ctx.set("chapter4_formal_material_diagnostics", _formal_diagnostics())
     item = SynthesisItem(
         title="公司公告",
         content="公司披露收入增长但材料不足以支撑完整产业和业绩分析。",
@@ -2565,8 +2627,7 @@ def test_v3_profile_external_only_remains_thin_all():
     ctx = SkillContext(input={"stock_name": "黑芝麻智能"})
     ctx.set("curated_external_argument_pack_status", "ok")
     ctx.set("deep_analysis_display", _v3_external_display())
-    ctx.set("annual_report_memo", {"status": "absent"})
-    ctx.set("broker_research_memo", {"status": "absent"})
+    ctx.set("chapter4_formal_material_diagnostics", _formal_diagnostics())
 
     profile = SynthesisSkill._build_evidence_profile(ctx, [])
 
@@ -2577,8 +2638,7 @@ def test_v3_profile_annual_only_external_rich_routes_formal_thin():
     ctx = SkillContext(input={"stock_name": "复旦微电"})
     ctx.set("curated_external_argument_pack_status", "ok")
     ctx.set("deep_analysis_display", _v3_external_display())
-    ctx.set("annual_report_memo", {"status": "ready"})
-    ctx.set("broker_research_memo", {"status": "absent"})
+    ctx.set("chapter4_formal_material_diagnostics", _formal_diagnostics(annual="ready"))
 
     profile = SynthesisSkill._build_evidence_profile(ctx, [])
 
@@ -2589,8 +2649,7 @@ def test_v3_profile_peer_families_do_not_make_external_rich():
     ctx = SkillContext(input={"stock_name": "复旦微电"})
     ctx.set("curated_external_argument_pack_status", "ok")
     ctx.set("deep_analysis_display", _v3_external_display(entity_scope="peer_or_industry"))
-    ctx.set("annual_report_memo", {"status": "ready"})
-    ctx.set("broker_research_memo", {"status": "absent"})
+    ctx.set("chapter4_formal_material_diagnostics", _formal_diagnostics(annual="ready"))
 
     profile = SynthesisSkill._build_evidence_profile(ctx, [])
 
@@ -2601,8 +2660,7 @@ def test_v3_profile_six_target_cards_in_one_family_do_not_make_external_rich():
     ctx = SkillContext(input={"stock_name": "复旦微电"})
     ctx.set("curated_external_argument_pack_status", "ok")
     ctx.set("deep_analysis_display", _v3_external_display(("technology_product",) * 6))
-    ctx.set("annual_report_memo", {"status": "ready"})
-    ctx.set("broker_research_memo", {"status": "absent"})
+    ctx.set("chapter4_formal_material_diagnostics", _formal_diagnostics(annual="ready"))
 
     profile = SynthesisSkill._build_evidence_profile(ctx, [])
 
@@ -2613,11 +2671,10 @@ def test_v3_profile_annual_and_broker_routes_formal_medium():
     ctx = SkillContext(input={"stock_name": "中际旭创"})
     ctx.set("curated_external_argument_pack_status", "ok")
     ctx.set("deep_analysis_display", _v3_external_display())
-    ctx.set("annual_report_memo", {"status": "ready"})
-    ctx.set("broker_research_memo", {
-        "status": "ready", "diagnostics": {"usable_card_count": 3},
-        "institutions": ["测试证券"],
-    })
+    ctx.set(
+        "chapter4_formal_material_diagnostics",
+        _formal_diagnostics(annual="ready", broker="ready", usable=3, institutions=("测试证券",)),
+    )
 
     profile = SynthesisSkill._build_evidence_profile(ctx, [])
 
@@ -2653,517 +2710,6 @@ def _broker_digest_item(
             "viewpoint_cluster": cluster,
         },
     )
-
-
-def test_build_broker_research_memo_admits_two_content_families():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "中际旭创",
-        "broker_research_digest_items": [
-            _broker_digest_item(card_type="broker_core_view", content="券商认为 800G 放量支撑增长。", cluster="core"),
-            _broker_digest_item(card_type="broker_product_driver", institution="另一个证券", content="研报认为 1.6T 进入增长接力。", cluster="driver"),
-        ],
-    })
-
-    memo = skill._build_broker_research_memo(ctx)
-
-    assert memo["status"] == "ready"
-    assert memo["institutions"] == ["测试证券", "另一个证券"]
-    assert memo["sections"][0]["citation_refs"]
-    assert memo["sections"][0]["source_ref_ids"][0].startswith("broker_research_digest:")
-    assert memo["validation"]["entered_scoring"] is False
-    assert memo["validation"]["entered_target_price"] is False
-
-
-def test_build_broker_research_memo_rejects_single_thin_card():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "中际旭创",
-        "broker_research_digest_items": [
-            _broker_digest_item(card_type="broker_core_view", content="券商认为需求增长。", cluster="core"),
-        ],
-    })
-
-    memo = skill._build_broker_research_memo(ctx)
-
-    assert memo["status"] == "absent"
-    assert memo["sections"] == []
-
-
-def test_build_broker_research_memo_preserves_same_cluster_across_institutions():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "中际旭创",
-        "broker_research_digest_items": [
-            _broker_digest_item(card_type="broker_core_view", institution="甲证券", content="券商认为需求增长。", cluster="same-view"),
-            _broker_digest_item(card_type="broker_core_view", institution="乙证券", content="机构认为需求增长较快。", cluster="same-view"),
-        ],
-    })
-
-    memo = skill._build_broker_research_memo(ctx)
-
-    assert memo["status"] == "ready"
-    assert memo["diagnostics"]["usable_card_count"] == 2
-    assert memo["institutions"] == ["甲证券", "乙证券"]
-
-
-def test_build_broker_research_memo_forecast_and_risk_rows_resolve_refs():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "中际旭创",
-        "broker_research_digest_items": [
-            _broker_digest_item(card_type="broker_core_view", content="券商认为产品升级打开空间。", cluster="core"),
-            _broker_digest_item(card_type="broker_earnings_forecast", content="研报预计 2026E 归母净利润上修。", cluster="forecast"),
-            _broker_digest_item(card_type="broker_risk_note", content="下游需求不及预期。", cluster="risk"),
-        ],
-    })
-
-    memo = skill._build_broker_research_memo(ctx)
-
-    forecast = memo["forecast_ranges"][0]
-    risk = memo["risks"][0]
-    for row in (forecast, risk):
-        assert row["internal_refs"]
-        assert row["citation_refs"]
-        assert row["source_ref_ids"]
-        assert row["citation_refs"][0] in memo["citations"]
-    assert memo["status"] == "single_institution"
-
-
-def test_build_annual_report_memo_ready_vs_fallback():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [
-                {"card_type": "business_model", "title": "主营业务", "excerpt": "主营 FPGA。", "source_block_id": "b1", "report_year": "2025", "report_type": "annual"},
-                {"card_type": "rd_product_progress", "title": "研发进展", "excerpt": "新品验证中。", "source_block_id": "b2", "report_year": "2025", "report_type": "annual"},
-                {"card_type": "management_market_view", "title": "管理层判断", "excerpt": "需求稳健。", "source_block_id": "b3", "report_year": "2025", "report_type": "annual"},
-                {"card_type": "market_outlook", "title": "市场前景", "excerpt": "行业增长。", "source_block_id": "b4", "report_year": "2025", "report_type": "annual"},
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}]},
-    })
-    memo = skill._build_annual_report_memo(ctx)
-    assert memo["status"] == "ready"
-    assert len(memo["sections"]["annual_report_explanation"]) >= 4
-
-    ctx2 = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [
-                {"card_type": "business_model", "title": "主营业务", "excerpt": "主营 FPGA。", "source_block_id": "b1", "report_year": "2025", "report_type": "annual"},
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": []},
-    })
-    memo2 = skill._build_annual_report_memo(ctx2)
-    assert memo2["status"] == "deterministic_fallback"
-
-
-def test_build_annual_report_memo_preserves_all_canonical_v2_narrative_cards():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    families = (
-        "business_structure",
-        "operating_progress",
-        "market_competition_outlook",
-        "technology_product_progress",
-        "financial_quality_explanation",
-    )
-    cards = []
-    for index in range(14):
-        family = families[index % len(families)]
-        cards.append({
-            "schema_version": "periodic_report_narrative_evidence_card.v2",
-            "selection_version": "annual_argument_selection.v2",
-            "card_id": f"periodic:v2:{index}",
-            "argument_family": family,
-            "argument_complete": index % 2 == 0,
-            "title": f"年报论据 {index}",
-            "source_block_id": f"block-{index}",
-            "source_unit_ids": [f"unit-{index}"],
-            "source_units": [{
-                "unit_id": f"unit-{index}",
-                "block_id": f"block-{index}",
-                "ordinal": 0,
-                "start_pos": 0,
-                "end_pos": 10,
-                "text": f"年报论据内容 {index}。",
-            }],
-            "source_excerpt": f"年报论据内容 {index}。",
-            "excerpt": f"年报论据内容 {index}。",
-            "fact_anchors": [f"事实锚点 {index}"],
-            "secondary_signals": [],
-            "score_parts": {"anchored_fact": 1},
-            "quality_score": 1,
-            "selection_reason": f"signal:{family}",
-            "source_type": "periodic_report_narrative_evidence",
-            "source_credit": 75,
-            "report_year": 2025,
-            "report_type": "annual",
-        })
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {"selected_narrative_cards": cards},
-        "formal_financial_fact_pack": {"facts": []},
-        "periodic_narrative_cards_max_display_items": 3,
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-    rows = memo["sections"]["annual_report_explanation"]
-    legacy_groups = {
-        "product_business",
-        "operation_update",
-        "management_view",
-        "competitiveness_rd",
-        "financial_explanation",
-    }
-
-    assert len(rows) == 14
-    assert len(ctx.get("annual_report_material_pack")["selected_narrative_cards"]) == 14
-    assert all(row["source_type"] == "periodic_report_narrative_evidence" for row in rows)
-    assert all(row["display_group"] in families for row in rows)
-    assert all("argument_complete" in row for row in rows)
-    assert not legacy_groups.intersection(row["display_group"] for row in rows)
-    assert [row["argument_family"] for row in rows] == [card["argument_family"] for card in cards]
-    assert [row["argument_complete"] for row in rows] == [card["argument_complete"] for card in cards]
-
-
-def test_build_annual_report_memo_marks_formal_financial_rows_as_incomplete_quality_explanations():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {"selected_narrative_cards": []},
-        "formal_financial_fact_pack": {
-            "facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}],
-        },
-        "formal_financial_explanation_pack": {
-            "rows": [{
-                "metric": "营业收入变动原因",
-                "normalized_summary": "收入变化主要系产品销售额增加所致。",
-                "source_doc": "2025年annual",
-                "source_ref": "annual:revenue",
-            }],
-        },
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-    rows = memo["sections"]["confirmed"] + memo["sections"]["annual_report_explanation"]
-
-    assert len(rows) == 2
-    assert all(row["display_group"] == "financial_quality_explanation" for row in rows)
-    assert all(row["argument_family"] == "financial_quality_explanation" for row in rows)
-    assert all(row["argument_complete"] is False for row in rows)
-
-
-def test_build_annual_report_memo_uses_in_memory_narrative_cards_without_notes():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {"selected_narrative_cards": []},
-        "periodic_report_narrative_evidence_cards": {
-            "cards": [
-                {
-                    "card_id": "periodic:1",
-                    "card_type": "business_model",
-                    "title": "主营业务与产品",
-                    "source_excerpt": "EEPROM产品在电表、手机摄像头模组、家电等领域稳步增长，车规级EEPROM产品已实现批量出货。",
-                    "source_block_id": "operation-1",
-                    "report_year": "2025",
-                    "report_type": "annual",
-                    "source_credit": 75,
-                },
-                {
-                    "card_id": "periodic:2",
-                    "card_type": "rd_product_progress",
-                    "title": "研发与产品进展",
-                    "source_excerpt": "新一代先进制程FPGA产品完成可靠性考核，开始量产准备。",
-                    "source_block_id": "rd-1",
-                    "report_year": "2025",
-                    "report_type": "annual",
-                    "source_credit": 75,
-                },
-                {
-                    "card_id": "periodic:3",
-                    "card_type": "management_market_view",
-                    "title": "管理层市场判断",
-                    "source_excerpt": "半导体行业景气度呈现结构性分化，FPGA产品在通信、工业控制、人工智能和高可靠领域应用良好。",
-                    "source_block_id": "market-1",
-                    "report_year": "2025",
-                    "report_type": "annual",
-                    "source_credit": 75,
-                },
-                {
-                    "card_id": "periodic:4",
-                    "card_type": "operation_update",
-                    "title": "经营情况更新",
-                    "source_excerpt": "安全与识别芯片各子线产品市场表现不同，在RFID与传感芯片带动下整体收入小幅增长。",
-                    "source_block_id": "operation-2",
-                    "report_year": "2025",
-                    "report_type": "annual",
-                    "source_credit": 75,
-                },
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": []},
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-
-    bodies = " ".join(r["body"] for r in memo["sections"]["annual_report_explanation"])
-    assert memo["status"] == "ready"
-    assert "车规级EEPROM" in bodies
-    assert "先进制程FPGA" in bodies
-
-
-def test_build_annual_report_memo_prefers_current_fulltext_cards_over_stale_pack():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "中际旭创",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [{
-                "card_id": "stale:1",
-                "argument_family": "business_structure",
-                "title": "旧目录摘录",
-                "excerpt": "产品类型 产品介绍 应用领域 产品或终端样图。",
-                "source_block_id": "stale-product-table",
-            }],
-        },
-        "periodic_report_narrative_evidence_cards": {
-            "cards": [{
-                "card_id": "current:1",
-                "argument_family": "financial_quality_explanation",
-                "argument_complete": True,
-                "title": "财务质量与变化原因",
-                "source_excerpt": (
-                    "报告期内，受益于终端客户需求增长，公司产品出货较快增长，"
-                    "运营效率继续提升，营业收入与净利润均同比增长。"
-                ),
-                "source_block_id": "profitability_commentary-0",
-                "source_credit": 75,
-            }],
-        },
-        "formal_financial_fact_pack": {"facts": []},
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-    bodies = " ".join(row["body"] for row in memo["sections"]["annual_report_explanation"])
-
-    assert "产品出货较快增长" in bodies
-    assert "产品类型 产品介绍" not in bodies
-
-
-def test_build_annual_report_memo_dedupes_duplicate_narrative_card_bodies():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    duplicate_body = "公司是国内领先的FPGA类产品供应商，提供FPGA、PSoC、FPAI等产品。"
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [
-                {
-                    "card_id": "periodic:1",
-                    "card_type": "management_market_view",
-                    "title": "管理层市场判断",
-                    "excerpt": duplicate_body,
-                    "source_block_id": "competitive-1",
-                },
-                {
-                    "card_id": "periodic:2",
-                    "card_type": "margin_competitiveness",
-                    "title": "毛利率与竞争力",
-                    "excerpt": duplicate_body,
-                    "source_block_id": "competitive-1",
-                },
-                {
-                    "card_id": "periodic:3",
-                    "card_type": "operation_update",
-                    "title": "经营情况更新",
-                    "excerpt": "EEPROM产品在电表和车规领域稳步增长。",
-                    "source_block_id": "operation-1",
-                },
-                {
-                    "card_id": "periodic:4",
-                    "card_type": "business_model",
-                    "title": "主营业务与产品",
-                    "excerpt": "公司建立健全FPGA、安全与识别芯片、非挥发存储器等产品线。",
-                    "source_block_id": "business-1",
-                },
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": []},
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-    bodies = [r["body"] for r in memo["sections"]["annual_report_explanation"]]
-
-    assert sum("公司是国内领先的FPGA类产品供应商" in body for body in bodies) == 1
-
-
-def test_build_annual_report_memo_cleans_table_noise_from_narrative_cards():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    noisy_body = (
-        "上海复旦微电子集团股份有限公司2025年年度报告 2025年，半导体行业的景气度呈现出明显的结构性分化。"
-        " 产品类型 产品介绍 应用领域 产品或终端样图 12/ 产品类型 产品介绍 应用领域 产品或终端样图 "
-        "公司拥有包括1xnm FinFET先进制程在内的SRAM型FPGA芯片，逻辑资源从50K至4000K，算力从4TOPS至128TOPS。"
-        " 显示器及屏模组、智能电表、NOR Flash存储器 15/241。"
-    )
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [
-                {
-                    "card_id": "periodic:1",
-                    "card_type": "management_market_view",
-                    "title": "管理层市场判断",
-                    "excerpt": noisy_body,
-                    "source_block_id": "market-1",
-                },
-                {
-                    "card_id": "periodic:2",
-                    "card_type": "operation_update",
-                    "title": "经营情况更新",
-                    "excerpt": "EEPROM产品在电表和车规领域稳步增长。",
-                    "source_block_id": "operation-1",
-                },
-                {
-                    "card_id": "periodic:3",
-                    "card_type": "business_model",
-                    "title": "主营业务与产品",
-                    "excerpt": "公司建立健全FPGA、安全与识别芯片、非挥发存储器等产品线。",
-                    "source_block_id": "business-1",
-                },
-                {
-                    "card_id": "periodic:4",
-                    "card_type": "rd_product_progress",
-                    "title": "研发与产品进展",
-                    "excerpt": "新一代先进制程FPGA产品完成可靠性考核。",
-                    "source_block_id": "rd-1",
-                },
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": []},
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-    body = memo["sections"]["annual_report_explanation"][0]["body"]
-
-    assert "上海复旦微电子集团股份有限公司2025年年度报告" not in body
-    assert "产品类型 产品介绍 应用领域 产品或终端样图" not in body
-    assert "12/" not in body
-    assert "15/241" not in body
-    assert "半导体行业的景气度呈现出明显的结构性分化" in body
-    assert len(body) <= 320
-
-
-def test_build_annual_report_memo_skips_table_fragment_cards():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    table_fragment = (
-        "锁等网络通讯、物联网模块、电脑及周边产品、手机模组、主要由FM25/FM29系列构显示器及屏模组、"
-        "智能电表、NOR Flash存储器成，支持SPI、通用并行接口，存储容量1Mbit-2Gbit。"
-    )
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [
-                {
-                    "card_id": "periodic:1",
-                    "card_type": "rd_product_progress",
-                    "title": "研发与产品进展",
-                    "excerpt": table_fragment,
-                    "source_block_id": "rd-table-1",
-                },
-                {
-                    "card_id": "periodic:2",
-                    "card_type": "operation_update",
-                    "title": "经营情况更新",
-                    "excerpt": "EEPROM产品在电表和车规领域稳步增长。",
-                    "source_block_id": "operation-1",
-                },
-                {
-                    "card_id": "periodic:3",
-                    "card_type": "business_model",
-                    "title": "主营业务与产品",
-                    "excerpt": "公司建立健全FPGA、安全与识别芯片、非挥发存储器等产品线。",
-                    "source_block_id": "business-1",
-                },
-                {
-                    "card_id": "periodic:4",
-                    "card_type": "management_market_view",
-                    "title": "管理层市场判断",
-                    "excerpt": "半导体行业景气度呈现结构性分化。",
-                    "source_block_id": "market-1",
-                },
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": []},
-    })
-
-    memo = skill._build_annual_report_memo(ctx)
-    bodies = " ".join(r["body"] for r in memo["sections"]["annual_report_explanation"])
-
-    assert "FM25/FM29系列构显示器" not in bodies
-    assert "EEPROM产品在电表和车规领域稳步增长" in bodies
-
-
-def test_build_annual_report_memo_zero_revenue_warning():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {"selected_narrative_cards": []},
-        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "0.00亿元", "source": "2025年annual"}]},
-        "periodic_report_filing_core_facts": [{"fact": "营业收入", "data": "0.00亿元", "source_labels": ["2025年annual"]}],
-    })
-    memo = skill._build_annual_report_memo(ctx)
-    assert any("0.00亿元" in w or "营业收入" in w for w in memo["validation"]["warnings"])
-    assert memo["status"] in ("blocked", "deterministic_fallback")
-
-
-def test_build_annual_report_memo_zero_metric_does_not_block_explanation_rows():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {"selected_narrative_cards": []},
-        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "0.00亿元", "source": "2025年annual"}]},
-        "formal_financial_explanation_pack": {
-            "rows": [
-                {
-                    "metric": "营业收入变动原因",
-                    "normalized_summary": "公司说明收入变化主要来自安全与识别芯片、智能电表芯片及 FPGA 销售额增加。",
-                    "source_doc": "2025年annual",
-                    "source_ref": "annual:explanation:revenue",
-                }
-            ]
-        },
-        "periodic_report_filing_core_facts": [{"fact": "营业收入", "data": "0.00亿元", "source_labels": ["2025年annual"]}],
-    })
-    memo = skill._build_annual_report_memo(ctx)
-
-    assert memo["status"] == "deterministic_fallback"
-    assert memo["sections"]["annual_report_explanation"]
-    confirmed_body = " ".join(row["body"] for row in memo["sections"]["confirmed"])
-    assert "0.00亿元" not in confirmed_body
-    assert any("0.00亿元" in w for w in memo["validation"]["warnings"])
-
-
-def test_build_annual_report_memo_skips_forbidden_source_cards():
-    skill = SynthesisSkill(synthesizer=MagicMock())
-    ctx = SkillContext(input={
-        "stock_name": "复旦微电",
-        "annual_report_material_pack": {
-            "selected_narrative_cards": [
-                {"card_type": "business_model", "title": "主营业务", "excerpt": "主营 FPGA。", "source_block_id": "b1", "report_year": "2025", "report_type": "annual"},
-                {"card_type": "management_market_view", "title": "雪球观点", "excerpt": "雪球上有人认为订单饱满。", "source_block_id": "b2", "report_year": "2025", "report_type": "annual"},
-                {"card_type": "rd_product_progress", "title": "研发进展", "excerpt": "券商认为新品将放量。", "source_block_id": "b3", "report_year": "2025", "report_type": "annual"},
-                {"card_type": "market_outlook", "title": "市场前景", "excerpt": "行业增长。", "source_block_id": "b4", "report_year": "2025", "report_type": "annual"},
-            ],
-        },
-        "formal_financial_fact_pack": {"facts": [{"metric": "营业收入", "value": "39.82亿元", "source": "2025年annual"}]},
-    })
-    memo = skill._build_annual_report_memo(ctx)
-    bodies = " ".join(r["body"] for r in memo["sections"]["annual_report_explanation"])
-    assert "雪球" not in bodies
-    assert "券商认为" not in bodies
-    assert any("雪球" in w or "券商认为" in w for w in memo["validation"]["warnings"])
 
 
 def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tmp_path):
@@ -3218,24 +2764,15 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
                 "by_type_selected": {"business_model": 1},
             },
         },
-        "annual_report_memo": {
-            "status": "ready",
-            "sections": {
-                "confirmed": [{"body": "营业收入：100亿元"}],
-                "annual_report_explanation": [{"body": "主营业务说明"}],
-            },
-        },
-        "broker_research_memo": {
-            "status": "ready",
-            "institutions": ["甲证券", "乙证券"],
-            "sections": [{"body": "甲证券认为：需求增长"}],
-            "risks": [{"body": "乙证券提示：风险"}],
-            "diagnostics": {
-                "input_item_count": 5,
-                "usable_card_count": 2,
-                "content_families": ["core_view", "risk_note"],
-                "institution_count": 2,
-            },
+        "chapter4_formal_material_diagnostics": {
+            **_formal_diagnostics(
+                annual="ready", broker="ready", usable=2,
+                institutions=("甲证券", "乙证券"),
+            ),
+            "annual_confirmed_row_count": 1,
+            "annual_explanation_row_count": 1,
+            "broker_input_item_count": 5,
+            "broker_content_families": ["core_view", "risk_note"],
         },
         "deep_analysis_display": _v3_external_display(("capacity_delivery",)),
     })
@@ -3258,6 +2795,22 @@ def test_build_material_coverage_diagnostics_counts_raw_and_structured_layers(tm
     assert coverage["external"]["citation_source_count"] == 1
     assert coverage["external"]["argument_card_count"] == 1
     assert coverage["external"]["argument_coverage_families"] == ["capacity_delivery"]
+
+
+def test_build_material_coverage_diagnostics_does_not_keep_broker_six_row_cap():
+    ctx = SkillContext(input={
+        "stock_name": "测试股",
+        "broker_research_digest_items": [_broker_digest_item(cluster=f"broker-{index}") for index in range(8)],
+        "chapter4_formal_material_diagnostics": _formal_diagnostics(
+            broker="ready", usable=8, institutions=tuple(f"机构{index}" for index in range(8)),
+        ),
+        "deep_analysis_display": {},
+    })
+
+    coverage = SynthesisSkill._build_material_coverage_diagnostics(ctx)
+
+    assert coverage["broker"]["memo_usable_card_count"] == 8
+    assert coverage["broker"]["memo_row_count"] == 8
 
 
 def test_broker_digest_loader_default_budget_matches_research_cache_width():

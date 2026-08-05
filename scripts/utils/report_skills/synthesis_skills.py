@@ -1,6 +1,5 @@
 """LLM synthesis skill."""
 
-import hashlib
 import json
 import re
 from datetime import date
@@ -44,6 +43,7 @@ if __name__.startswith("utils."):
     )
     from ..periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
     from ..evidence_freshness import build_freshness_overlay, parse_explicit_date
+    from ..deep_analysis_material_snapshot import build_chapter4_formal_material_diagnostics
 else:
     from skill_pipeline import BaseSkill, SkillContext
     from knowledge_synthesizer import KnowledgeSynthesizer
@@ -81,6 +81,7 @@ else:
     )
     from periodic_report_narrative_pack_store import PeriodicNarrativePackStorageError
     from evidence_freshness import build_freshness_overlay, parse_explicit_date
+    from deep_analysis_material_snapshot import build_chapter4_formal_material_diagnostics
 
 
 SYNTHESIS_KEYS = [
@@ -128,7 +129,7 @@ class SynthesisSkill(BaseSkill):
         if fundflow_material_pack.get("rows"):
             ctx.set("fundflow_material_pack", fundflow_material_pack)
 
-        # Build annual-report material pack and deterministic memo skeleton.
+        # Build annual-report material pack and load broker display material once.
         annual_material_pack: Dict[str, Any] = {}
         stock_name_for_annual = ctx.get("stock_name")
         if stock_name_for_annual:
@@ -146,9 +147,13 @@ class SynthesisSkill(BaseSkill):
                 pass
         if annual_material_pack:
             ctx.set("annual_report_material_pack", annual_material_pack)
-        ctx.set("annual_report_memo", self._build_annual_report_memo(ctx))
         self._refresh_broker_research_digest_notes(ctx)
-        ctx.set("broker_research_memo", self._build_broker_research_memo(ctx))
+        if ctx.get("broker_research_digest_items") is None:
+            ctx.set("broker_research_digest_items", self._eligible_broker_research_digest_items(ctx))
+        ctx.set(
+            "chapter4_formal_material_diagnostics",
+            build_chapter4_formal_material_diagnostics(ctx),
+        )
 
         # Build canonical synthesis items once.
         items = self._build_synthesis_items(stock_raw, keep_posts, ctx=ctx)
@@ -204,7 +209,7 @@ class SynthesisSkill(BaseSkill):
                 narrative_card_items = self._eligible_periodic_narrative_card_items(ctx)
                 display_items.extend(narrative_card_items)
             if ctx.get("include_broker_research_digest_in_synthesis_display"):
-                broker_digest_items = self._eligible_broker_research_digest_items(ctx)
+                broker_digest_items = ctx.get("broker_research_digest_items") or []
                 display_items.extend(broker_digest_items)
         if display_items:
             display = self._synthesize(
@@ -232,9 +237,7 @@ class SynthesisSkill(BaseSkill):
         official_types = {"exchange_announcement", "company_ir", "company_official", "announcement", "official", "confirmed_fact", "periodic_report_excerpt"}
         official = list(self._eligible_periodic_report_fulltext_items(ctx))
         official.extend(item for item in (ctx.get("source_intake_items") or []) if (getattr(item, "extra", {}) or {}).get("source_type") in official_types)
-        broker = ctx.get("broker_research_digest_items")
-        if broker is None:
-            broker = self._eligible_broker_research_digest_items(ctx)
+        broker = ctx.get("broker_research_digest_items") or []
         broker = [item for item in (broker or []) if (getattr(item, "extra", {}) or {}).get("card_type") != "broker_risk_note"]
         return build_freshness_overlay(
             profile=str(profile.get("profile") or ""), as_of_date=as_of,
@@ -407,355 +410,6 @@ class SynthesisSkill(BaseSkill):
             return default
 
     @staticmethod
-    def _annual_narrative_cards(ctx: SkillContext, material: Dict[str, Any]) -> List[Dict[str, Any]]:
-        pack = ctx.get("periodic_report_narrative_evidence_cards") or {}
-        cards: List[Dict[str, Any]] = []
-        for c in pack.get("cards") or []:
-            if not isinstance(c, dict):
-                continue
-            excerpt = c.get("excerpt") or c.get("source_excerpt")
-            if not excerpt:
-                continue
-            card = dict(c)
-            card["excerpt"] = excerpt
-            card.setdefault("source_credit", 75)
-            cards.append(card)
-        if cards:
-            return cards
-        return [
-            c for c in (material.get("selected_narrative_cards") or [])
-            if isinstance(c, dict)
-        ]
-
-    @staticmethod
-    def _clean_annual_memo_excerpt(text: str, max_chars: int = 300) -> str:
-        """Keep annual-report flavor while stripping visible PDF/table noise."""
-        cleaned = str(text or "")
-        cleaned = re.sub(
-            r"[\u4e00-\u9fffA-Za-z0-9（）()·]{0,50}(?:集团股份有限公司|股份有限公司|有限公司)\s*20\d{2}年(?:年度报告|半年度报告)",
-            "",
-            cleaned,
-        )
-        cleaned = re.sub(r"20\d{2}年(?:年度报告|半年度报告)", "", cleaned)
-        cleaned = re.sub(r"\b\d{1,3}/\d{1,3}\b", "", cleaned)
-        cleaned = re.sub(r"\b\d{1,3}/(?=\s|$)", "", cleaned)
-        for header in (
-            "产品类型 产品介绍 应用领域 产品或终端样图",
-            "产品类型 产品介绍 应用领域",
-            "产品或终端样图",
-        ):
-            cleaned = cleaned.replace(header, "")
-        cleaned = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", cleaned)
-        cleaned = re.sub(r"\s+", " ", cleaned).strip(" ，,。；;")
-        if len(cleaned) > max_chars:
-            cut = cleaned[:max_chars]
-            for sep in ("。", "；", "，", " "):
-                idx = cut.rfind(sep)
-                if idx >= int(max_chars * 0.6):
-                    cut = cut[:idx + 1]
-                    break
-            cleaned = cut.strip(" ，,；;")
-        return cleaned
-
-    @staticmethod
-    def _looks_like_annual_table_fragment(text: str) -> bool:
-        compact = re.sub(r"\s+", "", str(text or ""))
-        markers = ("主要由", "系列构", "接口", "存储容量", "模组", "屏模组")
-        return len(compact) >= 80 and sum(1 for marker in markers if marker in compact) >= 4
-
-    @staticmethod
-    def _build_annual_report_memo(ctx: SkillContext) -> Dict[str, Any]:
-        """Build a deterministic annual-report memo skeleton from existing packs."""
-        material = ctx.get("annual_report_material_pack") or {}
-        fact_pack = ctx.get("formal_financial_fact_pack") or {}
-        explanation_pack = ctx.get("formal_financial_explanation_pack") or {}
-        filing_core = ctx.get("periodic_report_filing_core_facts") or []
-
-        forbidden = ("知乎", "雪球", "券商认为", "研报预计")
-        warnings: List[str] = []
-        valid_cards: List[Dict[str, Any]] = []
-        seen_card_bodies: set[str] = set()
-        narrative_cards = SynthesisSkill._annual_narrative_cards(ctx, material)
-        for card in narrative_cards:
-            if not isinstance(card, dict):
-                continue
-            text = str(card.get("excerpt") or card.get("title") or "")
-            cleaned_text = SynthesisSkill._clean_annual_memo_excerpt(text)
-            if SynthesisSkill._looks_like_annual_table_fragment(cleaned_text):
-                continue
-            body_key = re.sub(r"\s+", "", cleaned_text)
-            if body_key and body_key in seen_card_bodies:
-                continue
-            if body_key:
-                seen_card_bodies.add(body_key)
-            hit = next((t for t in forbidden if t in text), "")
-            if hit:
-                warnings.append(f"skipped forbidden token '{hit}': {card.get('card_id')}")
-                continue
-            card = dict(card)
-            card["excerpt"] = cleaned_text
-            valid_cards.append(card)
-
-        for fact in filing_core:
-            if isinstance(fact, dict) and "0.00亿元" in str(fact.get("data") or ""):
-                m = str(fact.get("fact") or "")
-                if "营收" in m or "收入" in m or "利润" in m:
-                    warnings.append(f"suspicious zero metric: {m}={fact.get('data')}")
-
-        family_map = {
-            "business_model": "business_structure",
-            "operation_update": "operating_progress",
-            "management_market_view": "market_competition_outlook",
-            "market_outlook": "market_competition_outlook",
-            "technology_platform": "technology_product_progress",
-            "rd_product_progress": "technology_product_progress",
-            "financial_note": "financial_quality_explanation",
-        }
-        def _family(card: Dict[str, Any]) -> str:
-            return str(card.get("argument_family") or family_map.get(str(card.get("card_type") or ""), "business_structure"))
-
-        has_product = any(
-            _family(c) != "financial_quality_explanation" for c in valid_cards
-        )
-        has_material = bool(narrative_cards or fact_pack.get("facts") or explanation_pack.get("rows"))
-
-        citations: Dict[int, Dict[str, Any]] = {}
-        src_to_ref: Dict[tuple, int] = {}
-        nxt = 1
-
-        def _ref(key: tuple, meta: Dict[str, Any]) -> int:
-            nonlocal nxt
-            if key in src_to_ref:
-                return src_to_ref[key]
-            src_to_ref[key] = nxt
-            citations[nxt] = meta
-            nxt += 1
-            return nxt - 1
-
-        def _annual_row(
-            title, body, iref, src, source_type, citation_key, citation_title="",
-            source_credit=None, display_group="", argument_complete=False,
-        ):
-            meta: Dict[str, Any] = {"source": "公司年报", "title": citation_title or src, "source_type": source_type}
-            if source_credit is not None:
-                meta["source_credit"] = source_credit
-            row = {"title": title, "body": body, "internal_refs": [iref],
-                   "citation_refs": [_ref(citation_key, meta)], "source_ref_ids": [src],
-                   "source_type": source_type}
-            if display_group:
-                row["display_group"] = display_group
-            row["argument_family"] = display_group or "financial_quality_explanation"
-            row["argument_complete"] = bool(argument_complete)
-            return row
-
-        def _suspicious_zero_metric(metric: object, value: object) -> bool:
-            metric_text = str(metric or "")
-            value_text = str(value or "")
-            return "0.00亿元" in value_text and any(t in metric_text for t in ("营收", "收入", "利润"))
-
-        confirmed: List[Dict[str, Any]] = []
-        for f in fact_pack.get("facts") or []:
-            if isinstance(f, dict) and f.get("metric") is not None and f.get("value") is not None:
-                if _suspicious_zero_metric(f.get("metric"), f.get("value")):
-                    warning = f"suspicious zero metric: {f.get('metric')}={f.get('value')}"
-                    if warning not in warnings:
-                        warnings.append(warning)
-                    continue
-                s = str(f.get("source") or "公司年报")
-                metric = str(f["metric"])
-                confirmed.append(_annual_row(
-                    metric, f"{metric}：{f['value']}", f"fact:{metric}", s,
-                    "periodic_report_filing_fact", ("fact", s, f["metric"]),
-                    display_group="financial_quality_explanation",
-                ))
-
-        explanation_rows: List[Dict[str, Any]] = []
-        for r in explanation_pack.get("rows") or []:
-            if isinstance(r, dict):
-                m = r.get("metric") or r.get("topic")
-                b = r.get("normalized_summary") or r.get("excerpt")
-                if m and b:
-                    s = str(r.get("source_doc") or "公司年报")
-                    source_ref = r.get("source_ref") or ""
-                    explanation_rows.append(_annual_row(
-                        str(m), str(b), f"explanation:{source_ref}", s,
-                        "periodic_report_explanation", ("explanation", s, source_ref),
-                        display_group="financial_quality_explanation",
-                    ))
-
-        for c in valid_cards:
-            title = str(c.get("title") or "年报内容")
-            body = str(c.get("excerpt") or c.get("title") or "")
-            sid = c.get("source_block_id") or c.get("card_id") or ""
-            family = _family(c)
-            explanation_rows.append(_annual_row(
-                title, body, str(c.get("card_id") or ""), str(sid),
-                "periodic_report_narrative_evidence", ("card", sid), title, c.get("source_credit", 75),
-                display_group=family,
-                argument_complete=c.get("argument_complete", False),
-            ))
-
-        has_usable_rows = bool(confirmed or explanation_rows)
-        status = (
-            "absent" if not has_material else
-            "ready" if len(valid_cards) >= 4 and has_product and has_usable_rows else
-            "deterministic_fallback" if has_usable_rows else
-            "blocked" if warnings else "deterministic_fallback"
-        )
-
-        return {
-            "schema": "annual_report_memo.v1",
-            "status": status,
-            "source_layer": "annual_report",
-            "sections": {
-                "confirmed": confirmed,
-                "annual_report_explanation": explanation_rows,
-                "not_disclosed": [{"title": "未充分披露项", "body": "重要客户、订单、产能、供应链、管理层指引或细分拆分未在正式材料中充分披露。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
-                "inconclusive": [{"title": "不能下结论", "body": "不得用营收/利润推断主力资金或市场行为。", "internal_refs": [], "citation_refs": [], "source_ref_ids": []}],
-            },
-            "validation": {"warnings": warnings, "numeric_terms_checked": True, "unsupported_numbers": [], "strong_claims": []},
-            "citations": citations,
-        }
-
-    @staticmethod
-    def _build_broker_research_memo(ctx: SkillContext) -> Dict[str, Any]:
-        """Build a deterministic broker-research memo from existing digest items."""
-        raw_items = ctx.get("broker_research_digest_items")
-        items = raw_items if raw_items is not None else SynthesisSkill._eligible_broker_research_digest_items(ctx)
-        family_map = {
-            "broker_core_view": "core_view",
-            "broker_product_driver": "product_driver",
-            "broker_earnings_forecast": "earnings_forecast",
-            "broker_risk_note": "risk_note",
-            "broker_valuation_method": "valuation_method",
-        }
-        title_map = {
-            "broker_core_view": "券商核心观点",
-            "broker_product_driver": "产业与产品判断",
-            "broker_earnings_forecast": "盈利预测与估值假设",
-            "broker_risk_note": "风险提示",
-            "broker_valuation_method": "估值方法",
-        }
-        selected: List[Any] = []
-        seen: set = set()
-        for item in items or []:
-            extra = getattr(item, "extra", {}) or {}
-            if (
-                extra.get("source_type") != "broker_research"
-                or extra.get("claim_status") != "professional_analysis"
-                or extra.get("confirmed_fact") is True
-                or extra.get("scoring_eligible") is True
-                or extra.get("risk_score_eligible") is True
-            ):
-                continue
-            card_type = str(extra.get("card_type") or "")
-            family = family_map.get(card_type)
-            excerpt = " ".join(str(getattr(item, "content", "") or "").split())
-            if not family or not excerpt:
-                continue
-            institution = str(extra.get("institution") or getattr(item, "author", "") or "").strip()
-            key = (family, str(extra.get("viewpoint_cluster") or excerpt[:80]), institution)
-            if key in seen:
-                continue
-            seen.add(key)
-            selected.append(item)
-
-        families = {
-            family_map.get(str((getattr(item, "extra", {}) or {}).get("card_type") or ""))
-            for item in selected
-        }
-        families.discard(None)
-        institutions: List[str] = []
-        for item in selected:
-            institution = str((getattr(item, "extra", {}) or {}).get("institution") or getattr(item, "author", "") or "").strip()
-            if institution and institution not in institutions:
-                institutions.append(institution)
-        report_titles = {
-            str(getattr(item, "title", "") or "").strip()
-            for item in selected
-            if str(getattr(item, "title", "") or "").strip()
-        }
-        admitted = (
-            (len(selected) >= 2 and len(families) >= 2)
-            or (len(report_titles) == 1 and len(families) >= 2)
-            or (len(institutions) >= 2 and len(selected) >= 2)
-        )
-        status = "absent"
-        if admitted:
-            status = "single_institution" if len(institutions) <= 1 or len(report_titles) <= 1 else "ready"
-
-        citations: Dict[int, Dict[str, Any]] = {}
-        sections: List[Dict[str, Any]] = []
-        forecast_ranges: List[Dict[str, Any]] = []
-        risks: List[Dict[str, Any]] = []
-
-        def _source_id(item: Any) -> str:
-            extra = getattr(item, "extra", {}) or {}
-            seed = str(extra.get("viewpoint_cluster") or getattr(item, "title", "") or getattr(item, "content", ""))
-            return f"broker_research_digest:{hashlib.sha256(seed.encode('utf-8')).hexdigest()[:16]}"
-
-        def _row(item: Any, ref_id: int) -> Dict[str, Any]:
-            extra = getattr(item, "extra", {}) or {}
-            card_type = str(extra.get("card_type") or "")
-            institution = str(extra.get("institution") or getattr(item, "author", "") or "券商").strip()
-            text = " ".join(str(getattr(item, "content", "") or "").split())
-            if card_type == "broker_risk_note":
-                body = text if text.startswith("研报提示") else f"研报提示：{text}"
-            else:
-                body = text if re.match(r"^(券商|研报|机构)", text) else f"{institution}认为：{text}"
-            sid = _source_id(item)
-            citations[ref_id] = {
-                "source": "券商研报",
-                "title": str(getattr(item, "title", "") or title_map.get(card_type, "券商研报")),
-                "author": institution,
-                "source_type": "broker_research",
-                "source_credit": 72,
-                "claim_status": "professional_analysis",
-                "verification_status": "professional_observation",
-            }
-            return {
-                "title": title_map.get(card_type, "券商观点"),
-                "body": body,
-                "internal_refs": [sid.replace("broker_research_digest:", "broker:card:")],
-                "citation_refs": [ref_id],
-                "source_ref_ids": [sid],
-            }
-
-        if status != "absent":
-            for ref_id, item in enumerate(selected[:6], start=1):
-                row = _row(item, ref_id)
-                card_type = str((getattr(item, "extra", {}) or {}).get("card_type") or "")
-                if card_type == "broker_risk_note":
-                    risks.append({"body": row["body"], **{k: row[k] for k in ("internal_refs", "citation_refs", "source_ref_ids")}})
-                elif card_type == "broker_earnings_forecast":
-                    forecast_ranges.append({
-                        "metric": "研报盈利预测",
-                        "period": "未拆分",
-                        "range": row["body"],
-                        **{k: row[k] for k in ("internal_refs", "citation_refs", "source_ref_ids")},
-                    })
-                else:
-                    sections.append(row)
-
-        return {
-            "schema": "broker_research_memo.v1",
-            "status": status,
-            "source_layer": "broker_research",
-            "institutions": institutions,
-            "sections": sections,
-            "forecast_ranges": forecast_ranges,
-            "risks": risks,
-            "diagnostics": {
-                "input_item_count": len(items or []),
-                "usable_card_count": len(selected),
-                "content_families": sorted(families),
-                "institution_count": len(institutions),
-            },
-            "validation": {"attributed_forecasts_only": True, "entered_scoring": False, "entered_target_price": False},
-            "citations": citations,
-        }
-
-    @staticmethod
     def _build_material_coverage_diagnostics(ctx: SkillContext) -> Dict[str, Any]:
         """Return lightweight source-layer coverage diagnostics for chapter 4.
 
@@ -764,15 +418,11 @@ class SynthesisSkill(BaseSkill):
         """
         annual_pack = ctx.get("annual_report_material_pack") or {}
         annual_diag = annual_pack.get("diagnostics") or {}
-        annual_memo = ctx.get("annual_report_memo") or {}
-        annual_sections = annual_memo.get("sections") or {}
-
-        broker_memo = ctx.get("broker_research_memo") or {}
-        broker_diag = broker_memo.get("diagnostics") or {}
+        formal = ctx.get("chapter4_formal_material_diagnostics") or {}
         raw_broker = SynthesisSkill._broker_raw_report_coverage(ctx)
         digest_notes = SynthesisSkill._broker_digest_note_coverage(ctx)
         loader_max_items = SynthesisSkill._broker_digest_loader_max_items(ctx)
-        memo_institutions = broker_memo.get("institutions") or []
+        memo_institutions = formal.get("broker_institutions") or []
         uncovered_raw_institutions = [
             name for name in raw_broker["institutions"]
             if name not in memo_institutions
@@ -787,21 +437,18 @@ class SynthesisSkill(BaseSkill):
         return {
             "schema": "deep_analysis_material_coverage.v1",
             "annual": {
-                "memo_status": annual_memo.get("status", "absent"),
+                "memo_status": formal.get("annual_status", "absent"),
                 "narrative_cards_seen": int(annual_diag.get("cards_seen") or 0),
                 "narrative_cards_selected": int(annual_diag.get("cards_selected") or 0),
                 "by_type_seen": annual_diag.get("by_type_seen") or {},
                 "by_type_selected": annual_diag.get("by_type_selected") or {},
-                "confirmed_row_count": len(annual_sections.get("confirmed") or []),
-                "explanation_row_count": len(annual_sections.get("annual_report_explanation") or []),
-                "memo_row_count": (
-                    len(annual_sections.get("confirmed") or [])
-                    + len(annual_sections.get("annual_report_explanation") or [])
-                ),
-                "validation_warning_count": len((annual_memo.get("validation") or {}).get("warnings") or []),
+                "confirmed_row_count": int(formal.get("annual_confirmed_row_count") or 0),
+                "explanation_row_count": int(formal.get("annual_explanation_row_count") or 0),
+                "memo_row_count": int(formal.get("annual_confirmed_row_count") or 0) + int(formal.get("annual_explanation_row_count") or 0),
+                "validation_warning_count": int(formal.get("annual_warning_count") or 0),
             },
             "broker": {
-                "memo_status": broker_memo.get("status", "absent"),
+                "memo_status": formal.get("broker_status", "absent"),
                 "raw_manifest_status": raw_broker["status"],
                 "raw_report_count": raw_broker["report_count"],
                 "raw_institution_count": len(raw_broker["institutions"]),
@@ -814,16 +461,12 @@ class SynthesisSkill(BaseSkill):
                 "loader_max_items": loader_max_items,
                 "loader_budget_limited": digest_notes["note_count"] > loader_max_items,
                 "uncovered_raw_institutions": uncovered_raw_institutions,
-                "digest_item_count": int(broker_diag.get("input_item_count") or broker_diag.get("usable_card_count") or 0),
-                "memo_usable_card_count": int(broker_diag.get("usable_card_count") or 0),
-                "memo_row_count": (
-                    len(broker_memo.get("sections") or [])
-                    + len(broker_memo.get("forecast_ranges") or [])
-                    + len(broker_memo.get("risks") or [])
-                ),
-                "memo_institution_count": int(broker_diag.get("institution_count") or len(broker_memo.get("institutions") or [])),
+                "digest_item_count": int(formal.get("broker_input_item_count") or formal.get("broker_usable_card_count") or 0),
+                "memo_usable_card_count": int(formal.get("broker_usable_card_count") or 0),
+                "memo_row_count": int(formal.get("broker_usable_card_count") or 0) if formal.get("broker_status") in {"ready", "single_institution"} else 0,
+                "memo_institution_count": len(memo_institutions),
                 "memo_institutions": memo_institutions,
-                "content_families": broker_diag.get("content_families") or [],
+                "content_families": formal.get("broker_content_families") or [],
             },
             "external": {
                 "citation_source_count": len(deep_display.get("citations") or {}),
@@ -1022,10 +665,9 @@ class SynthesisSkill(BaseSkill):
         has_any_formal = any(section_support.values())
         has_any_item = bool(items)
         external_rich = pack_active and external_topics >= 3
-        annual_memo = ctx.get("annual_report_memo") or {}
-        broker_memo = ctx.get("broker_research_memo") or {}
-        annual_ready = annual_memo.get("status") == "ready"
-        broker_usable = int(broker_memo.get("diagnostics", {}).get("usable_card_count", 0) or 0)
+        formal = ctx.get("chapter4_formal_material_diagnostics") or {}
+        annual_ready = formal.get("annual_status") == "ready"
+        broker_usable = int(formal.get("broker_usable_card_count") or 0)
         reasons: List[str] = []
         if formal_insight_facts >= 5 and section_support["industry"] >= 2 and section_support["fundamentals"] >= 2:
             profile = "formal_rich"
@@ -1068,13 +710,13 @@ class SynthesisSkill(BaseSkill):
             "external_signal_count": 0,
             "section_decisions": section_decisions,
             "reasons": reasons,
-            "annual_memo_status": annual_memo.get("status", "absent"),
-            "broker_memo_status": broker_memo.get("status", "absent"),
-            "broker_single_institution": broker_memo.get("status") == "single_institution",
-            "broker_usable_card_count": broker_memo.get("diagnostics", {}).get("usable_card_count", 0),
-            "broker_content_families": broker_memo.get("diagnostics", {}).get("content_families", []),
-            "broker_institution_count": len(broker_memo.get("institutions") or []),
-            "memo_refs_resolved": bool(annual_memo.get("citations") or broker_memo.get("citations")),
+            "annual_memo_status": formal.get("annual_status", "absent"),
+            "broker_memo_status": formal.get("broker_status", "absent"),
+            "broker_single_institution": formal.get("broker_status") == "single_institution",
+            "broker_usable_card_count": broker_usable,
+            "broker_content_families": formal.get("broker_content_families", []),
+            "broker_institution_count": len(formal.get("broker_institutions") or []),
+            "memo_refs_resolved": bool(formal.get("formal_citation_candidate_count")),
             "formal_thin_layout_variant": (
                 "annual_broker_external_checklist" if profile == "formal_thin_external_rich" else None
             ),

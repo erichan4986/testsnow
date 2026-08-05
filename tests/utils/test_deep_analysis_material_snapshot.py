@@ -1,14 +1,17 @@
 """Tests for the deep-analysis MaterialSnapshot read-model."""
 
 import copy
+import hashlib
 import sys
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent.parent / "scripts" / "utils"))
 
+import deep_analysis_material_snapshot as snapshot_module  # noqa: E402
 from deep_analysis_material_snapshot import (  # noqa: E402
     _CitationAllocator,
     _adapt_material_row,
@@ -26,6 +29,76 @@ from deep_analysis_material_snapshot import (  # noqa: E402
 )
 
 
+def _canonical_annual_card(card_id, family, text, *, complete=True):
+    return {
+        "card_id": card_id,
+        "argument_family": family,
+        "argument_complete": complete,
+        "title": family,
+        "source_excerpt": text,
+        "source_block_id": f"block:{card_id}",
+        "source_credit": 75,
+    }
+
+
+def _broker_item(card_type, content, cluster, institution="测试证券"):
+    return SimpleNamespace(
+        title=f"{institution}报告",
+        content=content,
+        author=institution,
+        extra={
+            "source_type": "broker_research",
+            "claim_status": "professional_analysis",
+            "confirmed_fact": False,
+            "scoring_eligible": False,
+            "risk_score_eligible": False,
+            "card_type": card_type,
+            "viewpoint_cluster": cluster,
+            "institution": institution,
+        },
+    )
+
+
+def _direct_formal_ctx():
+    cards = [
+        _canonical_annual_card("business", "business_structure", "公司主营业务为芯片设计。"),
+        _canonical_annual_card("operating", "operating_progress", "报告期内客户导入数量增长。"),
+        _canonical_annual_card("technology", "technology_product_progress", "本公司推 動新品完成客 戶验证。"),
+        _canonical_annual_card(
+            "financial", "financial_quality_explanation", "收入增长主要系产品销售增加所致。",
+        ),
+    ]
+    return {
+        "periodic_report_narrative_evidence_cards": {"cards": cards},
+        "annual_report_material_pack": {"selected_narrative_cards": [
+            _canonical_annual_card("stale", "business_structure", "旧材料不应进入快照。"),
+        ]},
+        "formal_financial_fact_pack": {
+            "facts": [{"metric": "营业收入", "value": "10亿元", "source": "2025年annual"}],
+        },
+        "formal_financial_explanation_pack": {
+            "rows": [{
+                "metric": "营业收入变动原因",
+                "normalized_summary": "收入变化主要系产品销售增加所致。",
+                "source_doc": "2025年annual",
+                "source_ref": "annual:revenue",
+            }],
+        },
+        "broker_research_digest_items": [
+            _broker_item("broker_earnings_forecast", "预计2026年盈利增长。", "forecast"),
+            _broker_item("broker_core_view", "机构认为需求保持增长。", "core", "另一个证券"),
+            _broker_item("broker_risk_note", "若需求下降，预测需下修。", "risk"),
+        ],
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "deep_analysis_display": {
+            "_curated_external_argument_cards": [_external_argument_card(
+                argument_key="external:delivery", evidence="外部材料讨论交付节奏。",
+            )],
+            "citations": {1: {"source": "外部材料", "title": "交付观察"}},
+        },
+    }
+
+
 def _ctx():
     return {
         "synthesis": {"industry_logic": "baseline"},
@@ -36,84 +109,19 @@ def _ctx():
         "structured_risk_signals": {"risk": 1},
         "price_target": {"target": 10},
         "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
-        "annual_report_memo": {
-            "schema": "annual_report_memo.v1",
-            "status": "ready",
-            "sections": {
-                "confirmed": [
-                    {
-                        "title": "营业收入",
-                        "body": "营业收入 10 亿元",
-                        "internal_refs": ["annual:fact:revenue"],
-                        "citation_refs": [1],
-                        "source_ref_ids": ["annual-source:revenue"],
-                        "argument_family": "financial_quality_explanation",
-                        "argument_complete": False,
-                    }
-                ],
-                "annual_report_explanation": [
-                    {
-                        "title": "管理层讨论",
-                        "body": "公司解释增长来自 FPGA。",
-                        "internal_refs": ["annual:card:management"],
-                        "citation_refs": [2],
-                        "source_ref_ids": ["annual-source:management"],
-                        "argument_family": "business_structure",
-                        "argument_complete": True,
-                    }
-                ],
-                "not_disclosed": [
-                    {
-                        "title": "未披露",
-                        "body": "客户名称未充分披露。",
-                        "internal_refs": [],
-                        "citation_refs": [],
-                        "source_ref_ids": [],
-                    }
-                ],
-                "inconclusive": [],
-            },
-            "citations": {
-                1: {"source": "公司年报", "title": "财务数据"},
-                2: {"source": "公司年报", "title": "管理层讨论"},
-            },
+        "formal_financial_fact_pack": {
+            "facts": [{"metric": "营业收入", "value": "10 亿元", "source": "annual-source:revenue"}],
         },
-        "broker_research_memo": {
-            "schema": "broker_research_memo.v1",
-            "status": "single_institution",
-            "sections": [
-                {
-                    "title": "产业与产品判断",
-                    "body": "测试证券认为 800G 放量支撑增长。",
-                    "internal_refs": ["broker:card:core"],
-                    "citation_refs": [1],
-                    "source_ref_ids": ["broker-source:core"],
-                }
-            ],
-            "forecast_ranges": [
-                {
-                    "metric": "归母净利润",
-                    "period": "2026E",
-                    "range": "券商预测区间 10-12 亿元",
-                    "internal_refs": ["broker:card:forecast"],
-                    "citation_refs": [2],
-                    "source_ref_ids": ["broker-source:forecast"],
-                }
-            ],
-            "risks": [
-                {
-                    "body": "研报提示：若需求低于假设，盈利预测需下修。",
-                    "internal_refs": ["broker:card:risk"],
-                    "citation_refs": [3],
-                    "source_ref_ids": ["broker-source:risk"],
-                }
-            ],
-            "citations": {
-                1: {"source": "券商研报", "title": "核心观点"},
-                2: {"source": "券商研报", "title": "盈利预测"},
-                3: {"source": "券商研报", "title": "风险提示"},
-            },
-        },
+        "periodic_report_narrative_evidence_cards": {"cards": [
+            _canonical_annual_card(
+                "management", "business_structure", "公司解释增长来自 FPGA。",
+            ) | {"title": "管理层讨论", "source_block_id": "annual-source:management"},
+        ]},
+        "broker_research_digest_items": [
+            _broker_item("broker_product_driver", "研报认为 800G 放量支撑增长。", "core"),
+            _broker_item("broker_earnings_forecast", "券商预测区间 10-12 亿元", "forecast"),
+            _broker_item("broker_risk_note", "若需求低于假设，盈利预测需下修。", "risk"),
+        ],
         "deep_analysis_display": {
             "_curated_external_argument_cards": [
                 _external_argument_card(
@@ -173,6 +181,158 @@ def _external_argument_card(
         "scoring_eligible": False,
         "risk_score_eligible": False,
     }
+
+
+def test_formal_material_diagnostics_are_derived_from_canonical_inputs():
+    assert hasattr(snapshot_module, "build_chapter4_formal_material_diagnostics")
+
+    diagnostics = snapshot_module.build_chapter4_formal_material_diagnostics(
+        _direct_formal_ctx()
+    )
+
+    assert diagnostics == {
+        "annual_status": "ready",
+        "annual_confirmed_row_count": 1,
+        "annual_explanation_row_count": 5,
+        "annual_warning_count": 0,
+        "formal_citation_candidate_count": 9,
+        "broker_status": "ready",
+        "broker_input_item_count": 3,
+        "broker_usable_card_count": 3,
+        "broker_content_families": ["core_view", "earnings_forecast", "risk_note"],
+        "broker_institutions": ["测试证券", "另一个证券"],
+    }
+
+
+def test_snapshot_projects_direct_formal_inputs_with_stable_broker_refs_and_external_offset():
+    snapshot = build_deep_analysis_material_snapshot(_direct_formal_ctx())
+    rows = {row.row_id: row for row in snapshot.rows}
+
+    assert "旧材料不应进入快照" not in " ".join(row.body for row in snapshot.rows)
+    assert rows["annual:annual_report_explanation:3"].body == "本公司推動新品完成客戶验证"
+    assert rows["broker:sections:0"].citation_refs == (8,)
+    assert rows["broker:forecast_ranges:0"].citation_refs == (7,)
+    assert rows["broker:risks:0"].citation_refs == (9,)
+    assert rows["external:argument_cards:0"].citation_refs == (10,)
+    expected = hashlib.sha256("core".encode("utf-8")).hexdigest()[:16]
+    assert rows["broker:sections:0"].source_ref_ids == (
+        f"broker_research_digest:{expected}",
+    )
+
+
+def test_annual_projection_preserves_complete_cleaned_body_and_zero_warning():
+    ctx = _direct_formal_ctx()
+    long_body = "公司持续推进客户导入并完成产品验证。" * 30
+    ctx["periodic_report_narrative_evidence_cards"]["cards"] = [
+        _canonical_annual_card("business", "business_structure", "本公司推 動新品服务客 戶。"),
+        _canonical_annual_card("duplicate", "business_structure", "本公司推動新品服务客戶。"),
+        _canonical_annual_card("operating", "operating_progress", long_body),
+        _canonical_annual_card("technology", "technology_product_progress", "新平台完成可靠性验证。"),
+        _canonical_annual_card("financial", "financial_quality_explanation", "收入增长主要系产品销量增加。"),
+        {"card_id": "legacy", "source_excerpt": "没有 canonical family 的旧卡。"},
+    ]
+    ctx["formal_financial_fact_pack"] = {
+        "facts": [{"metric": "营业收入", "value": "0.00亿元", "source": "2025年annual"}],
+    }
+    ctx["periodic_report_filing_core_facts"] = [{"fact": "营业收入", "data": "0.00亿元"}]
+    ctx["broker_research_digest_items"] = []
+
+    diagnostics = snapshot_module.build_chapter4_formal_material_diagnostics(ctx)
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    formal = [row for row in snapshot.rows if row.claim_status in {"formal_fact", "formal_explanation"}]
+
+    assert diagnostics["annual_status"] == "ready"
+    assert diagnostics["annual_confirmed_row_count"] == 0
+    assert diagnostics["annual_explanation_row_count"] == 5
+    assert diagnostics["annual_warning_count"] == 1
+    assert sum(row.body == "本公司推動新品服务客戶" for row in formal) == 1
+    assert all("没有 canonical family" not in row.body for row in formal)
+    complete = next(row.body for row in formal if row.title == "operating_progress")
+    assert len(complete) > 300
+    assert complete == long_body.strip(" ，,。；;")
+
+
+def test_formal_diagnostics_count_unique_annual_citation_keys():
+    ctx = {
+        "formal_financial_fact_pack": {"facts": [
+            {"metric": "营业收入", "value": "10亿元", "source": "2025年annual"},
+            {"metric": "营业收入", "value": "10亿元", "source": "2025年annual"},
+        ]},
+        "broker_research_digest_items": [],
+    }
+
+    diagnostics = snapshot_module.build_chapter4_formal_material_diagnostics(ctx)
+
+    assert diagnostics["annual_confirmed_row_count"] == 2
+    assert diagnostics["formal_citation_candidate_count"] == 1
+
+
+def test_broker_projection_retains_all_guarded_items_and_view_model_keeps_layout_budget():
+    items = [
+        _broker_item("broker_core_view", f"机构认为第{index}项需求增长。", f"core:{index}", f"机构{index}")
+        for index in range(7)
+    ]
+    ctx = {"broker_research_digest_items": items}
+
+    diagnostics = snapshot_module.build_chapter4_formal_material_diagnostics(ctx)
+    rows = [row for row in build_deep_analysis_material_snapshot(ctx).rows if row.source_layer == "broker"]
+
+    assert diagnostics["broker_status"] == "ready"
+    assert diagnostics["broker_usable_card_count"] == 7
+    assert diagnostics["formal_citation_candidate_count"] == 7
+    assert len(rows) == 7
+    assert [row.attribution for row in rows] == [f"机构{index}" for index in range(7)]
+
+    view_model = build_chapter4_view_model(build_deep_analysis_material_snapshot(ctx), "formal_medium")
+    broker_rows = view_model.section("4.2").rows
+    assert len(broker_rows) == 5
+    assert [row.attribution for row in broker_rows] == [f"机构{index}" for index in range(5)]
+
+
+def test_single_guarded_broker_card_is_an_attributed_single_institution_observation():
+    item = _broker_item("broker_core_view", "公司产品进入客户验证阶段。", "sparse")
+    ctx = {"broker_research_digest_items": [item]}
+
+    diagnostics = snapshot_module.build_chapter4_formal_material_diagnostics(ctx)
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    rows = [row for row in snapshot.rows if row.source_layer == "broker"]
+
+    assert diagnostics["broker_status"] == "single_institution"
+    assert diagnostics["broker_usable_card_count"] == 1
+    assert len(rows) == 1
+    assert rows[0].attribution == "测试证券"
+
+
+def test_sparse_broker_owns_duplicate_external_fact_but_keeps_new_external_anchor():
+    fact = "公司A2000芯片已进入客户验证阶段并完成重点客户验证。"
+    ctx = {
+        "broker_research_digest_items": [
+            _broker_item("broker_core_view", fact, "sparse"),
+        ],
+        "deep_analysis_evidence_profile": {"profile": "formal_medium"},
+        "deep_analysis_display": {
+            "_curated_external_argument_cards": [
+                _external_argument_card(
+                    argument_key="external:duplicate", evidence=fact, ref=1,
+                ),
+                _external_argument_card(
+                    argument_key="external:delta",
+                    evidence="公司A2000芯片已进入客户验证阶段，2026年订单达到10亿元。", ref=2,
+                ),
+            ],
+            "citations": {
+                1: {"source": "外部材料", "title": "重复观察"},
+                2: {"source": "外部材料", "title": "新增锚点"},
+            },
+        },
+    }
+
+    snapshot = build_deep_analysis_material_snapshot(ctx)
+    view_model = build_chapter4_view_model(snapshot, "formal_medium")
+    external_bodies = [row.body for row in view_model.section("4.3").rows]
+
+    assert fact not in external_bodies
+    assert any("2026年订单达到10亿元" in body for body in external_bodies)
 
 
 def test_snapshot_projects_external_argument_v4_and_keeps_full_snapshot_offsets():
@@ -1764,28 +1924,16 @@ def test_select_annual_display_rows_removes_normalized_duplicate_segments_within
 
 def test_formal_medium_view_model_selects_annual_display_rows_and_reports_diagnostics():
     ctx = _ctx()
-    ctx["annual_report_memo"]["sections"]["annual_report_explanation"] = [
-        {
-            "title": "主营业务",
-            "body": "公司主营业务为芯片设计并服务于汽车电子客户。",
-            "citation_refs": [1],
-            "source_ref_ids": ["annual:business"],
-            "argument_family": "business_structure",
-        },
-        {
-            "title": "审计意见",
-            "body": "我们认为，后附的公司财务报表在所有重大方面公允反映了公司财务状况。",
-            "citation_refs": [2],
-            "source_ref_ids": ["annual:audit"],
-            "argument_family": "business_structure",
-        },
-        {
-            "title": "行业预测",
-            "body": "根据第三方预测，2026年全球市场规模将达到228亿美元。",
-            "citation_refs": [3],
-            "source_ref_ids": ["annual:industry"],
-            "argument_family": "market_competition_outlook",
-        },
+    ctx["periodic_report_narrative_evidence_cards"]["cards"] = [
+        _canonical_annual_card(
+            "business", "business_structure", "公司主营业务为芯片设计并服务于汽车电子客户。",
+        ) | {"title": "主营业务", "source_block_id": "annual:business"},
+        _canonical_annual_card(
+            "audit", "business_structure", "我们认为，后附的公司财务报表在所有重大方面公允反映了公司财务状况。",
+        ) | {"title": "审计意见", "source_block_id": "annual:audit"},
+        _canonical_annual_card(
+            "industry", "market_competition_outlook", "根据第三方预测，2026年全球市场规模将达到228亿美元。",
+        ) | {"title": "行业预测", "source_block_id": "annual:industry"},
     ]
 
     view_model = build_chapter4_view_model(
@@ -1811,7 +1959,7 @@ def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations
     assert all(row.risk_score_eligible is False for row in snapshot.rows)
 
     rows_by_id = {row.row_id: row for row in snapshot.rows}
-    assert rows_by_id["annual:confirmed:0"].text == "营业收入：营业收入 10 亿元"
+    assert rows_by_id["annual:confirmed:0"].text == "营业收入：营业收入：10 亿元"
     assert rows_by_id["annual:annual_report_explanation:0"].claim_status == "formal_explanation"
     assert rows_by_id["broker:forecast_ranges:0"].source_layer == "broker"
     assert rows_by_id["broker:risks:0"].claim_status == "professional_analysis"
@@ -1831,8 +1979,8 @@ def test_snapshot_preserves_lossless_broker_forecast_fields_and_memo_status():
 
     forecast = next(row for row in snapshot.rows if row.row_id == "broker:forecast_ranges:0")
 
-    assert forecast.broker_metric == "归母净利润"
-    assert forecast.broker_period == "2026E"
+    assert forecast.broker_metric == "研报盈利预测"
+    assert forecast.broker_period == "未拆分"
     assert forecast.body == "券商预测区间 10-12 亿元"
     assert forecast.broker_memo_status == "single_institution"
     assert all(
@@ -1932,7 +2080,7 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
     broker_row = next(row for row in view_model.section("4.2").rows if row.row_id == "broker:sections:0")
     external_row = next(row for row in view_model.section("4.3").rows if row.row_id == "external:argument_cards:0")
     assert annual_row.title == "营业收入"
-    assert annual_row.body == "营业收入 10 亿元"
+    assert annual_row.body == "营业收入：10 亿元"
     assert annual_row.render_role == "financial_quality_explanation"
     assert annual_row.argument_complete is False
     assert broker_row.render_role == "broker_assumption"
@@ -1944,10 +2092,11 @@ def test_formal_medium_view_model_preserves_input_and_row_render_metadata():
     assert {k: v for k, v in ctx.items() if k != "recommendation_decision"} == before
 
 
-def test_snapshot_does_not_admit_stale_rows_from_absent_annual_or_broker_memo():
+def test_snapshot_does_not_admit_rows_when_canonical_annual_and_broker_inputs_are_absent():
     ctx = _ctx()
-    ctx["annual_report_memo"]["status"] = "absent"
-    ctx["broker_research_memo"]["status"] = "absent"
+    ctx.pop("formal_financial_fact_pack")
+    ctx.pop("periodic_report_narrative_evidence_cards")
+    ctx.pop("broker_research_digest_items")
 
     snapshot = build_deep_analysis_material_snapshot(ctx)
     view_model = build_chapter4_view_model(snapshot, {"profile": "formal_medium"})

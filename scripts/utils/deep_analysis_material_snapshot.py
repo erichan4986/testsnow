@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, replace
 from difflib import SequenceMatcher
+import hashlib
 import re
 from typing import Any, Dict, Iterable, Mapping, Tuple
 
@@ -82,6 +83,25 @@ class MaterialSnapshot:
 
 
 @dataclass(frozen=True)
+class _AnnualMaterialProjection:
+    status: str
+    cards: Tuple[Mapping[str, Any], ...]
+    facts: Tuple[Mapping[str, Any], ...]
+    explanations: Tuple[Mapping[str, Any], ...]
+    warnings: Tuple[str, ...]
+
+
+@dataclass(frozen=True)
+class _BrokerMaterialProjection:
+    status: str
+    usable_items: Tuple[Any, ...]
+    projected_items: Tuple[Any, ...]
+    institutions: Tuple[str, ...]
+    families: Tuple[str, ...]
+    input_item_count: int
+
+
+@dataclass(frozen=True)
 class Chapter4Section:
     section_id: str
     title: str
@@ -109,6 +129,14 @@ class _CitationAllocator:
         self._next_ref = 1
         self.citations: Dict[int, Dict[str, Any]] = {}
         self._offset_by_source: Dict[int, int] = {}
+        self._refs_by_key: Dict[Tuple[Any, ...], int] = {}
+
+    def allocate(self, key: Tuple[Any, ...], meta: Mapping[str, Any]) -> int:
+        if key not in self._refs_by_key:
+            self._refs_by_key[key] = self._next_ref
+            self.citations[self._next_ref] = dict(meta)
+            self._next_ref += 1
+        return self._refs_by_key[key]
 
     def map_refs(self, local_refs: Iterable[Any], local_citations: Mapping[Any, Any]) -> Tuple[int, ...]:
         source_key = id(local_citations)
@@ -134,9 +162,11 @@ def build_deep_analysis_material_snapshot(ctx: Mapping[str, Any]) -> MaterialSna
     allocator = _CitationAllocator()
     profile = ctx.get("deep_analysis_evidence_profile") or {}
     display = ctx.get("deep_analysis_display") or {}
+    annual = _prepare_annual_material(ctx)
+    broker = _prepare_broker_material(ctx)
     rows = [
-        *_annual_rows(ctx.get("annual_report_memo") or {}, allocator),
-        *_broker_rows(ctx.get("broker_research_memo") or {}, allocator),
+        *_annual_rows(annual, allocator),
+        *_broker_rows(broker, allocator),
         *_external_rows(display, allocator, profile),
     ]
     return MaterialSnapshot(
@@ -146,6 +176,30 @@ def build_deep_analysis_material_snapshot(ctx: Mapping[str, Any]) -> MaterialSna
         diagnostics=_diagnostics(ctx, rows),
         external_topic_narratives=_external_narratives(display, allocator),
     )
+
+
+def build_chapter4_formal_material_diagnostics(ctx: Mapping[str, Any]) -> Dict[str, Any]:
+    """Summarize the canonical formal inputs without creating memo schemas."""
+    annual = _prepare_annual_material(ctx)
+    broker = _prepare_broker_material(ctx)
+    annual_eligible = annual.status in {"ready", "deterministic_fallback"}
+    annual_refs = len(
+        {("fact", str(row.get("source") or "公司年报"), row.get("metric")) for row in annual.facts}
+        | {("explanation", str(row.get("source_doc") or "公司年报"), str(row.get("source_ref") or "")) for row in annual.explanations}
+        | {("card", str(row.get("source_block_id") or row.get("card_id") or "")) for row in annual.cards}
+    )
+    return {
+        "annual_status": annual.status,
+        "annual_confirmed_row_count": len(annual.facts),
+        "annual_explanation_row_count": len(annual.explanations) + len(annual.cards),
+        "annual_warning_count": len(annual.warnings),
+        "formal_citation_candidate_count": (annual_refs if annual_eligible else 0) + len(broker.projected_items),
+        "broker_status": broker.status,
+        "broker_input_item_count": broker.input_item_count,
+        "broker_usable_card_count": len(broker.usable_items),
+        "broker_content_families": list(broker.families),
+        "broker_institutions": list(broker.institutions),
+    }
 
 
 def select_annual_display_rows(
@@ -920,84 +974,275 @@ def is_informative_variable_title(title: str) -> bool:
     return normalized not in _NON_INFORMATIVE_VARIABLE_TITLES
 
 
-def _annual_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list[MaterialRow]:
-    if memo.get("status") not in {"ready", "deterministic_fallback"}:
+_ANNUAL_FAMILIES = frozenset(_ANNUAL_ROLE_BUDGETS)
+_BROKER_FAMILIES = {
+    "broker_core_view": "core_view",
+    "broker_product_driver": "product_driver",
+    "broker_earnings_forecast": "earnings_forecast",
+    "broker_risk_note": "risk_note",
+    "broker_valuation_method": "valuation_method",
+}
+_BROKER_TITLES = {
+    "broker_core_view": "券商核心观点",
+    "broker_product_driver": "产业与产品判断",
+    "broker_earnings_forecast": "盈利预测与估值假设",
+    "broker_risk_note": "风险提示",
+    "broker_valuation_method": "估值方法",
+}
+
+
+def _clean_annual_excerpt(text: object) -> str:
+    cleaned = str(text or "")
+    cleaned = re.sub(
+        r"[\u4e00-\u9fffA-Za-z0-9（）()·]{0,50}(?:集团股份有限公司|股份有限公司|有限公司)\s*20\d{2}年(?:年度报告|半年度报告)",
+        "", cleaned,
+    )
+    cleaned = re.sub(r"20\d{2}年(?:年度报告|半年度报告)", "", cleaned)
+    cleaned = re.sub(r"\b\d{1,3}/\d{1,3}\b", "", cleaned)
+    cleaned = re.sub(r"\b\d{1,3}/(?=\s|$)", "", cleaned)
+    for header in (
+        "产品类型 产品介绍 应用领域 产品或终端样图",
+        "产品类型 产品介绍 应用领域",
+        "产品或终端样图",
+    ):
+        cleaned = cleaned.replace(header, "")
+    cleaned = re.sub(r"(?<=[\u4e00-\u9fff])\s+(?=[\u4e00-\u9fff])", "", cleaned)
+    cleaned = re.sub(r"\s+", " ", cleaned).strip(" ，,。；;")
+    return cleaned
+
+
+def _is_suspicious_zero_metric(metric: object, value: object) -> bool:
+    return "0.00亿元" in str(value or "") and any(term in str(metric or "") for term in ("营收", "收入", "利润"))
+
+
+def _prepare_annual_material(ctx: Mapping[str, Any]) -> _AnnualMaterialProjection:
+    current = [
+        card for card in ((ctx.get("periodic_report_narrative_evidence_cards") or {}).get("cards") or [])
+        if isinstance(card, Mapping) and (card.get("excerpt") or card.get("source_excerpt"))
+    ]
+    material = ctx.get("annual_report_material_pack") or {}
+    raw_cards = current or [
+        card for card in (material.get("selected_narrative_cards") or [])
+        if isinstance(card, Mapping)
+    ]
+    cards = []
+    seen_bodies = set()
+    for raw in raw_cards:
+        family = str(raw.get("argument_family") or "").strip()
+        if family not in _ANNUAL_FAMILIES:
+            continue
+        body = _clean_annual_excerpt(raw.get("excerpt") or raw.get("source_excerpt") or raw.get("title"))
+        key = re.sub(r"\s+", "", body)
+        if key in seen_bodies:
+            continue
+        if key:
+            seen_bodies.add(key)
+        card = dict(raw)
+        card["excerpt"] = body
+        if raw in current:
+            card.setdefault("source_credit", 75)
+        cards.append(card)
+
+    warnings = []
+    for fact in ctx.get("periodic_report_filing_core_facts") or []:
+        if isinstance(fact, Mapping) and _is_suspicious_zero_metric(fact.get("fact"), fact.get("data")):
+            warnings.append(f"suspicious zero metric: {fact.get('fact')}={fact.get('data')}")
+
+    facts = []
+    for fact in ((ctx.get("formal_financial_fact_pack") or {}).get("facts") or []):
+        if not isinstance(fact, Mapping) or fact.get("metric") is None or fact.get("value") is None:
+            continue
+        if _is_suspicious_zero_metric(fact.get("metric"), fact.get("value")):
+            warning = f"suspicious zero metric: {fact.get('metric')}={fact.get('value')}"
+            if warning not in warnings:
+                warnings.append(warning)
+            continue
+        facts.append(dict(fact))
+
+    explanations = tuple(
+        dict(row) for row in ((ctx.get("formal_financial_explanation_pack") or {}).get("rows") or [])
+        if isinstance(row, Mapping)
+        and (row.get("metric") or row.get("topic"))
+        and (row.get("normalized_summary") or row.get("excerpt"))
+    )
+    has_material = bool(raw_cards or (ctx.get("formal_financial_fact_pack") or {}).get("facts") or (ctx.get("formal_financial_explanation_pack") or {}).get("rows"))
+    has_rows = bool(cards or facts or explanations)
+    has_product = any(card.get("argument_family") != "financial_quality_explanation" for card in cards)
+    status = (
+        "absent" if not has_material else
+        "ready" if len(cards) >= 4 and has_product and has_rows else
+        "deterministic_fallback" if has_rows else
+        "blocked" if warnings else "deterministic_fallback"
+    )
+    return _AnnualMaterialProjection(status, tuple(cards), tuple(facts), explanations, tuple(warnings))
+
+
+def _annual_rows(projection: _AnnualMaterialProjection, allocator: _CitationAllocator) -> list[MaterialRow]:
+    if projection.status not in {"ready", "deterministic_fallback"}:
         return []
-    sections = memo.get("sections") or {}
-    citations = memo.get("citations") or {}
     result = []
-    section_status = {
-        "confirmed": "formal_fact",
-        "annual_report_explanation": "formal_explanation",
-        "not_disclosed": "disclosure_boundary",
-        "inconclusive": "disclosure_boundary",
-    }
-    for section, claim_status in section_status.items():
-        for idx, row in enumerate(sections.get(section) or []):
-            if not isinstance(row, dict):
-                continue
-            title = str(row.get("title") or "").strip()
-            result.append(_adapt_material_row(
-                row,
-                allocator,
-                citations,
-                f"annual:{section}:{idx}",
-                source_layer="annual",
-                claim_status=claim_status,
-                section_hint="annual_memo",
-                title=title,
-                render_role=_annual_render_role(section, row),
-                argument_complete=bool(row.get("argument_complete", False)),
-                source_credit="official",
-            ))
+    for index, fact in enumerate(projection.facts):
+        metric = str(fact.get("metric"))
+        source = str(fact.get("source") or "公司年报")
+        ref = allocator.allocate(
+            ("fact", source, fact.get("metric")),
+            {"source": "公司年报", "title": source, "source_type": "periodic_report_filing_fact"},
+        )
+        result.append(_direct_material_row(
+            f"annual:confirmed:{index}", metric, f"{metric}：{fact.get('value')}",
+            "annual", "formal_fact", (ref,), (source,), "annual_memo",
+            "financial_quality_explanation", False, "official",
+        ))
+
+    explanation_rows = []
+    for row in projection.explanations:
+        metric = str(row.get("metric") or row.get("topic"))
+        body = str(row.get("normalized_summary") or row.get("excerpt"))
+        source = str(row.get("source_doc") or "公司年报")
+        source_ref = str(row.get("source_ref") or "")
+        ref = allocator.allocate(
+            ("explanation", source, source_ref),
+            {"source": "公司年报", "title": source, "source_type": "periodic_report_explanation"},
+        )
+        explanation_rows.append(_direct_material_row(
+            "", metric, body, "annual", "formal_explanation", (ref,), (source,),
+            "annual_memo", "financial_quality_explanation", False, "official",
+        ))
+    for card in projection.cards:
+        title = str(card.get("title") or "年报内容")
+        source_id = str(card.get("source_block_id") or card.get("card_id") or "")
+        ref = allocator.allocate(
+            ("card", source_id),
+            {
+                "source": "公司年报", "title": title,
+                "source_type": "periodic_report_narrative_evidence",
+                "source_credit": card.get("source_credit", 75),
+            },
+        )
+        explanation_rows.append(_direct_material_row(
+            "", title, str(card.get("excerpt") or ""), "annual", "formal_explanation",
+            (ref,), (source_id,), "annual_memo", str(card.get("argument_family") or ""),
+            bool(card.get("argument_complete", False)), "official",
+        ))
+    for index, row in enumerate(explanation_rows):
+        result.append(replace(row, row_id=f"annual:annual_report_explanation:{index}"))
+
+    for index, (title, body) in enumerate((
+        ("未充分披露项", "重要客户、订单、产能、供应链、管理层指引或细分拆分未在正式材料中充分披露。"),
+        ("不能下结论", "不得用营收/利润推断主力资金或市场行为。"),
+    )):
+        section = "not_disclosed" if index == 0 else "inconclusive"
+        result.append(_direct_material_row(
+            f"annual:{section}:0", title, body, "annual", "disclosure_boundary",
+            (), (), "annual_memo",
+            "business_structure" if section == "not_disclosed" else "financial_quality_explanation",
+            False, "official",
+        ))
     return result
 
 
-def _annual_render_role(section: str, row: Mapping[str, Any]) -> str:
-    role = str(row.get("argument_family") or row.get("display_group") or "").strip()
-    if role:
-        return role
-    text = f"{row.get('title') or ''}{row.get('body') or ''}"
-    if any(term in text for term in ("主营", "产品", "客户", "应用", "业务")):
-        return "business_structure"
-    if section == "confirmed" or any(term in text for term in ("收入", "营收", "利润", "毛利率", "现金流", "费用", "存货")):
-        return "financial_quality_explanation"
-    return "operating_progress"
+def _prepare_broker_material(ctx: Mapping[str, Any]) -> _BrokerMaterialProjection:
+    raw_items = ctx.get("broker_research_digest_items") or []
+    selected = []
+    seen = set()
+    for item in raw_items:
+        extra = getattr(item, "extra", {}) or {}
+        if (
+            extra.get("source_type") != "broker_research"
+            or extra.get("claim_status") != "professional_analysis"
+            or extra.get("confirmed_fact") is True
+            or extra.get("scoring_eligible") is True
+            or extra.get("risk_score_eligible") is True
+        ):
+            continue
+        family = _BROKER_FAMILIES.get(str(extra.get("card_type") or ""))
+        content = " ".join(str(getattr(item, "content", "") or "").split())
+        if not family or not content:
+            continue
+        institution = str(extra.get("institution") or getattr(item, "author", "") or "").strip()
+        key = (family, str(extra.get("viewpoint_cluster") or content[:80]), institution)
+        if key in seen:
+            continue
+        seen.add(key)
+        selected.append(item)
+    families = tuple(sorted({
+        _BROKER_FAMILIES[str((getattr(item, "extra", {}) or {}).get("card_type"))]
+        for item in selected
+    }))
+    institutions = tuple(dict.fromkeys(
+        institution for item in selected
+        if (institution := str((getattr(item, "extra", {}) or {}).get("institution") or getattr(item, "author", "") or "").strip())
+    ))
+    titles = {
+        str(getattr(item, "title", "") or "").strip()
+        for item in selected if str(getattr(item, "title", "") or "").strip()
+    }
+    admitted = bool(selected)
+    status = "absent"
+    if admitted:
+        status = "single_institution" if len(institutions) <= 1 or len(titles) <= 1 else "ready"
+    projected = tuple(selected) if status != "absent" else ()
+    return _BrokerMaterialProjection(status, tuple(selected), projected, institutions, families, len(raw_items))
 
 
-def _broker_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list[MaterialRow]:
-    if memo.get("status") not in {"ready", "single_institution"}:
+def _broker_source_id(item: Any) -> str:
+    extra = getattr(item, "extra", {}) or {}
+    seed = str(extra.get("viewpoint_cluster") or getattr(item, "title", "") or getattr(item, "content", ""))
+    return f"broker_research_digest:{hashlib.sha256(seed.encode('utf-8')).hexdigest()[:16]}"
+
+
+def _broker_rows(projection: _BrokerMaterialProjection, allocator: _CitationAllocator) -> list[MaterialRow]:
+    if projection.status not in {"ready", "single_institution"}:
         return []
-    citations = memo.get("citations") or {}
+    prepared = []
+    for source_index, item in enumerate(projection.projected_items):
+        extra = getattr(item, "extra", {}) or {}
+        card_type = str(extra.get("card_type") or "")
+        institution = str(extra.get("institution") or getattr(item, "author", "") or "券商").strip()
+        text = " ".join(str(getattr(item, "content", "") or "").split())
+        body = (
+            text if text.startswith("研报提示") else f"研报提示：{text}"
+        ) if card_type == "broker_risk_note" else (
+            text if re.match(r"^(券商|研报|机构)", text) else f"{institution}认为：{text}"
+        )
+        source_id = _broker_source_id(item)
+        ref = allocator.allocate(
+            ("broker", source_index, source_id),
+            {
+                "source": "券商研报",
+                "title": str(getattr(item, "title", "") or _BROKER_TITLES.get(card_type, "券商研报")),
+                "author": institution,
+                "source_type": "broker_research",
+                "source_credit": 72,
+                "claim_status": "professional_analysis",
+                "verification_status": "professional_observation",
+            },
+        )
+        section = (
+            "risks" if card_type == "broker_risk_note" else
+            "forecast_ranges" if card_type == "broker_earnings_forecast" else "sections"
+        )
+        prepared.append((section, card_type, body, source_id, ref, institution))
+
     result = []
     for section in ("sections", "forecast_ranges", "risks"):
-        for idx, row in enumerate(memo.get(section) or []):
-            if not isinstance(row, dict):
-                continue
-            title, body = _broker_title_body(section, row)
-            material_row = _adapt_material_row(
-                row,
-                allocator,
-                citations,
-                f"broker:{section}:{idx}",
-                source_layer="broker",
-                claim_status="professional_analysis",
-                section_hint="broker_memo",
-                title=title,
-                body=body,
-                render_role={
-                    "sections": "broker_assumption",
-                    "forecast_ranges": "broker_forecast",
-                    "risks": "broker_risk",
-                }[section],
-                source_credit="professional",
+        for index, (_, card_type, body, source_id, ref, institution) in enumerate(
+            row for row in prepared if row[0] == section
+        ):
+            metric = "研报盈利预测" if section == "forecast_ranges" else ""
+            period = "未拆分" if section == "forecast_ranges" else ""
+            title = f"{metric}{period}" if metric else (
+                "反方约束" if section == "risks" else _BROKER_TITLES.get(card_type, "券商观点")
+            )
+            row = _direct_material_row(
+                f"broker:{section}:{index}", title, body, "broker", "professional_analysis",
+                (ref,), (source_id,), "broker_memo",
+                {"sections": "broker_assumption", "forecast_ranges": "broker_forecast", "risks": "broker_risk"}[section],
+                False, "professional", attribution=institution,
             )
             result.append(replace(
-                material_row,
-                attribution=_broker_attribution(row, material_row.citation_refs, allocator.citations),
-                broker_metric=str(row.get("metric") or "").strip(),
-                broker_period=str(row.get("period") or "").strip(),
-                broker_memo_status=str(memo.get("status") or "").strip(),
+                row, broker_metric=metric, broker_period=period,
+                broker_memo_status=projection.status,
             ))
     return result
 
@@ -1198,12 +1443,19 @@ def _external_units_by_key(cards: Iterable[Mapping[str, Any]]) -> dict[tuple[str
     }
 
 
-def _broker_title_body(section: str, row: Mapping[str, Any]) -> tuple[str, str]:
-    if section == "forecast_ranges":
-        title = "".join(str(row.get(key) or "").strip() for key in ("metric", "period"))
-        return title or "盈利预测", str(row.get("range") or "").strip()
-    title = str(row.get("title") or ("反方约束" if section == "risks" else "机构核心观点")).strip()
-    return title, str(row.get("body") or "").strip()
+def _direct_material_row(
+    row_id: str, title: str, body: str, source_layer: str, claim_status: str,
+    citation_refs: Tuple[int, ...], source_ref_ids: Tuple[str, ...],
+    section_hint: str, render_role: str, argument_complete: bool,
+    source_credit: str, *, attribution: str = "",
+) -> MaterialRow:
+    return MaterialRow(
+        row_id, f"{title}：{body}" if title and body else title or body,
+        source_layer, claim_status, citation_refs, source_ref_ids,
+        section_hint=section_hint, title=title, body=body, render_role=render_role,
+        argument_complete=argument_complete, attribution=attribution,
+        source_credit=source_credit,
+    )
 
 
 def _adapt_material_row(
@@ -1240,23 +1492,6 @@ def _adapt_material_row(
         source_credit=str(source_credit or "").strip(),
         diagnostics=_row_diagnostics(source),
     )
-
-
-def _broker_attribution(
-    row: Mapping[str, Any],
-    refs: Iterable[int],
-    citations: Mapping[int, Any],
-) -> str:
-    for ref in refs:
-        meta = citations.get(ref) or {}
-        author = str(meta.get("author") or "").strip() if isinstance(meta, Mapping) else ""
-        if author:
-            return author
-    body = str(row.get("body") or row.get("range") or "").strip()
-    match = re.match(r"^([^：:，,]{2,12}?)(?:研报)?(?:认为|预计|提示)", body)
-    if match and match.group(1) not in {"券商", "机构", "研报"}:
-        return match.group(1).strip()
-    return "研报"
 
 
 def _row_diagnostics(row: Mapping[str, Any]) -> Tuple[Tuple[str, str], ...]:
