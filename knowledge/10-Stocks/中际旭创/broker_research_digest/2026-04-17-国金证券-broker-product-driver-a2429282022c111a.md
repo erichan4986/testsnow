@@ -2,7 +2,7 @@
 stock: "中际旭创"
 code: "300308"
 source_type: broker_research
-card_id: "broker:2af7ea5b6139b7e5"
+card_id: "broker:a2429282022c111a"
 schema_version: "broker_research_digest_card.v1"
 card_type: broker_product_driver
 title: "产品与产业驱动"
@@ -19,9 +19,13 @@ confirmed_fact: false
 scoring_eligible: false
 risk_score_eligible: false
 display_only: false
-source_excerpt_hash: "2af7ea5b6139b7e54ffd456cf96ad550bd1127f23a26802e575f982e58a887d0"
+source_excerpt_hash: ba7ec3bc3b12c4658924e6ef8b0603b95c5b14558e078c004ba0369124253457
+excerpt_cleaner_version: broker_ocr_v3
+selection_version: broker_digest_v3_3
 source_pdf_path: "/Users/erichan/testsnow/data/raw/broker_research_reports/中际旭创_300308/_downloads/2026-04-17_国金证券_高速光模块放量增收增利，NPO等新技术核心卡位.pdf"
-source_url: ""
+source_url: "https://pdf.dfcfw.com/pdf/H3_AP202604171821286408_1.pdf"
+source_heading: generic_driver_block
+selection_reason: selected_generic_driver_block
 viewpoint_cluster: business_driver_market_demand_product_mix
 report_length_class: short
 collected_at: ""
@@ -31,7 +35,12 @@ collected_at: ""
 
 ## Broker Research Excerpt
 
-> 业绩简评 2026 年 4 月 17 日公司发布 2026 年一季报，2026Q1 实现收入 194.96亿元，同比+191.1%，环比+47.3%； 归母净利润57.35亿元， 同比+262.3%，环比+56.5%，各项指标均超市场预期。 经营分析 高速光模块出货占比提升，营收与利润共振。 下游客户需求强劲， 带动 800G/1.6T 等高速光模块产品同步放量，公司营收、利润实 现双增。 我们认为尽管物料端有价格上涨压力，但受益于高速光模 块出货比例、以及硅光渗透率提升，公司1Q26毛利率达到46.1%， 同比+9.36pct，环比+1.6pct；
+> 2026Q1 实现收入 194.96亿元，同比+191.1%，环比+47.3%；归母净利润57.35亿元，同比+262.3%，环比+56.5%，各项指标均超市场预期。高速光模块出货占比提升，营收与利润共振。下游客户需求强劲，带动 800G/1.6T 等高速光模块产品同步放量，公司营收、利润实现双增。我们认为尽管物料端有价格上涨压力，但受益于高速光模块出货比例、以及硅光渗透率提升，公司1Q26毛利率达到46.1%，同比+9.36pct，环比+1.6pct；
+
+## Selection Diagnostics
+
+- selection_reason: `selected_generic_driver_block`
+- heading=`generic_driver_block` | score=`88` | parts=`signal=48,evidence=28,completeness=12,coherence=8,ocr_penalty=8,noise_penalty=0` | status=`selected` | reason=`selected_generic_driver_block`
 
 ## Source
 

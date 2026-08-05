@@ -2,7 +2,7 @@
 stock: "中际旭创"
 code: "300308"
 source_type: broker_research
-card_id: "broker:c4b7cadb67aa95c0"
+card_id: "broker:6c3c9de6edf4fc52"
 schema_version: "broker_research_digest_card.v1"
 card_type: broker_core_view
 title: "券商核心观点"
@@ -19,10 +19,14 @@ confirmed_fact: false
 scoring_eligible: false
 risk_score_eligible: false
 display_only: false
-source_excerpt_hash: c4b7cadb67aa95c0744c7addf1ce004db1c3c36c48babf7b6b51fff33861e3a0
+source_excerpt_hash: "9342da2b69726dc8c6c33bd251c211ab82bb9412d8893556162d41a99fc06c44"
+excerpt_cleaner_version: broker_ocr_v3
+selection_version: broker_digest_v3_3
 source_pdf_path: "/Users/erichan/testsnow/data/raw/broker_research_reports/中际旭创_300308/_downloads/2026-04-09_华鑫证券_公司事件点评报告：高速光模块需求强劲增长，进一步加大产能投入.pdf"
-source_url: ""
-viewpoint_cluster: business_driver_market_demand_product_mix
+source_url: "https://pdf.dfcfw.com/pdf/H3_AP202604091821077597_1.pdf"
+source_heading: "事件"
+selection_reason: selected_best_heading_candidate
+viewpoint_cluster: earnings_growth_snapshot
 report_length_class: short
 collected_at: ""
 ---
@@ -31,7 +35,13 @@ collected_at: ""
 
 ## Broker Research Excerpt
 
-> 投资要点 ▌ 高速光模块占比持续提高，毛利率稳中有升 受益于终端客户对算力基础设施的强劲投入，2025 年公司 品出货较快增长，尤其高速光模块占比持续提高。 随着产 方案不断优化、运营效率继续提升，公司营业收入与净利 均同比实现大幅增长。 2025 年第四季度，公司毛利率达 44.48%，创历史新高，2026 年全年毛利率有望保持稳中 升。 ▌ 800G 和 1.6T 光模块份额稳固，进一步加大产 投入 CSP 客户和算力系统解决方案提供商需求旺盛，预计 20 2027 年 800G 光模块需求持续增长，1.6T 光模块需求将迎 强劲增长。 公司正进一步加大产能投入，2025 年化产能已 到 2800 多万只，2026 年产能还将有较大提升，以满足客 给予的份额和订单。
+> 中际旭创发布 2025年年度报告：2025年实现营业收入382.40亿元，同比增长 60.25%；实现扣非归母净利润 107.10亿元同比增长111.31%。
+
+## Selection Diagnostics
+
+- selection_reason: `selected_best_heading_candidate`
+- heading=`投资要点` | score=`-72` | parts=`signal=60,evidence=28,completeness=12,coherence=8,ocr_penalty=100,noise_penalty=80` | status=`rejected` | reason=`rejected_ocr_damage`
+- heading=`事件` | score=`47` | parts=`signal=15,evidence=28,completeness=8,coherence=0,ocr_penalty=4,noise_penalty=0` | status=`selected` | reason=`selected`
 
 ## Source
 
