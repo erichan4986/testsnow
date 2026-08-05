@@ -179,6 +179,7 @@ def _extract_thesis_points(
     text: str,
     direction: str,
     claim_verification_summary: Optional[Dict[str, Any]] = None,
+    use_llm: bool = True,
 ) -> List[Dict]:
     """从合成文本中提取看多/看空论点。优先使用 LLM，失败时回退到启发式。"""
     points = []
@@ -187,22 +188,23 @@ def _extract_thesis_points(
 
     text = sanitize_citation_markers(text)
 
-    try:
-        llm_result = _llm_extract_thesis(text)
-        if direction == "bullish":
-            return _guard_claim_verification_points(
-                llm_result.get("bullish", []),
-                direction,
-                claim_verification_summary,
-            )
-        else:
-            return _guard_claim_verification_points(
-                llm_result.get("bearish", []),
-                direction,
-                claim_verification_summary,
-            )
-    except Exception as e:
-        logger.warning(f"LLM 论点提取失败，回退到启发式: {e}")
+    if use_llm:
+        try:
+            llm_result = _llm_extract_thesis(text)
+            if direction == "bullish":
+                return _guard_claim_verification_points(
+                    llm_result.get("bullish", []),
+                    direction,
+                    claim_verification_summary,
+                )
+            else:
+                return _guard_claim_verification_points(
+                    llm_result.get("bearish", []),
+                    direction,
+                    claim_verification_summary,
+                )
+        except Exception as e:
+            logger.warning(f"LLM 论点提取失败，回退到启发式: {e}")
 
     if direction == "bullish":
         keywords = ["增长", "放量", "突破", "拐点", "优势", "机遇", "看好", "上调", "超预期", "确定性"]
@@ -541,8 +543,17 @@ class ExecutiveSummaryRenderer:
         combined = sanitize_citation_markers(debate_text + "\n" + fund_text)
 
         claim_verification_summary = ctx.get("claim_verification_summary")
-        bullish_points = _extract_thesis_points(combined, "bullish", claim_verification_summary)
-        bearish_points = _extract_thesis_points(combined, "bearish", claim_verification_summary)
+        use_llm = bool(ctx.get("report_llm_enabled", True))
+        if use_llm:
+            bullish_points = _extract_thesis_points(combined, "bullish", claim_verification_summary)
+            bearish_points = _extract_thesis_points(combined, "bearish", claim_verification_summary)
+        else:
+            bullish_points = _extract_thesis_points(
+                combined, "bullish", claim_verification_summary, use_llm=False
+            )
+            bearish_points = _extract_thesis_points(
+                combined, "bearish", claim_verification_summary, use_llm=False
+            )
         bullish_points = _filter_unsupported_formal_thin_bullish_points(bullish_points, ctx)
 
         pe_facts = _build_pe_spread_facts(ctx.get("peer_comparison_material"), stock_name)

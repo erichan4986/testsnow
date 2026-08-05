@@ -519,7 +519,7 @@ class ContentQualityGate:
 
         return llm_results
 
-    def process_xueqiu_posts(self, posts: List[Dict]) -> List[QualityResult]:
+    def process_xueqiu_posts(self, posts: List[Dict], use_llm: bool = True) -> List[QualityResult]:
         """
         处理雪球帖子（兼容现有数据结构）。
         """
@@ -538,7 +538,7 @@ class ContentQualityGate:
                 extra=post,
             )
             items.append(item)
-        return self.process(items)
+        return self.process(items, use_llm=use_llm)
 
     def process_zhihu_items(self, zhihu_items: List[Dict]) -> List[QualityResult]:
         """

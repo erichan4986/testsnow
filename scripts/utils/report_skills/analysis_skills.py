@@ -24,7 +24,9 @@ def cross_source_consolidation_skill(ctx: SkillContext) -> SkillContext:
             sys.path.insert(0, str(utils_dir))
         from content_consolidator import ContentConsolidator
 
-    consolidator = ContentConsolidator()
+    consolidator = ContentConsolidator(
+        use_llm_topics=bool(ctx.get("report_llm_enabled", True)),
+    )
     consolidated = consolidator.consolidate(keep_posts + zhihu_items)
     summary = consolidator.generate_cross_source_summary(consolidated) or ""
 

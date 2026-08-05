@@ -87,6 +87,7 @@ def test_configured_stock_entry_wires_reporter_without_network(tmp_path, monkeyp
             "--date",
             "20260629",
             "--fast-test",
+            "--no-llm",
             "--no-pdf",
         ]
     )
@@ -99,6 +100,7 @@ def test_configured_stock_entry_wires_reporter_without_network(tmp_path, monkeyp
     assert kwargs["source_intake_configs"] == {
         "测试股": {"enabled": True, "curated_external_argument_pack_synthesis_display": {"enabled": True}}
     }
+    assert kwargs["report_llm_enabled"] is False
     assert kwargs["stocks_data"]["测试股"][0]["content"] == "缓存标题"
     assert kwargs["stocks_data"]["测试股"][0]["like"] == 10
     raw_payload = json.loads((raw_dir / "report_input_20260629_测试股.json").read_text(encoding="utf-8"))
@@ -226,6 +228,36 @@ def test_fast_test_reuses_cached_zhihu_data(tmp_path):
     assert result == cached
 
 
+def test_no_llm_keeps_zhihu_search_but_disables_curator(tmp_path, monkeypatch):
+    mod = _load_entry_module()
+    calls = {}
+
+    class _Collector:
+        def collect(self, **kwargs):
+            calls.update(kwargs)
+            return {"report_items": [], "knowledge_items": [], "total": 0}
+
+    monkeypatch.setattr(mod, "ZhihuCollector", _Collector)
+    result = mod._collect_zhihu(
+        SimpleNamespace(fast_test=False, no_llm=True, keyword=["AI"]),
+        {"name": "测试股", "keywords": ["芯片"]},
+        tmp_path,
+        "20260731",
+    )
+
+    assert result["total"] == 0
+    assert calls["use_curator"] is False
+    assert calls["keywords"] == ["测试股", "芯片", "AI"]
+
+
+def test_parse_args_accepts_no_llm_flag():
+    mod = _load_entry_module()
+
+    args = mod._parse_args(["--stock", "测试股", "--no-llm"])
+
+    assert args.no_llm is True
+
+
 def test_cached_value_prefers_exact_filename_over_newer_fallback(tmp_path):
     mod = _load_entry_module()
     exact = tmp_path / "cache_20260804_测试股.json"
@@ -350,6 +382,7 @@ def test_offline_smoke_defaults_outputs_to_tmp(monkeypatch):
 
     assert args.fast_test is True
     assert args.no_pdf is True
+    assert args.no_llm is True
     assert args.raw_dir.startswith("/tmp/")
     assert args.report_dir.startswith("/tmp/")
     assert "offline_smoke" in args.raw_dir

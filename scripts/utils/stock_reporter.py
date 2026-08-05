@@ -29,6 +29,7 @@ class PerStockReporter:
         stock_configs: Dict[str, Dict] = None,
         enable_agent_reach: bool = False,
         enable_periodic_report_fulltext_intake: bool = False,
+        report_llm_enabled: bool = True,
     ):
         """Configure the single-stock report facade."""
         self.stocks_data = stocks_data or {}
@@ -40,6 +41,7 @@ class PerStockReporter:
         self.stock_configs = stock_configs or {}
         self.enable_agent_reach = enable_agent_reach
         self.enable_periodic_report_fulltext_intake = enable_periodic_report_fulltext_intake
+        self.report_llm_enabled = bool(report_llm_enabled)
         self.date_str = datetime.now().strftime("%Y%m%d")
 
     def generate_stock_report(self, stock_name: str, output_dir: str) -> tuple:
@@ -73,6 +75,7 @@ class PerStockReporter:
                 "raw_data": self.raw_data,
                 "stock_codes": self.stock_codes,
                 "stock_config": stock_cfg,
+                "report_llm_enabled": self.report_llm_enabled,
             }
             pipeline_input.update(plan.context_values)
 

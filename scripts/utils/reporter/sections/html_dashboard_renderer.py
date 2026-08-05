@@ -139,10 +139,14 @@ class HTMLDashboardRenderer:
         try:
             from .executive_summary_renderer import _extract_thesis_points
         except ImportError:
-            _extract_thesis_points = lambda t, d: []
+            _extract_thesis_points = lambda t, d, *a, **k: []
 
-        bullish_args = _extract_thesis_points(combined, "bullish")
-        bearish_args = _extract_thesis_points(combined, "bearish")
+        if ctx.get("report_llm_enabled", True):
+            bullish_args = _extract_thesis_points(combined, "bullish")
+            bearish_args = _extract_thesis_points(combined, "bearish")
+        else:
+            bullish_args = _extract_thesis_points(combined, "bullish", use_llm=False)
+            bearish_args = _extract_thesis_points(combined, "bearish", use_llm=False)
 
         def _card(title: str, value: str, color: str = "blue") -> str:
             color_map = {

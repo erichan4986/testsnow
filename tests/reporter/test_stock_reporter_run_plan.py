@@ -45,7 +45,23 @@ def test_reporter_forwards_one_compiled_plan_to_builder_and_context():
         "stock_config": {"industry": "测试行业"},
         "enable_claim_risk_signals": False,
         "enable_agent_reach": True,
+        "report_llm_enabled": True,
     }
+
+
+def test_reporter_forwards_disabled_llm_policy_to_pipeline():
+    reporter = PerStockReporter(
+        stocks_data={"测试股": [{"content": "有效帖子"}]},
+        report_llm_enabled=False,
+    )
+    plan = ReportRunPlan({}, {"enable_claim_risk_signals": False}, True)
+    pipeline = _pipeline_result("", "")
+    with patch("utils.stock_reporter.compile_report_run_plan", return_value=plan), patch(
+        "utils.report_skills.build_stock_report_pipeline", return_value=pipeline
+    ):
+        reporter.generate_stock_report("测试股", "/tmp/out")
+
+    assert pipeline.run.call_args.args[0]["report_llm_enabled"] is False
 
 
 def test_reporter_skips_empty_posts_when_plan_has_no_source():

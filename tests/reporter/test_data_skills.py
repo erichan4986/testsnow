@@ -47,6 +47,20 @@ def test_quality_gate_skill_filters_posts():
     assert "discard_posts" in result.output
 
 
+def test_quality_gate_skill_forwards_no_llm_policy(monkeypatch):
+    calls = {}
+
+    class _Gate:
+        def process_xueqiu_posts(self, posts, use_llm=True):
+            calls["use_llm"] = use_llm
+            return []
+
+    monkeypatch.setattr("report_skills.data_skills.ContentQualityGate", _Gate)
+    quality_gate_skill(SkillContext(input={"all_posts": [], "report_llm_enabled": False}))
+
+    assert calls["use_llm"] is False
+
+
 def test_quote_fetching_skill_with_code():
     ctx = SkillContext(input={
         "stock_name": "测试股",

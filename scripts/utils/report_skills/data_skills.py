@@ -48,7 +48,10 @@ def quality_gate_skill(ctx: SkillContext) -> SkillContext:
     all_posts = ctx.get("all_posts", [])
 
     gate = ContentQualityGate()
-    results = gate.process_xueqiu_posts(all_posts)
+    results = gate.process_xueqiu_posts(
+        all_posts,
+        use_llm=bool(ctx.get("report_llm_enabled", True)),
+    )
 
     keep = [r.item.extra for r in results if r.action == "keep"]
     demote = [r.item.extra for r in results if r.action == "demote"]

@@ -1091,6 +1091,7 @@ class SynthesisSkill(BaseSkill):
         deduped_sources_key: str = "synthesis_display_deduped_sources",
     ) -> dict:
         """调用 KnowledgeSynthesizer 或降级模板生成综合叙事。"""
+        llm_enabled = bool(ctx.get("report_llm_enabled", True)) if ctx is not None else True
         source_policy = self._canonical_synthesis_source_policy(ctx)
         enable_cv = bool(ctx.get("enable_claim_verification_context")) if ctx else False
         cv_context = None
@@ -1111,7 +1112,7 @@ class SynthesisSkill(BaseSkill):
             if cv_context:
                 ctx.set("claim_verification_summary", cv_context)
 
-        if self.llm_client and hasattr(self.llm_client, "chat"):
+        if llm_enabled and self.llm_client and hasattr(self.llm_client, "chat"):
             return self._legacy_llm_synthesize(stock_name, stock_raw, keep_posts, cv_context)
 
         fundflow_material_pack = build_fundflow_material_pack(stock_raw.get("fundflow", []))
@@ -1131,6 +1132,14 @@ class SynthesisSkill(BaseSkill):
                 stock_raw,
                 items_count=0,
                 sources=[],
+                source_policy=source_policy,
+            )
+
+        if not llm_enabled:
+            return self._template_synthesize(
+                stock_raw,
+                items_count=len(items),
+                sources=self._source_list(items),
                 source_policy=source_policy,
             )
 

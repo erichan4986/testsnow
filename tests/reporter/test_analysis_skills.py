@@ -17,6 +17,27 @@ def test_cross_source_consolidation_empty():
     assert result.get("cross_source_summary") == ""
 
 
+def test_cross_source_consolidation_disables_topic_llm(monkeypatch):
+    calls = {}
+
+    class _Consolidator:
+        def __init__(self, **kwargs):
+            calls.update(kwargs)
+
+        def consolidate(self, items):
+            return items
+
+        def generate_cross_source_summary(self, items):
+            return ""
+
+    monkeypatch.setattr("content_consolidator.ContentConsolidator", _Consolidator)
+    cross_source_consolidation_skill(
+        SkillContext(input={"keep_posts": [], "stock_raw": {}, "report_llm_enabled": False})
+    )
+
+    assert calls["use_llm_topics"] is False
+
+
 def test_scoring_skill_basic():
     ctx = SkillContext(input={
         "stock_raw": {

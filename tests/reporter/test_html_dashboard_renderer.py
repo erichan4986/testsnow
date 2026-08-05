@@ -181,3 +181,30 @@ def test_render_falls_back_to_synthesis_when_no_display(monkeypatch):
     renderer.render(ctx)
 
     assert any("baseline" in t for t in captured)
+
+
+def test_dashboard_skips_thesis_llm_when_report_policy_disabled(monkeypatch):
+    calls = []
+
+    def _fail_if_called(*args, **kwargs):
+        calls.append(True)
+        raise AssertionError("no-llm mode must skip dashboard thesis LLM")
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        _fail_if_called,
+    )
+
+    result = HTMLDashboardRenderer().render({
+        "stock_name": "TestStock",
+        "date_str": "20260805",
+        "stock_codes": {},
+        "report_llm_enabled": False,
+        "synthesis": {
+            "valuation_debate": "估值存在压力。",
+            "fundamentals": "订单增长需要继续验证。",
+        },
+    })
+
+    assert result
+    assert calls == []

@@ -94,6 +94,30 @@ def test_synthesis_skill_disabled_claim_verification_does_not_call_builder():
     assert ctx.output.get("claim_verification_status") != "ok"
 
 
+def test_synthesis_no_llm_skips_injected_synthesizer():
+    class _StrictSynthesizer:
+        def synthesize(self, *args, **kwargs):
+            raise AssertionError("no-llm mode must not call the synthesizer")
+
+    skill = SynthesisSkill(synthesizer=_StrictSynthesizer())
+    ctx = _test_context({
+        "stock_name": "测试股",
+        "report_llm_enabled": False,
+        "stock_raw": {
+            "reports": [{"title": "研报", "content": "收入增长", "institution": "测试证券"}],
+            "announcements": [],
+            "fundflow": [],
+            "news": [],
+            "zhihu": {"report_items": []},
+        },
+        "keep_posts": [],
+    })
+
+    skill.run(ctx)
+
+    assert ctx.get("synthesis") is not None
+
+
 def test_synthesis_skill_passes_stock_config_to_synthesizer():
     fake = FakeSynthesizer()
     skill = SynthesisSkill(synthesizer=fake)

@@ -77,6 +77,11 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         help="工程验证模式：跳过知乎采集和 LLM curator，只复用本地缓存/knowledge posts。",
     )
     parser.add_argument(
+        "--no-llm",
+        action="store_true",
+        help="禁用报告 pipeline 的 LLM 请求，保留确定性材料、行情和渲染流程。",
+    )
+    parser.add_argument(
         "--offline-smoke",
         action="store_true",
         help="真正离线的入口 smoke：隐含 --fast-test/--no-pdf，并禁用 LLM、行情 API、技术采集和图表生成。",
@@ -93,6 +98,7 @@ def _parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 def _apply_offline_smoke_mode(args: argparse.Namespace) -> None:
     args.fast_test = True
     args.no_pdf = True
+    args.no_llm = True
     if args.raw_dir == getattr(args, "_default_raw_dir", ""):
         args.raw_dir = "/tmp/testsnow_offline_smoke/raw"
     if args.report_dir == getattr(args, "_default_report_dir", ""):
@@ -404,7 +410,12 @@ def _collect_zhihu(args: argparse.Namespace, stock: dict[str, Any], raw_dir: Pat
     keywords = _keywords_for_stock(stock, args.keyword)
     logger.info("采集知乎内容，关键词: %s", ", ".join(keywords))
     collector = ZhihuCollector()
-    return collector.collect(stock_name=stock_name, keywords=keywords, limit=8, use_curator=True)
+    return collector.collect(
+        stock_name=stock_name,
+        keywords=keywords,
+        limit=8,
+        use_curator=not getattr(args, "no_llm", False),
+    )
 
 
 def _save_report_input(
@@ -474,6 +485,7 @@ def _run_report(args: argparse.Namespace, stock: dict[str, Any]) -> int:
         agent_reach_configs={stock_name: stock["agent_reach"]} if stock.get("agent_reach") else {},
         source_intake_configs={stock_name: stock["source_intake"]} if stock.get("source_intake") else {},
         stock_configs={stock_name: stock},
+        report_llm_enabled=not getattr(args, "no_llm", False),
     )
     md_path, html_path = reporter.generate_stock_report(stock_name, str(report_dir))
     if md_path:

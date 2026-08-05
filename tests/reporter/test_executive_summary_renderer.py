@@ -101,6 +101,31 @@ def test_render_without_synthesis_still_has_deterministic_summary(monkeypatch):
     assert "尚未形成可由高信用来源支撑的核心事实基座" in result
 
 
+def test_legacy_thesis_fallback_skips_llm_when_disabled(monkeypatch):
+    calls = []
+
+    def _fail_if_called(*args, **kwargs):
+        calls.append(True)
+        raise AssertionError("no-llm mode must skip thesis LLM")
+
+    monkeypatch.setattr(
+        "scripts.utils.reporter.sections.executive_summary_renderer._llm_extract_thesis",
+        _fail_if_called,
+    )
+
+    result = ExecutiveSummaryRenderer().render({
+        "stock_name": "测试股",
+        "report_llm_enabled": False,
+        "synthesis": {
+            "valuation_debate": "估值存在压力。",
+            "fundamentals": "订单增长。",
+        },
+    })
+
+    assert result
+    assert calls == []
+
+
 def test_deterministic_summary_uses_supported_core_fact_and_structured_valuation(monkeypatch):
     monkeypatch.setattr(
         "scripts.utils.reporter.sections.executive_summary_renderer._extract_thesis_points",
