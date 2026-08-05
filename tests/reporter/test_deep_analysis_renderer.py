@@ -1596,6 +1596,110 @@ def test_formal_thin_preserves_single_institution_broker_sections_forecast_risk_
     assert "[^7] | **测试证券** | 作者: 测试证券 | 《风险提示研报》" in result
 
 
+def _formal_thin_broker_snapshot(*rows):
+    return MaterialSnapshot(
+        schema="deep_analysis_material_snapshot.v1",
+        rows=tuple(rows),
+        citations={
+            ref: {"source": "测试证券", "author": "测试证券", "title": f"研报来源{ref}"}
+            for ref in range(1, 5)
+        },
+        diagnostics={},
+    )
+
+
+def test_formal_thin_broker_uses_snapshot_rows_global_refs_and_source_order():
+    snapshot = _formal_thin_broker_snapshot(
+        MaterialRow(
+            "broker:sections:0", "产品判断：FPGA产品进入放量阶段。", "broker",
+            "professional_analysis", (1,), ("broker:source:1",), title="产品判断",
+            body="FPGA产品进入放量阶段。", render_role="broker_assumption",
+            attribution="测试证券", source_credit="professional",
+            broker_memo_status="single_institution",
+        ),
+        MaterialRow(
+            "broker:forecast_ranges:0", "归母净利润2026年：12至14亿元", "broker",
+            "professional_analysis", (2,), ("broker:source:2",), title="归母净利润2026年",
+            body="12至14亿元", render_role="broker_forecast", attribution="测试证券",
+            source_credit="professional", broker_metric="归母净利润",
+            broker_period="2026年", broker_memo_status="single_institution",
+        ),
+        MaterialRow(
+            "broker:risks:0", "客户验证风险", "broker", "professional_analysis",
+            (3,), ("broker:source:3",), body="客户验证进度可能不及预期。",
+            render_role="broker_risk", attribution="测试证券",
+            source_credit="professional", broker_memo_status="single_institution",
+        ),
+    )
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {
+            "industry_logic": "",
+            "fundamentals": "",
+            "citations": {ref: {"source": "基线", "title": f"基线{ref}"} for ref in range(1, 5)},
+        },
+        "deep_analysis_material_snapshot": snapshot,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {},
+        "core_facts": [],
+    }
+
+    result = _render(DeepAnalysisRenderer(), ctx)
+
+    expected = (
+        "**产品判断**：测试证券研报认为：FPGA产品进入放量阶段[^5]",
+        "测试证券研报预计：归母净利润 2026年 12至14亿元[^6]",
+        "测试证券研报提示：客户验证进度可能不及预期[^7]",
+    )
+    assert "**单篇研报观点 / 单机构观点**" in result
+    assert all(text in result for text in expected)
+    assert [result.index(text) for text in expected] == sorted(result.index(text) for text in expected)
+    assert "[^5] | **测试证券** | 作者: 测试证券 | 《研报来源1》" in result
+    assert "[^6] | **测试证券** | 作者: 测试证券 | 《研报来源2》" in result
+    assert "[^7] | **测试证券** | 作者: 测试证券 | 《研报来源3》" in result
+
+
+def test_formal_thin_broker_generic_attribution_is_not_duplicated():
+    snapshot = _formal_thin_broker_snapshot(MaterialRow(
+        "broker:forecast_ranges:0", "营业收入2026E：20至22亿元", "broker",
+        "professional_analysis", (1,), ("broker:source:1",), body="20至22亿元",
+        render_role="broker_forecast", attribution="研报", source_credit="professional",
+        broker_metric="营业收入", broker_period="2026E", broker_memo_status="ready",
+    ))
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
+        "deep_analysis_material_snapshot": snapshot,
+        "broker_research_memo": {"status": "absent", "citations": {}},
+        "deep_analysis_display": {},
+        "core_facts": [],
+    }
+
+    result = _render(DeepAnalysisRenderer(), ctx)
+
+    assert "研报预计：营业收入 2026E 20至22亿元[^1]" in result
+    assert "研报研报预计" not in result
+
+
+def test_formal_thin_empty_broker_snapshot_fails_closed_despite_raw_memo_status():
+    ctx = {
+        "stock_name": "复旦微电",
+        "deep_analysis_evidence_profile": {"profile": "formal_thin_external_rich"},
+        "synthesis": {"industry_logic": "", "fundamentals": "", "citations": {}},
+        "deep_analysis_material_snapshot": _formal_thin_broker_snapshot(),
+        "broker_research_memo": {"status": "single_institution", "citations": {}},
+        "deep_analysis_display": {},
+        "core_facts": [],
+    }
+
+    result = _render(DeepAnalysisRenderer(), ctx)
+
+    assert "当前未取得足够可用研报 digest，不展开研报观点与假设。" in result
+    assert "**单篇研报观点 / 单机构观点**" not in result
+
+
 def test_formal_thin_v3_external_evidence_keeps_full_snapshot_citation_offset():
     renderer = DeepAnalysisRenderer()
     ctx = {

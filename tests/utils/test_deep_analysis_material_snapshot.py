@@ -1826,6 +1826,22 @@ def test_snapshot_projects_annual_broker_and_external_rows_with_global_citations
     assert rows_by_id["external:argument_cards:0"].citation_refs == (6,)
 
 
+def test_snapshot_preserves_lossless_broker_forecast_fields_and_memo_status():
+    snapshot = build_deep_analysis_material_snapshot(_ctx())
+
+    forecast = next(row for row in snapshot.rows if row.row_id == "broker:forecast_ranges:0")
+
+    assert forecast.broker_metric == "归母净利润"
+    assert forecast.broker_period == "2026E"
+    assert forecast.body == "券商预测区间 10-12 亿元"
+    assert forecast.broker_memo_status == "single_institution"
+    assert all(
+        row.broker_memo_status == "single_institution"
+        for row in snapshot.rows
+        if row.source_layer == "broker"
+    )
+
+
 def test_snapshot_keeps_fundflow_and_peer_material_in_diagnostics_only():
     snapshot = build_deep_analysis_material_snapshot(_ctx())
 

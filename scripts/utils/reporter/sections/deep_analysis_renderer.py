@@ -132,13 +132,11 @@ class DeepAnalysisRenderer:
         chapter4_citation_offset = self._max_citation_id(baseline_citations)
         chapter4_view_model = None
         material_snapshot = None
-        annual_memo = {}
-        broker_memo = {}
         annual_material_rows = ()
+        broker_material_rows = ()
         external_material_rows = ()
         external_topic_narratives = ()
         annual_citation_offset = chapter4_citation_offset
-        broker_citation_offset = chapter4_citation_offset
         external_citation_offset = chapter4_citation_offset
         if profile_name == "formal_medium":
             material_snapshot = ctx.get("deep_analysis_material_snapshot") or build_deep_analysis_material_snapshot(ctx)
@@ -151,9 +149,11 @@ class DeepAnalysisRenderer:
             annual_material_rows, _ = select_annual_display_rows(
                 row for row in material_snapshot.rows if row.source_layer == "annual"
             )
+            broker_material_rows = tuple(
+                row for row in material_snapshot.rows if row.source_layer == "broker"
+            )
             broker_owner_rows = tuple(
-                row for row in material_snapshot.rows
-                if row.source_layer == "broker" and row.body and row.attribution
+                row for row in broker_material_rows if row.body and row.attribution
             )
             external_material_rows, _ = select_incremental_external_display_rows(
                 material_snapshot.rows,
@@ -165,11 +165,6 @@ class DeepAnalysisRenderer:
                 external_material_rows,
                 (*annual_material_rows, *broker_owner_rows),
             )
-            broker_citation_offset = annual_citation_offset + self._max_snapshot_ref(material_snapshot, {"annual"})
-            external_citation_offset = annual_citation_offset + self._max_snapshot_ref(
-                material_snapshot,
-                {"annual", "broker"},
-            )
         deep_md = self._deep_analysis(
             synthesis,
             ctx,
@@ -179,8 +174,8 @@ class DeepAnalysisRenderer:
             curated_external_display=curated_display,
             curated_citation_offset=external_citation_offset,
             annual_citation_offset=annual_citation_offset,
-            broker_citation_offset=broker_citation_offset,
             annual_material_rows=annual_material_rows,
+            broker_material_rows=broker_material_rows,
             external_material_rows=external_material_rows,
             external_topic_narratives=external_topic_narratives,
         )
@@ -201,20 +196,9 @@ class DeepAnalysisRenderer:
             citations = {self._citation_key(k): v for k, v in (baseline_citations or {}).items()}
             citations.update(self._offset_citations(material_snapshot.citations, self._max_citation_id(citations)))
         else:
-            annual_memo_citations = annual_memo.get("citations", {}) or {}
-            broker_memo_citations = broker_memo.get("citations", {}) or {}
             citations = self._merged_citations(
                 baseline_citations,
-                annual_memo_citations,
-            )
-            citations = self._merged_citations(
-                citations,
-                broker_memo_citations,
-            )
-            external_citations = (curated_display or {}).get("citations", {})
-            citations = self._merged_citations(
-                citations,
-                external_citations,
+                (curated_display or {}).get("citations", {}),
             )
         freshness_candidate = ((ctx.get("evidence_freshness") or {}).get("summary_candidate") or {})
         reserved_refs = tuple(int(ref) for ref in freshness_candidate.get("citation_refs") or () if str(ref).isdigit())
@@ -343,8 +327,8 @@ class DeepAnalysisRenderer:
         curated_external_display: Dict[str, Any] | None = None,
         curated_citation_offset: int = 0,
         annual_citation_offset: int = 0,
-        broker_citation_offset: int = 0,
         annual_material_rows: tuple[MaterialRow, ...] = (),
+        broker_material_rows: tuple[MaterialRow, ...] = (),
         external_material_rows: tuple[MaterialRow, ...] = (),
         external_topic_narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> str:
@@ -379,8 +363,8 @@ class DeepAnalysisRenderer:
             lines.extend(self._formal_thin_external_rich_body(
                 ctx,
                 annual_citation_offset=annual_citation_offset,
-                broker_citation_offset=broker_citation_offset,
                 annual_material_rows=annual_material_rows,
+                broker_material_rows=broker_material_rows,
                 external_material_rows=external_material_rows,
                 external_topic_narratives=external_topic_narratives,
             ))
@@ -765,8 +749,8 @@ class DeepAnalysisRenderer:
         self,
         ctx: Dict[str, Any],
         annual_citation_offset: int = 0,
-        broker_citation_offset: int = 0,
         annual_material_rows: tuple[MaterialRow, ...] = (),
+        broker_material_rows: tuple[MaterialRow, ...] = (),
         external_material_rows: tuple[MaterialRow, ...] = (),
         external_topic_narratives: tuple[ExternalTopicNarrative, ...] = (),
     ) -> List[str]:
@@ -779,8 +763,10 @@ class DeepAnalysisRenderer:
             fallback="当前未取得足够年报材料，无法形成年报经营摘要。",
         ))
         lines.extend(["### 4.2 研报观点与假设", ""])
-        broker_memo = ctx.get("broker_research_memo") or {}
-        lines.extend(self._broker_research_memo_section(broker_memo, broker_citation_offset))
+        lines.extend(self._formal_thin_broker_section(
+            broker_material_rows,
+            annual_citation_offset,
+        ))
         map_md = self._formal_medium_external_variable_map(
             external_material_rows,
             citation_offset=annual_citation_offset,
@@ -796,59 +782,40 @@ class DeepAnalysisRenderer:
 
         return lines
 
-    @staticmethod
-    def _max_snapshot_ref(snapshot: Any, layers: set[str]) -> int:
-        refs: List[int] = []
-        for row in getattr(snapshot, "rows", ()) or ():
-            if getattr(row, "source_layer", "") not in layers:
-                continue
-            refs.extend(int(ref) for ref in getattr(row, "citation_refs", ()) or ())
-        return max(refs) if refs else 0
-
-    def _broker_research_memo_section(
+    def _formal_thin_broker_section(
         self,
-        memo: Dict[str, Any],
+        material_rows: tuple[MaterialRow, ...],
         citation_offset: int = 0,
     ) -> List[str]:
-        """Render broker memo as attributed professional assumptions."""
-        if (memo or {}).get("status") not in {"ready", "single_institution"}:
+        """Render attributed professional assumptions from snapshot rows."""
+        if not material_rows:
             return ["当前未取得足够可用研报 digest，不展开研报观点与假设。", ""]
 
         lines: List[str] = []
-        if memo.get("status") == "single_institution":
+        if any(row.broker_memo_status == "single_institution" for row in material_rows):
             lines.extend(["**单篇研报观点 / 单机构观点**", ""])
-        for row in (memo.get("sections") or []):
-            if not isinstance(row, dict):
-                continue
-            text = str(row.get("body") or "").strip()
-            title = str(row.get("title") or "").strip()
-            refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
-            if text:
+        for row in material_rows:
+            text = row.body.strip()
+            refs = [ref + citation_offset for ref in row.citation_refs]
+            author = "" if row.attribution in {"研报", "券商", "机构"} else row.attribution
+            if row.render_role == "broker_assumption" and text:
                 text = self._normalize_broker_attribution(
                     text,
                     default_prefix="研报认为",
-                    author=self._broker_row_author(row, memo),
+                    author=author,
                 )
-                lines.append(f"- {attach_refs_to_sentence(f'**{title}**：{text}' if title else text, refs)}")
-        for row in (memo.get("forecast_ranges") or []):
-            if not isinstance(row, dict):
-                continue
-            text = " ".join(str(row.get(k) or "").strip() for k in ("metric", "period", "range") if row.get(k))
-            refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
-            if text:
-                author = self._broker_row_author(row, memo)
+                view = f"**{row.title}**：{text}" if row.title else text
+                lines.append(f"- {attach_refs_to_sentence(view, refs)}")
+            elif row.render_role == "broker_forecast":
+                text = " ".join(filter(None, (row.broker_metric, row.broker_period, text)))
                 prefix = f"{author}研报预计" if author else "研报预计"
-                lines.append(f"- {attach_refs_to_sentence(f'{prefix}：{text}', refs)}")
-        for row in (memo.get("risks") or []):
-            if not isinstance(row, dict):
-                continue
-            text = str(row.get("body") or "").strip()
-            refs = [int(x) + citation_offset for x in row.get("citation_refs", []) if isinstance(x, (int, str))]
-            if text:
+                if text:
+                    lines.append(f"- {attach_refs_to_sentence(f'{prefix}：{text}', refs)}")
+            elif row.render_role == "broker_risk" and text:
                 text = self._normalize_broker_attribution(
                     text,
                     default_prefix="研报提示",
-                    author=self._broker_row_author(row, memo),
+                    author=author,
                 )
                 lines.append(f"- {attach_refs_to_sentence(text, refs)}")
         lines.append("")
@@ -867,18 +834,6 @@ class DeepAnalysisRenderer:
             "",
         ])
         return lines
-
-    @staticmethod
-    def _broker_row_author(row: Dict[str, Any], memo: Dict[str, Any]) -> str:
-        for ref in row.get("citation_refs") or []:
-            try:
-                meta = (memo.get("citations") or {}).get(int(ref), {})
-            except (TypeError, ValueError):
-                continue
-            author = str(meta.get("author") or "").strip()
-            if author:
-                return author
-        return ""
 
     @staticmethod
     def _normalize_broker_attribution(text: str, default_prefix: str = "研报认为", author: str = "") -> str:

@@ -271,3 +271,17 @@ def test_batch_g1_duplicate_chapter4_annual_projection_is_absent() -> None:
         "_truncate_title",
     ):
         assert f"def {name}(" not in source
+
+
+def test_batch_g2_formal_thin_broker_raw_memo_bypass_is_absent() -> None:
+    source = (
+        SCRIPTS_DIR / "utils" / "reporter" / "sections" / "deep_analysis_renderer.py"
+    ).read_text(encoding="utf-8")
+    for token in (
+        "def _broker_research_memo_section(",
+        "def _broker_row_author(",
+        "def _max_snapshot_ref(",
+        "broker_citation_offset",
+        'ctx.get("broker_research_memo")',
+    ):
+        assert token not in source

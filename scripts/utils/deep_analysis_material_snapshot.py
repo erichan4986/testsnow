@@ -52,6 +52,9 @@ class MaterialRow:
     diagnostics: Tuple[Tuple[str, str], ...] = ()
     external_family: str = ""
     external_unit_ids: Tuple[str, ...] = ()
+    broker_metric: str = ""
+    broker_period: str = ""
+    broker_memo_status: str = ""
 
 @dataclass(frozen=True)
 class ExternalNarrativePart:
@@ -992,6 +995,9 @@ def _broker_rows(memo: Mapping[str, Any], allocator: _CitationAllocator) -> list
             result.append(replace(
                 material_row,
                 attribution=_broker_attribution(row, material_row.citation_refs, allocator.citations),
+                broker_metric=str(row.get("metric") or "").strip(),
+                broker_period=str(row.get("period") or "").strip(),
+                broker_memo_status=str(memo.get("status") or "").strip(),
             ))
     return result
 
