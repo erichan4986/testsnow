@@ -1,3 +1,4 @@
+import json
 import os
 import sys
 from pathlib import Path
@@ -111,6 +112,29 @@ def test_collect_routes_weekly_source_and_cache_dir(monkeypatch, tmp_path):
 
     assert observed["weekly"] == {"weeks": 72, "source": "akshare", "adjustment": "qfq"}
     assert observed["build"]["cache_dir"] == tmp_path
+
+
+def test_collection_payload_serializes_daily_and_weekly_dates_as_json(monkeypatch):
+    collector = TechnicalCollector.__new__(TechnicalCollector)
+    daily = pd.DataFrame({
+        "date": pd.date_range("2026-07-01", periods=2, freq="B"),
+        "open": [10.0, 10.1], "high": [10.2, 10.3],
+        "low": [9.8, 9.9], "close": [10.1, 10.2], "volume": [100, 110],
+    })
+    weekly = daily.iloc[[0]].copy()
+    monkeypatch.setattr(
+        collector,
+        "build_technical_payload",
+        lambda *args, **kwargs: {"indicators": {}, "price_target": None},
+    )
+
+    payload = collector.build_collection_payload(
+        daily, weekly, code="300308", market=0, include_optional=False,
+    )
+
+    json.dumps(payload)
+    assert payload["daily_data"]["date"] == ["2026-07-01", "2026-07-02"]
+    assert payload["weekly_data"]["date"] == ["2026-07-01"]
 
 
 def test_collector_has_no_private_ohlcv_normalizer():

@@ -85,7 +85,8 @@ def _from_raw(data, source, adjustment):
     )
 
 
-def _raw(frame):
+def ohlcv_frame_to_payload(frame):
+    """Return JSON-safe OHLCV column lists for cache and report payloads."""
     if frame is None or frame.empty:
         return {}
     fields = [field for field in (*REQUIRED, "amount") if field in frame.columns]
@@ -175,8 +176,8 @@ def write_ohlcv_cache(
         "schema_version": SCHEMA_VERSION, "asset_type": asset_type,
         "symbol": str(symbol), "market": market, "source": source,
         "adjustment": adjustment, "fetched_at": fetched_at,
-        "latest_date": latest.isoformat(), "daily_data": _raw(daily),
-        "weekly_data": _raw(weekly),
+        "latest_date": latest.isoformat(), "daily_data": ohlcv_frame_to_payload(daily),
+        "weekly_data": ohlcv_frame_to_payload(weekly),
     }
     path = _path(cache_dir, asset_type, symbol, market)
     path.parent.mkdir(parents=True, exist_ok=True)

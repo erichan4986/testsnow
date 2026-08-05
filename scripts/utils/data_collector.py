@@ -8,9 +8,15 @@ from datetime import datetime, timedelta
 import pandas as pd
 
 try:
-    from technical_ohlcv_cache import normalize_ohlcv_frame
+    from technical_ohlcv_cache import (
+        normalize_ohlcv_frame,
+        ohlcv_frame_to_payload,
+    )
 except ImportError:
-    from .technical_ohlcv_cache import normalize_ohlcv_frame
+    from .technical_ohlcv_cache import (
+        normalize_ohlcv_frame,
+        ohlcv_frame_to_payload,
+    )
 
 try:
     from mootdx.quotes import Quotes
@@ -467,8 +473,8 @@ class TechnicalCollector:
             "adjustment": df_daily.attrs.get("adjustment", "raw"),
             "data_source": source, "indicators": technical.get("indicators", {}),
             "price_target": technical.get("price_target"),
-            "daily_data": df_daily.to_dict(orient="list"),
-            "weekly_data": df_weekly.to_dict(orient="list") if df_weekly is not None else {},
+            "daily_data": ohlcv_frame_to_payload(df_daily),
+            "weekly_data": ohlcv_frame_to_payload(df_weekly),
             "technical": technical,
             "fund_flow": _baidu_fund_flow_history(code, days=5) if include_optional else [],
             "concept_blocks": _baidu_concept_blocks(code) if include_optional else {},
