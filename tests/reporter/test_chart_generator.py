@@ -46,6 +46,7 @@ def require_kaleido_browser(request):
         "test_wrap_cjk_keeps_numeric_tokens_intact_and_limits_lines",
         "test_technical_panel_omits_scalar_momentum_panels",
         "test_technical_panel_uses_price_and_aligned_volume",
+        "test_technical_panel_uses_canonical_ma_keys_without_range_slider",
         "test_technical_panel_rejects_insufficient_or_single_panel",
     }
     if request.node.name in browser_free_tests:
@@ -104,6 +105,22 @@ def test_technical_panel_uses_price_and_aligned_volume(monkeypatch, tmp_path):
 
     assert captured["kwargs"]["rows"] == 2
     assert captured["kwargs"]["subplot_titles"] == ("价格与均线", "成交量")
+
+
+def test_technical_panel_uses_canonical_ma_keys_without_range_slider(monkeypatch, tmp_path):
+    captured = _capture_subplots(monkeypatch)
+
+    generate_technical_panel(
+        "测试股",
+        _daily_series(),
+        [],
+        {"ma_5": 105.0, "ma_20": 103.0, "ma_60": 100.0},
+        str(tmp_path / "tech.png"),
+    )
+
+    names = {trace.name for trace in captured["figure"].data}
+    assert {"MA5", "MA20", "MA60"}.issubset(names)
+    assert captured["figure"].layout.xaxis.rangeslider.visible is False
 
 
 def test_technical_panel_rejects_insufficient_or_single_panel(monkeypatch, tmp_path):

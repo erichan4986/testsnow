@@ -205,8 +205,10 @@ def generate_technical_panel(
         col=1,
     )
 
-    for key, color, window in [("ma5", "orange", 5), ("ma20", "blue", 20), ("ma60", "purple", 60)]:
-        val = indicators.get(key)
+    for color, window in [("orange", 5), ("blue", 20), ("purple", 60)]:
+        val = indicators.get(f"ma_{window}")
+        if val is None:
+            val = indicators.get(f"ma{window}")
         if val is None or n == 0:
             continue
         if isinstance(val, list) and len(val) == n:
@@ -220,7 +222,7 @@ def generate_technical_panel(
                 x=idx,
                 y=ma_y,
                 mode="lines",
-                name=key.upper(),
+                name=f"MA{window}",
                 line=dict(color=color, dash="dash"),
             ),
             row=1,
@@ -299,6 +301,7 @@ def generate_technical_panel(
         title=f"{stock_name} 技术面分析",
         height=480 + rows * 150,
         showlegend=False,
+        xaxis_rangeslider_visible=False,
         margin=dict(l=40, r=40, t=60, b=40),
     )
     fig.write_image(str(p), width=900, height=480 + rows * 150, scale=2)
